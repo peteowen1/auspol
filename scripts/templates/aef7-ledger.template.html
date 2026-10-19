@@ -167,6 +167,13 @@
        box-shadow:6px 0 6px -6px rgba(19,24,32,.18)}
   @media (max-width:700px){ th.fz, td.fz{position:static; box-shadow:none} }
   td.grp{font-size:11px; color:var(--ink-2); white-space:nowrap; font-weight:500}
+  td.about{min-width:240px; max-width:340px; font-size:11.5px; line-height:1.35; color:var(--ink-2); white-space:normal; vertical-align:top}
+  td.mstat{min-width:300px; max-width:420px; font-size:11.5px; line-height:1.35; color:var(--ink-2); white-space:normal; vertical-align:top}
+  td.mstat .m{margin:0 0 5px}
+  .st{display:inline-block; font-size:10px; font-weight:700; letter-spacing:.03em; padding:1px 6px; border-radius:9px;
+      border:1px solid currentColor; margin-right:5px}
+  .st.FIXED{color:var(--good)} .st.PARTLY{color:var(--warn)} .st.OPEN{color:var(--bad)} .st.UNVERIFIED{color:var(--ink-3)}
+  td.mstat .fb, td.mstat .sr{display:block; font-size:10.5px; color:var(--ink-3)}
   td.note{min-width:230px}
   td.note textarea{
     width:100%; font:inherit; font-size:12px; color:var(--ink); background:transparent;
@@ -739,7 +746,7 @@ a.seatjump{color:inherit;text-decoration:underline dotted;text-underline-offset:
           <th colspan="3" class="sep">AEF final two</th>
           <th colspan="4" class="sep">TCP on real pairing</th>
           <th colspan="3" class="sep">Seat log loss</th>
-          <th colspan="2" class="sep"></th>
+          <th class="sep"></th><th colspan="2" class="sep">Seat notes (committed CSV)</th><th></th>
         </tr>
         <tr class="hdr" id="hdr"></tr>
       </thead>
@@ -804,10 +811,16 @@ const COLS = [
   {k:"aef_ll", t:"AEF",   num:true, dp:3},
   {k:"dll",    t:"Δ loss", num:true, dp:3, delta:true},
   {k:"grp",    t:"Failure group", cls:"grp", sep:true},
-  {k:"note",   t:"Notes", cls:"note"}
+  {k:"about",  t:"About this seat", cls:"about", sep:true},
+  {k:"mstat",  t:"Model miss: status", cls:"mstat"},
+  {k:"note",   t:"Your notes", cls:"note"}
 ];
 
+// Worst model-miss status per seat, for sorting: OPEN, then UNVERIFIED, PARTLY, FIXED.
+const ST_RANK = {OPEN:0, UNVERIFIED:1, PARTLY:2, FIXED:3};
 SEATS.forEach(r => {
+  r.model = r.model || [];
+  r.mstat = r.model.length ? r.model.map(m=>m.status).sort((a,b)=>ST_RANK[a]-ST_RANK[b])[0] : "";
   r.dll = (r.ll != null && r.aef_ll != null) ? +(r.ll - r.aef_ll).toFixed(3) : null;
   // TCP scored on the pairing that ACTUALLY happened, regardless of whether
   // it was that side's #1 guess -- see "What the columns mean" for why this
@@ -936,7 +949,7 @@ function visible(){
     (!F.q    || r.seat.toLowerCase().includes(F.q)) &&
     (!F.wrong|| !r.correct) &&
     (!F.beat || (r.dll!=null && r.dll>0)) &&
-    (!F.noted|| (notes.get(key(r))||"").trim().length>0)
+    (!F.noted|| (notes.get(key(r))||"").trim().length>0 || !!r.about || r.model.length>0)
   );
 }
 const fmt = (v,dp) => v==null ? "<span style='color:var(--ink-3)'>—</span>" : v.toFixed(dp);
@@ -958,6 +971,11 @@ function render(){
         : `<td class="${(c.cls||"")+sep}" style="color:var(--ink-3)">—</td>`;
       if (c.k==="seat") return `<td class="${(c.cls||"")+sep}"><a href="#" class="seatjump" data-pair="${r.pair}" data-seat="${esc(r.seat)}" title="Every candidate in this seat">${esc(r.seat)}</a></td>`;
       if (c.k==="correct") return `<td class="${(c.cls||"")+sep}"><span class="mark ${r.correct?"y":"n"}">${r.correct?"✓":"✗"}</span></td>`;
+      if (c.k==="about") return `<td class="about${sep}">${esc(r.about||"")}</td>`;
+      if (c.k==="mstat") return `<td class="mstat">${r.model.map(m=>
+        `<div class="m"><span class="st ${m.status}">${m.status}</span>${esc(m.text)}`
+        + (m.fixed_by ? `<span class="fb">Fixed by: ${esc(m.fixed_by)}</span>` : "")
+        + `<span class="sr">Source: ${esc(m.source)}</span></div>`).join("")}</td>`;
       if (c.k==="note") return `<td class="note${sep}"><textarea rows="1" data-k="${k}" placeholder="Add a note"
             aria-label="Note for ${r.seat}">${esc(notes.get(k)||"")}</textarea></td>`;
       if (c.k==="f2cp") return r.f2cp==null
@@ -1021,7 +1039,7 @@ function cvisible(){
       (!F.cand  || (c.candidate||"").toLowerCase().includes(F.cand)) &&
       (!F.wrong || s.correct===false) &&
       (!F.beat  || (c.d_abs!=null && c.d_abs>0)) &&
-      (!F.noted || (notes.get(key(c))||"").trim().length>0);
+      (!F.noted || (notes.get(key(c))||"").trim().length>0 || !!s.about || s.model.length>0);
   });
 }
 function crender(){

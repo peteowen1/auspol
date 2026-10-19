@@ -153,8 +153,52 @@ SEATS[, act_fp_fav := fifelse(fav == winner, act_fp_win, act_fp_fav_true)][, act
 cat(sprintf("AEFL2b favourite's actual primary filled for %d of %d seats (%d upsets)\n",
             SEATS[is.finite(act_fp_fav), .N], nrow(SEATS), SEATS[fav != winner, .N]))
 
+# PER-SEAT NOTES, split in two kinds (2026-10-19, Pete). external/reference/
+# aef7-seat-notes.csv is the one committed source (it replaced notes typed into
+# the page's shared database, which went stale: "missed because of X" long
+# after X was fixed). Columns: election, seat, kind, text, status, fixed_by,
+# source.
+#   kind "fact"  -> shown as "About this seat": durable whatever the model does.
+#   kind "model" -> shown as "Model miss: status": why we missed, and whether
+#                   that cause is FIXED / PARTLY / OPEN / UNVERIFIED; FIXED and
+#                   PARTLY must name the fix (switch, commit or DECISIONS date).
+# Every row needs a source. Coverage check: a seat where the winner got < 25%
+# from us must carry a model row, even if the row says "Reason unknown".
+notes_f <- "docs/aef7-seat-notes.csv"
+if (!file.exists(notes_f)) stop("AEFL10! missing ", notes_f)
+NT <- fread(notes_f, showProgress = FALSE, colClasses = "character", na.strings = NULL)
+stopifnot(identical(names(NT), c("election", "seat", "kind", "text", "status", "fixed_by", "source")))
+bad <- NT[!(kind %in% c("fact", "model"))]
+if (nrow(bad)) stop("AEFL10! kind must be fact|model: ", paste(bad$seat, collapse = ", "))
+bad <- NT[kind == "model" & !(status %in% c("FIXED", "PARTLY", "OPEN", "UNVERIFIED"))]
+if (nrow(bad)) stop("AEFL10! model rows need a status FIXED|PARTLY|OPEN|UNVERIFIED: ", paste(bad$seat, collapse = ", "))
+bad <- NT[kind == "fact" & nzchar(status)]
+if (nrow(bad)) stop("AEFL10! fact rows carry no status: ", paste(bad$seat, collapse = ", "))
+bad <- NT[status %in% c("FIXED", "PARTLY") & !nzchar(fixed_by)]
+if (nrow(bad)) stop("AEFL10! FIXED/PARTLY rows must name fixed_by: ", paste(bad$seat, collapse = ", "))
+bad <- NT[!nzchar(text) | !nzchar(source)]
+if (nrow(bad)) stop("AEFL10! every note needs text and source: ", paste(bad$seat, collapse = ", "))
+NT[, nkey := paste(election, seat, sep = "\r")]
+skey <- paste(SEATS$pair, SEATS$seat, sep = "\r")
+orph <- NT[!(nkey %in% skey)]
+if (nrow(orph)) cat(sprintf("AEFL10! %d note row(s) match no ledger seat (not in the AEF-7, kept as history): %s\n",
+                            nrow(orph), paste(unique(paste(orph$election, orph$seat)), collapse = "; ")))
+SEATS[, about := vapply(skey, function(k) paste(NT[kind == "fact" & nkey == k, text], collapse = " "), "")]
+SEATS[, model := lapply(skey, function(k) {
+  m <- NT[kind == "model" & nkey == k, .(text, status, fixed_by, source)]
+  if (nrow(m)) m else list()
+})]
+uncovered <- SEATS[our_p_win < 0.25 & lengths(model) == 0L, .(pair, seat, our_p_win)]
+if (nrow(uncovered)) {
+  cat(sprintf("AEFL11! %d big miss(es) (winner under 25%%) with no model note:\n", nrow(uncovered)))
+  print(uncovered)
+}
+cat(sprintf("AEFL10 notes: %d fact rows on %d seats; model rows on %d seats (%s)\n",
+            NT[kind == "fact", .N], SEATS[nzchar(about), .N], SEATS[lengths(model) > 0L, .N],
+            paste(names(table(NT[kind == "model", status])), table(NT[kind == "model", status]), sep = " ", collapse = ", ")))
+
 setorder(SEATS, pair, seat)
-out_path <- file.path(OUT, "aef7-ledger-data.json")
+out_path <-file.path(OUT, "aef7-ledger-data.json")
 write(toJSON(SEATS, dataframe = "rows", auto_unbox = TRUE, digits = 6), out_path)
 cat(sprintf("AEFL2 wrote %s: %d seats\n", out_path, nrow(SEATS)))
 
