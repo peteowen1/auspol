@@ -8,8 +8,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
-- IN FLIGHT 19 Oct 10:05 (Pete: full rebuild, so the surge_h retrain ships too): `AUSPOL_PUBLISH=1
-  AUSPOL_REBUILD_FROM=3 bash scripts/rebuild_forecasts.sh`, log `deciding-runs/publish-20261019-0800.log` (PRs #127, #128).
+- DONE 19 Oct 11:47: full rebuild from 3 published (surge_h leak fix + PRs #127/#128), 4139 s, no `!!`. AEF-7 seat log
+  loss 0.2657 -> 0.2635 (AEF 0.2825, n=681); primary RMSE 4.729 -> 4.579; TCP MAE 3.76 -> 3.65 (AEF 3.63). Pooled 0.3267
+  over 2931 seat-elections. Snapshot `output/snapshots/20261019-1147-185957d-from3`.
 - OPEN (the command; see the second-stop line below): F7 screen (demographic correction in full, `AUSPOL_DEMO_RESID_FULL=1`,
   off). `Rscript scripts/quick_arm.R "AUSPOL_DEMO_RESID_FULL=1" --pairs=all --sims=1000 --slots=1 --no-reuse`, then
   the scratchpad scorer score_f7.R on its two cache keys (`plans/prereg-demo-resid-full-2026-10-19.md`). The 18 Oct
@@ -26,8 +27,11 @@ TCP-consistency check, arm H shipped, heavy-tail arm T REFUSED 19 Oct, F21 surge
   ALP/LNP/GRN/ONP/OTH) and the whole others bucket to OTH; training used per-class levels. Train/serve mismatch.
 - OPEN F2 (live): `AUSPOL_MINOR_DEFECT_BASE_PRED="1"` ships but `fit_seats_full.R` never applies it (comment only, :979).
 - OPEN F3 (live): `fit_seats_full.R:932` hardcodes the defector discount 0.282; every harness fits it time-forward.
-- OPEN F4 (scores): six harnesses use a flat `PARTY_SD` 1.5 and no `statewide_draws` (vic :853); only fed and live
-  pass statewide_draws, so 16 of 23 pairs are scored on a different statewide spread than ships.
+- OPEN F4 (scores): switch `AUSPOL_HARNESS_SW_DRAWS` built (304b662; OFF byte-identical on vic2022/wa2025, ON
+  sd(ALP-LNP) 3.68 vic2022 / 4.24 wa2025 vs 2.12 flat). Screen REFUSED 19 Oct: targeted 25 elections +0.0017 (SE
+  0.0014), all seats +0.0011 (SE 0.0009, WORSE), worse in 18 of 25; switch stays "0". OPEN for Pete: live forecast uses
+  the wide draws, so either state backtests flatter what ships or FP_EXTRA_SD 2.419 is too wide for states
+  (`plans/prereg-harness-sw-draws-2026-10-19.md` RESULT).
 - OPEN, DATED (from ~2 Nov, weekly; final snapshot 25-27 Nov): vic2026 salience snapshots. All 500 candidates fetched
   18 Oct (window to 6 Oct), but that is before the campaign: nobody's search interest is rising yet (Premier 1.1 in the
   last 8 weeks vs 9.3 before), so batches cannot be linked and `jump` is not comparable with the backtests' polling-day
