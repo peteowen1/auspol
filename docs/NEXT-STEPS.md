@@ -40,10 +40,8 @@ TCP-consistency check, arm H shipped, heavy-tail arm T REFUSED 19 Oct, F21 surge
   PUBLISHED 19 Oct 17:25 (rebuild from 6, `deciding-runs/publish-20261019-1700.log`): pooled 0.3267 -> 0.3242 (2,931
   seat-elections), AEF-7 0.2635 -> 0.2614 (AEF 0.2825); net-out applied in all 32 elections with draws. OPEN: read the
   next daily Forecast run's conclusion (first live run with AUSPOL_SW_NET_LIVE=1).
-- OPEN F9 (built, off): `AUSPOL_ERROR_DIST_COMP` (0bb998c, prereg `plans/prereg-error-dist-composition-2026-10-19.md`).
-  Next: `Rscript scripts/quick_arm.R "AUSPOL_ERROR_DIST_COMP=1" --pairs=all` once the rebuild is done; needs
-  `output/error-quantiles-comp.csv` regenerated from the new stage-6 shares (`AUSPOL_ERROR_DIST_COMP=1 Rscript
-  scripts/fit_error_distribution.R`) first.
+- DONE F9, REFUSED 19 Oct: `AUSPOL_ERROR_DIST_COMP=1` at 20k -0.0001 (SE 0.0001), within 1 SE; screen at 1k had
+  said -0.0005 (tail arm, floor artefact). Switch stays "0". Result in `plans/prereg-error-dist-composition-2026-10-19.md`.
 - OPEN F5 (verified live 19 Oct, backtests only): salience blend in the xgb training base and again after the trees;
   fix design in the 19 Oct agent report, not yet pre-registered. Matters for Vic from ~9 Nov.
   Width arms A0/A1 (`AUSPOL_FP_EXTRA_SD` 0 / 1.2) pre-registered, not yet run.
