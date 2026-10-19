@@ -37,7 +37,9 @@ TCP-consistency check, arm H shipped, heavy-tail arm T REFUSED 19 Oct, F21 surge
   totals unchanged, favourites 88/88 unchanged, favourite prob +1.3 pts mean). 20k deciding run DONE 19 Oct 16:19
   (`deciding-runs/20261019-1414-f4-net`): -0.0014 (SE 0.0006) over 31 elections, LOO holds, AEF-7 -0.0021; clause 4
   refuses (sa2014 +0.0043, wa2021 +0.0024, each >2 own SE). SHIPPED on Pete's override, PR #129 merged 19 Oct;
-  IN FLIGHT: rebuild from 6 + publish, log `deciding-runs/publish-20261019-1700.log`.
+  PUBLISHED 19 Oct 17:25 (rebuild from 6, `deciding-runs/publish-20261019-1700.log`): pooled 0.3267 -> 0.3242 (2,931
+  seat-elections), AEF-7 0.2635 -> 0.2614 (AEF 0.2825); net-out applied in all 32 elections with draws. OPEN: read the
+  next daily Forecast run's conclusion (first live run with AUSPOL_SW_NET_LIVE=1).
 - OPEN F9 (built, off): `AUSPOL_ERROR_DIST_COMP` (0bb998c, prereg `plans/prereg-error-dist-composition-2026-10-19.md`).
   Next: `Rscript scripts/quick_arm.R "AUSPOL_ERROR_DIST_COMP=1" --pairs=all` once the rebuild is done; needs
   `output/error-quantiles-comp.csv` regenerated from the new stage-6 shares (`AUSPOL_ERROR_DIST_COMP=1 Rscript
