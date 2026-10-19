@@ -43,3 +43,15 @@ accuracy, floor counts.
 election's share; not a refusal on its own (`no-one-election-share-refusal`), but leave-one-out must hold. (c) The
 vic2026 live walk moves a favourite: shown to Pete before shipping. Known blind spot: the composition table was itself
 fitted with z standardised the old way in mind; a joint refit is a separate prereg.
+
+## RESULT: screen (2026-10-19, 1,000 sims, all 35 elections, code 61afa50)
+
+Not WORSE, so the deciding run went ahead (`deciding-runs/20261019-1937-f9-comp`, 20,000 sims). The comp table was
+regenerated from the post-F4 stage-6 shares first; it came out byte-identical to the 14:53 one, as F4 moves the spread,
+not the shares. Shipped `error-quantiles.csv` unchanged (sha256 `bd8928...901f`).
+
+- All seats: 0.3079 -> 0.3074, -0.0005 (SE 0.0002, clustered on election), BETTER by more than 1 SE. 28 of 35
+  elections moved; 7 byte-identical (no earlier-election table row, or no seat with comp_f > 1).
+- AEF-7: 0.2606 -> 0.2602, -0.0004 (SE 0.0001).
+- Largest gains: qld2017 -0.0044, nsw2015 -0.0037, nsw2019 -0.0037 (named risk (b): qld2017 is one of three, not most).
+- Largest losses: nt2024 +0.0047 (25 seats), nt2020 +0.0008, wa2017 +0.0005. Clause 4 is judged on the 20k run.
