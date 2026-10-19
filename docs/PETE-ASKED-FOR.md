@@ -26,6 +26,17 @@ not a commit, not a plan file — that it is not happening and why.
 
 ---
 
+## 2026-10-18/19
+
+| Request | Status |
+|---|---|
+| Seat polls: good polls that name candidates do the work, bad polls have no influence; one Bayesian blend ("Ship H now") | **SHIPPED, merged PR #127; reaches the site with the 19 Oct full rebuild + publish (in flight).** Arm H, eleven `AUSPOL_SEAT_POLL_*` switches; McMahon 2025 Labor 0.27 -> 0.92. |
+| "have an agent add candidate names to MRP", test direct-only against including MRPs | **DONE (data), MRPs stay off independents.** `mrp_candidates.csv` (43 yes / 74 no / 5 unknown); `IND_DIRECT=ind` shipped (MRPs never vote on independents). |
+| Review the pipeline for work that gets done and then overwritten | **DONE: audit, 20 findings** (`reviews/pipeline-overwrite-audit-2026-10-18.md`). F1-F3, F11, F21 SHIPPED. F7 BUILT, OFF, screen killed twice by the memory watchdog (rerun on Pete's word). F4 IN PROGRESS 19 Oct (Pete: "go"): prereg `plans/prereg-harness-sw-draws-2026-10-19.md`. F5, F8-F10, F12-F20 NOT DONE. |
+| Review all the pre-registration rules for silly clauses (after "refusing an arm ... cause it's too good seems stupid") | **SHIPPED**: standard decision rule heads `PRE-REGISTRATION-RULES.md` (`reviews/rules-review-2026-10-18.md`). |
+| Fix the wrong Melbourne row; remind Pete to fix it on Wikipedia later, with steps | **SHIPPED in the model** (`seat_poll_corrections.csv`, PR #128). **Wikipedia edit is Pete's**: Daily Eight, 21 Oct. |
+| Look into salience for vic2026 | **DATA FETCHED 18 Oct, NOT IN THE MODEL**: pre-campaign, so not comparable yet; weekly snapshots from ~2 Nov (NEXT-STEPS, dated). |
+
 ## 2026-10-16
 
 | Request | Status |

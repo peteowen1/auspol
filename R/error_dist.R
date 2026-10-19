@@ -4,6 +4,16 @@
 # class (scripts/fit_error_distribution.R -> output/error-quantiles.csv): heavy tails everywhere, a right skew
 # for the candidate classes, the width unchanged (RMS 1).
 
+#' The quantile table the simulator reads: `error-quantiles-comp.csv` under AUSPOL_ERROR_DIST_COMP="1" (audit F9,
+#' plans/prereg-error-dist-composition-2026-10-19.md: z standardised by the composition factor too), else the
+#' shipped `error-quantiles.csv`.
+#' @noRd
+error_dist_file <- function() {
+  m <- Sys.getenv("AUSPOL_ERROR_DIST_COMP", "0")
+  if (!m %in% c("0", "1")) stop("AUSPOL_ERROR_DIST_COMP must be \"0\" or \"1\", got \"", m, "\"")
+  if (identical(m, "1")) "error-quantiles-comp.csv" else "error-quantiles.csv"
+}
+
 #' @noRd
 error_dist_on <- function() {
   m <- Sys.getenv("AUSPOL_ERROR_DIST", "1")
@@ -24,8 +34,10 @@ error_dist_on <- function() {
 #' @export
 error_dist_args <- function(target, classes) {
   if (!error_dist_on()) return(NULL)
-  f <- out_path("error-quantiles.csv")
-  if (!file.exists(f)) stop("AUSPOL_ERROR_DIST=1 but output/error-quantiles.csv is missing -- run scripts/fit_error_distribution.R")
+  fn <- error_dist_file(); f <- out_path(fn)
+  if (!file.exists(f)) stop("AUSPOL_ERROR_DIST=1 but output/", fn, " is missing -- run scripts/fit_error_distribution.R",
+                            if (fn != "error-quantiles.csv") " with AUSPOL_ERROR_DIST_COMP=1")
+  if (fn != "error-quantiles.csv") cat(sprintf("ERD2 %s: error shape from %s (AUSPOL_ERROR_DIST_COMP=1)\n", target, fn))
   tab <- data.table::fread(f, showProgress = FALSE)
   tgt_label <- target   # not a bare `target` inside tab[...]: it would bind to the column (data.table NSE)
   rows <- tab[tab$target %in% tgt_label]
@@ -34,7 +46,7 @@ error_dist_args <- function(target, classes) {
     return(NULL)
   }
   miss <- setdiff(classes, rows$class)
-  if (length(miss)) stop("AUSPOL_ERROR_DIST=1 but output/error-quantiles.csv has no ", target, " row for: ", paste(miss, collapse = ", "))
+  if (length(miss)) stop("AUSPOL_ERROR_DIST=1 but output/", fn, " has no ", target, " row for: ", paste(miss, collapse = ", "))
   qc <- grep("^q[0-9]{3}$", names(rows), value = TRUE)
   m <- as.matrix(rows[match(classes, rows$class), qc, with = FALSE])
   dimnames(m) <- list(classes, qc)

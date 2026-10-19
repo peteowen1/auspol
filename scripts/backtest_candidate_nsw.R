@@ -435,6 +435,8 @@ state_tgt <- fp_tgt[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v)
 state_tgt <- forecast_statewide_or_oracle("nsw", TO, c("2011" = "2011-03-26", "2015" = "2015-03-28", "2019" = "2019-03-23", "2023" = "2023-03-25")[[as.character(TO)]],
                                           names(state_tgt), state_prev, state_tgt,
                                           code = "BN0", n_sims = N_SIMS, seed = as.integer(Sys.getenv("AUSPOL_SEED", "42")))
+# audit F4 (AUSPOL_HARNESS_SW_DRAWS, R/forecast_statewide.R): the statewide draws behind sb, read before anything drops attributes
+SWD <- attr(state_tgt, "draws")
 # RE-ENTRY PRIOR, docs/plans/prereg-reentry-prior-2026-09-07.md. A class
 # contesting this seat but not the last one has no prior share, so swinging
 # zero forward leaves approximately zero -- 1,418 seat-class rows across the
@@ -1149,7 +1151,8 @@ if (.exhaust_on) {
 .bo <- breakout_mix_args(TGT, shares)
 .imx <- ind_mixture_surge(TGT, rownames(shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BT1N")
 surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
-sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = size_sd_apply(SD_OVR, shares, TGT, .level_sd, .lm(shares)), level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
+.swd <- harness_sw_draws(SWD, colnames(shares), N_SIMS, TGT, "BNW")
+sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = harness_sw_net_sd(size_sd_apply(SD_OVR, shares, TGT, .level_sd, .lm(shares)), .swd, shares, .level_sd, .lm(shares), psd, TGT, "BNW"), level_mult = .lm(shares), shares, fm, party_sd = psd, statewide_draws = .swd, seat_sd = sp$sd_within * SEAT_SD_MULT,
                               breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(TGT, rownames(shares)), error_q = error_dist_args(TGT, colnames(shares)),
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
                               shrink = SHRINK, conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),

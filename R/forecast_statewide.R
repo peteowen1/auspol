@@ -80,7 +80,7 @@ forecast_statewide_for <- function(region, year, election_date, parties, st_a,
   }
   FC <- statewide_draws_as_at(region, year, as_at = ed - 1, election_date = ed,
                               parties = parties, n_sims = n_sims, seed = seed,
-                              tpp_target = tpp_fn)
+                              tpp_target = tpp_fn, fp_extra_sd = fp_extra_sd_env())
   if (is.null(FC)) {
     stop("No trend could be fitted for ", region, year, " at ", as.character(ed - 1),
          ". A thin cycle must be reported, not silently scored as if the ",
@@ -409,5 +409,106 @@ forecast_statewide_or_oracle <- function(region, year, election_date, parties, s
               code, region, year, mean(abs(out - st_b[keep]), na.rm = TRUE), length(out),
               paste(sprintf("%s %.1f(%.1f)", keep, out, st_b[keep]), collapse = " ")))
   attr(out, "oracle") <- st_b[keep]
+  # the draws behind st_fc, for harness_sw_draws() (AUSPOL_HARNESS_SW_DRAWS); read straight after the call
+  attr(out, "draws") <- fc$draws
+  out
+}
+
+#' Statewide draws for a state harness's seat simulation (audit F4)
+#'
+#' `AUSPOL_HARNESS_SW_DRAWS` (default "net", shipped 2026-10-19 on Pete's override; "0" = flat PARTY_SD; "1" and "net" both pass draws, "net" also
+#' re-derives the seat spread, see [harness_sw_net_sd()]): the state harnesses pass the seat
+#' simulator the statewide draws `forecast_statewide_or_oracle()` built (its
+#' `draws` attribute) instead of a flat `PARTY_SD` with parties independent, so
+#' a backtest scores the statewide spread the live forecast ships
+#' (`plans/prereg-harness-sw-draws-2026-10-19.md`). Any pair without usable
+#' draws prints `SW0!` and returns NULL, so the caller keeps the flat spread.
+#'
+#' @param draws The `draws` attribute, read straight after the call (later
+#'   subsetting drops attributes).
+#' @param parties The share columns the simulator will get.
+#' @param n Rows wanted (the simulator's `n_sims`).
+#' @param pair,code Label and log prefix.
+#' @param from First row to take (Victoria's flow ensemble takes one block per replicate).
+#' @param quiet Skip the applied-spread line (every replicate after the first).
+#' @return A matrix `n` x `parties`, or NULL.
+#' @noRd
+harness_sw_draws <- function(draws, parties, n, pair, code = "SW", from = 1L, quiet = FALSE) {
+  v <- Sys.getenv("AUSPOL_HARNESS_SW_DRAWS", "net")
+  if (!v %in% c("0", "1", "net")) stop("AUSPOL_HARNESS_SW_DRAWS must be \"0\", \"1\" or \"net\", not ", v)
+  if (v == "0") return(NULL)
+  if (!Sys.getenv("AUSPOL_PARTY_COR", "off") %in% c("", "off", "0"))
+    stop("AUSPOL_HARNESS_SW_DRAWS=1 with AUSPOL_PARTY_COR set: the correlation is a no-op once draws are supplied")
+  why <- if (is.null(draws)) "no draws (thin cycle or oracle level)"
+         else if (length(miss <- setdiff(parties, colnames(draws)))) paste("draws lack", paste(miss, collapse = ", "))
+         else if (nrow(draws) < from + n - 1L) sprintf("%d draws, %d needed", nrow(draws), from + n - 1L)
+  if (!is.null(why)) {
+    cat(sprintf("%s0! %s: %s -- flat PARTY_SD kept for this pair\n", code, pair, why))
+    return(NULL)
+  }
+  d <- draws[seq.int(from, length.out = n), parties, drop = FALSE]
+  if (!quiet) {
+    s <- apply(d, 2, stats::sd)
+    two <- if (all(c("ALP", "LNP") %in% parties)) stats::sd(d[, "ALP"] - d[, "LNP"]) else NA_real_
+    cat(sprintf("%s1 %s: statewide draws applied (%d x %d), per-party sd %s; sd(ALP - LNP) %.2f (flat 1.5 independent gives %.2f)\n",
+                code, pair, nrow(d), ncol(d), paste(sprintf("%s %.2f", names(s), s), collapse = " "), two, sqrt(2) * 1.5))
+  }
+  d
+}
+
+#' The statewide first-preference widening added to the trend band (AUSPOL_FP_EXTRA_SD, default 2.419)
+#'
+#' Read by [forecast_statewide_for()] and `scripts/fit_seats_full.R`; the default is the adopted value
+#' (`docs/reviews/fp-widening-choice-2026-08-19.md`), so an unset switch is byte-identical.
+#' Screened as the width arms of `plans/prereg-harness-sw-draws-2026-10-19.md` amendment 1.
+#' @noRd
+fp_extra_sd_env <- function() {
+  raw <- Sys.getenv("AUSPOL_FP_EXTRA_SD", "2.419")
+  v <- suppressWarnings(as.numeric(raw))
+  if (length(v) != 1L || !is.finite(v) || v < 0) stop("AUSPOL_FP_EXTRA_SD must be one number >= 0, not ", raw)
+  v
+}
+
+#' Seat spread net of the statewide draws (AUSPOL_HARNESS_SW_DRAWS = "net", audit F4 amendment 1)
+#'
+#' The seat-level spread `level_sd` is the total seat residual with a statewide piece of `party_sd` removed in
+#' variance (`R/seat_sim.R`, `level_sd`). When the simulator gets statewide draws with variance `V_k` instead,
+#' the same total needs a seat sd of `sqrt(sd^2 - (V_k - party_sd_k^2))`, floored at half the original sd. A
+#' class whose draws are narrower than `party_sd` gets a WIDER seat sd by the same identity. Applied to every
+#' cell after the size and composition factors (`sd_override`).
+#'
+#' @param sd_override The override from [size_sd_apply()] (NA = keep the level sd), or `NULL`.
+#' @param draws Exactly the matrix passed as `statewide_draws` (NULL: nothing to net out, returns `sd_override`).
+#' @param shares,level_sd,level_mult As passed to [simulate_seat_contests()].
+#' @param party_sd As passed to [simulate_seat_contests()]: one number, or named per class (missing = 0).
+#' @param pair,code Label and log prefix.
+#' @param quiet Skip the SWN1 line.
+#' @param force Apply whatever AUSPOL_HARNESS_SW_DRAWS says: the published forecast's own switch
+#'   (AUSPOL_SW_NET_LIVE in `scripts/fit_seats_full.R`) decides there. `party_sd` must then be the FLAT
+#'   reference the seat spread was netted for (1.5), not the live draws' own sd.
+#' @return A full seats x classes sd matrix, or `sd_override` unchanged.
+#' @noRd
+harness_sw_net_sd <- function(sd_override, draws, shares, level_sd, level_mult, party_sd, pair, code = "SW", quiet = FALSE,
+                              force = FALSE) {
+  if (!(force || identical(Sys.getenv("AUSPOL_HARNESS_SW_DRAWS", "net"), "net")) || is.null(draws)) return(sd_override)
+  if (is.null(level_sd)) stop("AUSPOL_HARNESS_SW_DRAWS=net needs level_sd: there is no per-cell seat spread to net out")
+  cls <- colnames(shares); K <- length(cls)
+  lm_vec <- rep(1, K)
+  if (!is.null(level_mult)) { hit <- match(names(level_mult), cls); lm_vec[hit[!is.na(hit)]] <- as.numeric(level_mult)[!is.na(hit)] }
+  ppm <- pmin(pmax(unname(as.matrix(shares)), 0), 100) / 100
+  cur <- level_sd[1L] + level_sd[2L] * matrix(lm_vec, nrow(ppm), K, byrow = TRUE) * sqrt(ppm * (1 - ppm))
+  if (!is.null(sd_override)) { so <- as.matrix(sd_override); ok <- !is.na(so); cur[ok] <- so[ok] }
+  ps <- if (is.null(names(party_sd))) rep(as.numeric(party_sd)[1L], K) else {
+    x <- as.numeric(party_sd[cls]); x[is.na(x)] <- 0; x }
+  V <- apply(as.matrix(draws)[, cls, drop = FALSE], 2, stats::var)
+  delta <- V - ps^2
+  want <- cur^2 - matrix(delta, nrow(cur), K, byrow = TRUE)
+  floor2 <- (0.5 * cur)^2
+  nfl <- sum(want < floor2)
+  out <- matrix(sqrt(pmax(want, floor2)), nrow(cur), K, dimnames = dimnames(shares))
+  if (!quiet)
+    cat(sprintf("%sN1 %s: seat sd net of the draws; variance moved per class %s; %d of %d cells at the 0.5 floor; mean seat sd %.2f -> %.2f
+",
+                code, pair, paste(sprintf("%s %+.2f", cls, -delta), collapse = " "), nfl, length(out), mean(cur), mean(out)))
   out
 }

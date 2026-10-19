@@ -1,3 +1,9 @@
+# auspol 0.4.104
+
+- **The forecast no longer counts the statewide polling miss twice** (`AUSPOL_SW_NET_LIVE`, `AUSPOL_HARNESS_SW_DRAWS="net"`, audit F4): the seat-level spread is re-derived net of the statewide draws, and the state backtests now simulate the same statewide spread the forecast publishes. 35 elections at 20,000 simulations: seat log loss -0.0014 (SE 0.0006); shipped on Pete's override of the no-election-worse clause (sa2014, wa2021). Victoria: same favourite in all 88 seats, slightly more decisive odds.
+- `AUSPOL_FP_EXTRA_SD`: the statewide widening (2.419) is now a switch, unchanged by default.
+- Built and off: the error shape standardised by the composition factor too (`AUSPOL_ERROR_DIST_COMP`, audit F9), screen pending.
+
 # auspol 0.4.103
 
 - **The surge feature no longer learns from future elections** (`AUSPOL_SURGE_H_TF`): each election's search-interest surge chance comes from earlier elections only, and fed2025 gets real values instead of a filler 0. Overall neutral (35 elections +0.0005, SE 0.0009); kept on Pete's call.
