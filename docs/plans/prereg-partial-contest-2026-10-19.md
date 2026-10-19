@@ -61,3 +61,20 @@ unrelated candidates (an independent in one seat gains nothing because no indepe
 zeroed share keeps going to that seat's other classes, as now. Exact list printed by the arm. One pass suffices: the
 scaled class cells are held and only the row's other cells absorb the difference, so no iteration is needed (the
 0.01-point iteration above is dropped); a row whose conserved cells would exceed its total is left unscaled and named.
+
+## RESULT: arm A screen (2026-10-20, 1,000 sims, all 35 elections, code cfa3141) - REFUSED
+
+`deciding-runs/20261020-0831-class-conserve-1k` (DONE, 3,410 s, run as a scheduled task). `AUSPOL_CLASS_CONSERVE` stays "0".
+- 889 of 19,616 cells moved, in 12 of 35 elections. **The three elections that motivated the arm (nsw2023, sa2022,
+  nsw2019) are byte-identical**: the conservation step never touched them.
+- `score_quick_targets.R`: 343 target seats in 11 elections, primary +0.0013 (SE 0.0065) within 1 SE (clause 1 fails);
+  guard +0.0002 (SE 0.0007); leave-one-out 1 of 11 (fails); clause 5 fails. qld2015 +0.0207; wa2008 -0.0162.
+- qld2015: One Nation stood in 11 of 89 seats but was predicted about 4.5 in EVERY seat before the zeroing (its
+  statewide actual was 0.9). Arm A treated that pre-zero seat mean as the statewide total and packed it into the 11:
+  Lockyer 9.6 -> 49.4 (actual 26.7), Townsville 4.9 -> 25.3 (actual 3.8). The pre-zero mean is not a statewide level
+  when the class was predicted as if it stood everywhere.
+- Where nsw2023's drain actually happens is NOT the zeroing step (it would have moved). Lead, unverified: the
+  uncontested cells are already absent or near zero when they reach zero_unnominated, and the contested cells are
+  predicted from a statewide level (1.84) that averages over all 93 seats rather than the 17 contested.
+  Candidate arm A2: give the base and the trees the contested-seat level, level x n_seats / n_contested, built from
+  the nomination list (knowable before polling day). Needs its own amendment before building.

@@ -43,8 +43,9 @@ TCP-consistency check, arm H shipped, heavy-tail arm T REFUSED 19 Oct, F21 surge
 - DONE F5, REFUSED 20 Oct: `AUSPOL_SALIENCE_BLEND_ONCE=1` at 20k, target seats +0.0002 (SE 0.0012), all seats
   +0.0001 (SE 0.0006), leave-one-out 0/18; under-calls the 2022 teals. Switch stays "0"
   (`plans/prereg-salience-blend-once-2026-10-19.md`).
-- OPEN partial-contest arm A (`AUSPOL_CLASS_CONSERVE`, built 08d60c0): screen on all 35 at 1k, score with
-  `scripts/score_quick_targets.R`. Arm B (`AUSPOL_CLASS_ENTRY`) not built (`plans/prereg-partial-contest-2026-10-19.md`).
+- DONE partial-contest arm A, REFUSED 20 Oct at the 1k screen: nsw2023/sa2022/nsw2019 never moved; qld2015 +0.0207
+  (One Nation packed into 11 seats, Lockyer 49 vs 27). OPEN: find where nsw2023's drain happens, then amend for arm A2
+  (contested-seat level, level x n / k, into base and trees). Arm B not built (`plans/prereg-partial-contest-2026-10-19.md`).
 - OPEN, NEW 19 Oct, high value for Vic: partial-contest concentration. A minor party standing in k of n seats does
   not get its statewide level concentrated onto those k (nsw2023 One Nation 17/93: level right at 1.84, seats given
   ~2-5 against 5-15; sa2022 and nsw2019 exactly 0 in every contested seat). Mechanism not traced; trace, then
