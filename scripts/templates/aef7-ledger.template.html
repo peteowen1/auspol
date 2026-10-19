@@ -265,7 +265,18 @@ a.seatjump{color:inherit;text-decoration:underline dotted;text-underline-offset:
   </details>
 
   <details class="provlog">
-    <summary>Provenance &amp; changelog <span class="n">(49 updates)</span></summary>
+    <summary>Provenance &amp; changelog <span class="n">(50 updates)</span></summary>
+    <p class="sub prov"><b>v64, 18-19 Oct 2026: seat polls count properly, and the statewide miss is counted once.</b>
+       <b>Seat polls</b> are now blended with the model by how far each poll's own record says to trust it, instead of
+       a fixed weight (McMahon 2025 and the other polled seats; polled seats' log loss -0.014). <b>The live forecast
+       now gets what the trees trained on</b>: the per-party statewide level, the minor-party defector discount, and
+       a fitted major-party defector discount (0.313, was 0.282). <b>A leak closed</b>: the surge feature had learned
+       from later elections; it now learns from earlier ones only, on Pete's call (35 elections +0.0005, within
+       noise). <b>The statewide miss was counted twice</b>: every seat's spread already held most of it, and the
+       statewide draws were added on top. The seat spread now has the draws' share taken out, on Pete's override of
+       a refusal (35 elections -0.0014, SE 0.0006; South Australia 2014 and WA 2021 slightly worse). Tested and
+       refused: growth-ratio features, and narrowing the error tails in independent-heavy seats (no gain at full
+       size). Seat log loss 0.2676 to <b>0.2614</b> against AE Forecasts' 0.2825; primary-vote error 4.58 (AEF 5.71).</p>
     <p class="sub prov"><b>v63, 12-17 Oct 2026: our own polls, honest fits, and two new parts of the count.</b>
        <b>Polls:</b> the trend now reads our own Wikipedia poll scrape layered over AE Forecasts' file (theirs had
        RedBridge's Greens and One Nation figures swapped and lacked Resolve 6-10 Oct), plus Poll Bludger's tables and
