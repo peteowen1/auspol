@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (232 switches from `published_flags.R`, 7 entry points)
+## Switch parity (233 switches from `published_flags.R`, 7 entry points)
 
 | switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa |
 |---|---|---|---|---|---|---|---|
@@ -55,6 +55,7 @@ separate model code.
 | `AUSPOL_COMPOSITION_SD` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_CONSERVE_SHRINK_K` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_CONSERVE_TF` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_CONTEST_BASE` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_COUNCIL_EXTRA` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_COV_LOO` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_COV_TF` | NO | NO | NO | NO | NO | NO | NO |
@@ -288,6 +289,7 @@ separate model code.
 - **`AUSPOL_COMPOSITION_SD`** (**adopted, shared-function wiring**): SHIPPED (1) 2026-10-17 on Pete's override (with AUSPOL_ERROR_DIST), wired EVERYWHERE through R/size_sd.R like AUSPOL_SIZE_SD: size_sd_apply() multiplies in the composition factor, so all seven harnesses and fit_seats_full.R honour it. plans/prereg-composition-spread-2026-10-17.md
 - **`AUSPOL_CONSERVE_SHRINK_K`** (**adopted, shared-function wiring**): SHIPPED (3) 2026-10-16, UNIVERSAL via R/: read inside fit_minor_defector_conserve() (R/candidate_returns.R), which every harness and fit_seats_full.R reach through candidate_returns(), so the per-harness greps cannot see it.
 - **`AUSPOL_CONSERVE_TF`** (**adopted, shared-function wiring**): SHIPPED (1) 2026-10-14, UNIVERSAL via R/: read inside fit_minor_defector_conserve() (R/candidate_returns.R); trains on elections before the target. Same reach as AUSPOL_CONSERVE_SHRINK_K.
+- **`AUSPOL_CONTEST_BASE`** (intentional / dead experiment): ARM (0), FIT-TIME + LIVE: read by fit_xgb_primary_v6.R (moves base_pred for new-to-seat One Nation cells; writes output/contest-base-weight.csv) and R/xgb_primary_override.R (live, from the confirmed nomination list). Harnesses read the as-at predictions file. plans/prereg-contest-base-2026-10-20.md
 - **`AUSPOL_COUNCIL_EXTRA`** (**shipped, fitting-time switch (reaches harnesses via the artifact)**): FITTING-TIME, default 0, TESTING (plans/prereg-council-extra-2026-10-02.md). Read only by scripts/build_council_history.py, which builds the council-history input that the xgb council features (AUSPOL_XGB_COUNCIL) read; no R/ or harness call site.
 - **`AUSPOL_COV_LOO`** (intentional / dead experiment): Read inside R/statewide_cor.R, not per-harness -- universal in practice, absent from every harness script by design.
 - **`AUSPOL_COV_TF`** (intentional / dead experiment): Read inside R/statewide_cor.R, not per-harness -- same as AUSPOL_COV_LOO; default 0 (OFF).
@@ -502,4 +504,4 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR2  every non-universal switch (191 of 232) has a recorded classification.
+MR2  every non-universal switch (192 of 233) has a recorded classification.

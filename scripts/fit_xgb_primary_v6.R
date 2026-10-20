@@ -683,6 +683,28 @@ if (identical(Sys.getenv("AUSPOL_SITTING_MEMBER_ADJ", "0"), "1")) {
   ALL[, c("sm_group", "sm_shift") := NULL]
 }
 
+# AUSPOL_CONTEST_BASE=1: a new-to-seat One Nation candidate's base_pred moves toward the party's vote where it
+# stands (contest_base_gap(), R/xgb_primary_override.R), by a weight fitted on EARLIER elections only. The trees
+# could not make this correction themselves (prereg-contest-features-2026-10-20.md, REFUSED); this puts it in
+# base_pred, as the sitting-member shift does. The vic2026 row is what the live forecast applies.
+# plans/prereg-contest-base-2026-10-20.md.
+if (identical(Sys.getenv("AUSPOL_CONTEST_BASE", "0"), "1")) {
+  .gap <- contest_base_gap(ALL$pair, ALL$seat, ALL$party, ALL$base_pred, ALL$seat_prev_pcv, ALL$level_pred,
+                           paste(ALL$pair, ALL$seat, ALL$party) %in% paste(C$election, C$seat, C$party))
+  .res <- ALL$actual_share - ALL$base_pred
+  CBW <- rbindlist(lapply(c(unique(ALL$pair), "vic2026"), function(p)
+    data.table(pair = p, fit_contest_base_weight(.gap, .res, ALL$pair, p))))
+  fwrite(CBW, file.path(OUT, "contest-base-weight.csv"))
+  .w <- CBW$w[match(ALL$pair, CBW$pair)]
+  .before <- ALL$base_pred
+  ALL[, base_pred := base_pred + .w * .gap]
+  .mv <- ALL$base_pred != .before
+  cat(sprintf("CB1  contest base ON: %d cells moved in %d elections (mean %+.2f points); %d new-to-seat cells with a gap; vic2026 weight %.3f (raw %.3f, SE %.3f, %d elections)\n",
+              sum(.mv), uniqueN(ALL$pair[.mv]), if (any(.mv)) mean((ALL$base_pred - .before)[.mv]) else 0,
+              sum(.gap != 0), CBW[pair == "vic2026", w], CBW[pair == "vic2026", raw], CBW[pair == "vic2026", se],
+              CBW[pair == "vic2026", k]))
+}
+
 # GATE seat_outperf to the one row it means anything for: the party that held
 # the seat, in a pair where its member is gone. Left ungated, it changed
 # predictions on 66.5% of ALL 13,739 rows (not just the 349 retirement
