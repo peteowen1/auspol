@@ -57,8 +57,8 @@ TCP-consistency check, arm H shipped, heavy-tail arm T REFUSED 19 Oct, F21 surge
 - DONE first-term members: the +4.0 was +1.84 within-election (SE 0.81); the flag was blank in 25 of 35 elections.
   Rebuilt from our corpus (97.3% vs the seat file), 41 by-elections added, `build_seat_context.R` now in the rebuild
   (it was stale at 24 of 35, so the SHIPPED incumbent/retiring fill missed 11 elections). The fill arm REFUSED 20 Oct
-  (+0.0001, SE 0.0009). OPEN (Pete): the refreshed seat context ships with the next publish: pooled +0.0014 (SE
-  0.0014), the 11 elections -0.0073, the other 24 +0.0040 (`plans/prereg-first-term-fill-2026-10-20.md`).
+  (+0.0001, SE 0.0009). Pete 20 Oct "Ship the fix": the refreshed seat context goes out with the next publish
+  (pooled +0.0014, SE 0.0014; the 11 elections -0.0073, the other 24 +0.0040) (`plans/prereg-first-term-fill-2026-10-20.md`).
 - OPEN: the arm rebuild's SPZ3 stability check failed (error/composition tables moved again after the rerun, fed2022
   onward); the baseline's passed. The "second refit cannot move" assumption in `rebuild_forecasts.sh` is false for
   some runs; find what in stage 6 is not share-only before the next publish trips on it.
