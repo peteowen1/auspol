@@ -52,3 +52,35 @@ the 1e-4 floor; AEF-7.
     diff the live forecast with and without; any favourite change goes to Pete.
 
 Shipping is Pete's call on the result.
+
+## RESULT (2026-10-20): REFUSED on clauses 1 and 3
+
+Two isolated stage-3 rebuilds at 20k from 1e93959 (`deciding-runs/first-term-rebuilds/`). The arm's own pipeline
+stopped at its stability check (SPZ3: the error-quantile and composition tables moved again after the stage 6-7
+rerun, rows fed2022 onward only; the baseline's did not), so its predictions were written by running stage 8 alone on
+the second pass's outputs. Caveat: the arm's stage 6 read tables one refit behind its final ones.
+
+Fill applied: 8,285 rows in 18 elections (SCS). Seat-winner log loss change, lower is better:
+
+| clause | floor 1e-6 | floor 1e-4 | verdict |
+|---|---|---|---|
+| 1 primary, 379 named first-term seats in 18 elections | +0.0001 (SE 0.0009) | +0.0001 (SE 0.0009) | within 1 SE: FAIL |
+| 2 guard, all 2,931 seats | +0.0007 (SE 0.0016) | -0.0009 (SE 0.0004) | PASS |
+| 3 leave-one-election-out | 0 of 18 | 0 of 18 | FAIL |
+| 4 elections worse by more than 2 SE | 0 | 0 | PASS |
+
+(The 1e-6 guard carries nsw2019 Barwon, a floor seat that moves in every arm: +0.048 for that election alone.)
+
+Primary vote, first-term members standing again, mean miss (actual minus forecast) and RMSE in points: filled
+elections (378) +1.16 -> +1.05, RMSE 5.503 -> 5.498; seat-file elections (194) +0.63 -> +0.51 (named-in-advance (b):
+not the wrong way). The trees barely use the flag: a ~1-point under-call on members who mostly hold their seats moves
+no seat calls. The base_pred version was already refused on 2026-09-28 (sitting-member shift, member stands +1.14:
+no seat gain, RMSE worse; `prereg-sitting-member-baseline-2026-09-28.md`). Switch stays "0".
+
+### The baseline against the published predictions (reported, not voted)
+
+The baseline differs from the 19 Oct publish only by the refreshed `seat-context.csv` (built in the pipeline from
+today; the old file was stale at 24 of 35 elections). Pooled seat log loss 0.3256 -> 0.3270 (+0.0014, SE 0.0014).
+The 11 newly filled elections -0.0073 (SE 0.0040, 664 seats); the other 24 +0.0040 (SE 0.0012, 2,267 seats), whose
+seat-context values are byte-identical old vs new (0 incumbent or retiring changes), so their loss is the retrained
+trees learning from the 11. No election worse by more than 2 SE. Goes to Pete: it ships with the next publish.

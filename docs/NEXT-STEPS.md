@@ -54,9 +54,16 @@ TCP-consistency check, arm H shipped, heavy-tail arm T REFUSED 19 Oct, F21 surge
   seats it acts on +0.0022 (SE 0.0017). Shares improved (nsw2023 new-to-seat RMSE 8.07 -> 5.65) but new-to-seat
   One Nation rarely wins, so seat calls do not. Partial-contest line closed for seat calls
   (`plans/prereg-contest-base-2026-10-20.md`). IND/OTH/OTH_RIGHT not attempted: many parties share one level.
+- DONE first-term members: the +4.0 was +1.84 within-election (SE 0.81); the flag was blank in 25 of 35 elections.
+  Rebuilt from our corpus (97.3% vs the seat file), 41 by-elections added, `build_seat_context.R` now in the rebuild
+  (it was stale at 24 of 35, so the SHIPPED incumbent/retiring fill missed 11 elections). The fill arm REFUSED 20 Oct
+  (+0.0001, SE 0.0009). OPEN (Pete): the refreshed seat context ships with the next publish: pooled +0.0014 (SE
+  0.0014), the 11 elections -0.0073, the other 24 +0.0040 (`plans/prereg-first-term-fill-2026-10-20.md`).
+- OPEN: the arm rebuild's SPZ3 stability check failed (error/composition tables moved again after the rerun, fed2022
+  onward); the baseline's passed. The "second refit cannot move" assumption in `rebuild_forecasts.sh` is false for
+  some runs; find what in stage 6 is not share-only before the next publish trips on it.
 - OPEN, from the same diagnosis: Greens over-called in high-Greens seats by the trees (Melbourne, Griffith, Northcote);
-  first-term Labor members +4.0 (SE 0.7, n 39); retiring Labor members about -2.0 (n 34); Dickson's published stage
-  moved a correct tree LNP figure +5.5.
+  retiring Labor members about -2.0 (n 34); Dickson's published stage moved a correct tree LNP figure +5.5.
 - OPEN (Pete): the 28 old notes in the ledger page's notes store now duplicate `docs/aef7-seat-notes.csv` under "Your
   notes"; clear them only on his yes.
 - DONE F9, REFUSED 19 Oct: `AUSPOL_ERROR_DIST_COMP=1` at 20k -0.0001 (SE 0.0001), within 1 SE; screen at 1k had
