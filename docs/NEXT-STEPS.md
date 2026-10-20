@@ -8,6 +8,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
+- OPEN (time-boxed, before 28 Nov): benchmark vic2026 against AE Forecasts, Alex Jago and Global Election Simulator, each
+  frozen weekly and on 17 and 27 Nov, raw as received (`plans/external-benchmark-vic2026-2026-10-20.md`). AE Forecasts
+  has per-seat probabilities; Jago (a calculator) and GES give calls only. Roy Morgan dropped 21 Oct (no seat winners).
+
 - DONE 19 Oct 11:47: full rebuild from 3 published (surge_h leak fix + PRs #127/#128), 4139 s, no `!!`. AEF-7 seat log
   loss 0.2657 -> 0.2635 (AEF 0.2825, n=681); primary RMSE 4.729 -> 4.579; TCP MAE 3.76 -> 3.65 (AEF 3.63). Pooled 0.3267
   over 2931 seat-elections. Snapshot `output/snapshots/20261019-1147-185957d-from3`.
