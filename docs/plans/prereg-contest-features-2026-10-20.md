@@ -63,3 +63,32 @@ Shipping is Pete's call on the result.
 
 - Whether a new candidate is strong or weak beyond what the other features carry.
 - Sub-seat effects (which booths); classes the model does not predict at all (`zero_unnominated()` leaves those).
+
+## RESULT (2026-10-20): REFUSED on clauses 1-4
+
+Two isolated stage-3 rebuilds at 20k from 874d65c (`deciding-runs/contest-rebuilds/`, arm 70 min, base 33 min).
+Baseline `published-predictions.csv` is byte-identical to the live `output/` copy (19 Oct publish), so it reproduces
+the scoreboard. `scripts/score_contest_feats.R`, seat-winner log loss change, lower is better:
+
+| clause | floor 1e-6 | floor 1e-4 | verdict |
+|---|---|---|---|
+| 1 primary, 2,558 target seats in 31 elections | +0.0041 (SE 0.0020) | +0.0023 (SE 0.0011) | WORSE by more than 1 SE |
+| 2 guard, all 2,931 seats | +0.0036 (SE 0.0017) | +0.0020 (SE 0.0009) | FAIL |
+| 3 leave-one-election-out | 0 of 31 drops better | 0 of 31 | FAIL |
+| 4 elections worse by more than 2 SE | 5 (qld2012, sa2014, fed2025, wa2017, vic2022) | 5 | FAIL |
+| 5 without the top two seats | +0.0043, sign kept | +0.0025 | (passes, but the sign is "worse") |
+
+Pooled 0.3256 -> 0.3292 (same formula on both). Contested minor-class share RMSE (points) 4.266 -> 4.298; only
+One Nation new-to-seat improved (5.632 -> 5.612). nsw2023 One Nation new-to-seat: published 2.31 -> 2.75 vs actual 9.67.
+(d) no class's mean contested share moved more than 0.06 points. (b) and (c) not run: refused before shipping.
+
+**Why it failed, read from the trees' own output** (`xgb-primary-v6-oof-predictions.csv`, both copies): the trees
+did not use the new features to lift new-to-seat cells. nsw2023's 11 One Nation new-to-seat cells: base_pred 1.3-3.0,
+trees off 2.9-4.6, trees ON 2.7-4.3, actual 5.1-15.3 — the arm moved them DOWN. The trees learn a residual on top of
+`base_pred` (`base_margin`); base_pred puts a new-to-seat minor at ~1.5, and a correction of +8 points on a few
+hundred rows is beyond what the trees will fit against the regularisation. This is the CLAUDE.md "base_pred AND the
+xgb layer" trap: the arm put the information only into the layer that cannot carry it.
+
+**So this refuses the trees-only version, not the idea.** The untested stronger version puts the contested-seat level
+into `base_pred` itself: a new-to-seat contesting cell's baseline starts from `level_pred * n / k` (shrunk), not from
+the seat's (absent) history. Needs its own prereg before it is built. Switch stays "0".
