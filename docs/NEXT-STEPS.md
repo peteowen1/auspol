@@ -59,9 +59,11 @@ TCP-consistency check, arm H shipped, heavy-tail arm T REFUSED 19 Oct, F21 surge
   (it was stale at 24 of 35, so the SHIPPED incumbent/retiring fill missed 11 elections). The fill arm REFUSED 20 Oct
   (+0.0001, SE 0.0009). Pete 20 Oct "Ship the fix": the refreshed seat context goes out with the next publish
   (pooled +0.0014, SE 0.0014; the 11 elections -0.0073, the other 24 +0.0040) (`plans/prereg-first-term-fill-2026-10-20.md`).
-- OPEN: the arm rebuild's SPZ3 stability check failed (error/composition tables moved again after the rerun, fed2022
-  onward); the baseline's passed. The "second refit cannot move" assumption in `rebuild_forecasts.sh` is false for
-  some runs; find what in stage 6 is not share-only before the next publish trips on it.
+- DONE the arm rebuild's SPZ3 failure (20 Oct): not a non-share-only fit. Shares were byte-identical between the two
+  stage-6 passes; in pass 1 sa2010 and sa2022 got the same file tag (`a24d75e`), and since SA's file names carry no
+  election, sa2010 overwrote sa2022's results and the pass-1 tables took sa2022 from a 19 Oct run. The tag was a
+  weighted character sum, not a hash: now md5 in all seven harnesses, and SA refuses (BS0!) to overwrite another
+  election's file. No other collision among the SA files on disk; the published forecast was not affected.
 - OPEN, from the same diagnosis: Greens over-called in high-Greens seats by the trees (Melbourne, Griffith, Northcote);
   retiring Labor members about -2.0 (n 34); Dickson's published stage moved a correct tree LNP figure +5.5.
 - OPEN (Pete): the 28 old notes in the ledger page's notes store now duplicate `docs/aef7-seat-notes.csv` under "Your

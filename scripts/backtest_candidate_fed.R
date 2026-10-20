@@ -326,9 +326,11 @@ cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f
   e <- e[!names(e) %in% c("AUSPOL_OUT_SUFFIX")]
   if (!length(e)) "" else {
     s <- paste(sort(paste0(names(e), "=", e)), collapse = ";")
-    sprintf("-a%s", substr(tolower(paste0(as.hexmode(
-      sum(utils::head(utf8ToInt(s), 4000) * seq_along(utils::head(utf8ToInt(s), 4000)))
-    ))), 1, 6))
+    # md5 of the whole string. The weighted character sum this replaced put nearby settings within a few hundred of
+    # each other: on 2026-10-20 sa2022 and sa2010 got the same tag, and since SA's file names carry no election,
+    # sa2010 overwrote sa2022's results mid-rebuild (it also ignored everything past 4,000 characters).
+    tf <- tempfile(); writeBin(charToRaw(enc2utf8(s)), tf); h <- unname(tools::md5sum(tf)); unlink(tf)
+    sprintf("-a%s", substr(h, 1, 6))
   }
 })
 CAL_TAG <- paste0(

@@ -290,9 +290,11 @@ N_SIMS <- as.integer(Sys.getenv("AUSPOL_N_SIMS", "20000"))
   e <- e[!names(e) %in% c("AUSPOL_OUT_SUFFIX")]
   if (!length(e)) "" else {
     s <- paste(sort(paste0(names(e), "=", e)), collapse = ";")
-    sprintf("-a%s", substr(tolower(paste0(as.hexmode(
-      sum(utils::head(utf8ToInt(s), 4000) * seq_along(utils::head(utf8ToInt(s), 4000)))
-    ))), 1, 6))
+    # md5 of the whole string. The weighted character sum this replaced put nearby settings within a few hundred of
+    # each other: on 2026-10-20 sa2022 and sa2010 got the same tag, and since SA's file names carry no election,
+    # sa2010 overwrote sa2022's results mid-rebuild (it also ignored everything past 4,000 characters).
+    tf <- tempfile(); writeBin(charToRaw(enc2utf8(s)), tf); h <- unname(tools::md5sum(tf)); unlink(tf)
+    sprintf("-a%s", substr(h, 1, 6))
   }
 })
 CAL_TAG <- paste0(
@@ -1382,6 +1384,15 @@ cat("\nBS4  misses, worst first\n")
 print(head(res[pred != actual][order(prob),
                                .(seat, we_said = pred, our_p = round(pred_p, 3),
                                  actual, gave_winner = round(prob, 3))], 10))
+# SA's file names carry no election, so a run whose tag matched another election's would overwrite that election's
+# results and nothing downstream could tell (2026-10-20: sa2010 overwrote sa2022 mid-rebuild, and the pooled tables
+# quietly took sa2022 from an older run). Refuse rather than overwrite another election's files.
+.sd_path <- file.path("output", sprintf("backtest-sa-sharedetail%s.csv", CAL_TAG))
+if (file.exists(.sd_path)) {
+  .prev_pair <- unique(fread(.sd_path, select = "pair", showProgress = FALSE)$pair)
+  if (!identical(.prev_pair, TGT)) stop("BS0! ", basename(.sd_path), " already holds ", paste(.prev_pair, collapse = "+"),
+                                        ", not ", TGT, ": two elections share this file tag; refusing to overwrite it")
+}
 fwrite(res, file.path("output", sprintf("backtest-sa%s.csv", CAL_TAG)))
 
 # RETAIN THE FULL PER-SEAT PER-PARTY PROBABILITY TABLE.
@@ -1426,7 +1437,7 @@ fwrite(data.table(pair = TGT, as.data.table(sim$totals)), file.path("output", sp
 # exactly this contamination with no way to detect it after the fact.
 fwrite(as.data.table(.rr$detail)[, `:=`(pair = TGT,
        xgb_primary_on = as.integer(identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")))],
-       file.path("output", sprintf("backtest-sa-sharedetail%s.csv", CAL_TAG)))
+       .sd_path)
 
 # NAME THE FILE ACTUALLY WRITTEN. This line was a hardcoded string and printed
 # "backtest-sa.csv" for every arm, including arms that correctly wrote a tagged
