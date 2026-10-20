@@ -1,3 +1,9 @@
+# auspol 0.4.105
+
+- **The seat context is rebuilt in every rebuild** (Pete, 20 Oct: "Ship the fix"). The old file was stale at 24 of 35 elections, so the shipped incumbent/retiring fill missed 11 of them. Pooled seat log loss +0.0014 (SE 0.0014): the 11 newly filled elections -0.0073, the other 24 +0.0040 from retraining alone. The first-term flag is rebuilt from our candidate corpus (97.3% agreement with the anchor's seat file), and 41 by-elections were added.
+- **Backtest file tags are an md5 hash**, and the SA backtest refuses to overwrite another election's results. The old tag gave sa2010 and sa2022 the same file name in one rebuild, and that tripped the rebuild's stability check.
+- Built and off, all refused at 20,000 simulations: contest features in the trees (`AUSPOL_XGB_CONTEST`), the contest base for new-to-seat One Nation (`AUSPOL_CONTEST_BASE`), and the first-term flag filled from our corpus (`AUSPOL_SEAT_CONTEXT_SOPH`).
+
 # auspol 0.4.104
 
 - **The forecast no longer counts the statewide polling miss twice** (`AUSPOL_SW_NET_LIVE`, `AUSPOL_HARNESS_SW_DRAWS="net"`, audit F4): the seat-level spread is re-derived net of the statewide draws, and the state backtests now simulate the same statewide spread the forecast publishes. 35 elections at 20,000 simulations: seat log loss -0.0014 (SE 0.0006); shipped on Pete's override of the no-election-worse clause (sa2014, wa2021). Victoria: same favourite in all 88 seats, slightly more decisive odds.
