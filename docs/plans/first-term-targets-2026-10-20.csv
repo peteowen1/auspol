@@ -1,0 +1,380 @@
+pair,seat
+fed2010,Bennelong
+fed2010,Blair
+fed2010,Blaxland
+fed2010,Bonner
+fed2010,Braddon
+fed2010,Brand
+fed2010,Calare
+fed2010,Charlton
+fed2010,Cook
+fed2010,Corangamite
+fed2010,Corio
+fed2010,Cowan
+fed2010,Deakin
+fed2010,Dobell
+fed2010,Eden-Monaro
+fed2010,Fadden
+fed2010,Forde
+fed2010,Forrest
+fed2010,Franklin
+fed2010,Fremantle
+fed2010,Grey
+fed2010,Hasluck
+fed2010,Indi
+fed2010,Isaacs
+fed2010,Kingston
+fed2010,Leichhardt
+fed2010,Lindsay
+fed2010,Longman
+fed2010,Makin
+fed2010,Maribyrnong
+fed2010,Mitchell
+fed2010,Moreton
+fed2010,Page
+fed2010,Parkes
+fed2010,Petrie
+fed2010,Port Adelaide
+fed2010,Solomon
+fed2010,Swan
+fed2010,Wakefield
+fed2013,Aston
+fed2013,Bass
+fed2013,Bennelong
+fed2013,Bonner
+fed2013,Brisbane
+fed2013,Canberra
+fed2013,Chifley
+fed2013,Dawson
+fed2013,Denison
+fed2013,Flynn
+fed2013,Forde
+fed2013,Fowler
+fed2013,Fraser
+fed2013,Greenway
+fed2013,Hasluck
+fed2013,Herbert
+fed2013,Hughes
+fed2013,Kooyong
+fed2013,La Trobe
+fed2013,Leichhardt
+fed2013,Longman
+fed2013,Macarthur
+fed2013,Macquarie
+fed2013,McEwen
+fed2013,McPherson
+fed2013,Melbourne
+fed2013,Reid
+fed2013,Riverina
+fed2013,Robertson
+fed2013,Ryan
+fed2013,Solomon
+fed2013,Throsby
+fed2013,Wannon
+fed2013,Werriwa
+fed2016,Banks
+fed2016,Barker
+fed2016,Barton
+fed2016,Bass
+fed2016,Batman
+fed2016,Bendigo
+fed2016,Braddon
+fed2016,Capricornia
+fed2016,Corangamite
+fed2016,Deakin
+fed2016,Dobell
+fed2016,Durack
+fed2016,Eden-Monaro
+fed2016,Gellibrand
+fed2016,Gilmore
+fed2016,Hindmarsh
+fed2016,Hinkler
+fed2016,Hotham
+fed2016,Hume
+fed2016,Indi
+fed2016,Kingsford Smith
+fed2016,La Trobe
+fed2016,Lalor
+fed2016,Lindsay
+fed2016,Lyne
+fed2016,Lyons
+fed2016,Mallee
+fed2016,Moore
+fed2016,New England
+fed2016,Newcastle
+fed2016,O'Connor
+fed2016,Page
+fed2016,Pearce
+fed2016,Petrie
+fed2016,Rankin
+fed2016,Reid
+fed2016,Robertson
+fed2016,Scullin
+nsw2015,Balmain
+nsw2015,Bankstown
+nsw2015,Bathurst
+nsw2015,Baulkham Hills
+nsw2015,Blacktown
+nsw2015,Blue Mountains
+nsw2015,Camden
+nsw2015,Campbelltown
+nsw2015,Cessnock
+nsw2015,Coogee
+nsw2015,Cronulla
+nsw2015,Drummoyne
+nsw2015,Dubbo
+nsw2015,East Hills
+nsw2015,Fairfield
+nsw2015,Gosford
+nsw2015,Granville
+nsw2015,Heathcote
+nsw2015,Hornsby
+nsw2015,Keira
+nsw2015,Kiama
+nsw2015,Monaro
+nsw2015,Mulgoa
+nsw2015,Myall Lakes
+nsw2015,Oatley
+nsw2015,Orange
+nsw2015,Parramatta
+nsw2015,Port Macquarie
+nsw2015,Riverstone
+nsw2015,Rockdale
+nsw2015,Shellharbour
+nsw2015,Strathfield
+nsw2015,Tamworth
+nsw2015,Vaucluse
+nsw2015,Wollondilly
+nt2020,Arafura
+nt2020,Arnhem
+nt2020,Braitling
+nt2020,Brennan
+nt2020,Drysdale
+nt2020,Karama
+nt2020,Port Darwin
+nt2020,Sanderson
+nt2024,Barkly
+nt2024,Braitling
+nt2024,Brennan
+nt2024,Fong Lim
+nt2024,Katherine
+nt2024,Namatjira
+nt2024,Nelson
+qld2015,Albert
+qld2015,Algester
+qld2015,Ashgrove
+qld2015,Barron River
+qld2015,Beaudesert
+qld2015,Brisbane Central
+qld2015,Broadwater
+qld2015,Bulimba
+qld2015,Burleigh
+qld2015,Burnett
+qld2015,Cairns
+qld2015,Capalaba
+qld2015,Chatsworth
+qld2015,Cook
+qld2015,Everton
+qld2015,Ferny Grove
+qld2015,Greenslopes
+qld2015,Ipswich
+qld2015,Ipswich West
+qld2015,Kallangur
+qld2015,Keppel
+qld2015,Logan
+qld2015,Lytton
+qld2015,Mansfield
+qld2015,Maryborough
+qld2015,Morayfield
+qld2015,Mount Coot-tha
+qld2015,Mount Isa
+qld2015,Mount Ommaney
+qld2015,Mundingburra
+qld2015,Murrumba
+qld2015,Nanango
+qld2015,Nudgee
+qld2015,Pine Rivers
+qld2015,Pumicestone
+qld2015,Sandgate
+qld2015,Southport
+qld2015,Springwood
+qld2015,Stretton
+qld2015,Sunnybank
+qld2015,Thuringowa
+qld2015,Toowoomba North
+qld2015,Toowoomba South
+qld2015,Townsville
+qld2015,Waterford
+qld2015,Whitsunday
+qld2017,Algester
+qld2017,Barron River
+qld2017,Bulimba
+qld2017,Bundaberg
+qld2017,Burdekin
+qld2017,Capalaba
+qld2017,Condamine
+qld2017,Ferny Grove
+qld2017,Gaven
+qld2017,Gladstone
+qld2017,Greenslopes
+qld2017,Gregory
+qld2017,Gympie
+qld2017,Ipswich
+qld2017,Ipswich West
+qld2017,Keppel
+qld2017,Logan
+qld2017,Lytton
+qld2017,Mackay
+qld2017,Maryborough
+qld2017,Mirani
+qld2017,Moggill
+qld2017,Morayfield
+qld2017,Mundingburra
+qld2017,Nudgee
+qld2017,Pine Rivers
+qld2017,Redlands
+qld2017,Sandgate
+qld2017,Springwood
+qld2017,Stretton
+qld2017,Thuringowa
+qld2017,Townsville
+qld2017,Warrego
+qld2017,Waterford
+qld2017,Woodridge
+qld2020,Aspley
+qld2020,Broadwater
+qld2020,Buderim
+qld2020,Bundaberg
+qld2020,Cairns
+qld2020,Callide
+qld2020,Cook
+qld2020,Gaven
+qld2020,Hinchinbrook
+qld2020,Lockyer
+qld2020,Mansfield
+qld2020,Mirani
+qld2020,Mount Ommaney
+qld2020,Murrumba
+qld2020,Nicklin
+qld2020,Noosa
+qld2020,Redlands
+qld2020,Rockhampton
+qld2020,Southern Downs
+sa2014,Adelaide
+sa2014,Chaffey
+sa2014,Flinders
+sa2014,Little Para
+sa2014,Mitchell
+sa2014,Morialta
+sa2014,Mount Gambier
+sa2014,Taylor
+sa2018,Elder
+sa2018,Giles
+sa2018,Hartley
+sa2018,Kaurna
+sa2018,Lee
+sa2018,Reynell
+sa2018,Schubert
+sa2018,Torrens
+vic2014,Bendigo West
+vic2014,Bentleigh
+vic2014,Brunswick
+vic2014,Burwood
+vic2014,Carrum
+vic2014,Caulfield
+vic2014,Gembrook
+vic2014,Gippsland East
+vic2014,Ivanhoe
+vic2014,Mordialloc
+vic2014,Morwell
+vic2014,South Barwon
+vic2014,Thomastown
+vic2018,Bass
+vic2018,Bentleigh
+vic2018,Bulleen
+vic2018,Carrum
+vic2018,Dandenong
+vic2018,Eltham
+vic2018,Essendon
+vic2018,Frankston
+vic2018,Geelong
+vic2018,Hawthorn
+vic2018,Kew
+vic2018,Lowan
+vic2018,Macedon
+vic2018,Melbourne
+vic2018,Mordialloc
+vic2018,Oakleigh
+vic2018,Pascoe Vale
+vic2018,Prahran
+vic2018,Ripon
+vic2018,Shepparton
+vic2018,Yuroke
+wa2005,Albany
+wa2005,Alfred Cove
+wa2005,Ballajura
+wa2005,Bunbury
+wa2005,Cockburn
+wa2005,Geraldton
+wa2005,Girrawheen
+wa2005,Greenough
+wa2005,Joondalup
+wa2005,Kalgoorlie
+wa2005,Kimberley
+wa2005,Mandurah
+wa2005,Perth
+wa2005,Riverton
+wa2005,Southern River
+wa2005,Swan Hills
+wa2005,Wagin
+wa2005,Wanneroo
+wa2005,Yokine
+wa2008,Bassendean
+wa2008,Bunbury
+wa2008,Dawesville
+wa2008,Kingsley
+wa2008,Moore
+wa2008,South Perth
+wa2008,Vasse
+wa2013,Carine
+wa2013,Darling Range
+wa2013,Geraldton
+wa2013,Kingsley
+wa2013,Maylands
+wa2013,Nedlands
+wa2013,Riverton
+wa2013,Southern River
+wa2013,Swan Hills
+wa2013,Wanneroo
+wa2017,Balcatta
+wa2017,Bassendean
+wa2017,Belmont
+wa2017,Central Wheatbelt
+wa2017,Churchlands
+wa2017,Forrestfield
+wa2017,Fremantle
+wa2017,Joondalup
+wa2017,Kimberley
+wa2017,Perth
+wa2017,Pilbara
+wa2021,Balcatta
+wa2021,Belmont
+wa2021,Bunbury
+wa2021,Darling Range
+wa2021,Dawesville
+wa2021,Forrestfield
+wa2021,Hillarys
+wa2021,Jandakot
+wa2021,Joondalup
+wa2021,Kalamunda
+wa2021,Kalgoorlie
+wa2021,Kingsley
+wa2021,Moore
+wa2021,Morley
+wa2021,Mount Lawley
+wa2021,Murray-Wellington
+wa2021,Perth
+wa2021,Pilbara
+wa2021,Southern River
+wa2021,Swan Hills
+wa2021,Wanneroo

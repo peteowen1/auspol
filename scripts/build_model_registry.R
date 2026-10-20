@@ -209,6 +209,12 @@ CLASSIFY <- list(
   AUSPOL_ERROR_DIST_COMP = paste(
     "ARM (0), UNIVERSAL via R/: read by error_dist_file() in R/error_dist.R, which error_dist_args() (every harness and",
     "fit_seats_full.R) calls; also read by scripts/fit_error_distribution.R. plans/prereg-error-dist-composition-2026-10-19.md"),
+  AUSPOL_CLASS_CONSERVE = paste(
+    "ARM (0), UNIVERSAL via R/: read by class_conserve_on() inside zero_unnominated() (R/nomination_zero.R), which every",
+    "harness and fit_seats_full.R (zero_unnominated_live) reach. plans/prereg-partial-contest-2026-10-19.md"),
+  AUSPOL_SALIENCE_BLEND_ONCE = paste(
+    "ARM (0), UNIVERSAL via R/: read by salience_blend_once() in R/salience_surge.R, through blend_salience_post_xgb() in the",
+    "fed/nsw/qld/sa/vic harnesses and directly in fit_seats_full.R. WA and NT have no salience blend. plans/prereg-salience-blend-once-2026-10-19.md"),
   AUSPOL_SEAT_POLL_HEAVY_TAIL = paste(
     "ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
     "reach). plans/prereg-seat-poll-heavy-tail-2026-10-18.md"),
@@ -236,6 +242,14 @@ CLASSIFY <- list(
   AUSPOL_XGB_RATIO_FEATS = paste(
     "ARM (0), FIT-TIME + LIVE: read by fit_xgb_primary_v6.R (training features; the as-at and final models",
     "inherit them) and R/xgb_primary_override.R (live). Harnesses read the as-at predictions file. plans/prereg-growth-ratio-features-2026-10-18.md"),
+  AUSPOL_XGB_CONTEST = paste(
+    "ARM (0), FIT-TIME + LIVE: read by fit_xgb_primary_v6.R (training features stands_i, level_contested; the as-at and",
+    "final models inherit them) and R/xgb_primary_override.R (live, from the confirmed nomination list). Harnesses read the",
+    "as-at predictions file. plans/prereg-contest-features-2026-10-20.md"),
+  AUSPOL_CONTEST_BASE = paste(
+    "ARM (0), FIT-TIME + LIVE: read by fit_xgb_primary_v6.R (moves base_pred for new-to-seat One Nation cells; writes",
+    "output/contest-base-weight.csv) and R/xgb_primary_override.R (live, from the confirmed nomination list). Harnesses",
+    "read the as-at predictions file. plans/prereg-contest-base-2026-10-20.md"),
   AUSPOL_ZERO_ABSENT = paste(
     "ARM (0), UNIVERSAL via R/: the default of simulate_seat_contests(zero_absent = zero_absent_on()), so every",
     "harness, NT and fit_seats_full.R honour it with no call-site argument. plans/prereg-zero-absent-2026-10-17.md"),
@@ -672,6 +686,10 @@ CLASSIFY <- list(
   AUSPOL_SEAT_CONTEXT_FILL = paste(
     "FITTING-TIME. SHIPPED 2026-09-28 as v46: fills incumbent party / retiring member from output/seat-context.csv when the xgb training",
     "table is built (scripts/fit_xgb_primary_v6.R); baked into the trained model, no harness or live read."),
+  AUSPOL_SEAT_CONTEXT_SOPH = paste(
+    "FITTING-TIME ARM (0): fills the first-term-member flag (soph_cand) from output/seat-context.csv where the seat",
+    "file has none, in scripts/fit_xgb_primary_v6.R; baked into the trained model. Live reads the vic2026 seat file,",
+    "which has the flag. plans/prereg-first-term-fill-2026-10-20.md"),
   AUSPOL_SEAT_CONTEXT_MARGIN = paste(
     "ARM, not shipped (default 0; phase 2 of plans/prereg-seat-context-complete-2026-09-28.md). Read in scripts/fit_xgb_primary_v6.R",
     "(training) and R/xgb_primary_override.R (the 'all' mode, live). Off, so nothing differs by entry point."),

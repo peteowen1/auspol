@@ -167,9 +167,11 @@ N_SIMS <- as.integer(Sys.getenv("AUSPOL_N_SIMS", "20000"))
   e <- e[!names(e) %in% c("AUSPOL_OUT_SUFFIX")]
   if (!length(e)) "" else {
     s <- paste(sort(paste0(names(e), "=", e)), collapse = ";")
-    sprintf("-a%s", substr(tolower(paste0(as.hexmode(
-      sum(utils::head(utf8ToInt(s), 4000) * seq_along(utils::head(utf8ToInt(s), 4000)))
-    ))), 1, 6))
+    # md5 of the whole string. The weighted character sum this replaced put nearby settings within a few hundred of
+    # each other: on 2026-10-20 sa2022 and sa2010 got the same tag, and since SA's file names carry no election,
+    # sa2010 overwrote sa2022's results mid-rebuild (it also ignored everything past 4,000 characters).
+    tf <- tempfile(); writeBin(charToRaw(enc2utf8(s)), tf); h <- unname(tools::md5sum(tf)); unlink(tf)
+    sprintf("-a%s", substr(h, 1, 6))
   }
 })
 CAL_TAG <- paste0(
@@ -1028,7 +1030,7 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
     # candidate would have been blended federally.
     .exp_mode <- suppressWarnings(as.integer(Sys.getenv("AUSPOL_SALIENCE_EXPECTED", "0")))
     if (is.na(.exp_mode)) .exp_mode <- 0L
-    shares <- blend_salience_shares(shares, hz, surge_mu_arg[1], expected = .exp_mode > 0L)
+    shares <- blend_salience_post_xgb(shares, hz, surge_mu_arg[1], expected = .exp_mode > 0L, label = TGT, code = "SBQ1")
     # ARM B, docs/plans/prereg-salience-expected-and-variance-2026-09-07.md.
     # level_sd is binomial-shaped and gives a major on 30% MORE uncertainty
     # than a top-percentile insurgent on 13.9%; the salience band has

@@ -411,13 +411,21 @@ for (pr in PAIRS) {
   # plans/prereg-seat-context-complete-2026-09-28.md.
   if (identical(Sys.getenv("AUSPOL_SEAT_CONTEXT_FILL", "1"), "1")) {
     SCX <- fread(out_path("seat-context.csv"), showProgress = FALSE)
-    scx <- SCX[SCX$pair == pr$election, list(.s = s, cx_class = incumbent_class, cx_ret = retiring,
+    scx <- SCX[SCX$pair == pr$election, list(.s = s, cx_class = incumbent_class, cx_ret = retiring, cx_soph = soph_cand,
                                               cx_margin = if ("margin_est" %in% names(SCX)) margin_est else NA_real_)]
     m[, .s := normalise_seat(seat)]
     m <- merge(m, scx, by = ".s", all.x = TRUE)
     n_fill <- sum(is.na(m$is_incumbent_party) & !is.na(m$cx_class))
     m[is.na(is_incumbent_party) & !is.na(cx_class), is_incumbent_party := party == cx_class]
     m[is.na(retirement) & !is.na(cx_ret), retirement := cx_ret]
+    # AUSPOL_SEAT_CONTEXT_SOPH=1: the first-term-member flag from our corpus where the seat file has none (25 of
+    # 35 elections), validated 96.8% against the seat file over 913 seats (2026-10-20). Blanks only.
+    # plans/prereg-first-term-fill-2026-10-20.md.
+    if (identical(Sys.getenv("AUSPOL_SEAT_CONTEXT_SOPH", "0"), "1")) {
+      n_soph <- sum(is.na(m$soph_cand) & !is.na(m$cx_soph))
+      m[is.na(soph_cand) & !is.na(cx_soph), soph_cand := cx_soph]
+      if (n_soph) cat(sprintf("SCS  %s: first-term member filled from seat-context for %d rows\n", pr$election, n_soph))
+    }
     # AUSPOL_SEAT_CONTEXT_MARGIN=1: Labor's estimated two-party margin at the
     # previous election (validated r 0.984, mean |diff| 1.64 against the seat
     # file). Previous swing is NOT filled (r 0.875, below the 0.9 bar).
@@ -428,7 +436,7 @@ for (pr in PAIRS) {
     # file only where no estimate does; the live forecast does the same.
     if (identical(.mmode, "all"))
       m[is.finite(cx_margin), margin := cx_margin]
-    m[, c(".s", "cx_class", "cx_ret", "cx_margin") := NULL]
+    m[, c(".s", "cx_class", "cx_ret", "cx_soph", "cx_margin") := NULL]
     if (n_fill) cat(sprintf("SCF  %s: incumbent/retiring filled from seat-context for %d rows\n", pr$election, n_fill))
   }
 
@@ -500,6 +508,19 @@ if (identical(Sys.getenv("AUSPOL_XGB_RATIO_FEATS", "0"), "1")) {
   cat(sprintf("XRF1 growth-ratio features ON: growth_ratio median %.2f (range %.2f-%.2f), ratio_dev sd %.2f\n",
               stats::median(ALL$growth_ratio, na.rm = TRUE), min(ALL$growth_ratio, na.rm = TRUE),
               max(ALL$growth_ratio, na.rm = TRUE), stats::sd(ALL$ratio_dev, na.rm = TRUE)))
+}
+# AUSPOL_XGB_CONTEST (prereg-contest-features-2026-10-20.md): tell the trees who is standing. n_cand_now is 1
+# where nobody stands, so 4,202 uncontested rows labelled ~0 look like contested ones and drag new-to-seat
+# minor cells down (nsw2023 One Nation: trees 3.29, actual 9.67). Same columns, same rule as
+# contest_features() in R/xgb_primary_override.R; only when on, as above.
+if (identical(Sys.getenv("AUSPOL_XGB_CONTEST", "0"), "1")) {
+  .cf <- contest_features(ALL$pair, ALL$seat, ALL$party, ALL$level_pred,
+                          paste(C$election, C$seat, C$party), C$election, C$seat)
+  ALL[, stands_i := .cf$stands_i]
+  ALL[, level_contested := .cf$level_contested]
+  cat(sprintf("XCT1 contest features ON: %d of %d rows stand (%d seats with no candidacy treated as standing); level_contested median %.2f (level_pred %.2f)\n",
+              sum(ALL$stands_i), nrow(ALL), attr(.cf, "unknown_seats"), stats::median(ALL$level_contested, na.rm = TRUE),
+              stats::median(ALL$level_pred, na.rm = TRUE)))
 }
 ALL[, same := ifelse(is.na(same), FALSE, same)]
 ALL[, same_mp := ifelse(is.na(same_mp), FALSE, same_mp)]
@@ -670,6 +691,28 @@ if (identical(Sys.getenv("AUSPOL_SITTING_MEMBER_ADJ", "0"), "1")) {
   ALL[, c("sm_group", "sm_shift") := NULL]
 }
 
+# AUSPOL_CONTEST_BASE=1: a new-to-seat One Nation candidate's base_pred moves toward the party's vote where it
+# stands (contest_base_gap(), R/xgb_primary_override.R), by a weight fitted on EARLIER elections only. The trees
+# could not make this correction themselves (prereg-contest-features-2026-10-20.md, REFUSED); this puts it in
+# base_pred, as the sitting-member shift does. The vic2026 row is what the live forecast applies.
+# plans/prereg-contest-base-2026-10-20.md.
+if (identical(Sys.getenv("AUSPOL_CONTEST_BASE", "0"), "1")) {
+  .gap <- contest_base_gap(ALL$pair, ALL$seat, ALL$party, ALL$base_pred, ALL$seat_prev_pcv, ALL$level_pred,
+                           paste(ALL$pair, ALL$seat, ALL$party) %in% paste(C$election, C$seat, C$party))
+  .res <- ALL$actual_share - ALL$base_pred
+  CBW <- rbindlist(lapply(c(unique(ALL$pair), "vic2026"), function(p)
+    data.table(pair = p, fit_contest_base_weight(.gap, .res, ALL$pair, p))))
+  fwrite(CBW, file.path(OUT, "contest-base-weight.csv"))
+  .w <- CBW$w[match(ALL$pair, CBW$pair)]
+  .before <- ALL$base_pred
+  ALL[, base_pred := base_pred + .w * .gap]
+  .mv <- ALL$base_pred != .before
+  cat(sprintf("CB1  contest base ON: %d cells moved in %d elections (mean %+.2f points); %d new-to-seat cells with a gap; vic2026 weight %.3f (raw %.3f, SE %.3f, %d elections)\n",
+              sum(.mv), uniqueN(ALL$pair[.mv]), if (any(.mv)) mean((ALL$base_pred - .before)[.mv]) else 0,
+              sum(.gap != 0), CBW[pair == "vic2026", w], CBW[pair == "vic2026", raw], CBW[pair == "vic2026", se],
+              CBW[pair == "vic2026", k]))
+}
+
 # GATE seat_outperf to the one row it means anything for: the party that held
 # the seat, in a pair where its member is gone. Left ungated, it changed
 # predictions on 66.5% of ALL 13,739 rows (not just the 349 retirement
@@ -759,6 +802,7 @@ feat_cols <- c("base_pred", "seat_prev_pcv", "seat_outperf", "level_prev",
                if (!.raw_level && identical(.lvl_mode, "pred")) "level_from_polls",
                "dev_prev",
                if (identical(Sys.getenv("AUSPOL_XGB_RATIO_FEATS", "0"), "1")) c("growth_ratio", "ratio_dev"),
+               if (identical(Sys.getenv("AUSPOL_XGB_CONTEST", "0"), "1")) c("stands_i", "level_contested"),
                # x_notional_adj (see its own comment above, where it's built):
                # only included when AUSPOL_XGB_NOTIONAL=1. The column exists
                # unconditionally (0 when off) so feat_cols can name it without

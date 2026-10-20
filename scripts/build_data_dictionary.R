@@ -165,10 +165,18 @@ L <- c(L, "",
 L <- c(L, "## Derived outputs (`output/`)", "")
 of <- sort(list.files("output", pattern = "[.]csv$", full.names = TRUE))
 keep <- of[!grepl("backtest-", basename(of))]
-L <- c(L, "| file | rows | columns |", "|---|---:|---|")
-for (p in utils::head(keep, 30)) {
+# EVERY derived file, one row per family. Until 2026-10-19 this listed the first 30 alphabetically (of 1,054) and
+# said nothing, so a file past "b" read as absent: the very question this dictionary exists to answer. Files whose
+# names differ only by numbers (an election year, a scenario value, a page) are one family, listed once with a count.
+fam <- gsub("[0-9]+([.][0-9]+)*", "N", sub("[.]csv$", "", basename(keep)))
+fam <- paste0(fam, ".csv")
+L <- c(L, sprintf("%d files in %d families (names differing only by numbers are one family, N; rows and columns are its first file's).",
+                  length(keep), length(unique(fam))), "",
+       "| file (family) | files | rows | columns |", "|---|---:|---:|---|")
+for (fm in unique(fam)) {
+  p <- keep[fam == fm][1]
   h <- hdr(p)
-  L <- c(L, sprintf("| `%s` | %s | %s |", basename(p),
+  L <- c(L, sprintf("| `%s` | %d | %s | %s |", fm, sum(fam == fm),
                     format(nrows_of(p), big.mark = ","),
                     if (h$ok) paste0("`", paste(h$cols, collapse = "`, `"), "`") else "unreadable"))
 }

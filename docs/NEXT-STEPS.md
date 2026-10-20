@@ -27,7 +27,7 @@ TCP-consistency check, arm H shipped, heavy-tail arm T REFUSED 19 Oct, F21 surge
   ALP/LNP/GRN/ONP/OTH) and the whole others bucket to OTH; training used per-class levels. Train/serve mismatch.
 - OPEN F2 (live): `AUSPOL_MINOR_DEFECT_BASE_PRED="1"` ships but `fit_seats_full.R` never applies it (comment only, :979).
 - OPEN F3 (live): `fit_seats_full.R:932` hardcodes the defector discount 0.282; every harness fits it time-forward.
-- OPEN F4 (scores): switch `AUSPOL_HARNESS_SW_DRAWS` built (304b662; OFF byte-identical on vic2022/wa2025, ON
+- DONE F4 (scores): switch `AUSPOL_HARNESS_SW_DRAWS` built (304b662; OFF byte-identical on vic2022/wa2025, ON
   sd(ALP-LNP) 3.68 vic2022 / 4.24 wa2025 vs 2.12 flat). Screen REFUSED 19 Oct: targeted 25 elections +0.0017 (SE
   0.0014), all seats +0.0011 (SE 0.0009, WORSE), worse in 18 of 25; switch stays "0". OPEN for Pete: live forecast uses
   the wide draws, so either state backtests flatter what ships or FP_EXTRA_SD 2.419 is too wide for states
@@ -36,8 +36,41 @@ TCP-consistency check, arm H shipped, heavy-tail arm T REFUSED 19 Oct, F21 surge
   +0.0017, and the LIVE forecast still carries it (draws + full seat sd). Live port built OFF (`AUSPOL_SW_NET_LIVE`, 08af39d; vic2026 walk:
   totals unchanged, favourites 88/88 unchanged, favourite prob +1.3 pts mean). 20k deciding run DONE 19 Oct 16:19
   (`deciding-runs/20261019-1414-f4-net`): -0.0014 (SE 0.0006) over 31 elections, LOO holds, AEF-7 -0.0021; clause 4
-  refuses (sa2014 +0.0043, wa2021 +0.0024, each >2 own SE). OPEN for Pete: override and ship both switches, or not.
-  Width arms A0/A1 (`AUSPOL_FP_EXTRA_SD` 0 / 1.2) pre-registered, not yet run.
+  refuses (sa2014 +0.0043, wa2021 +0.0024, each >2 own SE). SHIPPED on Pete's override, PR #129 merged 19 Oct;
+  PUBLISHED 19 Oct 17:25 (rebuild from 6, `deciding-runs/publish-20261019-1700.log`): pooled 0.3267 -> 0.3242 (2,931
+  seat-elections), AEF-7 0.2635 -> 0.2614 (AEF 0.2825); net-out applied in all 32 elections with draws. First live
+  daily Forecast run with AUSPOL_SW_NET_LIVE=1: success, 2026-10-19T23:28Z (ran ~3.5 h late).
+- DONE F5, REFUSED 20 Oct: `AUSPOL_SALIENCE_BLEND_ONCE=1` at 20k, target seats +0.0002 (SE 0.0012), all seats
+  +0.0001 (SE 0.0006), leave-one-out 0/18; under-calls the 2022 teals. Switch stays "0"
+  (`plans/prereg-salience-blend-once-2026-10-19.md`).
+- DONE partial-contest arm A, REFUSED 20 Oct at the 1k screen: nsw2023/sa2022/nsw2019 never moved; qld2015 +0.0207
+  (One Nation packed into 11 seats, Lockyer 49 vs 27). Arm B not built (`plans/prereg-partial-contest-2026-10-19.md`).
+- DONE contest features in the trees (`AUSPOL_XGB_CONTEST`, stands_i + level_contested), REFUSED 20 Oct at 20k:
+  target seats +0.0041 (SE 0.0020) worse, all seats +0.0036 (SE 0.0017), leave-one-out 0/31, 5 elections worse. The
+  trees moved nsw2023's new-to-seat One Nation cells DOWN (~3.1 -> 2.9 vs actual 9.7): they fit a residual on
+  base_pred (~1.5) and will not add +8. Switch stays "0" (`plans/prereg-contest-features-2026-10-20.md`).
+- DONE contest base (`AUSPOL_CONTEST_BASE`, new-to-seat One Nation base_pred toward its vote where it stands),
+  REFUSED 20 Oct at 20k: target seats +0.0036 (SE 0.0023), all seats +0.0025 (SE 0.0016), leave-one-out 0/27; the 317
+  seats it acts on +0.0022 (SE 0.0017). Shares improved (nsw2023 new-to-seat RMSE 8.07 -> 5.65) but new-to-seat
+  One Nation rarely wins, so seat calls do not. Partial-contest line closed for seat calls
+  (`plans/prereg-contest-base-2026-10-20.md`). IND/OTH/OTH_RIGHT not attempted: many parties share one level.
+- DONE first-term members: the +4.0 was +1.84 within-election (SE 0.81); the flag was blank in 25 of 35 elections.
+  Rebuilt from our corpus (97.3% vs the seat file), 41 by-elections added, `build_seat_context.R` now in the rebuild
+  (it was stale at 24 of 35, so the SHIPPED incumbent/retiring fill missed 11 elections). The fill arm REFUSED 20 Oct
+  (+0.0001, SE 0.0009). Pete 20 Oct "Ship the fix": the refreshed seat context goes out with the next publish
+  (pooled +0.0014, SE 0.0014; the 11 elections -0.0073, the other 24 +0.0040) (`plans/prereg-first-term-fill-2026-10-20.md`).
+- DONE the arm rebuild's SPZ3 failure (20 Oct): not a non-share-only fit. Shares were byte-identical between the two
+  stage-6 passes; in pass 1 sa2010 and sa2022 got the same file tag (`a24d75e`), and since SA's file names carry no
+  election, sa2010 overwrote sa2022's results and the pass-1 tables took sa2022 from a 19 Oct run. The tag was a
+  weighted character sum, not a hash: now md5 in all seven harnesses, and SA refuses (BS0!) to overwrite another
+  election's file. No other collision among the SA files on disk; the published forecast was not affected.
+- OPEN, from the same diagnosis: Greens over-called in high-Greens seats by the trees (Melbourne, Griffith, Northcote);
+  retiring Labor members about -2.0 (n 34); Dickson's published stage moved a correct tree LNP figure +5.5.
+- OPEN (Pete): the 28 old notes in the ledger page's notes store now duplicate `docs/aef7-seat-notes.csv` under "Your
+  notes"; clear them only on his yes.
+- DONE F9, REFUSED 19 Oct: `AUSPOL_ERROR_DIST_COMP=1` at 20k -0.0001 (SE 0.0001), within 1 SE; screen at 1k had
+  said -0.0005 (tail arm, floor artefact). Switch stays "0". Result in `plans/prereg-error-dist-composition-2026-10-19.md`.
+- Width arms A0/A1 (`AUSPOL_FP_EXTRA_SD` 0 / 1.2) pre-registered, not yet run.
 - OPEN, DATED (from ~2 Nov, weekly; final snapshot 25-27 Nov): vic2026 salience snapshots. All 500 candidates fetched
   18 Oct (window to 6 Oct), but that is before the campaign: nobody's search interest is rising yet (Premier 1.1 in the
   last 8 weeks vs 9.3 before), so batches cannot be linked and `jump` is not comparable with the backtests' polling-day

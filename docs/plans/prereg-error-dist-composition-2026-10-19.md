@@ -43,3 +43,27 @@ accuracy, floor counts.
 election's share; not a refusal on its own (`no-one-election-share-refusal`), but leave-one-out must hold. (c) The
 vic2026 live walk moves a favourite: shown to Pete before shipping. Known blind spot: the composition table was itself
 fitted with z standardised the old way in mind; a joint refit is a separate prereg.
+
+## RESULT: screen (2026-10-19, 1,000 sims, all 35 elections, code 61afa50)
+
+Not WORSE, so the deciding run went ahead (`deciding-runs/20261019-1937-f9-comp`, 20,000 sims). The comp table was
+regenerated from the post-F4 stage-6 shares first; it came out byte-identical to the 14:53 one, as F4 moves the spread,
+not the shares. Shipped `error-quantiles.csv` unchanged (sha256 `bd8928...901f`).
+
+- All seats: 0.3079 -> 0.3074, -0.0005 (SE 0.0002, clustered on election), BETTER by more than 1 SE. 28 of 35
+  elections moved; 7 byte-identical (no earlier-election table row, or no seat with comp_f > 1).
+- AEF-7: 0.2606 -> 0.2602, -0.0004 (SE 0.0001).
+- Largest gains: qld2017 -0.0044, nsw2015 -0.0037, nsw2019 -0.0037 (named risk (b): qld2017 is one of three, not most).
+- Largest losses: nt2024 +0.0047 (25 seats), nt2020 +0.0008, wa2017 +0.0005. Clause 4 is judged on the 20k run.
+
+## RESULT: deciding run (2026-10-19, 20,000 sims, all 35 elections, code 61afa50): REFUSED
+
+`deciding-runs/20261019-1937-f9-comp` (DONE, 3,334 s). Primary fails: all seats 0.3165 -> 0.3164, -0.0001 (SE 0.0001),
+within 1 SE. AEF-7 0.2614 -> 0.2613, -0.0001 (SE 0.0001). The switch stays "0"; the comp table stays on disk, unread.
+
+The screen overstated it five-fold (-0.0005 at 1,000 sims). This arm acts in the tails, and at 1,000 sims the
+winner-probability floor is 5e-4 against 2.5e-5 at 20k, so thinner or fatter tails mostly change how many seats sit at
+the floor. That is the documented quick_arm limit, here producing a false BETTER rather than a missed one. The
+elections at the ends even swapped places: nt2024 +0.0047 on the screen, -0.0079 at 20k. Elections at 20k: largest
+gains nt2024 -0.0079, qld2017 -0.0031; largest losses nt2016 +0.0029, sa2018 +0.0009. 8 better and 13 worse by
+0.0001 or more.

@@ -89,6 +89,18 @@ defector in this data (McBride, MacKillop, LNP 62.3% → IND 14.8%) shows a
 defector can lose most of a major party's vote along with the party label,
 where a minor-to-minor relabelling (Donato's case) does not behave that way.
 
+The major-party case is now a fitted carry, not an exclusion. A sitting member who leaves a
+major party keeps a fraction of their previous personal vote, `discount_mp` from
+`fit_defector_discount()` (`R/candidate_returns.R:1162`), fitted on elections before the target
+(federal targets get their own shrunk rate, `AUSPOL_DEFECT_BY_LEVEL = "2"`, `:1268`). The live
+forecast fits it every run (`scripts/fit_seats_full.R:936-946`, `AUSPOL_LIVE_DEFECT_FIT`); it read
+a frozen 0.282 until 2026-10-18, and the fitted value then was 0.313 (the frozen number is
+now only the fallback if the fit fails). A minor-to-minor switcher gets the separate
+`fit_minor_defector_discount()` rate, passed to the live base and the live xgb feature alike
+(`:950-975`). A departed independent's cell is held at a time-forward rate
+(`AUSPOL_DEPARTED_SUCCESSOR`, replacing a leaked corpus-wide 0.38), and a major's departed or
+present seat gets its own slope (`AUSPOL_MAJOR_DEPARTED`, `AUSPOL_MAJOR_SLOPE`).
+
 **2. Swing it by the statewide trend** (`dev_slope()`):
 ```
 base = level_now + slope × (x − level_prev)
@@ -100,7 +112,11 @@ near 0 shrinks it to the statewide average. `slope` is 0.907 when the same
 candidate is personally returning, 0.326 for a fresh face, or 1.0 (uniform
 swing, no penalty) when the salience screen (`salience_permit_for()`,
 `screened_slopes()`) judges a fresh face as a plausible emergence rather than
-a no-hoper.
+a no-hoper. Sitting members take their own slope tier (`AUSPOL_MP_SLOPE`,
+`scripts/fit_seats_full.R:914-930`), and since 2026-10-14 that table and the minor-defector
+carry are fitted on earlier elections only, shrunk toward a structural prior
+(`AUSPOL_MP_SLOPE_TF`, `AUSPOL_CONSERVE_TF`, `AUSPOL_CONSERVE_SHRINK_K = "3"`, which replaced an
+8-case cliff).
 
 **3. Pull toward a typical emergence, weighted by how likely one looks**
 (`surge_blend_estimate()`):
@@ -115,7 +131,13 @@ class, not personally returning — which excludes a declining incumbent like
 Adam Bandt by construction, not by tuning). `surge_mu` is the mean share of
 past governed candidates who *did* emerge (~35%, from 9 known cases across 5
 elections). At `p_hat` near 0 this step does nothing; the closer to 1, the
-more the estimate is pulled toward that ~35%.
+more the estimate is pulled toward that ~35%. No class counts as "surging" in the
+salience screen (`AUSPOL_SURGE_SOURCE = "none"`, `R/party_surge.R:95`, decided 2026-10-16
+because the "surging" flag had been computed from the election's own swing). The same hazard
+feeds the xgb primary model as the feature `surge_h`; since 2026-10-18 that feature is built
+only from canon elections strictly before each training election (`AUSPOL_SURGE_H_TF`,
+`scripts/fit_xgb_primary_v6.R:555-566`), where it had been leave-one-out and so let fed2016
+learn from fed2022 and sa2026.
 
 **4. Renormalise every party in the seat to sum to 100%.**
 
@@ -149,48 +171,75 @@ It is, and it is on. Read this before adding another mechanism.
 
 ### Part A — building the inputs (`fit_seats_full.R`, once)
 
-**The numbers below are a grouping, NOT execution order** — corrected by the
-review gate 2026-09-11, which found a reader following the table top to bottom
-would get two steps backwards. In the file, the surge hazard (step 9,
-`:665-719`) runs BEFORE the swing (step 5, `:773`), and the statewide draws
-(step 4, `:935-971`) are built AFTER the whole `shares` chain (steps 5-8),
-because `sw_draws` and `shares` are different objects that never touch until
-`simulate_seat_contests()`. Execution order is: 1-3, 9, 5-8, 4, 10.
+**The numbers below are a grouping, NOT execution order.** Re-read against the file
+2026-10-19. Execution order is: 1-3, 9, 5-7, 8 (the post-xgb corrections), then 4, then 10.
+The statewide draws (step 4) are built AFTER the whole `shares` chain, because `sw_draws`
+and `shares` are different objects that never touch until `simulate_seat_contests()`.
 
 | # | step | where |
 |---|---|---|
-| 1 | flow table from the previous election's transfers | `:284` |
-| 2 | baseline per-seat primaries (`mat22`), normalised | `:293` |
-| 3 | strip transferred votes | `:629` |
-| 4 | statewide projection → `sw_draws`, one correlated vector per draw | `:935-971` |
-| 5 | apply the swing per seat via the dev slopes | `:773+` |
-| 6 | One Nation written over the swung value from a concentration ratio | `:837` |
-| 7 | **XGB primary override replaces every seat's primaries** | `:854` |
-| 8 | salience point blend — a *second* surge effect, on the mean | `salience_surge.R:388` |
-| 9 | surge hazard → per-seat `surge_h`, `surge_mu`, `surge_sd`, `surge_party` | `:680-712` |
-| 10 | XGB flow override → per-seat `conditional_override` | |
+| 1 | flow table from the previous election's transfers | `:265` |
+| 2 | baseline per-seat primaries (`mat22`), normalised; by-election winners take the sitting level (`byelection_prior`) | `:335`, `:1023` |
+| 3 | statewide level: trend, anchored to the projection (`LL1`, `:583`), then pulled toward a 20-day-half-life average of recent polls plus federal polls' state breakdowns at weight 0.15 (`level_recent_apply`, `R/level_recent.R`, call at `:627`) | `:373-640` |
+| 4 | statewide projection → `sw_draws`, one vector per draw, independent across parties (`AUSPOL_PARTY_COR = "off"`) with sd `sqrt(trend_sd^2 + 2.419^2)` | `:1481-1620` (sd at `:572`, draws `:1559-1569`) |
+| 5 | apply the swing per seat via the dev slopes | `:1186-1267` |
+| 6 | One Nation written over the swung value from a concentration ratio (CV 0.365) | `:814-823`, `:1308-1325` |
+| 7 | **xgb primary model replaces every seat's primaries** (`xgb_primary_predict_live`), served the per-class level it trained on (`AUSPOL_LIVE_LEVEL_SPLIT`) and the raw prior-election matrix (`AUSPOL_LIVE_SEATPREV_RAW`) | `:1361-1383` |
+| 8 | post-xgb corrections, in order: independent's own record (`ind_person`), WA seat-swing nudge, **seat-poll blend**, demographic residual, leader-seat bonus, departed-member blend, salience point blend, nomination zeroing | `:1396-1475` |
+| 9 | surge hazard → per-seat `surge_h`, `surge_mu`, `surge_sd`, `surge_party` | `:1105-1137` |
+| 10 | xgb flow override (time-forward trees `tf2`) then the how-to-vote card order → per-seat `conditional_override` | `:1767-1777` |
+| 11 | per-cell seat sd: level form, widened by seat size and seat composition, then re-derived net of the statewide draws; empirical error quantiles per class; Liberal/National split | `:1780-1792` |
+
+**The seat-poll blend (step 8).** Each polled (seat, class) cell is pulled toward its poll
+average by `v / (v + 1/P + t2)` (`R/seat_poll_blend.R:906-1048`). `P` is the sum over that
+cell's polls of recency x precision: a weight `0.5^(days/H)` (half-life `H`, prior 60 days,
+fitted on earlier elections; the old 90-day window is gone) divided by sampling variance
+plus a non-sampling floor for the poll's method group (mrp, independent direct, stake-holder
+direct, opt-in link; one firm's polls in a cell count once). `v` is our own model's error
+variance for the class, fitted on every earlier seat-class cell, scaled by predicted size and
+(for independents) by the campaign rise in search interest. `t2` is an election-wide miss
+all seat polls share. A poll votes only on classes it names in full, and an MRP never votes
+on an independent's cell. All of it is time-forward; the priors are in `docs/CONSTANTS.md`.
+Polled-seat log loss fell 0.0136 (SE 0.0021) when this shipped (2026-10-18, arm H).
+
+**The seat sd (step 11).** Per cell it is `level_sd` (1.10 + 8.67 sqrt(p(1-p))), widened by
+a factor fitted on earlier elections for small seats (`AUSPOL_SIZE_SD`, `R/size_sd.R`) and for
+seats with large non-major shares (`AUSPOL_COMPOSITION_SD`). Then, because `level_sd` was
+fitted net of a flat 1.5-point statewide piece while the live draws are about 2.6 points for
+the majors, the statewide miss was counted about twice. `harness_sw_net_sd()`
+(`R/forecast_statewide.R:491`, called at `fit_seats_full.R:1803`, `AUSPOL_SW_NET_LIVE = "1"`,
+shipped 2026-10-19) lowers each cell's sd so the total is what `level_sd` was fitted to,
+never below half the original sd. The state and federal harnesses do the same
+(`AUSPOL_HARNESS_SW_DRAWS = "net"`, so a backtest scores the spread the live forecast ships).
 
 ### Part B — the per-draw loop (`src/seat_sim_core.cpp`, x `n_sims`)
 
-One statewide shift per draw, then per seat:
+One statewide shift per draw (`:150-165`; the draws from step 4 are passed in as
+`statewide_draws`), then per seat:
 
-1. **statewide shift**, correlated across parties via the Cholesky factor (`:83`)
-2. **seat noise**: `v = base + shift + rnorm(0, sd_cell)`, clamped at 0, where
-   `sd_cell` is `level_sd = 1.10 + 8.67*sqrt(p(1-p))` (`:90`)
-3. **insurgency surge**: with probability `surge_h[i]`, add
-   `N(surge_mu, surge_sd)` to the recipient and scale the others down (`:96`)
-4. **eliminations**: exclude the lowest, distribute by conditional flow, looking
-   up per-seat override → shared table → seat-specific → pooled (`:118`)
-5. **winner** = higher of the last two; TCP recorded (`:191-198`)
-6. **calibration shrink**: with probability `shrink`, replace the winner with a
-   uniform pick among the alive (`:199`)
+1. **statewide shift**, taken from the draws (independent across parties since 2026-10-16)
+2. **seat noise**: `v = base + shift + e`, clamped at 0 (`:169-189`). `e` is
+   `sd_cell * z`, where `z` is drawn from that class's empirical standardised-error
+   quantiles (201 quantiles from earlier elections, `AUSPOL_ERROR_DIST = "1"`, shipped
+   2026-10-17: heavy tails, a right skew for the candidate classes, width unchanged); it falls back to
+   `rnorm(0, sd_cell)` when a target has too little history
+3. **breakout mixture** (off), then **insurgency surge** (`:223`): with probability `surge_h[i]`,
+   add `N(surge_mu, surge_sd)` to the recipient and scale the others down
+4. **Liberal and National as two candidates** (`:252`, `AUSPOL_COALITION_SPLIT = "1"`,
+   shipped 2026-10-17): the combined Coalition cell is split by a Beta draw around the seat's
+   previous split before the count, with its own random stream
+5. **eliminations**: exclude the lowest, distribute by conditional flow, looking
+   up per-seat override → shared table → seat-specific → pooled
+6. **winner** = higher of the last two; TCP recorded (`:406-421`)
+7. **calibration shrink**: with probability `shrink` (0.01), replace the winner with a
+   uniform pick among the alive (`:422`)
 
 ### The naming trap that caused the confusion
 
 `published_flags.R` reads `AUSPOL_SURGE_H = "0"`, which looks like the surge is
 off. It is not. That is only the FLAT FALLBACK hazard. The real per-seat hazard
 comes from `AUSPOL_SALIENCE_SURGE_V2 = "1"` and **overwrites `surge_arg` at
-`fit_seats_full.R:698`**. What is genuinely off is `AUSPOL_IND_SALIENCE`,
+`fit_seats_full.R:1123`**. What is genuinely off is `AUSPOL_IND_SALIENCE`,
 `AUSPOL_INSURGENCY_SHRINK`, `AUSPOL_SALIENCE_EXPECTED`, `AUSPOL_SALIENCE_EXP_SD`
 and the retired two-party `simulate_seats()`.
 
@@ -208,8 +257,9 @@ through `pred_share`. The classical path is live.
 
 ### Where it IS Frankenstein: three mechanisms for one problem
 
-The mean is set in four places (5, 6, 7, 8). The uncertainty is set in five
-(statewide draws, `level_sd`, surge, `flow_sd`, `shrink`). Two of the five exist
+The mean is set in many places (5, 6, 7, and the eight post-xgb corrections in 8). The
+uncertainty is set in nine (statewide draws, `level_sd`, the size and composition widenings,
+the error shape, the net-out, surge, `flow_sd`, `shrink`). Two of the five exist
 only because another was wrong:
 
 - **`level_sd`** is a global curve, so it cannot reach an emergence. For IND
@@ -548,6 +598,17 @@ model.
   numbers. **The general rule this keeps re-teaching: any loop that can skip
   an item needs a counter that a downstream consumer is forced to check —
   "most of it worked" must never look identical to "all of it worked."**
+
+- **Serving the model a different input from the one it trained on.** The 2026-10-18 audit
+  (`docs/reviews/pipeline-overwrite-audit-2026-10-18.md`) found the live forecast feeding
+  the xgb layer a statewide level with independents and OTH_RIGHT at zero (training had
+  them split), a by-election-edited prior matrix (training saw the raw one) and a frozen
+  defector constant (every harness fitted it). Each passed every check because the
+  harnesses never exercise the live path. When a feature is built in two scripts, diff the
+  two on one real row (F1, F3, F11, all fixed).
+- **Removing a directory that holds a junction deletes the target.** 2026-10-15: a worktree
+  removal deleted `external/elections/` and the anchor clone through junctions; 107 files
+  were rebuilt from cached raw downloads. List and unlink junctions before any removal.
 
 ## Data boundary
 

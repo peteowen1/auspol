@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-10-17 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-10-20 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
@@ -134,7 +134,7 @@ cannot pass as a working one.
   - e.g. council/2008/aurukunshire/councillor_summary.html, council/2008/aurukunshire/mayoral_summary.html, council/2008/balonneshire/councillor_summary.html, council/2008/balonneshire/mayoral_summary.html
 - **waec/** -- 1916 files, 49.0 MB
   - e.g. app.html, app.min.js, config-loader.js, config.json
-- **trends/** -- 5226 files, 3.2 MB
+- **trends/** -- 5266 files, 3.3 MB
   - e.g. 2019_anch2_Adrian_Wone_Susie_Beveridge_Will_Landers_Ammar_Khan.rds, 2019_anch2_Bill_Chandler_Susan_Moylan_Dave_Blake_Tim_Bohm.rds, 2019_anch2_Robert_Oakeshott_Helen_Haines_Zali_Steggall_Kerryn_Phelps.rds, 2019_anch2_Trevor_Jones_Colin_Butland_David_Norman_Thor_Prohaska.rds
 - **boundaries/** -- 75 files, 770.5 MB
   - e.g. AEC-2025-esri.zip, AEC_2025/AUS_ELB_region.dbf, AEC_2025/AUS_ELB_region.prj, AEC_2025/AUS_ELB_region.shp
@@ -144,7 +144,7 @@ cannot pass as a working one.
   - e.g. abs-sed/CG_CED_2016_CED_2021.csv, abs-sed/CG_SED_2016_SED_2021.csv, abs-sed/CG_SED_2021_SED_2022.csv, abs-sed/CG_SED_2022_SED_2024.csv
 - **aef/** -- 17 files, 4.8 MB
   - e.g. 2022fed-results.json, 2022fed-summary.json, 2022sa-results.json, 2022sa-summary.json
-- **polls/** -- 4087 files, 481.3 MB. **1 ZERO-BYTE: crosstabs-ambiguous.txt**
+- **polls/** -- 4092 files, 493.6 MB. **1 ZERO-BYTE: crosstabs-ambiguous.txt**
   - e.g. act-polls-handkeyed.csv, archive/archive_vs_ae_pairs.csv, archive/fed_archive_polls.csv, archive/morgan_rows.csv
 
 ## Candidate-level corpus (`output/candidacies.csv`)

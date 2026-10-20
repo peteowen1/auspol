@@ -154,9 +154,11 @@ cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f
   e <- e[!names(e) %in% c("AUSPOL_OUT_SUFFIX")]
   if (!length(e)) "" else {
     s <- paste(sort(paste0(names(e), "=", e)), collapse = ";")
-    sprintf("-a%s", substr(tolower(paste0(as.hexmode(
-      sum(utils::head(utf8ToInt(s), 4000) * seq_along(utils::head(utf8ToInt(s), 4000)))
-    ))), 1, 6))
+    # md5 of the whole string. The weighted character sum this replaced put nearby settings within a few hundred of
+    # each other: on 2026-10-20 sa2022 and sa2010 got the same tag, and since SA's file names carry no election,
+    # sa2010 overwrote sa2022's results mid-rebuild (it also ignored everything past 4,000 characters).
+    tf <- tempfile(); writeBin(charToRaw(enc2utf8(s)), tf); h <- unname(tools::md5sum(tf)); unlink(tf)
+    sprintf("-a%s", substr(h, 1, 6))
   }
 })
 CAL_TAG <- paste0(
@@ -899,7 +901,7 @@ for (K in PAIRS) {
       # candidate would have been blended federally.
       .exp_mode <- suppressWarnings(as.integer(Sys.getenv("AUSPOL_SALIENCE_EXPECTED", "0")))
       if (is.na(.exp_mode)) .exp_mode <- 0L
-      shares <- blend_salience_shares(shares, hz, surge_mu_arg[1], expected = .exp_mode > 0L)
+      shares <- blend_salience_post_xgb(shares, hz, surge_mu_arg[1], expected = .exp_mode > 0L, label = sprintf("vic%d", K$to), code = "SBV1")
       # THE VARIANCE, not just the point estimate. level_sd is binomial-shaped
       # and gives a major on 30% more uncertainty than a top-percentile
       # insurgent on 13.9%; the salience band has measured the latter at 12.6.

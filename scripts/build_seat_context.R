@@ -28,6 +28,33 @@ name_key <- function(n, g) vapply(paste(n, fifelse(is.na(g), "", g)), function(x
   tk <- unique(strsplit(gsub("[^A-Z]+", " ", toupper(x)), " +")[[1]]); paste(sort(tk[nzchar(tk)]), collapse = " ")
 }, character(1), USE.NAMES = FALSE)
 C[, nk := name_key(name, given)]
+# Same-person key for the first-term flag: surname plus FIRST given name only. The full-name key above split
+# one member into two when a middle name came and went between elections ("Shayne Kenneth NEUMANN" fed2019,
+# "Shayne NEUMANN" fed2022), which marked 15-year members as first-term. The retirement match keeps `nk`.
+# State files leave `surname` empty and write the name four ways ("SANDERSON, Rachel", "SANDERSON Rachel",
+# "Rachel Sanderson", "PISONI, DG"), so the surname is parsed from `name` where the column is empty: before a
+# comma; else the upper-case token(s); else the last token. Initial, not first name: "DG" (sa2006) is David.
+person_key <- function(name, surname, given) {
+  one <- function(n, sn, g) {
+    n <- trimws(n)
+    if (!is.na(sn) && nzchar(sn)) { s <- sn; rest <- if (is.na(g)) "" else g }
+    else if (grepl(",", n)) { s <- sub(",.*$", "", n); rest <- sub("^[^,]*,", "", n) }
+    else {
+      tk <- strsplit(n, " +")[[1]]; up <- grepl("^[A-Z][A-Z'-]+$", tk)
+      if (any(up) && !all(up)) { s <- paste(tk[up], collapse = " "); rest <- paste(tk[!up], collapse = " ") }
+      else { s <- tk[length(tk)]; rest <- paste(tk[-length(tk)], collapse = " ") }
+    }
+    paste(toupper(gsub("[^A-Za-z]", "", s)), substr(toupper(gsub("[^A-Za-z]", "", rest)), 1, 1))
+  }
+  mapply(one, name, surname, given, USE.NAMES = FALSE)
+}
+C[, sk := person_key(name, surname, given)]
+# Same surname, and the same initial unless one side has none (nsw2011 lists Penrith's winner as just "AYRES").
+same_person <- function(a, b) {
+  sa <- sub(" .*$", "", a); sb <- sub(" .*$", "", b)
+  ia <- sub("^[^ ]* ?", "", a); ib <- sub("^[^ ]* ?", "", b)
+  sa == sb & (ia == ib | !nzchar(ia) | !nzchar(ib))
+}
 dts <- election_dates()
 C[, edate := as.Date(unname(dts[election]))]
 
@@ -36,7 +63,7 @@ C[, edate := as.Date(unname(dts[election]))]
 win <- C[, {
   w <- which(elected %in% TRUE)
   if (length(w) != 1L) w <- which.max(votes)
-  .(win_class = party[w], win_nk = nk[w], win_name = name[w])
+  .(win_class = party[w], win_nk = nk[w], win_sk = sk[w], win_name = name[w])
 }, by = .(election, region, s, edate)]
 cat(sprintf("CON1  winners: %d seat-elections over %d elections\n", nrow(win), uniqueN(win$election)))
 
@@ -51,10 +78,10 @@ out <- rbindlist(lapply(pairs, function(pr) {
   cur <- unique(C[election == el, .(s, seat, region)])
   if (!nrow(cur)) return(NULL)
   ed <- as.Date(unname(dts[el])); pd <- as.Date(unname(dts[pv]))
-  pw <- win[election == pv, .(s, prev_class = win_class, sitting_nk = win_nk, sitting_name = win_name)]
+  pw <- win[election == pv, .(s, prev_class = win_class, sitting_nk = win_nk, sitting_sk = win_sk, sitting_name = win_name)]
   # the election before the previous one, for the first-term flags
   ppv <- win[region == cur$region[1] & edate < pd][edate == max(edate)]
-  ppw <- ppv[, .(s, pp_class = win_class, pp_nk = win_nk)]
+  ppw <- ppv[, .(s, pp_class = win_class, pp_nk = win_nk, pp_sk = win_sk)]
   x <- merge(cur, pw, by = "s", all.x = TRUE)
   x <- merge(x, ppw, by = "s", all.x = TRUE)
   # an intervening by-election replaces the class (and the member is unknown)
@@ -68,7 +95,21 @@ out <- rbindlist(lapply(pairs, function(pr) {
   x[, retire_reason := rt$reason[match(s, rt$s)]]
   # first-term member / party: the seat changed hands at the previous election
   x[, soph_party := !is.na(pp_class) & !is.na(prev_class) & prev_class != pp_class & is.na(by_class)]
-  x[, soph_cand := !is.na(pp_nk) & !is.na(sitting_nk) & sitting_nk != pp_nk]
+  # soph_cand, the sitting member first won the seat at the previous election or since (compared by `sk`, the
+  # same-person key), with two by-election rules checked against the seat file on 2026-10-20:
+  # - a by-election BEFORE the previous election, won by the previous winner's class: that member already held
+  #   the seat (nsw2023 Felicity Wilson, Philip Donato, Paul Scully; qld2024 Laura Gerber), so not first-term;
+  # - a by-election SINCE the previous election does not change it: the seat file follows the member who won the
+  #   previous general election (fed2019 Longman, Braddon and nsw2019 Gosford first-term; nsw2019 Orange, fed2025
+  #   Cook not), so the comparison is the same as without one.
+  ppd <- if (nrow(ppv)) ppv$edate[1] else as.Date(NA)
+  bpre <- BY[region == cur$region[1] & bdate > ppd & bdate < pd][order(bdate)][, .SD[.N], by = s][, .(s, bpre_class = by_class)]
+  x <- merge(x, bpre, by = "s", all.x = TRUE)
+  x[, soph_cand := !is.na(pp_sk) & !is.na(sitting_sk) & !same_person(sitting_sk, pp_sk) &
+                   !(!is.na(bpre_class) & bpre_class == prev_class)]
+  # No winner two elections back (the first election of a series, or a new seat): unknown, not "no", so a fill
+  # leaves it blank rather than writing a confident FALSE.
+  x[is.na(pp_sk) | is.na(sitting_sk), soph_cand := NA]
   x[, `:=`(pair = el, prev = pv)]
   x[, .(pair, prev, region, seat, s, incumbent_class, sitting_name, retiring, retire_reason, soph_cand, soph_party,
         by_election = !is.na(by_class), has_prev = !is.na(prev_class))]

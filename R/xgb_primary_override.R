@@ -316,6 +316,27 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
     rows[, n_cand_prev := ifelse(is.na(idx), 0L, n_prev$N[idx])]
   }
   rows[, n_cand_now := 1L]   # unknown pre-nomination; matches the backtest fallback
+  # AUSPOL_XGB_CONTEST: who stands, from the confirmed nomination list (AUSPOL_NOM_LIVE=1, the list the zeroing
+  # uses). Before it loads, every class is assumed to stand everywhere (stands_i 1, level_contested = level_pred),
+  # which is what the live forecast assumes today. prereg-contest-features-2026-10-20.md.
+  if (identical(Sys.getenv("AUSPOL_XGB_CONTEST", "0"), "1")) {
+    nom <- if (identical(Sys.getenv("AUSPOL_NOM_LIVE", "auto"), "1"))
+      live_nominations(seats, election = target_election, prior = prev_election)$target else NULL
+    if (is.null(nom) || !nrow(nom)) {
+      rows[, stands_i := 1L]
+      rows[, level_contested := level_pred]
+      cat(sprintf("XCT2 %s: contest features ON, no confirmed nomination list: every class assumed to stand in every seat\n",
+                  target_election))
+    } else {
+      ns <- normalise_seat(nom$seat)
+      cf <- contest_features(rep(target_election, nrow(rows)), normalise_seat(rows$seat), rows$party, rows$level_pred,
+                             paste(target_election, ns, nom$party), rep(target_election, nrow(nom)), ns)
+      rows[, stands_i := cf$stands_i]
+      rows[, level_contested := cf$level_contested]
+      cat(sprintf("XCT2 %s: contest features ON from the nomination list: %d of %d seat-classes stand (%d seats with no candidacy treated as standing)\n",
+                  target_election, sum(cf$stands_i), nrow(rows), attr(cf, "unknown_seats")))
+    }
+  }
   rows[, same_i := 0L]; rows[, same_mp_i := 0L]
   if (!is.null(returns)) {
     R <- data.table::as.data.table(returns)
@@ -598,6 +619,29 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
     cat(sprintf("SM2  %s: sitting-member shift applied to %d rows (%s)\n", .lab, sum(.add != 0),
                 paste(sprintf("%s %+.2f", .sh$group, .sh$shift), collapse = ", ")))
   }
+  # AUSPOL_CONTEST_BASE=1: the same new-to-seat fill the training base_pred carries (scripts/fit_xgb_primary_v6.R),
+  # with this election's weight fitted there on every earlier election. Who stands comes from the confirmed
+  # nomination list (AUSPOL_NOM_LIVE=1); without it nothing moves. plans/prereg-contest-base-2026-10-20.md.
+  if (identical(Sys.getenv("AUSPOL_CONTEST_BASE", "0"), "1")) {
+    .lab <- paste0(region, year)
+    .nom <- if (identical(Sys.getenv("AUSPOL_NOM_LIVE", "auto"), "1"))
+      live_nominations(seats, election = target_election, prior = prev_election)$target else NULL
+    if (is.null(.nom) || !nrow(.nom)) {
+      cat(sprintf("CB2  %s: contest base ON, no confirmed nomination list: nothing moved\n", .lab))
+    } else {
+      .cbf <- out_path("contest-base-weight.csv")
+      if (!file.exists(.cbf)) stop("AUSPOL_CONTEST_BASE=1 needs ", .cbf, " (scripts/fit_xgb_primary_v6.R)")
+      .cbw <- data.table::fread(.cbf, showProgress = FALSE)
+      .cbw <- .cbw[.cbw$pair == .lab]
+      if (nrow(.cbw) != 1L) stop("contest-base-weight.csv has ", nrow(.cbw), " rows for ", .lab, ", expected 1")
+      .st <- paste(normalise_seat(rows$seat), rows$party) %in% paste(normalise_seat(.nom$seat), .nom$party)
+      .gap <- contest_base_gap(rep(.lab, nrow(rows)), rows$seat, rows$party, rows$base_pred, rows$seat_prev_pcv,
+                               rows$level_pred, .st)
+      rows[, base_pred := base_pred + .cbw$w * .gap]
+      cat(sprintf("CB2  %s: contest base ON from the nomination list: %d new-to-seat cells moved by weight %.3f (mean gap %+.2f points)\n",
+                  .lab, sum(.gap != 0), .cbw$w, if (any(.gap != 0)) mean(.gap[.gap != 0]) else 0))
+    }
+  }
   X <- as.matrix(rows[, ..feat_cols])
   # MUST MATCH fit_xgb_primary_v6_final.R's own training DMatrix exactly --
   # that script sets base_margin=base_pred whenever AUSPOL_XGB_BASE_MARGIN is
@@ -642,4 +686,74 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   out <- 100 * out / rowSums(out)
   cat(sprintf("XG4  LIVE xgb v6 primary prediction ON for %s: %d seat-classes overridden\n", region, nrow(rows)))
   out
+}
+
+#' Who is standing, as two xgb features (`AUSPOL_XGB_CONTEST`)
+#'
+#' `stands_i` is 1 where the class has a candidacy in the seat, else 0; a seat with no candidacy at all in the
+#' list (vic2022 Narracan's deferred election) is unknown and counts as standing everywhere, as the live zeroing
+#' leaves such seats untouched. `level_contested` is the class's level where it stands:
+#' `level_pred * n_seats / max(n_contesting, 1)`, counted per election. One row per (pair, seat, party) is
+#' required. Used by `scripts/fit_xgb_primary_v6.R` (training) and [xgb_primary_predict_live()] (serving).
+#' docs/plans/prereg-contest-features-2026-10-20.md.
+#' @param pair,seat,party,level_pred The feature rows.
+#' @param cand_key `paste(election, seat, party)` of every candidacy.
+#' @param cand_election,cand_seat The candidacies' election and seat.
+#' @return data.frame(stands_i, level_contested), attribute `unknown_seats`.
+#' @noRd
+contest_features <- function(pair, seat, party, level_pred, cand_key, cand_election, cand_seat) {
+  rk <- paste(pair, seat, party)
+  if (anyDuplicated(rk)) stop("contest_features: duplicate (pair, seat, party) rows, e.g. ", rk[anyDuplicated(rk)])
+  stands <- rk %in% cand_key
+  covered <- paste(pair, seat) %in% paste(cand_election, cand_seat)
+  stands[!covered] <- TRUE
+  n_seats <- stats::ave(seq_along(seat), pair, FUN = function(i) length(unique(seat[i])))
+  n_cont <- stats::ave(as.numeric(stands), pair, party, FUN = sum)
+  out <- data.frame(stands_i = as.integer(stands), level_contested = level_pred * n_seats / pmax(n_cont, 1))
+  attr(out, "unknown_seats") <- length(unique(paste(pair, seat)[!covered]))
+  out
+}
+
+#' How far a new-to-seat candidate's baseline sits below the party's vote where it stands (`AUSPOL_CONTEST_BASE`)
+#'
+#' For each (pair, party) in `classes`, the class's statewide vote in seat-share points is `level_pred * n_seats`.
+#' Seats where it stood last time keep their `base_pred`; what is left is spread evenly over the seats where it
+#' stands for the first time (`fill`). Returns `fill - base_pred` on those new-to-seat standing cells and 0 on every
+#' other cell. Only real candidacies count as standing (a seat missing from the list moves nothing).
+#' docs/plans/prereg-contest-base-2026-10-20.md.
+#' @param pair,seat,party,base_pred,prev_share,level_pred The feature rows; `prev_share` NA or 0 means new to seat.
+#' @param stands Logical, the class has a candidacy in the seat.
+#' @param classes Single-party classes the fill applies to.
+#' @return Numeric gap, one per row.
+#' @noRd
+contest_base_gap <- function(pair, seat, party, base_pred, prev_share, level_pred, stands, classes = "ONP") {
+  if (anyDuplicated(paste(pair, seat, party))) stop("contest_base_gap: duplicate (pair, seat, party) rows")
+  n_seats <- stats::ave(seq_along(seat), pair, FUN = function(i) length(unique(seat[i])))
+  ok <- stands & party %in% classes & is.finite(base_pred) & is.finite(level_pred)
+  new <- ok & (is.na(prev_share) | prev_share == 0)
+  ret <- ok & !new
+  grp <- paste(pair, party)
+  ret_sum <- stats::ave(ifelse(ret, base_pred, 0), grp, FUN = sum)
+  k_new <- stats::ave(as.numeric(new), grp, FUN = sum)
+  fill <- pmax(0, (level_pred * n_seats - ret_sum) / pmax(k_new, 1))
+  ifelse(new, fill - base_pred, 0)
+}
+
+#' Time-forward weight on [contest_base_gap()]
+#'
+#' The no-intercept slope of `resid` (actual minus base_pred) on `gap` over earlier elections' non-zero-gap cells,
+#' SE clustered on election, shrunk toward 0 by its own signal to noise (`b * b^2 / (b^2 + se^2)`, the
+#' sitting-member convention) and clipped to `[0, 1]`. Fewer than two earlier elections gives 0.
+#' @return data.frame(w, raw, se, k = elections, n = cells).
+#' @noRd
+fit_contest_base_weight <- function(gap, resid, pair, target_election) {
+  use <- gap != 0 & is.finite(gap) & is.finite(resid) & elections_before(pair, target_election)
+  g <- gap[use]; r <- resid[use]; p <- pair[use]
+  k <- length(unique(p))
+  if (k < 2L || sum(g^2) == 0) return(data.frame(w = 0, raw = NA_real_, se = NA_real_, k = k, n = length(g)))
+  b <- sum(r * g) / sum(g^2)
+  u <- tapply(g * (r - b * g), p, sum)
+  se <- sqrt(k / (k - 1) * sum(u^2)) / sum(g^2)
+  w <- if (isTRUE(b^2 + se^2 > 0)) b * b^2 / (b^2 + se^2) else 0
+  data.frame(w = min(1, max(0, w)), raw = b, se = se, k = k, n = length(g))
 }
