@@ -411,13 +411,21 @@ for (pr in PAIRS) {
   # plans/prereg-seat-context-complete-2026-09-28.md.
   if (identical(Sys.getenv("AUSPOL_SEAT_CONTEXT_FILL", "1"), "1")) {
     SCX <- fread(out_path("seat-context.csv"), showProgress = FALSE)
-    scx <- SCX[SCX$pair == pr$election, list(.s = s, cx_class = incumbent_class, cx_ret = retiring,
+    scx <- SCX[SCX$pair == pr$election, list(.s = s, cx_class = incumbent_class, cx_ret = retiring, cx_soph = soph_cand,
                                               cx_margin = if ("margin_est" %in% names(SCX)) margin_est else NA_real_)]
     m[, .s := normalise_seat(seat)]
     m <- merge(m, scx, by = ".s", all.x = TRUE)
     n_fill <- sum(is.na(m$is_incumbent_party) & !is.na(m$cx_class))
     m[is.na(is_incumbent_party) & !is.na(cx_class), is_incumbent_party := party == cx_class]
     m[is.na(retirement) & !is.na(cx_ret), retirement := cx_ret]
+    # AUSPOL_SEAT_CONTEXT_SOPH=1: the first-term-member flag from our corpus where the seat file has none (25 of
+    # 35 elections), validated 96.8% against the seat file over 913 seats (2026-10-20). Blanks only.
+    # plans/prereg-first-term-fill-2026-10-20.md.
+    if (identical(Sys.getenv("AUSPOL_SEAT_CONTEXT_SOPH", "0"), "1")) {
+      n_soph <- sum(is.na(m$soph_cand) & !is.na(m$cx_soph))
+      m[is.na(soph_cand) & !is.na(cx_soph), soph_cand := cx_soph]
+      if (n_soph) cat(sprintf("SCS  %s: first-term member filled from seat-context for %d rows\n", pr$election, n_soph))
+    }
     # AUSPOL_SEAT_CONTEXT_MARGIN=1: Labor's estimated two-party margin at the
     # previous election (validated r 0.984, mean |diff| 1.64 against the seat
     # file). Previous swing is NOT filled (r 0.875, below the 0.9 bar).
@@ -428,7 +436,7 @@ for (pr in PAIRS) {
     # file only where no estimate does; the live forecast does the same.
     if (identical(.mmode, "all"))
       m[is.finite(cx_margin), margin := cx_margin]
-    m[, c(".s", "cx_class", "cx_ret", "cx_margin") := NULL]
+    m[, c(".s", "cx_class", "cx_ret", "cx_soph", "cx_margin") := NULL]
     if (n_fill) cat(sprintf("SCF  %s: incumbent/retiring filled from seat-context for %d rows\n", pr$election, n_fill))
   }
 

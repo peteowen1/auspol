@@ -231,6 +231,12 @@ fi
 if at_least 3 && [ "${AUSPOL_XGB_BOOTH:-0}" = "1" ]; then
   python scripts/build_booth_features.py > "$LOG/s3_booth.log" 2>&1 || { echo "!! build_booth_features.py failed -- see $LOG/s3_booth.log"; exit 1; }
 fi
+# SEAT CONTEXT (AUSPOL_SEAT_CONTEXT_FILL, shipped): incumbent party, retiring and first-term member from our own
+# corpus, read by stage 3. It was outside the pipeline until 2026-10-20 and had gone stale at 24 of 35 elections,
+# so the shipped fill reached none of nsw2011/15, nt, qld2012-17, sa2010-18. ~7 s.
+if at_least 3; then
+  Rscript scripts/build_seat_context.R > "$LOG/s3_seat_context.log" 2>&1 || { echo "!! build_seat_context.R failed -- see $LOG/s3_seat_context.log"; exit 1; }
+fi
 # COUNCIL HISTORY (AUSPOL_XGB_COUNCIL): read by stage 3 and the live forecast.
 # Rebuilt whenever stage 3 runs, from the parsed council results on disk.
 if at_least 3; then

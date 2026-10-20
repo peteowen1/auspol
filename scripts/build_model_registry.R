@@ -686,6 +686,10 @@ CLASSIFY <- list(
   AUSPOL_SEAT_CONTEXT_FILL = paste(
     "FITTING-TIME. SHIPPED 2026-09-28 as v46: fills incumbent party / retiring member from output/seat-context.csv when the xgb training",
     "table is built (scripts/fit_xgb_primary_v6.R); baked into the trained model, no harness or live read."),
+  AUSPOL_SEAT_CONTEXT_SOPH = paste(
+    "FITTING-TIME ARM (0): fills the first-term-member flag (soph_cand) from output/seat-context.csv where the seat",
+    "file has none, in scripts/fit_xgb_primary_v6.R; baked into the trained model. Live reads the vic2026 seat file,",
+    "which has the flag. plans/prereg-first-term-fill-2026-10-20.md"),
   AUSPOL_SEAT_CONTEXT_MARGIN = paste(
     "ARM, not shipped (default 0; phase 2 of plans/prereg-seat-context-complete-2026-09-28.md). Read in scripts/fit_xgb_primary_v6.R",
     "(training) and R/xgb_primary_override.R (the 'all' mode, live). Off, so nothing differs by entry point."),
