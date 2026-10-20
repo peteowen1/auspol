@@ -65,3 +65,29 @@ Nation; the 1e-4 floor; AEF-7.
 (d) A class's statewide total moving more than 1 point in any election: reported to Pete.
 
 Shipping is Pete's call on the result.
+
+## RESULT (2026-10-20): REFUSED on clauses 1-4
+
+One isolated stage-3 rebuild at 20k from 5e4fe20 with the switch on (`deciding-runs/contest-base-rebuild/`, 74 min;
+CB1 "317 cells moved in 13 elections (mean +1.05 points) ... vic2026 weight 0.437"), against the 874d65c baseline
+copy. `scripts/score_contest_feats.R`, seat-winner log loss change, lower is better:
+
+| clause | floor 1e-6 | floor 1e-4 | verdict |
+|---|---|---|---|
+| 1 primary, 2,051 target seats in 27 elections | +0.0036 (SE 0.0023) | +0.0014 (SE 0.0009) | WORSE by more than 1 SE |
+| 2 guard, all 2,931 seats | +0.0025 (SE 0.0016) | +0.0009 (SE 0.0006) | FAIL |
+| 3 leave-one-election-out | 0 of 27 | 0 of 27 | FAIL |
+| 4 elections worse by more than 2 SE | 2 (nsw2023, wa2017) | 2 | FAIL |
+
+Split by where the change acts (not voted, added after seeing the result): the 317 seats whose One Nation base_pred
+moved +0.0022 (SE 0.0017); the other 2,614 seats, moved only by the retrained trees, +0.0026 (SE 0.0018), +0.0008
+(SE 0.0007) at 1e-4. So it is not worse only through retrain churn: it does not help seat calls where it acts either.
+
+The shares did improve where it acts: One Nation new-to-seat contested RMSE 5.632 -> 5.488 points (460 cells),
+nsw2023's 11 cells 8.07 -> 5.65 (mean 2.31 -> 5.08, actual 9.67); all minor cells 4.266 -> 4.257. fed2016 unmoved
+(weight 0). nsw2023's seat losses are seats One Nation did not contest (Pittwater, Vaucluse: the retrained trees
+moved the teal independent up), and sa2026 Ngadjuri lost 0.896 -> 0.467 as One Nation's rise ate into the winner.
+New-to-seat One Nation candidates almost never win, so a better share for them buys no seat-call accuracy.
+
+Switch stays "0". This closes the partial-contest line for seat calls: the trees-only and base_pred versions are both
+refused, and the base_pred version is the strongest one built from what the pipeline has.

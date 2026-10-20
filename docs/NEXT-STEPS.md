@@ -49,10 +49,11 @@ TCP-consistency check, arm H shipped, heavy-tail arm T REFUSED 19 Oct, F21 surge
   target seats +0.0041 (SE 0.0020) worse, all seats +0.0036 (SE 0.0017), leave-one-out 0/31, 5 elections worse. The
   trees moved nsw2023's new-to-seat One Nation cells DOWN (~3.1 -> 2.9 vs actual 9.7): they fit a residual on
   base_pred (~1.5) and will not add +8. Switch stays "0" (`plans/prereg-contest-features-2026-10-20.md`).
-- OPEN, high value for Vic: partial-contest concentration, the base_pred version. Traced (trees never told who
-  stands; `reviews/miss-diagnosis-aef7-2026-10-19.md`); the trees-only fix failed, so the next arm puts the
-  contested-seat level (level_pred x n / k, shrunk) into base_pred for new-to-seat contesting cells. Needs a prereg
-  first; every class (Vic 2026: Legalise Cannabis, Family First, Libertarians).
+- DONE contest base (`AUSPOL_CONTEST_BASE`, new-to-seat One Nation base_pred toward its vote where it stands),
+  REFUSED 20 Oct at 20k: target seats +0.0036 (SE 0.0023), all seats +0.0025 (SE 0.0016), leave-one-out 0/27; the 317
+  seats it acts on +0.0022 (SE 0.0017). Shares improved (nsw2023 new-to-seat RMSE 8.07 -> 5.65) but new-to-seat
+  One Nation rarely wins, so seat calls do not. Partial-contest line closed for seat calls
+  (`plans/prereg-contest-base-2026-10-20.md`). IND/OTH/OTH_RIGHT not attempted: many parties share one level.
 - OPEN, from the same diagnosis: Greens over-called in high-Greens seats by the trees (Melbourne, Griffith, Northcote);
   first-term Labor members +4.0 (SE 0.7, n 39); retiring Labor members about -2.0 (n 34); Dickson's published stage
   moved a correct tree LNP figure +5.5.
