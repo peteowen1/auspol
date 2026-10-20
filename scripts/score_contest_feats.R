@@ -3,11 +3,13 @@
 # path). Standard rule: targets are seats with any cell moved > 0.05 points; primary target-seat seat-winner log
 # loss, guard all seats, leave-one-election-out, no election worse by > 2 SE of its own seats, not two seats.
 # Lower is better everywhere. Codes SCF0-SCF8.
-#   Rscript scripts/score_contest_feats.R <baseline repo copy> <arm repo copy> [eps=1e-6]
+#   Rscript scripts/score_contest_feats.R <baseline repo copy> <arm repo copy> [eps=1e-6] [targets.csv]
+# targets.csv (columns pair, seat) names the target seats in advance instead of "a cell moved > 0.05".
 suppressMessages(library(data.table))
 a <- commandArgs(trailingOnly = TRUE)
-if (!length(a) %in% 2:3) stop("usage: score_contest_feats.R <baseline repo copy> <arm repo copy> [eps]")
-EPS <- if (length(a) == 3) as.numeric(a[3]) else 1e-6
+if (!length(a) %in% 2:4) stop("usage: score_contest_feats.R <baseline repo copy> <arm repo copy> [eps] [targets.csv]")
+EPS <- if (length(a) >= 3) as.numeric(a[3]) else 1e-6
+TGT <- if (length(a) == 4) fread(a[4], showProgress = FALSE) else NULL
 rd <- function(d) fread(file.path(d, "output", "published-predictions.csv"), showProgress = FALSE)
 B <- rd(a[1]); A <- rd(a[2])
 cat(sprintf("SCF0 baseline %d cells / %d elections; arm %d cells / %d elections; floor %g\n",
@@ -23,9 +25,14 @@ if (anyDuplicated(S[, .(pair, seat)])) stop("SCF0! more than one winner row in a
 S[, d := -log(pmax(pa, EPS)) + log(pmax(pb, EPS))]
 moved <- m[, .(mv = max(abs(sa - sb), na.rm = TRUE)), by = .(pair, seat)]
 S <- merge(S, moved, by = c("pair", "seat"))
-S[, target := mv > 0.05]
-cat(sprintf("SCF1 %d seats in %d elections; targets (a cell moved > 0.05 points): %d seats in %d elections\n",
-            nrow(S), uniqueN(S$pair), sum(S$target), uniqueN(S[target == TRUE]$pair)))
+if (is.null(TGT)) S[, target := mv > 0.05] else {
+  S[, target := paste(pair, seat) %in% paste(TGT$pair, TGT$seat)]
+  n_named <- nrow(unique(TGT[, .(pair, seat)]))
+  if (sum(S$target) != n_named) stop("SCF1! ", n_named, " named targets, ", sum(S$target), " found among scored seats")
+}
+cat(sprintf("SCF1 %d seats in %d elections; targets (%s): %d seats in %d elections\n",
+            nrow(S), uniqueN(S$pair), if (is.null(TGT)) "a cell moved > 0.05 points" else paste("named in", a[4]),
+            sum(S$target), uniqueN(S[target == TRUE]$pair)))
 
 cl_se <- function(x) {   # mean change and its SE clustered on election (per-election sums)
   g <- x[, .(s = sum(d), n = .N), by = pair]; G <- nrow(g); N <- sum(g$n); mu <- sum(g$s) / N
