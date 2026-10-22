@@ -78,7 +78,10 @@ TCP-consistency check, arm H shipped, heavy-tail arm T REFUSED 19 Oct, F21 surge
   39.6 -> 45.6 vs actual 33.5; LNP by-election winner died before the election, so an incumbent party with nobody
   sitting), Morwell vic2022 +0.79, Kalamunda wa2025 +0.45, of +2.61 total. By-election gains in general are not
   over-called: 16 of 22 held at the next general election, our mean P 0.64. Scratchpad fillcheck/{check,moved,revert}.R.
-  Option if pursued: a time-decay arm on the 11 old elections, `quick_arm.R` on AEF-7 (~15 min). My lean: leave it.
+  Pete chose to test it: `AUSPOL_TRAIN_DECAY_H=4` (`plans/prereg-train-decay-4-2026-10-22.md`). quick_arm cannot
+  screen it (the decay acts at stage 4 and quick_arm reuses cached tree predictions), so one isolated rebuild from
+  stage 4 is SCHEDULED 01:00 23 Oct (Scheduled Task `auspol-decay4-rebuild`, at 883a773, ~45 min). It refuses to start
+  below 8 GB available. Next session: read `deciding-runs/decay4-rebuild/STATUS`, then score per the prereg.
 - OPEN, from the same diagnosis: Greens over-called in high-Greens seats by the trees (Melbourne, Griffith, Northcote);
   retiring Labor members about -2.0 (n 34); Dickson's published stage moved a correct tree LNP figure +5.5.
 - OPEN (Pete): the 28 old notes in the ledger page's notes store now duplicate `docs/aef7-seat-notes.csv` under "Your
