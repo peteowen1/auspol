@@ -35,7 +35,7 @@
   const polling = performance.getEntriesByType("resource").map((e) => e.name).filter((n) => /guide-victoria-/.test(n));
   const cx = cor(box.map((x) => x[0]), cen.map((x) => x[0])), cy = cor(box.map((x) => x[1]), cen.map((x) => x[1]));
   // Refuse rather than hand back calls on the wrong districts (paths no longer in feature order) or with an unread colour.
-  if (gj.features.length !== 88 || Math.abs(cx) < 0.95 || Math.abs(cy) < 0.95)
+  if (gj.features.length !== 88 || !(Math.abs(cx) >= 0.95) || !(Math.abs(cy) >= 0.95))   // NaN stops too
     return `STOP: path order no longer matches the geojson (features ${gj.features.length}, cor_x ${cx.toFixed(3)}, cor_y ${cy.toFixed(3)})`;
   if (tally.UNK) return `STOP: ${tally.UNK} district(s) have a colour cls() does not know: ${rows.filter((r) => r.split(",")[1] === "UNK").join(" | ")}`;
   return {
