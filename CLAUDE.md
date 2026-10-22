@@ -354,9 +354,11 @@ same discipline as `docs/DATA-REGISTRY.md`.
 **Two reading traps.** The table's columns run `fit_seats` (published)
 **first**, then `fed | nsw | qld | sa | vic | wa` — misread once as the
 other order, which turned a deliberate exclusion into a reported bug. And
-the generator only greps the harness files and `fit_seats_full.R`, so a
-switch read inside `R/` (not the harness itself) shows "UNEXPLAINED" even
-when it's correctly wired — `AUSPOL_SD_DEPARTED` is the current example.
+a row of `NO`s can still be correct wiring: the entry-point columns only see
+reads in the script itself, so check the last column, the `R/` files that
+read the switch. Since 2026-10-23 the scan parses the code: comments and
+longer switch names no longer count as a read (audit F20). It still cannot see
+a value: a hardcoded constant beside the read scores "yes".
 
 There are **six** candidate-seat backtest harnesses — `backtest_candidate_fed.R`,
 `_vic.R`, `_nsw.R`, `_sa.R`, `_wa.R`, `_qld.R` (built 2026-09-07) — and they
@@ -614,9 +616,7 @@ it by asking directly whether published defaults use base_margin now. Before
 claiming a fix does or doesn't reach "the published number", check **which of
 these two functions the script you're actually asking about calls** — grep
 `fit_seats_full.R` specifically, don't reason from `xgb_primary_override()`'s
-docstring alone. `docs/MODEL-REGISTRY.md`'s per-switch table can mislead here
-too: it lists `AUSPOL_XGB_PRIMARY` as reaching `fit_seats_full.R` ("yes"),
-which is very likely a grep substring false-positive against
-`AUSPOL_XGB_PRIMARY_LIVE`/`_OOF`/`_SD` mentions in comments, not a real call
-site — `fit_seats_full.R` has no direct call to `xgb_primary_override()`.
-Verify with a function-name grep, not the registry table, when this matters.
+docstring alone. `docs/MODEL-REGISTRY.md` listed `AUSPOL_XGB_PRIMARY` as
+reaching `fit_seats_full.R` until 2026-10-23; that "yes" was the old grep
+matching `AUSPOL_XGB_PRIMARY_LIVE`/`_OOF`/`_SD`, and the parsed scan now says
+NO, which is correct: `fit_seats_full.R` never calls `xgb_primary_override()`.

@@ -53,9 +53,11 @@ contest features / contest base / partial-contest arm A refused, first-term fill
   values. Each refresh: `AUSPOL_SALIENCE_TO=<date> Rscript scripts/fetch_salience_vic2026_full.R` (~100 requests,
   resumable; anchor now Jacinta Allan, was Daniel Andrews), then `scripts/build_vic2026_salience_jump.R`
   (output/vic2026-salience-jump.csv). Not yet wired into the live forecast.
-- OPEN F8, F10, F12-F20 (F5 and F9 REFUSED, F7 waiting above, IND override shipped as arm H): post-xgb tables fitted
-  on residuals the shares no longer carry, HTV overwriting xgb flows, registry greps comments, and the rest of the
-  audit's list (`reviews/pipeline-overwrite-audit-2026-10-18.md`).
+- OPEN F8, F10, F12-F19 (F5 and F9 REFUSED, F7 waiting above, IND override shipped as arm H): post-xgb tables fitted
+  on residuals the shares no longer carry, HTV overwriting xgb flows, and the rest of the audit's list
+  (`reviews/pipeline-overwrite-audit-2026-10-18.md`). F20 DONE 23 Oct: the model registry parses the code (comments
+  and longer names no longer count) and lists each switch's `R/` readers. It found one new gap, inert today: the
+  harnesses never read `AUSPOL_MINOR_DEFECT` (only `_BASE_PRED`), so an arm setting it to 0 would not reach a backtest.
 
 ## 2026-10-17 (READ FIRST)
 

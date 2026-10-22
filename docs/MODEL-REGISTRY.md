@@ -1,6 +1,6 @@
 # Model registry
 
-**Generated 2026-10-20 by `scripts/build_model_registry.R`. Do not hand-edit** --
+**Generated 2026-10-23 by `scripts/build_model_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate whenever a switch is added to
 `published_flags.R` or a harness's wiring changes.
 
@@ -33,248 +33,251 @@ separate model code.
 
 ## Switch parity (234 switches from `published_flags.R`, 7 entry points)
 
-| switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa |
-|---|---|---|---|---|---|---|---|
-| `AUSPOL_ANCHOR_EXHAUST` | yes | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_ANCHOR_IMPLIED` | yes | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_ASAT_MIN_PAIRS` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_BREAKOUT_MIX` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_BREAKOUT_MIX_MIN_P` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_BUCKET_SPLIT` | yes | yes | NO | NO | NO | NO | NO |
-| `AUSPOL_BUCKET_TOTAL` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_BYELEC_DEPARTED` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_BYELEC_LEVEL` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_BYELECTION_FILL` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_BYELECTION_MP` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_BYELECTION_PRIOR` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_CENSUS_FILE` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_CLASS_CONSERVE` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_CLOSE_PROPORTIONAL` | yes | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_COALITION_SPLIT` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_COALITION_SPLIT_F` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_COMPOSITION_SD` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_CONSERVE_SHRINK_K` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_CONSERVE_TF` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_CONTEST_BASE` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_COUNCIL_EXTRA` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_COV_LOO` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_COV_TF` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_CROSS_SEAT_VOTE` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_DEFECT_BY_LEVEL` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_DEFECT_CONSERVE` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_DEFECT_DISCOUNT` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_DEFECT_POOLED` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_DEFECT_SIZE` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_DEFECTOR_STATE` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_DEMO_RESID` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_DEMO_RESID_FULL` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_DEMO_RESID_SHUFFLE` | NO | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_DEPARTED_FED` | yes | NO | yes | yes | yes | yes | NO |
-| `AUSPOL_DEPARTED_HOLD` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_DEPARTED_HOLD_MIN_PRIOR` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_DEPARTED_ORIGIN` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_DEPARTED_SUCCESSOR` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_DEV_SLOPE` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_DEV_SLOPE_MODE` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_DISPERSION_SLOPE` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_EDU_RESID` | NO | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_EDU_RESID_FEATURE` | NO | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_EDU_RESID_SHUFFLE` | NO | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_ERROR_DIST` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_ERROR_DIST_COMP` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_FALLBACK_SMOOTH` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_FIT_SLOPES` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_FLOW_ASAT` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_FLOW_CELL_SD` | NO | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_FLOW_FRAG` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_FLOW_MODEL_TAG` | NO | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_FLOW_RATE_HL` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_FLOW_SD` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_FLOW_SHIFT` | yes | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_FLOW_SHRINK_K` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_FLOW_TF` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_FORCE_FP` | yes | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_FORCE_FP_RULE` | yes | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_FORECAST_MODE` | NO | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_FP_EXTRA_SD` | yes | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_FP_SD_MODE` | yes | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_FUND_TIME_FORWARD` | NO | yes | NO | NO | NO | NO | NO |
-| `AUSPOL_HARNESS_SW_DRAWS` | NO | NO | yes | yes | yes | yes | yes |
-| `AUSPOL_HC_DEFECTOR` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_HISTORIC_ELECTED_BACKFILL` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_HONOUR_DEPARTED` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_HTV_EXCLUDE` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_HTV_FLOW` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_IND_MIXTURE` | NO | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_IND_PERSON` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_IND_PERSON_CARRY` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_IND_PERSON_DIR` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_IND_SALIENCE` | NO | yes | NO | NO | NO | NO | NO |
-| `AUSPOL_IND_TYPICAL` | NO | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_IND_TYPICAL_STAT` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_INSURGENCY_SHRINK` | yes | yes | NO | NO | NO | NO | NO |
-| `AUSPOL_LEADER_SEAT` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_LEADERS_SUPPLEMENT` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_LEVEL_FED_GAP_HL` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_LEVEL_FED_R` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_LEVEL_MODE` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_LEVEL_MULT_IND` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_LEVEL_MULT_OTH` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_LEVEL_RECENT` | yes | yes | NO | NO | NO | NO | NO |
-| `AUSPOL_LEVEL_RECENT_HALFLIFE` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_LEVEL_RECIPE` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_LEVEL_SD` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_LIVE_DEFECT_FIT` | yes | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_LIVE_DRAW_BUCKET` | yes | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_LIVE_LEVEL_ANCHOR` | yes | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_LIVE_LEVEL_SPLIT` | yes | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_LIVE_SEATPREV_RAW` | yes | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_MAJOR_DEPARTED` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_MAJOR_SLOPE` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_MINOR_DEFECT` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_MINOR_DEFECT_BASE_PRED` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_MINOR_DEFECT_CONSERVE` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_MP_SLOPE` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_MP_SLOPE_FILE` | NO | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_MP_SLOPE_TF` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_N_SIMS` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_NB_TARGET` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_NEW_IND_SHRINK` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_NEW_IND_SHRINK_CAP` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_NOM_LIVE` | yes | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_NOM_ZERO` | NO | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_NOM_ZERO_ORDER` | NO | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_NOTIONAL` | NO | yes | NO | NO | NO | NO | NO |
-| `AUSPOL_NSW_THIN_WALK` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_ONP_CONC_SD` | NO | NO | NO | yes | yes | NO | NO |
-| `AUSPOL_ONP_CV` | yes | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_ONP_FIX` | yes | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_ONP_ORDER` | yes | NO | yes | yes | yes | NO | NO |
-| `AUSPOL_OTHERS_SCALE` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_PARTY_COR` | yes | yes | yes | yes | yes | yes | NO |
-| `AUSPOL_PB_COALITION_COMBINED` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_POLL_ARCHIVE` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_POLL_BT` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_POLL_PB` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_POLL_SOURCE` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_POOL_BY_JURISDICTION` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_PUBLISH_NSW2027` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_QLD_CUTOFF` | NO | yes | NO | yes | yes | yes | NO |
-| `AUSPOL_QLD_FLOWS` | yes | yes | NO | yes | yes | yes | NO |
-| `AUSPOL_REENTRY` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_REENTRY_GAP` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_REENTRY_LINK` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_REENTRY_SPLIT` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_REENTRY_WINSOR` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SA_CUTOFF` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SA_FLOWS` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SALIENCE_BLEND` | yes | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SALIENCE_BLEND_ONCE` | yes | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SALIENCE_EXP_SD` | NO | yes | yes | yes | yes | yes | NO |
-| `AUSPOL_SALIENCE_EXPECTED` | yes | yes | yes | yes | yes | yes | NO |
-| `AUSPOL_SALIENCE_PCTILE_NZ` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SALIENCE_SMOOTH` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SALIENCE_SURGE_V2` | yes | yes | yes | yes | yes | yes | yes* |
-| `AUSPOL_SD_DEPARTED` | NO | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_SEAT_CONTEXT_FILL` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_CONTEXT_MARGIN` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_CONTEXT_SOPH` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_POLL_ALLPOLLS` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_POLL_BLEND` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_SEAT_POLL_COALITION_DEDUP` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_POLL_CORRECTIONS` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_POLL_DECAY` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_POLL_ELECTION_ERR` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_POLL_FIRM_FLOOR` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_POLL_FIRM_SHARED` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_POLL_GROUPS` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_POLL_HANDKEYED` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_POLL_HEAVY_TAIL` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_POLL_IND_DIRECT` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_POLL_IND_MAP` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_POLL_IND_WEIGHT` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_POLL_MATCH` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_POLL_MODELVAR_ALL` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_POLL_MRP_NAME` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_POLL_NAMED_ONLY` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_POLL_PRECISION_BLEND` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_POLL_PRIOR` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_POLL_PRIOR_SD` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_POLL_SALIENCE_VAR` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_POLL_SIZEVAR` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_POLL_SOURCES` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_POLL_SPLIT_ALL` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_POLL_TPP_SOURCE` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_POLL_W_SINGLE_CLUSTER` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SEAT_SD_MULT` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_SEAT_SPREAD_SRC` | NO | yes | yes | yes | yes | yes | NO |
-| `AUSPOL_SEAT_SWING_PORT` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_SEAT_SWING_PORT_NOCLIFF` | NO | NO | NO | NO | NO | NO | yes |
-| `AUSPOL_SEAT_SWING_PORT_WA` | NO | NO | NO | NO | NO | NO | yes |
-| `AUSPOL_SEED` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_SHIP_TIME_FORWARD` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SHRINK` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_SIM_ENGINE` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SITTING_MEMBER_ADJ` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SIZE_SD` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SLOPE_SHRINK` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SPLIT_SLOPE` | NO | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_STATE_DEV` | NO | yes | NO | NO | NO | NO | NO |
-| `AUSPOL_STATE_DEV_SHUFFLE` | NO | yes | NO | NO | NO | NO | NO |
-| `AUSPOL_STATE_NOTIONAL` | NO | NO | yes | yes | yes | yes | yes |
-| `AUSPOL_STATE_POLL_EXTRA` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_STATE_POLL_POOL` | NO | yes | NO | NO | NO | NO | NO |
-| `AUSPOL_SURGE_FROM_ZERO` | yes | yes | yes | yes | yes | yes | NO |
-| `AUSPOL_SURGE_H` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_SURGE_H_TF` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SURGE_RECIPIENT` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_SURGE_SCALE` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_SURGE_SOURCE` | yes | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_SW_NET_LIVE` | yes | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_THIN_CYCLE` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_TIME_FORWARD_FITS` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_TRAIN_COMPLETENESS` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_TRAIN_DECAY_H` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_TRAIN_DEMEAN` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_TRAIN_SKIP_PAIRS` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_TREND_RW_MULT` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_TREND_SIGMAS` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_TREND_SZC` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_UPSET_FLOOR` | yes | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_WA_CUTOFF` | NO | yes | NO | yes | yes | yes | NO |
-| `AUSPOL_WA_DROP_3C` | NO | yes | NO | yes | yes | yes | NO |
-| `AUSPOL_WA_DROP_LNP` | NO | yes | NO | yes | yes | yes | NO |
-| `AUSPOL_WA_FLOWS` | yes | yes | NO | yes | yes | yes | NO |
-| `AUSPOL_XGB_BASE_DELTA` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_XGB_BASE_DELTA_TOL` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_XGB_BASE_MARGIN` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_XGB_BASE_RECORD` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_XGB_BOOTH` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_XGB_CONTEST` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_XGB_COUNCIL` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_XGB_DEPARTED_SIDE` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_XGB_ENDORSE` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_XGB_ENSEMBLE` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_XGB_FLOWS` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_XGB_PRIMARY` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_XGB_PRIMARY_LIVE` | yes | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_XGB_PRIMARY_OOF` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_XGB_PRIMARY_SD` | NO | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_XGB_PRIMARY_SD_CLASSES` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_XGB_PRIMARY_SD_SRC` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_XGB_RATIO_FEATS` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_XGB_SEATPREV_NAFILL` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_XGB_SEED` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_XGB_SENATE` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_XGB_SURGE` | NO | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_XGB_SURGE_SRC` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_ZERO_ABSENT` | NO | NO | NO | NO | NO | NO | NO |
+The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
+
+| switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa | read in `R/` |
+|---|---|---|---|---|---|---|---|---|
+| `AUSPOL_ANCHOR_EXHAUST` | yes | NO | NO | NO | NO | NO | NO | forecast_mode.R |
+| `AUSPOL_ANCHOR_IMPLIED` | yes | NO | NO | NO | NO | NO | NO | forecast_mode.R |
+| `AUSPOL_ASAT_MIN_PAIRS` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_BREAKOUT_MIX` | NO | NO | NO | NO | NO | NO | NO | breakout_mix.R |
+| `AUSPOL_BREAKOUT_MIX_MIN_P` | NO | NO | NO | NO | NO | NO | NO | breakout_mix.R |
+| `AUSPOL_BUCKET_SPLIT` | yes | NO | NO | NO | NO | NO | NO | forecast_statewide.R |
+| `AUSPOL_BUCKET_TOTAL` | NO | NO | NO | NO | NO | NO | NO | forecast_mode.R, forecast_statewide.R |
+| `AUSPOL_BYELEC_DEPARTED` | NO | NO | NO | NO | NO | NO | NO | candidate_returns.R |
+| `AUSPOL_BYELEC_LEVEL` | NO | NO | NO | NO | NO | NO | NO | candidate_returns.R |
+| `AUSPOL_BYELECTION_FILL` | NO | NO | NO | NO | NO | NO | NO | byelection_prior.R |
+| `AUSPOL_BYELECTION_MP` | NO | NO | NO | NO | NO | NO | NO | byelection_prior.R, candidate_returns.R |
+| `AUSPOL_BYELECTION_PRIOR` | yes | yes | yes | yes | yes | yes | yes | byelection_prior.R |
+| `AUSPOL_CENSUS_FILE` | NO | NO | NO | NO | NO | NO | NO | demographic_residual.R |
+| `AUSPOL_CLASS_CONSERVE` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R |
+| `AUSPOL_CLOSE_PROPORTIONAL` | yes | NO | NO | NO | NO | NO | NO | forecast_mode.R |
+| `AUSPOL_COALITION_SPLIT` | NO | NO | NO | NO | NO | NO | NO | coalition_split.R |
+| `AUSPOL_COALITION_SPLIT_F` | NO | NO | NO | NO | NO | NO | NO | coalition_split.R |
+| `AUSPOL_COMPOSITION_SD` | NO | NO | NO | NO | NO | NO | NO | size_sd.R |
+| `AUSPOL_CONSERVE_SHRINK_K` | NO | NO | NO | NO | NO | NO | NO | candidate_returns.R |
+| `AUSPOL_CONSERVE_TF` | NO | NO | NO | NO | NO | NO | NO | candidate_returns.R |
+| `AUSPOL_CONTEST_BASE` | NO | NO | NO | NO | NO | NO | NO | xgb_primary_override.R |
+| `AUSPOL_COUNCIL_EXTRA` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_COV_LOO` | NO | NO | NO | NO | NO | NO | NO | statewide_cor.R |
+| `AUSPOL_COV_TF` | NO | NO | NO | NO | NO | NO | NO | statewide_cor.R |
+| `AUSPOL_CROSS_SEAT_VOTE` | NO | NO | NO | NO | NO | NO | NO | candidate_returns.R |
+| `AUSPOL_DEFECT_BY_LEVEL` | NO | NO | NO | NO | NO | NO | NO | candidate_returns.R |
+| `AUSPOL_DEFECT_CONSERVE` | NO | NO | NO | NO | NO | NO | NO | candidate_returns.R |
+| `AUSPOL_DEFECT_DISCOUNT` | yes | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_DEFECT_POOLED` | NO | NO | NO | NO | NO | NO | NO | candidate_returns.R |
+| `AUSPOL_DEFECT_SIZE` | NO | NO | NO | NO | NO | NO | NO | candidate_returns.R |
+| `AUSPOL_DEFECTOR_STATE` | NO | NO | NO | NO | NO | NO | NO | defector_state.R |
+| `AUSPOL_DEMO_RESID` | yes | yes | yes | yes | yes | yes | yes | demographic_residual.R |
+| `AUSPOL_DEMO_RESID_FULL` | NO | NO | NO | NO | NO | NO | NO | demographic_residual.R |
+| `AUSPOL_DEMO_RESID_SHUFFLE` | NO | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_DEPARTED_FED` | yes | NO | NO | NO | NO | NO | NO | departed_fed.R |
+| `AUSPOL_DEPARTED_HOLD` | yes | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_DEPARTED_HOLD_MIN_PRIOR` | yes | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_DEPARTED_ORIGIN` | yes | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_DEPARTED_SUCCESSOR` | yes | yes | yes | yes | yes | yes | yes | departed_successor.R, new_ind_shrink.R |
+| `AUSPOL_DEV_SLOPE` | NO | NO | NO | NO | NO | NO | NO | dev_slope.R |
+| `AUSPOL_DEV_SLOPE_MODE` | yes | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_DISPERSION_SLOPE` | yes | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_EDU_RESID` | NO | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_EDU_RESID_FEATURE` | NO | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_EDU_RESID_SHUFFLE` | NO | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_ERROR_DIST` | NO | NO | NO | NO | NO | NO | NO | error_dist.R |
+| `AUSPOL_ERROR_DIST_COMP` | NO | NO | NO | NO | NO | NO | NO | error_dist.R |
+| `AUSPOL_FALLBACK_SMOOTH` | yes | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_FIT_SLOPES` | yes | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_FLOW_ASAT` | NO | NO | NO | NO | NO | NO | NO | xgb_flow_override.R |
+| `AUSPOL_FLOW_CELL_SD` | NO | yes | yes | yes | yes | yes | yes | xgb_flow_override.R |
+| `AUSPOL_FLOW_FRAG` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_FLOW_MODEL_TAG` | NO | yes | yes | yes | yes | yes | yes | xgb_flow_override.R |
+| `AUSPOL_FLOW_RATE_HL` | NO | NO | NO | NO | NO | NO | NO | xgb_flow_override.R |
+| `AUSPOL_FLOW_SD` | yes | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_FLOW_SHIFT` | yes | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_FLOW_SHRINK_K` | yes | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_FLOW_TF` | NO | NO | NO | NO | NO | NO | NO | xgb_flow_override.R |
+| `AUSPOL_FORCE_FP` | yes | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_FORCE_FP_RULE` | yes | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_FORECAST_MODE` | NO | yes | NO | NO | NO | NO | NO | forecast_statewide.R |
+| `AUSPOL_FP_EXTRA_SD` | NO | NO | NO | NO | NO | NO | NO | forecast_statewide.R |
+| `AUSPOL_FP_SD_MODE` | yes | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_FUND_TIME_FORWARD` | NO | yes | NO | NO | NO | NO | NO | forecast_statewide.R |
+| `AUSPOL_HARNESS_SW_DRAWS` | NO | NO | NO | NO | NO | NO | NO | forecast_statewide.R |
+| `AUSPOL_HC_DEFECTOR` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_HISTORIC_ELECTED_BACKFILL` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_HONOUR_DEPARTED` | yes | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_HTV_EXCLUDE` | NO | NO | NO | NO | NO | NO | NO | htv_flow.R |
+| `AUSPOL_HTV_FLOW` | yes | yes | yes | yes | yes | yes | yes | htv_flow.R |
+| `AUSPOL_IND_MIXTURE` | NO | NO | NO | NO | NO | NO | NO | ind_mixture.R, new_ind_shrink.R |
+| `AUSPOL_IND_PERSON` | NO | NO | NO | NO | NO | NO | NO | ind_person.R, new_ind_shrink.R |
+| `AUSPOL_IND_PERSON_CARRY` | NO | NO | NO | NO | NO | NO | NO | ind_person.R |
+| `AUSPOL_IND_PERSON_DIR` | NO | NO | NO | NO | NO | NO | NO | ind_person.R |
+| `AUSPOL_IND_SALIENCE` | NO | yes | NO | NO | NO | NO | NO |  |
+| `AUSPOL_IND_TYPICAL` | NO | NO | NO | NO | NO | NO | NO | ind_mixture.R, ind_typical.R, new_ind_shrink.R |
+| `AUSPOL_IND_TYPICAL_STAT` | NO | NO | NO | NO | NO | NO | NO | ind_typical.R |
+| `AUSPOL_INSURGENCY_SHRINK` | NO | yes | NO | NO | NO | NO | NO |  |
+| `AUSPOL_LEADER_SEAT` | yes | NO | NO | NO | NO | NO | NO | leader_seat.R |
+| `AUSPOL_LEADERS_SUPPLEMENT` | NO | NO | NO | NO | NO | NO | NO | leader_seat.R |
+| `AUSPOL_LEVEL_FED_GAP_HL` | NO | NO | NO | NO | NO | NO | NO | level_recent.R |
+| `AUSPOL_LEVEL_FED_R` | NO | NO | NO | NO | NO | NO | NO | level_recent.R |
+| `AUSPOL_LEVEL_MODE` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_LEVEL_MULT_IND` | yes | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_LEVEL_MULT_OTH` | yes | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_LEVEL_RECENT` | NO | NO | NO | NO | NO | NO | NO | level_recent.R |
+| `AUSPOL_LEVEL_RECENT_HALFLIFE` | NO | NO | NO | NO | NO | NO | NO | level_recent.R |
+| `AUSPOL_LEVEL_RECIPE` | NO | NO | NO | NO | NO | NO | NO | forecast_mode.R |
+| `AUSPOL_LEVEL_SD` | yes | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_LIVE_DEFECT_FIT` | yes | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_LIVE_DRAW_BUCKET` | yes | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_LIVE_LEVEL_ANCHOR` | yes | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_LIVE_LEVEL_SPLIT` | yes | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_LIVE_SEATPREV_RAW` | yes | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_MAJOR_DEPARTED` | yes | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_MAJOR_SLOPE` | yes | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_MINOR_DEFECT` | yes | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_MINOR_DEFECT_BASE_PRED` | yes | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_MINOR_DEFECT_CONSERVE` | NO | NO | NO | NO | NO | NO | NO | candidate_returns.R |
+| `AUSPOL_MP_SLOPE` | yes | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_MP_SLOPE_FILE` | NO | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_MP_SLOPE_TF` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_N_SIMS` | yes | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_NB_TARGET` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_NEW_IND_SHRINK` | NO | NO | NO | NO | NO | NO | NO | ind_mixture.R, ind_typical.R, new_ind_shrink.R |
+| `AUSPOL_NEW_IND_SHRINK_CAP` | NO | NO | NO | NO | NO | NO | NO | new_ind_shrink.R |
+| `AUSPOL_NOM_LIVE` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R, xgb_primary_override.R |
+| `AUSPOL_NOM_ZERO` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R |
+| `AUSPOL_NOM_ZERO_ORDER` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R |
+| `AUSPOL_NOTIONAL` | NO | yes | NO | NO | NO | NO | NO |  |
+| `AUSPOL_NSW_THIN_WALK` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_ONP_CONC_SD` | NO | NO | NO | yes | yes | NO | NO |  |
+| `AUSPOL_ONP_CV` | yes | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_ONP_FIX` | yes | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_ONP_ORDER` | yes | NO | yes | yes | yes | NO | NO |  |
+| `AUSPOL_OTHERS_SCALE` | NO | NO | NO | NO | NO | NO | NO | forecast_mode.R, others_bucket.R |
+| `AUSPOL_PARTY_COR` | yes | yes | yes | yes | yes | yes | NO | forecast_statewide.R |
+| `AUSPOL_PB_COALITION_COMBINED` | NO | NO | NO | NO | NO | NO | NO | poll_source.R |
+| `AUSPOL_POLL_ARCHIVE` | NO | NO | NO | NO | NO | NO | NO | poll_source.R |
+| `AUSPOL_POLL_BT` | NO | NO | NO | NO | NO | NO | NO | poll_source.R |
+| `AUSPOL_POLL_PB` | NO | NO | NO | NO | NO | NO | NO | poll_source.R |
+| `AUSPOL_POLL_SOURCE` | NO | NO | NO | NO | NO | NO | NO | poll_source.R |
+| `AUSPOL_POOL_BY_JURISDICTION` | NO | NO | NO | NO | NO | NO | NO | pool_hierarchical.R |
+| `AUSPOL_PUBLISH_NSW2027` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_QLD_CUTOFF` | NO | yes | NO | yes | yes | yes | NO |  |
+| `AUSPOL_QLD_FLOWS` | yes | yes | NO | yes | yes | yes | NO |  |
+| `AUSPOL_REENTRY` | yes | NO | NO | NO | NO | NO | NO | new_ind_shrink.R, reentry_prior.R |
+| `AUSPOL_REENTRY_GAP` | NO | NO | NO | NO | NO | NO | NO | reentry_prior.R |
+| `AUSPOL_REENTRY_LINK` | NO | NO | NO | NO | NO | NO | NO | reentry_prior.R |
+| `AUSPOL_REENTRY_SPLIT` | NO | NO | NO | NO | NO | NO | NO | reentry_prior.R |
+| `AUSPOL_REENTRY_WINSOR` | NO | NO | NO | NO | NO | NO | NO | reentry_prior.R |
+| `AUSPOL_SA_CUTOFF` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_SA_FLOWS` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_SALIENCE_BLEND` | NO | NO | NO | NO | NO | NO | NO | salience_surge.R |
+| `AUSPOL_SALIENCE_BLEND_ONCE` | yes | NO | NO | NO | NO | NO | NO | salience_surge.R |
+| `AUSPOL_SALIENCE_EXP_SD` | NO | yes | yes | yes | yes | yes | NO |  |
+| `AUSPOL_SALIENCE_EXPECTED` | yes | yes | yes | yes | yes | yes | NO |  |
+| `AUSPOL_SALIENCE_PCTILE_NZ` | NO | NO | NO | NO | NO | NO | NO | salience_surge.R |
+| `AUSPOL_SALIENCE_SMOOTH` | NO | NO | NO | NO | NO | NO | NO | salience_surge.R |
+| `AUSPOL_SALIENCE_SURGE_V2` | yes | yes | yes | yes | yes | yes | yes* |  |
+| `AUSPOL_SD_DEPARTED` | NO | yes | yes | yes | yes | yes | yes | xgb_primary_sd_override.R |
+| `AUSPOL_SEAT_CONTEXT_FILL` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_SEAT_CONTEXT_MARGIN` | NO | NO | NO | NO | NO | NO | NO | xgb_primary_override.R |
+| `AUSPOL_SEAT_CONTEXT_SOPH` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_SEAT_POLL_ALLPOLLS` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
+| `AUSPOL_SEAT_POLL_BLEND` | yes | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
+| `AUSPOL_SEAT_POLL_COALITION_DEDUP` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
+| `AUSPOL_SEAT_POLL_CORRECTIONS` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
+| `AUSPOL_SEAT_POLL_DECAY` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
+| `AUSPOL_SEAT_POLL_ELECTION_ERR` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
+| `AUSPOL_SEAT_POLL_FIRM_FLOOR` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
+| `AUSPOL_SEAT_POLL_FIRM_SHARED` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
+| `AUSPOL_SEAT_POLL_GROUPS` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
+| `AUSPOL_SEAT_POLL_HANDKEYED` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
+| `AUSPOL_SEAT_POLL_HEAVY_TAIL` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
+| `AUSPOL_SEAT_POLL_IND_DIRECT` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
+| `AUSPOL_SEAT_POLL_IND_MAP` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
+| `AUSPOL_SEAT_POLL_IND_WEIGHT` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
+| `AUSPOL_SEAT_POLL_MATCH` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
+| `AUSPOL_SEAT_POLL_MODELVAR_ALL` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
+| `AUSPOL_SEAT_POLL_MRP_NAME` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
+| `AUSPOL_SEAT_POLL_NAMED_ONLY` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
+| `AUSPOL_SEAT_POLL_PRECISION_BLEND` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
+| `AUSPOL_SEAT_POLL_PRIOR` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
+| `AUSPOL_SEAT_POLL_PRIOR_SD` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
+| `AUSPOL_SEAT_POLL_SALIENCE_VAR` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
+| `AUSPOL_SEAT_POLL_SIZEVAR` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
+| `AUSPOL_SEAT_POLL_SOURCES` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
+| `AUSPOL_SEAT_POLL_SPLIT_ALL` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
+| `AUSPOL_SEAT_POLL_TPP_SOURCE` | NO | NO | NO | NO | NO | NO | NO | seat_poll_joint.R |
+| `AUSPOL_SEAT_POLL_W_SINGLE_CLUSTER` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
+| `AUSPOL_SEAT_SD_MULT` | yes | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_SEAT_SPREAD_SRC` | NO | NO | NO | NO | NO | NO | NO | prev_seat_swing.R |
+| `AUSPOL_SEAT_SWING_PORT` | yes | yes | yes | yes | yes | yes | NO | seat_swing_port.R |
+| `AUSPOL_SEAT_SWING_PORT_NOCLIFF` | NO | NO | NO | NO | NO | NO | yes | seat_swing_port.R |
+| `AUSPOL_SEAT_SWING_PORT_WA` | NO | NO | NO | NO | NO | NO | yes | seat_swing_port.R |
+| `AUSPOL_SEED` | yes | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_SHIP_TIME_FORWARD` | NO | NO | NO | NO | NO | NO | NO | split_slope.R |
+| `AUSPOL_SHRINK` | yes | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_SIM_ENGINE` | NO | NO | NO | NO | NO | NO | NO | seat_sim.R |
+| `AUSPOL_SITTING_MEMBER_ADJ` | NO | NO | NO | NO | NO | NO | NO | xgb_primary_override.R |
+| `AUSPOL_SIZE_SD` | NO | NO | NO | NO | NO | NO | NO | size_sd.R |
+| `AUSPOL_SLOPE_SHRINK` | NO | NO | NO | NO | NO | NO | NO | split_slope.R |
+| `AUSPOL_SPLIT_SLOPE` | NO | NO | NO | NO | NO | NO | NO | split_slope.R |
+| `AUSPOL_STATE_DEV` | NO | yes | NO | NO | NO | NO | NO |  |
+| `AUSPOL_STATE_DEV_SHUFFLE` | NO | yes | NO | NO | NO | NO | NO |  |
+| `AUSPOL_STATE_NOTIONAL` | NO | NO | NO | NO | NO | NO | NO | state_notional.R |
+| `AUSPOL_STATE_POLL_EXTRA` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_STATE_POLL_POOL` | NO | NO | NO | NO | NO | NO | NO | state_poll_pool.R |
+| `AUSPOL_SURGE_FROM_ZERO` | yes | yes | yes | yes | yes | yes | NO |  |
+| `AUSPOL_SURGE_H` | yes | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_SURGE_H_TF` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_SURGE_RECIPIENT` | yes | yes | yes | yes | yes | yes | NO |  |
+| `AUSPOL_SURGE_SCALE` | yes | yes | yes | yes | yes | yes | NO |  |
+| `AUSPOL_SURGE_SOURCE` | NO | NO | NO | NO | NO | NO | NO | party_surge.R, salience_screen.R |
+| `AUSPOL_SW_NET_LIVE` | yes | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_THIN_CYCLE` | NO | NO | NO | NO | NO | NO | NO | forecast_statewide.R, hare_clark.R |
+| `AUSPOL_TIME_FORWARD_FITS` | NO | NO | NO | NO | NO | NO | NO | fundamentals_tf.R, time_forward.R |
+| `AUSPOL_TRAIN_COMPLETENESS` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_TRAIN_DECAY_H` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_TRAIN_DEMEAN` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_TRAIN_SKIP_PAIRS` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_TREND_RW_MULT` | NO | NO | NO | NO | NO | NO | NO | forecast_mode.R |
+| `AUSPOL_TREND_SIGMAS` | NO | NO | NO | NO | NO | NO | NO | forecast_mode.R |
+| `AUSPOL_TREND_SZC` | NO | NO | NO | NO | NO | NO | NO | trend.R |
+| `AUSPOL_UPSET_FLOOR` | yes | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_WA_CUTOFF` | NO | yes | NO | yes | yes | yes | NO |  |
+| `AUSPOL_WA_DROP_3C` | NO | yes | NO | yes | yes | yes | NO | external_flows.R |
+| `AUSPOL_WA_DROP_LNP` | NO | yes | NO | yes | yes | yes | NO | external_flows.R |
+| `AUSPOL_WA_FLOWS` | yes | yes | NO | yes | yes | yes | NO |  |
+| `AUSPOL_XGB_BASE_DELTA` | NO | NO | NO | NO | NO | NO | NO | xgb_base_delta.R, xgb_primary_override.R |
+| `AUSPOL_XGB_BASE_DELTA_TOL` | NO | NO | NO | NO | NO | NO | NO | xgb_base_delta.R |
+| `AUSPOL_XGB_BASE_MARGIN` | NO | NO | NO | NO | NO | NO | NO | xgb_primary_override.R |
+| `AUSPOL_XGB_BASE_RECORD` | NO | NO | NO | NO | NO | NO | NO | xgb_primary_override.R |
+| `AUSPOL_XGB_BOOTH` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_XGB_CONTEST` | NO | NO | NO | NO | NO | NO | NO | xgb_primary_override.R |
+| `AUSPOL_XGB_COUNCIL` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_XGB_DEPARTED_SIDE` | NO | NO | NO | NO | NO | NO | NO | departed_side.R |
+| `AUSPOL_XGB_ENDORSE` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_XGB_ENSEMBLE` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_XGB_FLOWS` | yes | yes | yes | yes | yes | yes | yes | xgb_flow_override.R |
+| `AUSPOL_XGB_PRIMARY` | NO | yes | yes | yes | yes | yes | yes | nomination_zero.R, salience_surge.R, xgb_primary_override.R |
+| `AUSPOL_XGB_PRIMARY_LIVE` | yes | NO | NO | NO | NO | NO | NO | breakout_mix.R, xgb_primary_override.R |
+| `AUSPOL_XGB_PRIMARY_OOF` | NO | NO | NO | NO | NO | NO | NO | xgb_primary_override.R |
+| `AUSPOL_XGB_PRIMARY_SD` | NO | yes | yes | yes | yes | yes | yes | xgb_primary_sd_override.R |
+| `AUSPOL_XGB_PRIMARY_SD_CLASSES` | NO | NO | NO | NO | NO | NO | NO | xgb_primary_sd_override.R |
+| `AUSPOL_XGB_PRIMARY_SD_SRC` | NO | NO | NO | NO | NO | NO | NO | xgb_primary_sd_override.R |
+| `AUSPOL_XGB_RATIO_FEATS` | NO | NO | NO | NO | NO | NO | NO | xgb_primary_override.R |
+| `AUSPOL_XGB_SEATPREV_NAFILL` | NO | NO | NO | NO | NO | NO | NO | xgb_primary_override.R |
+| `AUSPOL_XGB_SEED` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_XGB_SENATE` | NO | NO | NO | NO | NO | NO | NO | xgb_primary_override.R |
+| `AUSPOL_XGB_SURGE` | NO | yes | yes | yes | yes | yes | yes | xgb_surge_override.R |
+| `AUSPOL_XGB_SURGE_SRC` | NO | NO | NO | NO | NO | NO | NO | xgb_surge_override.R |
+| `AUSPOL_ZERO_ABSENT` | NO | NO | NO | NO | NO | NO | NO | zero_absent.R |
 
 ## Every non-universal switch, explained
 
 - **`AUSPOL_ANCHOR_EXHAUST`** (intentional / dead experiment): ARM, not shipped (default 0; plans/prereg-anchor-exhaust-2026-09-27.md). Wired everywhere:  read in R/forecast_mode.R (statewide_draws_as_at()), which every harness and fit_seats_full.R reach: the five state harnesses and fit_seats_full.R through forecast_statewide_or_oracle() -> forecast_statewide_for() (R/forecast_statewide.R:81), the federal harness directly. "No" cells are the harness grep missing the R/ read, not drift (corrected 2026-10-09 after review).  No effect where flows carry no exhaust (every non-NSW election, live Victoria).
 - **`AUSPOL_ANCHOR_IMPLIED`** (intentional / dead experiment): ARM, not shipped (default 0; plans/prereg-anchor-implied-tpp-2026-09-20.md). Wired everywhere:  read in R/forecast_mode.R (statewide_draws_as_at()), which every harness and fit_seats_full.R reach: the five state harnesses and fit_seats_full.R through forecast_statewide_or_oracle() -> forecast_statewide_for() (R/forecast_statewide.R:81), the federal harness directly. "No" cells are the harness grep missing the R/ read, not drift (corrected 2026-10-09 after review).  scripts/audit_statewide_forecast.R only prints it.
 - **`AUSPOL_ASAT_MIN_PAIRS`** (intentional / dead experiment): Training-time switch for scripts/fit_xgb_primary_asat.R only: the minimum number of earlier election pairs a target must have before it gets its own point-in-time model (default 4). Below it the target gets no model and no row in the predictions file, so the harness keeps base_pred for it and says so. Not a harness or forecast switch.
+- **`AUSPOL_BREAKOUT_MIX`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: read by breakout_mix_args() (R/breakout_mix.R), which all seven entry points reach. The old 'yes' cells were comments.
 - **`AUSPOL_BREAKOUT_MIX_MIN_P`** (intentional / dead experiment): PREREG PENDING, default 0 (= every eligible cell, i.e. no gate). Read inside breakout_mix_args() in R/breakout_mix.R, which all six harnesses and fit_seats_full.R call, so the harness grep cannot see it; it reaches all of them when set.
 - **`AUSPOL_BUCKET_SPLIT`** (**adopted, shared-function wiring**): SHIPPED 2026-09-28 (ledger v44, 'cand_naive'). Read inside candidate_bucket_ratio() in R/forecast_statewide.R, which every harness and fit_seats_full.R reach through forecast_statewide_for(); only the federal harness names it in a comment. published_flags.R notes the split is backtests-only until the 9 Nov nominations.
 - **`AUSPOL_BUCKET_TOTAL`** (intentional / dead experiment): ARM, not shipped (default 'poll'; plans/prereg-bucket-total-candidates-2026-09-28.md). Read in R/forecast_statewide.R (candidate_bucket_total()) and R/forecast_mode.R, both below the harness grep; scripts/build_bucket_total_history.R reads the audit log it produces.
@@ -294,6 +297,7 @@ separate model code.
 - **`AUSPOL_COUNCIL_EXTRA`** (**shipped, fitting-time switch (reaches harnesses via the artifact)**): FITTING-TIME, default 0, TESTING (plans/prereg-council-extra-2026-10-02.md). Read only by scripts/build_council_history.py, which builds the council-history input that the xgb council features (AUSPOL_XGB_COUNCIL) read; no R/ or harness call site.
 - **`AUSPOL_COV_LOO`** (intentional / dead experiment): Read inside R/statewide_cor.R, not per-harness -- universal in practice, absent from every harness script by design.
 - **`AUSPOL_COV_TF`** (intentional / dead experiment): Read inside R/statewide_cor.R, not per-harness -- same as AUSPOL_COV_LOO; default 0 (OFF).
+- **`AUSPOL_CROSS_SEAT_VOTE`** (**adopted, shared-function wiring**): SHIPPED (1) 2026-10-06, UNIVERSAL via R/: read inside personal_prior_vote() (R/candidate_returns.R), which all seven entry points reach. The old 'yes' cells were comments.
 - **`AUSPOL_DEFECT_BY_LEVEL`** (**adopted, shared-function wiring**): SHIPPED 2026-10-05 (mode 2: federal targets get their own shrunk sitting-member defector carry). Read inside R/candidate_returns.R (line ~1240), so every harness and fit_seats_full.R get it through that function; the grep cannot see it.
 - **`AUSPOL_DEFECT_CONSERVE`** (**adopted, shared-function wiring**): SHIPPED (default 1) and read inside R/candidate_returns.R's personal_prior_vote(), not by any harness directly, so the registry's grep sees it nowhere: a major-party defector's unclaimed vote stays with the origin class instead of vanishing. Reaches every harness and fit_seats_full.R through that one function. scripts/prereg_major_defector_verify.R proves =0 is byte-identical to the pre-switch behaviour.
 - **`AUSPOL_DEFECT_POOLED`** (**adopted, shared-function wiring**): ADOPTED 2026-09-09 at "2" (docs/plans/prereg-defector-two-rate- 2026-09-09.md), by Pete on mechanism -- the arm missed its own primary bar (t -2.04 vs 2.08) but every directional indicator was favourable and R4 confirmed the published Victorian forecast is byte-identical (Victoria fields no major-party defector standing as a minor this cycle, so the mechanism does not fire there). Reaches fit_seats_full.R correctly: personal_prior_vote() self-resolves both rates from Sys.getenv() when the caller passes NULL, exactly so this did not need a seventh call site wired by hand -- the mistake that made the first pooled-arm run VOID earlier the same day.
@@ -302,6 +306,7 @@ separate model code.
 - **`AUSPOL_DEMO_RESID_FULL`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: read inside R/demographic_residual.R (the demographic correction every harness and fit_seats_full.R reach). plans/prereg-demo-resid-full-2026-10-19.md
 - **`AUSPOL_DEMO_RESID_SHUFFLE`** (intentional / dead experiment): Control, not an arm. Permutes which seat gets which seat's demographics within each election, at fit and at apply both, so every marginal and the whole procedure survive and only the seat-to-demographics link dies. Absent from fit_seats_full.R for the same reason its arm is: a control has no business in the published forecast. Calibrated on sa2026 -- 8 draws give mean 0.3576 against a 0.3577 baseline, sd 0.0013, so the null manufactures nothing and the real effect sits 8.9 sds out.
 - **`AUSPOL_DEPARTED_FED`** (intentional / dead experiment): REFUSED 2026-09-30 (both '1' and 'gap': qld2020 and sa2026 worse; plans/prereg-departed-fed-gap-2026-09-30.md). Wired into the nsw/qld/sa/vic harnesses and fit_seats_full.R. The fed and wa 'NO' cells are by design: commit 2ff6bf8 says fed and wa have no booth map (the booth-to-federal-district join only exists for state elections with transposed federal swing).
+- **`AUSPOL_DEV_SLOPE`** (intentional / dead experiment): UNIVERSAL via R/: read by dev_slopes_for() (R/dev_slope.R), which all seven entry points reach. The old 'yes' cells matched AUSPOL_DEV_SLOPE_MODE and comments.
 - **`AUSPOL_EDU_RESID`** (intentional / dead experiment): REFUSED 2026-09-15 and left wired so the result stays reproducible. docs/plans/prereg-education-residual-correction-2026-09-15.md: the criterion passed (pooled seat log loss 0.2702 -> 0.2689 over the AEF-7) and the placebo condition fired, so the answer is no. Superseded by AUSPOL_DEMO_RESID. Default 0 and it should stay 0.
 - **`AUSPOL_EDU_RESID_FEATURE`** (intentional / dead experiment): Which census column AUSPOL_EDU_RESID uses. born_aus_pct was pre-registered as the PLACEBO and was not one: r(yr12_pct, born_aus_pct) = -0.706 over 1,989 seats, so both columns read a single class-and-urbanity axis from opposite ends. It recovered 71% of the pooled gain and 100% of it on qld2024, which is what refused the mechanism. The lesson is in AUSPOL_DEMO_RESID_SHUFFLE: with correlated features the control must break the link, not swap the variable.
 - **`AUSPOL_EDU_RESID_SHUFFLE`** (intentional / dead experiment): The permutation control retrofitted to the refused single-feature arm, and the instrument that showed its signal was REAL (8.9 sds) even though the arm was refused. Same mechanism as AUSPOL_DEMO_RESID_SHUFFLE; absent from fit_seats_full.R because a control does not belong in the published forecast.
@@ -325,12 +330,14 @@ separate model code.
 - **`AUSPOL_HISTORIC_ELECTED_BACKFILL`** (**adopted, shared-function wiring**): SHIPPED 2026-09-15 on judgement (costs 0.0141 pooled RMSE in the backtest, but vic2026 is never a training pair so the 62 returning members can only move the live forecast, which the backtest cannot see). Read ONCE at build time by scripts/build_candidacies.R and baked into output/candidacies.csv, so no harness reads it at runtime; reversible by rebuilding candidacies with the flag off.
 - **`AUSPOL_HTV_EXCLUDE`** (intentional / dead experiment): DIAGNOSTIC 2026-10-13: leaves named transfer files out of the how-to-vote fit (R/htv_flow.R) to attribute a new file's effect; published empty. Read inside R/ via htv_flow_override() -- universal in practice.
 - **`AUSPOL_IND_MIXTURE`** (intentional / dead experiment): ARM, REFUSED 2026-10-09 (seat log loss +0.0332 over 22 pairs), off. In all six harnesses; NOT in fit_seats_full.R by design: a refused arm is not wired into the published forecast.
+- **`AUSPOL_IND_PERSON`** (**adopted, shared-function wiring**): SHIPPED (final), UNIVERSAL via R/: read by ind_person_mode() (R/ind_person.R); every entry point calls ind_person_apply(). The old 'yes' cells were trailing comments on those calls.
 - **`AUSPOL_IND_PERSON_CARRY`** (**adopted, shared-function wiring**): SHIPPED 'linear' 2026-10-10 with AUSPOL_IND_PERSON (Pete's override, plans/prereg-ind-person-2026-10-10.md). Read inside R/ind_person.R, which all six harnesses and fit_seats_full.R call, so the harness grep cannot see it.
 - **`AUSPOL_IND_PERSON_DIR`** (**adopted, shared-function wiring**): SHIPPED 'lower' 2026-10-10 with AUSPOL_IND_PERSON. Read inside R/ind_person.R (all six harnesses and fit_seats_full.R).
 - **`AUSPOL_IND_SALIENCE`** (intentional / dead experiment): Deprecated experimental arm (the v1 national IND multiplier), superseded by the newer salience mechanisms; fed-only because that is the only harness it was ever tested in. Not adopted.
 - **`AUSPOL_IND_TYPICAL`** (intentional / dead experiment): ARM, REFUSED 2026-10-09 (plans/prereg-ind-typical-2026-10-09.md), off. In all six harnesses; NOT in fit_seats_full.R by design: a refused arm is not wired into the published forecast.
 - **`AUSPOL_IND_TYPICAL_STAT`** (intentional / dead experiment): Sub-setting of the refused AUSPOL_IND_TYPICAL, read inside R/ind_typical.R; harness-only like its parent.
 - **`AUSPOL_INSURGENCY_SHRINK`** (intentional / dead experiment): Per-seat shrink experiment, REFUSED 2026-09-06 (worse than the scalar shrink on 5 of 6 federal pairs) -- see docs/NEXT-STEPS.md. Fed/fit_seats-only because that is as far as the experiment got before being set aside. Not adopted.
+- **`AUSPOL_LEADER_SEAT`** (**adopted, shared-function wiring**): SHIPPED (1), UNIVERSAL via R/: read inside leader_seat_apply() (R/leader_seat.R); fit_seats_full.R also reads it directly. The harness 'yes' cells were comments.
 - **`AUSPOL_LEADERS_SUPPLEMENT`** (intentional / dead experiment): DIAGNOSTIC 2026-10-13: 0 drops leaders-supplement.csv in read_leaders() (R/leader_seat.R) -- universal in practice; published 1.
 - **`AUSPOL_LEVEL_FED_GAP_HL`** (intentional / dead experiment): Same prereg; only read when AUSPOL_LEVEL_FED_R > 0. Read inside R/level_recent.R -- universal in practice.
 - **`AUSPOL_LEVEL_FED_R`** (**adopted, shared-function wiring**): SHIPPED 0.15 2026-10-12 (Pete; plans/prereg-federal-breakdowns-in-blend-2026-10-12.md). Read inside R/level_recent.R, which every harness and fit_seats_full.R reach through the level blend -- universal in practice.
@@ -343,10 +350,12 @@ separate model code.
 - **`AUSPOL_LIVE_LEVEL_ANCHOR`** (intentional / dead experiment): OFF since 2026-09-30 (v56), LIVE-ONLY by design: read only in fit_seats_full.R. The un-anchored level scored better over all 22 elections, and published_flags.R says backtests and live now both use the un-anchored recipe (AUSPOL_LEVEL_RECIPE='live').
 - **`AUSPOL_LIVE_LEVEL_SPLIT`** (**adopted, shared-function wiring**): SHIPPED 2026-10-18 as a train/serve fix, LIVE-ONLY by design: read only in fit_seats_full.R, which serves the xgb layer a level_pred split by bucket_split_ratio(). The harnesses read level_pred from output/level-pred.csv, built by the same function.
 - **`AUSPOL_LIVE_SEATPREV_RAW`** (**adopted, shared-function wiring**): SHIPPED 2026-10-19 as a train/serve fix, LIVE-ONLY by design: read only in fit_seats_full.R, which serves the xgb layer seat_prev_pcv from the raw prior-election matrix, as fit_xgb_primary_v6.R trains it.
+- **`AUSPOL_MINOR_DEFECT`** (**OPEN GAP**): OPEN GAP, inert at published values. fit_seats_full.R gates the minor-to-minor defector discount on this master switch AND AUSPOL_MINOR_DEFECT_BASE_PRED; the six harnesses gate on _BASE_PRED alone and never read this one (no R/ function does either). Both ship at 1, so nothing differs today, but an arm setting AUSPOL_MINOR_DEFECT=0 acts on the forecast and not on any backtest. The old harness 'yes' cells matched AUSPOL_MINOR_DEFECT_BASE_PRED. Found 2026-10-23.
 - **`AUSPOL_MINOR_DEFECT_CONSERVE`** (**adopted, shared-function wiring**): SHIPPED 2026-09-19 (plans/prereg-minor-defector-conserve-2026-09-19.md). Read inside personal_prior_vote() in R/candidate_returns.R: a minor-to-minor defector's origin class keeps a fitted share (~0.38) of the vote. Reaches every harness and fit_seats_full.R through that function, not by a direct harness read.
 - **`AUSPOL_MP_SLOPE_FILE`** (intentional / dead experiment): DIAGNOSTIC 2026-10-13: path of the sitting-member slope table; read in all six harnesses (published default output/mp-slope-by-target.csv).
 - **`AUSPOL_MP_SLOPE_TF`** (**adopted, shared-function wiring**): SHIPPED (1) 2026-10-14, FIT-TIME: read by scripts/fit_mp_slope.R, which writes output/mp-slope-by-target.csv (rebuild stage 0); harnesses and live read the table, not the switch.
 - **`AUSPOL_NB_TARGET`** (intentional / dead experiment): NOT A MODEL SWITCH: an argument to scripts/build_notional_baselines.R (which federal election year to build notional post-redistribution baselines for). Reads NO everywhere by construction; listed in published_flags.R only as documentation of how to rebuild the notional table.
+- **`AUSPOL_NEW_IND_SHRINK`** (**adopted, shared-function wiring**): SHIPPED (1) 2026-10-06, UNIVERSAL via R/: read by new_ind_mode() (R/new_ind_shrink.R, also ind_mixture.R/ind_typical.R), which all seven entry points reach. The old 'yes' cells were comments.
 - **`AUSPOL_NEW_IND_SHRINK_CAP`** (**adopted, shared-function wiring**): SHIPPED (default 1 = cap the new-independent factor at 1); the '0' arm is pending. Read inside R/new_ind_shrink.R, which all six harnesses and fit_seats_full.R call, so the harness grep cannot see it.
 - **`AUSPOL_NOM_LIVE`** (**adopted, shared-function wiring**): SHIPPED v61, LIVE-ONLY by design: the published Victorian forecast zeroes non-standing parties only when set to '1' by hand once the VEC final list is loaded (R/nomination_zero.R, fit_seats_full.R). The six harnesses use AUSPOL_NOM_ZERO instead.
 - **`AUSPOL_NOM_ZERO`** (**adopted, shared-function wiring**): SHIPPED v61 2026-10-03 (mode 2). All six harnesses read it. fit_seats_full.R does not name it, by design: the published run uses AUSPOL_NOM_LIVE for the same zeroing (R/nomination_zero.R) once the real nomination list exists.
@@ -368,6 +377,7 @@ separate model code.
 - **`AUSPOL_PUBLISH_NSW2027`** (intentional / dead experiment): PUBLISH-TIME (1): read by scripts/promote_rebuild.R to ship the nsw2027 tables, matching the repository variable the daily job gates on. Not a model switch, so no harness reads it.
 - **`AUSPOL_QLD_CUTOFF`** (intentional / dead experiment): Read inside R/external_flows.R (pool_configured_flows), not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).
 - **`AUSPOL_QLD_FLOWS`** (intentional / dead experiment): Self-referential no-op in the QLD harness itself ("use Queensland's own flows" is trivially true there) -- disclosed via its own `.inert` list. Genuinely absent from WA (uses AUSPOL_WA_FLOWS instead).
+- **`AUSPOL_REENTRY`** (**adopted, shared-function wiring**): SHIPPED (majors) 2026-10-06, UNIVERSAL via R/: read by reentry_mode() (R/reentry_prior.R), which all seven entry points reach. fit_seats_full.R names it only inside a printed message; the harness 'yes' cells matched AUSPOL_REENTRY_* switches.
 - **`AUSPOL_REENTRY_GAP`** (intentional / dead experiment): Read inside R/reentry_prior.R, not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).
 - **`AUSPOL_REENTRY_LINK`** (intentional / dead experiment): Read inside R/reentry_prior.R, not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).
 - **`AUSPOL_REENTRY_SPLIT`** (intentional / dead experiment): Read inside R/reentry_prior.R, not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).
@@ -386,6 +396,7 @@ separate model code.
 - **`AUSPOL_SEAT_CONTEXT_MARGIN`** (intentional / dead experiment): ARM, not shipped (default 0; phase 2 of plans/prereg-seat-context-complete-2026-09-28.md). Read in scripts/fit_xgb_primary_v6.R (training) and R/xgb_primary_override.R (the 'all' mode, live). Off, so nothing differs by entry point.
 - **`AUSPOL_SEAT_CONTEXT_SOPH`** (**shipped, fitting-time switch (reaches harnesses via the artifact)**): FITTING-TIME ARM (0): fills the first-term-member flag (soph_cand) from output/seat-context.csv where the seat file has none, in scripts/fit_xgb_primary_v6.R; baked into the trained model. Live reads the vic2026 seat file, which has the flag. plans/prereg-first-term-fill-2026-10-20.md
 - **`AUSPOL_SEAT_POLL_ALLPOLLS`** (**adopted, shared-function wiring**): SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 2
+- **`AUSPOL_SEAT_POLL_BLEND`** (**adopted, shared-function wiring**): SHIPPED (1), UNIVERSAL via R/: read inside seat_poll_blend_apply() (R/seat_poll_blend.R); fit_seats_full.R also reads it directly. The harness 'yes' cells were comments.
 - **`AUSPOL_SEAT_POLL_COALITION_DEDUP`** (**adopted, shared-function wiring**): SHIPPED 2026-10-07 (data fix). Read in .read_seat_polls_file() in R/seat_poll_blend.R, which all six harnesses and fit_seats_full.R reach through the seat-poll blend; the weight fit and the blend see the same polls.
 - **`AUSPOL_SEAT_POLL_CORRECTIONS`** (**adopted, shared-function wiring**): SHIPPED 2026-10-18 (data fix), UNIVERSAL via R/: read inside R/seat_poll_blend.R's seat-poll reader, which every harness and fit_seats_full.R reach.
 - **`AUSPOL_SEAT_POLL_DECAY`** (**adopted, shared-function wiring**): SHIPPED 2026-10-09 (full 20k run with PRIOR and MRP_NAME: 0.2705 -> 0.2675 on the 6 polled elections). Read in seat_poll_shares() in R/seat_poll_blend.R (.seat_poll_decay_on()), which every entry point reaches through the blend; the harness grep cannot see it.
@@ -412,6 +423,7 @@ separate model code.
 - **`AUSPOL_SEAT_POLL_TPP_SOURCE`** (intentional / dead experiment): TESTING, default 'all' (plans/prereg-seat-poll-tpp-direct-2026-09-30.md). Read in R/seat_poll_joint.R, which implements blend mode 3 (joint primary and two-party weights); it only matters under that mode.
 - **`AUSPOL_SEAT_POLL_W_SINGLE_CLUSTER`** (**adopted, shared-function wiring**): SHIPPED 2026-10-07 (bug fix: a weight fitted on one cluster gets SE Inf, not ~0). 'legacy' restores the old factor for screening only. Read at R/seat_poll_blend.R line ~393 inside all three weight fits, so every entry point gets it.
 - **`AUSPOL_SEAT_SPREAD_SRC`** (**adopted, shared-function wiring**): SHIPPED (derived), UNIVERSAL via R/: read inside R/prev_seat_swing.R, which the harnesses call for seat_sd; harness-only by its own comment (live seat_sd comes from the fitted spread).
+- **`AUSPOL_SEAT_SWING_PORT`** (**adopted, shared-function wiring**): SHIPPED (2), UNIVERSAL via R/: read inside seat_swing_port_apply() (R/seat_swing_port.R), which WA reaches too; WA's own scoping switch is AUSPOL_SEAT_SWING_PORT_WA, whose name made the old WA cell 'yes'.
 - **`AUSPOL_SEAT_SWING_PORT_NOCLIFF`** (intentional / dead experiment): PREREG PENDING, default 0 (built 2026-10-05). Read inside R/seat_swing_port.R, which the nsw/qld/sa/vic/wa harnesses and fit_seats_full.R all call; only the wa harness also names it (an output-filename tag), and scripts/dry_run_seat_swing_port_wa.R sets it. So the matrix's wa-only 'yes' is a naming artefact, not wiring.
 - **`AUSPOL_SEAT_SWING_PORT_WA`** (**adopted, shared-function wiring**): SHIPPED 2026-10-06 (Pete override; mode 2). WA-ONLY by design (Pete: 'why is WA special?'; wa2025 -0.0064 log loss, nothing else moves): read in R/seat_swing_port.R and the wa harness only. Mode 2 pools WA cycles for WA targets alone, so the other harnesses and the live Victoria run are intentionally untouched.
 - **`AUSPOL_SHIP_TIME_FORWARD`** (**adopted, shared-function wiring**): SHIPPED as a leak fix (ledger v51, 2026-09-29). Read in R/split_slope.R, which the six harnesses use for the minor-slope tiers; fit_seats_full.R does not name split_slope (function-name grep), so the published path is not shown to read it. Not traced further.
@@ -427,6 +439,8 @@ separate model code.
 - **`AUSPOL_STATE_POLL_POOL`** (**adopted, shared-function wiring**): SHIPPED v60 2026-10-02 (Pete overrode the prereg clause). FEDERAL-HARNESS-ONLY by design: pools a state signal from seat polls before the seat-poll blend (R/state_poll_pool.R); published_flags.R states 'federal harness only'. Only backtest_candidate_fed.R calls it.
 - **`AUSPOL_SURGE_FROM_ZERO`** (intentional / dead experiment): WA has no candidate-level salience corpus -- same exclusion as AUSPOL_SALIENCE_EXPECTED, intentional.
 - **`AUSPOL_SURGE_H_TF`** (**adopted, shared-function wiring**): SHIPPED 2026-10-18 as a leak fix, TRAINING-ONLY by design: read in scripts/fit_xgb_primary_v6.R, which builds the xgb training features (stage 3). Harnesses and fit_seats_full.R were already time-forward.
+- **`AUSPOL_SURGE_RECIPIENT`** (**OPEN GAP**): OPEN GAP in WA, part of the AUSPOL_SALIENCE_SURGE_V2 gap below: WA has no surge-v2 hazard, so it has no recipient step to switch. Read directly in fit_seats_full.R and the other five harnesses; no R/ function reads it. The old WA 'yes' was a comment.
+- **`AUSPOL_SURGE_SCALE`** (**OPEN GAP**): OPEN GAP in WA, part of the AUSPOL_SALIENCE_SURGE_V2 gap below: no surge-v2 hazard in WA, so nothing to scale. Read directly in fit_seats_full.R and the other five harnesses; no R/ function reads it. The old WA 'yes' was a comment.
 - **`AUSPOL_SURGE_SOURCE`** (intentional / dead experiment): UNIVERSAL via R/: read inside surging_parties() (R/party_surge.R), which every harness reaches through salience_permit_for() and fit_xgb_primary_v4/v6.R reach directly, so the per-harness greps cannot see it. Published "actual" LEAKS and is being replaced (plans/prereg-surge-flag-time-forward-2026-10-15.md); fit_seats_full.R already behaves as "none" because vic2026 has no votes.
 - **`AUSPOL_SW_NET_LIVE`** (**adopted, shared-function wiring**): SHIPPED 2026-10-19 (Pete override). PUBLISHED-ONLY by design: the live counterpart of AUSPOL_HARNESS_SW_DRAWS=net, read in fit_seats_full.R; the harnesses are measured with the harness switch. plans/prereg-harness-sw-draws-2026-10-19.md amendment 1
 - **`AUSPOL_THIN_CYCLE`** (intentional / dead experiment): CONFIRMED (1) 2026-10-14, UNIVERSAL via R/: read inside R/forecast_statewide.R and R/hare_clark.R (thin_cycle_statewide() for cycles the trend cannot fit).
@@ -453,6 +467,7 @@ separate model code.
 - **`AUSPOL_XGB_DEPARTED_SIDE`** (**shipped, fitting-time switch (reaches harnesses via the artifact)**): FITTING-TIME, ARM (default 0; plans/prereg-departed-member-sides-2026-09-28.md). Adds own_departed_i / opp_departed_i xgb features via add_departed_side() (R/departed_side.R), called from fit_xgb_primary_v6.R and _v6_final.R; baked into the trained model.
 - **`AUSPOL_XGB_ENDORSE`** (**shipped, fitting-time switch (reaches harnesses via the artifact)**): FITTING-TIME. SHIPPED v59 2026-10-02: Climate 200 / Voices endorsement xgb features, read in scripts/fit_xgb_primary_v6.R and scripts/promote_rebuild.R; baked into the trained model.
 - **`AUSPOL_XGB_ENSEMBLE`** (**shipped, fitting-time switch (reaches harnesses via the artifact)**): FITTING-TIME. SHIPPED v58 2026-10-02: K=3 seed-varied xgb fits averaged. Read in fit_xgb_primary_asat.R and fit_xgb_primary_v6_final.R (training only), so no harness or live read exists.
+- **`AUSPOL_XGB_PRIMARY`** (intentional / dead experiment): Harness-only BY DESIGN, and the split is the point: a backtest must predict a pair with a model that never saw it, so the harnesses read the POINT-IN-TIME predictions (output/xgb-primary-asat-predictions.csv, scripts/fit_xgb_primary_asat.R: one model per election, trained only on elections whose polling day precedes it, since 2026-09-18; leave-one-pair-out before that) while the published forecast reads the all-data model via AUSPOL_XGB_PRIMARY_LIVE. Same recipe, same base_margin mode, different cutoff date -- that is the whole difference, by design. Absent from fit_seats_full.R deliberately -- a predictions file has no row for an election that has not happened.
 - **`AUSPOL_XGB_PRIMARY_LIVE`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R), the live counterpart of AUSPOL_XGB_PRIMARY above. Loads output/xgb-primary-v6-final.model, trained on all 22 historical pairs -- correct here and leakage in a backtest, which is exactly why the two switches exist separately.
 - **`AUSPOL_XGB_PRIMARY_OOF`** (intentional / dead experiment): Harness-only escape hatch naming which out-of-fold file AUSPOL_XGB_PRIMARY reads; empty means the v6 default. Exists because the unversioned filename is v1's, and until 2026-09-11 the backtest arm measured v1 while the live forecast shipped v6 -- the two were never describing the same model. Not a modelling switch; no published-forecast analogue.
 - **`AUSPOL_XGB_PRIMARY_SD`** (intentional / dead experiment): OFF (0). The xgb spread model's per-cell sd, read in R/xgb_primary_sd_override.R and wired into fed and nsw only. With the switch off nothing reaches any output, so the four unwired harnesses are not a live parity gap; if it is ever adopted the wiring must be ported to all six in the same commit (CLAUDE.md rule).
@@ -506,4 +521,4 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR2  every non-universal switch (193 of 234) has a recorded classification.
+MR2  every non-universal switch (206 of 234) has a recorded classification.
