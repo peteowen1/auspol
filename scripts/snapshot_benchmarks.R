@@ -203,6 +203,11 @@ if (file.exists(af)) {
 gf <- raw("ges", "ges-district-calls-read-from-page.csv")
 if (file.exists(gf)) {
   g <- fread(gf, skip = "district,")
+  # Only the five map colours ges_read_calls.js decodes are calls. Anything else (its UNK) would reach
+  # classify_party() with a blank name and come back IND: a plausible, wrong, frozen call.
+  bad <- !(g$party %in% c("LIB", "NAT", "ALP", "GRN", "ONP"))
+  if (any(bad)) stop(sprintf("VB6! GES has %d district(s) with an unread map colour (%s): %s", sum(bad),
+                             paste(unique(g$party[bad]), collapse = ","), paste(g$district[bad], collapse = ", ")))
   write_calls(g[, .(district = match_districts(district, "ges"), call_class = classify_party(rep("", .N), code = party), prob = NA_real_)], "ges")
 } else {
   cat(sprintf("VB4! GES district calls NOT captured for %s: read the rendered map at %s/victoria in Chrome into %s (format: the 2026-10-21 file's header)\n",

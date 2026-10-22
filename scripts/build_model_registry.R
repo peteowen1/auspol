@@ -195,11 +195,6 @@ CLASSIFY <- list(
   AUSPOL_REENTRY = "SHIPPED (majors) 2026-10-06, UNIVERSAL via R/: read by reentry_mode() (R/reentry_prior.R), which all seven entry points reach. fit_seats_full.R names it only inside a printed message; the harness 'yes' cells matched AUSPOL_REENTRY_* switches.",
   AUSPOL_SEAT_POLL_BLEND = "SHIPPED (1), UNIVERSAL via R/: read inside seat_poll_blend_apply() (R/seat_poll_blend.R); fit_seats_full.R also reads it directly. The harness 'yes' cells were comments.",
   AUSPOL_SEAT_SWING_PORT = "SHIPPED (2), UNIVERSAL via R/: read inside seat_swing_port_apply() (R/seat_swing_port.R), which WA reaches too; WA's own scoping switch is AUSPOL_SEAT_SWING_PORT_WA, whose name made the old WA cell 'yes'.",
-  AUSPOL_MINOR_DEFECT = paste(
-    "OPEN GAP, inert at published values. fit_seats_full.R gates the minor-to-minor defector discount on this master switch",
-    "AND AUSPOL_MINOR_DEFECT_BASE_PRED; the six harnesses gate on _BASE_PRED alone and never read this one (no R/ function does",
-    "either). Both ship at 1, so nothing differs today, but an arm setting AUSPOL_MINOR_DEFECT=0 acts on the forecast and not on",
-    "any backtest. The old harness 'yes' cells matched AUSPOL_MINOR_DEFECT_BASE_PRED. Found 2026-10-23."),
   AUSPOL_SURGE_RECIPIENT = paste(
     "OPEN GAP in WA, part of the AUSPOL_SALIENCE_SURGE_V2 gap below: WA has no surge-v2 hazard, so it has no recipient",
     "step to switch. Read directly in fit_seats_full.R and the other five harnesses; no R/ function reads it. The old WA 'yes' was a comment."),

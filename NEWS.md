@@ -1,3 +1,8 @@
+# auspol 0.4.106
+
+- **Victorian 2026 external benchmark**: rival seat calls (AE Forecasts, the Global Election Simulator, Jago's calculator on our shares) captured on fixed freeze dates by `scripts/snapshot_benchmarks.R`, and a scorer built before any result (`scripts/score_benchmarks_vic2026.R`). A GES map colour the reader does not recognise now stops the capture instead of becoming an independent call.
+- **The model registry parses the code** rather than grepping text, so comments and longer switch names no longer count as reads (audit F20). The backtests now honour `AUSPOL_MINOR_DEFECT` as the forecast does; nothing changes at the published settings.
+
 # auspol 0.4.105
 
 - **The seat context is rebuilt in every rebuild** (Pete, 20 Oct: "Ship the fix"). The old file was stale at 24 of 35 elections, so the shipped incumbent/retiring fill missed 11 of them. Pooled seat log loss +0.0014 (SE 0.0014): the 11 newly filled elections -0.0073, the other 24 +0.0040 from retraining alone. The first-term flag is rebuilt from our candidate corpus (97.3% agreement with the anchor's seat file), and 41 by-elections were added.
