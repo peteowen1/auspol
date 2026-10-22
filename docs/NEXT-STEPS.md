@@ -42,8 +42,8 @@ contest features / contest base / partial-contest arm A refused, first-term fill
   screen it (the decay acts at stage 4 and quick_arm reuses cached tree predictions), so one isolated rebuild from
   stage 4 is SCHEDULED 01:00 23 Oct (Scheduled Task `auspol-decay4-rebuild`, at 883a773, ~45 min). It refuses to start
   below 8 GB available. Next session: read `deciding-runs/decay4-rebuild/STATUS`, then score per the prereg.
-  EXPECT A REFUSAL on 23 Oct: 4.8 GB available on 22 Oct (kernel pool leak, see F7 above), no reboot. If STATUS
-  says it refused, that is memory, not the arm: reboot, then rerun the same Scheduled Task.
+  REFUSED 23 Oct 01:00 as expected: "only 2989 MB available (needs 8000)" (kernel pool leak, see F7 above). That is
+  memory, not the arm. After a reboot: `schtasks /run /tn auspol-decay4-rebuild` (~45 min), then score per the prereg.
 - OPEN, from the same diagnosis: Greens over-called in high-Greens seats by the trees (Melbourne, Griffith, Northcote);
   retiring Labor members about -2.0 (n 34); Dickson's published stage moved a correct tree LNP figure +5.5.
 - OPEN (Pete): the 28 old notes in the ledger page's notes store now duplicate `docs/aef7-seat-notes.csv` under "Your
