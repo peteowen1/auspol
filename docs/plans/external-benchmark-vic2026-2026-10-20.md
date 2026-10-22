@@ -105,3 +105,28 @@ site's own and are frozen as published. It is not rerun on our numbers.
 3. First capture now (27 Oct at the latest). Add the freeze dates as reminders in the Daily Eight.
 4. After the VEC declares: `scripts/score_benchmarks_vic2026.R` reads only the committed `calls.csv` files plus the
    VEC results and prints the tables above.
+
+## Amendment 1 (2026-10-22, before the first capture that counts): how the capture is done, and Jago's inputs
+
+Added, not edited: the clauses above stand as written.
+
+- **Jago's inputs from our forecast.** The clause above allowed "derived from our primaries and flows". Fixed now as
+  primaries only, with no flows: his calculator's inputs are the four parties' first-preference shares with every
+  other vote shared among them in proportion (his `calculator.js` builds his own defaults that way, from "None"), so
+  the same quantity from our forecast is each party's mean first-preference share across the 88 districts in that
+  day's published `seat-shares-vic-2026.csv`, the four renormalised to 100. Equal weight per district. Using flows
+  would feed him a quantity his model does not take. 22 Oct: GRN 16.33, ALP 28.30, LNP 31.83, ONP 23.54 (the four
+  are 90.5% of our vote).
+- **His calculator is run, not ported.** `scripts/jago_calc.js` runs his saved `calculator.js` unmodified in Node.
+  Checked 22 Oct against his live page at two inputs: same seat tallies (defaults: Lab 68, Lnp 19, Grn 1; ours: Lab
+  41, Lnp 39, Grn 6, Phn 2) and the same winner in four sampled districts.
+- **Capture:** `Rscript scripts/snapshot_benchmarks.R` on each freeze date (the plan's step 2). It fetches raw into
+  the dated folder with a manifest, accepts a file only when its content checks pass, resumes, and writes the
+  committed calls to `docs/benchmarks/vic2026/<date>/<source>-calls.csv` (exits 1 if any source is missing). The AE
+  Forecasts fetch is in this script, always fresh, rather than a `--snapshot` mode in `fetch_aeforecasts.R`; same
+  effect, one script.
+- **GES needs one Chrome step per date**: run `scripts/ges_read_calls.js` in the page, paste its rows into the dated
+  `ges/ges-district-calls-read-from-page.csv`, and save the `guide-victoria-*.js` bundle it names (that bundle is
+  not linked from any file the script can fetch). 22 Oct: calls identical to 21 Oct district for district (47/22/13/6)
+  although both its app and polling bundles changed hash.
+- **Not done:** the optional "Jago on a published poll average" entry.
