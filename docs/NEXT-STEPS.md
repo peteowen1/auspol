@@ -23,6 +23,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   attempt was stopped by the memory watchdog.
 - OPEN: F7 screen stopped by the memory watchdog a SECOND time 19 Oct (~07:45, at the compile step; a citiusverse
   export held ~5 GB). Not restarted; rerun only on Pete's word, with the machine otherwise idle.
+  22 Oct: Pete said go, NOT launched: 4.8 GB available of 31.5 with no large process (kernel paged pool 10.2 GB,
+  non-paged 2.8 GB, up since 15 Oct: a leak only a reboot clears). Pete chose no reboot; run F7 after the next one.
 
 ## 2026-10-18 pipeline audit (READ FIRST; `reviews/pipeline-overwrite-audit-2026-10-18.md`, Sonnet, read-only)
 
@@ -82,6 +84,8 @@ TCP-consistency check, arm H shipped, heavy-tail arm T REFUSED 19 Oct, F21 surge
   screen it (the decay acts at stage 4 and quick_arm reuses cached tree predictions), so one isolated rebuild from
   stage 4 is SCHEDULED 01:00 23 Oct (Scheduled Task `auspol-decay4-rebuild`, at 883a773, ~45 min). It refuses to start
   below 8 GB available. Next session: read `deciding-runs/decay4-rebuild/STATUS`, then score per the prereg.
+  EXPECT A REFUSAL on 23 Oct: 4.8 GB available on 22 Oct (kernel pool leak, see F7 above), no reboot. If STATUS
+  says it refused, that is memory, not the arm: reboot, then rerun the same Scheduled Task.
 - OPEN, from the same diagnosis: Greens over-called in high-Greens seats by the trees (Melbourne, Griffith, Northcote);
   retiring Labor members about -2.0 (n 34); Dickson's published stage moved a correct tree LNP figure +5.5.
 - OPEN (Pete): the 28 old notes in the ledger page's notes store now duplicate `docs/aef7-seat-notes.csv` under "Your
