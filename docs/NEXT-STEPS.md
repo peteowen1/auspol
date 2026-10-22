@@ -90,6 +90,14 @@ party-cor off) and the phantom-votes arm REFUSED: all in the journal and DECISIO
   scratch copy that drops NT before the check. (2) Run without a base, the vintage builder's source B labels
   qld2017/sa2018 rows from ANOTHER election's reaggregation as "on election boundaries"; their previous
   name-matched rows were kept. Fix both before the next census regeneration.
+  Read 23 Oct, NOT fixed (needs a design call, nothing at risk now): `output/census-features.csv` IS the vintage
+  file (identical to `census-features-vintage.csv`, 3,226 rows, 15 Oct 00:04), and the vintage builder reads it
+  as its base (`build_census_features_vintage.R:248`). So the old builder should never write it again: run to its
+  end it would overwrite the published table with boundary-vintage rows, including census taken after polling day.
+  (1)'s `CF2!` currently stops it before that write (`build_census_features.R:284` unions in all 35 v6 pairs, and
+  this builder has vintages for 18), so do not just patch the stop. The fix is to choose how a regeneration chains
+  the two builders, e.g. the old one writes only a separate boundary file the vintage builder reads.
+  wa2001/wa2005 are empty (0/57, 0/68) on purpose: no pre-2006 census on disk (Pete 14 Oct, `blank_census_lookahead.R`).
 
 **State (15 Oct):** 35 scored single-member elections. AEF-7 seat log loss 0.2669 (published 15 Oct 15:33) vs AEF 0.2825;
 pooled 0.3347 over 2,931 seats. Tas/ACT on the Hare-Clark path: pooled 0.496 vs naive 0.974. Training rule P4;
