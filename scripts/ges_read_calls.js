@@ -33,9 +33,13 @@
     return [JSON.stringify(gj.features[i].properties.name), cls(r, g, b), hex(r, g, b)].join(","); });
   const tally = {}; rows.forEach((r) => { const c = r.split(",")[1]; tally[c] = (tally[c] || 0) + 1; });
   const polling = performance.getEntriesByType("resource").map((e) => e.name).filter((n) => /guide-victoria-/.test(n));
+  const cx = cor(box.map((x) => x[0]), cen.map((x) => x[0])), cy = cor(box.map((x) => x[1]), cen.map((x) => x[1]));
+  // Refuse rather than hand back calls on the wrong districts (paths no longer in feature order) or with an unread colour.
+  if (gj.features.length !== 88 || Math.abs(cx) < 0.95 || Math.abs(cy) < 0.95)
+    return `STOP: path order no longer matches the geojson (features ${gj.features.length}, cor_x ${cx.toFixed(3)}, cor_y ${cy.toFixed(3)})`;
+  if (tally.UNK) return `STOP: ${tally.UNK} district(s) have a colour cls() does not know: ${rows.filter((r) => r.split(",")[1] === "UNK").join(" | ")}`;
   return {
-    check: { features: gj.features.length, cor_x: cor(box.map((x) => x[0]), cen.map((x) => x[0])).toFixed(3),
-             cor_y: cor(box.map((x) => x[1]), cen.map((x) => x[1])).toFixed(3), tally },
+    check: { features: gj.features.length, cor_x: cx.toFixed(3), cor_y: cy.toFixed(3), tally },
     polling_bundle: polling,
     csv: rows.join("\n"),
   };
