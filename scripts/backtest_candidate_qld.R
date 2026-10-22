@@ -585,7 +585,8 @@ if (!is.null(.fitsl)) cat(sprintf("FS1  fitted slopes | same %s | new %s
 # harness anyway. Renamed so the two purposes cannot share one flag again;
 # this one stays out of published_flags.R entirely.
 .minor_disc <- NULL; .minor_disc_loser <- NULL
-if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT_BASE_PRED", "0"), "1")) {
+if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT_BASE_PRED", "0"), "1") &&
+      !identical(Sys.getenv("AUSPOL_MINOR_DEFECT", "1"), "0")) {  # same outer switch as fit_seats_full.R:959 (audit F20)
   .mfd <- tryCatch(fit_minor_defector_discount(TGT), error = function(e) {
     cat(sprintf("BQ0n! minor-defector fit FAILED, no discount applied: %s\n", conditionMessage(e)))
     list(discount = NULL, discount_mp = NULL, discount_loser = NULL, n = 0L)

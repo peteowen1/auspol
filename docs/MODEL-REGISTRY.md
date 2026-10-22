@@ -133,7 +133,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_LIVE_SEATPREV_RAW` | yes | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_MAJOR_DEPARTED` | yes | yes | yes | yes | yes | yes | yes |  |
 | `AUSPOL_MAJOR_SLOPE` | yes | yes | yes | yes | yes | yes | yes |  |
-| `AUSPOL_MINOR_DEFECT` | yes | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_MINOR_DEFECT` | yes | yes | yes | yes | yes | yes | yes |  |
 | `AUSPOL_MINOR_DEFECT_BASE_PRED` | yes | yes | yes | yes | yes | yes | yes |  |
 | `AUSPOL_MINOR_DEFECT_CONSERVE` | NO | NO | NO | NO | NO | NO | NO | candidate_returns.R |
 | `AUSPOL_MP_SLOPE` | yes | yes | yes | yes | yes | yes | yes |  |
@@ -350,7 +350,6 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_LIVE_LEVEL_ANCHOR`** (intentional / dead experiment): OFF since 2026-09-30 (v56), LIVE-ONLY by design: read only in fit_seats_full.R. The un-anchored level scored better over all 22 elections, and published_flags.R says backtests and live now both use the un-anchored recipe (AUSPOL_LEVEL_RECIPE='live').
 - **`AUSPOL_LIVE_LEVEL_SPLIT`** (**adopted, shared-function wiring**): SHIPPED 2026-10-18 as a train/serve fix, LIVE-ONLY by design: read only in fit_seats_full.R, which serves the xgb layer a level_pred split by bucket_split_ratio(). The harnesses read level_pred from output/level-pred.csv, built by the same function.
 - **`AUSPOL_LIVE_SEATPREV_RAW`** (**adopted, shared-function wiring**): SHIPPED 2026-10-19 as a train/serve fix, LIVE-ONLY by design: read only in fit_seats_full.R, which serves the xgb layer seat_prev_pcv from the raw prior-election matrix, as fit_xgb_primary_v6.R trains it.
-- **`AUSPOL_MINOR_DEFECT`** (**OPEN GAP**): OPEN GAP, inert at published values. fit_seats_full.R gates the minor-to-minor defector discount on this master switch AND AUSPOL_MINOR_DEFECT_BASE_PRED; the six harnesses gate on _BASE_PRED alone and never read this one (no R/ function does either). Both ship at 1, so nothing differs today, but an arm setting AUSPOL_MINOR_DEFECT=0 acts on the forecast and not on any backtest. The old harness 'yes' cells matched AUSPOL_MINOR_DEFECT_BASE_PRED. Found 2026-10-23.
 - **`AUSPOL_MINOR_DEFECT_CONSERVE`** (**adopted, shared-function wiring**): SHIPPED 2026-09-19 (plans/prereg-minor-defector-conserve-2026-09-19.md). Read inside personal_prior_vote() in R/candidate_returns.R: a minor-to-minor defector's origin class keeps a fitted share (~0.38) of the vote. Reaches every harness and fit_seats_full.R through that function, not by a direct harness read.
 - **`AUSPOL_MP_SLOPE_FILE`** (intentional / dead experiment): DIAGNOSTIC 2026-10-13: path of the sitting-member slope table; read in all six harnesses (published default output/mp-slope-by-target.csv).
 - **`AUSPOL_MP_SLOPE_TF`** (**adopted, shared-function wiring**): SHIPPED (1) 2026-10-14, FIT-TIME: read by scripts/fit_mp_slope.R, which writes output/mp-slope-by-target.csv (rebuild stage 0); harnesses and live read the table, not the switch.
@@ -521,4 +520,4 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR2  every non-universal switch (206 of 234) has a recorded classification.
+MR2  every non-universal switch (205 of 234) has a recorded classification.

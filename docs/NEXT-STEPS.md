@@ -58,8 +58,9 @@ contest features / contest base / partial-contest arm A refused, first-term fill
 - OPEN F8, F10, F12-F19 (F5 and F9 REFUSED, F7 waiting above, IND override shipped as arm H): post-xgb tables fitted
   on residuals the shares no longer carry, HTV overwriting xgb flows, and the rest of the audit's list
   (`reviews/pipeline-overwrite-audit-2026-10-18.md`). F20 DONE 23 Oct: the model registry parses the code (comments
-  and longer names no longer count) and lists each switch's `R/` readers. It found one new gap, inert today: the
-  harnesses never read `AUSPOL_MINOR_DEFECT` (only `_BASE_PRED`), so an arm setting it to 0 would not reach a backtest.
+  and longer names no longer count) and lists each switch's `R/` readers. The one gap it found (harnesses never read
+  `AUSPOL_MINOR_DEFECT`) FIXED 23 Oct: all seven harnesses gate the base_pred discount on it as `fit_seats_full.R:959`
+  does (byte-identical at published flags; not run, memory).
 
 ## 2026-10-17 (READ FIRST)
 
@@ -82,7 +83,7 @@ party-cor off) and the phantom-votes arm REFUSED: all in the journal and DECISIO
 - OPEN `seat_sd` is dead in the shipped config (the seat-spread leak was inert: `simulate_seat_contests()` ignores it
   whenever `level_sd` is given; fix `AUSPOL_SEAT_SPREAD_SRC="derived"` merged): a candidate for removal, not tuning.
 - OPEN small: `AUSPOL_PARTY_COR` is out of NT with no recorded reason (out of WA by design: cor(ALP, IND) flips sign
-  there, MODEL-REGISTRY); NT prints BNT4/BNT5 twice.
+  there, MODEL-REGISTRY). (NT's two-meaning `BNT4` fixed 23 Oct: the nothing-scored exit is now `BNT6!`.)
 - OPEN same one-run lag, older: the seat-poll weight is fitted on the PREVIOUS rebuild's output/forecasts.csv
   (R/seat_poll_blend.R:67; DECISIONS 2026-09-29), so stage 6 uses last run's predictions to weight seat polls. The
   spread fix's compare-and-rerun pattern (scripts/compare_spread_tables.R) could cover it too.
@@ -123,7 +124,8 @@ scoring each election x sqrt(votes). Leak fixes shipped: conserve, MP slopes, ce
   after): LEAVE-ONE-OUT but OFF at published flags, so any arm switching them on measures a leaked number:
   `fit_xgb_primary_sd.R:108` (`AUSPOL_XGB_PRIMARY_SD`), `fit_flow_drift.R` (`AUSPOL_FLOW_CELL_SD`),
   `fit_insurgency_risk.R:33` (`AUSPOL_INSURGENCY_SHRINK`), `party_positions(exclude=)` in `R/reentry_prior.R:288`,
-  `xgb-primary-v6-oof-predictions.csv` (static-cache arm). `state_swing_adjustment()` (R/state_swing_prior.R:73) has no caller: dead code.
+  `xgb-primary-v6-oof-predictions.csv` (static-cache arm). `state_swing_adjustment()` (R/state_swing_prior.R:73) has no caller: dead code (re-confirmed 23 Oct; deleting the
+  file + `.Rd` was blocked by the session's permission check, so it waits for Pete's OK; then `devtools::document()`).
 - OPEN (lead, NOT a result) sitting non-major members (Sonnet, 16 Oct; scratchpad `minor-mp/`): published-path
   signed error +0.36 pts, SE 1.11, n 84 sitting minor/IND members in 29 elections: no overall over-call. Hints only:
   falling own vote -3.8 (SE 3.9, n 9); trend slope +0.26 (SE 0.17); **leader-seat bonus on a sitting minor member
@@ -145,8 +147,8 @@ weighting by track record, seat-poll precision blend, typical-vote independent m
   breakdowns; the trend arms cannot move a blend at weight 0.89-1.00. `reviews/poll-weighting-inventory-2026-10-12.md`.
 - OPEN move off AE (`reviews/ae-dependence-audit-2026-10-13.md`): (b) language-model extraction of the Poll Bludger
   posts, the stronger version, not tried.
-- OPEN leader ratings: drift from months out needs horizon scoring; the blog chart was briefed to
-  inthegame-blog-86 (not confirmed taken).
+- OPEN leader ratings: drift from months out needs horizon scoring. (The blog chart is DONE: inthegame-blog PRs #890
+  and #895, "The leaders" in `politics/_forecast-body.qmd`.)
 - OPEN (by hand) the federal breakdown poll page is not auto-refreshed (FK3! warns past 45 days); live statewide pages are (17 Oct).
 - OPEN fed2025 vs AEF (0.377 vs 0.303; Pete asked 18 Oct): base_pred minor-party growth as flat points tested and
   REFUSED (logit, proportional, growth-ratio slopes all worse; `prereg-growth-ratio-features` RESULT; journal has the
@@ -185,7 +187,8 @@ Tools: misses via `scripts/biggest_misses.R` / skill `biggest-misses` (never `fo
 ## 2026-10-07 to 2026-10-08: archived handoffs
 
 Verbatim in `backlog/journal-2026-10-07-to-10-08.md`. Still OPEN from them:
-- OPEN: NSW 2027 page, blog side: seat pages need an election switch in ITG's `seat.qmd` (data on R2 since PR #107). Owned by the `inthegame-blog` session.
+- OPEN: NSW 2027 page, blog side: seat pages need an election switch in inthegame-blog's `politics/seat.qmd` (still
+  Victoria-only 23 Oct; `politics/nsw.qmd:43` has `seatPage: false`; data on R2 since PR #107). Owned by the `inthegame-blog` session.
 - OPEN: scenario-job straggler (one matrix job per run crawls on the runner's network). Pete 2026-10-09: leave open. Untried: per-step timeout plus re-run; fewer, fatter jobs.
 - OPEN: fed2025 seat polls deserved weight ~0.13 and got 0.55; no pre-election signal found yet. Worst case McMahon,
   Camenzuli (IND) published 29.0, actual 9.8: ONE poll, Compass Polling 8 Apr 2025 (opt-in SMS link, n=1,003, IND 41);
@@ -194,8 +197,9 @@ Verbatim in `backlog/journal-2026-10-07-to-10-08.md`. Still OPEN from them:
   DONE 18 Oct: every seat poll classified (`external/reference/polls/seat-polls/poll_methods.csv`,
   `reviews/seat-poll-methods-2026-10-18.md`). NEXT: prereg seat-poll weights by method and sponsor (+ per-pollster
   reliability, consensus down-weight), time-forward, shrunk by group size, scored on seat-poll seats. Dirty pollster
-  labels to fix in the scraper: sponsors in the pollster column (Climate 200, Sky News, Industry Association,
-  Internal polling), 56 unnamed fed2016 polls, "44%" (a duplicated uComms Brisbane row), "YouGo (MRP)".
+  labels: checked 23 Oct, NOT reaching the model. The blend takes the firm from `poll_methods.csv`'s `pollster_clean`
+  (`R/seat_poll_blend.R:174`; "YouGo (MRP)" -> YouGov, "44%" -> uComms, sponsors -> unknown), and the "44%" duplicate of
+  uComms Brisbane 20 Mar 2025 has no fieldwork date, so `:89` drops it. Raw `seat_polls.csv` labels are cosmetic.
 - OPEN: 120 `AUSPOL_*` names read in code but unregistered, classified 2026-10-12 (`reviews/unregistered-switches-2026-10-12.md`):
   33 MODEL / 24 RUN / 18 DIAG / 45 DEAD. Act on: live vs backtest MP-slope tier differs (live keeps a party only at
   n_member >= 8, harnesses keep any); ~20 harness-only model switches to register or delete.
@@ -246,7 +250,8 @@ plan, **Pete to send**; To Do reminder set).
   95%+ favourites that lost (calibration by band otherwise identical,
   roadmap item 5 DONE); the TCP gap is nsw2023; nsw2023 walked end to end
   (trend right, Labor's fall = phantom vote + published/implied two-party
-  gap + fundamentals). OPEN: the anchor-implied arm (`plans/prereg-anchor-implied-tpp-2026-09-20.md`, `AUSPOL_ANCHOR_IMPLIED`, still "0"; v44 scored other changes, no verdict on this arm found in DECISIONS); wa2017 and fed2019
+  gap + fundamentals). The anchor-implied arm was REFUSED 27-28 Sep (22 pairs, t -0.77;
+  `backlog/journal-2026-09-27-to-10-05.md:526`; `AUSPOL_ANCHOR_IMPLIED` "0"). OPEN: wa2017 and fed2019
   still to walk with Pete (questions in the review). Refused arms:
   `prereg-fundamentals-drop-fed-aligned`, `prereg-phantom-minor-vote`.
 
@@ -288,9 +293,9 @@ plan, **Pete to send**; To Do reminder set).
 - **Seat polls: PARKED** after arms S, T, U refused; the weight is fitted on one or two earlier polled
   elections. Resume only with a source adding earlier polled elections. Change seats beyond the statewide miss
   (Parramatta, Heathcote): walk examples with Pete before any rule.
-- **Time-forward fits still use `min_n` cliffs** (early pairs snap to slope 1.000 below 40 rows), and the
-  hardcoded `SHIP_SAME/SHIP_NEW` slopes (`R/split_slope.R:330`) were fitted on every election (a remaining
-  leak). Partial-pool instead (shrinkage rule). Unconfirmed whether either was since done: not in DECISIONS.
+- **Time-forward fits still use `min_n` cliffs** (checked 23 Oct: `R/split_slope.R:395,416` return 1 / skip below
+  n 40; the shrinkage arm `AUSPOL_SLOPE_SHRINK` is "0"). Partial-pool instead (shrinkage rule). The `SHIP_SAME/NEW`
+  leak is DONE: `AUSPOL_SHIP_TIME_FORWARD=1` (v51) makes the fallback time-forward; the constants are opt-out only.
 - **Seat context phase 2** (margin, previous swing; first-term flags' definition) was queued 2026-09-28; not
   confirmed built.
 - **Teal/independent under-call** (Curtin, Goldstein, Mackellar, Wakehurst):
@@ -312,6 +317,8 @@ mode everywhere, time-forward folds, registry classified, zero-placeholder
 audit, smoke loop + as-at cache + `tidy_output.R`, `out_path()`.
 
 Still open:
+- NB 23 Oct: neither branch below exists any more; only the commits b21fb77 and ae91f62 survive (unreferenced, so
+  `git gc` can drop them). Pete: recreate the branch to keep the work, or let it go.
 - Branch `fed-timing-resume-fixed` (b21fb77, unmerged, NOT through the review gate or `check_like_ci`): fixes
   the federal `PARTY_COR` loop leak (a full fed run simulates every pair with the LAST pair's matrix; dormant
   at published defaults because `AUSPOL_FORECAST_MODE=1` skips the matrix; live for fed with FORECAST_MODE=0),
@@ -320,7 +327,8 @@ Still open:
   `AUSPOL_FLOW_SD_BY_SOURCE` default 0). Also `instrument-backtest-fed-timing` (ae91f62), paused.
 - The seat-poll, demographic and leader-seat corrections learn from the PREVIOUS rebuild's
   `output/forecasts.csv`, so a rebuild's result depends on the one before it; make them read this run's
-  as-at predictions (queued 2026-09-30, not confirmed done).
+  as-at predictions (queued 2026-09-30). Still live 23 Oct: `R/demographic_residual.R:213` and
+  `R/seat_poll_blend.R:728,791` read `output/forecasts.csv`; leader-seat (`R/leader_seat.R:119`) not checked.
 - Main-tree `R CMD build` failed after ~6 min once (2026-10-04) while the fresh-clone check passed. Likely
   cause, unproven: the junctions in `.claude/worktrees/*/output` and `/external` into the main tree. Remove
   with `cmd /c rmdir` (never a recursive delete) before running the check in the main tree; the
