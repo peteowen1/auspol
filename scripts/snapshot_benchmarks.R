@@ -51,14 +51,14 @@ args <- commandArgs(trailingOnly = TRUE)
 DERIVE_ONLY <- "--derive" %in% args
 DAY <- sub("^--date=", "", grep("^--date=", args, value = TRUE))
 if (!length(DAY)) DAY <- format(Sys.time(), "%Y-%m-%d", tz = "UTC")
-if (!grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", DAY)) stop("BM0! --date must be YYYY-MM-DD, got ", DAY)
+if (!grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", DAY)) stop("VB0! --date must be YYYY-MM-DD, got ", DAY)
 
 RAW  <- file.path("external", "reference", "benchmarks", "vic2026", DAY)
 OUT  <- file.path("docs", "benchmarks", "vic2026", DAY)
 MAN  <- file.path(RAW, "manifest.tsv")
 UA   <- "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
 N_DISTRICTS <- 88L
-cat(sprintf("BM1  vic2026 benchmark %s for %s: raw %s, calls %s\n", if (DERIVE_ONLY) "derive" else "capture", DAY, RAW, OUT))
+cat(sprintf("VB1  vic2026 benchmark %s for %s: raw %s, calls %s\n", if (DERIVE_ONLY) "derive" else "capture", DAY, RAW, OUT))
 
 # ---- validators: a file counts only if it is what it claims to be ------------------------------------------------
 read_txt <- function(f) paste(readLines(f, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
@@ -79,7 +79,7 @@ fails <- character()
 
 get <- function(source, url, name, valid) {
   rel <- file.path(source, name); dest <- file.path(RAW, rel)
-  if (rel %in% manifest$file && file.exists(dest) && valid(dest)) { cat(sprintf("BM2  %-40s already captured\n", rel)); return(invisible(dest)) }
+  if (rel %in% manifest$file && file.exists(dest) && valid(dest)) { cat(sprintf("VB2  %-40s already captured\n", rel)); return(invisible(dest)) }
   dir.create(dirname(dest), showWarnings = FALSE, recursive = TRUE)
   t <- format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
   h <- curl::new_handle(useragent = UA, followlocation = TRUE, timeout = 120)
@@ -88,14 +88,14 @@ get <- function(source, url, name, valid) {
   good <- !is.na(code) && code == 200L && file.exists(dest) && isTRUE(valid(dest))
   if (!good) {
     why <- if (inherits(r, "error")) conditionMessage(r) else sprintf("HTTP %s, %s", code, if (file.exists(dest)) "content failed its check" else "no file")
-    cat(sprintf("BM3! %-40s NOT captured: %s (%s)\n", rel, why, url))
+    cat(sprintf("VB3! %-40s NOT captured: %s (%s)\n", rel, why, url))
     fails <<- c(fails, rel); return(invisible(NULL))
   }
   manifest <<- rbind(manifest[file != rel], data.table(
     source = source, url = url, fetched_utc = t, http = as.character(code), bytes = as.character(file.size(dest)),
     sha256 = digest::digest(file = dest, algo = "sha256"), file = rel))
   fwrite(manifest, MAN, sep = "\t")
-  cat(sprintf("BM2  %-40s %9d bytes\n", rel, file.size(dest)))
+  cat(sprintf("VB2  %-40s %9d bytes\n", rel, file.size(dest)))
   invisible(dest)
 }
 
@@ -145,27 +145,27 @@ raw <- function(...) file.path(RAW, ...)
 written <- character()
 
 ours_seats <- if (file.exists(raw("ours", "seat-probs-vic-2026.csv"))) unique(fread(raw("ours", "seat-probs-vic-2026.csv"))$seat) else character()
-if (length(ours_seats) != N_DISTRICTS) stop(sprintf("BM4! our seat-probs for %s has %d districts, not %d: nothing can be matched", DAY, length(ours_seats), N_DISTRICTS))
+if (length(ours_seats) != N_DISTRICTS) stop(sprintf("VB4! our seat-probs for %s has %d districts, not %d: nothing can be matched", DAY, length(ours_seats), N_DISTRICTS))
 canon <- setNames(ours_seats, toupper(ours_seats))
 
 # One district name per row, by our spelling; every one of the 88 present. Returns the canonical names.
 match_districts <- function(x, src) {
   k <- toupper(trimws(x)); out <- unname(canon[k])
-  if (anyNA(out)) stop(sprintf("BM5! %s names %d districts we do not: %s", src, sum(is.na(out)), paste(unique(x[is.na(out)]), collapse = ", ")))
-  if (uniqueN(out) != N_DISTRICTS) stop(sprintf("BM5! %s covers %d of %d districts", src, uniqueN(out), N_DISTRICTS))
+  if (anyNA(out)) stop(sprintf("VB5! %s names %d districts we do not: %s", src, sum(is.na(out)), paste(unique(x[is.na(out)]), collapse = ", ")))
+  if (uniqueN(out) != N_DISTRICTS) stop(sprintf("VB5! %s covers %d of %d districts", src, uniqueN(out), N_DISTRICTS))
   out
 }
 write_calls <- function(dt, src) {
   stopifnot(identical(names(dt), c("district", "call_class", "prob")))
-  if (any(is.na(dt$call_class))) stop(sprintf("BM6! %s has %d rows with no class", src, sum(is.na(dt$call_class))))
+  if (any(is.na(dt$call_class))) stop(sprintf("VB6! %s has %d rows with no class", src, sum(is.na(dt$call_class))))
   if (!all(is.na(dt$prob))) {
     tot <- dt[, .(s = sum(prob)), by = district]
-    if (any(abs(tot$s - 1) > 0.01)) stop(sprintf("BM6! %s probabilities do not sum to 1 in %d districts (worst %.3f)", src, sum(abs(tot$s - 1) > 0.01), tot$s[which.max(abs(tot$s - 1))]))
+    if (any(abs(tot$s - 1) > 0.01)) stop(sprintf("VB6! %s probabilities do not sum to 1 in %d districts (worst %.3f)", src, sum(abs(tot$s - 1) > 0.01), tot$s[which.max(abs(tot$s - 1))]))
   }
   setorder(dt, district, -prob, call_class)
   f <- file.path(OUT, paste0(src, "-calls.csv")); fwrite(dt, f)
   fav <- if (all(is.na(dt$prob))) dt else dt[, .SD[1], by = district]
-  cat(sprintf("BM7  %-12s %d districts; calls %s -> %s\n", src, uniqueN(dt$district),
+  cat(sprintf("VB7  %-12s %d districts; calls %s -> %s\n", src, uniqueN(dt$district),
               paste(sprintf("%s %d", names(table(fav$call_class)), table(fav$call_class)), collapse = ", "), f))
   written <<- c(written, src)
 }
@@ -174,7 +174,7 @@ write_calls <- function(dt, src) {
 sp <- fread(raw("ours", "seat-probs-vic-2026.csv"))
 write_calls(sp[prob > 0, .(district = match_districts(seat, "ours"), call_class = party, prob = as.numeric(prob))], "ours")
 fj <- fromJSON(raw("ours", "forecast-vic2026.json"), simplifyVector = FALSE)
-cat(sprintf("BM8  ours: built %s at %s\n", fj$built_at, fj$git_sha))
+cat(sprintf("VB8  ours: built %s at %s\n", fj$built_at, fj$git_sha))
 
 # AE Forecasts: party indices through partyAbbr/partyName, classed by classify_party(); negative indices are generic
 # candidates of a type and land in the same class as the named ones (score_aeforecasts.R does the same).
@@ -185,17 +185,17 @@ if (file.exists(af)) {
   nm <- rbindlist(lapply(rep$partyName, function(p) data.table(k = as.character(p[[1]]), name = as.character(p[[2]]))))
   ab <- merge(ab, nm, by = "k", all.x = TRUE)
   ab[, cls := classify_party(name, code = abbr)]
-  cat(sprintf("BM9  AE Forecasts party classes: %s (report %s)\n", paste(sprintf("%s=%s", ab$abbr, ab$cls), collapse = " "), rep$reportDate))
+  cat(sprintf("VB9  AE Forecasts party classes: %s (report %s)\n", paste(sprintf("%s=%s", ab$abbr, ab$cls), collapse = " "), rep$reportDate))
   seats <- unlist(rep$seatNames)
   rows <- rbindlist(lapply(seq_along(seats), function(i) {
     p <- rep$seatPartyWinFrequencies[[i]]
     data.table(seat = seats[i], k = vapply(p, function(x) as.character(x[[1]]), ""), pct = vapply(p, function(x) as.numeric(x[[2]]), 0))
   }))
   rows <- merge(rows, ab[, .(k, cls)], by = "k", all.x = TRUE)
-  if (anyNA(rows$cls)) stop(sprintf("BM9! AE Forecasts uses party index %s, absent from its partyAbbr", paste(unique(rows[is.na(cls)]$k), collapse = ",")))
+  if (anyNA(rows$cls)) stop(sprintf("VB9! AE Forecasts uses party index %s, absent from its partyAbbr", paste(unique(rows[is.na(cls)]$k), collapse = ",")))
   aef <- rows[, .(prob = sum(pct) / 100), by = .(seat, call_class = cls)][prob > 0]
   write_calls(aef[, .(district = match_districts(seat, "aeforecasts"), call_class, prob)], "aeforecasts")
-} else cat("BM4! no AE Forecasts payload for this date\n")
+} else cat("VB4! no AE Forecasts payload for this date\n")
 
 # GES: party codes read from the rendered map (LIB/NAT/ALP/GRN/ONP...), classed by code.
 gf <- raw("ges", "ges-district-calls-read-from-page.csv")
@@ -203,7 +203,7 @@ if (file.exists(gf)) {
   g <- fread(gf, skip = "district,")
   write_calls(g[, .(district = match_districts(district, "ges"), call_class = classify_party(rep("", .N), code = party), prob = NA_real_)], "ges")
 } else {
-  cat(sprintf("BM4! GES district calls NOT captured for %s: read the rendered map at %s/victoria in Chrome into %s (format: the 2026-10-21 file's header)\n",
+  cat(sprintf("VB4! GES district calls NOT captured for %s: read the rendered map at %s/victoria in Chrome into %s (format: the 2026-10-21 file's header)\n",
               DAY, "https://globalelectionsimulator.com", gf))
   fails <- c(fails, "ges/calls")
 }
@@ -214,12 +214,12 @@ prev_days <- prev_days[prev_days < DAY]
 if (length(prev_days)) {
   for (pat in c("^page-VictoriaApp-.*\\.js$", "^guide-victoria-.*\\.js$")) {
     now <- list.files(raw("ges"), pat); was <- list.files(file.path(dirname(RAW), tail(prev_days, 1), "ges"), pat)
-    cat(sprintf("BM10 GES %s: %s now, %s on %s -> %s\n", sub("^\\^(.*)-\\.\\*.*$", "\\1", pat),
+    cat(sprintf("VB10 GES %s: %s now, %s on %s -> %s\n", sub("^\\^(.*)-\\.\\*.*$", "\\1", pat),
                 if (length(now)) now[1] else "not captured", if (length(was)) was[1] else "not captured", tail(prev_days, 1),
                 if (!length(now) || !length(was)) "cannot compare" else if (identical(now, was)) "unchanged" else "CHANGED"))
   }
   if (!length(list.files(raw("ges"), "^guide-victoria-.*\\.js$"))) {
-    cat("BM4! GES polling inputs (guide-victoria-*.js) not saved for this date: save it from Chrome's network panel with the calls\n")
+    cat("VB4! GES polling inputs (guide-victoria-*.js) not saved for this date: save it from Chrome's network panel with the calls\n")
     fails <- c(fails, "ges/guide-victoria")
   }
 }
@@ -231,19 +231,19 @@ if (file.exists(file.path(jd, "calculator.js"))) {
   four <- c(Grn = "GRN", Lab = "ALP", Lnp = "LNP", Phn = "ONP")
   m <- vapply(four, function(p) mean(sh[[p]]), 0)
   inp <- 100 * m / sum(m)
-  cat(sprintf("BM11 Jago inputs from our %d-district mean primaries: %s (the four were %.1f%% of the vote; renormalised)\n",
+  cat(sprintf("VB11 Jago inputs from our %d-district mean primaries: %s (the four were %.1f%% of the vote; renormalised)\n",
               nrow(sh), paste(sprintf("%s %.2f", names(inp), inp), collapse = ", "), sum(m)))
   fwrite(data.table(party = names(inp), our_class = unname(four), our_mean_primary = round(m, 4), jago_input = round(inp, 4)),
          file.path(OUT, "jago-ours-inputs.csv"))
   tmp <- tempfile(fileext = ".csv")
   st <- system2("node", c("scripts/jago_calc.js", shQuote(jd), sprintf("%.4f", inp)), stdout = tmp, stderr = "")
-  if (!identical(as.integer(st), 0L)) stop("BM12! scripts/jago_calc.js failed (exit ", st, ")")
+  if (!identical(as.integer(st), 0L)) stop("VB12! scripts/jago_calc.js failed (exit ", st, ")")
   jc <- fread(tmp)
   fwrite(jc, file.path(OUT, "jago-ours-detail.csv"))
   write_calls(jc[, .(district = match_districts(district, "jago-ours"), call_class = unname(four[winner]), prob = NA_real_)], "jago-ours")
-} else { cat("BM4! no saved Jago calculator for this date\n"); fails <- c(fails, "jago") }
+} else { cat("VB4! no saved Jago calculator for this date\n"); fails <- c(fails, "jago") }
 
-cat(sprintf("\nBM13 %s: calls written for %s%s\n", DAY, paste(written, collapse = ", "),
+cat(sprintf("\nVB13 %s: calls written for %s%s\n", DAY, paste(written, collapse = ", "),
             if (length(fails)) sprintf("; NOT USABLE: %s", paste(unique(fails), collapse = ", ")) else "; every source captured"))
-cat("BM13 next: commit docs/benchmarks/vic2026/", DAY, "/ and rerun scripts/build_data_registry.R\n", sep = "")
+cat("VB13 next: commit docs/benchmarks/vic2026/", DAY, "/ and rerun scripts/build_data_registry.R\n", sep = "")
 if (length(fails)) quit(status = 1)
