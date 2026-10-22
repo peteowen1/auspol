@@ -70,6 +70,12 @@ TCP-consistency check, arm H shipped, heavy-tail arm T REFUSED 19 Oct, F21 surge
   election, sa2010 overwrote sa2022's results and the pass-1 tables took sa2022 from a 19 Oct run. The tag was a
   weighted character sum, not a hash: now md5 in all seven harnesses, and SA refuses (BS0!) to overwrite another
   election's file. No other collision among the SA files on disk; the published forecast was not affected.
+- PUBLISHED 21 Oct 17:34: the refreshed seat context (DECISIONS). AEF-7 0.2614 -> 0.2652, pooled 0.3242 -> 0.3256.
+- OPEN (finding, 22 Oct): completing the incumbent/retiring fill for 11 OLD elections (nsw2011/15, nt, qld2012-17,
+  sa2010-18) made the 24 untouched elections worse by +0.0040 (SE 0.0012) through retraining alone, AEF-7 included.
+  More complete training data making recent elections worse is a signal, not noise: either the fill is wrong somewhere
+  in those 11, or the incumbent/retiring effect differs by era and the trees pool it. Check the fill against declared
+  results in the 11 first, then an era interaction or a time decay on those rows.
 - OPEN, from the same diagnosis: Greens over-called in high-Greens seats by the trees (Melbourne, Griffith, Northcote);
   retiring Labor members about -2.0 (n 34); Dickson's published stage moved a correct tree LNP figure +5.5.
 - OPEN (Pete): the 28 old notes in the ledger page's notes store now duplicate `docs/aef7-seat-notes.csv` under "Your
