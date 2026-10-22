@@ -71,11 +71,14 @@ TCP-consistency check, arm H shipped, heavy-tail arm T REFUSED 19 Oct, F21 surge
   weighted character sum, not a hash: now md5 in all seven harnesses, and SA refuses (BS0!) to overwrite another
   election's file. No other collision among the SA files on disk; the published forecast was not affected.
 - PUBLISHED 21 Oct 17:34: the refreshed seat context (DECISIONS). AEF-7 0.2614 -> 0.2652, pooled 0.3242 -> 0.3256.
-- OPEN (finding, 22 Oct): completing the incumbent/retiring fill for 11 OLD elections (nsw2011/15, nt, qld2012-17,
-  sa2010-18) made the 24 untouched elections worse by +0.0040 (SE 0.0012) through retraining alone, AEF-7 included.
-  More complete training data making recent elections worse is a signal, not noise: either the fill is wrong somewhere
-  in those 11, or the incumbent/retiring effect differs by era and the trees pool it. Check the fill against declared
-  results in the 11 first, then an era interaction or a time decay on those rows.
+- OPEN, decision for Pete (finding, 22 Oct): completing the incumbent/retiring fill for 11 OLD elections (nsw2011/15,
+  nt, qld2012-17, sa2010-18) made the 24 untouched elections worse by +0.0040 (SE 0.0012) through retraining alone.
+  CHECKED 22 Oct: the fill is NOT wrong in the 11 (absent members unflagged 26.2% vs 25.2% in the 24; flagged but
+  standing 1 vs 2). AEF-7's +0.0038 is three upsets: Ipswich West qld2024 +1.89 (P(ALP) 0.141 -> 0.021; LNP primary
+  39.6 -> 45.6 vs actual 33.5; LNP by-election winner died before the election, so an incumbent party with nobody
+  sitting), Morwell vic2022 +0.79, Kalamunda wa2025 +0.45, of +2.61 total. By-election gains in general are not
+  over-called: 16 of 22 held at the next general election, our mean P 0.64. Scratchpad fillcheck/{check,moved,revert}.R.
+  Option if pursued: a time-decay arm on the 11 old elections, `quick_arm.R` on AEF-7 (~15 min). My lean: leave it.
 - OPEN, from the same diagnosis: Greens over-called in high-Greens seats by the trees (Melbourne, Griffith, Northcote);
   retiring Labor members about -2.0 (n 34); Dickson's published stage moved a correct tree LNP figure +5.5.
 - OPEN (Pete): the 28 old notes in the ledger page's notes store now duplicate `docs/aef7-seat-notes.csv` under "Your
