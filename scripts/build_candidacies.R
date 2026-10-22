@@ -612,6 +612,11 @@ if (file.exists(vf6)) {
 WAEC <- file.path("external", "reference", "waec")
 wa_files <- list.files(WAEC, pattern = "^sg[0-9]{4}-[A-Z]+\\.json$")
 wa_years <- sort(unique(as.integer(sub("^sg([0-9]{4}).*$", "\\1", wa_files))))
+# list.files() on a directory that does not exist returns character(0) without
+# complaint, so unlike every other region block this one printed nothing when its
+# whole reference tree was absent (CI never populates external/reference/).
+if (!length(wa_years))
+  cat(sprintf("BC5  wa: no sg<year>-<SEAT>.json files in %s, so no WA election is built\n", WAEC))
 for (y in wa_years) {
   ff <- wa_files[grepl(sprintf("^sg%d-", y), wa_files)]
   rows <- list()

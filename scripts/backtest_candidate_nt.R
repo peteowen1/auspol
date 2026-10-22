@@ -469,7 +469,8 @@ for (K in PAIRS) {
   # feature -- docs/reviews/base-pred-blind-to-tonights-fixes-2026-09-16.md.
   # Same shape as major_discount/.defect above.
   .minor_disc <- NULL; .minor_disc_loser <- NULL
-  if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT_BASE_PRED", "0"), "1")) {
+  if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT_BASE_PRED", "0"), "1") &&
+      !identical(Sys.getenv("AUSPOL_MINOR_DEFECT", "1"), "0")) {  # same outer switch as fit_seats_full.R:959 (audit F20)
     .mfd <- tryCatch(fit_minor_defector_discount(el_to), error = function(e) {
       cat(sprintf("BNT0n! minor-defector fit FAILED, no discount applied: %s\n", conditionMessage(e)))
       list(discount = NULL, discount_mp = NULL, discount_loser = NULL, n = 0L)
@@ -920,7 +921,7 @@ if (!length(res_all)) {
   # on it, and no file means no stale score can be pooled. Outside
   # forecast mode a pair always has a statewide, so an empty run is a real failure.
   if (identical(Sys.getenv("AUSPOL_FORECAST_MODE", "1"), "1")) {
-    cat("BNT4! no NT pair scored: every pair was skipped (no fittable poll trend). Nothing written.\n")
+    cat("BNT6! no NT pair scored: every pair was skipped (no fittable poll trend). Nothing written.\n")
     quit(save = "no", status = 0)
   }
   stop("no NT pair produced a result")

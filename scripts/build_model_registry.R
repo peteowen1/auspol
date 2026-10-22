@@ -34,16 +34,57 @@ pf <- readLines("scripts/published_flags.R", warn = FALSE)
 switches <- sort(unique(regmatches(pf, regexpr("AUSPOL_[A-Z_0-9]+", pf))))
 switches <- switches[nzchar(switches)]
 
-# Switches read inside a SHARED R/ function rather than named in every
-# harness script -- a literal grep on the harness .R files would call these
-# gaps everywhere, which is not what "gap" means for this table. Verified by
-# reading R/*.R directly (see docs/MODEL-REGISTRY.md's own notes section for
-# citations); update this list if a switch moves between the two styles.
-SHARED_FN <- c("AUSPOL_COV_LOO", "AUSPOL_COV_TF", "AUSPOL_SALIENCE_SMOOTH", "AUSPOL_SIM_ENGINE", "AUSPOL_DEFECT_POOLED")
-
+# A MENTION IN A COMMENT IS NOT A READ, AND AUSPOL_X IS NOT AUSPOL_X_LIVE.
+# Until 2026-10-23 present() was grepl(fixed = TRUE) over every line, so a
+# comment naming a switch scored "yes" (audit F20: AUSPOL_MINOR_DEFECT_BASE_PRED
+# in fit_seats_full.R while it was unwired), and AUSPOL_XGB_PRIMARY scored "yes"
+# in fit_seats_full.R from mentions of AUSPOL_XGB_PRIMARY_LIVE/_OOF/_SD. Now the
+# file goes through R's own parser: only string constants and symbols count
+# (Sys.getenv("AUSPOL_X"), Sys.setenv(AUSPOL_X = ...), a "AUSPOL_X=1" command
+# string), comments never do, and the name must end where the token's name
+# ends. Fixture check below, before anything is scanned.
+code_tokens <- local({
+  cache <- list()
+  function(file) {
+    if (!is.null(cache[[file]])) return(cache[[file]])
+    pd <- utils::getParseData(parse(file, keep.source = TRUE), includeText = TRUE)
+    tok <- pd$text[pd$token %in% c("STR_CONST", "SYMBOL", "SYMBOL_SUB", "SYMBOL_FUNCTION_CALL")]
+    cache[[file]] <<- tok
+    tok
+  }
+})
+mentions <- function(sw, file) {
+  any(grepl(sprintf("(?<![A-Z0-9_])%s(?![A-Z0-9_])", sw), code_tokens(file), perl = TRUE))
+}
 present <- function(sw, file) {
   if (!file.exists(file)) return(NA)
-  any(grepl(sw, readLines(file, warn = FALSE), fixed = TRUE))
+  mentions(sw, file)
+}
+
+local({
+  fx <- tempfile(fileext = ".R")
+  writeLines(c("# AUSPOL_FX_COMMENT is only named here",
+               "a <- Sys.getenv(\"AUSPOL_FX_READ\", \"0\")  # and AUSPOL_FX_TRAILING here",
+               "Sys.setenv(",
+               "  AUSPOL_FX_SET = \"1\")",
+               "cmd <- \"AUSPOL_FX_CMD=1 Rscript x.R\"",
+               "b <- Sys.getenv(\"AUSPOL_FX_LONG_LIVE\")"), fx)
+  want <- c(AUSPOL_FX_COMMENT = FALSE, AUSPOL_FX_TRAILING = FALSE, AUSPOL_FX_READ = TRUE,
+            AUSPOL_FX_SET = TRUE, AUSPOL_FX_CMD = TRUE, AUSPOL_FX_LONG = FALSE)
+  got <- vapply(names(want), present, logical(1), file = fx)
+  if (!identical(got, want))
+    stop("MR0! present() fixture: ", paste(names(want)[got != want], collapse = ", "), " scored wrong")
+  unlink(fx)
+})
+
+# Switches read inside a SHARED R/ function show "NO" in every entry point (the
+# harnesses only call the function), which is not a gap. Until 2026-10-23 a
+# hand list said which these were (and nothing read it); now every row carries
+# the R/ files whose CODE reads the switch, found the same way as present().
+R_FILES <- list.files("R", pattern = "\\.R$", full.names = TRUE)
+r_readers <- function(sw) {
+  hit <- R_FILES[vapply(R_FILES, function(f) mentions(sw, f), logical(1))]
+  if (length(hit)) paste(basename(hit), collapse = ", ") else ""
 }
 
 # READING A SWITCH IS NOT RUNNING AT ITS PUBLISHED VALUE, and until 2026-09-14
@@ -142,6 +183,29 @@ for (sw in names(COMMENT_ONLY)) {
 # row; update this when a gap is fixed or a new one is found by rerunning
 # this script and diffing its output.
 CLASSIFY <- list(
+  # ---- Added 2026-10-23: the 12 rows the parser scan (audit F20) turned non-universal. Each used to
+  # score "yes" from a comment or from a longer switch's name. Nine are read by an R/ function every
+  # entry point calls (traced two call levels from the reading function); three are real gaps.
+  AUSPOL_BREAKOUT_MIX = "ARM (0), UNIVERSAL via R/: read by breakout_mix_args() (R/breakout_mix.R), which all seven entry points reach. The old 'yes' cells were comments.",
+  AUSPOL_CROSS_SEAT_VOTE = "SHIPPED (1) 2026-10-06, UNIVERSAL via R/: read inside personal_prior_vote() (R/candidate_returns.R), which all seven entry points reach. The old 'yes' cells were comments.",
+  AUSPOL_DEV_SLOPE = "UNIVERSAL via R/: read by dev_slopes_for() (R/dev_slope.R), which all seven entry points reach. The old 'yes' cells matched AUSPOL_DEV_SLOPE_MODE and comments.",
+  AUSPOL_IND_PERSON = "SHIPPED (final), UNIVERSAL via R/: read by ind_person_mode() (R/ind_person.R); every entry point calls ind_person_apply(). The old 'yes' cells were trailing comments on those calls.",
+  AUSPOL_LEADER_SEAT = "SHIPPED (1), UNIVERSAL via R/: read inside leader_seat_apply() (R/leader_seat.R); fit_seats_full.R also reads it directly. The harness 'yes' cells were comments.",
+  AUSPOL_NEW_IND_SHRINK = "SHIPPED (1) 2026-10-06, UNIVERSAL via R/: read by new_ind_mode() (R/new_ind_shrink.R, also ind_mixture.R/ind_typical.R), which all seven entry points reach. The old 'yes' cells were comments.",
+  AUSPOL_REENTRY = "SHIPPED (majors) 2026-10-06, UNIVERSAL via R/: read by reentry_mode() (R/reentry_prior.R), which all seven entry points reach. fit_seats_full.R names it only inside a printed message; the harness 'yes' cells matched AUSPOL_REENTRY_* switches.",
+  AUSPOL_SEAT_POLL_BLEND = "SHIPPED (1), UNIVERSAL via R/: read inside seat_poll_blend_apply() (R/seat_poll_blend.R); fit_seats_full.R also reads it directly. The harness 'yes' cells were comments.",
+  AUSPOL_SEAT_SWING_PORT = "SHIPPED (2), UNIVERSAL via R/: read inside seat_swing_port_apply() (R/seat_swing_port.R), which WA reaches too; WA's own scoping switch is AUSPOL_SEAT_SWING_PORT_WA, whose name made the old WA cell 'yes'.",
+  AUSPOL_MINOR_DEFECT = paste(
+    "OPEN GAP, inert at published values. fit_seats_full.R gates the minor-to-minor defector discount on this master switch",
+    "AND AUSPOL_MINOR_DEFECT_BASE_PRED; the six harnesses gate on _BASE_PRED alone and never read this one (no R/ function does",
+    "either). Both ship at 1, so nothing differs today, but an arm setting AUSPOL_MINOR_DEFECT=0 acts on the forecast and not on",
+    "any backtest. The old harness 'yes' cells matched AUSPOL_MINOR_DEFECT_BASE_PRED. Found 2026-10-23."),
+  AUSPOL_SURGE_RECIPIENT = paste(
+    "OPEN GAP in WA, part of the AUSPOL_SALIENCE_SURGE_V2 gap below: WA has no surge-v2 hazard, so it has no recipient",
+    "step to switch. Read directly in fit_seats_full.R and the other five harnesses; no R/ function reads it. The old WA 'yes' was a comment."),
+  AUSPOL_SURGE_SCALE = paste(
+    "OPEN GAP in WA, part of the AUSPOL_SALIENCE_SURGE_V2 gap below: no surge-v2 hazard in WA, so nothing to scale. Read",
+    "directly in fit_seats_full.R and the other five harnesses; no R/ function reads it. The old WA 'yes' was a comment."),
   AUSPOL_SIZE_SD = paste(
     "SHIPPED 2026-10-14 (1), wired EVERYWHERE through R/size_sd.R: all seven harnesses and fit_seats_full.R pass",
     "sd_override = size_sd_apply(...) to simulate_seat_contests(), which reads the switch inside R/. The 'NO' cells",
@@ -829,13 +893,18 @@ L <- c(
   "separate model code.\n",
   sprintf("## Switch parity (%d switches from `published_flags.R`, %d entry points)\n",
           length(switches), length(cols)),
-  paste0("| switch | ", paste(cols, collapse = " | "), " |"),
-  paste0("|---|", paste(rep("---", length(cols)), collapse = "|"), "|")
+  paste0("The last column lists the `R/` files whose code (not comments) reads the switch. A row of ",
+         "`NO`s with a file there is shared-function wiring: every entry point that calls that ",
+         "function honours it. Presence is still not value: a hardcoded constant beside the read ",
+         "(audit F3) or a swapped table (F10) scores \"yes\" here.\n"),
+  paste0("| switch | ", paste(cols, collapse = " | "), " | read in `R/` |"),
+  paste0("|---|", paste(rep("---", length(cols)), collapse = "|"), "|---|")
 )
+RREAD <- vapply(switches, r_readers, character(1))
 
 for (sw in switches) {
   r <- fmt_row(sw)
-  row <- paste0("| `", sw, "` | ", paste(r$vals, collapse = " | "), " |")
+  row <- paste0("| `", sw, "` | ", paste(r$vals, collapse = " | "), " | ", RREAD[[sw]], " |")
   L <- c(L, row)
 }
 
