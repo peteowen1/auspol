@@ -11,7 +11,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - OPEN, DATED (Tue 27 Oct, 3, 10, 17 and Fri 27 Nov): vic2026 benchmark capture. Built and run 22 Oct (all four
   sources, `docs/benchmarks/vic2026/2026-10-22/`). Each date: `Rscript scripts/snapshot_benchmarks.R`, plus the GES
   Chrome step (`scripts/ges_read_calls.js`; plan Amendment 1), rerun the script, commit the calls folder, rerun
-  `scripts/build_data_registry.R`. Still to build: `scripts/score_benchmarks_vic2026.R` (after the VEC declares).
+  `scripts/build_data_registry.R`. Scorer BUILT 23 Oct: `Rscript scripts/score_benchmarks_vic2026.R --results=<csv>`
+  (`district, winner, status`; winner as the VEC prints the party) once every district is declared; `--dry-run` passes
+  its known answer now (ours 88/88 against its own favourites). Still to build: the VEC 2026 results file itself.
   Roy Morgan dropped 21 Oct (no seat winners) (`plans/external-benchmark-vic2026-2026-10-20.md`).
 
 - OPEN: F7 screen (demographic correction in full, `AUSPOL_DEMO_RESID_FULL=1`, off).

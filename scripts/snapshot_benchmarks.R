@@ -41,7 +41,9 @@
 # seat-shares-vic-2026.csv, the four renormalised to sum to 100. Equal weight per district (Victorian districts are
 # drawn within 10% of one quota), no preference flows, nothing invented.
 #
-# Emits BM* codes (grepped ARCHITECTURE.md and scripts/ first: BM is free). A `!` code means the capture is not usable.
+# Emits VB* codes. A `!` code means the capture is not usable. (They were BM* until 2026-10-22: BM was not free,
+# scripts/build_retiring_mp_cases.R prints BM1-BM9, and test-check-code-collisions.R turned CI red. Check a prefix
+# with that test, not by grepping one folder.)
 
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
