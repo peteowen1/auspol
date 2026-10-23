@@ -124,8 +124,10 @@ scoring each election x sqrt(votes). Leak fixes shipped: conserve, MP slopes, ce
   after): LEAVE-ONE-OUT but OFF at published flags, so any arm switching them on measures a leaked number:
   `fit_xgb_primary_sd.R:108` (`AUSPOL_XGB_PRIMARY_SD`), `fit_flow_drift.R` (`AUSPOL_FLOW_CELL_SD`),
   `fit_insurgency_risk.R:33` (`AUSPOL_INSURGENCY_SHRINK`), `party_positions(exclude=)` in `R/reentry_prior.R:288`,
-  `xgb-primary-v6-oof-predictions.csv` (static-cache arm). `state_swing_adjustment()` (R/state_swing_prior.R:73) has no caller: dead code (re-confirmed 23 Oct; deleting the
-  file + `.Rd` was blocked by the session's permission check, so it waits for Pete's OK; then `devtools::document()`).
+  `xgb-primary-v6-oof-predictions.csv` (static-cache arm). `state_swing_adjustment()` (R/state_swing_prior.R:73) has no caller: dead code (re-confirmed 23 Oct). Its signal
+  is now gone on 37 state-years too (DECISIONS 2026-10-23), so the variant route is closed. Pete to choose: delete
+  (`git rm` is blocked for the session, so he runs it) or keep as `@keywords internal`; either way `devtools::document()`
+  and the full `check_like_ci.R` after.
 - OPEN (lead, NOT a result) sitting non-major members (Sonnet, 16 Oct; scratchpad `minor-mp/`): published-path
   signed error +0.36 pts, SE 1.11, n 84 sitting minor/IND members in 29 elections: no overall over-call. Hints only:
   falling own vote -3.8 (SE 3.9, n 9); trend slope +0.26 (SE 0.17); **leader-seat bonus on a sitting minor member
