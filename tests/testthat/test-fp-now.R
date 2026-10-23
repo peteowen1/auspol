@@ -11,7 +11,7 @@ test_that("fp_now adds to 100.0 from the NSW and Vic live shapes, on the latest 
   expect_equal(sum_m(r), 100, tolerance = 1e-9)
   expect_equal(vapply(r, `[[`, "", "party"), names(nsw))
   expect_true(all(vapply(r, function(d) d$lo <= d$m && d$m <= d$hi, TRUE)))
-  # raw means were 98.2, so each share moves by about 1.8%, never by more than 0.15 points
+  # raw means were 98.2, so each share grows by about 1.8% of itself: ALP's 31.0 moves ~0.6 points
   expect_lt(max(abs(vapply(r, `[[`, 0, "m") - nsw)), 0.7)
   vic <- c(LNP = 30, ALP = 30, ONP = 14.6, GRN = 12, OTH = 10.9)           # sums to 97.5
   expect_equal(sum_m(fp_now_normalised(mk_tr(vic), names(vic))), 100, tolerance = 1e-9)
