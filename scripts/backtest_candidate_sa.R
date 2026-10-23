@@ -668,7 +668,7 @@ mat <- (function(m) {
 ", if (is.null(.fdo)) 0L else .fdo$n)); return(m) }
   m2 <- route_departed_origin(m, PRV, TGT, .fdo$frac)
   .a <- attr(m2, "departed_origin")
-  cat(sprintf("BF0o departed-origin share %.3f from %d cases (target excluded): %d routed%s
+  cat(sprintf("BF0o departed-origin share %.3f (shrunk) from %d earlier-election cases: %d routed%s
 ", .fdo$frac, .fdo$n, .a$applied,
               if (length(.a$skipped)) paste0("; SKIPPED ", paste(.a$skipped, collapse = ", ")) else ""))
   m2

@@ -26,6 +26,15 @@ not a commit, not a plan file — that it is not happening and why.
 
 ---
 
+## 2026-10-24
+
+| Request | Status |
+|---|---|
+| Retiring members' vote goes home: a member who left a party retires, send the released vote back to the former party first (Morwell 2022), tested in base_pred AND xgb | **NOT DONE: investigating 24 Oct.** |
+| Greens over-called in high-Greens seats (Melbourne, Griffith, South Brisbane): pull the tree's Greens share toward base_pred as the Greens base grows; screen with quick_arm on fed2025 + qld2024 | **NOT DONE: investigating 24 Oct.** |
+| TCP margins too close to 50: one stretch factor, time-forward, shrunk toward 1.00 | **NOT DONE: investigating 24 Oct.** |
+| Zero-probability newcomers (7 seats at the 1e-6 floor, Katter 2012): launch prior, a founder or sitting defector carries their personal vote into the new party | **NOT DONE: investigating 24 Oct** (sizing first; the bigger build). |
+
 ## 2026-10-18/19
 
 | Request | Status |

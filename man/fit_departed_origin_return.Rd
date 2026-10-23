@@ -9,23 +9,28 @@ fit_departed_origin_return(
   corpus = NULL,
   pairs = NULL,
   stat = c("median", "mean"),
-  min_n = 5L
+  min_n = 1L
 )
 }
 \arguments{
-\item{target_election}{Pair whose own rows are excluded from the fit.}
+\item{target_election}{Election being forecast; only earlier pairs are used.}
 
 \item{corpus, pairs}{As in \code{\link[=fit_defector_discount]{fit_defector_discount()}}.}
 
 \item{stat}{\code{"median"} or \code{"mean"}.}
 
-\item{min_n}{Fewer usable cases than this returns \code{frac = NULL}.}
+\item{min_n}{Fewer usable cases than this returns \code{frac = NULL}. Default 1:
+the shrinkage handles thin case counts.}
 }
 \value{
-list(frac, n, cases).
+list(frac, frac_raw, n, k, cases).
 }
 \description{
-Leave-target-out over every other pair: for each case from
-\code{\link[=departed_defectors]{departed_defectors()}}, \verb{(origin party's actual vote at election_to - origin_prev * statewide ratio) / lead_pcv}, clipped to \verb{[0, 1]}, then the
-median (\code{stat = "median"}, the shipped arm) or mean (\code{"mean"}).
+Time-forward over the pairs dated before the target (\code{\link[=fit_pairs_for]{fit_pairs_for()}}):
+for each case from \code{\link[=departed_defectors]{departed_defectors()}}, \verb{(origin party's actual vote at election_to - origin_prev * statewide ratio) / lead_pcv}, clipped to
+\verb{[0, 1]}, then the median (\code{stat = "median"}) or mean (\code{"mean"}), shrunk
+toward 0 (no vote goes home beyond the swing) by \code{n / (n + k)}, \code{k} =
+\code{AUSPOL_DEPARTED_ORIGIN_SHRINK_K} (default 3). The fit was leave-target-out
+until 2026-10-24, so it learned from later elections, and it refused below
+5 cases rather than shrinking. docs/plans/prereg-departed-origin-tf-2026-10-24.md.
 }

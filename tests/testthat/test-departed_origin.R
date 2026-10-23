@@ -36,10 +36,17 @@ test_that("route_departed_origin moves frac * lead_pcv and conserves the row", {
   expect_equal(r2[1, ], m2[1, ])
 })
 
-test_that("fit_departed_origin_return excludes the target pair and clips to [0, 1]", {
+test_that("fit_departed_origin_return is time-forward, clips to [0, 1] and shrinks by n/(n+k)", {
   pairs <- list(list(election = "vic2018", prev = "vic2014"), list(election = "vic2022", prev = "vic2018"))
-  f <- fit_departed_origin_return("vic2022", corpus = corpus, pairs = pairs, min_n = 1L)
+  f <- fit_departed_origin_return("vic2022", corpus = corpus, pairs = pairs)
   expect_equal(f$n, 0L); expect_null(f$frac)          # the only case IS the target
-  g <- fit_departed_origin_return("nsw2023", corpus = corpus, pairs = pairs, min_n = 1L)
-  expect_equal(g$n, 1L); expect_true(g$frac >= 0 && g$frac <= 1)
+  # vic2022's case is LATER than a vic2018 target: leave-target-out kept it, time-forward must not
+  expect_equal(fit_departed_origin_return("vic2018", corpus = corpus, pairs = pairs)$n, 0L)
+  g <- fit_departed_origin_return("nsw2023", corpus = corpus, pairs = pairs)
+  expect_equal(g$n, 1L); expect_true(g$frac_raw >= 0 && g$frac_raw <= 1)
+  expect_equal(g$frac, g$frac_raw * 1 / (1 + 3))      # default k = 3
+  withr::with_envvar(c(AUSPOL_DEPARTED_ORIGIN_SHRINK_K = "0"),
+    expect_equal(fit_departed_origin_return("nsw2023", corpus = corpus, pairs = pairs)$frac, g$frac_raw))
+  withr::with_envvar(c(AUSPOL_DEPARTED_ORIGIN_SHRINK_K = "-1"),
+    expect_error(fit_departed_origin_return("nsw2023", corpus = corpus, pairs = pairs), "non-negative"))
 })

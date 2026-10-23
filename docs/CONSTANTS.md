@@ -516,6 +516,7 @@ outright on sa2026, vic2022 and nsw2023.
 | constant | value | status |
 |---|---|---|
 | `AUSPOL_CONSERVE_SHRINK_K` (was `min_n` = 8) | K = 3 pseudo-cases | `fit_minor_defector_conserve()`: **CHOSEN prior strength** (same 3 as `.DEFSTATE_K`), shipped 2026-10-16. The median kept share is shrunk toward 0 by n / (n + 3); replaces a cliff that ignored 7 cases and believed 8. Not fitted. `"off"` restores the cliff. Screen: seat log loss unchanged (+0.0001, SE 0.0001). |
+| `AUSPOL_DEPARTED_ORIGIN_SHRINK_K` (was `min_n` = 5) | K = 3 pseudo-cases | `fit_departed_origin_return()` (`R/candidate_returns.R`): **CHOSEN prior strength**, same 3 as above, added 2026-10-24. The share of a departed defector's vote that goes home to their origin party is shrunk toward 0 by n / (n + 3). The same change made the fit time-forward; it was leave-target-out. Reaches the model only under `AUSPOL_DEPARTED_ORIGIN` (off). `docs/plans/prereg-departed-origin-tf-2026-10-24.md`. |
 | `prior_df` | 3 pseudo-degrees of freedom | **CHOSEN prior strength** (same 3 as `.DEFSTATE_K`): each jurisdiction's own spread is moderated toward the pooled within-jurisdiction spread, s_g^2 = (SS_g + 3 s^2) / (n_g - 1 + 3). Not fitted; with 1-9 cases per jurisdiction the variance of the variances cannot be estimated. `Inf` gives one common spread. |
 | `1.2533` | sqrt(pi/2) | **MATHEMATICAL**: large-sample standard error of a median relative to a mean under normal noise. |
 | between-jurisdiction variance tau^2 | fitted per call | **FITTED** (DerSimonian-Laird method of moments, floored at 0). |
