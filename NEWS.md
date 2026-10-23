@@ -1,3 +1,7 @@
+# auspol 0.4.107
+
+- **`fp_now` first-preference shares add to 100.0** on the Victorian and every `build_trend_page_data.R` page (issue #131; they summed to 97.5 for Victoria and 98.2 for NSW because each party's trend is fitted alone). The exported endpoint means are rescaled to 100 and rounded by largest remainder (`R/fp_now.R`), the 95% half-widths scaled by the same factor and centred on the rounded mean; the build stops unless the sum is 100 +/- 0.1 (log line `TP4`). Display only: the trend series, the headline two-party estimate and the seat forecast are unchanged. Rescaling, not a joint refit, because a refit would move published numbers.
+
 # auspol 0.4.106
 
 - **Victorian 2026 external benchmark**: rival seat calls (AE Forecasts, the Global Election Simulator, Jago's calculator on our shares) captured on fixed freeze dates by `scripts/snapshot_benchmarks.R`, and a scorer built before any result (`scripts/score_benchmarks_vic2026.R`). A GES map colour the reader does not recognise now stops the capture instead of becoming an independent call.
