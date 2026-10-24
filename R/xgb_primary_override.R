@@ -112,6 +112,7 @@ xgb_primary_override <- function(shares, pair_label, enabled = NULL) {
     out[hit, p] <- pmax(0, v[hit])
     n_hit <- n_hit + sum(hit); n_miss <- n_miss + sum(!hit)
   }
+  out <- grn_tree_shrink_apply(out, shares, pair_label)   # AUSPOL_GRN_TREE_SHRINK, off by default
   out <- 100 * out / rowSums(out)
   cat(sprintf("XG1  xgb primary override ON for %s: %d cells replaced, %d kept (no xgb prediction)\n",
               pair_label, n_hit, n_miss))
@@ -683,6 +684,7 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
     hit <- !is.na(v)
     out[hit, p] <- v[hit]
   }
+  out <- grn_tree_shrink_apply(out, shares, target_election)   # AUSPOL_GRN_TREE_SHRINK, off by default
   out <- 100 * out / rowSums(out)
   cat(sprintf("XG4  LIVE xgb v6 primary prediction ON for %s: %d seat-classes overridden\n", region, nrow(rows)))
   out

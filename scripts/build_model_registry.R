@@ -208,6 +208,14 @@ CLASSIFY <- list(
   AUSPOL_CONSERVE_SHRINK_K = paste(
     "SHIPPED (3) 2026-10-16, UNIVERSAL via R/: read inside fit_minor_defector_conserve() (R/candidate_returns.R),",
     "which every harness and fit_seats_full.R reach through candidate_returns(), so the per-harness greps cannot see it."),
+  AUSPOL_DEPARTED_ORIGIN_SHRINK_K = paste(
+    "ARM (3) 2026-10-24, UNIVERSAL via R/: read inside fit_departed_origin_return() (R/candidate_returns.R); reaches the",
+    "model only under AUSPOL_DEPARTED_ORIGIN (off). plans/prereg-departed-origin-tf-2026-10-24.md."),
+  AUSPOL_GRN_TREE_SHRINK = paste(
+    "ARM (off) 2026-10-24, UNIVERSAL via R/: read inside grn_tree_shrink_apply(), called from xgb_primary_override()",
+    "(every harness) and xgb_primary_predict_live() (fit_seats_full.R). Post-xgb. plans/prereg-grn-tree-shrink-2026-10-24.md."),
+  AUSPOL_GRN_TREE_SHRINK_K = paste(
+    "ARM (3) 2026-10-24, read inside grn_tree_shrink_fit(); same reach as AUSPOL_GRN_TREE_SHRINK."),
   AUSPOL_CONSERVE_TF = paste(
     "SHIPPED (1) 2026-10-14, UNIVERSAL via R/: read inside fit_minor_defector_conserve() (R/candidate_returns.R);",
     "trains on elections before the target. Same reach as AUSPOL_CONSERVE_SHRINK_K."),

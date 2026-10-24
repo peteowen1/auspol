@@ -1,6 +1,6 @@
 # Model registry
 
-**Generated 2026-10-23 by `scripts/build_model_registry.R`. Do not hand-edit** --
+**Generated 2026-10-24 by `scripts/build_model_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate whenever a switch is added to
 `published_flags.R` or a harness's wiring changes.
 
@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (234 switches from `published_flags.R`, 7 entry points)
+## Switch parity (237 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -75,6 +75,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_DEPARTED_HOLD` | yes | yes | yes | yes | yes | yes | yes |  |
 | `AUSPOL_DEPARTED_HOLD_MIN_PRIOR` | yes | yes | yes | yes | yes | yes | yes |  |
 | `AUSPOL_DEPARTED_ORIGIN` | yes | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_DEPARTED_ORIGIN_SHRINK_K` | NO | NO | NO | NO | NO | NO | NO | candidate_returns.R |
 | `AUSPOL_DEPARTED_SUCCESSOR` | yes | yes | yes | yes | yes | yes | yes | departed_successor.R, new_ind_shrink.R |
 | `AUSPOL_DEV_SLOPE` | NO | NO | NO | NO | NO | NO | NO | dev_slope.R |
 | `AUSPOL_DEV_SLOPE_MODE` | yes | yes | yes | yes | yes | yes | yes |  |
@@ -101,6 +102,8 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_FP_EXTRA_SD` | NO | NO | NO | NO | NO | NO | NO | forecast_statewide.R |
 | `AUSPOL_FP_SD_MODE` | yes | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_FUND_TIME_FORWARD` | NO | yes | NO | NO | NO | NO | NO | forecast_statewide.R |
+| `AUSPOL_GRN_TREE_SHRINK` | NO | NO | NO | NO | NO | NO | NO | grn_tree_shrink.R, new_ind_shrink.R |
+| `AUSPOL_GRN_TREE_SHRINK_K` | NO | NO | NO | NO | NO | NO | NO | grn_tree_shrink.R |
 | `AUSPOL_HARNESS_SW_DRAWS` | NO | NO | NO | NO | NO | NO | NO | forecast_statewide.R |
 | `AUSPOL_HC_DEFECTOR` | NO | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_HISTORIC_ELECTED_BACKFILL` | NO | NO | NO | NO | NO | NO | NO |  |
@@ -306,6 +309,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_DEMO_RESID_FULL`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: read inside R/demographic_residual.R (the demographic correction every harness and fit_seats_full.R reach). plans/prereg-demo-resid-full-2026-10-19.md
 - **`AUSPOL_DEMO_RESID_SHUFFLE`** (intentional / dead experiment): Control, not an arm. Permutes which seat gets which seat's demographics within each election, at fit and at apply both, so every marginal and the whole procedure survive and only the seat-to-demographics link dies. Absent from fit_seats_full.R for the same reason its arm is: a control has no business in the published forecast. Calibrated on sa2026 -- 8 draws give mean 0.3576 against a 0.3577 baseline, sd 0.0013, so the null manufactures nothing and the real effect sits 8.9 sds out.
 - **`AUSPOL_DEPARTED_FED`** (intentional / dead experiment): REFUSED 2026-09-30 (both '1' and 'gap': qld2020 and sa2026 worse; plans/prereg-departed-fed-gap-2026-09-30.md). Wired into the nsw/qld/sa/vic harnesses and fit_seats_full.R. The fed and wa 'NO' cells are by design: commit 2ff6bf8 says fed and wa have no booth map (the booth-to-federal-district join only exists for state elections with transposed federal swing).
+- **`AUSPOL_DEPARTED_ORIGIN_SHRINK_K`** (intentional / dead experiment): ARM (3) 2026-10-24, UNIVERSAL via R/: read inside fit_departed_origin_return() (R/candidate_returns.R); reaches the model only under AUSPOL_DEPARTED_ORIGIN (off). plans/prereg-departed-origin-tf-2026-10-24.md.
 - **`AUSPOL_DEV_SLOPE`** (intentional / dead experiment): UNIVERSAL via R/: read by dev_slopes_for() (R/dev_slope.R), which all seven entry points reach. The old 'yes' cells matched AUSPOL_DEV_SLOPE_MODE and comments.
 - **`AUSPOL_EDU_RESID`** (intentional / dead experiment): REFUSED 2026-09-15 and left wired so the result stays reproducible. docs/plans/prereg-education-residual-correction-2026-09-15.md: the criterion passed (pooled seat log loss 0.2702 -> 0.2689 over the AEF-7) and the placebo condition fired, so the answer is no. Superseded by AUSPOL_DEMO_RESID. Default 0 and it should stay 0.
 - **`AUSPOL_EDU_RESID_FEATURE`** (intentional / dead experiment): Which census column AUSPOL_EDU_RESID uses. born_aus_pct was pre-registered as the PLACEBO and was not one: r(yr12_pct, born_aus_pct) = -0.706 over 1,989 seats, so both columns read a single class-and-urbanity axis from opposite ends. It recovered 71% of the pooled gain and 100% of it on qld2024, which is what refused the mechanism. The lesson is in AUSPOL_DEMO_RESID_SHUFFLE: with correlated features the control must break the link, not swap the variable.
@@ -325,6 +329,8 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_FP_EXTRA_SD`** (intentional / dead experiment): UNIVERSAL via R/: read by fp_extra_sd_env() in R/forecast_statewide.R, which forecast_statewide_for() (the five state harnesses and nt), backtest_candidate_fed.R and fit_seats_full.R all call. Default 2.419 is the adopted value.
 - **`AUSPOL_FP_SD_MODE`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R -- first-preference spread mode for the live Victorian projection); backtests use realised historical first preferences, not a projected spread.
 - **`AUSPOL_FUND_TIME_FORWARD`** (**adopted, shared-function wiring**): SHIPPED as a leak fix (ledger v51, 2026-09-29). Read in R/forecast_statewide.R (reached by every harness and fit_seats_full.R), scripts/backtest_candidate_fed.R and scripts/build_level_pred.R. 'No' in the other harness columns is the grep missing the R/ read.
+- **`AUSPOL_GRN_TREE_SHRINK`** (intentional / dead experiment): ARM (off) 2026-10-24, UNIVERSAL via R/: read inside grn_tree_shrink_apply(), called from xgb_primary_override() (every harness) and xgb_primary_predict_live() (fit_seats_full.R). Post-xgb. plans/prereg-grn-tree-shrink-2026-10-24.md.
+- **`AUSPOL_GRN_TREE_SHRINK_K`** (intentional / dead experiment): ARM (3) 2026-10-24, read inside grn_tree_shrink_fit(); same reach as AUSPOL_GRN_TREE_SHRINK.
 - **`AUSPOL_HARNESS_SW_DRAWS`** (**adopted, shared-function wiring**): SHIPPED 2026-10-19 as net (Pete override). HARNESS-ONLY by design: the six state harnesses read it via harness_sw_draws() in R/forecast_statewide.R. fit_seats_full.R and the federal harness already pass statewide draws. plans/prereg-harness-sw-draws-2026-10-19.md
 - **`AUSPOL_HC_DEFECTOR`** (**adopted, shared-function wiring**): SHIPPED (1) 2026-10-14, Hare-Clark ONLY: read in scripts/backtest_hare_clark.R (Tasmania, ACT). The six single-member harnesses and Victoria's live forecast are not Hare-Clark, so the gaps are intentional.
 - **`AUSPOL_HISTORIC_ELECTED_BACKFILL`** (**adopted, shared-function wiring**): SHIPPED 2026-09-15 on judgement (costs 0.0141 pooled RMSE in the backtest, but vic2026 is never a training pair so the 62 returning members can only move the live forecast, which the backtest cannot see). Read ONCE at build time by scripts/build_candidacies.R and baked into output/candidacies.csv, so no harness reads it at runtime; reversible by rebuilding candidacies with the flag off.
@@ -520,4 +526,4 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR2  every non-universal switch (205 of 234) has a recorded classification.
+MR2  every non-universal switch (208 of 237) has a recorded classification.
