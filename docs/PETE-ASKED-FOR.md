@@ -33,6 +33,13 @@ moved verbatim 2026-10-24. Every row below still has something open.
 
 ---
 
+## 2026-10-25
+
+| Request | Status |
+|---|---|
+| Returning independents keep their own vote (Mildura: Cupper 33.9 -> 17.6 published via the x0.61 minor-field scale); Pete chose the fitted return rate | **NOT DONE: screening.** `AUSPOL_IND_RETURN` built off (aff86bf), prereg `docs/plans/prereg-ind-return-2026-10-25.md`; quick_arm A-final running 25 Oct. Not covered: a NEW independent inheriting a movement (Benambra, McKeeman after Hawkins). |
+| Historical bookmaker odds to test the model against the market | **DONE 24 Oct.** Pete's own scrapes (fed2022, fed2025, sa2022, qld2020) scored: `docs/reviews/backtest-vs-bookmakers-2026-10-24.md` (ca3291f). Ladbrokes fed2019 Vic on Wayback found, not yet scraped. |
+
 ## 2026-10-24
 
 | Request | Status |

@@ -61,3 +61,26 @@ unedited.
 - Known answers the criterion must get right: Mildura vic2022 (Cupper the sitting member, 2018 record 32.7, actual 33.9,
   lost the seat on 48.7: cell 2.57 + 0.933 x 32.7 = 33.1) and Indi fed2016 (McGowan, a member re-elected): the rule
   should move these toward the actual, not away.
+
+## Result, arm A-final (2026-10-25, quick_arm, 35 elections, 1,000 sims): REFUSED
+
+- Changed cells' squared share error 13,331 -> 15,660 (+17%, SE 1,056): worse by more than 2 SE.
+- Seat log loss, all 2,931 seats: 0.3085 -> 0.3094 (SE 0.0011), within 1 SE. AEF-7 ledger 0.2644 -> 0.2683 (SE 0.0038).
+- Split: the 228 IND cells it set went 5,628 -> 7,180; the shipped model's mean signed error on them was +0.12 points
+  (unbiased), and the rule lowered 122, raised 106. Early time-forward fits are flat lines: Gippsland East vic2010
+  (Ingram, sitting) 36.8 -> 6.4 (actual 25.3); Isaacs and Sydney fed2010 0.5 -> 10.4 (actual 1.5).
+- Arm A-base was not run in this form.
+
+## Amendment 1 (2026-10-25, before any run of it; Pete chose "repair the fitted rule")
+
+Added after the A-final result; the text above is unedited. Two changes, both answering the two defects found:
+
+1. **Fit:** a ratio, not a line, so a small record stays small. For each group (previous winner, previous loser),
+   `r = (n x rhat + K x 1) / (n + K)`, with `rhat` = sum(actual) / sum(record) over that group's cells in earlier
+   elections and `K = 3` (the `AUSPOL_CONSERVE_SHRINK_K` convention): shrunk toward "keeps their whole vote", no
+   minimum-n cliff (no earlier cases gives r = 1). Cell = `r x record`.
+2. **Stage:** the screened arm is **A-base** (before the trees; the harnesses carry it into the frozen predictions
+   through `AUSPOL_XGB_BASE_DELTA`). `fit_seats_full.R` gains a base-stage `ind_person_apply()` call before
+   `xgb_primary_predict_live()` so the arm reaches the published forecast; a no-op unless a base-stage switch is set.
+
+Criteria unchanged (sections above).

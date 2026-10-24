@@ -1393,6 +1393,12 @@ if (.sb_once) {
               attr(shares, "cells"), if (is.null(if (exists(".hz")) .hz else NULL)) sprintf(" (no corpus for %s yet)", TGT) else ""))
   attr(shares, "cells") <- NULL
 }
+# Base-stage person rules (the harnesses' stage = "base" hook, before the trees): a no-op unless a
+# base-stage switch is set (AUSPOL_IND_PERSON or AUSPOL_IND_RETURN = "base"). plans/prereg-ind-return-2026-10-25.md.
+.ipb <- .try("ind_person_base", ind_person_apply(shares, TGT, stage = "base", code = "FSIPb"))
+if (!is.null(.ipb)) shares <- .ipb else if ("base" %in% c(ind_person_mode(), Sys.getenv("AUSPOL_IND_RETURN", "0")))
+  cat(sprintf("FSIPb!! ind_person_apply(stage = \"base\") FAILED%s -- the base-stage person rules are NOT applied\n",
+              .reason("ind_person_base")))
 shares_x <- .try("xgb_live", xgb_primary_predict_live(shares, .mat22_xgb, a22, state_mean, .returns,
                                                         level_split = .level_split,
                                                         own_prev = .own_prev_xgb, region = REGION,

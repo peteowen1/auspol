@@ -9,8 +9,9 @@
 # change (log-log slope 0.13, se 0.16); sitting members kept a median 0.99 of it, losers 0.82.
 #
 # This SETS the IND cell of a seat whose sole independent stood as an independent in the SAME seat at
-# the previous election to a + b_group x their previous share, the line fitted time-forward on every
-# such earlier case (b separate for a previous winner and a previous loser), and rescales the seat's
+# the previous election to r_group x their previous share, the ratio fitted time-forward on every such
+# earlier case and shrunk toward 1 (r separate for a previous winner and a previous loser; Amendment 1
+# replaced a first-arm linear fit that went flat on few early cases), and rescales the seat's
 # other classes pro rata. Disjoint from AUSPOL_IND_PERSON, which takes only people with NO record in
 # this seat at the previous election. Applied from inside ind_person_apply(), so every harness and
 # fit_seats_full.R reach it through the call they already make.
@@ -85,31 +86,28 @@ ind_return_cells <- function(target, corpus = NULL) {
 
 #' The carry for returning independents, fitted on earlier elections only
 #'
-#' Ordinary least squares `actual ~ record + record:lost` over every returning-independent cell of an
-#' election dated before `target`: one intercept, a slope for a previous winner and one for a previous
-#' loser. Slopes bounded to [0, 1.5] (a member can grow; a negative carry is not a model).
+#' Amendment 1 (the linear fit of the first arm went flat on few early cases: Ingram vic2010 36.8 -> 6.4).
+#' A ratio per group (previous winner, previous loser): `rhat` = sum(actual) / sum(record) over that group's
+#' cells in elections dated before `target`, shrunk toward 1 ("keeps their whole vote") as
+#' `(n x rhat + K) / (n + K)`, `K = 3` (the `AUSPOL_CONSERVE_SHRINK_K` convention). No minimum-n cliff: no
+#' earlier cases gives 1.
 #'
-#' @return list `a`, `b_won`, `b_lost`, `n`, `n_won`, `n_lost`, `ok` (FALSE below 5 cases).
+#' @return list `r_won`, `r_lost`, `raw_won`, `raw_lost`, `n`, `n_won`, `n_lost`, `ok` (always TRUE).
 #' @noRd
 ind_return_fit <- function(target, corpus = NULL) {
   C <- corpus
   if (is.null(C)) C <- data.table::fread(out_path("candidacies.csv"), showProgress = FALSE)
   cs <- .ir_cases(data.table::as.data.table(C))
-  bad <- list(a = NA_real_, b_won = NA_real_, b_lost = NA_real_, n = 0L, n_won = 0L, n_lost = 0L, ok = FALSE)
-  if (!nrow(cs)) return(bad)
-  cs <- cs[elections_before(cs$election, target) & is.finite(cs$actual) & is.finite(cs$record)]
-  bad$n <- nrow(cs)
-  if (nrow(cs) < 5L) return(bad)
-  cs[, lost := !(won %in% TRUE)]
-  if (length(unique(cs$lost)) < 2L) {
-    co <- stats::coef(stats::lm(actual ~ record, data = cs)); b_w <- b_l <- unname(co[2])
-  } else {
-    co <- stats::coef(stats::lm(actual ~ record + record:lost, data = cs))
-    b_w <- unname(co[2]); b_l <- unname(co[2] + co[3])
+  if (nrow(cs)) cs <- cs[elections_before(cs$election, target) & is.finite(cs$actual) & is.finite(cs$record) & cs$record > 0]
+  K <- 3
+  grp <- function(w) {
+    x <- if (nrow(cs)) cs[(cs$won %in% TRUE) == w] else cs
+    n <- nrow(x); raw <- if (n) sum(x$actual) / sum(x$record) else NA_real_
+    list(n = n, raw = raw, r = if (n) (n * raw + K) / (n + K) else 1)
   }
-  cl <- function(b) min(max(if (is.finite(b)) b else 0, 0), 1.5)
-  list(a = unname(co[1]), b_won = cl(b_w), b_lost = cl(b_l), n = nrow(cs), n_won = sum(!cs$lost),
-       n_lost = sum(cs$lost), ok = TRUE)
+  gw <- grp(TRUE); gl <- grp(FALSE)
+  list(r_won = gw$r, r_lost = gl$r, raw_won = gw$raw, raw_lost = gl$raw, n = gw$n + gl$n,
+       n_won = gw$n, n_lost = gl$n, ok = TRUE)
 }
 
 #' Set each returning-independent cell to the fitted carry of their own previous share
@@ -121,12 +119,11 @@ ind_return_apply <- function(shares, target, stage = c("base", "final"), code = 
   if (!identical(ind_return_mode(), stage) || !"IND" %in% colnames(shares)) return(shares)
   cells <- ind_return_cells(target, corpus)
   f <- ind_return_fit(target, corpus)
-  if (!nrow(cells) || !f$ok) {
-    cat(sprintf("%s  returning independents (%s) for %s: %d matched, %s -- nothing set\n", code, stage, target,
-                nrow(cells), if (!f$ok) sprintf("only %d earlier case(s), no fit", f$n) else "no cells"))
+  if (!nrow(cells)) {
+    cat(sprintf("%s  returning independents (%s) for %s: none\n", code, stage, target))
     return(shares)
   }
-  cells$value <- pmax(0, f$a + ifelse(cells$won %in% TRUE, f$b_won, f$b_lost) * cells$record)
+  cells$value <- pmax(0, ifelse(cells$won %in% TRUE, f$r_won, f$r_lost) * cells$record)
   ci <- match("IND", colnames(shares))
   ri <- match(cells$skey, normalise_seat(rownames(shares)))
   out <- shares; n <- 0L; log <- character(0)
@@ -140,8 +137,8 @@ ind_return_apply <- function(shares, target, stage = c("base", "final"), code = 
     log <- c(log, sprintf("%s %s %.1f -> %.1f (%s %.1f)", cells$seat[k], cells$name[k], old, new,
                           if (cells$won[k] %in% TRUE) "won" else "lost", cells$record[k]))
   }
-  cat(sprintf("%s  returning independents (%s) for %s: %d cell(s) set from %d matched; carry %.2f + %.3f x record if won, %.3f if lost (n=%d earlier cases: %d won, %d lost)%s\n",
-              code, stage, target, n, nrow(cells), f$a, f$b_won, f$b_lost, f$n, f$n_won, f$n_lost,
+  cat(sprintf("%s  returning independents (%s) for %s: %d cell(s) set from %d matched; carry x%.3f if won (raw %.3f, n %d), x%.3f if lost (raw %.3f, n %d), shrunk to 1 with K=3%s\n",
+              code, stage, target, n, nrow(cells), f$r_won, f$raw_won, f$n_won, f$r_lost, f$raw_lost, f$n_lost,
               if (n) paste0(": ", paste(log, collapse = "; ")) else ""))
   out
 }

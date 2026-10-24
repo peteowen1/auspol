@@ -114,7 +114,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_IND_PERSON` | NO | NO | NO | NO | NO | NO | NO | ind_person.R, new_ind_shrink.R |
 | `AUSPOL_IND_PERSON_CARRY` | NO | NO | NO | NO | NO | NO | NO | ind_person.R |
 | `AUSPOL_IND_PERSON_DIR` | NO | NO | NO | NO | NO | NO | NO | ind_person.R |
-| `AUSPOL_IND_RETURN` | NO | NO | NO | NO | NO | NO | NO | ind_return.R |
+| `AUSPOL_IND_RETURN` | yes | NO | NO | NO | NO | NO | NO | ind_return.R |
 | `AUSPOL_IND_SALIENCE` | NO | yes | NO | NO | NO | NO | NO |  |
 | `AUSPOL_IND_TYPICAL` | NO | NO | NO | NO | NO | NO | NO | ind_mixture.R, ind_typical.R, new_ind_shrink.R |
 | `AUSPOL_IND_TYPICAL_STAT` | NO | NO | NO | NO | NO | NO | NO | ind_typical.R |
