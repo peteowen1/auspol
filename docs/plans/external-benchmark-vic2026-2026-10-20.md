@@ -21,6 +21,23 @@ Checked means fetched or read on 2026-10-20; unchecked means only the tweet or a
 | **Added 24 Oct (before any result):** Sportsbet, [seat betting](https://www.sportsbet.com.au/betting/politics/vic-politics/victorian-state-election-seat-betting-10944986) | **50 of 88** districts (event 10944986), one market per seat, party selections incl. named independents and "Any Other" | decimal odds; convert to probabilities by removing the bookmaker margin (normalise 1/price within each seat) and report the overround; seats without a market are excluded from its comparisons, with the count printed | unauthenticated JSON, `/apigw/sportsbook-sports/Sportsbook/Sports/Events/10944986/Markets` (ECOSYSTEM.md "Bookmaker odds"); competition 9519 lists the other Victorian markets (seat totals, hung parliament, government) | **checked 24 Oct**, raw in `2026-10-24/sportsbet/`. TAB checked the same day: only a statewide Premier market (Coalition 1.15), no seats; its API did not answer plain curl. **Corrected the same day: wrong.** The politics page shows only featured markets; TAB's feed `api.beta.tab.com.au/v1/tab-info-service/sports/Politics/competitions/Victorian%20Politics` lists **53 seat markets** plus the Premier market (136 KB). It answers only inside a browser session (plain curl hangs), so capture needs headless Chrome. Betfair (exchange) checked the same day: market 1.240828208 (Coalition back 1.27, AUD 134,667 matched) and only 4 seat markets (Caulfield, Bulleen, Brighton, Broadmeadows), all readable without login from `ero.betfair.com.au/www/sports/exchange/readonly/v1/bymarket` |
 | **Added 24 Oct (before any result):** TAB, Victorian Politics seat markets | 53 of 88 | decimal odds, margin removed as for Sportsbet | browser-session JSON (above) | checked 24 Oct; raw not yet saved (browser-only) |
 
+**Amendment 2 (24 Oct, before any result).** Bookmaker and exchange capture is `scripts/snapshot_benchmarks.R` through the
+`oddsdata` package (`C:/dev/oddsdata`). Three things fixed here, all before a count exists:
+
+- **Margin removal is the power method** (`oddsdata::implied_probs(method = "power")`: find `k` with
+  `sum((1/price)^k) = 1`), not the "normalise 1/price" written in the Sportsbet row above. Normalising leaves too much of
+  the margin on longshots; the power method takes more of it from them, which is where bookmakers put it. Both rows'
+  wording stays as first written.
+- **Residual selections** ("Any Other", "Other", "Any Other Result", "Any Other Party or Independent") are class
+  `ANY_OTHER`, scored as the winner's probability when the winner is in none of that market's named classes. The Swing
+  Is On's three "Other" buckets are `OTH_LEFT`, `OTH_RIGHT`, `OTH_UNALIGNED`, scored the same way.
+- **TAB is saved by hand**, not automated: its feed is behind bot protection, and this project does not work around
+  one. The snapshot prints the URL and the file name (`tab/Politics-Victorian-Politics.json`) when it is missing, as it
+  does for the Global Election Simulator's calls.
+
+Bookmaker comparisons run only on the districts each one prices, with the count printed; Betfair's 4 are reported, not
+scored as a source of record.
+
 AE Forecasts' party codes in this payload: -4 LNP, -3 OTH, -2 IND, -1 OTH, 0 ALP, 1 LNP, 2 GRN, 3 IND, 4 ONP,
 5 UAP, 6 DEM, 7 NAT. Map them to our classes, with LNP and NAT merged into `LNP` as `classify_party()` does, and assert that
 each seat's mapped probabilities sum to 1 within 0.01.

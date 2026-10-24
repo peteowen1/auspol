@@ -33,6 +33,13 @@
 #   jago         his page and the four scripts it runs. "Jago on our numbers" is his OWN calculator.js run offline
 #                (scripts/jago_calc.js) on our statewide primaries for that day; see JAGO INPUTS below
 #   Roy Morgan   DROPPED 21 Oct (no seat winners in finding 10346); not fetched
+#   theswingison (added 24 Oct) data/vic/tap-default-result.js: 5,000-simulation win counts per seat, one entry per
+#                date (a 7-day rolling buffer); the entry for DAY is the forecast of record for that date
+#   sportsbet, tab, betfair (added 24 Oct) seat-winner markets via the oddsdata package (C:/dev/oddsdata). Partial
+#                coverage (50, 53 and 4 of 88 on 24 Oct), so their calls files carry only the districts priced and
+#                say how many. Prices become probabilities with oddsdata::implied_probs()'s power method (plan
+#                amendment, 24 Oct). Fetched only when DAY is today: odds are live, there is no "as at" URL. TAB
+#                is behind bot protection and is saved by hand from a normal browser (VB4! says where).
 #
 # JAGO INPUTS (fixed 2026-10-22, before the first counting capture; plan amendment 1). His calculator takes four
 # statewide shares, Greens/Labor/LNP/One Nation, and his own defaults are those four parties' Senate first
@@ -139,6 +146,48 @@ if (!DERIVE_ONLY) {
   get("jago", paste0(J, "/assets/4PP/calculator.js"), "calculator.js", has_text("#calculate"))
   get("jago", paste0(J, "/assets/4PP/monotone_cubic_spline.js"), "monotone_cubic_spline.js", has_text("createInterpolant"))
   get("jago", paste0(J, "/assets/4PP/four-party-graph.js"), "four-party-graph.js", has_text("."))
+
+  # The Swing Is On: the precomputed simulation result its page renders, and the page itself.
+  TSIO <- "https://theswingison.com"
+  get("theswingison", paste0(TSIO, "/track-polls/vic26"), "vic26.html", has_text("tap-default-result\\.js"))
+  get("theswingison", paste0(TSIO, "/data/vic/tap-default-result.js"), "tap-default-result.js",
+      has_text(sprintf('window\\.TAP_DEFAULT_RESULT = \\{"days":.*"date":"%s"', DAY)))
+
+  # Bookmakers and the exchange, through oddsdata, which writes raw files and manifest rows itself. Last, because
+  # get() rewrites the manifest from memory and would drop rows appended behind its back.
+  today <- format(Sys.time(), "%Y-%m-%d", tz = "UTC")
+  if (!requireNamespace("oddsdata", quietly = TRUE)) {
+    cat("VB3! oddsdata not installed: no Sportsbet/TAB/Betfair capture (devtools::install('C:/dev/oddsdata'))\n")
+    fails <- c(fails, "sportsbet", "tab", "betfair")
+  } else if (DAY != today) {
+    cat(sprintf("VB3! odds are live: cannot capture bookmakers for %s on %s\n", DAY, today))
+    fails <- c(fails, "sportsbet", "tab", "betfair")
+  } else {
+    store <- dirname(RAW)
+    book <- function(src, expr) tryCatch({ x <- expr; cat(sprintf("VB2  %-40s %d markets, %d selections\n", src,
+      uniqueN(x$market_id), nrow(x))); x }, error = function(e) {
+      cat(sprintf("VB3! %-40s NOT captured: %s\n", src, conditionMessage(e))); fails <<- c(fails, src); NULL })
+    book("sportsbet", {
+      ev <- oddsdata::sb_events(9519, store = store)          # Sportsbet's Victorian politics competition
+      ev <- ev[grepl("Seat Betting", event)]
+      if (nrow(ev) != 1L) stop("expected one 'Seat Betting' event in competition 9519, found ", nrow(ev))
+      oddsdata::sb_markets(ev$event_id, ev$event, store = store)
+    })
+    book("betfair", {
+      nav <- oddsdata::bf_search(2378961, store = store)      # Betfair politics
+      vic <- nav[event %in% c("Australia - Victoria State Politics", "Individual Electorates")]
+      if (!nrow(vic)) stop("no Victorian markets in Betfair's politics search")
+      oddsdata::bf_prices(vic$market_id, store = store)
+    })
+    # TAB's feed is behind bot protection and is NOT automated around. Save it by hand from a normal browser.
+    if (!length(list.files(file.path(RAW, "tab"), "^Politics-Victorian-Politics.*\\.json$"))) {
+      cat(sprintf("VB4! TAB not captured: open %s in a normal browser on tab.com.au and save the response as received to %s\n",
+                  "https://api.beta.tab.com.au/v1/tab-info-service/sports/Politics/competitions/Victorian%20Politics?jurisdiction=NSW",
+                  file.path(RAW, "tab", "Politics-Victorian-Politics.json")))
+      fails <- c(fails, "tab")
+    }
+    invisible(NULL)
+  }
 }
 
 # ---- derive the calls files ----------------------------------------------------------------------------------------
@@ -151,10 +200,10 @@ if (length(ours_seats) != N_DISTRICTS) stop(sprintf("VB4! our seat-probs for %s 
 canon <- setNames(ours_seats, toupper(ours_seats))
 
 # One district name per row, by our spelling; every one of the 88 present. Returns the canonical names.
-match_districts <- function(x, src) {
+match_districts <- function(x, src, all = TRUE) {
   k <- toupper(trimws(x)); out <- unname(canon[k])
   if (anyNA(out)) stop(sprintf("VB5! %s names %d districts we do not: %s", src, sum(is.na(out)), paste(unique(x[is.na(out)]), collapse = ", ")))
-  if (uniqueN(out) != N_DISTRICTS) stop(sprintf("VB5! %s covers %d of %d districts", src, uniqueN(out), N_DISTRICTS))
+  if (all && uniqueN(out) != N_DISTRICTS) stop(sprintf("VB5! %s covers %d of %d districts", src, uniqueN(out), N_DISTRICTS))
   out
 }
 write_calls <- function(dt, src) {
@@ -249,6 +298,61 @@ if (file.exists(file.path(jd, "calculator.js"))) {
   fwrite(jc, file.path(OUT, "jago-ours-detail.csv"))
   write_calls(jc[, .(district = match_districts(district, "jago-ours"), call_class = unname(four[winner]), prob = NA_real_)], "jago-ours")
 } else { cat("VB4! no saved Jago calculator for this date\n"); fails <- c(fails, "jago") }
+
+# The Swing Is On: win counts out of its simulations for the entry dated DAY. Its four "Other" classes (left-leaning,
+# right-leaning, unaligned) are kept apart as OTH_LEFT/OTH_RIGHT/OTH_UNALIGNED: they are its own buckets, not ours.
+tf <- raw("theswingison", "tap-default-result.js")
+if (file.exists(tf)) {
+  js <- read_txt(tf)
+  tj <- fromJSON(sub(";\\s*$", "", sub("^[\\s\\S]*?window\\.TAP_DEFAULT_RESULT = ", "", js, perl = TRUE)), simplifyVector = FALSE)
+  dd <- Filter(function(d) identical(d$date, DAY), tj$days)
+  if (length(dd) != 1L) stop(sprintf("VB14! The Swing Is On has %d entries dated %s", length(dd), DAY))
+  swc <- dd[[1]]$mcResult$seatWinCounts
+  if (is.null(swc)) stop("VB14! The Swing Is On entry has no mcResult$seatWinCounts")
+  n_it <- length(dd[[1]]$mcResult$iterationCounts)
+  tcls <- c("Labor" = "ALP", "Coalition" = "LNP", "Greens" = "GRN", "One Nation" = "ONP",
+            "Other, Left-leaning" = "OTH_LEFT", "Other, Right-leaning" = "OTH_RIGHT", "Other, Unaligned" = "OTH_UNALIGNED")
+  tl <- rbindlist(lapply(names(swc), function(s) data.table(seat = s, lab = names(swc[[s]]), n = as.numeric(unlist(swc[[s]])))))
+  if (!all(tl$lab %in% names(tcls))) stop("VB14! The Swing Is On class not mapped: ", paste(setdiff(tl$lab, names(tcls)), collapse = ", "))
+  tot <- tl[, .(n = sum(n)), by = seat]
+  if (any(tot$n != n_it)) stop(sprintf("VB14! The Swing Is On seat win counts do not sum to its %d simulations", n_it))
+  cat(sprintf("VB14 The Swing Is On %s: %d simulations, poll average %s\n", DAY, n_it,
+              paste(sprintf("%s %.1f", names(dd[[1]]$avgPt), unlist(dd[[1]]$avgPt)), collapse = ", ")))
+  write_calls(tl[n > 0, .(district = match_districts(seat, "theswingison"), call_class = unname(tcls[lab]), prob = n / n_it)], "theswingison")
+} else { cat("VB4! no The Swing Is On result for this date\n"); fails <- c(fails, "theswingison") }
+
+# Bookmakers and the exchange: seat-winner markets only, partial coverage. Selections are classed by name; a residual
+# ("Any Other", "Other", "Any Other Result", "Any Other Party or Independent") is ANY_OTHER, which scores as the
+# winner's probability when the winner is in none of the named classes. A name we cannot class stops the script.
+book_class <- function(x) {
+  out <- rep(NA_character_, length(x))
+  out[grepl("^Labor$", x)] <- "ALP"
+  out[grepl("^(Liberals?|Nationals?|Coalition|L-?NP)$", x)] <- "LNP"
+  out[grepl("^Greens$", x)] <- "GRN"
+  out[grepl("^One Nation$", x)] <- "ONP"
+  out[grepl("^Independent", x)] <- "IND"
+  out[grepl("^(Any )?Other", x)] <- "ANY_OTHER"
+  if (anyNA(out)) stop("VB6! bookmaker selection(s) not classed: ", paste(unique(x[is.na(out)]), collapse = ", "))
+  out
+}
+newest <- function(src, pat) { f <- sort(list.files(raw(src), pat, full.names = TRUE)); if (length(f)) tail(f, 1) else NA_character_ }
+if (requireNamespace("oddsdata", quietly = TRUE)) {
+  parsers <- list(
+    sportsbet = function() { f <- newest("sportsbet", "^event-.*-markets-.*\\.json$"); if (is.na(f)) NULL else
+      oddsdata::sb_parse_markets(read_txt(f), "seat-betting")[, seat := market] },
+    tab = function() { f <- newest("tab", "^Politics-Victorian-Politics-.*\\.json$"); if (is.na(f)) NULL else
+      oddsdata::tab_parse_markets(read_txt(f))[market == "Seat Winner"][, seat := sub(" State Election$", "", event)] },
+    betfair = function() { f <- newest("betfair", "^markets-.*\\.json$"); if (is.na(f)) NULL else
+      oddsdata::bf_parse_prices(read_txt(f))[event == "Individual Electorates"][, seat := sub("^Seat of ", "", market)] })
+  for (src in names(parsers)) {
+    o <- parsers[[src]]()
+    if (is.null(o) || !nrow(o)) { cat(sprintf("VB4! no %s seat markets on disk for this date\n", src)); fails <- c(fails, src); next }
+    o <- oddsdata::implied_probs(o, "power")
+    o <- o[!is.na(prob)]
+    cat(sprintf("VB15 %s: %d seat markets, median overround %.3f (1.000 = no margin)\n", src, uniqueN(o$seat), median(o$overround)))
+    write_calls(o[, .(prob = sum(prob)), by = .(district = match_districts(seat, src, all = FALSE), call_class = book_class(selection))], src)
+  }
+} else { cat("VB4! oddsdata not installed: bookmaker calls not derived\n"); fails <- c(fails, "sportsbet", "tab", "betfair") }
 
 cat(sprintf("\nVB13 %s: calls written for %s%s\n", DAY, paste(written, collapse = ", "),
             if (length(fails)) sprintf("; NOT USABLE: %s", paste(unique(fails), collapse = ", ")) else "; every source captured"))
