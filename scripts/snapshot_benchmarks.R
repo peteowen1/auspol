@@ -39,7 +39,8 @@
 #                coverage (50, 53 and 4 of 88 on 24 Oct), so their calls files carry only the districts priced and
 #                say how many. Prices become probabilities with oddsdata::implied_probs()'s power method (plan
 #                amendment, 24 Oct). Fetched only when DAY is today: odds are live, there is no "as at" URL. TAB
-#                is behind bot protection and is saved by hand from a normal browser (VB4! says where).
+#                is behind bot protection: it is saved from Pete's own Chrome (Claude in Chrome, or by hand) into
+#                tab/Politics-Victorian-Politics.json with a manifest row (oddsdata::odds_save_raw), never automated.
 #
 # JAGO INPUTS (fixed 2026-10-22, before the first counting capture; plan amendment 1). His calculator takes four
 # statewide shares, Greens/Labor/LNP/One Nation, and his own defaults are those four parties' Senate first
@@ -328,7 +329,7 @@ book_class <- function(x) {
   out <- rep(NA_character_, length(x))
   out[grepl("^Labor$", x)] <- "ALP"
   out[grepl("^(Liberals?|Nationals?|Coalition|L-?NP)$", x)] <- "LNP"
-  out[grepl("^Greens$", x)] <- "GRN"
+  out[grepl("^Gre+ns$", x)] <- "GRN"                 # TAB spells it "Greeens" in one market (24 Oct)
   out[grepl("^One Nation$", x)] <- "ONP"
   out[grepl("^Independent", x)] <- "IND"
   out[grepl("^(Any )?Other", x)] <- "ANY_OTHER"
@@ -340,7 +341,7 @@ if (requireNamespace("oddsdata", quietly = TRUE)) {
   parsers <- list(
     sportsbet = function() { f <- newest("sportsbet", "^event-.*-markets-.*\\.json$"); if (is.na(f)) NULL else
       oddsdata::sb_parse_markets(read_txt(f), "seat-betting")[, seat := market] },
-    tab = function() { f <- newest("tab", "^Politics-Victorian-Politics-.*\\.json$"); if (is.na(f)) NULL else
+    tab = function() { f <- newest("tab", "^Politics-Victorian-Politics.*\\.json$"); if (is.na(f)) NULL else
       oddsdata::tab_parse_markets(read_txt(f))[market == "Seat Winner"][, seat := sub(" State Election$", "", event)] },
     betfair = function() { f <- newest("betfair", "^markets-.*\\.json$"); if (is.na(f)) NULL else
       oddsdata::bf_parse_prices(read_txt(f))[event == "Individual Electorates"][, seat := sub("^Seat of ", "", market)] })
