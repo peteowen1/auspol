@@ -30,10 +30,10 @@ not a commit, not a plan file — that it is not happening and why.
 
 | Request | Status |
 |---|---|
-| Retiring members' vote goes home: a member who left a party retires, send the released vote back to the former party first (Morwell 2022), tested in base_pred AND xgb | **NOT DONE: investigating 24 Oct.** |
-| Greens over-called in high-Greens seats (Melbourne, Griffith, South Brisbane): pull the tree's Greens share toward base_pred as the Greens base grows; screen with quick_arm on fed2025 + qld2024 | **NOT DONE: investigating 24 Oct.** |
-| TCP margins too close to 50: one stretch factor, time-forward, shrunk toward 1.00 | **NOT DONE: investigating 24 Oct.** |
-| Zero-probability newcomers (7 seats at the 1e-6 floor, Katter 2012): launch prior, a founder or sitting defector carries their personal vote into the new party | **NOT DONE: investigating 24 Oct** (sizing first; the bigger build). |
+| Retiring members' vote goes home: a member who left a party retires, send the released vote back to the former party first (Morwell 2022), tested in base_pred AND xgb | **NOT DONE: screening.** Fit fixed (time-forward, shrunk; f4107c0), prereg `docs/plans/prereg-departed-origin-tf-2026-10-24.md`; quick_arm arm A running 24 Oct. xgb feature only if part 1 passes or is within 1 SE. |
+| Greens over-called in high-Greens seats (Melbourne, Griffith, South Brisbane): pull the tree's Greens share toward base_pred as the Greens base grows; screen with quick_arm on fed2025 + qld2024 | **NOT DONE: building.** In-sample check near zero (`docs/reviews/greens-overcall-investigation-2026-10-24.md`); Pete chose 24 Oct to build `AUSPOL_GRN_TREE_SHRINK` and screen it anyway. |
+| TCP margins too close to 50: one stretch factor, time-forward, shrunk toward 1.00 | **NOT DOING (told Pete 24 Oct).** A stretch that keeps every seat on the same side of 50 cannot change who is favoured, so seat log loss cannot move; it would only change displayed margins (`docs/reviews/tcp-compression-investigation-2026-10-24.md`). |
+| Zero-probability newcomers (7 seats at the 1e-6 floor, Katter 2012): launch prior, a founder or sitting defector carries their personal vote into the new party | **NOT DONE: pre-registering.** Sized -0.003 to -0.005 pooled (`docs/reviews/launch-prior-investigation-2026-10-24.md`). Pete chose 24 Oct: build `AUSPOL_LAUNCH_PRIOR` as a hold-or-fade mixture for sitting defectors (=1) plus sitting members who moved seat (=2). |
 
 ## 2026-10-18/19
 
