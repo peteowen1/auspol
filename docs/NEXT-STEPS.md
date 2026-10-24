@@ -24,6 +24,14 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   22 Oct: Pete said go, NOT launched: 4.8 GB available of 31.5 with no large process (kernel paged pool 10.2 GB,
   non-paged 2.8 GB, up since 15 Oct: a leak only a reboot clears). Pete chose no reboot; run F7 after the next one.
 
+- OPEN, after a reboot: returning-independent screen, arm A-base (`AUSPOL_IND_RETURN=base`, off; Amendment 1, commit
+  d1f1e26). `Rscript scripts/quick_arm.R "AUSPOL_IND_RETURN=base" --pairs=all --reuse` (~30 min, rebuilds the
+  baseline), then judge against `plans/prereg-ind-return-2026-10-25.md` + Amendment 1. Killed 25 Oct by the memory
+  watchdog at the compile step, 0 of 70 runs done (2.3 GB available, no R running). Arm A-final REFUSED 25 Oct.
+  Why it matters: Mildura (Cupper 33.9 in 2022 -> 17.6 published, cut by the x0.61 minor-field scale), Kew and
+  Hawthorn; the bookies price independents there far above us. Not covered: Benambra (a NEW independent succeeding
+  Hawkins), still OPEN.
+
 ## 2026-10-18 pipeline audit (READ FIRST; `reviews/pipeline-overwrite-audit-2026-10-18.md`, Sonnet, read-only)
 
 20 findings where work is overwritten, doubled or ignored, or live and backtest diverge. Spot-checked in code 18 Oct.
