@@ -1,6 +1,6 @@
 # Model registry
 
-**Generated 2026-10-24 by `scripts/build_model_registry.R`. Do not hand-edit** --
+**Generated 2026-10-25 by `scripts/build_model_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate whenever a switch is added to
 `published_flags.R` or a harness's wiring changes.
 
@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (237 switches from `published_flags.R`, 7 entry points)
+## Switch parity (238 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -114,6 +114,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_IND_PERSON` | NO | NO | NO | NO | NO | NO | NO | ind_person.R, new_ind_shrink.R |
 | `AUSPOL_IND_PERSON_CARRY` | NO | NO | NO | NO | NO | NO | NO | ind_person.R |
 | `AUSPOL_IND_PERSON_DIR` | NO | NO | NO | NO | NO | NO | NO | ind_person.R |
+| `AUSPOL_IND_RETURN` | NO | NO | NO | NO | NO | NO | NO | ind_return.R |
 | `AUSPOL_IND_SALIENCE` | NO | yes | NO | NO | NO | NO | NO |  |
 | `AUSPOL_IND_TYPICAL` | NO | NO | NO | NO | NO | NO | NO | ind_mixture.R, ind_typical.R, new_ind_shrink.R |
 | `AUSPOL_IND_TYPICAL_STAT` | NO | NO | NO | NO | NO | NO | NO | ind_typical.R |
@@ -339,6 +340,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_IND_PERSON`** (**adopted, shared-function wiring**): SHIPPED (final), UNIVERSAL via R/: read by ind_person_mode() (R/ind_person.R); every entry point calls ind_person_apply(). The old 'yes' cells were trailing comments on those calls.
 - **`AUSPOL_IND_PERSON_CARRY`** (**adopted, shared-function wiring**): SHIPPED 'linear' 2026-10-10 with AUSPOL_IND_PERSON (Pete's override, plans/prereg-ind-person-2026-10-10.md). Read inside R/ind_person.R, which all six harnesses and fit_seats_full.R call, so the harness grep cannot see it.
 - **`AUSPOL_IND_PERSON_DIR`** (**adopted, shared-function wiring**): SHIPPED 'lower' 2026-10-10 with AUSPOL_IND_PERSON. Read inside R/ind_person.R (all six harnesses and fit_seats_full.R).
+- **`AUSPOL_IND_RETURN`** (intentional / dead experiment): ARM (off), UNIVERSAL via R/: read by ind_return_mode() (R/ind_return.R), applied from inside ind_person_apply(), which every entry point calls at both stages. plans/prereg-ind-return-2026-10-25.md.
 - **`AUSPOL_IND_SALIENCE`** (intentional / dead experiment): Deprecated experimental arm (the v1 national IND multiplier), superseded by the newer salience mechanisms; fed-only because that is the only harness it was ever tested in. Not adopted.
 - **`AUSPOL_IND_TYPICAL`** (intentional / dead experiment): ARM, REFUSED 2026-10-09 (plans/prereg-ind-typical-2026-10-09.md), off. In all six harnesses; NOT in fit_seats_full.R by design: a refused arm is not wired into the published forecast.
 - **`AUSPOL_IND_TYPICAL_STAT`** (intentional / dead experiment): Sub-setting of the refused AUSPOL_IND_TYPICAL, read inside R/ind_typical.R; harness-only like its parent.
@@ -526,4 +528,4 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR2  every non-universal switch (208 of 237) has a recorded classification.
+MR2  every non-universal switch (209 of 238) has a recorded classification.
