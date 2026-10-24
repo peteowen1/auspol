@@ -355,6 +355,11 @@ if (requireNamespace("oddsdata", quietly = TRUE)) {
   }
 } else { cat("VB4! oddsdata not installed: bookmaker calls not derived\n"); fails <- c(fails, "sportsbet", "tab", "betfair") }
 
+if (sum(c("sportsbet", "tab", "betfair") %in% written) >= 2L) {
+  st <- system2(file.path(R.home("bin"), "Rscript"), c("scripts/compare_bookmaker_odds.R", paste0("--date=", DAY)))
+  if (!identical(as.integer(st), 0L)) { cat("VB18! scripts/compare_bookmaker_odds.R failed\n"); fails <- c(fails, "bookmaker-odds") }
+}
+
 cat(sprintf("\nVB13 %s: calls written for %s%s\n", DAY, paste(written, collapse = ", "),
             if (length(fails)) sprintf("; NOT USABLE: %s", paste(unique(fails), collapse = ", ")) else "; every source captured"))
 cat("VB13 next: commit docs/benchmarks/vic2026/", DAY, "/ and rerun scripts/build_data_registry.R\n", sep = "")
