@@ -112,7 +112,7 @@ contest features / contest base / partial-contest arm A refused, first-term fill
   (output/vic2026-salience-jump.csv). Local runs DO use a vic2026 salience corpus (live walk log: XG5 43 cells,
   31 surge seats); the CI publish does not have one yet (DS3 falls back to flat surge_h), so the surge double count
   (`AUSPOL_SURGE_LEVEL`) reaches the published forecast only once a corpus reaches CI.
-- OPEN F8, F10, F12-F19 (F5 and F9 REFUSED, F7 waiting above, IND override shipped as arm H): post-xgb tables fitted
+- OPEN F8, F10, F12-F19 (F5, F7 and F9 REFUSED, IND override shipped as arm H): post-xgb tables fitted
   on residuals the shares no longer carry, HTV overwriting xgb flows, and the rest of the audit's list
   (`reviews/pipeline-overwrite-audit-2026-10-18.md`). (F20 and its `AUSPOL_MINOR_DEFECT` gap: DONE 23 Oct, journal.)
 
