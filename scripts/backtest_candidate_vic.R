@@ -769,6 +769,9 @@ for (K in PAIRS) {
   # the typical vote for their signals, before ("base") or after ("final") the frozen trees. R/ind_typical.R.
   shares <- ind_typical_apply(shares, sprintf("vic%d", K$to), stage = "base", code = "BV1T")
   shares <- ind_person_apply(shares, sprintf("vic%d", K$to), stage = "base", code = "BV1P")  # AUSPOL_IND_PERSON (off): an independent starts from their own record. R/ind_person.R.
+  # AUSPOL_LEVEL_CONSERVE (off; plans/prereg-level-conserve-2026-10-25.md): rake the base so each standing
+  # class's implied statewide share equals the level it was built on. R/level_conserve.R.
+  shares <- level_conserve_apply(shares, sb, sprintf("vic%d", K$to), stage = "base", target = fb, held = HELD)
   shares <- xgb_primary_override(shares, sprintf("vic%d", K$to))
   shares <- ind_typical_apply(shares, sprintf("vic%d", K$to), stage = "final", code = "BV1T")
   shares <- ind_person_apply(shares, sprintf("vic%d", K$to), stage = "final", code = "BV1P")  # AUSPOL_IND_PERSON (off): an independent starts from their own record. R/ind_person.R.
@@ -946,6 +949,7 @@ for (K in PAIRS) {
   nom_zero_save_flows(fm, sprintf("vic%d", K$to))   # the as-at forecasts table zeroes with this same fm
   shares <- zero_unnominated_at("late", shares, fb, sprintf("vic%d", K$to), flows = fm)
   .nz_cells <- nomination_zeroed_cells(.nz_pre, shares)
+  shares <- level_conserve_apply(shares, sb, sprintf("vic%d", K$to), stage = "final", target = fb, held = HELD)  # AUSPOL_LEVEL_CONSERVE "final"/"both": after the last nomination zero
   # ARM H, docs/plans/prereg-reentry-flatratio-variance-2026-09-08.md. Widens
   # the SIMULATED uncertainty, not the point estimate, for cells that fell
   # back to the flat re-entry ratio -- point-shrinkage was tried and refused

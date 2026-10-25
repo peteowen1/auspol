@@ -1449,6 +1449,36 @@ if (.sb_once) {
 if (!is.null(.ipb)) shares <- .ipb else if ("base" %in% c(ind_person_mode(), Sys.getenv("AUSPOL_IND_RETURN", "0")))
   cat(sprintf("FSIPb!! ind_person_apply(stage = \"base\") FAILED%s -- the base-stage person rules are NOT applied\n",
               .reason("ind_person_base")))
+# AUSPOL_LEVEL_CONSERVE (off; plans/prereg-level-conserve-2026-10-25.md): rake the seats so each standing class's
+# vote-weighted implied statewide share equals its level, here ("base", the base_margin the trees see) and/or after
+# the nomination zero below ("final"). The level is the per-class split the harnesses' sb carries (.level_split,
+# AUSPOL_LIVE_LEVEL_SPLIT=1, shipped); without it, the targets this seat layer scaled to (state_mean for the polled
+# classes, a22 * scale_to for the bucket). Which classes stand: the live nomination list when AUSPOL_NOM_LIVE=1
+# opens it, else every class with share. R/level_conserve.R.
+.lc_level <- NULL; .lc_target <- NULL
+if (!identical(level_conserve_mode(), "0")) {
+  if (!is.null(.level_split)) {
+    .lc_level <- .level_split
+  } else {
+    .lc_level <- state_mean
+    if (length(unmodelled) && !is.na(state_mean["OTH"]))
+      for (p in c(unmodelled, "OTH")) .lc_level[p] <- a22[[p]] * scale_to
+  }
+  .lc_target <- tryCatch(live_nominations(rownames(shares), election = TGT, prior = PREV)$target, error = function(e) {
+    cat(sprintf("LCV1! live nomination list unavailable (%s): every class with share counts as standing\n", conditionMessage(e)))
+    NULL
+  })
+  cat(sprintf("LCV1  live level source: %s; standing from %s\n",
+              if (!is.null(.level_split)) "per-class split (.level_split)" else "seat-layer targets (state_mean, a22 * scale_to)",
+              if (is.null(.lc_target)) "shares > 0 (no final nomination list)" else "the live nomination list"))
+}
+if (level_conserve_mode() %in% c("base", "both")) {   # off: not even the .try timing entry, so "0" is byte-identical
+  .lcb <- .try("level_conserve_base", level_conserve_apply(shares, .lc_level, TGT, stage = "base", target = .lc_target,
+                                                           held = if (.departed_hold) HELD else NULL))
+  if (!is.null(.lcb)) shares <- .lcb else
+    cat(sprintf("LCV1!! level_conserve_apply(stage = \"base\") FAILED%s -- the level is NOT conserved in this forecast\n",
+                .reason("level_conserve_base")))
+}
 shares_x <- .try("xgb_live", xgb_primary_predict_live(shares, .mat22_xgb, a22, state_mean, .returns,
                                                         level_split = .level_split,
                                                         own_prev = .own_prev_xgb, region = REGION,
@@ -1542,6 +1572,14 @@ shares <- tryCatch(zero_unnominated_live(shares, fm, TGT, prior = PREV), error =
   .nz_before
 })
 .nz_cells <- nomination_zeroed_cells(.nz_before, shares)
+# AUSPOL_LEVEL_CONSERVE "final"/"both": after the nomination zero (a 0 stays 0). See the base call above.
+if (level_conserve_mode() %in% c("final", "both")) {
+  .lcf <- .try("level_conserve_final", level_conserve_apply(shares, .lc_level, TGT, stage = "final", target = .lc_target,
+                                                            held = if (.departed_hold) HELD else NULL))
+  if (!is.null(.lcf)) shares <- .lcf else
+    cat(sprintf("LCV1!! level_conserve_apply(stage = \"final\") FAILED%s -- the level is NOT conserved in this forecast\n",
+                .reason("level_conserve_final")))
+}
 cvf <- function(x) stats::sd(x) / mean(x)
 cat(sprintf("ONP allocation: target CV %.3f, delivered %.3f (previously compressed to 0.283)
 ",

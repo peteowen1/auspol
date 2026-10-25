@@ -1075,6 +1075,9 @@ shares <- new_ind_shrink_apply(shares, TGT, code = "BS1n")
 # the typical vote for their signals, before ("base") or after ("final") the frozen trees. R/ind_typical.R.
 shares <- ind_typical_apply(shares, TGT, stage = "base", code = "BS1T")
 shares <- ind_person_apply(shares, TGT, stage = "base", code = "BS1P")  # AUSPOL_IND_PERSON (off): an independent starts from their own record. R/ind_person.R.
+# AUSPOL_LEVEL_CONSERVE (off; plans/prereg-level-conserve-2026-10-25.md): rake the base so each standing
+# class's implied statewide share equals the level it was built on. R/level_conserve.R.
+shares <- level_conserve_apply(shares, st_b, TGT, stage = "base", target = fb, held = HELD)
 shares <- xgb_primary_override(shares, TGT)
 shares <- ind_typical_apply(shares, TGT, stage = "final", code = "BS1T")
 shares <- ind_person_apply(shares, TGT, stage = "final", code = "BS1P")  # AUSPOL_IND_PERSON (off): an independent starts from their own record. R/ind_person.R.
@@ -1266,6 +1269,7 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
 nom_zero_save_flows(fm, TGT)   # the as-at forecasts table zeroes with this same fm
 shares <- zero_unnominated_at("late", shares, fb, TGT, flows = fm)
 .nz_cells <- nomination_zeroed_cells(.nz_pre, shares)
+shares <- level_conserve_apply(shares, st_b, TGT, stage = "final", target = fb, held = HELD)  # AUSPOL_LEVEL_CONSERVE "final"/"both": after the last nomination zero
   # ARM H, docs/plans/prereg-reentry-flatratio-variance-2026-09-08.md. Widens
   # the SIMULATED uncertainty, not the point estimate, for cells that fell
   # back to the flat re-entry ratio -- point-shrinkage was tried and refused

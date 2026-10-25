@@ -652,6 +652,9 @@ for (K in PAIRS) {
   # the typical vote for their signals, before ("base") or after ("final") the frozen trees. R/ind_typical.R.
   shares <- ind_typical_apply(shares, el_to, stage = "base", code = "BNT1T")
   shares <- ind_person_apply(shares, el_to, stage = "base", code = "BNT1P")  # AUSPOL_IND_PERSON (off): an independent starts from their own record. R/ind_person.R.
+  # AUSPOL_LEVEL_CONSERVE (off; plans/prereg-level-conserve-2026-10-25.md): rake the base so each standing
+  # class's implied statewide share equals the level it was built on. R/level_conserve.R.
+  shares <- level_conserve_apply(shares, sb, el_to, stage = "base", target = fb, held = HELD)
   shares <- xgb_primary_override(shares, el_to)
   shares <- ind_typical_apply(shares, el_to, stage = "final", code = "BNT1T")
   shares <- ind_person_apply(shares, el_to, stage = "final", code = "BNT1P")  # AUSPOL_IND_PERSON (off): an independent starts from their own record. R/ind_person.R.
@@ -706,6 +709,7 @@ for (K in PAIRS) {
   nom_zero_save_flows(fm, el_to)   # the as-at forecasts table zeroes with this same fm
   shares <- zero_unnominated_at("late", shares, fb, el_to, flows = fm)
   .nz_cells <- nomination_zeroed_cells(.nz_pre, shares)
+  shares <- level_conserve_apply(shares, sb, el_to, stage = "final", target = fb, held = HELD)  # AUSPOL_LEVEL_CONSERVE "final"/"both": after the last nomination zero
   # DIAGNOSTIC DUMP, off unless asked. Writes the projected primary the model
   # actually simulates from, so a seat can be inspected without reconstructing
   # the pipeline by hand and getting it subtly wrong.
