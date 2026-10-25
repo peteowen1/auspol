@@ -606,6 +606,15 @@ for (K in PAIRS) {
                   el_to, length(zeroed), paste(sort(zeroed), collapse = ", ")))
     }
   }
+  # SENATE RANK (AUSPOL_ONP_ORDER = "senate_rank", 2026-10-25,
+  # docs/plans/prereg-onp-senate-rank-2026-10-25.md). Same arm as the SA, Qld
+  # and NSW harnesses: keep this harness's One Nation values, re-order them over
+  # the contested seats by the most recent earlier federal SENATE One Nation
+  # vote (output/senate-by-district-class.csv covers WA), renormalise below.
+  if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate_rank")) {
+    .onr <- onp_senate_rank_apply(mat, el_to, code = "ONR1", refill = "none")
+    if (!is.null(.onr)) mat <- .onr
+  }
   if (.departed_hold) {
     shares <- renorm_hold(mat, HELD)
     cat(sprintf("BH0  departed hold: %d cell(s) held in %d seat(s)%s\n", sum(HELD), sum(rowSums(HELD) > 0),
