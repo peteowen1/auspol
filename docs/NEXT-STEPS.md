@@ -48,19 +48,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   its own SE. The split is in the prereg's RESULT section. PETE OVERRODE both clause refusals (25 Oct evening): 20k deciding
   run scheduled 03:15 26 Oct, `deciding-runs/20261025-1801-f7-demo-resid-full` (code 5dd64ec). Read its marker next session.
 
-- OPEN, Pete: returning independents. Both arms REFUSED 25 Oct (A-final; A-base under Amendment 1: target-seat log
-  loss +0.0058, SE 0.0104, 0 of 33 leave-one-out; `plans/prereg-ind-return-2026-10-25.md`). Lead, untraced: the vic2022
-  harness already has Mildura IND at 38.7 (actual 41.2) and the arm never touched it, so the vic2026 cut (33.9 -> 17.6
-  via the x0.61 minor-field scale) may be a LIVE-path-only effect. TRACED 25 Oct: it is a train/serve split.
-  `fit_seats_full.R:1251-1272` MULTIPLIES IND/OTH_RIGHT/OTH cells by forecast OTH / 2022 others (x0.61), so a big
-  personal vote loses 39% of itself. The six state harnesses never take that path: each class gets its own statewide
-  level from the bucket split (vic2022 log `FST1 ... IND 0.35`; `BV0` IND 5.7 forecast vs 5.5 actual) and moves by
-  ADDITIVE `dev_slope()` (`backtest_candidate_vic.R:644-648`). Only `_fed.R` scales multiplicatively. SHIPPED 25 Oct,
-  live only: `AUSPOL_MINOR_ADDITIVE=1` (federal screen neutral; fed harness stays on `_FED=0`; DECISIONS). Still open:
-  Mildura 25.6 vs Cupper's 33.9 (One Nation's fill takes the rest); live `FST1!` (no candidate-model split for vic2026).
-  Why it matters: Mildura (Cupper 33.9 in 2022 -> 17.6 published, cut by the x0.61 minor-field scale), Kew and
-  Hawthorn; the bookies price independents there far above us. Not covered: Benambra (a NEW independent succeeding
-  Hawkins), still OPEN.
+- OPEN, Pete: returning independents. Both arms REFUSED 25 Oct (`plans/prereg-ind-return-2026-10-25.md`); the
+  x0.61 multiplicative minor-field scale (a live-only train/serve split) was fixed by `AUSPOL_MINOR_ADDITIVE=1`,
+  SHIPPED 25 Oct live only (DECISIONS). Still open: Mildura 25.6 vs Cupper's 33.9 (One Nation's fill takes the
+  rest); live `FST1!` (no candidate-model split for vic2026); Kew and Hawthorn, where the bookies price independents
+  far above us; Benambra (a NEW independent succeeding Hawkins).
 
 ## 2026-10-18 pipeline audit (READ FIRST; `reviews/pipeline-overwrite-audit-2026-10-18.md`, Sonnet, read-only)
 
@@ -69,25 +61,8 @@ Closed from it (journal): rules review (standard decision rule now heads `PRE-RE
 TCP-consistency check, arm H shipped, heavy-tail arm T REFUSED 19 Oct, F21 surge_h fixed. Closed 18-21 Oct
 (`backlog/journal-2026-10-16-to-2026-10-22.md`): F1-F3 shipped, F4 net-out shipped and published, F5 and F9 refused,
 contest features / contest base / partial-contest arm A refused, first-term fill refused, seat context published.
-- OPEN, decision for Pete (finding, 22 Oct): completing the incumbent/retiring fill for 11 OLD elections (nsw2011/15,
-  nt, qld2012-17, sa2010-18) made the 24 untouched elections worse by +0.0040 (SE 0.0012) through retraining alone.
-  CHECKED 22 Oct: the fill is NOT wrong in the 11 (absent members unflagged 26.2% vs 25.2% in the 24; flagged but
-  standing 1 vs 2). AEF-7's +0.0038 is three upsets: Ipswich West qld2024 +1.89 (P(ALP) 0.141 -> 0.021; LNP primary
-  39.6 -> 45.6 vs actual 33.5; LNP by-election winner died before the election, so an incumbent party with nobody
-  sitting), Morwell vic2022 +0.79, Kalamunda wa2025 +0.45, of +2.61 total. By-election gains in general are not
-  over-called: 16 of 22 held at the next general election, our mean P 0.64. Scratchpad fillcheck/{check,moved,revert}.R.
-  Pete chose to test it: `AUSPOL_TRAIN_DECAY_H=4` (`plans/prereg-train-decay-4-2026-10-22.md`). quick_arm cannot
-  screen it (the decay acts at stage 4 and quick_arm reuses cached tree predictions), so one isolated rebuild from
-  stage 4 is SCHEDULED 01:00 23 Oct (Scheduled Task `auspol-decay4-rebuild`, at 883a773, ~45 min). It refuses to start
-  below 8 GB available. Next session: read `deciding-runs/decay4-rebuild/STATUS`, then score per the prereg.
-  REFUSED 23 Oct 01:00 as expected: "only 2989 MB available (needs 8000)" (kernel pool leak, see F7 above). That is
-  memory, not the arm. Refused again 25 Oct 10:55 after the reboot: 6,609 MB available (paged pool fine at 0.9 GB, but
-  ~23 GB committed with no process over 1 GB). `schtasks /run /tn auspol-decay4-rebuild` (~45 min) once 8 GB is free.
-  RAN 25 Oct 14:31-16:14 and REFUSED. Primary (24 untouched elections, 2,267 seats): -0.0007 (SE 0.0011), within 1 SE.
-  Guard (35 elections, 2,931 seats): +0.0001. Leave-one-election-out fails, vic2010 is worse by 2.9 SE, and the gain is
-  the three upsets alone (+0.0001 without them). The 11 refilled elections are +0.0026 (SE 0.0014). Half-life stays at
-  8. Result section in the prereg. `C:\dev\auspol-iso-decay4` (16 GB) can be deleted.
-- OPEN, from the same diagnosis: Greens over-called in high-Greens seats by the trees (Melbourne, Griffith, Northcote);
+- OPEN, from the 22 Oct old-election fill diagnosis (the `AUSPOL_TRAIN_DECAY_H=4` test of it REFUSED 25 Oct,
+  half-life stays 8; DECISIONS, `plans/prereg-train-decay-4-2026-10-22.md`): Greens over-called in high-Greens seats by the trees (Melbourne, Griffith, Northcote);
   retiring Labor members about -2.0 (n 34); Dickson's published stage moved a correct tree LNP figure +5.5.
 - OPEN (Pete): the 28 old notes in the ledger page's notes store now duplicate `docs/aef7-seat-notes.csv` under "Your
   notes"; clear them only on his yes.
@@ -102,19 +77,14 @@ contest features / contest base / partial-contest arm A refused, first-term fill
   (`AUSPOL_SURGE_LEVEL`) reaches the published forecast only once a corpus reaches CI.
 - OPEN F8, F10, F12-F19 (F5 and F9 REFUSED, F7 waiting above, IND override shipped as arm H): post-xgb tables fitted
   on residuals the shares no longer carry, HTV overwriting xgb flows, and the rest of the audit's list
-  (`reviews/pipeline-overwrite-audit-2026-10-18.md`). F20 DONE 23 Oct: the model registry parses the code (comments
-  and longer names no longer count) and lists each switch's `R/` readers. The one gap it found (harnesses never read
-  `AUSPOL_MINOR_DEFECT`) FIXED 23 Oct: all seven harnesses gate the base_pred discount on it as `fit_seats_full.R:959`
-  does (byte-identical at published flags; not run, memory).
+  (`reviews/pipeline-overwrite-audit-2026-10-18.md`). (F20 and its `AUSPOL_MINOR_DEFECT` gap: DONE 23 Oct, journal.)
 
 ## 2026-10-17 (READ FIRST)
 
 Shipped and published that day (Lib/Nat split `AUSPOL_COALITION_SPLIT=1`, 15 Oct full rebuild, surge flag "none",
 party-cor off) and the phantom-votes arm REFUSED: all in the journal and DECISIONS.
-- PARKED composition spread (`reviews/composition-spread-2026-10-17.md`): C passed its 1k screen (all seats -0.0021,
-  SE 0.0013) but taxes NSW and favourites; C2 lost. Pete: go to the error-distribution fix; C is its benchmark.
-  Error distribution E REFUSED (`AUSPOL_ERROR_DIST`; every seat -0.0004, SE 0.0017). Open: width (C) + tails together.
-- OPEN, bigger than either arm: errors are HEAVY-TAILED everywhere (0.57% of non-IND-seat cells miss by 4+ sim
+- OPEN, bigger than composition spread C (parked, `reviews/composition-spread-2026-10-17.md`) or the refused error
+  distribution E (`AUSPOL_ERROR_DIST`), and the place to try width + tails together: errors are HEAVY-TAILED everywhere (0.57% of non-IND-seat cells miss by 4+ sim
   sds, ~100x a bell curve; kurtosis 20). A fat-tailed per-cell error (fitted time-forward) is the general fix for
   floor seats. NB the seat-poll form of it (arm T, mixture on model error) was REFUSED 19 Oct (-0.0004, SE 0.0052).
 - MEASURED, PARKED per-class level bias (17 Oct, scratchpad levelcorr.R): statewide level over-predicts the Greens in
@@ -127,8 +97,6 @@ party-cor off) and the phantom-votes arm REFUSED: all in the journal and DECISIO
 
 - OPEN `seat_sd` is dead in the shipped config (the seat-spread leak was inert: `simulate_seat_contests()` ignores it
   whenever `level_sd` is given; fix `AUSPOL_SEAT_SPREAD_SRC="derived"` merged): a candidate for removal, not tuning.
-- OPEN small: `AUSPOL_PARTY_COR` is out of NT with no recorded reason (out of WA by design: cor(ALP, IND) flips sign
-  there, MODEL-REGISTRY). (NT's two-meaning `BNT4` fixed 23 Oct: the nothing-scored exit is now `BNT6!`.)
 - OPEN same one-run lag, older: the seat-poll weight is fitted on the PREVIOUS rebuild's output/forecasts.csv
   (R/seat_poll_blend.R:67; DECISIONS 2026-09-29), so stage 6 uses last run's predictions to weight seat polls. The
   spread fix's compare-and-rerun pattern (scripts/compare_spread_tables.R) could cover it too.
@@ -140,7 +108,7 @@ party-cor off) and the phantom-votes arm REFUSED: all in the journal and DECISIO
   file (identical to `census-features-vintage.csv`, 3,226 rows, 15 Oct 00:04), and the vintage builder reads it
   as its base (`build_census_features_vintage.R:248`). So the old builder should never write it again: run to its
   end it would overwrite the published table with boundary-vintage rows, including census taken after polling day.
-  (1)'s `CF2!` currently stops it before that write (`build_census_features.R:284` unions in all 35 v6 pairs, and
+  (1)'s `CF2!` currently stops it before that write (`build_census_features.R:284-285` unions in all 35 v6 pairs, and
   this builder has vintages for 18), so do not just patch the stop. The fix is to choose how a regeneration chains
   the two builders, e.g. the old one writes only a separate boundary file the vintage builder reads.
   wa2001/wa2005 are empty (0/57, 0/68) on purpose: no pre-2006 census on disk (Pete 14 Oct, `blank_census_lookahead.R`).
@@ -212,8 +180,8 @@ weighting by track record, seat-poll precision blend, typical-vote independent m
   person-rule slope toward the ratio carry (Pete, 2026-10-11).
 - OPEN miss-table seats traced but not fixed: Malvern 2022 (O'Brien under-called in base_pred), Bankstown 2023 (xgb
   cut ALP 55.8 -> 49.8). Traced 16 Oct (Sonnet): **4 of 5 are the seat-poll blend** (`seat_poll_blend_apply`,
-  R/seat_poll_blend.R:556) pulling ONE poll at a fitted weight ~0.87 (Parkes 2022, New England 2022, Dawson 2022,
-  McMahon 2025). Poll "Others" lumps land in one class (`.seat_poll_known_class_map` ~:895 splits only when
+  R/seat_poll_blend.R:909; weight from `seat_poll_weight()` at :738) pulling ONE poll at a fitted weight ~0.87 (Parkes 2022, New England 2022, Dawson 2022,
+  McMahon 2025). Poll "Others" lumps land in one class (`.seat_poll_known_class_map` :1341 splits only when
   ONP/OTH_RIGHT >= half the lump). Traeger 2024 separate (Katter's falling trend carried flat; leader bonus +3.0).
   Already refused: public-only sources (2026-10-07), precision-scaled blend (2026-10-09). Untried: splitting a poll's
   "Others" lump by our own class expectations; a weight per election rather than one pooled weight.
@@ -326,7 +294,7 @@ plan, **Pete to send**; To Do reminder set).
   carrying a class gap onto a candidate when none of that class's earlier candidates re-stand, in `base_pred`
   AND xgb. Bigger overcalls with a permitted successor (Geelong, Morwell, Mildura, Kavel, Finniss) are a
   separate item, not started; departed-hold refused.
-- **Simulation noise revives zeroed parties** (`R/seat_sim.R:1275`, `v <- base_v + shift + rnorm(K, 0, sd_cell)`):
+- **Simulation noise revives zeroed parties** (`R/seat_sim.R:1455`, `v <- base_v + shift + rnorm(K, 0, sd_cell)`, or an equal-quantile draw when `has_eq`):
   written shares are 0, draws are not. Measure how often a revived cell places or wins before masking it;
   affects every harness number, so it needs a prereg. Unmeasured.
 - **Departed-rate refit**: branch `departed-rate-refit` (256f328, reviewed twice) never run on real data; its
@@ -343,8 +311,8 @@ plan, **Pete to send**; To Do reminder set).
 - **Time-forward fits still use `min_n` cliffs** (checked 23 Oct: `R/split_slope.R:395,416` return 1 / skip below
   n 40; the shrinkage arm `AUSPOL_SLOPE_SHRINK` is "0"). Partial-pool instead (shrinkage rule). The `SHIP_SAME/NEW`
   leak is DONE: `AUSPOL_SHIP_TIME_FORWARD=1` (v51) makes the fallback time-forward; the constants are opt-out only.
-- **Seat context phase 2** (margin, previous swing; first-term flags' definition) was queued 2026-09-28; not
-  confirmed built.
+- **Seat context phase 2**: margin BUILT 28 Sep as arm `AUSPOL_SEAT_CONTEXT_MARGIN` (published "0"; `5e50f07`), no
+  recorded verdict; previous swing not filled (r 0.875 vs the seat file); first-term fill refused (Oct 20 prereg).
 - **Teal/independent under-call** (Curtin, Goldstein, Mackellar, Wakehurst):
   PARKED by Pete. Overall we lead AEF on independents (36 winners: 16.7 vs
   19.7 log loss). Wave term blocked (`reviews/wave-term-blocked-2026-09-07.md`).
