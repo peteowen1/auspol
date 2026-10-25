@@ -9,7 +9,7 @@
 #' (`fed-swing-transposed.csv`), shrunk toward 0 by its precision across
 #' cycles (at least 3 cycles, else 0). docs/plans/prereg-seat-swing-port-v2-2026-09-29.md.
 #'
-#' Two switches, both default off (this function is unchanged when both are):
+#' Three switches (this function is unchanged when all are at their defaults):
 #' * `AUSPOL_SEAT_SWING_PORT_WA`: "1" adds the five Western Australian cycles
 #'   (`fed-swing-transposed-wa.csv`, built by `scripts/transpose_fed_swing.R`
 #'   with `TRANSPOSE_REGION=wa`) to every target's pooled fit; "2" adds them only
@@ -23,6 +23,16 @@
 #'   seat-level one (or the cluster one with two cycles, whichever is larger)
 #'   multiplied by `SEAT_SWING_NOCLIFF_SE_INFLATE` (2): a thin fit gets a
 #'   quarter of the weight its own error would give it, not zero.
+#' * `AUSPOL_SEAT_SWING_PORT_RESID` (audit F8, default "0"): "1" replaces the
+#'   dependent variable. Instead of the seat's whole two-party swing, the fit
+#'   uses what the trees left: the seat's as-at xgb residual in two-party terms,
+#'   `((actual ALP - xgb ALP) - (actual LNP - xgb LNP)) / 2`, demeaned within
+#'   the cycle ([seat_swing_port_resid_table()], read from
+#'   `current_seat_predictions(net = FALSE)`). The trees already see `fed_swing`
+#'   as a feature, so the default coefficient describes the total effect while
+#'   the port is applied on top of the trees. Same cycles-before-target rule, so
+#'   it stays time-forward; a cycle with no as-at predictions (wa2008) drops out.
+#'   docs/plans/prereg-postxgb-resid-net-2026-10-25.md.
 #'
 #' @param target_election Label such as `"vic2022"`.
 #' @return list: `coef`, `k` (earlier cycles), `n` (seats), `b` (unshrunk), `se`.
@@ -35,8 +45,11 @@ seat_swing_port_coef <- function(target_election) {
   cyc <- unique(fs$label)
   cyc <- cyc[cyc %in% names(d)]
   cyc <- cyc[elections_before(cyc, target_election)]
+  resid <- seat_swing_port_resid_on()
+  rt <- if (resid) seat_swing_port_resid_table(current_seat_predictions(net = FALSE)) else NULL
   rows <- data.table::rbindlist(lapply(cyc, function(lab) {
     rg <- sub("[0-9]{4}$", "", lab)
+    if (resid) return(.port_resid_rows(rt, fs, lab, rg))
     prior <- names(d)[startsWith(names(d), rg) & as.Date(unname(d)) < as.Date(unname(d[lab]))]
     if (!length(prior)) return(NULL)
     prv <- prior[which.max(as.Date(unname(d[prior])))]
@@ -49,6 +62,8 @@ seat_swing_port_coef <- function(target_election) {
     m[, `:=`(yy = (t_now - t_prev) - mean(t_now - t_prev), dev = fed_swing - mean(fed_swing), pair = lab, region = rg)]
     m
   }), fill = TRUE)
+  if (resid) cat(sprintf("PXR1 %s: port coefficient fitted on post-tree two-party residuals (AUSPOL_SEAT_SWING_PORT_RESID=1): %d earlier cycles with as-at predictions (%s), %d seats\n",
+                         target_election, length(unique(rows$pair)), paste(unique(rows$pair), collapse = ","), nrow(rows)))
   if (!nrow(rows)) return(list(coef = 0, k = 0L, n = 0L, b = NA_real_, se = NA_real_))
   G <- length(unique(rows$pair))
   thin <- G < 3L
@@ -167,11 +182,20 @@ seat_swing_port_table <- function(target_election, write = FALSE) {
       out <- data.table::copy(tb)
       out$coef <- cf$coef; out$coef_unshrunk <- cf$b; out$coef_se <- cf$se
       out$cycles <- cf$k; out$n_fit <- cf$n
+      # Only under the arm, so the default shipped table is byte-identical.
+      if (seat_swing_port_resid_on()) out$resid <- "1"
       data.table::fwrite(out, cache)
     }
   } else if (file.exists(cache)) {
     raw <- data.table::fread(cache, showProgress = FALSE)
     if (!nrow(raw) || length(unique(raw$coef)) != 1L) stop(cache, " is empty or has more than one coefficient")
+    # A table written under the other AUSPOL_SEAT_SWING_PORT_RESID mode carries
+    # the other coefficient; using it would silently run the wrong arm.
+    cached_resid <- if ("resid" %in% names(raw)) as.character(raw[["resid"]][1]) else "0"
+    want_resid <- if (seat_swing_port_resid_on()) "1" else "0"
+    if (!identical(cached_resid, want_resid))
+      stop(cache, " was written with AUSPOL_SEAT_SWING_PORT_RESID=", cached_resid, " but this run has ", want_resid,
+           "; rerun scripts/promote_rebuild.R under the same setting")
     cf <- list(coef = raw$coef[1], k = raw$cycles[1], n = raw$n_fit[1],
                b = raw$coef_unshrunk[1], se = raw$coef_se[1])
     tb <- raw[, list(seat, fed_swing)]
@@ -220,9 +244,7 @@ seat_swing_port_adj <- function(target_election, seats) {
 #'   `AUSPOL_SEAT_SWING_PORT_WA` is "0").
 #' @export
 seat_swing_port_apply <- function(shares, target_election) {
-  if (sub("[0-9]{4}$", "", target_election) == "wa") {
-    if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT_WA", "2"), "0")) return(shares)
-  } else if (!identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "2"), "2")) return(shares)
+  if (!seat_swing_port_on(target_election)) return(shares)
   stopifnot(all(c("ALP", "LNP") %in% colnames(shares)))
   adj <- seat_swing_port_adj(target_election, rownames(shares))
   stopifnot(all(is.finite(adj)))
@@ -231,4 +253,75 @@ seat_swing_port_apply <- function(shares, target_election) {
   shares[, "ALP"] <- pmax(0, shares[, "ALP"] + adj)
   shares[, "LNP"] <- pmax(0, shares[, "LNP"] - adj)
   100 * shares / rowSums(shares)
+}
+
+#' Whether the seat-swing port acts on a target election
+#'
+#' The gate [seat_swing_port_apply()] uses, shared with the residual netting in
+#' [current_seat_predictions()] so the two cannot disagree: WA targets follow
+#' `AUSPOL_SEAT_SWING_PORT_WA` (any value but "0"), every other target
+#' `AUSPOL_SEAT_SWING_PORT` ("2"). The federal harness never calls the port, so
+#' callers that walk every election must skip `fed` themselves.
+#' @param target_election Label such as `"vic2022"`.
+#' @return `TRUE` or `FALSE`.
+#' @keywords internal
+seat_swing_port_on <- function(target_election) {
+  if (sub("[0-9]{4}$", "", target_election) == "wa")
+    return(!identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT_WA", "2"), "0"))
+  identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "2"), "2")
+}
+
+#' Whether the port coefficient is fitted on post-tree residuals (audit F8)
+#' @return `TRUE` when `AUSPOL_SEAT_SWING_PORT_RESID` is "1"; an error for any
+#'   value other than "0" or "1", so a typo cannot silently run the default.
+#' @keywords internal
+seat_swing_port_resid_on <- function() {
+  v <- Sys.getenv("AUSPOL_SEAT_SWING_PORT_RESID", "0")
+  if (!v %in% c("0", "1")) stop("AUSPOL_SEAT_SWING_PORT_RESID must be \"0\" or \"1\", not \"", v, "\"")
+  identical(v, "1")
+}
+
+#' Each seat's as-at xgb residual in two-party terms, for the port fit
+#'
+#' `AUSPOL_SEAT_SWING_PORT_RESID=1`. For each election and seat,
+#' `((actual ALP - xgb ALP) - (actual LNP - xgb LNP)) / 2`: the part of the
+#' Labor-versus-Coalition result the trees missed, in the same units as the
+#' port's adjustment (which adds `adj` to Labor and takes it from the
+#' Coalition, moving that half-difference by `adj`). A seat with no row for one
+#' of the two classes counts that class as 0 predicted and 0 actual.
+#' @param preds [current_seat_predictions()] output (`election`, `seat`,
+#'   `party`, `xgb_pred_seat`, `actual_share`), un-netted.
+#' @return data.table `election`, `s` (normalised seat), `resid`.
+#' @export
+seat_swing_port_resid_table <- function(preds) {
+  if (is.null(preds))
+    stop("AUSPOL_SEAT_SWING_PORT_RESID=1 needs this rebuild's as-at seat predictions ",
+         "(output/xgb-primary-asat-predictions.csv); none found")
+  need <- c("election", "seat", "party", "xgb_pred_seat", "actual_share")
+  miss <- setdiff(need, names(preds))
+  if (length(miss)) stop("seat_swing_port_resid_table: predictions lack ", paste(miss, collapse = ", "))
+  el_v <- as.character(preds[["election"]])
+  seat_v <- normalise_seat(preds[["seat"]])
+  party_v <- as.character(preds[["party"]])
+  dup <- anyDuplicated(paste(el_v, seat_v, party_v, sep = "\r"))
+  if (dup) stop("seat_swing_port_resid_table: duplicate (election, seat, party) row, first at ",
+                el_v[dup], " ", seat_v[dup], " ", party_v[dup])
+  sgn <- ifelse(party_v == "ALP", 0.5, ifelse(party_v == "LNP", -0.5, 0))
+  keep <- sgn != 0
+  d <- data.table::data.table(election = el_v[keep], s = seat_v[keep],
+                              v = sgn[keep] * (preds[["actual_share"]][keep] - preds[["xgb_pred_seat"]][keep]))
+  d[, list(resid = sum(v)), by = c("election", "s")]
+}
+
+# One cycle's rows for the residual port fit: the residual table joined to the
+# transposed federal swing, both demeaned within the cycle. NULL under 5 seats,
+# as the default fit.
+.port_resid_rows <- function(rt, fs, lab, rg) {
+  a <- rt[rt$election == lab, list(s, resid)]
+  f <- fs[fs$label == lab, list(s = normalise_seat(seat), fed_swing)]
+  m <- merge(a, f, by = "s")
+  m <- m[is.finite(m$resid) & is.finite(m$fed_swing)]
+  if (nrow(m) < 5L) return(NULL)
+  m[, `:=`(yy = resid - mean(resid), dev = fed_swing - mean(fed_swing), pair = lab, region = rg)]
+  m
 }

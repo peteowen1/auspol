@@ -4,7 +4,12 @@
 \alias{current_seat_predictions}
 \title{This rebuild's as-at seat predictions, for the post-xgb corrections to learn from}
 \usage{
-current_seat_predictions()
+current_seat_predictions(net = postxgb_resid_net_on())
+}
+\arguments{
+\item{net}{Net the port out (default: the switch). The port's own residual
+fit (\code{AUSPOL_SEAT_SWING_PORT_RESID}) passes \code{FALSE}, so it never reads a
+prediction that already contains itself.}
 }
 \value{
 data.table \code{election}, \code{seat}, \code{party}, \code{xgb_pred_seat},
@@ -20,4 +25,12 @@ depending on which rebuild came first). Stage 4 writes the same predictions
 for THIS run to \code{output/xgb-primary-asat-predictions.csv} (identical to the
 forecasts table within a run, 11,643 of 11,643 rows, 2026-09-30); this reads
 that, falling back to the forecasts table only when it is absent.
+}
+\details{
+Under \code{AUSPOL_POSTXGB_RESID_NET=1} (audit F8, default "0") the seat-swing
+port's adjustment is added back into each state election's prediction
+(\code{\link[=postxgb_net_port]{postxgb_net_port()}}), so the corrections applied after the port (seat-poll
+blend, demographic, leader seat, and anything else reading this) learn from
+what is left once the port has acted, which is what they are applied to.
+docs/plans/prereg-postxgb-resid-net-2026-10-25.md.
 }

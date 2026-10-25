@@ -810,6 +810,15 @@ CLASSIFY <- list(
     "PREREG PENDING, default 0 (built 2026-10-05). Read inside R/seat_swing_port.R, which the nsw/qld/sa/vic/wa harnesses and",
     "fit_seats_full.R all call; only the wa harness also names it (an output-filename tag), and scripts/dry_run_seat_swing_port_wa.R sets it.",
     "So the matrix's wa-only 'yes' is a naming artefact, not wiring."),
+  AUSPOL_SEAT_SWING_PORT_RESID = paste(
+    "ARM, default 0 (audit F8, built 2026-10-25; plans/prereg-postxgb-resid-net-2026-10-25.md). UNIVERSAL via R/: read in",
+    "R/seat_swing_port.R (seat_swing_port_resid_on), which every state harness and fit_seats_full.R reach through seat_swing_port_apply();",
+    "no entry point names it. The federal harness has no port, so it is untouched by construction."),
+  AUSPOL_POSTXGB_RESID_NET = paste(
+    "ARM, default 0 (audit F8, built 2026-10-25; plans/prereg-postxgb-resid-net-2026-10-25.md). UNIVERSAL via R/: read in",
+    "R/seat_predictions.R (postxgb_resid_net_on), the default of current_seat_predictions(), which every post-xgb table fit reads",
+    "in all seven harnesses and fit_seats_full.R; no entry point names it. Federal harness: its federal rows never move, but tables",
+    "that pool state rows (demographic, leader seat) do, so fed pairs can change."),
   AUSPOL_SEAT_SWING_PORT_WA = paste(
     "SHIPPED 2026-10-06 (Pete override; mode 2). WA-ONLY by design (Pete: 'why is WA special?'; wa2025 -0.0064 log loss, nothing else",
     "moves): read in R/seat_swing_port.R and the wa harness only. Mode 2 pools WA cycles for WA targets alone, so the other",

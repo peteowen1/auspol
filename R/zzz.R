@@ -75,3 +75,6 @@ globalVariables(c("..dcols"))
 
 # Added 2026-10-06: new_ind_shrink.R data.table NSE column names.
 globalVariables(c("skey", "n_ind", "tot", "ind", "cls", "pkey"))
+
+# Added 2026-10-25: seat-swing port residual fit (AUSPOL_SEAT_SWING_PORT_RESID).
+globalVariables(c("s", "resid", "v"))
