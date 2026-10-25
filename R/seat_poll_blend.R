@@ -1030,7 +1030,7 @@ seat_poll_blend_apply <- function(shares, target_election) {
   ok[ok] <- shares[cbind(i[ok], j[ok])] > 0
   before <- shares
   shares[cbind(i[ok], j[ok])] <- shares[cbind(i[ok], j[ok])] + wvec[ok] * (tb$poll[ok] - shares[cbind(i[ok], j[ok])])
-  shares <- 100 * shares / rowSums(shares)
+  shares <- row_shift_exact(before, shares, target_election, "seat-poll blend")   # audit F16 (RSX1); default = whole-row rescale
   cat(sprintf("SPB  %s: w %.3f (raw %.3f, se %.3f, %d cells in %d earlier elections); %d of %d polled cells applied across %d seats (%d MRP-only); mean |change| %.2f points\n",
               target_election, w$w, w$raw, w$se, w$n, w$k, sum(ok), nrow(tb),
               length(unique(i[ok])), sum(tb$n_mrp[ok] == tb$n_polls[ok]),
@@ -1108,7 +1108,7 @@ seat_poll_weights_split <- function(target_election) {
     shares[i[r], j[r]] <- shares[i[r], j[r]] + wt[r] * (tb$poll[r] - base[i[r], j[r]])
   }
   shares <- pmax(shares, 0)
-  shares <- 100 * shares / rowSums(shares)
+  shares <- row_shift_exact(before, shares, target_election, "seat-poll blend (mode 2)")   # audit F16 (RSX1)
   cat(sprintf("SPB2 %s: w_direct %.3f, w_mrp %.3f (pooled %.3f); applied %d direct and %d MRP cells across %d seats; mean |change| %.2f points
 ",
               target_election, w$w_direct, w$w_mrp, w$w, sum(ok & tb$type == "direct"), sum(ok & tb$type == "mrp"),

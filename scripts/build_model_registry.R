@@ -264,6 +264,10 @@ CLASSIFY <- list(
   AUSPOL_DEMO_RESID_FULL = paste(
     "ARM (0), UNIVERSAL via R/: read inside R/demographic_residual.R (the demographic correction every harness and",
     "fit_seats_full.R reach). plans/prereg-demo-resid-full-2026-10-19.md"),
+  AUSPOL_ROW_SHIFT_EXACT = paste(
+    "ARM (0), UNIVERSAL via R/: read by row_shift_exact_on() in R/row_shift_exact.R, called from blend_salience_shares()",
+    "(R/salience_surge.R) and the three seat-poll blend modes (R/seat_poll_blend.R, R/seat_poll_joint.R), which every",
+    "harness and fit_seats_full.R reach. plans/prereg-row-shift-exact-2026-10-25.md"),
   AUSPOL_SURGE_H_TF = paste(
     "SHIPPED 2026-10-18 as a leak fix, TRAINING-ONLY by design: read in scripts/fit_xgb_primary_v6.R, which builds the xgb",
     "training features (stage 3). Harnesses and fit_seats_full.R were already time-forward."),
