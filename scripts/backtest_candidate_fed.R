@@ -1500,6 +1500,10 @@ for (K in PAIRS) {
   # the typical vote for their signals, before ("base") or after ("final") the frozen trees. R/ind_typical.R.
   shares <- ind_typical_apply(shares, sprintf("fed%d", K$to), stage = "base", code = "BF1T")
   shares <- ind_person_apply(shares, sprintf("fed%d", K$to), stage = "base", code = "BF1P")  # AUSPOL_IND_PERSON (off): an independent starts from their own record. R/ind_person.R.
+  # AUSPOL_LEVEL_CONSERVE (off; plans/prereg-level-conserve-2026-10-25.md): rake the base so each standing
+  # class's implied NATIONAL share equals the level the seats were built on (st_fc in forecast mode, else st_b).
+  .lc_level <- if (FORECAST_MODE) unlist(st_fc) else st_b
+  shares <- level_conserve_apply(shares, .lc_level, sprintf("fed%d", K$to), stage = "base", target = fb, held = HELD)
   shares <- xgb_primary_override(shares, sprintf("fed%d", K$to))
   shares <- ind_typical_apply(shares, sprintf("fed%d", K$to), stage = "final", code = "BF1T")
   shares <- ind_person_apply(shares, sprintf("fed%d", K$to), stage = "final", code = "BF1P")  # AUSPOL_IND_PERSON (off): an independent starts from their own record. R/ind_person.R.
@@ -1605,6 +1609,7 @@ for (K in PAIRS) {
                                           truth = truth, keep = keep,
                                           parties = parties, sd_w = sd_w,
                                           sw_draws = sw_draws, fb = fb,
+                                          lc_level = .lc_level, held = HELD,   # AUSPOL_LEVEL_CONSERVE "final"
                                           nz_cells = .nz_cells,
                                           # Carried per pair -- see the FED-2
                                           # finding in docs/plans/
@@ -1845,6 +1850,7 @@ for (X in out_all) {
   nom_zero_save_flows(X$fm, sprintf("fed%d", X$K$to))   # the as-at forecasts table zeroes with this same fm
   X$shares <- zero_unnominated_at("late", X$shares, X$fb, sprintf("fed%d", X$K$to), code = "NZ1b", flows = X$fm)
   X$nz_cells <- rbind(X$nz_cells, nomination_zeroed_cells(.nz_pre, X$shares))
+  X$shares <- level_conserve_apply(X$shares, X$lc_level, sprintf("fed%d", X$K$to), stage = "final", target = X$fb, held = X$held)  # AUSPOL_LEVEL_CONSERVE "final"/"both": after the last nomination zero
   set.seed(SEED)
   # ARM H, docs/plans/prereg-reentry-flatratio-variance-2026-09-08.md. Widens
   # the SIMULATED uncertainty, not the point estimate, for cells that fell

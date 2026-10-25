@@ -239,3 +239,5 @@
 "ONR1","scripts/fit_seats_full.R","same_meaning","One Nation ordered by the Senate vote (AUSPOL_ONP_ORDER=senate_rank): onp_senate_rank_apply() and its harness callers, and the live block in fit_seats_full.R"
 "ONF1","R/onp_order.R","same_meaning","uniform_major One Nation fill weights: onp_fill_betas() and its one caller"
 "ONF1","scripts/fit_seats_full.R","same_meaning","uniform_major One Nation fill weights: onp_fill_betas() and its one caller"
+"LCV1","R/level_conserve.R","same_meaning","AUSPOL_LEVEL_CONSERVE: level_conserve_apply() prints what it applied; fit_seats_full.R prints the live level source before the same call"
+"LCV1","scripts/fit_seats_full.R","same_meaning","AUSPOL_LEVEL_CONSERVE: level_conserve_apply() prints what it applied; fit_seats_full.R prints the live level source before the same call"

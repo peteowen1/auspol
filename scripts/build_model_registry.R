@@ -327,6 +327,15 @@ CLASSIFY <- list(
     "ARM (0), UNIVERSAL via R/: the default of simulate_seat_contests(surge_level = surge_level_on()) (R/surge_level.R),",
     "so every harness, NT and fit_seats_full.R honour it with no call-site argument; the C++ core takes it as an",
     "argument. 'NO' in the harness columns is the grep, not a gap. plans/prereg-surge-level-2026-10-25.md"),
+  AUSPOL_LEVEL_CONSERVE = paste(
+    "ARM (0), built 2026-10-25, not run. Wired at the same two points in all seven harnesses (fed, vic, nsw, sa, wa, qld, nt) and",
+    "fit_seats_full.R through ONE function, level_conserve_apply() (R/level_conserve.R): 'base' just before the xgb override",
+    "(xgb_primary_predict_live() live), 'final' after the last nomination zero. Post-xgb (post_xgb_switches()). The switch is",
+    "read inside R/ (level_conserve_mode()), so 'NO' in the entry-point columns is the grep, not a gap.",
+    "plans/prereg-level-conserve-2026-10-25.md"),
+  AUSPOL_LEVEL_CONSERVE_LAMBDA = paste(
+    "Sub-setting of AUSPOL_LEVEL_CONSERVE (strength, default 1), read only inside R/level_conserve.R, so every entry point",
+    "that calls level_conserve_apply() honours it; 'NO' in the harness columns is the grep, not a gap."),
   AUSPOL_ERROR_DIST = paste(
     "SHIPPED (1) 2026-10-17 on Pete's override (with AUSPOL_COMPOSITION_SD), UNIVERSAL via R/: error_dist_args() (R/error_dist.R) is called at every simulate_seat_contests() site",
     "(six harnesses, NT, fit_seats_full.R) and reads the switch inside R/. plans/prereg-error-distribution-2026-10-17.md"),
