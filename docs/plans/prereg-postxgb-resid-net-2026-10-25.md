@@ -158,3 +158,21 @@ every `AUSPOL_*` variable and each input file's size and mtime).
   matches the recorded refusal (it later shipped live-only on Pete's override, which these criteria leave to him).
 
 Both known answers come out right, and clause 3 can be checked from the screen's "changed cells" output.
+
+## RESULT, arm R AEF-7 screen (2026-10-25; appended, nothing above edited)
+
+`quick_arm.R "AUSPOL_SEAT_SWING_PORT_RESID=1" --no-reuse --slots=1` ran 18:18-18:38 (launched with 8,372 MB available)
+at 1,000 sims, at the code after 5dd64ec. Baseline cache d3f07d6e21f7, arm cache bba16ea61f5e. Log
+`deciding-runs/quickarm-20261025-f8-R-aef7.log`. 7 elections, 681 seats, floor 5e-4.
+
+- Clause 4 (it ran): `PXR1` printed for all five movable AEF-7 targets (vic2022 5 cycles / 361 seats, nsw2023 6 / 449,
+  qld2024 7 / 542, sa2026 8 / 635, wa2025 11 / 812). Every cycle named comes before its target.
+- Clause 3 (controls, AEF-7 part): fed2022 and fed2025 have 0 changed cells. Changed cells: 716 of 4,767, in 5 of 7
+  elections.
+- Seat-winner log loss (lower is better), SE clustered on election: 0.2644 -> 0.2652, **+0.0008 (SE 0.0021)**, within
+  1 SE. Per election: qld2024 +0.0116, sa2026 +0.0027, wa2025 +0.0011, vic2022 +0.0002, nsw2023 -0.0083.
+- Changed-cell share squared error: +32.4 (SE 188.3), not clear.
+
+Reading: within 1 SE either way, which is "no measurable effect at this size" (the prereg's MDE note), not a
+refusal. The deciding primary is `--pairs=all`, with the 27 controls; that run has not been done yet (queued behind
+Pete's One Nation priority).

@@ -23,6 +23,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   step; a citiusverse export held ~5 GB). Run only with the machine otherwise idle.
   22 Oct: Pete said go, NOT launched: 4.8 GB available of 31.5 with no large process (kernel paged pool 10.2 GB,
   non-paged 2.8 GB, up since 15 Oct: a leak only a reboot clears). Pete chose no reboot; run F7 after the next one.
+  RAN 25 Oct 16:45-17:54 and needs PETE. The primary passes: ALP+GRN squared share error -0.0653 (SE 0.0499), 5,862 cells
+  in 35 elections. The guard is flat: seat log loss -0.0001 (SE 0.0006, 2,931 seats); AEF-7 is -0.0020 (SE 0.0015).
+  Two clauses refuse it. Leave-one-election-out fails without nsw2023 or fed2019, and qld2020 is worse by 2.15 of
+  its own SE. The split is in the prereg's RESULT section. PETE OVERRODE both clause refusals (25 Oct evening): 20k deciding
+  run scheduled 03:15 26 Oct, `deciding-runs/20261025-1801-f7-demo-resid-full` (code 5dd64ec). Read its marker next session.
 
 - OPEN, Pete: returning independents. Both arms REFUSED 25 Oct (A-final; A-base under Amendment 1: target-seat log
   loss +0.0058, SE 0.0104, 0 of 33 leave-one-out; `plans/prereg-ind-return-2026-10-25.md`). Lead, untraced: the vic2022

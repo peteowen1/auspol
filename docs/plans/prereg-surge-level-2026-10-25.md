@@ -116,3 +116,29 @@ hazard); 1,000 (floor 5e-4) is too coarse for seats whose winner sits near the h
 
 Arm B of the trace (holding a personally-returning candidate's cell through the live One Nation fill) is a
 separate switch with its own decision; it is live-only and cannot be backtested.
+
+## RESULT, AEF-7 screen (2026-10-25; appended, nothing above edited)
+
+`quick_arm.R "AUSPOL_SURGE_LEVEL=1" --sims=5000 --no-reuse --slots=1` ran 17:56-18:17 (launched with 8,161 MB
+available) at the code after 5dd64ec. Baseline cache c534f351c292, arm cache 5766a1ac4800. Log
+`deciding-runs/quickarm-20261025-surge-level-aef7.log`, score `...-aef7-score.txt`. 7 elections, 681 seats, floor 1e-4.
+
+SLV1 read first. The arm ran: 17,565 / 19,759 / 4,782 / 1,799 / 2,794 / 8,295 seat-draws were raised in the six
+harnesses with a hazard, and wa2025 had 0 seats with a hazard. Seat-winner log loss change, arm minus shipped (lower is
+better), SE clustered on election:
+
+| clause | scope | n | change | SE | result |
+|---|---|--:|--:|--:|---|
+| 1 primary (SLS2) | AEF-7 targets | 87 of 196 frozen, 6 el. | -0.0056 | 0.0075 | within 1 SE: NOT PASSED |
+| 2 guard (SLS3) | all seats | 681 / 7 el. | -0.0016 | 0.0011 | holds (better by more than 1 SE) |
+| 3 per election (SLS4) | | | worst fed2022 +0.0011 (SE 0.0018) | | none worse by 2 SE |
+| 4 LOO (SLS5) | | | -0.0125 to -0.0009 | | sign kept |
+| 5 without Mildura, Wannon (SLS6) | | | -0.0029 | | sign kept |
+| U1 (SLS7) | 29 winning recipients | | 0 lose > 0.10 | | ok |
+| U2 (SLS8) | hazard-0 seats | | 0 move > 0.001 | | ok |
+
+Per election: vic2022 -0.0064, fed2025 -0.0035, nsw2023 -0.0018, sa2026 -0.0005, wa2025 0, qld2024 +0.0000,
+fed2022 +0.0011. Reading: on AEF-7 the primary points the right way but is within 1 SE. Only 87 of the 196 targets are
+in AEF-7. This is NOT a refusal: "within 1 SE" stops nothing, and the prereg's own primary is over all 196 targets.
+The `--pairs=all` step was held, because the coordinator's queue said "only if AEF-7 passes"; that decision has been
+referred back.
