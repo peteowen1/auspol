@@ -59,6 +59,10 @@ contest features / contest base / partial-contest arm A refused, first-term fill
   REFUSED 23 Oct 01:00 as expected: "only 2989 MB available (needs 8000)" (kernel pool leak, see F7 above). That is
   memory, not the arm. Refused again 25 Oct 10:55 after the reboot: 6,609 MB available (paged pool fine at 0.9 GB, but
   ~23 GB committed with no process over 1 GB). `schtasks /run /tn auspol-decay4-rebuild` (~45 min) once 8 GB is free.
+  RAN 25 Oct 14:31-16:14 and REFUSED. Primary (24 untouched elections, 2,267 seats): -0.0007 (SE 0.0011), within 1 SE.
+  Guard (35 elections, 2,931 seats): +0.0001. Leave-one-election-out fails, vic2010 is worse by 2.9 SE, and the gain is
+  the three upsets alone (+0.0001 without them). The 11 refilled elections are +0.0026 (SE 0.0014). Half-life stays at
+  8. Result section in the prereg. `C:\dev\auspol-iso-decay4` (16 GB) can be deleted.
 - OPEN, from the same diagnosis: Greens over-called in high-Greens seats by the trees (Melbourne, Griffith, Northcote);
   retiring Labor members about -2.0 (n 34); Dickson's published stage moved a correct tree LNP figure +5.5.
 - OPEN (Pete): the 28 old notes in the ledger page's notes store now duplicate `docs/aef7-seat-notes.csv` under "Your
