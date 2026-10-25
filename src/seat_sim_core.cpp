@@ -15,6 +15,20 @@
 #include <unordered_map>
 using namespace Rcpp;
 
+// NO FLOATING-POINT CONTRACTION in this file. R's interpreter rounds every `*`
+// and `+` separately; GCC's default -ffp-contract=fast fuses `a * b + c` into
+// one FMA (a single rounding) whenever the target has FMA. Ubuntu 26.04's GCC
+// 15 targets x86-64-v3 by default, so on the ubuntu-latest CI runner from
+// 2026-10-25 the core drifted from the R loop by one ULP in tcp_share and the
+// byte-identity tests failed. Done here, not as PKG_CXXFLAGS in src/Makevars,
+// because R CMD check --as-cran warns on that flag as non-portable and CI
+// treats warnings as errors.
+#if defined(__clang__)
+#pragma clang fp contract(off)
+#elif defined(__GNUC__)
+#pragma GCC optimize("fp-contract=off")
+#endif
+
 static inline double ld_sum(const std::vector<double>& x, const std::vector<int>& idx) {
   long double s = 0.0L;
   for (size_t t = 0; t < idx.size(); ++t) s += x[idx[t]];
