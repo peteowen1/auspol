@@ -577,6 +577,14 @@ if (.cond && !is.null(.returns))
     # of those four numbers were wrong, and ONP's was the also-ran slope written
     # into the member row over ZERO member observations.
     .mpf <- Sys.getenv("AUSPOL_MP_SLOPE_FILE", "output/mp-slope-by-target.csv")
+    # AUSPOL_MP_SLOPE_POOL=1: the partially pooled table, the same rule fit_seats_full.R uses
+    # (plans/prereg-mp-slope-pool-2026-10-25.md); it replaces AUSPOL_MP_SLOPE_FILE. "0" reads as before.
+    .mp_pool <- Sys.getenv("AUSPOL_MP_SLOPE_POOL", "0")
+    if (!.mp_pool %in% c("0", "1")) stop('AUSPOL_MP_SLOPE_POOL must be "0" or "1", not "', .mp_pool, '"')
+    if (identical(.mp_pool, "1")) {
+      .mpf <- "output/mp-slope-pooled.csv"
+      cat("MPP1  MP tier read from", .mpf, "(AUSPOL_MP_SLOPE_POOL=1, partially pooled)\n")
+    }
     if (!file.exists(.mpf))
       stop("AUSPOL_MP_SLOPE=1 needs ", .mpf, " -- run scripts/fit_mp_slope.R")
     .mpt <- data.table::fread(.mpf, showProgress = FALSE)

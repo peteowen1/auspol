@@ -228,6 +228,9 @@ CLASSIFY <- list(
   AUSPOL_MP_SLOPE_TF = paste(
     "SHIPPED (1) 2026-10-14, FIT-TIME: read by scripts/fit_mp_slope.R, which writes output/mp-slope-by-target.csv",
     "(rebuild stage 0); harnesses and live read the table, not the switch."),
+  AUSPOL_MP_SLOPE_POOL = paste(
+    "ARM (0) 2026-10-25 (plans/prereg-mp-slope-pool-2026-10-25.md): read in fit_seats_full.R and all seven harnesses,",
+    "each switching the MP tier to output/mp-slope-pooled.csv (written by scripts/fit_mp_slope.R). NT reads it too."),
   AUSPOL_PB_COALITION_COMBINED = paste(
     "OFF (0), UNIVERSAL via R/: read inside R/poll_source.R's WA Poll Bludger merge; off is today's behaviour exactly.",
     "Only WA polls carry combined-only Coalition rows."),
