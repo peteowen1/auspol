@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (240 switches from `published_flags.R`, 7 entry points)
+## Switch parity (242 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -166,6 +166,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_POLL_PB` | NO | NO | NO | NO | NO | NO | NO | poll_source.R |
 | `AUSPOL_POLL_SOURCE` | NO | NO | NO | NO | NO | NO | NO | poll_source.R |
 | `AUSPOL_POOL_BY_JURISDICTION` | NO | NO | NO | NO | NO | NO | NO | pool_hierarchical.R |
+| `AUSPOL_POSTXGB_RESID_NET` | NO | NO | NO | NO | NO | NO | NO | seat_predictions.R |
 | `AUSPOL_PUBLISH_NSW2027` | NO | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_QLD_CUTOFF` | NO | yes | NO | yes | yes | yes | NO |  |
 | `AUSPOL_QLD_FLOWS` | yes | yes | NO | yes | yes | yes | NO |  |
@@ -218,6 +219,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_SEAT_SPREAD_SRC` | NO | NO | NO | NO | NO | NO | NO | prev_seat_swing.R |
 | `AUSPOL_SEAT_SWING_PORT` | yes | yes | yes | yes | yes | yes | NO | seat_swing_port.R |
 | `AUSPOL_SEAT_SWING_PORT_NOCLIFF` | NO | NO | NO | NO | NO | NO | yes | seat_swing_port.R |
+| `AUSPOL_SEAT_SWING_PORT_RESID` | NO | NO | NO | NO | NO | NO | NO | seat_swing_port.R |
 | `AUSPOL_SEAT_SWING_PORT_WA` | NO | NO | NO | NO | NO | NO | yes | seat_swing_port.R |
 | `AUSPOL_SEED` | yes | yes | yes | yes | yes | yes | yes |  |
 | `AUSPOL_SHIP_TIME_FORWARD` | NO | NO | NO | NO | NO | NO | NO | split_slope.R |
@@ -385,6 +387,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_POLL_PB`** (intentional / dead experiment): 2026-10-13 (Pete: go): Poll Bludger posts (model-read, stated figures) replace AE's numbers where they agree. Read inside poll_layer() (R/poll_source.R) via load_polls() -- universal in practice.
 - **`AUSPOL_POLL_SOURCE`** (**adopted, shared-function wiring**): SHIPPED layered 2026-10-13 (Pete; plans/prereg-own-poll-source-step2-2026-10-12.md). Read inside load_polls() (R/load_polls.R), which every harness and fit_seats_full.R call -- universal in practice.
 - **`AUSPOL_POOL_BY_JURISDICTION`** (intentional / dead experiment): BUILT 2026-10-13, OFF, not measured across all pairs (docs/reviews/pooled-fits-inventory-2026-10-13.md). Gate is pool_by_jurisdiction_on() in R/pool_hierarchical.R, called from fit_defector_discount(), fit_minor_defector_discount() and fit_sitting_minor_level() in R/candidate_returns.R, so it reaches every harness and fit_seats_full.R; not a gap.
+- **`AUSPOL_POSTXGB_RESID_NET`** (intentional / dead experiment): ARM, default 0 (audit F8, built 2026-10-25; plans/prereg-postxgb-resid-net-2026-10-25.md). UNIVERSAL via R/: read in R/seat_predictions.R (postxgb_resid_net_on), the default of current_seat_predictions(), which every post-xgb table fit reads in all seven harnesses and fit_seats_full.R; no entry point names it. Federal harness: its federal rows never move, but tables that pool state rows (demographic, leader seat) do, so fed pairs can change.
 - **`AUSPOL_PUBLISH_NSW2027`** (intentional / dead experiment): PUBLISH-TIME (1): read by scripts/promote_rebuild.R to ship the nsw2027 tables, matching the repository variable the daily job gates on. Not a model switch, so no harness reads it.
 - **`AUSPOL_QLD_CUTOFF`** (intentional / dead experiment): Read inside R/external_flows.R (pool_configured_flows), not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).
 - **`AUSPOL_QLD_FLOWS`** (intentional / dead experiment): Self-referential no-op in the QLD harness itself ("use Queensland's own flows" is trivially true there) -- disclosed via its own `.inert` list. Genuinely absent from WA (uses AUSPOL_WA_FLOWS instead).
@@ -436,6 +439,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_SEAT_SPREAD_SRC`** (**adopted, shared-function wiring**): SHIPPED (derived), UNIVERSAL via R/: read inside R/prev_seat_swing.R, which the harnesses call for seat_sd; harness-only by its own comment (live seat_sd comes from the fitted spread).
 - **`AUSPOL_SEAT_SWING_PORT`** (**adopted, shared-function wiring**): SHIPPED (2), UNIVERSAL via R/: read inside seat_swing_port_apply() (R/seat_swing_port.R), which WA reaches too; WA's own scoping switch is AUSPOL_SEAT_SWING_PORT_WA, whose name made the old WA cell 'yes'.
 - **`AUSPOL_SEAT_SWING_PORT_NOCLIFF`** (intentional / dead experiment): PREREG PENDING, default 0 (built 2026-10-05). Read inside R/seat_swing_port.R, which the nsw/qld/sa/vic/wa harnesses and fit_seats_full.R all call; only the wa harness also names it (an output-filename tag), and scripts/dry_run_seat_swing_port_wa.R sets it. So the matrix's wa-only 'yes' is a naming artefact, not wiring.
+- **`AUSPOL_SEAT_SWING_PORT_RESID`** (intentional / dead experiment): ARM, default 0 (audit F8, built 2026-10-25; plans/prereg-postxgb-resid-net-2026-10-25.md). UNIVERSAL via R/: read in R/seat_swing_port.R (seat_swing_port_resid_on), which every state harness and fit_seats_full.R reach through seat_swing_port_apply(); no entry point names it. The federal harness has no port, so it is untouched by construction.
 - **`AUSPOL_SEAT_SWING_PORT_WA`** (**adopted, shared-function wiring**): SHIPPED 2026-10-06 (Pete override; mode 2). WA-ONLY by design (Pete: 'why is WA special?'; wa2025 -0.0064 log loss, nothing else moves): read in R/seat_swing_port.R and the wa harness only. Mode 2 pools WA cycles for WA targets alone, so the other harnesses and the live Victoria run are intentionally untouched.
 - **`AUSPOL_SHIP_TIME_FORWARD`** (**adopted, shared-function wiring**): SHIPPED as a leak fix (ledger v51, 2026-09-29). Read in R/split_slope.R, which the six harnesses use for the minor-slope tiers; fit_seats_full.R does not name split_slope (function-name grep), so the published path is not shown to read it. Not traced further.
 - **`AUSPOL_SIM_ENGINE`** (intentional / dead experiment): Read inside R/seat_sim.R's simulate_seat_contests(), not per-harness -- universal in practice.
@@ -532,4 +536,4 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR2  every non-universal switch (211 of 240) has a recorded classification.
+MR2  every non-universal switch (213 of 242) has a recorded classification.

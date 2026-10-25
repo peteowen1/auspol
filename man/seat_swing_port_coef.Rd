@@ -23,7 +23,7 @@ origin on the seat's transposed federal swing relative to its cycle's mean
 cycles (at least 3 cycles, else 0). docs/plans/prereg-seat-swing-port-v2-2026-09-29.md.
 }
 \details{
-Two switches, both default off (this function is unchanged when both are):
+Three switches (this function is unchanged when all are at their defaults):
 \itemize{
 \item \code{AUSPOL_SEAT_SWING_PORT_WA}: "1" adds the five Western Australian cycles
 (\code{fed-swing-transposed-wa.csv}, built by \code{scripts/transpose_fed_swing.R}
@@ -38,5 +38,15 @@ cluster-robust error cannot be estimated, so the error is the ordinary
 seat-level one (or the cluster one with two cycles, whichever is larger)
 multiplied by \code{SEAT_SWING_NOCLIFF_SE_INFLATE} (2): a thin fit gets a
 quarter of the weight its own error would give it, not zero.
+\item \code{AUSPOL_SEAT_SWING_PORT_RESID} (audit F8, default "0"): "1" replaces the
+dependent variable. Instead of the seat's whole two-party swing, the fit
+uses what the trees left: the seat's as-at xgb residual in two-party terms,
+\verb{((actual ALP - xgb ALP) - (actual LNP - xgb LNP)) / 2}, demeaned within
+the cycle (\code{\link[=seat_swing_port_resid_table]{seat_swing_port_resid_table()}}, read from
+\code{current_seat_predictions(net = FALSE)}). The trees already see \code{fed_swing}
+as a feature, so the default coefficient describes the total effect while
+the port is applied on top of the trees. Same cycles-before-target rule, so
+it stays time-forward; a cycle with no as-at predictions (wa2008) drops out.
+docs/plans/prereg-postxgb-resid-net-2026-10-25.md.
 }
 }
