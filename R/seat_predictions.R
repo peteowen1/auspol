@@ -104,7 +104,15 @@ postxgb_net_port <- function(x, adj_fun = .port_adj_memo) {
   c(election_data_path("fed-swing-transposed.csv"),
     Sys.getenv("AUSPOL_SEAT_SWING_WA_FILE", election_data_path("fed-swing-transposed-wa.csv")),
     out_path(c("seat-tpp-estimates.csv", "xgb-primary-asat-predictions.csv", "forecasts.csv")),
-    sort(list.files(out_path(), pattern = "^seat-swing-port-.*\\.csv$", full.names = TRUE)))
+    sort(list.files(out_path(), pattern = "^seat-swing-port-.*\\.csv$", full.names = TRUE)),
+    # AUSPOL_SEAT_SWING_PORT_3C also reads the candidate corpus and the booth
+    # files (R/seat_swing_port_3c.R); only under the arm, so default keys are unchanged.
+    if (seat_swing_port_3c_mode() != "0") c(
+      out_path("candidacies.csv"), election_data_path(c("fed-booth-map.csv", "fed-booth-map-wa.csv")),
+      sort(list.files(file.path(pkg_root(), "external", "reference", "aec", "booths"),
+                      pattern = "^(tpp|pp)-fed[0-9]{4}\\.csv$", full.names = TRUE)),
+      sort(list.files(file.path(pkg_root(), "external", "reference", "correspondences"),
+                      pattern = "^booths-[0-9]{4}wa.*\\.csv$", full.names = TRUE))))
 }
 .port_adj_memo <- function(election, seats) {
   ev <- Sys.getenv()
