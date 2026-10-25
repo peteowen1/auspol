@@ -631,6 +631,10 @@ if (LEVEL_ANCHOR && "OTH" %in% names(state_mean)) {
 # toward the mean of the last 28 days of polls, the window ending TODAY (one ending on the
 # future polling day would hold nothing). Same function the harnesses call.
 # (.try() is defined further down, so the fallback is inline here.)
+# The level as it stands BEFORE the blend: the recipe the trees' level_pred was trained on
+# (scripts/build_level_pred.R has no blend unless AUSPOL_LEVEL_PRED_RECENT=1). Served to the xgb layer only
+# under AUSPOL_LIVE_LEVEL_PRED_TREND=1 (audit F12, plans/prereg-live-level-pred-2026-10-25.md; LLP1 below).
+.state_mean_trend <- state_mean
 .slr <- tryCatch(level_recent_apply(state_mean, TGT, REGION, as.Date(unname(election_dates()[TGT])),
                                     code = "FSLR", as_at = Sys.Date()),
                  error = function(e) { cat(sprintf("FSLR!! level_recent_apply() FAILED (%s) -- the statewide level is the trend alone\n",
@@ -1425,6 +1429,23 @@ if (identical(Sys.getenv("AUSPOL_LIVE_LEVEL_SPLIT", "1"), "1") && "OTH" %in% nam
   cat(sprintf("XG0s the xgb layer's level_pred, others bucket split as in training: %s (sum %.2f = state OTH %.2f)\n",
               paste(sprintf("%s %.2f", .bk, .level_split[.bk]), collapse = ", "), sum(.level_split[.bk]), state_mean[["OTH"]]))
 }
+# AUSPOL_LIVE_LEVEL_PRED_TREND (audit F12, default "0", plans/prereg-live-level-pred-2026-10-25.md): the trees'
+# level_pred (and the surge levels xgb_primary_predict_live() derives from the same vector) from the level BEFORE
+# the recent-poll blend, as build_level_pred.R trains it. base_margin and every other use of state_mean keep the
+# blended level, and so does .level_split (AUSPOL_LEVEL_CONSERVE reads it). Off, .xgb_level IS state_mean and
+# .level_split_xgb IS .level_split, so the published run is unchanged.
+if (live_level_pred_trend() && (nzchar(FORCE_FP) || LEVEL_ANCHOR))
+  stop("LLP1! AUSPOL_LIVE_LEVEL_PRED_TREND=1 with ", if (nzchar(FORCE_FP)) "AUSPOL_FORCE_FP" else "AUSPOL_LIVE_LEVEL_ANCHOR=1",
+       ": the pre-blend level was captured before that shift, so the trees would silently lose it. Run them separately.")
+.xgb_level <- live_level_pred_serve(state_mean, .state_mean_trend, code = "LLP1")
+.level_split_xgb <- .level_split
+if (!identical(.xgb_level, state_mean) && !is.null(.level_split)) {
+  .level_split_xgb <- .xgb_level[setdiff(names(.xgb_level), "OTH")]
+  .level_split_xgb[.bk] <- .xgb_level[["OTH"]] * .rt[.bk]
+  if (abs(sum(.level_split_xgb) - sum(.xgb_level)) > 1e-6) stop("LLP1: split pre-blend level does not keep the statewide total")
+  cat(sprintf("LLP1  pre-blend split served as level_pred: %s\n",
+              paste(sprintf("%s %.2f", names(.level_split_xgb), .level_split_xgb), collapse = ", ")))
+}
 .mat22_xgb <- if (identical(Sys.getenv("AUSPOL_LIVE_SEATPREV_RAW", "1"), "1")) .mat22_raw else mat22
 cat(sprintf("XG0p seat_prev_pcv served from the %s prior-election matrix (%d cells differ from the edited one by > 0.05)\n",
             if (identical(.mat22_xgb, .mat22_raw)) "raw (as trained)" else "edited",
@@ -1476,8 +1497,8 @@ if (!identical(level_conserve_mode(), "0")) {
 # run, so a forecast asked to conserve the level is never published without it. Off, the call returns at once.
 shares <- level_conserve_apply(shares, .lc_level, TGT, stage = "base", target = .lc_target,
                                held = if (.departed_hold) HELD else NULL)
-shares_x <- .try("xgb_live", xgb_primary_predict_live(shares, .mat22_xgb, a22, state_mean, .returns,
-                                                        level_split = .level_split,
+shares_x <- .try("xgb_live", xgb_primary_predict_live(shares, .mat22_xgb, a22, .xgb_level, .returns,
+                                                        level_split = .level_split_xgb,
                                                         own_prev = .own_prev_xgb, region = REGION,
                                                         year = YEAR, prev_year = as.integer(sub("^[a-z]+", "", PREV))))
 if (!is.null(shares_x)) {

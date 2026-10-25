@@ -241,3 +241,7 @@
 "ONF1","scripts/fit_seats_full.R","same_meaning","uniform_major One Nation fill weights: onp_fill_betas() and its one caller"
 "LCV1","R/level_conserve.R","same_meaning","AUSPOL_LEVEL_CONSERVE: level_conserve_apply() prints what it applied; fit_seats_full.R prints the live level source before the same call"
 "LCV1","scripts/fit_seats_full.R","same_meaning","AUSPOL_LEVEL_CONSERVE: level_conserve_apply() prints what it applied; fit_seats_full.R prints the live level source before the same call"
+"LLP1","R/level_recent.R","same_meaning","one check (audit F12, plans/prereg-live-level-pred-2026-10-25.md): the library function prints it and its caller passes the same code to it or stops with it"
+"LLP1","scripts/fit_seats_full.R","same_meaning","one check (audit F12, plans/prereg-live-level-pred-2026-10-25.md): the library function prints it and its caller passes the same code to it or stops with it"
+"LPR1","R/level_recent.R","same_meaning","one check (audit F12, plans/prereg-live-level-pred-2026-10-25.md): the library function prints it and its caller passes the same code to it or stops with it"
+"LPR1","scripts/build_level_pred.R","same_meaning","one check (audit F12, plans/prereg-live-level-pred-2026-10-25.md): the library function prints it and its caller passes the same code to it or stops with it"
