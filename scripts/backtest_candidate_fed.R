@@ -1053,8 +1053,13 @@ for (K in PAIRS) {
       # `st_a[["OTH"]]` is the same trap a second time: `[[` on a missing name
       # in an atomic vector THROWS rather than returning NA, so a prior
       # election with no OTH share would kill the run outright.
+      # AUSPOL_LEVEL_DEAD_PARTY (default "0" = st_a itself): the prior shares that SPLIT the bucket lose the
+      # share of parties not standing at the target (R/level_dead_party.R, the same function the state
+      # harnesses reach through forecast_statewide_or_oracle()). Never the seats' swing baseline: st_a itself
+      # is untouched, and the per-class factor .dp_k() below carries the difference.
+      .st_a_dp <- dead_party_prior(st_a, paste0("fed", K$to), parties, flows = fm, label = sprintf("BF0 fed%d", K$to))
       prior_sh <- vapply(bucket, function(p) {
-        v <- st_a[p]
+        v <- .st_a_dp[p]
         if (length(v) != 1L || !is.finite(v)) 0 else unname(v)
       }, numeric(1))
       base_share <- sum(prior_sh)
@@ -1254,6 +1259,14 @@ for (K in PAIRS) {
       # the five state harnesses and AUSPOL_MINOR_ADDITIVE in fit_seats_full.R do.
       .minor_add <- identical(Sys.getenv("AUSPOL_MINOR_ADDITIVE_FED", "0"), "1")
       .add_tgt <- list()
+      # AUSPOL_LEVEL_DEAD_PARTY: on the prior-ratio path each class goes to its share of the bucket by the
+      # ADJUSTED prior (prior_sh), so its factor is prior_sh / st_a times the common one; "0" = scale_to exactly.
+      .dp_k <- function(p) {
+        if (identical(level_dead_party_mode(), "0")) return(scale_to)
+        pa <- st_a[p]
+        if (length(pa) != 1L || !is.finite(pa) || pa <= 0) return(scale_to)
+        unname(prior_sh[[p]] * scale_to / pa)
+      }
       .scale_class <- function(p, k) {
         if (.minor_add) .add_tgt[[p]] <<- st_a[[p]] * k
         else { mat[, p] <<- mat[, p] * k; st_a[[p]] <<- st_a[[p]] * k }
@@ -1301,10 +1314,10 @@ for (K in PAIRS) {
                     paste(sprintf("%s %.2f", bucket, vapply(bucket, function(b)
                       if (b %in% names(.add_tgt)) .add_tgt[[b]] else st_a[[b]], numeric(1))), collapse = ", ")))
       } else {
-      for (p in setdiff(unmodelled, done_lvl)) .scale_class(p, scale_to)
+      for (p in setdiff(unmodelled, done_lvl)) .scale_class(p, .dp_k(p))
       }
       if (is.null(cand_ratio) || identical(Sys.getenv("AUSPOL_IND_TREND", "0"), "1"))
-        st_a[["OTH"]] <- st_a[["OTH"]] * scale_to
+        st_a[["OTH"]] <- st_a[["OTH"]] * .dp_k("OTH")
       for (p in bucket) st_fc[[p]] <- st_a[[p]]
       # AUSPOL_MINOR_ADDITIVE_FED: the class keeps its prior level as dev_slope()'s `prev` and the scaled one as its target
       for (p in names(.add_tgt)) st_fc[[p]] <- .add_tgt[[p]]

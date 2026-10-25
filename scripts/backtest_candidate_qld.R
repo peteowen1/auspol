@@ -442,7 +442,8 @@ st_a <- fa[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
 st_b <- fb[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
 # AUSPOL_FORECAST_MODE=1: predicted statewide, not the oracle (R/forecast_statewide.R).
 st_b <- forecast_statewide_or_oracle("qld", PAIR$to, PAIR$asof, colnames(mat), st_a, st_b,
-                                     code = "BQ0", n_sims = N_SIMS, seed = as.integer(Sys.getenv("AUSPOL_SEED", "42")))
+                                     code = "BQ0", n_sims = N_SIMS, seed = as.integer(Sys.getenv("AUSPOL_SEED", "42")),
+                                     flows = fm)   # AUSPOL_LEVEL_DEAD_PARTY=flow
 # audit F4 (AUSPOL_HARNESS_SW_DRAWS, R/forecast_statewide.R): the statewide draws behind sb, read before anything drops attributes
 SWD <- attr(st_b, "draws")
 # RE-ENTRY PRIOR, docs/plans/prereg-reentry-prior-2026-09-07.md. A class

@@ -416,7 +416,8 @@ for (K in PAIRS) {
   # AUSPOL_FORECAST_MODE=1: the statewide the seats swing toward is PREDICTED
   # from polls as at the day before, not read off this election (R/forecast_statewide.R).
   sb <- forecast_statewide_or_oracle("vic", K$to, VIC_DATE[[as.character(K$to)]], colnames(mat), sa, sb,
-                                     code = "BV0", n_sims = N_SIMS, seed = as.integer(Sys.getenv("AUSPOL_SEED", "42")), on_fail = "skip")
+                                     code = "BV0", n_sims = N_SIMS, seed = as.integer(Sys.getenv("AUSPOL_SEED", "42")), on_fail = "skip",
+                                     flows = fm)   # AUSPOL_LEVEL_DEAD_PARTY=flow
   if (is.null(sb)) next   # thin cycle: no forecast statewide, pair not scored in forecast mode
   # audit F4 (AUSPOL_HARNESS_SW_DRAWS, R/forecast_statewide.R): the statewide draws behind sb, read before anything drops attributes
   SWD <- attr(sb, "draws")

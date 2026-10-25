@@ -327,19 +327,28 @@ fundamentals_loo_table <- function() {
 #' @param on_fail `"stop"` (default) or `"skip"`: what to do when no trend can be
 #'   fitted. `"skip"` prints a loud line and returns `NULL` so a multi-pair
 #'   harness can drop the pair; it never falls back to the oracle.
+#' @param flows The harness's [build_flow_matrix()] result, for
+#'   `AUSPOL_LEVEL_DEAD_PARTY = "flow"` ([dead_party_prior()],
+#'   [dead_party_level()], [dead_class_keep()]); NULL falls back to pro rata,
+#'   and says so.
 #' @return Named numeric on `names(st_b)`, with attribute `oracle` (the
 #'   replaced values) when the forecast was used.
 #' @export
 forecast_statewide_or_oracle <- function(region, year, election_date, parties, st_a, st_b,
                                          code = "BX0", n_sims = 20000L, seed = 42L,
                                          mode = Sys.getenv("AUSPOL_FORECAST_MODE", "1"),
-                                         on_fail = c("stop", "skip")) {
+                                         on_fail = c("stop", "skip"), flows = NULL) {
   if (!identical(mode, "1")) return(st_b)
   on_fail <- match.arg(on_fail)
   # A class in the target's statewide but not the caller's party list (a new
   # entrant) must still get a forecast level, or it would be dropped from the
   # returned vector; the union here means the five call sites cannot differ.
   parties <- union(parties, names(st_b))
+  # AUSPOL_LEVEL_DEAD_PARTY (default "0" = st_a itself): the previous result that SPLITS the unpolled
+  # bucket (forecast_statewide_for() -> bucket_split_ratio()) loses the share of parties not standing at
+  # the target (R/level_dead_party.R). The thin cycle below keeps st_a and adjusts its carried LEVEL
+  # instead (dead_party_level()); the harness's own st_a (the seats' swing baseline) is never touched.
+  st_a_split <- dead_party_prior(st_a, paste0(region, year), parties, flows = flows, label = paste0(code, " ", region, year))
   fc <- tryCatch(
     # ALWAYS 20,000 draws for the statewide level, whatever the harness's own
     # sim count: st_fc is colMeans(draws), so at 2,000 sims base_pred jittered
@@ -353,10 +362,10 @@ forecast_statewide_or_oracle <- function(region, year, election_date, parties, s
       cat(sprintf("%sf time-forward statewide: fundamentals %.2f, day-before trend weight %.2f
 ",
                   code, ftf$fund, mtf$w[mtf$horizon == 1]))
-      forecast_statewide_for(region, year, election_date, parties, st_a, ftf, mtf,
+      forecast_statewide_for(region, year, election_date, parties, st_a_split, ftf, mtf,
                              n_sims = max(n_sims, 20000L), seed = seed)
     } else {
-      forecast_statewide_for(region, year, election_date, parties, st_a,
+      forecast_statewide_for(region, year, election_date, parties, st_a_split,
                              fundamentals_loo_table(),
                              data.table::fread(file.path("output", "projection-mix.csv"), showProgress = FALSE),
                              n_sims = max(n_sims, 20000L), seed = seed)
@@ -380,7 +389,11 @@ forecast_statewide_or_oracle <- function(region, year, election_date, parties, s
       cat(sprintf("%s  thin cycle %s%d: published path failed (%s); shrinkage estimate used\n",
                   code, region, year, conditionMessage(fc)))
       keep <- intersect(names(th), names(st_b))
-      out <- th[keep]
+      # AUSPOL_LEVEL_DEAD_PARTY: the carried part of a non-standing party's share leaves its class's level,
+      # then a class with no candidate gives its level up; "0" = th[keep], as before.
+      th <- dead_party_level(th, paste0(region, year), carried = 1 - attr(th, "w_polls"), flows = flows,
+                             label = paste0(code, " ", region, year))
+      out <- dead_class_keep(th, keep, flows = flows, label = paste0(code, " ", region, year))
       cat(sprintf("%s  forecast statewide (THIN CYCLE) replaces the oracle for %s%d. Mean |error| %.2f pts over %d classes: %s\n",
                   code, region, year, mean(abs(out - st_b[keep]), na.rm = TRUE), length(out),
                   paste(sprintf("%s %.1f(%.1f)", keep, out, st_b[keep]), collapse = " ")))
@@ -401,7 +414,9 @@ forecast_statewide_or_oracle <- function(region, year, election_date, parties, s
     return(NULL)
   }
   keep <- intersect(names(fc$st_fc), names(st_b))
-  out <- fc$st_fc[keep]
+  # AUSPOL_LEVEL_DEAD_PARTY: a class with no candidate anywhere gives its level to the standing classes
+  # (by flows or pro rata) instead of being dropped here; "0" = fc$st_fc[keep], as before.
+  out <- dead_class_keep(fc$st_fc, keep, flows = flows, label = paste0(code, " ", region, year))
   # AUSPOL_LEVEL_RECENT (off unless "1"): the day-before level toward the last
   # 28 days of polls (R/level_recent.R); the line below then scores the blend.
   out <- level_recent_apply(out, sprintf("%s%d", region, year), region, election_date, code = paste0(code, "r"))

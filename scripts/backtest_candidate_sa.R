@@ -489,7 +489,8 @@ st_b <- fb[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
 # why replacing the oracle with a prediction is not the same as deleting it.
 # Since 2026-09-19 the block lives once in R/forecast_statewide.R for all six harnesses.
 st_b <- forecast_statewide_or_oracle("sa", PAIR$to, PAIR$flow_before, colnames(mat), st_a, st_b,
-                                     code = "BS0", n_sims = N_SIMS, seed = as.integer(Sys.getenv("AUSPOL_SEED", "42")))
+                                     code = "BS0", n_sims = N_SIMS, seed = as.integer(Sys.getenv("AUSPOL_SEED", "42")),
+                                     flows = fm)   # AUSPOL_LEVEL_DEAD_PARTY=flow
 # audit F4 (AUSPOL_HARNESS_SW_DRAWS, R/forecast_statewide.R): the statewide draws behind sb, read before anything drops attributes
 SWD <- attr(st_b, "draws")
 # RE-ENTRY PRIOR, docs/plans/prereg-reentry-prior-2026-09-07.md. A class

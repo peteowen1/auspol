@@ -436,7 +436,8 @@ state_tgt <- fp_tgt[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v)
 # AUSPOL_FORECAST_MODE=1: predicted statewide, not the oracle (R/forecast_statewide.R).
 state_tgt <- forecast_statewide_or_oracle("nsw", TO, c("2011" = "2011-03-26", "2015" = "2015-03-28", "2019" = "2019-03-23", "2023" = "2023-03-25")[[as.character(TO)]],
                                           names(state_tgt), state_prev, state_tgt,
-                                          code = "BN0", n_sims = N_SIMS, seed = as.integer(Sys.getenv("AUSPOL_SEED", "42")))
+                                          code = "BN0", n_sims = N_SIMS, seed = as.integer(Sys.getenv("AUSPOL_SEED", "42")),
+                                          flows = fm)   # AUSPOL_LEVEL_DEAD_PARTY=flow
 # audit F4 (AUSPOL_HARNESS_SW_DRAWS, R/forecast_statewide.R): the statewide draws behind sb, read before anything drops attributes
 SWD <- attr(state_tgt, "draws")
 # RE-ENTRY PRIOR, docs/plans/prereg-reentry-prior-2026-09-07.md. A class

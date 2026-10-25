@@ -21,7 +21,8 @@
 #
 # Run (from the repo root):  powershell.exe -Command 'Rscript "scripts/screen_level_share.R"'
 #   no arguments: the three 2026-10-11 validation comparisons.
-#   --pairs=A|B,C|D   compare arm A against arm B (arm = none | window | decay:H | decay:fit)
+#   --pairs=A|B,C|D   compare arm A against arm B (arm = none | window | decay:H | decay:fit | dead:flow | dead:pro;
+#                     a dead: arm is the --ref arm plus AUSPOL_LEVEL_DEAD_PARTY, see "AUSPOL_LEVEL_DEAD_PARTY arms" below)
 #   --ref=decay:10    the level arm the published-predictions file was produced under
 # Data.table NSE: no local variable shares a name with a column used inside [...]; masks are built outside.
 
@@ -50,7 +51,70 @@ arm_env <- function(spec) {                       # sets the env switches the sh
   else if (p[1] == "decay")  { Sys.setenv(AUSPOL_LEVEL_RECENT = "decay", AUSPOL_LEVEL_RECENT_HALFLIFE = p[2]) }
   else stop("unknown arm ", spec)
 }
+# ---- AUSPOL_LEVEL_DEAD_PARTY arms: "dead:flow" / "dead:pro" ON TOP OF the reference arm -----------------------
+# (plans/prereg-level-dead-party-2026-10-25.md). The arm's level change per election, from the shipped code
+# (R/level_dead_party.R) applied to the level the harness had:
+#   thin cycles (output/level-pred.csv from_polls = 0): thin_cycle_statewide() from the previous result, its
+#     carried part adjusted by dead_party_level(), each class with no candidate given out by dead_class_keep();
+#   fitted cycles: the full level-pred vector, a class with no candidate given out by dead_class_keep().
+# The baseline it is compared with is what the seats actually got: the level over the classes that stand,
+# renormalised pro rata (the seat renormalisation). Flows are the harness's own (output/nomzero-flows-<e>.rds).
+# BLIND to moves inside the unpolled bucket (the bucket split's prior), which never reach ALP/LNP/GRN.
+DEAD_DELTA <- new.env()
+dead_delta <- function(e, mode) {
+  key <- paste(e, mode)
+  if (!is.null(DEAD_DELTA[[key]])) return(DEAD_DELTA[[key]])
+  if (is.null(DEAD_DELTA$C)) {
+    DEAD_DELTA$C <- fread(out_path("candidacies.csv"), showProgress = FALSE)
+    DEAD_DELTA$LP <- fread(out_path("level-pred.csv"), showProgress = FALSE)
+  }
+  C <- DEAD_DELTA$C; LPt <- DEAD_DELTA$LP
+  el_c <- C$election
+  shr <- function(x) { m <- el_c == x & is.finite(C$votes); s <- C[m, list(v = sum(votes)), by = "party"]; setNames(100 * s$v / sum(s$v), s$party) }
+  D <- dead_party_table(e, corpus = C)
+  zero <- c(ALP = 0, LNP = 0, GRN = 0)
+  if (inherits(D, "dp_none")) { DEAD_DELTA[[key]] <- zero; return(zero) }
+  sa <- shr(attr(D, "prior")); sb <- shr(e); keep <- names(sb)[sb > 0]
+  ff <- out_path(sprintf("nomzero-flows-%s.rds", e)); fl <- if (file.exists(ff)) readRDS(ff)$flows else NULL
+  lpe <- LPt[LPt$pair == e]; lp <- setNames(lpe$level_pred, lpe$party)
+  reg <- sub("[0-9]{4}$", "", e); yr <- as.integer(sub("^[a-z]+", "", e)); ed <- as.Date(unname(eds[e]))
+  thin <- nrow(lpe) > 0L && all(lpe$from_polls == 0)
+  lg <- capture.output({
+    if (thin) {
+      pt <- union(names(sa), names(sb))
+      base_full <- thin_cycle_statewide(reg, yr, ed, pt, sa)
+      arm_full <- dead_party_level(base_full, e, carried = 1 - attr(base_full, "w_polls"), flows = fl, corpus = C, mode = mode)
+    } else { base_full <- lp; arm_full <- lp }
+    kp <- intersect(names(base_full), keep)
+    base <- base_full[kp] * 100 / sum(base_full[kp])
+    arm <- dead_class_keep(arm_full, intersect(names(arm_full), keep), flows = fl, mode = mode, label = e)
+    arm <- arm * 100 / sum(arm)   # exactly 100 already unless the full vector was short of 100
+  })
+  cls <- c("ALP", "LNP", "GRN")
+  d <- setNames(vapply(cls, function(k) (if (k %in% names(arm)) arm[[k]] else 0) - (if (k %in% names(base)) base[[k]] else 0), 0), cls)
+  if (any(abs(d) > 1e-9)) cat(sprintf("LB1d %s %s (%s): level change ALP %+.2f LNP %+.2f GRN %+.2f | %s\n", e, mode,
+                                      if (thin) "thin cycle" else "fitted", d[["ALP"]], d[["LNP"]], d[["GRN"]],
+                                      paste(trimws(grep("^DPL", lg, value = TRUE)), collapse = " || ")))
+  DEAD_DELTA[[key]] <- d
+  d
+}
+
 arm_levels <- function(spec, verbose = FALSE) {    # list: election -> named c(ALP, LNP, GRN, OTH) after the blend
+  if (startsWith(spec, "dead:")) {
+    mode <- sub("^dead:", "", spec)
+    base <- arm_levels(REF_ARM)
+    cat(sprintf("LB1  ARM %s = reference arm %s plus AUSPOL_LEVEL_DEAD_PARTY=%s\n", spec, REF_ARM, mode))
+    nch <- 0L
+    for (e in names(base)) {
+      d <- dead_delta(e, mode)
+      if (any(abs(d) > 1e-9)) nch <- nch + 1L
+      v <- base[[e]]; v[c("ALP", "LNP", "GRN")] <- v[c("ALP", "LNP", "GRN")] + d
+      v[["OTH"]] <- 100 - sum(v[c("ALP", "LNP", "GRN")])
+      base[[e]] <- v
+    }
+    cat(sprintf("     dead-party level change applied: %d of %d elections moved\n", nch, length(base)))
+    return(base)
+  }
   arm_env(spec)
   cat(sprintf("LB1  ARM %s applies AUSPOL_LEVEL_RECENT=%s AUSPOL_LEVEL_RECENT_HALFLIFE=%s\n", spec,
               Sys.getenv("AUSPOL_LEVEL_RECENT"), if (startsWith(spec, "decay")) Sys.getenv("AUSPOL_LEVEL_RECENT_HALFLIFE") else "(unused)"))

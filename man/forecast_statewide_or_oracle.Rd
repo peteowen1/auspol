@@ -15,7 +15,8 @@ forecast_statewide_or_oracle(
   n_sims = 20000L,
   seed = 42L,
   mode = Sys.getenv("AUSPOL_FORECAST_MODE", "1"),
-  on_fail = c("stop", "skip")
+  on_fail = c("stop", "skip"),
+  flows = NULL
 )
 }
 \arguments{
@@ -31,6 +32,11 @@ forecast_statewide_or_oracle(
 \item{on_fail}{\code{"stop"} (default) or \code{"skip"}: what to do when no trend can be
 fitted. \code{"skip"} prints a loud line and returns \code{NULL} so a multi-pair
 harness can drop the pair; it never falls back to the oracle.}
+
+\item{flows}{The harness's \code{\link[=build_flow_matrix]{build_flow_matrix()}} result, for
+\code{AUSPOL_LEVEL_DEAD_PARTY = "flow"} (\code{\link[=dead_party_prior]{dead_party_prior()}},
+\code{\link[=dead_party_level]{dead_party_level()}}, \code{\link[=dead_class_keep]{dead_class_keep()}}); NULL falls back to pro rata,
+and says so.}
 }
 \value{
 Named numeric on \code{names(st_b)}, with attribute \code{oracle} (the

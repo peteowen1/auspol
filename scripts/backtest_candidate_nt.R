@@ -377,7 +377,8 @@ for (K in PAIRS) {
   sb <- fb[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
   # AUSPOL_FORECAST_MODE=1: predicted statewide, not the oracle (R/forecast_statewide.R).
   sb <- forecast_statewide_or_oracle("nt", K$to, NT_DATE[[as.character(K$to)]], union(colnames(A), names(sb)), sa, sb,
-                                     code = "BNT0", n_sims = N_SIMS, seed = as.integer(Sys.getenv("AUSPOL_SEED", "42")), on_fail = "skip")
+                                     code = "BNT0", n_sims = N_SIMS, seed = as.integer(Sys.getenv("AUSPOL_SEED", "42")), on_fail = "skip",
+                                     flows = fm)   # AUSPOL_LEVEL_DEAD_PARTY=flow
   if (is.null(sb)) next   # thin cycle: no forecast statewide, pair not scored in forecast mode
   # audit F4 (AUSPOL_HARNESS_SW_DRAWS, R/forecast_statewide.R): the statewide draws behind sb, read before anything drops attributes
   SWD <- attr(sb, "draws")

@@ -627,6 +627,19 @@ if (LEVEL_ANCHOR && "OTH" %in% names(state_mean)) {
   # (sum 97.93) while the backtests read them rescaled. Review gate 2026-09-30.
   state_mean <- state_mean * 100 / sum(state_mean)
 }
+# AUSPOL_LEVEL_DEAD_PARTY (default "0" = nothing here runs; plans/prereg-level-dead-party-2026-10-25.md): the same
+# two steps the harnesses take in forecast_statewide_or_oracle(). A polled class with no candidate anywhere gives
+# its level to the standing classes by flows (OTH is the whole others bucket here, split below, so it is never
+# "gone"), and .a22_lvl is the 2022 result with non-standing parties' share moved, used ONLY to split the bucket
+# below (never as the seats' swing baseline, which stays a22). Needs the final nomination list (AUSPOL_NOM_LIVE=1);
+# without it nothing is judged dead and DPL0! says so. R/level_dead_party.R.
+.dp_stand <- dead_party_live_standing(rownames(mat22), TGT, PREV)
+.a22_lvl <- a22
+if (!is.null(.dp_stand)) {
+  state_mean <- dead_class_keep(state_mean, intersect(names(state_mean), c(unique(.dp_stand$party), "OTH")),
+                                flows = fm, label = paste("FS", TGT))
+  .a22_lvl <- dead_party_prior(a22, TGT, colnames(mat22), flows = fm, standing = .dp_stand, label = paste("FS", TGT))
+}
 # AUSPOL_LEVEL_RECENT (off unless "1"; plans/prereg-level-recent-blend-2026-10-10.md): ALP/LNP/GRN
 # toward the mean of the last 28 days of polls, the window ending TODAY (one ending on the
 # future polling day would hold nothing). Same function the harnesses call.
@@ -1297,6 +1310,14 @@ unmodelled <- setdiff(parties, modelled)
 if (length(unmodelled) && !is.na(state_mean["OTH"])) {
   base_share <- sum(a22[unmodelled], a22[["OTH"]], na.rm = TRUE)
   scale_to <- state_mean[["OTH"]] / base_share
+  # AUSPOL_LEVEL_DEAD_PARTY: each bucket class's target is its share of the bucket by .a22_lvl (a22 itself when
+  # off or without a final nomination list, so .dp_tgt is then a22[[p]] * scale_to exactly).
+  .dp_base <- sum(.a22_lvl[c(unmodelled, "OTH")], na.rm = TRUE)
+  .dp_tgt <- function(p) {
+    if (identical(.a22_lvl, a22)) return(a22[[p]] * scale_to)
+    v <- .a22_lvl[p]; if (length(v) != 1L || !is.finite(v)) v <- 0
+    state_mean[["OTH"]] * unname(v) / .dp_base
+  }
   # THE MULTIPLICATIVE PATH NEEDS THE SLOPE TOO, and it is the one that carries
   # IND -- the class with the worst seat-level error in the corpus (RMSE ~7.2,
   # double every other class) and the second-lowest slope. Applying the slope to
@@ -1313,10 +1334,11 @@ if (length(unmodelled) && !is.na(state_mean["OTH"])) {
   # minor field: Mildura's independent (Cupper, 33.9 in 2022) by 39% when One Nation takes the field's votes.
   .minor_add <- identical(Sys.getenv("AUSPOL_MINOR_ADDITIVE", "1"), "1")
   for (p in c(unmodelled, if ("OTH" %in% modelled) "OTH")) {
-    tgt <- a22[[p]] * scale_to
+    tgt <- .dp_tgt(p)
     .sl <- .vic_slope(p, rownames(mat22)); .hd <- attr(.sl, "departed"); if (.departed_hold && !is.null(.hd)) HELD[, p] <- ((.hd %in% TRUE) & (mat22[, p] >= .hold_min)) %in% TRUE
     shares[, p] <- if (.minor_add) dev_slope(.own_x(p, rownames(mat22), mat22[, p]), a22[[p]], tgt, .sl)
-                   else dev_slope(.own_x(p, rownames(mat22), mat22[, p]) * scale_to, tgt, tgt, .sl)
+                   else dev_slope(.own_x(p, rownames(mat22), mat22[, p]) *
+                                    (if (identical(.a22_lvl, a22) || !(a22[[p]] > 0)) scale_to else tgt / a22[[p]]), tgt, tgt, .sl)
   }
   cat(sprintf("minor field scaled x%.2f (%s): %s at 2022 %.1f%% -> forecast %.1f%%
 ",
@@ -1429,11 +1451,11 @@ if (identical(Sys.getenv("AUSPOL_LIVE_LEVEL_SPLIT", "1"), "1") && "OTH" %in% nam
   # The daily CI run has no output/minor-class-shares-v2.csv (forecast.yaml does not fetch it), and
   # candidate_bucket_ratio() stops without it; the prior-election ratio is what bucket_split_ratio() itself falls back
   # to when the candidate model has no row for the target (vic2026 has none), so use it, and say so (review 2026-10-18).
-  .rt <- tryCatch(bucket_split_ratio(paste0(REGION, YEAR), .bk, a22), error = function(e) {
+  .rt <- tryCatch(bucket_split_ratio(paste0(REGION, YEAR), .bk, .a22_lvl), error = function(e) {
     cat(sprintf("XG0s! candidate-model bucket split unavailable (%s): prior-election ratio used\n", conditionMessage(e)))
     .old <- Sys.getenv("AUSPOL_BUCKET_SPLIT", NA); Sys.setenv(AUSPOL_BUCKET_SPLIT = "prior")
     on.exit(if (is.na(.old)) Sys.unsetenv("AUSPOL_BUCKET_SPLIT") else Sys.setenv(AUSPOL_BUCKET_SPLIT = .old), add = TRUE)
-    bucket_split_ratio(paste0(REGION, YEAR), .bk, a22)
+    bucket_split_ratio(paste0(REGION, YEAR), .bk, .a22_lvl)
   })
   .level_split <- state_mean[setdiff(names(state_mean), "OTH")]
   .level_split[.bk] <- state_mean[["OTH"]] * .rt[.bk]
@@ -1492,7 +1514,7 @@ if (!identical(level_conserve_mode(), "0")) {
   } else {
     .lc_level <- state_mean
     if (length(unmodelled) && !is.na(state_mean["OTH"]))
-      for (p in c(unmodelled, "OTH")) .lc_level[p] <- a22[[p]] * scale_to
+      for (p in c(unmodelled, "OTH")) .lc_level[p] <- .dp_tgt(p)   # a22[[p]] * scale_to unless AUSPOL_LEVEL_DEAD_PARTY moved it
   }
   # NOT caught: with the switch on, a nomination list that is asked for (AUSPOL_NOM_LIVE=1) and cannot be read
   # stops the run rather than silently changing which classes stand. "auto"/"0" return no list, by design.
@@ -1677,7 +1699,7 @@ mu <- vapply(parties, function(p) {
 # recipe. docs/plans/prereg-live-level-anchor-2026-09-28.md (amendment).
 DRAW_BUCKET_FIX <- identical(Sys.getenv("AUSPOL_LIVE_DRAW_BUCKET", "1"), "1")
 if (DRAW_BUCKET_FIX && length(unmodelled) && !is.na(state_mean["OTH"])) {
-  for (p in intersect(c(unmodelled, "OTH"), parties)) mu[[p]] <- a22[[p]] * scale_to
+  for (p in intersect(c(unmodelled, "OTH"), parties)) mu[[p]] <- .dp_tgt(p)   # a22[[p]] * scale_to unless AUSPOL_LEVEL_DEAD_PARTY moved it
   if (!all(is.finite(mu))) stop("LL3: a bucket class has no 2022 share to split by: ",
                                 paste(names(mu)[!is.finite(mu)], collapse = ", "))
   cat(sprintf("LL3  others bucket in the draws split, not double-counted: %s (sum %.2f = state OTH %.2f)\n",

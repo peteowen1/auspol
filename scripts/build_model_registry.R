@@ -333,6 +333,12 @@ CLASSIFY <- list(
     "(xgb_primary_predict_live() live), 'final' after the last nomination zero. Post-xgb (post_xgb_switches()). The switch is",
     "read inside R/ (level_conserve_mode()), so 'NO' in the entry-point columns is the grep, not a gap.",
     "plans/prereg-level-conserve-2026-10-25.md"),
+  AUSPOL_LEVEL_DEAD_PARTY = paste(
+    "ARM (0), built 2026-10-25, not run. Read inside R/ (level_dead_party_mode(), R/level_dead_party.R), so 'NO' in the",
+    "entry-point columns is the grep, not a gap: the six state harnesses reach it through forecast_statewide_or_oracle(flows = fm)",
+    "(dead_party_prior() on the carried-forward prior, dead_class_keep() at the `keep` step), the federal harness through",
+    "dead_party_prior() on its bucket split, and fit_seats_full.R through dead_party_live_standing() (a no-op until",
+    "AUSPOL_NOM_LIVE=1 opens the final nomination list). plans/prereg-level-dead-party-2026-10-25.md"),
   AUSPOL_LEVEL_CONSERVE_LAMBDA = paste(
     "Sub-setting of AUSPOL_LEVEL_CONSERVE (strength, default 1), read only inside R/level_conserve.R, so every entry point",
     "that calls level_conserve_apply() honours it; 'NO' in the harness columns is the grep, not a gap."),
