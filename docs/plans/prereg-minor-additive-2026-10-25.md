@@ -75,3 +75,13 @@ Reading: neutral on the federal pairs. It helps a big returning personal vote (I
 32.4) and hurts some seats where the independent faded (Sturt and Boothby 2019 12.5/11.9 -> 18.1/16.9, actual 2.6; who
 the previous independent was in those seats NOT checked). Not decided here: the live forecast currently uses the multiplicative rule, which no state
 harness measures; the 28 state elections' scores come from the additive one. That is a parity question for Pete.
+
+## Live walk (2026-10-25, local fit_seats_full.R, vic2026, switch off vs on)
+
+`deciding-runs/20261025-minor-additive-walk/` (both runs exit 0, about 4 min each; suffixed outputs moved there, S7
+marker restored). Both logs print `minor field scaled x0.61: IND+OTH_RIGHT+OTH at 2022 17.1% -> forecast 10.3%`.
+Final seat shares, IND, off -> on: Mildura 20.2 -> 25.6, Hawthorn 20.6 -> 25.0, Kew 18.9 -> 23.4, Benambra 9.0 ->
+13.0, Shepparton 8.6 -> 12.7, Mulgrave 7.8 -> 11.0, Mornington 4.5 -> 6.5; no other cell moves more than 2 points
+(11 in all). Win probability: Hawthorn IND 0.17 -> 0.42 (LNP 0.82 -> 0.58), Kew IND 0.05 -> 0.10, Mildura LNP 0.22 ->
+0.16 (ONP 0.78 -> 0.82). Expected seats: IND 0.31 -> 0.66, LNP 30.59 -> 30.27, ALP 29.20 -> 29.13, ONP 21.89 unchanged.
+Mildura stays well under Cupper's 33.9: after the additive step One Nation's allocation still takes its share.
