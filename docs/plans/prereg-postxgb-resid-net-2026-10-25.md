@@ -114,6 +114,10 @@ LS1 tables, and every seat whose winner probability moves by more than 0.05.
 `scripts/promote_rebuild.R`. Under R that table carries a `resid` column. `seat_swing_port_table()` now refuses a table
 written under the other mode, so promote must run with the shipped value set.
 
+**The daily CI runner must not net (arm N).** It has no port sources, and shipped port tables exist only for vic2026
+and nsw2027. So `current_seat_predictions(net = TRUE)` would stop on every other election. Before N could ship, the CI
+run must keep `AUSPOL_POSTXGB_RESID_NET=0`, or ship the netted tables.
+
 ## Dry run of the arms (read-only, 2026-10-25, worktree code against the main checkout's `output/`)
 
 Published flags applied (port "2", WA "2", NOCLIFF "0", time-forward fits "1"). The table shows the port coefficient,

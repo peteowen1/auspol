@@ -94,6 +94,26 @@ test_that("a zero port adjustment leaves the rows exactly as they were (no renor
   expect_match(log, "0 with a non-zero port \\(\\), 0 seats netted")
 })
 
+test_that("the seat-poll memo key stamps the port's inputs when netting is on, and only then", {
+  d <- tempfile("elections"); dir.create(d)
+  withr::local_options(auspol.elections_dir = d)
+  f <- file.path(d, "fed-swing-transposed.csv")
+  writeLines("seat,fed_swing", f)
+  expect_true(f %in% .port_input_files())
+  withr::local_envvar(AUSPOL_POSTXGB_RESID_NET = "0")
+  off1 <- .seat_poll_memo_key("vic2022", 90, FALSE, FALSE, FALSE)
+  withr::local_envvar(AUSPOL_POSTXGB_RESID_NET = "1")
+  on1 <- .seat_poll_memo_key("vic2022", 90, FALSE, FALSE, FALSE)
+  # A rebuilt port input (new size and mtime) must miss the cache under the arm...
+  writeLines(c("seat,fed_swing", "Kew,1.5"), f)
+  Sys.setFileTime(f, Sys.time() + 3600)
+  on2 <- .seat_poll_memo_key("vic2022", 90, FALSE, FALSE, FALSE)
+  expect_false(identical(on1, on2))
+  # ...while the default key never reads it, so the default cache is unchanged.
+  withr::local_envvar(AUSPOL_POSTXGB_RESID_NET = "0")
+  expect_identical(.seat_poll_memo_key("vic2022", 90, FALSE, FALSE, FALSE), off1)
+})
+
 test_that("seat_swing_port_resid_table is the two-party miss, in the port's units", {
   rt <- seat_swing_port_resid_table(fake_preds())
   # Kew: ALP missed by +5, LNP by -5 -> (5 - -5) / 2 = 5; Bendigo East (-2 - 2) / 2 = -2.

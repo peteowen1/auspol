@@ -93,13 +93,23 @@ postxgb_net_port <- function(x, adj_fun = .port_adj_memo) {
 # variable and the size and mtime of every file the port reads, so a changed
 # switch or a rebuilt input misses the cache.
 .port_memo <- new.env(parent = emptyenv())
+
+# Every file the port's adjustment can read, for any target: the two transposed
+# federal swing tables, the seat TPP estimates, the as-at predictions and
+# forecasts table (the residual fit, AUSPOL_SEAT_SWING_PORT_RESID), and every
+# shipped seat-swing-port-<target>.csv. ONE list, used by .port_adj_memo() and by
+# .seat_poll_memo_key(), so a cache over current_seat_predictions(net = TRUE)
+# cannot miss a rebuilt port input.
+.port_input_files <- function() {
+  c(file.path(election_data_path(), "fed-swing-transposed.csv"),
+    Sys.getenv("AUSPOL_SEAT_SWING_WA_FILE", file.path(election_data_path(), "fed-swing-transposed-wa.csv")),
+    out_path(c("seat-tpp-estimates.csv", "xgb-primary-asat-predictions.csv", "forecasts.csv")),
+    sort(list.files(out_path(), pattern = "^seat-swing-port-.*\\.csv$", full.names = TRUE)))
+}
 .port_adj_memo <- function(election, seats) {
   ev <- Sys.getenv()
   ev <- ev[startsWith(names(ev), "AUSPOL_")]
-  files <- c(file.path(election_data_path(), "fed-swing-transposed.csv"),
-             Sys.getenv("AUSPOL_SEAT_SWING_WA_FILE", file.path(election_data_path(), "fed-swing-transposed-wa.csv")),
-             out_path("seat-tpp-estimates.csv"), out_path("xgb-primary-asat-predictions.csv"),
-             out_path("forecasts.csv"), out_path(sprintf("seat-swing-port-%s.csv", election)))
+  files <- .port_input_files()
   fi <- file.info(files)
   key <- paste(c(election, seats, paste(names(ev), ev, sep = "="), files, fi$size, format(fi$mtime, "%Y%m%d%H%M%OS6")),
                collapse = "\r")

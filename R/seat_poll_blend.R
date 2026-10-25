@@ -65,6 +65,9 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
   sp <- file.path(pkg_root(), "external", "reference", "polls", "seat-polls")
   files <- c(file.path(sp, c("seat_polls.csv", "hand_keyed_primaries.csv", "poll_methods.csv", "mrp_candidates.csv", "seat_poll_corrections.csv")),
              out_path(c("candidacies.csv", "endorsement-features.csv", "xgb-primary-asat-predictions.csv", "forecasts.csv")),
+             # Under AUSPOL_POSTXGB_RESID_NET=1 current_seat_predictions() also reads the port's inputs;
+             # stamped only then, so the default key (and so the default cache) is unchanged.
+             if (postxgb_resid_net_on()) .port_input_files() else character(0),
              extra)
   fi <- file.info(files, extra_cols = FALSE)
   paste(election, days, by_type, by_poll, .raw, pkg_root(),
