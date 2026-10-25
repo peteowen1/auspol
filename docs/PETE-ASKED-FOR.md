@@ -33,6 +33,21 @@ moved verbatim 2026-10-24. Every row below still has something open.
 
 ---
 
+## 2026-10-26
+
+Rows from the NEXT-STEPS session's 25-26 Oct work, as it reported them (details in `docs/NEXT-STEPS.md`, "Builds
+waiting for R"; Claude in the auspol session did not see these requests firsthand).
+
+| Request | Status |
+|---|---|
+| Independent seat gap kept on a re-stand: the SHARE version (carry only the re-standers' share of the old class vote; Geelong ~2% of Lyons's gap) | **NOT BUILT.** Branch `ind-overcall-1025` (7252acb, local) has only the yes/no version `AUSPOL_IND_GAP_RESTAND` (reaches Pascoe Vale of 5 targets). Prereg `plans/prereg-ind-gap-restand-2026-10-25.md` on that branch. |
+| Seat-poll primaries where a poll reports only two candidates: hunt for the full primaries first, infer only when none exist | **NOT DONE.** Recorded by the NEXT-STEPS session; no branch named. |
+| A shrunk new-independent seat-poll bias term | **NOT DONE.** Recorded by the NEXT-STEPS session; no branch named. |
+| Morning pages: the Mildura trace and the wa2017 / fed2019 walks | **NOT DONE.** Recorded by the NEXT-STEPS session. |
+| Federal state breakdowns in the state trend, with 90/180 days out as a second deciding metric | **PREREG ONLY.** Branch `fed-breakdowns-prereg-1026` (45e2bc4, local); the 90/180-day amendment is not yet written into the prereg. |
+
+---
+
 ## 2026-10-25
 
 | Request | Status |
