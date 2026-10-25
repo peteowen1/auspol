@@ -601,7 +601,8 @@ shares with the XGB challenger" and are easy to conflate:
 - **`xgb_primary_predict_live()`** (`AUSPOL_XGB_PRIMARY_LIVE`) — **the
   published Victoria forecast only** (`fit_seats_full.R`). Sets `base_margin`
   from THIS RUN'S OWN freshly-computed `shares` matrix at prediction time
-  (`R/xgb_primary_override.R:481-483`), so a primary-vote fix reaches the
+  (`R/xgb_primary_override.R:260` takes `base_pred` from `shares`; `:664-668`
+  sets it as `base_margin`), so a primary-vote fix reaches the
   published number **immediately on the next run**, with no retrain needed —
   the trained tree model only ever learned a residual correction on top of
   whatever `base_margin` it's handed.
