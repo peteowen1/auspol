@@ -72,6 +72,6 @@ IND/OTH_RIGHT/OTH cell moved by more than 0.05 points (1,604 cells).
 8. Holds: only fit_seats_full.R and backtest_candidate_fed.R read the switch.
 
 Reading: neutral on the federal pairs. It helps a big returning personal vote (Indi 2019 IND 25.2 -> 34.9, actual
-32.4) and hurts where a large prior IND cell belonged to someone else or nobody (Sturt and Boothby 2019 12.5/11.9 ->
-18.1/16.9, actual 2.6). Not decided here: the live forecast currently uses the multiplicative rule, which no state
+32.4) and hurts some seats where the independent faded (Sturt and Boothby 2019 12.5/11.9 -> 18.1/16.9, actual 2.6; who
+the previous independent was in those seats NOT checked). Not decided here: the live forecast currently uses the multiplicative rule, which no state
 harness measures; the 28 state elections' scores come from the additive one. That is a parity question for Pete.
