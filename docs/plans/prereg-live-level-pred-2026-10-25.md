@@ -14,7 +14,9 @@ The trees are trained on one statewide level and served another.
 - **Live.** `scripts/fit_seats_full.R:638-642` overwrites `state_mean` with `level_recent_apply()` (the 20-day
   half-life blend, `AUSPOL_LEVEL_RECENT=decay`, shipped 11 Oct). `.level_split` is built from that blended
   `state_mean` (`:1426-1427`), and `xgb_primary_predict_live()` serves it as `level_pred`
-  (`R/xgb_primary_override.R:275-276`) and derives the surge levels from the same vector (`:500`).
+  (`R/xgb_primary_override.R:275-276`) and derives the surge levels from the same vector (`:500`). The salience
+  permit's surge levels are also built from the blended `state_mean` (`surge_levels_live()` in `fit_seats_full.R`'s
+  `.permit`), while the harnesses' permit reads `level-pred.csv` (`salience_permit_for(..., surge_levels = NULL)`).
 - **Backtests.** No mismatch. Stage 6 harnesses blend their base (`R/forecast_statewide.R:407`,
   `backtest_candidate_fed.R:1365`), but the trees' other features, `level_pred` included, come from the stage-3
   features file through `xgb_base_delta_apply()` (only `base_pred` is refreshed), and the harnesses' surge levels read
@@ -33,9 +35,12 @@ probably a few tenths at most. **UNVERIFIED**: no run.
 
 1. **`AUSPOL_LIVE_LEVEL_PRED_TREND=1`**, diagnostic, live only. `fit_seats_full.R` keeps `.state_mean_trend`, the
    level just before the blend (after the rescale to 100), and serves it to `xgb_primary_predict_live()` as
-   `state_mean` (so `level_pred` and the surge levels) with its own bucket split (`.level_split_xgb`). `base_margin`,
-   `.level_split` (read by `AUSPOL_LEVEL_CONSERVE`) and every other use of `state_mean` keep the blended level.
-   Refuses to run with `AUSPOL_FORCE_FP` or `AUSPOL_LIVE_LEVEL_ANCHOR=1`, whose shifts land after the capture. Prints
+   `state_mean` (so `level_pred` and the surge levels) with its own bucket split (`.level_split_xgb`), and builds the
+   salience permit's surge levels from it too (`.permit_level`). `base_margin`, `.level_split` (read by
+   `AUSPOL_LEVEL_CONSERVE`) and every other use of `state_mean` keep the blended level. With the switch on, every
+   level-derived input the backtests take from `level-pred.csv` is pre-blend live as well, so the arm is the
+   backtest-scored configuration. Refuses to run (at `FORCE_FP`'s definition, before anything reads the pre-blend
+   level) with `AUSPOL_FORCE_FP` or `AUSPOL_LIVE_LEVEL_ANCHOR=1`, whose shifts land after the capture. Prints
    `LLP1` at default too (blended minus pre-blend, per class).
 2. **`AUSPOL_LEVEL_PRED_RECENT=1`**, the fix, training side. `build_level_pred.R` applies
    `level_pred_recent_apply()` (`R/level_recent.R`) to each poll-based pair: `level_recent_apply()` at
@@ -92,7 +97,10 @@ Neither arm shows in `quick_arm.R`. Both sides rebuild, because the code has mov
   1. The arm's `s3_level.log` shows `LPR2 recent-poll blend applied to N of N poll-based pairs` with N = the pairs
      with a poll trend, and `LPR1` lines whose `w` is non-zero for the recent elections; the base log has no `LPR` line.
   2. `level-pred.csv` differs between the copies only in ALP/LNP/GRN and the pro-rata classes of blended pairs, and
-     the arm's per-pair blend matches the harness blend (`*r` codes in the base's stage-6 logs) to 2 decimals.
+     the arm's per-pair blend matches the harness blend (`*r` codes in the base's stage-6 logs) within 0.15 points per
+     class. Not tighter: `build_level_pred.R` fits the trend at 2,000 sims and the harnesses at 20,000 or more, which
+     jitters the level by about 0.1. The blend weight `w` printed on both lines must agree to 2 decimals (it depends
+     on the polls and the fitted constant, not on the trend).
   3. The base reproduces the latest publish's pooled log loss to 3 decimals, or the cause of the difference is named.
 
 **Criterion** (the standard rule, `docs/PRE-REGISTRATION-RULES.md`): seat-winner log loss on the published path,

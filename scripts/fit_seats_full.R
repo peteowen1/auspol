@@ -675,6 +675,12 @@ SA_RESPONSE <- c(LNP = -0.846, ALP = -0.123, IND = -0.086,
 # be read as a FUNCTION of the primary vote rather than only at today's point.
 # Nothing is forced by default.
 FORCE_FP <- Sys.getenv("AUSPOL_FORCE_FP", "")
+# AUSPOL_LIVE_LEVEL_PRED_TREND (audit F12): refused here, before anything reads the pre-blend level
+# (.state_mean_trend, captured above), because a forced scenario or the anchor shift lands after the capture and
+# the trees and the salience permit would silently lose it.
+if (live_level_pred_trend() && (nzchar(FORCE_FP) || LEVEL_ANCHOR))
+  stop("LLP1! AUSPOL_LIVE_LEVEL_PRED_TREND=1 with ", if (nzchar(FORCE_FP)) "AUSPOL_FORCE_FP" else "AUSPOL_LIVE_LEVEL_ANCHOR=1",
+       ": the pre-blend level was captured before that shift, so the trees would silently lose it. Run them separately.")
 # The what-if slider's zero point: the level BEFORE any forcing.
 cat(sprintf("FP0  statewide primaries before forcing: %s\n",
             paste(sprintf("%s %.2f", names(state_mean), state_mean), collapse = ", ")))
@@ -920,9 +926,13 @@ if (.succ_on) { cat(sprintf("DSR1 departed successor rates (%s): %d seat(s) for 
 }
 .reason <- function(name) if (exists(name, envir = .why)) sprintf(" (%s)", get(name, envir = .why)) else ""
 .returns <- if (.cond) .try("returns", candidate_returns(PREV, TGT)) else NULL
+# Under AUSPOL_LIVE_LEVEL_PRED_TREND=1 (audit F12) the permit's surge levels come from the pre-blend level too, as
+# the harnesses' permit reads output/level-pred.csv (no blend): the arm is then the backtest-scored configuration.
+# Off, this is state_mean, unchanged.
+.permit_level <- if (live_level_pred_trend()) .state_mean_trend else state_mean
 .permit  <- if (.screened && !is.null(.returns))
               .try("permit", salience_permit_for(TGT, PREV, REGION,
-                                                 surge_levels = surge_levels_live(TGT, state_mean))) else NULL
+                                                 surge_levels = surge_levels_live(TGT, .permit_level))) else NULL
 if (.cond && is.null(.returns)) {
   cat(sprintf(sub("@T", TGT, "DS2  arm CS requested but @T has no candidate list yet -- FALLING BACK to uniform swing%s\n", fixed = TRUE),
               .reason("returns")))
@@ -1434,9 +1444,6 @@ if (identical(Sys.getenv("AUSPOL_LIVE_LEVEL_SPLIT", "1"), "1") && "OTH" %in% nam
 # the recent-poll blend, as build_level_pred.R trains it. base_margin and every other use of state_mean keep the
 # blended level, and so does .level_split (AUSPOL_LEVEL_CONSERVE reads it). Off, .xgb_level IS state_mean and
 # .level_split_xgb IS .level_split, so the published run is unchanged.
-if (live_level_pred_trend() && (nzchar(FORCE_FP) || LEVEL_ANCHOR))
-  stop("LLP1! AUSPOL_LIVE_LEVEL_PRED_TREND=1 with ", if (nzchar(FORCE_FP)) "AUSPOL_FORCE_FP" else "AUSPOL_LIVE_LEVEL_ANCHOR=1",
-       ": the pre-blend level was captured before that shift, so the trees would silently lose it. Run them separately.")
 .xgb_level <- live_level_pred_serve(state_mean, .state_mean_trend, code = "LLP1")
 .level_split_xgb <- .level_split
 if (!identical(.xgb_level, state_mean) && !is.null(.level_split)) {

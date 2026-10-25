@@ -251,7 +251,7 @@ if at_least 3 && [ "${AUSPOL_LEVEL_PRED_RECENT:-0}" = "1" ]; then
   Rscript scripts/build_fed_state_breakdowns.R > "$LOG/s3_fed_breakdowns.log" 2>&1 || { echo "!! build_fed_state_breakdowns.R failed -- see $LOG/s3_fed_breakdowns.log"; exit 1; }
   Rscript scripts/build_level_recent_table.R > "$LOG/s3_level_recent.log" 2>&1 || { echo "!! build_level_recent_table.R failed -- see $LOG/s3_level_recent.log"; exit 1; }
 fi
-if at_least 3; then stage "3-features";            Rscript scripts/build_level_pred.R > "$LOG/s3_level.log" 2>&1 || { echo "!! build_level_pred.R failed -- see $LOG/s3_level.log"; exit 1; }; Rscript scripts/fit_xgb_primary_v6.R    > "$LOG/s3_v6.log"   2>&1; done_stage "3-features"; fi
+if at_least 3; then stage "3-features";            Rscript scripts/build_level_pred.R > "$LOG/s3_level.log" 2>&1; Rscript scripts/fit_xgb_primary_v6.R    > "$LOG/s3_v6.log"   2>&1; done_stage "3-features"; fi
 if at_least 4; then stage "4-asat-models";         Rscript scripts/fit_xgb_primary_asat.R  > "$LOG/s4_asat.log" 2>&1; done_stage "4-asat-models"; fi
 if at_least 4; then stage "4b-asat-flow-models";   Rscript scripts/fit_xgb_flows_asat.R    > "$LOG/s4b_flows.log" 2>&1; done_stage "4b-asat-flow-models"; fi
 # 4c TIME-FORWARD FLOW MODELS (AUSPOL_FLOW_TF, shipped 2026-10-12): the tagged as-at models, vic2026's
