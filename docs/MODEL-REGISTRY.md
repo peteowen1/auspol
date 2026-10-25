@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (249 switches from `published_flags.R`, 7 entry points)
+## Switch parity (251 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -224,6 +224,8 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_SEAT_SD_MULT` | yes | yes | yes | yes | yes | yes | yes |  |
 | `AUSPOL_SEAT_SPREAD_SRC` | NO | NO | NO | NO | NO | NO | NO | prev_seat_swing.R |
 | `AUSPOL_SEAT_SWING_PORT` | yes | yes | yes | yes | yes | yes | NO | seat_swing_port.R |
+| `AUSPOL_SEAT_SWING_PORT_3C` | NO | NO | NO | NO | NO | NO | NO | seat_swing_port.R, seat_swing_port_3c.R |
+| `AUSPOL_SEAT_SWING_PORT_3C_W` | NO | NO | NO | NO | NO | NO | NO | seat_swing_port.R, seat_swing_port_3c.R |
 | `AUSPOL_SEAT_SWING_PORT_NOCLIFF` | NO | NO | NO | NO | NO | NO | yes | seat_swing_port.R |
 | `AUSPOL_SEAT_SWING_PORT_RESID` | NO | NO | NO | NO | NO | NO | NO | seat_swing_port.R |
 | `AUSPOL_SEAT_SWING_PORT_WA` | NO | NO | NO | NO | NO | NO | yes | seat_swing_port.R |
@@ -450,6 +452,8 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_SEAT_POLL_W_SINGLE_CLUSTER`** (**adopted, shared-function wiring**): SHIPPED 2026-10-07 (bug fix: a weight fitted on one cluster gets SE Inf, not ~0). 'legacy' restores the old factor for screening only. Read at R/seat_poll_blend.R line ~393 inside all three weight fits, so every entry point gets it.
 - **`AUSPOL_SEAT_SPREAD_SRC`** (**adopted, shared-function wiring**): SHIPPED (derived), UNIVERSAL via R/: read inside R/prev_seat_swing.R, which the harnesses call for seat_sd; harness-only by its own comment (live seat_sd comes from the fitted spread).
 - **`AUSPOL_SEAT_SWING_PORT`** (**adopted, shared-function wiring**): SHIPPED (2), UNIVERSAL via R/: read inside seat_swing_port_apply() (R/seat_swing_port.R), which WA reaches too; WA's own scoping switch is AUSPOL_SEAT_SWING_PORT_WA, whose name made the old WA cell 'yes'.
+- **`AUSPOL_SEAT_SWING_PORT_3C`** (intentional / dead experiment): ARM, default 0 (built 2026-10-25; plans/prereg-seat-swing-port-3c-2026-10-25.md). UNIVERSAL via R/: read in R/seat_swing_port_3c.R (seat_swing_port_3c_mode), called from seat_swing_port_fs()/seat_swing_port_coef() in R/seat_swing_port.R, which every state harness and fit_seats_full.R reach through seat_swing_port_apply(); no entry point names it. The federal harness has no port, so it is untouched by construction.
+- **`AUSPOL_SEAT_SWING_PORT_3C_W`** (intentional / dead experiment): ARM, default 0 (same prereg): the fixed weight for AUSPOL_SEAT_SWING_PORT_3C=1, read in R/seat_swing_port_3c.R (seat_swing_port_3c_w); same reach as AUSPOL_SEAT_SWING_PORT_3C, and inert unless that switch is 1.
 - **`AUSPOL_SEAT_SWING_PORT_NOCLIFF`** (intentional / dead experiment): PREREG PENDING, default 0 (built 2026-10-05). Read inside R/seat_swing_port.R, which the nsw/qld/sa/vic/wa harnesses and fit_seats_full.R all call; only the wa harness also names it (an output-filename tag), and scripts/dry_run_seat_swing_port_wa.R sets it. So the matrix's wa-only 'yes' is a naming artefact, not wiring.
 - **`AUSPOL_SEAT_SWING_PORT_RESID`** (intentional / dead experiment): ARM, default 0 (audit F8, built 2026-10-25; plans/prereg-postxgb-resid-net-2026-10-25.md). UNIVERSAL via R/: read in R/seat_swing_port.R (seat_swing_port_resid_on), which every state harness and fit_seats_full.R reach through seat_swing_port_apply(); no entry point names it. The federal harness has no port, so it is untouched by construction.
 - **`AUSPOL_SEAT_SWING_PORT_WA`** (**adopted, shared-function wiring**): SHIPPED 2026-10-06 (Pete override; mode 2). WA-ONLY by design (Pete: 'why is WA special?'; wa2025 -0.0064 log loss, nothing else moves): read in R/seat_swing_port.R and the wa harness only. Mode 2 pools WA cycles for WA targets alone, so the other harnesses and the live Victoria run are intentionally untouched.
@@ -549,4 +553,4 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR2  every non-universal switch (219 of 249) has a recorded classification.
+MR2  every non-universal switch (221 of 251) has a recorded classification.

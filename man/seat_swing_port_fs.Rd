@@ -4,15 +4,23 @@
 \alias{seat_swing_port_fs}
 \title{The transposed federal swing table the port reads for one target}
 \usage{
-seat_swing_port_fs(target_election)
+seat_swing_port_fs(target_election, w3c = NULL)
 }
 \arguments{
 \item{target_election}{Label such as \code{"wa2025"}.}
+
+\item{w3c}{Mode "2" only: the fitted weight from \code{\link[=seat_swing_port_coef]{seat_swing_port_coef()}}.}
 }
 \description{
 \code{fed-swing-transposed.csv}, plus the WA table when
 \code{AUSPOL_SEAT_SWING_PORT_WA} asks for it. The WA file defaults to
 \code{fed-swing-transposed-wa.csv} beside the main one; \code{AUSPOL_SEAT_SWING_WA_FILE}
 points elsewhere. A missing WA file is an error, never a silent skip.
+}
+\details{
+Under \code{AUSPOL_SEAT_SWING_PORT_3C} (\code{\link[=seat_swing_port_3c_mode]{seat_swing_port_3c_mode()}}) the target
+and every cycle before it are cleaned for Coalition line-up changes
+(\code{\link[=seat_swing_port_3c_clean]{seat_swing_port_3c_clean()}}): at the fixed weight for "1", at \code{w3c} for
+"2" (with \code{w3c = NULL} only \code{frac} and \code{fed_swing_raw} are added).
 }
 \keyword{internal}

@@ -38,16 +38,38 @@
 #' @return list: `coef`, `k` (earlier cycles), `n` (seats), `b` (unshrunk), `se`.
 #' @export
 seat_swing_port_coef <- function(target_election) {
+  mode3 <- seat_swing_port_3c_mode()
   fs <- seat_swing_port_fs(target_election)
-  fs$label <- paste0(fs$region, fs$cycle)
   tp <- data.table::fread(out_path("seat-tpp-estimates.csv"), showProgress = FALSE)
   d <- election_dates()
-  cyc <- unique(fs$label)
+  cyc <- unique(paste0(fs$region, fs$cycle))
   cyc <- cyc[cyc %in% names(d)]
   cyc <- cyc[elections_before(cyc, target_election)]
   resid <- seat_swing_port_resid_on()
   rt <- if (resid) seat_swing_port_resid_table(current_seat_predictions(net = FALSE)) else NULL
-  rows <- data.table::rbindlist(lapply(cyc, function(lab) {
+  rows <- .port_fit_rows(fs, cyc, tp, d, resid, rt)
+  w3c <- if (mode3 == "1") seat_swing_port_3c_w() else NULL
+  if (mode3 == "2") {
+    # The weight is fitted on the RAW deviations of the same earlier cycles,
+    # then the fit is rerun on the swings cleaned at that weight.
+    fw <- seat_swing_port_3c_fit_w(rows)
+    w3c <- fw$w
+    cat(sprintf("S3C2 %s: line-up weight fitted on %d earlier cycles: %d affected seat rows, b_unaffected %s, b_affected %s (se %s), w %.3f\n",
+                target_election, length(unique(rows$pair)), fw$n_aff, format(round(fw$b_u, 3)),
+                format(round(fw$b_a, 3)), format(round(fw$se_a, 3)), w3c))
+    fs <- .port_3c_apply_w(fs, w3c)
+    rows <- .port_fit_rows(fs, cyc, tp, d, resid, rt)
+  }
+  cf <- .seat_swing_port_coef_fit(rows, target_election, resid)
+  if (mode3 != "0") cf$w3c <- w3c
+  cf
+}
+
+# The seat rows of the port fit: one block per earlier cycle, the dependent
+# variable demeaned within the cycle and the transposed federal swing likewise.
+.port_fit_rows <- function(fs, cyc, tp, d, resid, rt) {
+  fs$label <- paste0(fs$region, fs$cycle)
+  data.table::rbindlist(lapply(cyc, function(lab) {
     rg <- sub("[0-9]{4}$", "", lab)
     if (resid) return(.port_resid_rows(rt, fs, lab, rg))
     prior <- names(d)[startsWith(names(d), rg) & as.Date(unname(d)) < as.Date(unname(d[lab]))]
@@ -55,13 +77,16 @@ seat_swing_port_coef <- function(target_election) {
     prv <- prior[which.max(as.Date(unname(d[prior])))]
     a <- tp[tp$election == lab, list(s, t_now = tpp)]
     b <- tp[tp$election == prv, list(s, t_prev = tpp)]
-    f <- fs[fs$label == lab, list(s = normalise_seat(seat), fed_swing)]
+    f <- .port_fs_cols(fs[fs$label == lab])
     m <- merge(merge(a, b, by = "s"), f, by = "s")
     m <- m[is.finite(t_now) & is.finite(t_prev) & is.finite(fed_swing)]
     if (nrow(m) < 5L) return(NULL)
     m[, `:=`(yy = (t_now - t_prev) - mean(t_now - t_prev), dev = fed_swing - mean(fed_swing), pair = lab, region = rg)]
     m
   }), fill = TRUE)
+}
+
+.seat_swing_port_coef_fit <- function(rows, target_election, resid) {
   if (resid) cat(sprintf("PXR1 %s: port coefficient fitted on post-tree two-party residuals (AUSPOL_SEAT_SWING_PORT_RESID=1): %d earlier cycles with as-at predictions (%s), %d seats\n",
                          target_election, length(unique(rows$pair)), paste(unique(rows$pair), collapse = ","), nrow(rows)))
   if (!nrow(rows)) return(list(coef = 0, k = 0L, n = 0L, b = NA_real_, se = NA_real_))
@@ -144,14 +169,27 @@ seat_swing_port_wa_mode <- function(target_election) {
 #' `AUSPOL_SEAT_SWING_PORT_WA` asks for it. The WA file defaults to
 #' `fed-swing-transposed-wa.csv` beside the main one; `AUSPOL_SEAT_SWING_WA_FILE`
 #' points elsewhere. A missing WA file is an error, never a silent skip.
+#'
+#' Under `AUSPOL_SEAT_SWING_PORT_3C` ([seat_swing_port_3c_mode()]) the target
+#' and every cycle before it are cleaned for Coalition line-up changes
+#' ([seat_swing_port_3c_clean()]): at the fixed weight for "1", at `w3c` for
+#' "2" (with `w3c = NULL` only `frac` and `fed_swing_raw` are added).
 #' @param target_election Label such as `"wa2025"`.
+#' @param w3c Mode "2" only: the fitted weight from [seat_swing_port_coef()].
 #' @keywords internal
-seat_swing_port_fs <- function(target_election) {
+seat_swing_port_fs <- function(target_election, w3c = NULL) {
   fs <- data.table::fread(election_data_path("fed-swing-transposed.csv"), showProgress = FALSE)
   if (seat_swing_port_wa_mode(target_election) != "0") {
     f <- Sys.getenv("AUSPOL_SEAT_SWING_WA_FILE", election_data_path("fed-swing-transposed-wa.csv"))
     if (!file.exists(f)) stop("AUSPOL_SEAT_SWING_PORT_WA is on but ", f, " does not exist; run scripts/transpose_fed_swing.R with TRANSPOSE_REGION=wa")
     fs <- data.table::rbindlist(list(fs, data.table::fread(f, showProgress = FALSE)), fill = TRUE)
+  }
+  mode3 <- seat_swing_port_3c_mode()
+  if (mode3 != "0") {
+    labs <- unique(paste0(fs$region, fs$cycle))
+    labs <- labs[labs %in% names(election_dates())]
+    keep <- unique(c(labs[elections_before(labs, target_election)], target_election))
+    fs <- seat_swing_port_3c_clean(fs, w = if (mode3 == "1") seat_swing_port_3c_w() else w3c, labels = keep)
   }
   fs
 }
@@ -176,7 +214,7 @@ seat_swing_port_table <- function(target_election, write = FALSE) {
   cache <- out_path(sprintf("seat-swing-port-%s.csv", target_election))
   if (file.exists(src_fs) && file.exists(src_tp)) {
     cf <- seat_swing_port_coef(target_election)
-    fs <- seat_swing_port_fs(target_election)
+    fs <- seat_swing_port_fs(target_election, w3c = cf$w3c)
     tb <- fs[paste0(fs$region, fs$cycle) == target_election, list(seat, fed_swing)]
     if (write) {
       out <- data.table::copy(tb)
@@ -184,6 +222,7 @@ seat_swing_port_table <- function(target_election, write = FALSE) {
       out$cycles <- cf$k; out$n_fit <- cf$n
       # Only under the arm, so the default shipped table is byte-identical.
       if (seat_swing_port_resid_on()) out$resid <- "1"
+      if (seat_swing_port_3c_mode() != "0") { out$lineup3c <- seat_swing_port_3c_mode(); out$w3c <- cf$w3c }
       data.table::fwrite(out, cache)
     }
   } else if (file.exists(cache)) {
@@ -196,8 +235,16 @@ seat_swing_port_table <- function(target_election, write = FALSE) {
     if (!identical(cached_resid, want_resid))
       stop(cache, " was written with AUSPOL_SEAT_SWING_PORT_RESID=", cached_resid, " but this run has ", want_resid,
            "; rerun scripts/promote_rebuild.R under the same setting")
+    # Same for the line-up cleaning: the cached swings are already cleaned (or not).
+    cached_3c <- if ("lineup3c" %in% names(raw)) as.character(raw[["lineup3c"]][1]) else "0"
+    if (!identical(cached_3c, seat_swing_port_3c_mode()))
+      stop(cache, " was written with AUSPOL_SEAT_SWING_PORT_3C=", cached_3c, " but this run has ", seat_swing_port_3c_mode(),
+           "; rerun scripts/promote_rebuild.R under the same setting")
+    if (seat_swing_port_3c_mode() == "1" && !isTRUE(all.equal(as.numeric(raw[["w3c"]][1]), seat_swing_port_3c_w())))
+      stop(cache, " was written with AUSPOL_SEAT_SWING_PORT_3C_W=", raw[["w3c"]][1], " but this run has ", seat_swing_port_3c_w())
     cf <- list(coef = raw$coef[1], k = raw$cycles[1], n = raw$n_fit[1],
                b = raw$coef_unshrunk[1], se = raw$coef_se[1])
+    if ("w3c" %in% names(raw)) cf$w3c <- as.numeric(raw$w3c[1])
     tb <- raw[, list(seat, fed_swing)]
     cat(sprintf("SP2  %s: port inputs read from %s (sources absent)
 ", target_election, basename(cache)))
@@ -318,10 +365,18 @@ seat_swing_port_resid_table <- function(preds) {
 # as the default fit.
 .port_resid_rows <- function(rt, fs, lab, rg) {
   a <- rt[rt$election == lab, list(s, resid)]
-  f <- fs[fs$label == lab, list(s = normalise_seat(seat), fed_swing)]
+  f <- .port_fs_cols(fs[fs$label == lab])
   m <- merge(a, f, by = "s")
   m <- m[is.finite(m$resid) & is.finite(m$fed_swing)]
   if (nrow(m) < 5L) return(NULL)
   m[, `:=`(yy = resid - mean(resid), dev = fed_swing - mean(fed_swing), pair = lab, region = rg)]
   m
+}
+
+# One cycle's (s, fed_swing) for the fit, carrying the line-up share `frac`
+# when AUSPOL_SEAT_SWING_PORT_3C added it.
+.port_fs_cols <- function(x) {
+  out <- data.table::data.table(s = normalise_seat(x$seat), fed_swing = x$fed_swing)
+  if ("frac" %in% names(x)) out$frac <- x$frac
+  out
 }

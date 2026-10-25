@@ -838,6 +838,14 @@ CLASSIFY <- list(
     "ARM, default 0 (audit F8, built 2026-10-25; plans/prereg-postxgb-resid-net-2026-10-25.md). UNIVERSAL via R/: read in",
     "R/seat_swing_port.R (seat_swing_port_resid_on), which every state harness and fit_seats_full.R reach through seat_swing_port_apply();",
     "no entry point names it. The federal harness has no port, so it is untouched by construction."),
+  AUSPOL_SEAT_SWING_PORT_3C = paste(
+    "ARM, default 0 (built 2026-10-25; plans/prereg-seat-swing-port-3c-2026-10-25.md). UNIVERSAL via R/: read in",
+    "R/seat_swing_port_3c.R (seat_swing_port_3c_mode), called from seat_swing_port_fs()/seat_swing_port_coef() in R/seat_swing_port.R,",
+    "which every state harness and fit_seats_full.R reach through seat_swing_port_apply(); no entry point names it. The federal",
+    "harness has no port, so it is untouched by construction."),
+  AUSPOL_SEAT_SWING_PORT_3C_W = paste(
+    "ARM, default 0 (same prereg): the fixed weight for AUSPOL_SEAT_SWING_PORT_3C=1, read in R/seat_swing_port_3c.R",
+    "(seat_swing_port_3c_w); same reach as AUSPOL_SEAT_SWING_PORT_3C, and inert unless that switch is 1."),
   AUSPOL_POSTXGB_RESID_NET = paste(
     "ARM, default 0 (audit F8, built 2026-10-25; plans/prereg-postxgb-resid-net-2026-10-25.md). UNIVERSAL via R/: read in",
     "R/seat_predictions.R (postxgb_resid_net_on), the default of current_seat_predictions(), which every post-xgb table fit reads",
