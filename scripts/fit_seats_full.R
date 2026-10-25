@@ -1262,11 +1262,11 @@ if (length(unmodelled) && !is.na(state_mean["OTH"])) {
   # Shrink toward the class's own scaled statewide level, so at SLOPE 1 this is
   # exactly mat22[, p] * scale_to as before.
   #
-  # AUSPOL_MINOR_ADDITIVE="1" (off; plans/prereg-minor-additive-2026-10-25.md): the same class levels, but each seat
+  # AUSPOL_MINOR_ADDITIVE="1" (SHIPPED 2026-10-25, live only; plans/prereg-minor-additive-2026-10-25.md): the same class levels, but each seat
   # moves by POINTS (dev_slope from the 2022 level to the scaled one), as the five state harnesses already do
   # (backtest_candidate_vic.R:644-648). Multiplying cuts a large personal vote by the same fraction as the whole
   # minor field: Mildura's independent (Cupper, 33.9 in 2022) by 39% when One Nation takes the field's votes.
-  .minor_add <- identical(Sys.getenv("AUSPOL_MINOR_ADDITIVE", "0"), "1")
+  .minor_add <- identical(Sys.getenv("AUSPOL_MINOR_ADDITIVE", "1"), "1")
   for (p in c(unmodelled, if ("OTH" %in% modelled) "OTH")) {
     tgt <- a22[[p]] * scale_to
     .sl <- .vic_slope(p, rownames(mat22)); .hd <- attr(.sl, "departed"); if (.departed_hold && !is.null(.hd)) HELD[, p] <- ((.hd %in% TRUE) & (mat22[, p] >= .hold_min)) %in% TRUE

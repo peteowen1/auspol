@@ -31,10 +31,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `fit_seats_full.R:1251-1272` MULTIPLIES IND/OTH_RIGHT/OTH cells by forecast OTH / 2022 others (x0.61), so a big
   personal vote loses 39% of itself. The six state harnesses never take that path: each class gets its own statewide
   level from the bucket split (vic2022 log `FST1 ... IND 0.35`; `BV0` IND 5.7 forecast vs 5.5 actual) and moves by
-  ADDITIVE `dev_slope()` (`backtest_candidate_vic.R:644-648`). Only `_fed.R` scales multiplicatively (fed2007 x0.59 ...
-  fed2025 x0.83). So the state backtests have never scored the rule that publishes Mildura. Live vic2026 also logs
-  `FST1! no candidate-model share for IND, OTH_RIGHT, OTH; prior-ratio split kept`. Fix to consider: live takes the
-  harnesses' path (bucket-split levels, additive slope) for the minor classes; walk Mildura/Kew/Mulgrave with/without.
+  ADDITIVE `dev_slope()` (`backtest_candidate_vic.R:644-648`). Only `_fed.R` scales multiplicatively. SHIPPED 25 Oct,
+  live only: `AUSPOL_MINOR_ADDITIVE=1` (federal screen neutral; fed harness stays on `_FED=0`; DECISIONS). Still open:
+  Mildura 25.6 vs Cupper's 33.9 (One Nation's fill takes the rest); live `FST1!` (no candidate-model split for vic2026).
   Why it matters: Mildura (Cupper 33.9 in 2022 -> 17.6 published, cut by the x0.61 minor-field scale), Kew and
   Hawthorn; the bookies price independents there far above us. Not covered: Benambra (a NEW independent succeeding
   Hawkins), still OPEN.

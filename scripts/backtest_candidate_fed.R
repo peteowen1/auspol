@@ -1240,10 +1240,10 @@ for (K in PAIRS) {
         }
       }
       # Scale one minor class to its forecast level. Default: MULTIPLY the prior matrix column and its level (every
-      # seat loses the same fraction). AUSPOL_MINOR_ADDITIVE="1" (off; plans/prereg-minor-additive-2026-10-25.md):
+      # seat loses the same fraction). AUSPOL_MINOR_ADDITIVE_FED="1" (off, measured neutral 2026-10-25; plans/prereg-minor-additive-2026-10-25.md):
       # keep both and record the scaled level as the class's target, so dev_slope() moves each seat by POINTS, as
       # the five state harnesses and AUSPOL_MINOR_ADDITIVE in fit_seats_full.R do.
-      .minor_add <- identical(Sys.getenv("AUSPOL_MINOR_ADDITIVE", "0"), "1")
+      .minor_add <- identical(Sys.getenv("AUSPOL_MINOR_ADDITIVE_FED", "0"), "1")
       .add_tgt <- list()
       .scale_class <- function(p, k) {
         if (.minor_add) .add_tgt[[p]] <<- st_a[[p]] * k
@@ -1297,10 +1297,10 @@ for (K in PAIRS) {
       if (is.null(cand_ratio) || identical(Sys.getenv("AUSPOL_IND_TREND", "0"), "1"))
         st_a[["OTH"]] <- st_a[["OTH"]] * scale_to
       for (p in bucket) st_fc[[p]] <- st_a[[p]]
-      # AUSPOL_MINOR_ADDITIVE: the class keeps its prior level as dev_slope()'s `prev` and the scaled one as its target
+      # AUSPOL_MINOR_ADDITIVE_FED: the class keeps its prior level as dev_slope()'s `prev` and the scaled one as its target
       for (p in names(.add_tgt)) st_fc[[p]] <- .add_tgt[[p]]
       cat(sprintf("BF0  fed%d minor field scaled x%.2f (%s): %s at prior %.1f%% -> forecast %.1f%%\n",
-                  K$to, scale_to, if (.minor_add) sprintf("ADDITIVE, AUSPOL_MINOR_ADDITIVE=1, %d class(es)", length(.add_tgt)) else "multiplicative",
+                  K$to, scale_to, if (.minor_add) sprintf("ADDITIVE, AUSPOL_MINOR_ADDITIVE_FED=1, %d class(es)", length(.add_tgt)) else "multiplicative",
                   paste(bucket, collapse = "+"),
                   base_share, sum(unlist(st_fc[bucket]))))
     }

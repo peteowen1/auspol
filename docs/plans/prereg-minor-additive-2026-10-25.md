@@ -85,3 +85,12 @@ Final seat shares, IND, off -> on: Mildura 20.2 -> 25.6, Hawthorn 20.6 -> 25.0, 
 (11 in all). Win probability: Hawthorn IND 0.17 -> 0.42 (LNP 0.82 -> 0.58), Kew IND 0.05 -> 0.10, Mildura LNP 0.22 ->
 0.16 (ONP 0.78 -> 0.82). Expected seats: IND 0.31 -> 0.66, LNP 30.59 -> 30.27, ALP 29.20 -> 29.13, ONP 21.89 unchanged.
 Mildura stays well under Cupper's 33.9: after the additive step One Nation's allocation still takes its share.
+
+## Decision (2026-10-25, Pete): SHIP, live forecast only
+
+Shipped although the federal screen did not pass criterion 1 and criterion 4 fired on fed2007: Pete's call on parity.
+The published Victorian forecast now moves the minor field by points, which is the rule the 28 state backtests are
+scored on, instead of a multiplicative rule only the federal harness measures. `AUSPOL_MINOR_ADDITIVE` = "1" in
+`published_flags.R` and as `fit_seats_full.R`'s inline default; the federal harness reads a separate switch,
+`AUSPOL_MINOR_ADDITIVE_FED`, kept "0", so the federal backtest numbers are unchanged. That difference between the live
+forecast and the federal harness is deliberate and recorded in `published_flags.R`.
