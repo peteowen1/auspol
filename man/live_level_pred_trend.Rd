@@ -7,7 +7,7 @@
 live_level_pred_trend()
 }
 \value{
-\code{TRUE} when \code{"1"}, \code{FALSE} when \code{"0"} (default); anything else is an error.
+\code{TRUE} when \code{"1"} (default, shipped 2026-10-26), \code{FALSE} when \code{"0"}; anything else is an error.
 }
 \description{
 Serve the live trees the pre-blend statewide level? (AUSPOL_LIVE_LEVEL_PRED_TREND)

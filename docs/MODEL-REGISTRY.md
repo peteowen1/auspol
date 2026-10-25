@@ -1,6 +1,6 @@
 # Model registry
 
-**Generated 2026-10-25 by `scripts/build_model_registry.R`. Do not hand-edit** --
+**Generated 2026-10-26 by `scripts/build_model_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate whenever a switch is added to
 `published_flags.R` or a harness's wiring changes.
 
@@ -162,8 +162,8 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_ONP_CV` | yes | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_ONP_FILL` | yes | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_ONP_FIX` | yes | NO | NO | NO | NO | NO | NO |  |
-| `AUSPOL_ONP_NEWSEAT_RULE` | yes | NO | yes | yes | yes | NO | yes | onp_newseat.R |
-| `AUSPOL_ONP_ORDER` | yes | yes | yes | yes | yes | yes | yes | onp_newseat.R |
+| `AUSPOL_ONP_NEWSEAT_RULE` | yes | NO | yes | yes | yes | NO | yes | new_ind_shrink.R, onp_newseat.R |
+| `AUSPOL_ONP_ORDER` | yes | yes | yes | yes | yes | yes | yes | new_ind_shrink.R, onp_newseat.R |
 | `AUSPOL_OTHERS_SCALE` | NO | NO | NO | NO | NO | NO | NO | forecast_mode.R, others_bucket.R |
 | `AUSPOL_PARTY_COR` | yes | yes | yes | yes | yes | yes | NO | forecast_statewide.R |
 | `AUSPOL_PB_COALITION_COMBINED` | NO | NO | NO | NO | NO | NO | NO | poll_source.R |

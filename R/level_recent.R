@@ -344,10 +344,10 @@ level_recent_apply <- function(levels, target, region, election_date, code = "LR
 
 #' Serve the live trees the pre-blend statewide level? (AUSPOL_LIVE_LEVEL_PRED_TREND)
 #'
-#' @return `TRUE` when `"1"`, `FALSE` when `"0"` (default); anything else is an error.
+#' @return `TRUE` when `"1"` (default, shipped 2026-10-26), `FALSE` when `"0"`; anything else is an error.
 #' @export
 live_level_pred_trend <- function() {
-  v <- Sys.getenv("AUSPOL_LIVE_LEVEL_PRED_TREND", "0")
+  v <- Sys.getenv("AUSPOL_LIVE_LEVEL_PRED_TREND", "1")
   if (!v %in% c("0", "1")) stop("AUSPOL_LIVE_LEVEL_PRED_TREND must be \"0\" or \"1\", not ", v, call. = FALSE)
   identical(v, "1")
 }

@@ -8,7 +8,7 @@ onp_newseat_apply(
   shares,
   target,
   history,
-  order = Sys.getenv("AUSPOL_ONP_ORDER", "federal"),
+  order = Sys.getenv("AUSPOL_ONP_ORDER", "senate_rank"),
   lookup = rownames(shares),
   refill = c("none", "prop"),
   standing = NULL,
