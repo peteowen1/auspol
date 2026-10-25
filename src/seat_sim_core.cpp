@@ -46,7 +46,8 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
                    bool has_eq = false,
                    NumericMatrix eq = NumericMatrix(0, 0),
                    bool za = false,
-                   LogicalMatrix absent = LogicalMatrix(0, 0)) {
+                   LogicalMatrix absent = LogicalMatrix(0, 0),
+                   bool surge_level = false) {
   const int nseat = shares.nrow(), K = shares.ncol();
   // PER-SEAT CONDITIONAL OVERRIDE, sparse. The shared cell_mat is dense over
   // the key space but has no seat dimension; a per-seat dense table would be
@@ -68,6 +69,10 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
   std::fill(tcp_r.begin(), tcp_r.end(), NA_INTEGER);
   std::fill(tcp_share.begin(), tcp_share.end(), NA_REAL);
   long long n_fb = 0, n_tx = 0, n_recipient_fb_draw = 0, n_bo = 0;
+  // AUSPOL_SURGE_LEVEL (R/seat_sim.R surge_level): per seat, draws where the
+  // fired surge RAISED the recipient to its drawn level, and draws where it
+  // fired but the recipient already sat at or above that level (no change).
+  IntegerVector lvl_raise(nseat), lvl_noop(nseat);
   // BREAKOUT MIXTURE: per seat, the columns with p > 0, in column order (the
   // R loop's which()). Empty for every seat when has_bo is false.
   const int n_q = bo_q.size();
@@ -230,7 +235,19 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
           int j;
           if (j0 != NA_INTEGER) j = j0 - 1;
           else { j = cand[0]; for (size_t t = 1; t < cand.size(); ++t) if (v[cand[t]] > v[j]) j = cand[t]; }
-          const double add = R::rnorm(surge_mu[i], surge_sd[i]);
+          double add = R::rnorm(surge_mu[i], surge_sd[i]);
+          if (surge_level) {
+            // LEVEL, not gain: the draw is the share the recipient reaches
+            // (surge_mu is the mean vote of past emergence WINNERS, who started
+            // near zero). Relative to this draw's own total, as the breakout
+            // does, so the rule is scale-free. Same random number as the gain
+            // rule, so the two modes share every draw.
+            long double sv = 0.0L;
+            for (int k = 0; k < K; ++k) sv += v[k];
+            const double target = add / 100.0 * (double) sv;
+            if (target > v[j]) add = target - v[j];
+            else { add = 0; ++lvl_noop[i]; }
+          }
           if (add > 0) {
             long double pv = 0.0L;
             for (int k = 0; k < K; ++k) if (k != j) pv += v[k];
@@ -238,6 +255,7 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
             if (pool_v > add) {
               for (int k = 0; k < K; ++k) if (k != j) v[k] = (v[k] * (pool_v - add)) / pool_v;
               v[j] = v[j] + add;
+              if (surge_level) ++lvl_raise[i];
             }
           }
         }
@@ -432,5 +450,6 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
                       _["n_fb"] = (double) n_fb, _["n_tx"] = (double) n_tx,
                       _["n_recipient_fb_draw"] = (double) n_recipient_fb_draw,
                       _["n_bo"] = (double) n_bo,
+                      _["lvl_raise"] = lvl_raise, _["lvl_noop"] = lvl_noop,
                       _["fp"] = keep_fp ? (SEXP) fp : R_NilValue);
 }

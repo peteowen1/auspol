@@ -335,6 +335,14 @@
 #' @param zero_absent Logical. `TRUE` sets a cell whose predicted share is 0 (the class is not standing) back
 #'   to 0 after its draw, so it takes no votes; the draw is still made, so every other cell is unchanged.
 #'   Defaults to the `AUSPOL_ZERO_ABSENT` switch ([zero_absent_on()]); `FALSE` is the previous behaviour.
+#' @param surge_level Logical. `TRUE` reads each fired surge's `N(surge_mu, surge_sd)` draw as the
+#'   LEVEL the recipient reaches (percent of the draw's total) rather than an amount added: the
+#'   recipient becomes `max(v, L)`, the difference coming from the others pro rata, and a recipient
+#'   already at or above `L` is unchanged. The random number is the same one, so every other draw
+#'   is identical. Defaults to the `AUSPOL_SURGE_LEVEL` switch ([surge_level_on()]); `FALSE` is the
+#'   previous (gain) behaviour, byte for byte. Under `TRUE` the result also carries
+#'   `surge_level_raised` and `surge_level_unchanged` (per seat, draws) and prints `SLV1`.
+#'   docs/plans/prereg-surge-level-2026-10-25.md.
 #' @param error_q Optional classes x quantiles matrix (rows in the order of `shares`'
 #'   columns, at least two nondecreasing columns), under `AUSPOL_ERROR_DIST=1` (built by
 #'   [error_dist_args()]). Each cell's noise becomes `sd_cell * z`, `z` drawn by one uniform per
@@ -399,8 +407,11 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                                    keep_fp = FALSE,
                                    breakout_p = NULL, breakout_q = NULL,
                                    coalition_split = NULL, error_q = NULL,
-                                   zero_absent = zero_absent_on()) {
+                                   zero_absent = zero_absent_on(),
+                                   surge_level = surge_level_on()) {
   engine <- match.arg(engine)
+  if (!is.logical(surge_level) || length(surge_level) != 1L || is.na(surge_level))
+    stop("surge_level must be TRUE or FALSE; got ", paste(format(surge_level), collapse = ", "))
   # SHRINK MAY BE PER-SEAT. A scalar applies the same rate everywhere and caps
   # EVERY seat at 1 - shrink/2 -- 0.9598 at shrink = 0.10, with no seat above
   # 0.99. That absorbs one specific risk (a non-major taking a seat called safe
@@ -663,6 +674,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   surge_party_idx <- rep(NA_integer_, length(seat_names))
   n_recipient_fb <- 0L        # named class absent from the columns (static)
   n_recipient_fb_draw <- 0L   # named class at zero share in a draw (per seat-draw)
+  lvl_raise <- integer(length(seat_names))  # AUSPOL_SURGE_LEVEL: fired and raised the recipient
+  lvl_noop <- integer(length(seat_names))   # fired, recipient already at or above the level
   if (!is.null(surge_party)) {
     sp <- surge_party
     if (!is.null(names(sp))) {
@@ -1342,7 +1355,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                           as.numeric(fallback_flow_sd), as.numeric(ov_sd), isTRUE(keep_fp),
                           has_bo, bo_p, bo_q,
                           has_split, as.integer(split_lnp), split_r, as.numeric(split_f),
-                          has_eq, eq, za, absent_m)
+                          has_eq, eq, za, absent_m, isTRUE(surge_level))
     wins[] <- core$wins; totals[] <- core$totals
     tcp_winner[] <- parties[core$tcp_w]; tcp_runnerup[] <- parties[core$tcp_r]
     tcp_share[] <- core$tcp_share
@@ -1350,6 +1363,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
     n_fb <- as.integer(core$n_fb); n_tx <- as.integer(core$n_tx)
     n_recipient_fb_draw <- as.integer(core$n_recipient_fb_draw)
     n_bo <- as.integer(core$n_bo)
+    lvl_raise <- as.integer(core$lvl_raise); lvl_noop <- as.integer(core$lvl_noop)
   } else {
   # One transfer's destination shares over `tgt`, by the same lookup, smoothing
   # and noise as the count below. Used only by the coalition-split count; the
@@ -1488,6 +1502,13 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
         if (length(cand) && stats::runif(1) < surge_h[i]) {
           j <- if (!is.na(j0)) j0 else cand[which.max(v[cand])]
           add <- stats::rnorm(1, surge_mu[i], surge_sd[i])
+          if (surge_level) {
+            # LEVEL, not gain (AUSPOL_SURGE_LEVEL, R/surge_level.R): the draw is
+            # the share the recipient reaches, so a recipient already there
+            # gains nothing. Same random number as the gain rule.
+            add <- surge_level_gain(v, j, add)
+            if (add <= 0) lvl_noop[i] <- lvl_noop[i] + 1L
+          }
           if (add > 0) {
             others <- setdiff(seq_len(K), j)
             pool_v <- sum(v[others])
@@ -1497,6 +1518,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
             if (pool_v > add) {
               v[others] <- v[others] * (pool_v - add) / pool_v
               v[j] <- v[j] + add
+              if (surge_level) lvl_raise[i] <- lvl_raise[i] + 1L
             }
           }
         }
@@ -1716,7 +1738,16 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   wp <- expand.grid(seat = seat_names, party = parties,
                     stringsAsFactors = FALSE)
   wp$prob <- as.vector(wins) / n_sims
-  list(win_prob = wp[wp$prob > 0, ],
+  lvl <- NULL
+  if (surge_level) {
+    names(lvl_raise) <- seat_names; names(lvl_noop) <- seat_names
+    # SAY WHAT WAS APPLIED: an arm whose rule never fired reads exactly like
+    # one with no effect. Draws, not seats, are the unit the rule acts on.
+    cat(sprintf("SLV1 surge as LEVEL (AUSPOL_SURGE_LEVEL=1): %d seat-draw(s) raised the recipient, in %d of %d seat(s) with a hazard; %d fired with the recipient already at or above its drawn level (unchanged)\n",
+                sum(lvl_raise), sum(lvl_raise > 0L), sum(surge_h > 0), sum(lvl_noop)))
+    lvl <- list(surge_level_raised = lvl_raise, surge_level_unchanged = lvl_noop)
+  }
+  c(list(win_prob = wp[wp$prob > 0, ],
        totals = totals,
        tcp_winner = tcp_winner,
        tcp_runnerup = tcp_runnerup,
@@ -1729,7 +1760,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
        breakout_draws = n_bo,
        coalition_split = split_info,
        error_dist = has_eq,
-       zero_absent = za)
+       zero_absent = za), lvl)
 }
 
 #' Per-class slope multipliers for [simulate_seat_contests()]
