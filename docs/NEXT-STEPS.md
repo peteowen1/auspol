@@ -8,22 +8,21 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
-- OPEN, 25 Oct evening state (all switches below are on `dev`, default off, reviewed by Sonnet):
-  1. One Nation new-seat rule + Senate ranking (`AUSPOL_ONP_NEWSEAT_RULE`, `AUSPOL_ONP_ORDER=senate_rank`): screens
-     running (A, B, B v A, then all-pairs guards); Pete ships live if not worse by > 1 SE. Bendigo East overshoots in
-     the live walk (ONP 0.69 vs market 0.29): trace before shipping. `plans/prereg-onp-newseat-rule-2026-10-25.md`.
-  2. `AUSPOL_LIVE_LEVEL_PRED_TREND=1` SHIP DECIDED (Pete): flip in `published_flags.R` after the run queue's last
-     launch (~02:15), before the 07:00 refresh; walk showed 0 change today.
-  3. Sitting-member rule (`AUSPOL_RETURNING_MEMBER_RULE`): go/wait on the candidacies rebuild + retrain from stage 3
-     (~2 h detached, after the F7 deciding run). 66 of 108 by-election winner names are from Wikipedia, unverified.
-  4. F7 deciding run 03:15 26 Oct (`deciding-runs/20261025-1801-f7-demo-resid-full/`): Pete decides on its result.
-  5. Delete `C:\dev\auspol-iso-decay4` (16 GB, decay4 done)? Pete's call.
-  6. `dev` -> `main` PR: pre-PR review done (0 Important after fixes); needs full `check_like_ci.R` then open.
-- OPEN, run queue (detached agent, one at a time, >= 6.5 GB, no launch after 02:15): One Nation arms; surge-level
-  all pairs (AEF-7: guard -0.0016, SE 0.0011; primary within 1 SE); F8 arms N and RN (arm R AEF-7 +0.0008, SE
-  0.0021); GRN_TREE_SHRINK; departed-origin A; width A0/A1; level-conserve (base/final/both); port 3C.
-- OPEN, building (Opus worktrees, 25 Oct evening): F16 `AUSPOL_ROW_SHIFT_EXACT`, F18 `AUSPOL_NOM_ZERO_PRE_XGB`,
-  dead-party level `AUSPOL_LEVEL_DEAD_PARTY` (nt2024 Territory Alliance carried at 14.8).
+- OPEN, 26 Oct morning state (replaces the 25 Oct evening block; results in DECISIONS.md and each prereg):
+  1. Sitting-member rule (`AUSPOL_RETURNING_MEMBER_RULE`): go/wait on the candidacies rebuild + retrain from stage 3
+     (~2 h detached). 66 of 108 by-election winner names are from Wikipedia, unverified.
+  2. Departed-origin part 2 (the xgb feature, a stage-4 rebuild): eligible by the prereg's letter because part 1 was
+     within 1 SE, but part 1 leaned worse (+1.33, SE 2.56). Claude recommends not spending the rebuild.
+  3. `dev` -> `main` PR (172 files ahead of main): review what landed since the last pre-PR review (38d96a5,
+     01e765d and the 25 Oct merges), full `check_like_ci.R`, then open.
+- OPEN, merge (reviewed, not on dev): F16 `AUSPOL_ROW_SHIFT_EXACT` (6306855; add the M~100-with-others guard at
+  merge), F18 `AUSPOL_NOM_ZERO_PRE_XGB` (c4b2cbd), work-5c ec43512 + cde69f5 (`C:\dev\auspol-5c`). Dead-party
+  `AUSPOL_LEVEL_DEAD_PARTY` (337f4cd) PARKED: its screen says not worth it; do not merge.
+- OPEN, screens not yet run (one at a time, >= 6.5 GB free, so after the reboot that clears the kernel pool leak):
+  level-conserve FIRST (`prereg-level-conserve-2026-10-25.md`; the majors' +0.6-0.8 tree overshoot over ~30
+  elections is this seat-layer effect); port 3C (its live walk must report Bendigo East: the Nationals' change carries
+  over to the state seat, `reviews/bendigo-east-onp-2026-10-25.md`); width A0/A1; departed arm B. F8 RN is dead
+  (arm N worse). F8 arm N's netting costs 579 s per harness run: cache it to disk before any rerun.
 - FOUND 25 Oct, LIVE in backtests: nsw2019, sa2022 and vic2022 predict One Nation 0 in every seat it contested
   (party list from the previous election); fixed only under `AUSPOL_ONP_NEWSEAT_RULE=1`.
 
