@@ -1353,7 +1353,7 @@ if (ONP_FIX == "1" && identical(ONP_FILL, "uniform_major")) {
   # only -- no harness has a One Nation fill to change.
   .ofb_f <- sprintf("output/statewide-draw-betas-%s.csv", TARGET$out_stem)
   if (!file.exists(.ofb_f)) stop("AUSPOL_ONP_FILL=uniform_major needs ", .ofb_f, ", written by a default run of this script")
-  cat(sprintf("ONF1  betas from %s (modified %s)\n", .ofb_f, format(file.mtime(.ofb_f), "%Y-%m-%d %H:%M")))
+  cat(sprintf("ONF2  betas from %s (modified %s)\n", .ofb_f, format(file.mtime(.ofb_f), "%Y-%m-%d %H:%M")))
   shares <- onp_fill_betas(shares, unname(onp_target), fread(.ofb_f, showProgress = FALSE),
                            held = if (.departed_hold) HELD else NULL, code = "ONF1")
   attr(shares, "onp_fill") <- NULL
