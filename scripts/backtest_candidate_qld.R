@@ -456,6 +456,15 @@ REENTRY_CELLS <- attr(reentry_apply_harness(mat, fa, fb, st_b,
                              pairs = all_election_pairs(), code = "BQ1r"),
                       "reentry")
 
+# ONE NATION IN SEATS WITH NO STATE HISTORY (AUSPOL_ONP_NEWSEAT_RULE, default "0" = nothing happens
+# here). One Nation stood in every Queensland pair's previous election, so prepare() only records which
+# seats it held a vote in. R/onp_newseat.R, docs/plans/prereg-onp-newseat-rule-2026-10-25.md.
+ONN_RULE <- onp_newseat_rule()
+.onn_hist <- NULL; .onn_stand <- fb[fb$party == "ONP" & fb$votes > 0, unique(seat)]
+if (ONN_RULE) {
+  .onn <- onp_newseat_prepare(mat, st_a, .onn_stand, TGT, code = "ONN1")
+  mat <- .onn$mat; st_a <- .onn$prev_level; .onn_hist <- .onn$history
+}
 parties <- colnames(mat); shares <- mat
 
 # STRONGHOLD ELASTICITY, against docs/plans/prereg-stronghold-elasticity.md.
@@ -765,13 +774,25 @@ if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate") && "ONP" %in%
     ONS_APPLIED <- TRUE
   }
 }
+# ONE NATION IN SEATS WITH NO STATE HISTORY (AUSPOL_ONP_NEWSEAT_RULE=1). Seats where One Nation held
+# a vote last time keep their swing; the no-history seats it contests are re-allocated (mean kept) by
+# rank on the earlier federal House (AUSPOL_ONP_ORDER=federal; output/house-onp-by-district.csv for
+# Queensland) or Senate (senate_rank) One Nation vote, spread to a CV fitted on earlier elections.
+# Rows are renormalised below. R/onp_newseat.R.
+if (ONN_RULE) {
+  shares <- onp_newseat_apply(shares, TGT, .onn_hist, order = Sys.getenv("AUSPOL_ONP_ORDER", "federal"),
+                              refill = "none", standing = .onn_stand, code = "ONN1")
+  attr(shares, "onp_newseat") <- NULL
+}
 # SENATE RANK (AUSPOL_ONP_ORDER = "senate_rank", 2026-10-25,
 # docs/plans/prereg-onp-senate-rank-2026-10-25.md). Keeps this harness's own
 # One Nation values (the swing off the previous state election) and only
 # re-orders them, over the seats One Nation contests, by the most recent
 # earlier federal SENATE One Nation vote. Rows are renormalised below, as the
-# shipped path's are.
-if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate_rank")) {
+# shipped path's are. Skipped under AUSPOL_ONP_NEWSEAT_RULE=1, whose rule owns the ordering.
+if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate_rank") && ONN_RULE) {
+  cat("ONR1  skipped: AUSPOL_ONP_NEWSEAT_RULE=1 orders the no-history seats; seats with history keep their own path\n")
+} else if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate_rank")) {
   .onr <- onp_senate_rank_apply(shares, TGT, code = "ONR1", refill = "none")
   if (!is.null(.onr)) shares <- .onr
 }

@@ -793,14 +793,15 @@ if (identical(ONP_ORDER, "senate_rank")) {
               if (!is.null(.osr)) basename(.osr_f) else "senate-onp-by-district.csv",
               stats::cor(rank(idx_v), rank(.osr_k)), length(.osr_k)))
 }
-onp_ratio <- numeric(nrow(mat22)); names(onp_ratio) <- rownames(mat22)
-for (r in seq_along(ord)) {
-  q <- (r - 1) / (length(ord) - 1)
-  pos <- q * (length(sa_ratio) - 1)
-  lo <- floor(pos) + 1; hi <- min(lo + 1, length(sa_ratio))
-  onp_ratio[rownames(mat22)[ord[r]]] <-
-    sa_ratio[lo] + (pos - (lo - 1)) * (sa_ratio[hi] - sa_ratio[lo])
-}
+# The quantile map, shared with every backtest harness since 2026-10-25 (R/onp_newseat.R,
+# onp_rank_ratio(): the loop that lived here, moved verbatim). AUSPOL_ONP_NEWSEAT_RULE is the
+# harnesses' version of this allocation for seats with no One Nation state history; here EVERY seat
+# is such a seat (One Nation polled 0.28% in 4 seats in 2022 and has no swing path in this script),
+# so the switch changes nothing in the live forecast at either value.
+onp_ratio <- onp_rank_ratio(ord, sa_ratio, rownames(mat22))
+cat(sprintf("ONN1  live: all %d seats allocated by rank on the %s One Nation vote (AUSPOL_ONP_NEWSEAT_RULE=%s; the live forecast has no One Nation history path, so the rule is the same here at both values)\n",
+            nrow(mat22), if (identical(ONP_ORDER, "senate_rank")) "federal SENATE" else if (identical(ONP_ORDER, "greens")) "Greens-share (not federal)" else "federal HOUSE",
+            if (onp_newseat_rule()) "1" else "0"))
 
 # SENATE RULE (AUSPOL_ONP_ORDER = "senate", 2026-10-01, from Pete's chart).
 # Replaces both the ordering and the borrowed SA spread above: each seat's
@@ -846,8 +847,9 @@ if (is.finite(ONP_CV) && ONP_CV > 0) {
   # VECTOR FIRST. pmax(0.02, x) drops x's NAMES, exactly as pmax(0.1, m) drops a
   # matrix's dim -- and onp_ratio is looked up BY SEAT NAME immediately after,
   # so the whole allocation silently became NA. Second time this argument order
-  # has bitten today.
-  onp_ratio <- pmax(1 + (ONP_CV / cur) * (onp_ratio - 1), 0.02)
+  # has bitten today. The expression lives in onp_cv_force() (R/onp_newseat.R),
+  # shared with the harnesses' AUSPOL_ONP_NEWSEAT_RULE; same arithmetic.
+  onp_ratio <- onp_cv_force(onp_ratio, ONP_CV)
   cat(sprintf("CN1  One Nation concentration forced: CV %.3f -> %.3f (delivered %.3f)\n",
               cur, ONP_CV, stats::sd(onp_ratio) / mean(onp_ratio)))
 }

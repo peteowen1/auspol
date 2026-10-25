@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (246 switches from `published_flags.R`, 7 entry points)
+## Switch parity (247 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -160,7 +160,8 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_ONP_CV` | yes | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_ONP_FILL` | yes | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_ONP_FIX` | yes | NO | NO | NO | NO | NO | NO |  |
-| `AUSPOL_ONP_ORDER` | yes | NO | yes | yes | yes | NO | yes |  |
+| `AUSPOL_ONP_NEWSEAT_RULE` | yes | NO | yes | yes | yes | NO | yes | onp_newseat.R |
+| `AUSPOL_ONP_ORDER` | yes | yes | yes | yes | yes | yes | yes | onp_newseat.R |
 | `AUSPOL_OTHERS_SCALE` | NO | NO | NO | NO | NO | NO | NO | forecast_mode.R, others_bucket.R |
 | `AUSPOL_PARTY_COR` | yes | yes | yes | yes | yes | yes | NO | forecast_statewide.R |
 | `AUSPOL_PB_COALITION_COMBINED` | NO | NO | NO | NO | NO | NO | NO | poll_source.R |
@@ -385,7 +386,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_ONP_CV`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R). ADOPTED 2026-09-09 at 0.365, partially pooled (docs/reviews/onp-concentration-validated-2026-09-09.md) -- moves the live Victorian One Nation median seat count 9 -> 10. The highest-stakes switch this registry tracks; was previously mislabelled "federal" here, which is wrong -- fit_seats_full.R is the Victorian forecast, not a federal one.
 - **`AUSPOL_ONP_FILL`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R -- how the other classes fill One Nation's seat-level gap). No harness has a One Nation fill step, so "uniform_major" cannot be backtested (docs/plans/prereg-onp-fill-uniform-2026-10-25.md).
 - **`AUSPOL_ONP_FIX`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R -- One Nation allocation fix for the live Victorian projection).
-- **`AUSPOL_ONP_ORDER`** (intentional / dead experiment): One Nation allocation ordering. fit_seats_full.R (all values) and the SA, Qld and NSW harnesses ("senate", "senate_rank"); WA reads "senate_rank" only (R/onp_order.R, 2026-10-25). Not fed (the federal harness has the House vote it predicts) and not vic (One Nation negligible in vic2014-2022), intentional.
+- **`AUSPOL_ONP_NEWSEAT_RULE`** (intentional / dead experiment): TESTING (0), UNIVERSAL via R/: read by onp_newseat_rule() (R/onp_newseat.R), which all seven harnesses call (onp_newseat_prepare()/onp_newseat_apply() at the point their no-history One Nation seats are formed) and fit_seats_full.R prints (live: every seat is a no-history seat, so the rule is the live method at both values). fed and WA have no House key (ONN1! under AUSPOL_ONP_ORDER=federal); NT has no One Nation candidates. plans/prereg-onp-newseat-rule-2026-10-25.md
 - **`AUSPOL_OTHERS_SCALE`** (intentional / dead experiment): ARM, REFUSED 2026-09-28 (plans/prereg-others-bucket-size-2026-09-27.md). Backtest path only (R/forecast_mode.R, R/others_bucket.R); published_flags.R says the live script is deliberately not wired because it did not pass.
 - **`AUSPOL_PARTY_COR`** (intentional / dead experiment): WA deliberately excluded from the statewide party-correlation matrix -- cor(ALP, IND) flips sign there (docs/reviews/statewide-cov-loo-2026-09-07.md). Intentional, not a gap.
 - **`AUSPOL_PB_COALITION_COMBINED`** (intentional / dead experiment): OFF (0), UNIVERSAL via R/: read inside R/poll_source.R's WA Poll Bludger merge; off is today's behaviour exactly. Only WA polls carry combined-only Coalition rows.
@@ -544,4 +545,4 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR2  every non-universal switch (217 of 246) has a recorded classification.
+MR2  every non-universal switch (217 of 247) has a recorded classification.

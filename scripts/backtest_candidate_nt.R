@@ -386,6 +386,12 @@ for (K in PAIRS) {
   mat <- matrix(0, nrow = nrow(A), ncol = length(parties),
                 dimnames = list(rownames(A), parties))
   mat[, colnames(A)] <- A
+  # ONE NATION IN SEATS WITH NO STATE HISTORY (AUSPOL_ONP_NEWSEAT_RULE, default "0"). One Nation has
+  # stood in no Territory election in the corpus, so the call below prints ONN1 and changes nothing;
+  # it is wired so a future NT candidacy gets the same rule as every other harness. R/onp_newseat.R.
+  ONN_RULE <- onp_newseat_rule()
+  .onn_stand <- fb[fb$party == "ONP" & fb$votes > 0, unique(seat)]
+  .onn_hist <- stats::setNames(if ("ONP" %in% colnames(A)) A[, "ONP"] > 0 else rep(FALSE, nrow(A)), rownames(A))
   DEV_SLOPE <- dev_slopes_for(parties)
   # "screened" COUNTS TOO, as it does in the other five harnesses. The published
   # value of AUSPOL_DEV_SLOPE_MODE is "screened", and this line tested for
@@ -638,6 +644,11 @@ for (K in PAIRS) {
       cat(sprintf("BNT0  %s: zeroed IND in %d seat(s) with no independent nominated: %s\n",
                   el_to, length(zeroed), paste(sort(zeroed), collapse = ", ")))
     }
+  }
+  if (ONN_RULE) {   # AUSPOL_ONP_NEWSEAT_RULE=1, see above; Senate key from output/senate-by-district-class.csv
+    mat <- onp_newseat_apply(mat, el_to, .onn_hist, order = Sys.getenv("AUSPOL_ONP_ORDER", "federal"),
+                             refill = "none", standing = .onn_stand, code = "ONN1")
+    attr(mat, "onp_newseat") <- NULL
   }
   if (.departed_hold) {
     shares <- renorm_hold(mat, HELD)

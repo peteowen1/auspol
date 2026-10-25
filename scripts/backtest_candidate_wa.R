@@ -351,6 +351,12 @@ for (K in PAIRS) {
   mat <- matrix(0, nrow = nrow(A), ncol = length(parties),
                 dimnames = list(rownames(A), parties))
   mat[, colnames(A)] <- A
+  # ONE NATION IN SEATS WITH NO STATE HISTORY (AUSPOL_ONP_NEWSEAT_RULE, default "0" = nothing happens
+  # here). This harness already carries every target class (the union above), so One Nation new to the
+  # state (wa2001, wa2017) swings from zero to the statewide level; only the history flag is needed.
+  ONN_RULE <- onp_newseat_rule()
+  .onn_stand <- fb[fb$party == "ONP" & fb$votes > 0, unique(seat)]
+  .onn_hist <- stats::setNames(if ("ONP" %in% colnames(A)) A[, "ONP"] > 0 else rep(FALSE, nrow(A)), rownames(A))
   DEV_SLOPE <- dev_slopes_for(parties)
   # "screened" COUNTS TOO, as it does in the other five harnesses. The published
   # value of AUSPOL_DEV_SLOPE_MODE is "screened", and this line tested for
@@ -611,7 +617,19 @@ for (K in PAIRS) {
   # and NSW harnesses: keep this harness's One Nation values, re-order them over
   # the contested seats by the most recent earlier federal SENATE One Nation
   # vote (output/senate-by-district-class.csv covers WA), renormalise below.
-  if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate_rank")) {
+  # ONE NATION IN SEATS WITH NO STATE HISTORY (AUSPOL_ONP_NEWSEAT_RULE=1): the no-history seats One
+  # Nation contests are re-allocated (mean kept) by rank on the earlier federal Senate One Nation vote
+  # (senate_rank; output/senate-by-district-class.csv). There is NO House key for WA (no AEC House booth
+  # vote files on disk), so under AUSPOL_ONP_ORDER=federal the rule prints ONN1! and changes nothing.
+  # Under the rule the senate_rank re-rank of every contested seat below is skipped. R/onp_newseat.R.
+  if (ONN_RULE) {
+    mat <- onp_newseat_apply(mat, el_to, .onn_hist, order = Sys.getenv("AUSPOL_ONP_ORDER", "federal"),
+                             refill = "none", standing = .onn_stand, code = "ONN1")
+    attr(mat, "onp_newseat") <- NULL
+  }
+  if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate_rank") && ONN_RULE) {
+    cat("ONR1  skipped: AUSPOL_ONP_NEWSEAT_RULE=1 orders the no-history seats; seats with history keep their own path\n")
+  } else if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate_rank")) {
     .onr <- onp_senate_rank_apply(mat, el_to, code = "ONR1", refill = "none")
     if (!is.null(.onr)) mat <- .onr
   }
