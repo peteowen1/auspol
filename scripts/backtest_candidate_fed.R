@@ -721,6 +721,15 @@ for (K in PAIRS) {
                                target = eb,
                                pairs = all_election_pairs(), code = "BF1r"),
                         "reentry")
+  # ONE NATION IN DIVISIONS WITH NO HISTORY (AUSPOL_ONP_NEWSEAT_RULE, default "0" = nothing happens
+  # here). Recorded now, before any transfer moves a candidate's vote, so "history" means One Nation
+  # had a vote in the division at the previous federal election. R/onp_newseat.R.
+  ONN_RULE <- onp_newseat_rule()
+  .onn_hist <- NULL; .onn_stand <- fb[fb$party == "ONP" & fb$votes > 0, unique(seat)]
+  if (ONN_RULE) {
+    .onn <- onp_newseat_prepare(mat, st_a, .onn_stand, eb, code = "ONN1")
+    mat <- .onn$mat; st_a <- .onn$prev_level; .onn_hist <- .onn$history
+  }
 
   # ---- FORECAST MODE, against docs/plans/prereg-forecast-mode.md -----------
   # Default OFF, in which case the block below is the original: shift each
@@ -1461,6 +1470,16 @@ for (K in PAIRS) {
     .protected <- nrow(REENTRY_CELLS) - nrow(.rc)
     cat(sprintf("BF1r  re-entry applied post-swing to %d cell(s)%s\n", sum(.rk),
                 if (.protected) sprintf(" | %d protected by own_prev", .protected) else ""))
+  }
+  # ONE NATION IN DIVISIONS WITH NO HISTORY (AUSPOL_ONP_NEWSEAT_RULE=1). Only the Senate ordering
+  # (AUSPOL_ONP_ORDER=senate_rank) has a key here: the previous federal election's Senate One Nation
+  # share by division. Under the House ordering the key would be the division's own previous House
+  # vote, which a no-history division does not have, so the rule prints ONN1! and changes nothing.
+  # Rows are renormalised below. R/onp_newseat.R.
+  if (ONN_RULE) {
+    shares <- onp_newseat_apply(shares, eb, .onn_hist, order = Sys.getenv("AUSPOL_ONP_ORDER", "federal"),
+                                refill = "none", standing = .onn_stand, code = "ONN1")
+    attr(shares, "onp_newseat") <- NULL
   }
   # Zero IND wherever nobody actually stood at the TARGET election. This is
   # nomination data, not the result being predicted: which classes contest a

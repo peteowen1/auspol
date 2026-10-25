@@ -663,3 +663,7 @@ Existing rows for `AUSPOL_SEAT_POLL_PRIOR` (0.75), `_PRIOR_SD` (0.25), the half-
 | `AUSPOL_DEFECT_BY_LEVEL` | `R/candidate_returns.R:1268` | "2" | Switch, shipped 2026-10-05. |
 | `IND_MIX_PRIOR_SD` | `R/ind_mixture.R:16` (arm `AUSPOL_IND_MIXTURE`, OFF) | 1.5 | **CHOSEN** prior sd of the surge-chance coefficients; inert at the published "0". |
 | `FD_TOL` | `scripts/fit_federal.R:341` | 0.002 | Already listed (fold section); line added. |
+| `k_prior` (`onp_newseat_cv()`) | `R/onp_newseat.R:208` (arm `AUSPOL_ONP_NEWSEAT_RULE`, OFF) | 0.5 | **CHOSEN** prior exponent of One Nation's SD-on-level curve (`scripts/estimate_onp_concentration.R` fits ~0.5 over all seats); the time-forward contested-seat fit pulls it to ~0.8 once 10+ earlier elections exist. Inert at the published "0". |
+| `k_shrink` (`onp_newseat_cv()`) | `R/onp_newseat.R:208` | 3 | **CHOSEN** shrinkage constant, weight `df/(df+3)`, same form as `AUSPOL_CONSERVE_SHRINK_K`. Inert at "0". |
+| `min_seats` (`onp_newseat_cv()`) | `R/onp_newseat.R:208` | 10 | **CHOSEN** fewest One-Nation-contested seats for an earlier election to enter the spread fit. Inert at "0". |
+| no-history seats needed / key coverage (`onp_newseat_apply()`) | `R/onp_newseat.R:314`, `:335` | 3 seats; at most 10% without a key | **CHOSEN**, the same applicability rule as `onp_senate_rank_apply()` / `onp_senate_alloc()`. Inert at "0". |

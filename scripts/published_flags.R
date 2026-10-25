@@ -319,6 +319,7 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_UPSET_FLOOR         = "0",          # TESTING 2026-10-02: time-forward upset insurance for minor contenders (R/upset_floor.R, stage 6b). plans/prereg-upset-floor-2026-10-02.md
   AUSPOL_ONP_ORDER           = "federal",    # "senate" REFUSED 2026-10-01 (plans/prereg-onp-senate-2026-10-01.md): SA 2026 seat log loss +1.7 SE.
                                              # "senate_rank" TESTING 2026-10-25 (plans/prereg-onp-senate-rank-2026-10-25.md): ordering only, spread kept; live + sa/qld/nsw/wa harnesses (R/onp_order.R).
+  AUSPOL_ONP_NEWSEAT_RULE    = "0",          # TESTING 2026-10-25 (plans/prereg-onp-newseat-rule-2026-10-25.md; reviews/onp-newseat-parity-2026-10-25.md): "1" = in seats where One Nation had NO vote at the previous state election, its share is allocated by rank on the earlier federal House (AUSPOL_ONP_ORDER=federal) or Senate (senate_rank) One Nation vote with a time-forward CV, mean kept -- the live forecast's method, now in all seven harnesses (R/onp_newseat.R). Live unchanged at both values (every Victorian seat is such a seat already).
   AUSPOL_ONP_FIX             = "1",
   AUSPOL_ONP_FILL            = "prop",       # TESTING 2026-10-25 "uniform_major" (plans/prereg-onp-fill-uniform-2026-10-25.md): One Nation's seat gap filled by the statewide draw betas, not by size. LIVE ONLY (fit_seats_full.R); no harness has the fill.
   AUSPOL_QLD_FLOWS           = "1",

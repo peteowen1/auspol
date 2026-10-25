@@ -431,6 +431,17 @@ for (K in PAIRS) {
                                pairs = all_election_pairs(), code = "BV1r"),
                         "reentry")
 
+  # ONE NATION IN SEATS WITH NO STATE HISTORY (AUSPOL_ONP_NEWSEAT_RULE, default "0" = nothing happens
+  # here). One Nation did not stand in 2018, so vic2022 has no ONP column and is predicted 0 in the 4
+  # seats it contested; under the rule the column is added at zero (previous level 0) and allocated
+  # below. R/onp_newseat.R, docs/plans/prereg-onp-newseat-rule-2026-10-25.md.
+  ONN_RULE <- onp_newseat_rule()
+  .onn_tgt <- sprintf("vic%d", K$to)
+  .onn_hist <- NULL; .onn_stand <- fb[fb$party == "ONP" & fb$votes > 0, unique(seat)]
+  if (ONN_RULE) {
+    .onn <- onp_newseat_prepare(mat, sa, .onn_stand, .onn_tgt, code = "ONN1")
+    mat <- .onn$mat; sa <- .onn$prev_level; .onn_hist <- .onn$history
+  }
   parties <- colnames(mat); shares <- mat
   # THIS HARNESS HAS NEVER PASSED `shrink`, the same defect
   # docs/reviews/calibration-2026-08-21.md found and that was fixed in the SA
@@ -674,6 +685,15 @@ for (K in PAIRS) {
     .protected <- nrow(REENTRY_CELLS) - nrow(.rc)
     cat(sprintf("BV1r  re-entry applied post-swing to %d cell(s)%s\n", sum(.rk),
                 if (.protected) sprintf(" | %d protected by own_prev", .protected) else ""))
+  }
+  # ONE NATION IN SEATS WITH NO STATE HISTORY (AUSPOL_ONP_NEWSEAT_RULE=1): the no-history seats One
+  # Nation contests are re-allocated (mean kept) by rank on the earlier federal House
+  # (AUSPOL_ONP_ORDER=federal) or Senate (senate_rank) One Nation vote, spread to a CV fitted on
+  # earlier elections; rows are renormalised below. vic2014/vic2018: One Nation stood nowhere.
+  if (ONN_RULE) {
+    shares <- onp_newseat_apply(shares, .onn_tgt, .onn_hist, order = Sys.getenv("AUSPOL_ONP_ORDER", "federal"),
+                                refill = "none", standing = .onn_stand, code = "ONN1")
+    attr(shares, "onp_newseat") <- NULL
   }
   if (ELASTIC > 0) {
     cat(sprintf("BV1e elasticity ON (over %.2f, fall %.1f): %d cells\n",

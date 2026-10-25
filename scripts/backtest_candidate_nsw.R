@@ -508,6 +508,16 @@ keep <- names(truth)
 
 
 # ---- project each seat's 2023 primaries: uniform swing off its 2019 share ----
+# ONE NATION IN SEATS WITH NO STATE HISTORY (AUSPOL_ONP_NEWSEAT_RULE, default "0" = nothing happens
+# here). One Nation did not stand in 2015, so nsw2019 has no ONP column and is predicted 0 in all 12
+# seats it contested; under the rule the column is added at zero (previous level 0, so the swing
+# gives the statewide level) and allocated after the renormalisation below. R/onp_newseat.R.
+ONN_RULE <- onp_newseat_rule()
+.onn_hist <- NULL; .onn_stand <- fp_tgt[fp_tgt$party == "ONP" & fp_tgt$votes > 0, unique(seat)]
+if (ONN_RULE) {
+  .onn <- onp_newseat_prepare(mat, state_prev, .onn_stand, TGT, code = "ONN1")
+  mat <- .onn$mat; state_prev <- .onn$prev_level; .onn_hist <- .onn$history
+}
 parties <- colnames(mat)
 shares <- mat
 # STRONGHOLD ELASTICITY, against docs/plans/prereg-stronghold-elasticity.md.
@@ -826,7 +836,20 @@ if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate") && "ONP" %in%
 # re-orders them, over the seats One Nation contests, by the most recent
 # earlier federal SENATE One Nation vote. Rows already sum to 100 here, so the
 # other classes in a moved seat give up or take the difference in proportion.
-if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate_rank")) {
+# Under AUSPOL_ONP_NEWSEAT_RULE=1 the rule below owns the ordering and this is skipped.
+#
+# ONE NATION IN SEATS WITH NO STATE HISTORY (AUSPOL_ONP_NEWSEAT_RULE=1). Seats where One Nation held
+# a vote last time keep their swing; the no-history seats it contests are re-allocated (mean kept) by
+# rank on the earlier federal House (AUSPOL_ONP_ORDER=federal) or Senate (senate_rank) One Nation vote,
+# spread to a CV fitted on earlier elections; rows already sum to 100, so refill "prop". R/onp_newseat.R.
+if (ONN_RULE) {
+  shares <- onp_newseat_apply(shares, TGT, .onn_hist, order = Sys.getenv("AUSPOL_ONP_ORDER", "federal"),
+                              refill = "prop", standing = .onn_stand, code = "ONN1")
+  attr(shares, "onp_newseat") <- NULL
+}
+if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate_rank") && ONN_RULE) {
+  cat("ONR1  skipped: AUSPOL_ONP_NEWSEAT_RULE=1 orders the no-history seats; seats with history keep their own path\n")
+} else if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate_rank")) {
   .onr <- onp_senate_rank_apply(shares, TGT, code = "ONR1", refill = "prop")
   if (!is.null(.onr)) shares <- .onr
 }
