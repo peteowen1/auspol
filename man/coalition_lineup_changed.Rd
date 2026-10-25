@@ -15,8 +15,12 @@ Logical vector.
 \description{
 A different number of Coalition candidates is a change (a three-cornered
 contest appeared or went away). With one candidate on each side, a different
-party is a change (Liberal to National), except that the Queensland merged
-party \code{LNP} matches either, since it replaced both by merger, not by a
-candidate choice. \code{NA} on either side gives \code{NA} (unknown).
+party is a change (Liberal to National). The Queensland merger is NOT a
+change: when one side is the merged party \code{LNP} alone and the other side has
+any Coalition candidate (Liberal, National, both, or \code{LNP}), the line-up is
+treated as unchanged, since the merger replaced them, not a candidate choice
+(so a 2007 \code{LP+NP} contest against a 2010 \code{LNP} one is unchanged). \code{LNP}
+against no Coalition candidate is still a change. \code{NA} on either side gives
+\code{NA} (unknown).
 }
 \keyword{internal}

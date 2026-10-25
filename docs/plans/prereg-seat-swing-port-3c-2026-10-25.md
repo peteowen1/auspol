@@ -33,7 +33,8 @@ For each booth the transposition used, compare the Coalition line-up of its divi
 transposed with the line-up of ITS OWN division at the federal election before (matched by `PollingPlaceID`, so a
 redistributed booth is compared with the contest its earlier vote came from). A change is a different number of
 Coalition candidates, or a different party when there is one on each side. The Queensland merged party (`LNQ`/`LNP`)
-matches either Liberal or National, because it replaced both by merger, not by a candidate choice. A seat's affected
+alone matches any Coalition line-up (Liberal, National or both), because it replaced them by merger, not by a
+candidate choice. A seat's affected
 share `frac` is the vote share of its booths that are affected.
 
 | Value | What it changes |
@@ -48,8 +49,26 @@ Every harness that applies the port (vic, nsw, sa, wa, qld, nt) and `fit_seats_f
 `seat_swing_port_apply()`. The federal harness has no port. The shipped table `output/seat-swing-port-<target>.csv`
 carries `lineup3c` and `w3c` under the arm, and a table written under another setting is refused.
 
-Check codes: `S3C1` (per cycle: the changed divisions with both line-ups, seats touched, largest shares, and the vote
-share whose line-up could not be read) and `S3C2` (mode 2: the fitted slopes and `w`). Neither is used anywhere else
+Check codes: `S3C1` (per cycle: the changed divisions with both line-ups, seats touched, largest shares, and coverage)
+and `S3C2` (mode 2: the fitted slopes and `w`).
+
+**Coverage is printed and bounded, never dropped quietly** (added after review, 2026-10-25). Each `S3C1` line reports,
+for its cycle: map booths absent from the federal two-party file (count), booths there with no votes (count), the vote
+share in booths with no match at the earlier federal election (compared under their own division's name), the vote
+share whose line-up cannot be read (treated unaffected), and the seats with no booth in the share table. The run
+STOPS above these limits, set against the largest value seen across all 16 cycles in the dry run:
+
+| Quantity | Limit | Largest seen (cycle) |
+|---|---|---|
+| map booths absent from the federal two-party file | 2% of booths | 0 in every cycle |
+| booths with no votes | 5% of booths | 20 of 831, 2.4% (wa2021) |
+| votes in booths new since the earlier election | 30% of votes | 15.3% (wa2025) |
+| votes with an unreadable line-up | 5% of votes | 1.5% (sa2022) |
+| state seats with no booth in the share table | any | 0 in every cycle |
+
+The Queensland merger is not a change in either direction: one side `LNP` alone against any Coalition line-up on the
+other (Liberal, National or both) is unchanged; `LNP` against no Coalition candidate is a change. No cycle the port
+reads compares across the 2010 merger, so the tables below are unaffected by that rule. Neither is used anywhere else
 (`tests/testthat/test-check-code-collisions.R` passes).
 
 ### Why mode "2" is the primary arm, "1" the comparison, `W=0.5` the sensitivity

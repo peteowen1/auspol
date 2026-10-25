@@ -19,10 +19,11 @@ test_that("both switches parse strictly and default off", {
 })
 
 test_that("a line-up change is a different count, or a different single party; the merged LNP is neither", {
-  now  <- c("LP+NP", "NP", "LP",  "LP", "LP+NP", "",   "LP", "LP+NP", NA)
-  prev <- c("LP",    "LP", "LNP", "LP", "LNP",   "LP", "",   "LP+NP", "LP")
+  now  <- c("LP+NP", "NP", "LP",  "LP", "LP+NP", "",   "LP", "LP+NP", NA,   "LNP",   "LNP", "")
+  prev <- c("LP",    "LP", "LNP", "LP", "LNP",   "LP", "",   "LP+NP", "LP", "LP+NP", "",    "LNP")
   expect_identical(coalition_lineup_changed(now, prev),
-                   c(TRUE, TRUE, FALSE, FALSE, TRUE, TRUE, TRUE, FALSE, NA))
+                   c(TRUE, TRUE, FALSE, FALSE, FALSE, TRUE, TRUE, FALSE, NA, FALSE, TRUE, TRUE))
+  # The 2010 Queensland merger: a 2007 LP+NP contest against a 2010 LNP one is unchanged.
 })
 
 test_that("fed_coalition_lineup counts Coalition candidates per division and keeps divisions with none", {
@@ -73,6 +74,45 @@ test_that("the affected share is the vote share of booths whose own earlier cont
   expect_error(seat_swing_port_3c_share("vic", 2026, 2025, z$ly[z$ly$year == 2025L], z$bm, z$now, z$prev), "no federal election before")
 })
 
+test_that("booths the share cannot weigh or compare are counted, and over the limit stop the run", {
+  z <- mk_share_inputs()
+  sh <- seat_swing_port_3c_share("vic", 2026, 2025, z$ly, z$bm, z$now, z$prev)
+  expect_identical(attr(sh, "n_booths"), 30L)
+  expect_identical(attr(sh, "n_not_in_now"), 0L)
+  expect_identical(attr(sh, "n_no_votes"), 0L)
+  expect_equal(attr(sh, "new"), 0)
+  # (a) Map booths absent from the federal two-party file: the old code gave
+  # them tot = NA and dropped them from both sides of the share, unreported.
+  # 1 of 30 (3.3%) is over the 2% limit.
+  expect_error(seat_swing_port_3c_share("vic", 2026, 2025, z$ly, z$bm, z$now[z$now$place_id != 5L], z$prev),
+               "not_in_now 3.3% > 2%")
+  # Under the limit it is reported, not hidden: 1 of 60 booths.
+  bm60 <- rbind(z$bm, data.table::data.table(district = sprintf("seat%02d", 1:30), place_id = 101:130))
+  now60 <- rbind(z$now, data.table::data.table(place_id = 101:130, division = z$now$division, tot = 1000))
+  sh60 <- seat_swing_port_3c_share("vic", 2026, 2025, z$ly, bm60, now60[now60$place_id != 105L], now60)
+  expect_identical(attr(sh60, "n_not_in_now"), 1L)
+  # Zero-vote booths: counted, and 2 of 30 (6.7%) is over the 5% limit.
+  nv <- data.table::copy(z$now); nv$tot[1:2] <- 0
+  expect_error(seat_swing_port_3c_share("vic", 2026, 2025, z$ly, z$bm, nv, z$prev), "no_votes 6.7% > 5%")
+  # (c) Booths with no earlier-election match: their vote share is reported,
+  # and above 30% the run stops.
+  sh_new <- seat_swing_port_3c_share("vic", 2026, 2025, z$ly, z$bm, z$now, z$prev[z$prev$place_id > 3L])
+  expect_equal(attr(sh_new, "new"), 0.1)
+  expect_error(seat_swing_port_3c_share("vic", 2026, 2025, z$ly, z$bm, z$now, z$prev[z$prev$place_id > 15L]), "new 50.0% > 30%")
+})
+
+test_that("(d) a state seat missing from the share table stops the cleaning instead of getting frac 0", {
+  fs <- data.table::data.table(seat = c("a", "b", "Seat C"), fed_swing = c(1, 2, 3), region = "vic", cycle = 2026L, fed = 2025L)
+  share <- function(rg, cy, fy, ly) {
+    out <- data.table::data.table(s = c("a", "b"), frac = c(1, 0), divisions = c("x", ""))
+    attr(out, "changed") <- data.table::data.table(prev_division = "x", division = "x", prev = "LP", now = "LP+NP")
+    attr(out, "unknown") <- 0
+    out
+  }
+  expect_error(seat_swing_port_3c_clean(fs, w = 0, lineup = data.table::data.table(), share_fun = share),
+               "1 of 3 seats have no booth in the line-up share table \\(Seat C\\)")
+})
+
 test_that("cleaning moves an affected seat to the cycle mean at w = 0, halves it at 0.5, leaves it at 1", {
   fs <- data.table::data.table(seat = c("a", "b", "c", "d"), fed_swing = c(10, 0, 2, 4), region = "vic", cycle = 2026L, fed = 2025L)
   share <- function(rg, cy, fy, ly) {
@@ -109,6 +149,12 @@ test_that("the fitted weight is near 0 when the affected part does not carry ove
   expect_equal(none$n_aff, 120L)
   # No affected rows: nothing to fit, exclusion by default.
   expect_equal(seat_swing_port_3c_fit_w(mk(0)[frac == 0])$w, 0)
+  # Every row fully affected: the unaffected column is all zero (rank 1), so 0,
+  # whatever the scale of the deviations (the old det() test depended on it).
+  all_aff <- mk(0.5); all_aff$frac <- 1
+  expect_equal(seat_swing_port_3c_fit_w(all_aff)$w, 0)
+  tiny <- mk(0.5); tiny$dev <- tiny$dev * 1e-4; tiny$yy <- tiny$yy * 1e-4
+  expect_gt(seat_swing_port_3c_fit_w(tiny)$w, 0.85)   # det(XtX) ~ 1e-9 here, but the fit is fine
 })
 
 # ---- end to end through seat_swing_port_coef / _table on a synthetic disk ----

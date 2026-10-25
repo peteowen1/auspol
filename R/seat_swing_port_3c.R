@@ -82,9 +82,13 @@ fed_coalition_lineup <- function(cand = NULL) {
 #'
 #' A different number of Coalition candidates is a change (a three-cornered
 #' contest appeared or went away). With one candidate on each side, a different
-#' party is a change (Liberal to National), except that the Queensland merged
-#' party `LNP` matches either, since it replaced both by merger, not by a
-#' candidate choice. `NA` on either side gives `NA` (unknown).
+#' party is a change (Liberal to National). The Queensland merger is NOT a
+#' change: when one side is the merged party `LNP` alone and the other side has
+#' any Coalition candidate (Liberal, National, both, or `LNP`), the line-up is
+#' treated as unchanged, since the merger replaced them, not a candidate choice
+#' (so a 2007 `LP+NP` contest against a 2010 `LNP` one is unchanged). `LNP`
+#' against no Coalition candidate is still a change. `NA` on either side gives
+#' `NA` (unknown).
 #' @param now,prev Line-up strings from [fed_coalition_lineup()].
 #' @return Logical vector.
 #' @keywords internal
@@ -93,9 +97,9 @@ coalition_lineup_changed <- function(now, prev) {
   nn <- n_of(now); np <- n_of(prev)
   out <- nn != np
   same_n <- !is.na(out) & !out
-  lnp <- same_n & (now == "LNP" | prev == "LNP")
   out[same_n] <- now[same_n] != prev[same_n]
-  out[lnp & nn == 1L] <- FALSE
+  merger <- !is.na(out) & ((now == "LNP" & np > 0L) | (prev == "LNP" & nn > 0L))
+  out[merger] <- FALSE
   out
 }
 
@@ -176,15 +180,22 @@ seat_swing_port_3c_share <- function(region, cycle, fed, lineup,
   i_now <- match(bm_place, now_place)
   div_now <- booths_now[["division"]][i_now]
   tot <- as.numeric(booths_now[["tot"]])[i_now]
-  div_prev <- if (is.null(booths_prev)) rep(NA_character_, length(bm_place))
-              else booths_prev[["division"]][match(bm_place, as.integer(booths_prev[["place_id"]]))]
+  prev_hit <- if (is.null(booths_prev)) rep(NA_integer_, length(bm_place))
+              else match(bm_place, as.integer(booths_prev[["place_id"]]))
+  div_prev <- if (is.null(booths_prev)) rep(NA_character_, length(bm_place)) else booths_prev[["division"]][prev_hit]
   # A booth new at this election keeps its division's name as the comparator.
   div_prev <- ifelse(is.na(div_prev), div_now, div_prev)
   ly_y <- as.integer(lineup$year); ly_d <- as.character(lineup$division); ly_l <- lineup$lineup
   l_now <- ly_l[match(paste(fed, div_now), paste(ly_y, ly_d))]
   l_prev <- ly_l[match(paste(prev_yr, div_prev), paste(ly_y, ly_d))]
   ch <- coalition_lineup_changed(l_now, l_prev)
-  ok <- is.finite(tot) & tot > 0
+  in_now <- !is.na(i_now)
+  ok <- in_now & is.finite(tot) & tot > 0
+  # Booths that cannot be weighed or compared are COUNTED, never dropped quietly:
+  # absent from the now file (booth count; no votes to weigh), present with no
+  # votes (booth count), and new since the earlier election (vote share; they
+  # are compared under their own division's name).
+  is_new <- ok & is.na(prev_hit)
   unknown <- sum(tot[ok & is.na(ch)])
   aff <- ok & !is.na(ch) & ch
   b <- data.table::data.table(s = bm_s[ok], tot = tot[ok], aff = aff[ok],
@@ -195,7 +206,37 @@ seat_swing_port_3c_share <- function(region, cycle, fed, lineup,
                                        prev = l_prev[aff], now = l_now[aff]))
   attr(out, "changed") <- chg
   attr(out, "unknown") <- unknown / sum(tot[ok])
+  attr(out, "n_booths") <- length(bm_place)
+  attr(out, "n_not_in_now") <- sum(!in_now)
+  attr(out, "n_no_votes") <- sum(in_now & !ok)
+  attr(out, "new") <- sum(tot[is_new]) / sum(tot[ok])
+  .port_3c_coverage_stop(sprintf("%s%s <- fed%d", region, cycle, fed), out)
   out
+}
+
+# Coverage limits for the line-up share (`AUSPOL_SEAT_SWING_PORT_3C`)
+#
+# Above these the share table is not describing the booths the transposition
+# used, and the run stops. Limits, against the largest seen in the 16 cycles
+# of the dry run of 2026-10-25 (prereg): booths absent from the federal
+# two-party file over 2% of the map's booths (seen: 0 everywhere); booths with
+# no votes over 5% (seen: 20 of 831, 2.4%, wa2021); votes in booths with no
+# earlier-election match over 30% (seen: 15.3%, wa2025); votes whose line-up
+# cannot be read over 5% (seen: 1.5%, sa2022); and, in
+# [seat_swing_port_3c_clean()], any state seat of the cycle missing from the
+# share table (seen: none).
+PORT_3C_LIMITS <- c(not_in_now = 0.02, no_votes = 0.05, new = 0.30, unknown = 0.05)
+
+.port_3c_coverage_stop <- function(lab, sh) {
+  nb <- attr(sh, "n_booths")
+  v <- c(not_in_now = attr(sh, "n_not_in_now") / nb, no_votes = attr(sh, "n_no_votes") / nb,
+         new = attr(sh, "new"), unknown = attr(sh, "unknown"))
+  v[!is.finite(v)] <- 1
+  bad <- names(v)[v > PORT_3C_LIMITS[names(v)]]
+  if (length(bad))
+    stop("AUSPOL_SEAT_SWING_PORT_3C ", lab, ": coverage over its limit (", paste(sprintf("%s %.1f%% > %.0f%%", bad, 100 * v[bad], 100 * PORT_3C_LIMITS[bad]), collapse = "; "),
+         "). The booth map, the federal booth files and the candidate corpus do not describe the same booths.")
+  invisible(v)
 }
 
 #' Clean the port's transposed federal swing for Coalition line-up changes
@@ -227,18 +268,25 @@ seat_swing_port_3c_clean <- function(fs, w = NULL, lineup = NULL, share_fun = se
     rg <- fs$region[at[1]]; cy <- fs$cycle[at[1]]; fy <- fs$fed[at[1]]
     sh <- share_fun(rg, cy, fy, lineup)
     fr <- sh$frac[match(s_v[at], sh$s)]
-    fr[!is.finite(fr)] <- 0
+    no_seat <- fs$seat[at][!is.finite(fr)]
+    if (length(no_seat))
+      stop("AUSPOL_SEAT_SWING_PORT_3C ", lab, ": ", length(no_seat), " of ", length(at), " seats have no booth in the line-up share table (",
+           paste(utils::head(no_seat, 8L), collapse = ", "), "); the booth map and the transposed swing disagree on seat names")
     fs$frac[at] <- fr
     chg <- attr(sh, "changed")
     moved <- at[fr > 0]
     ord <- moved[order(-fs$frac[moved])]
     top <- utils::head(ord, 6L)
-    cat(sprintf("S3C1 %s <- fed%s: %d Coalition line-up change(s) in its booths (%s); %d of %d seats touched%s%s\n",
+    nb <- attr(sh, "n_booths")
+    cov <- if (is.null(nb)) "coverage not reported" else
+      sprintf("coverage: %d of %d map booths absent from the fed%s two-party file, %d with no votes; %.1f%% of votes in booths new since the earlier election (compared by division name); %.1f%% of votes with an unreadable line-up (treated unaffected); 0 of %d seats unmatched",
+              attr(sh, "n_not_in_now"), nb, fy, attr(sh, "n_no_votes"), 100 * attr(sh, "new"), 100 * attr(sh, "unknown"), length(at))
+    cat(sprintf("S3C1 %s <- fed%s: %d Coalition line-up change(s) in its booths (%s); %d of %d seats touched%s; %s\n",
                 lab, fy, if (is.null(chg)) 0L else nrow(chg),
                 if (is.null(chg) || !nrow(chg)) "none" else paste(sprintf("%s %s->%s", chg$division, ifelse(chg$prev == "", "none", chg$prev), ifelse(chg$now == "", "none", chg$now)), collapse = ", "),
                 length(moved), length(at),
                 if (length(top)) paste0("; largest: ", paste(sprintf("%s %.0f%%", fs$seat[top], 100 * fs$frac[top]), collapse = ", ")) else "",
-                if (isTRUE(attr(sh, "unknown") > 0)) sprintf("; %.1f%% of votes in booths with an unreadable line-up (treated unaffected)", 100 * attr(sh, "unknown")) else ""))
+                cov))
   }
   if (!is.null(w)) fs <- .port_3c_apply_w(fs, w)
   fs
@@ -270,7 +318,9 @@ seat_swing_port_3c_fit_w <- function(rows) {
   if (n_aff < 2L) return(zero)
   X <- cbind(u = (1 - rows$frac) * rows$dev, a = rows$frac * rows$dev)
   XtX <- crossprod(X)
-  if (abs(det(XtX)) < 1e-9) return(zero)
+  # Rank and conditioning, not the determinant: det() scales with the squared
+  # size of the deviations, so a fixed tolerance on it means nothing.
+  if (qr(X)$rank < 2L || kappa(XtX, exact = TRUE) > 1e10) return(zero)
   inv <- solve(XtX)
   b <- drop(inv %*% crossprod(X, rows$yy))
   e <- drop(rows$yy - X %*% b)
