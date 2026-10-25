@@ -425,10 +425,12 @@ nom_zero_pre_xgb_mode <- function() {
 #'
 #' Off (`"0"`), returns `shares` untouched and prints one `NZP1` line saying so.
 #' On, runs exactly [zero_unnominated_live()] (same list, same gate, same mode-2
-#' flow redistribution as training's zero) and prints how many cells it zeroed
-#' before the trees. Until `AUSPOL_NOM_LIVE=1` opens the gate it changes nothing,
-#' and says so. The post-xgb call is kept as the final guard: the trees write a
-#' prediction back into every cell, zeroed ones included.
+#' flow redistribution as training's zero); the cells it zeroed are counted on
+#' the `NZL` and `NZP2` lines that follow the `NZP1` line. Until
+#' `AUSPOL_NOM_LIVE=1` opens the gate it changes nothing, and says so. On, every
+#' error propagates, whatever `AUSPOL_NOM_LIVE` says. The post-xgb call is kept
+#' as the final guard: the trees write a prediction back into every cell, zeroed
+#' ones included.
 #' @inheritParams zero_unnominated_live
 #' @return `shares`, zeroed when on and the nomination gate is open.
 #' @export
@@ -437,15 +439,10 @@ zero_unnominated_live_pre_xgb <- function(shares, flows, label = "vic2026", prio
     cat(sprintf("NZP1  %s: pre-xgb nomination zero OFF (AUSPOL_NOM_ZERO_PRE_XGB=0); base unchanged\n", label))
     return(shares)
   }
-  out <- zero_unnominated_live(shares, flows, label, prior = prior, code = "NZP2", ...)
-  zc <- nomination_zeroed_cells(shares, out)
-  nchg <- sum(abs(out - shares) > 1e-9)
-  per <- table(zc$class)
-  cat(sprintf("NZP1  %s: pre-xgb nomination zero ON: %d cell(s) zeroed before the trees%s, %d cell(s) changed\n",
-              label, nrow(zc),
-              if (nrow(zc)) sprintf(" (%s)", paste(sprintf("%s %d", names(per), as.integer(per)), collapse = ", ")) else "",
-              nchg))
-  out
+  # The counts are not repeated here: the NZL lines (cells changed and zeroed, per class) and the NZP2
+  # line that follow are this call's, and say so by sitting under this one.
+  cat(sprintf("NZP1  %s: pre-xgb nomination zero ON: zeroing the base before the trees (counts: the NZL/NZP2 lines below)\n", label))
+  zero_unnominated_live(shares, flows, label, prior = prior, code = "NZP2", ...)
 }
 
 #' Where a harness leaves the flow matrix its nomination zeroing used

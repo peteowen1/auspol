@@ -29,8 +29,10 @@ zero_unnominated_live_pre_xgb(
 \description{
 Off (\code{"0"}), returns \code{shares} untouched and prints one \code{NZP1} line saying so.
 On, runs exactly \code{\link[=zero_unnominated_live]{zero_unnominated_live()}} (same list, same gate, same mode-2
-flow redistribution as training's zero) and prints how many cells it zeroed
-before the trees. Until \code{AUSPOL_NOM_LIVE=1} opens the gate it changes nothing,
-and says so. The post-xgb call is kept as the final guard: the trees write a
-prediction back into every cell, zeroed ones included.
+flow redistribution as training's zero); the cells it zeroed are counted on
+the \code{NZL} and \code{NZP2} lines that follow the \code{NZP1} line. Until
+\code{AUSPOL_NOM_LIVE=1} opens the gate it changes nothing, and says so. On, every
+error propagates, whatever \code{AUSPOL_NOM_LIVE} says. The post-xgb call is kept
+as the final guard: the trees write a prediction back into every cell, zeroed
+ones included.
 }

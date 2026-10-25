@@ -348,9 +348,10 @@ test_that("pre-xgb zero: on gives exactly what the post-xgb live zero gives, and
   expect_identical(r$out, ref)                      # same function, same rule, same flows
   expect_equal(unname(r$out["Narracan", "GRN"]), 0)
   expect_equal(unname(r$out["Narracan", c("ALP", "LNP", "IND")]), c(50, 40, 10))
-  expect_match(r$txt, "NZP1  vic2026: pre-xgb nomination zero ON: 1 cell(s) zeroed before the trees (GRN 1), 3 cell(s) changed",
-               fixed = TRUE)
+  expect_match(r$txt, "NZP1  vic2026: pre-xgb nomination zero ON", fixed = TRUE)
+  expect_match(r$txt, "applied: 3 cells changed, 1 zeroed (GRN 1)", fixed = TRUE)   # the counts, once, on NZL
   expect_match(r$txt, "NZP2  vic2026: zeroed 1 cell", fixed = TRUE)   # its own code, not the post-xgb NZ1
+  expect_false(grepl("NZP1[^\n]*cell", r$txt))                         # not repeated on the NZP1 line
 })
 
 test_that("pre-xgb zero: on but the list not opened (auto) changes nothing and reports 0 cells", {
@@ -359,7 +360,26 @@ test_that("pre-xgb zero: on but the list not opened (auto) changes nothing and r
   r <- .nzp_run(sh, fx$corpus)
   expect_identical(r$out, sh)
   expect_match(r$txt, "NOT applied (provisional list", fixed = TRUE)
-  expect_match(r$txt, "pre-xgb nomination zero ON: 0 cell(s) zeroed before the trees, 0 cell(s) changed", fixed = TRUE)
+  expect_match(r$txt, "NZP1  vic2026: pre-xgb nomination zero ON", fixed = TRUE)
+})
+
+test_that("pre-xgb zero: switch on with the list NOT asked for (auto/0) still STOPS on any error (review)", {
+  # The first fit_seats_full.R wiring re-raised only when AUSPOL_NOM_LIVE asked for the list, so this
+  # error went to NZP3!! and the run carried on. Now nothing catches it, in the script or here.
+  sh <- .live_shares(c("Richmond", "Kew", "Narracan")); rownames(sh) <- NULL   # forced error: no seat names
+  for (nl in c("auto", "0")) {
+    withr::local_envvar(AUSPOL_NOM_LIVE = nl, AUSPOL_NOM_ZERO = "2", AUSPOL_NOM_ZERO_PRE_XGB = "1")
+    expect_false(nom_zero_requested())
+    expect_error(capture.output(zero_unnominated_live_pre_xgb(sh, .live_flows, "vic2026")), "NZL!! the share matrix has no rownames")
+  }
+  # and the published script does not wrap the call in anything that could swallow it
+  f <- testthat::test_path("..", "..", "scripts", "fit_seats_full.R")
+  skip_if_not(file.exists(f), "scripts/ not shipped in the check build")
+  l <- sub("#.*$", "", readLines(f, warn = FALSE))
+  call <- grep("zero_unnominated_live_pre_xgb\\(", l, value = TRUE)
+  expect_length(call, 1L)
+  expect_match(call, "^shares <- zero_unnominated_live_pre_xgb\\(shares, fm, TGT, prior = PREV\\)\\s*$")
+  expect_false(any(grepl("NZP3", l)))
 })
 
 test_that("pre-xgb zero: a deliberately broken input is caught, never a silent no-op", {

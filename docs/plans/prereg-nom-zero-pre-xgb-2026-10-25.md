@@ -53,8 +53,8 @@ is why the gate stays shut. The VEC final list is due after nominations close; `
 `zero_unnominated_live()` itself: the same list, the same gate, the same `zero_unnominated()` rule and the same
 live flow matrix `fm`. The post-xgb zero stays as the final guard (the trees write a prediction back into every
 cell, zeroed ones included), and the cells zeroed before the trees join the final-write assertion. Log codes:
-`NZP1` (on/off and how many cells were zeroed before the trees), `NZP2` (the zeroing line), `NZP3!!` (a
-non-fatal failure when the list was not asked for).
+`NZP1` (on or off), then the `NZL` lines (cells changed and zeroed, per class) and `NZP2` (the zeroing line)
+for the pre-xgb call. With the switch on, any failure stops the run, whatever `AUSPOL_NOM_LIVE` says.
 
 At `"0"` the run is byte-identical. At `"1"` it is also byte-identical until `AUSPOL_NOM_LIVE=1`.
 
@@ -86,7 +86,7 @@ Predictions, written before the run:
 
 1. **Unaffected seats.** A seat where S zeroes nothing has the same shares in A and B to 1e-9. (If not, some
    tree feature reads other seats' base shares, and that has to be explained before anything else.)
-2. **Counts.** `NZP1`'s zeroed count in B equals the post-xgb `NZL` zeroed count in A, less any cell the trees
+2. **Counts.** The pre-xgb zeroed count in B (the `NZL` line under `NZP1`) equals the post-xgb `NZL` zeroed count in A, less any cell the trees
    predicted as exactly 0. B's post-xgb `NZL` line zeroes only cells the trees revived (positive tree
    predictions on a zero base), and the final-write assertion passes.
 3. **Per affected seat.** The zeroed class is 0 in both arms. The share it frees goes to the same standing

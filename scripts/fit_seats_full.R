@@ -1534,14 +1534,11 @@ shares <- level_conserve_apply(shares, .lc_level, TGT, stage = "base", target = 
 # harness sharedetail is written after the harnesses' zero). "1" gives the live base_margin the same zeros, with
 # the same function and flow matrix as the post-xgb call below, which stays as the final guard (the trees write a
 # prediction back into every cell). A no-op until AUSPOL_NOM_LIVE=1 opens the list. Logged NZP1 (NZP2 is its
-# zeroing line). Failures follow the post-xgb call: with the list asked for, or a bad switch value, any failure
-# STOPS the run; otherwise NZP3!! and the base goes on unzeroed.
+# zeroing line). NOT wrapped in tryCatch/.try(): with the switch on (or set to a bad value) ANY failure STOPS the
+# run, whatever AUSPOL_NOM_LIVE says, so a forecast asked for the pre-xgb zero is never published without it.
+# Off ("0"), the call returns before anything that can fail.
 .nzp_before <- shares
-shares <- tryCatch(zero_unnominated_live_pre_xgb(shares, fm, TGT, prior = PREV), error = function(e) {
-  if (nom_zero_requested() || grepl("^NZP1!!", conditionMessage(e))) stop(conditionMessage(e), call. = FALSE)
-  cat(sprintf("NZP3!! pre-xgb nomination zero FAILED (%s) -- base WITHOUT it\n", conditionMessage(e)))
-  .nzp_before
-})
+shares <- zero_unnominated_live_pre_xgb(shares, fm, TGT, prior = PREV)
 .nzp_cells <- nomination_zeroed_cells(.nzp_before, shares)
 shares_x <- .try("xgb_live", xgb_primary_predict_live(shares, .mat22_xgb, a22, .xgb_level, .returns,
                                                         level_split = .level_split_xgb,
