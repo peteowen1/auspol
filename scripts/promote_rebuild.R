@@ -153,7 +153,7 @@ if (identical(.flag("AUSPOL_PUBLISH_NSW2027"), "1")) {
   invisible(leader_seat_table("nsw2027", write = TRUE))
   .csf_n <- data.table::fread(file.path(OUT, "census-features.csv"), showProgress = FALSE)
   .n27 <- unique(.csf_n$seat[.csf_n$pair == "nsw2027"])
-  if (length(.n27) != 93L) stop("census-features.csv has ", length(.n27), " nsw2027 seats, not 93 -- rerun scripts/build_census_features.R")
+  if (length(.n27) != 93L) stop("census-features.csv has ", length(.n27), " nsw2027 seats, not 93 -- rerun scripts/build_census_features_vintage.R")
   invisible(withr::with_envvar(c(AUSPOL_DEMO_RESID = "2"), demographic_residual_apply(
     matrix(50, length(.n27), 2, dimnames = list(.n27, c("ALP", "GRN"))), "nsw2027", write_table = TRUE)))
   .nsw_tables <- c("seat-swing-port-nsw2027.csv", "seat-poll-blend-nsw2027.csv", "leader-seat-nsw2027.csv", "demo-resid-nsw2027.csv")

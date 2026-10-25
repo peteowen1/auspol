@@ -1,45 +1,77 @@
 # Census features with the vintage that PRECEDES each election (no look-ahead).
 #
-# WHY. scripts/build_census_features.R gives every older pair a 2016 or 2021
-# census: fed2007-fed2016 take census-ced-2016, and every pre-2022 state pair
-# takes a "2021"-labelled SED file that is in fact the 2016 census
-# (census-sed-2016-reaggregated-to-X.csv; the label is the BOUNDARY year, the
-# data are 2016 -- national Tot_P_P 21,197,487 against 21,197,492 in the raw
-# 2016 SED file, 24.2M in the 2021 one). AUSPOL_DEMO_RESID=2 reads all seven
-# columns, so its backtest gain on pre-2016 pairs includes look-ahead.
+# THE ONLY WRITER OF output/census-features.csv (Pete, 2026-10-25). It builds from
+# raw census inputs alone and reads no earlier census-features output.
+# scripts/build_census_features.R was retired that day. It gave every older pair a
+# 2016 or 2021 census (fed2007-fed2016 took census-ced-2016, and every pre-2022 state
+# pair took a "2021"-labelled SED file that is in fact the 2016 census reaggregated:
+# the label is the BOUNDARY year), so its backtest gain on pre-2016 pairs included
+# look-ahead. It also stopped on the Northern Territory (CF2!). Until 2026-10-25 this
+# script read its source-B rows from output/census-features.csv, which since the
+# 13-15 Oct swap was this script's own previous output. So a rebuild depended on
+# whatever the last rebuild had written, and a run without the AUSPOL_CENSUS_VINTAGE_BASE
+# copy re-labelled qld2017/sa2018 rows (filled by the old builder from another
+# boundary vintage) as "on election boundaries". Source B now reads the reaggregated
+# files directly, and it labels a borrowed boundary vintage as borrowed.
 #
 # RULE (Pete, 2026-10-13): census taken BEFORE the election. 2006 census
 # (8 Aug 2006) for elections 2007-2010, 2011 (9 Aug 2011) for 2011-2015, 2016
 # (9 Aug 2016) for 2016-2020, 2021 (10 Aug 2021) after. Applied by DATE, not by
 # year, so fed2016 (2 Jul 2016, five weeks BEFORE the 2016 census) takes 2011
 # and wa2021 (13 Mar 2021) takes 2016. Flip a pair with PREF_OVERRIDE below.
+# Refined 2026-10-14: the census must be PUBLISHED before polling day (CENSUS_RELEASE).
 # Elections before the 2006 census (wa2001, wa2005) have no earlier census on
-# disk (2001 not fetched): they take 2006 and are flagged LOOKAHEAD.
+# disk (2001 not fetched): they are EMPTY ON PURPOSE (Pete, 14 Oct; every row is
+# blanked by scripts/blank_census_lookahead.R, and CHECK CW10 stops the build if
+# one of them ever carries a value).
 #
-# WRITES output/census-features-vintage.csv: pair, seat, vintage, exact, the 7
-# features, vintage_note. `vintage` is the CENSUS YEAR OF THE DATA (the old file's
-# state `vintage` was a boundary year). exact = the census geography's boundaries
-# equal the election's (seat sets identical) or, for borrowed reaggregated rows,
-# the old file's flag. vintage_note starts with LOOKAHEAD when the census
-# post-dates the election, so no row carries look-ahead silently.
+# WRITES <out>/census-features.csv: pair, seat, vintage, exact, the 7 features,
+# vintage_note. `vintage` is the CENSUS YEAR OF THE DATA (the retired file's state
+# `vintage` was a boundary year). exact = the census geography's boundaries equal
+# the election's (seat sets identical), or for reaggregated rows, the election is
+# in REAG_EXACT below. vintage_note starts with LOOKAHEAD when the census post-dates
+# the election (then BLANKED by blank_census_lookahead.R), so no row carries
+# look-ahead silently.
+#
+# USAGE (from the repo root):
+#   Rscript scripts/build_census_features_vintage.R [--root=DIR] [--out=DIR] [--compare=FILE]
+#     --root     where output/candidacies.csv and external/reference/ are read (default ".")
+#     --out      where census-features.csv is written (default <root>/output)
+#     --compare  a census-features table to diff the new build against, cell by cell
+#                (CHECK CW9; default the file this build replaces). Printed, never read
+#                into the build.
+#
+# SEAT UNIVERSE per pair: its contested seats (candidacies.csv), plus, for the 25
+# pairs the retired builder covered (the REAG_FOR pairs and the federal pairs), the
+# PREVIOUS election's seats filed under the current pair. The harnesses project each
+# seat's previous primaries forward, so a division abolished at a redistribution still
+# needs a row. That is the retired builder's universe, reproduced exactly; the other
+# 12 pairs (added 2026-10-13) never had predecessor rows, and CW3b prints what they
+# lack. Extending it changes which elections the demographic corrections apply to, so
+# it is not done here.
 #
 # SOURCE ORDER per (pair, seat):
 #   A  the preferred census's own geography, when the pair's contested seat set
 #      EQUALS that geography's seat set (boundaries match). exact = TRUE.
-#   B  (state pairs, preferred census >= 2016 only) the existing file's row:
-#      2016 census reaggregated onto the election's boundaries. Older census on
-#      the right boundaries; used because 2021 was never reaggregated.
+#   B  (state pairs in REAG_FOR, preferred census >= 2016 only) the 2016 census
+#      reaggregated onto later ABS SED boundaries (census-sed-2016-reaggregated-to-
+#      <year>.csv, scripts/build_census_correspondence.R): the pair's own boundary
+#      year first, else the nearest other boundary year (earlier on a tie), which is
+#      labelled BORROWED. Older census on (near-)election boundaries; used because
+#      2021 was never reaggregated.
 #   C  the preferred census, matched by seat NAME (boundaries differ: exact FALSE).
 #   D  the nearest LATER census, matched by name (LOOKAHEAD).
-#   E  the existing file's row (LOOKAHEAD when its census post-dates the election).
+#   F  federal only: the 2006 census on 2004 boundaries, by name.
+#   (E, "the existing file's row", was removed 2026-10-25 with the base file; the
+#   15 Oct file used it for no row.)
 #
 # FEATURE MAPPING. ABS 2011 BCP table B01 and 2006 BCP table B01 ("Selected
 # Person Characteristics by Sex") carry the same 108 cells in the same order as
-# the 2016/2021 G01 columns the old script uses, with the same column names in
-# 2011. 2006 columns are called B1..B108; they are renamed POSITIONALLY to the
-# 2011 B01 names and the seven features' cells are asserted against the 2006
-# cell descriptions (BCP2006_cell_desc_dp.xls) -- see CHECK CW1. derive() is a
-# verbatim copy of build_census_features.R's, so definitions cannot drift:
+# the 2016/2021 G01 columns, with the same column names in 2011. 2006 columns
+# are called B1..B108; they are renamed POSITIONALLY to the 2011 B01 names and
+# the seven features' cells are asserted against the 2006 cell descriptions
+# (BCP2006_cell_desc_dp.xls) -- see CHECK CW1. derive() is the only copy of the
+# feature definitions:
 #   yr12_pct        Yr 12 / (Yr 12+11+10+9+8-or-below)  B01 Highest year of school
 #   born_aus_pct    Birthplace_Australia_P / Tot_P_P     B01 Birthplace
 #   indig_pct       Indigenous_P_Tot_P / Tot_P_P         B01 Indigenous total
@@ -48,13 +80,34 @@
 #   lang_other_pct  Lang_spoken_home_Oth_Lang_P / Tot_P_P B01 Language at home
 #   edu_25plus_pct  Age_psns_att_edu_inst_25_ov_P / Tot_P_P B01 Educ. institution
 #
-# Check codes: CW. Does not edit or read-write any existing output.
+# NO INCOME FEATURE, deliberately (carried over from the retired builder, 2026-09-12).
+# The federal CED files carry income and housing medians; the state SED
+# reaggregations carry none (G01 counts only: a median cannot be reaggregated by
+# weighted summing). An income column would be real for federal pairs and filler for
+# state pairs, which is a jurisdiction label a tree splits on (the state-deviation
+# block lost 0.056 RMSE that way). To revisit: reaggregate G02 from SA1 medians.
+#
+# Check codes: CW.
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages({library(data.table); library(readxl)})
 
-OUT <- "output"; CEN <- "external/reference/census"
-RAW <- "external/reference/abs/raw"
+.args <- commandArgs(trailingOnly = TRUE)
+.unknown <- setdiff(sub("=.*$", "", .args), c("--root", "--out", "--compare"))
+if (length(.unknown)) stop("CW0! unknown argument(s): ", paste(.unknown, collapse = ", "))
+.arg <- function(name, default) {
+  a <- grep(sprintf("^--%s=", name), .args, value = TRUE)
+  if (length(a)) sub(sprintf("^--%s=", name), "", a[length(a)]) else default
+}
+ROOT <- .arg("root", ".")
+OUT <- file.path(ROOT, "output")                       # inputs (candidacies.csv)
+OUT_DIR <- .arg("out", OUT)                            # where the table is written
+COMPARE <- .arg("compare", file.path(OUT_DIR, "census-features.csv"))
+CEN <- file.path(ROOT, "external/reference/census")
+RAW <- file.path(ROOT, "external/reference/abs/raw")
+cat(sprintf("CW0  reading inputs under %s | writing %s | comparing against %s\n",
+            normalizePath(ROOT), file.path(OUT_DIR, "census-features.csv"), COMPARE))
+
 CENSUS_DATE <- c("2006" = "2006-08-08", "2011" = "2011-08-09",
                  "2016" = "2016-08-09", "2021" = "2021-08-10")
 # PUBLICATION dates (Pete 2026-10-14: only a census PUBLISHED before polling day may be used). First release of the
@@ -79,11 +132,30 @@ NEW_DATES <- c(nsw2011 = "2011-03-26", nsw2015 = "2015-03-28", qld2012 = "2012-0
                qld2015 = "2015-01-31", qld2017 = "2017-11-25", sa2010 = "2010-03-20",
                sa2014 = "2014-03-15", sa2018 = "2018-03-17", nt2016 = "2016-08-27",
                nt2020 = "2020-08-22", nt2024 = "2024-08-24")
-# Live pairs whose boundaries are the predecessor's (documented in
-# build_census_features.R: vic2026 = vic2022, nsw2027 = nsw2023).
+# Live pairs whose boundaries are the predecessor's (vic2026 = vic2022, nsw2027 = nsw2023).
 SAME_BOUNDS <- c(vic2026 = "vic2022", nsw2027 = "nsw2023")
 
-# ---- verbatim from scripts/build_census_features.R ------------------------
+# SOURCE B MAPS, moved from the retired build_census_features.R (its VINTAGE / EXACT,
+# unchanged). The value is the ABS SED BOUNDARY year whose 2016-census reaggregation
+# serves the pair; REAG_EXACT lists the pairs whose own boundaries that file is.
+# A pair NOT named here gets no source-B row: qld2017 and sa2018 used to, through the
+# retired builder's nearest-vintage fill, and were labelled "on election boundaries"
+# although the file was built for another boundary year. (Checked 2026-10-25 against
+# the ABS correspondences: Queensland's SED boundaries do not move 2021 -> 2025, so the
+# 2021 file IS qld2017's 93 districts; South Australia's 2021 file is sa2022's, not
+# sa2018's. Adding qld2017 here would move its census inputs: Pete's call.)
+REAG_FOR <- c(wa2021 = "2021", vic2022 = "2022", sa2022 = "2022", sa2026 = "2025",
+              nsw2023 = "2022", qld2024 = "2024", wa2025 = "2025",
+              vic2018 = "2021", vic2014 = "2021", nsw2019 = "2021",
+              qld2020 = "2021", wa2017 = "2021", wa2013 = "2021",
+              wa2008 = "2021", wa2005 = "2021", wa2001 = "2021",
+              # Victoria's boundaries have not moved since the 2021 redistribution.
+              vic2026 = "2022",
+              # NSW 2027 keeps the 2021 redistribution's boundaries.
+              nsw2027 = "2022")
+REAG_EXACT <- c("wa2021", "vic2022", "sa2022", "nsw2023", "qld2024", "wa2025", "sa2026",
+                "vic2026", "nsw2027")
+
 .sum_cols <- function(d, cols) {
   if (!all(cols %in% names(d))) return(rep(NA_real_, nrow(d)))
   rowSums(as.matrix(d[, cols, with = FALSE]), na.rm = TRUE)
@@ -103,6 +175,7 @@ derive <- function(d) {
                                          "Age_75_84_yr_P")) / tot]
   d[, under35_pct := 100 * .sum_cols(d, c("Age_15_19_yr_P", "Age_20_24_yr_P",
                                           "Age_25_34_yr_P")) / tot]
+  # SED files say Lang_spoken_home_*, CED files Lang_used_home_*, for the same quantity.
   lang <- intersect(c("Lang_spoken_home_Oth_Lang_P", "Lang_used_home_Oth_Lang_P"), names(d))
   d[, lang_other_pct := if (length(lang)) 100 * .sum_cols(d, lang[1]) / tot else NA_real_]
   d[, edu_25plus_pct := 100 * .sum_cols(d, "Age_psns_att_edu_inst_25_ov_P") / tot]
@@ -123,6 +196,44 @@ seat_key <- function(x) {
 .special <- "No usual address|Migratory|Offshore|Shipping|Other Territories|Unincorporated|Outside|Not applicable|Not Applicable"
 REGION_OF <- c("1" = "nsw", "2" = "vic", "3" = "qld", "4" = "sa", "5" = "wa",
                "6" = "tas", "7" = "nt", "8" = "act")
+
+# ---- checks, as functions so a deliberately broken table can be fed to them ----
+# CW7: a note may claim the election's own boundaries only on an exact row, and an
+# exact row must say which boundaries it is on. Returns the offending rows.
+exact_label_violations <- function(x) {
+  claims <- grepl("onto election boundaries|seat set identical", x$vintage_note)
+  x[(claims & !(x$exact %in% TRUE)) | (!claims & (x$exact %in% TRUE))]
+}
+# CW10: a pair polled before the first census release on disk must carry no census
+# value (wa2001, wa2005: empty on purpose). Returns the offending pairs.
+pre_census_violations <- function(x, polling_day, first_release) {
+  early <- names(polling_day)[polling_day < first_release]
+  rows <- x$pair %in% early
+  has <- Reduce(`|`, lapply(FEATS, function(f) is.finite(x[[f]][rows])), FALSE)
+  list(early = early, bad = unique(x$pair[rows][has]))
+}
+# CW9: cell-by-cell difference between two census-features tables, keyed on (pair, seat key).
+census_diff <- function(new, old) {
+  cols <- c("seat", "vintage", "exact", FEATS, "vintage_note")
+  kn <- paste(new$pair, seat_key(new$seat)); ko <- paste(old$pair, seat_key(old$seat))
+  only_new <- new[!kn %in% ko, .(pair, seat)]; only_old <- old[!ko %in% kn, .(pair, seat)]
+  m <- match(kn, ko); i_new <- which(!is.na(m)); i_old <- m[i_new]
+  cells <- rbindlist(lapply(cols, function(cl) {
+    a <- new[[cl]][i_new]; b <- old[[cl]][i_old]
+    if (cl %in% FEATS) {
+      a <- as.numeric(a); b <- as.numeric(b)
+      same <- (is.na(a) & is.na(b)) | (!is.na(a) & !is.na(b) & abs(a - b) <= 1e-9 * pmax(1, abs(b)))
+    } else {
+      a <- as.character(a); b <- as.character(b)
+      same <- (is.na(a) & is.na(b)) | (!is.na(a) & !is.na(b) & a == b)
+    }
+    j <- which(!same)
+    data.table(pair = new$pair[i_new][j], seat = new$seat[i_new][j], column = rep(cl, length(j)),
+               old = as.character(b[j]), new = as.character(a[j]))
+  }))
+  list(n_new = nrow(new), n_old = nrow(old), common = length(i_new),
+       only_new = only_new, only_old = only_old, cells = cells)
+}
 
 # ---- 2011: B01 straight from the zip, names from the geog_desc sheet --------
 read_2011 <- function(g) {
@@ -232,8 +343,8 @@ for (v in c("2016", "2021")) {
           skey = seat_key(sn$seat), label = sn$seat)[, (FEATS) := dn[, FEATS, with = FALSE]][], fill = TRUE)
   }
 }
-# Tas / ACT / NT state districts are out of scope here (Hare-Clark seats are named
-# after federal divisions and would collide with them); mainland states only.
+# Tas / ACT state districts are out of scope here (Hare-Clark seats are named
+# after federal divisions and would collide with them).
 GEO <- GEO[GEO$kind %in% c("ced", "ced04") | GEO$region %in% c("nsw", "vic", "qld", "sa", "wa", "nt")]
 dupg <- GEO[, .N, by = .(census, kind, region, skey)][N > 1]
 if (nrow(dupg)) { cat("CW2! duplicate geography keys, keeping first:\n"); print(dupg)
@@ -244,21 +355,73 @@ print(dcast(GEO[, .N, by = .(census, grp = ifelse(kind %in% c("ced", "ced04"), k
 # Federal counts must be the divisions: 150 in 2006/2011/2016, 151 in 2021.
 stopifnot(GEO[kind == "ced" & census %in% c("2006", "2011", "2016"), .N, by = census]$N == 150L)
 
-# ---- cells and the old file -------------------------------------------------
-OLD <- fread(file.path(OUT, "census-features.csv"), showProgress = FALSE)
+# ---- source B table: the 2016 census reaggregated onto later SED boundaries ----
+# One row per (boundary year, state, seat). The leading digit of final_code is the
+# state; seat names repeat across states (Murray, Albert Park), so the state is part
+# of the key. Rows with no code (the files' non-geographic remainder) are dropped.
+REAG <- rbindlist(lapply(sort(unique(REAG_FOR)), function(v) {
+  f <- file.path(CEN, sprintf("census-sed-2016-reaggregated-to-%s.csv", v))
+  d <- fread(f, showProgress = FALSE)
+  if (!all(c("final_code", "final_name") %in% names(d))) stop("CW2! ", f, " lacks final_code / final_name")
+  code <- as.character(d$final_code)
+  reg <- unname(REGION_OF[substr(code, 1, 1)])
+  keep <- !is.na(code) & nzchar(code) & reg %in% c("nsw", "vic", "qld", "sa", "wa")
+  d <- derive(d[keep])
+  data.table(bvint = v, region = reg[keep], skey = seat_key(d$final_name))[, (FEATS) := d[, FEATS, with = FALSE]][]
+}))
+dupr <- REAG[, .N, by = .(bvint, region, skey)][N > 1]
+if (nrow(dupr)) { cat("CW2! duplicate reaggregated keys, keeping first:\n"); print(dupr)
+  REAG <- REAG[!duplicated(REAG[, .(bvint, region, skey)])] }
+cat("CW2  2016 census reaggregated: seats per boundary year and state\n")
+print(dcast(REAG[, .N, by = .(bvint, region)], bvint ~ region, value.var = "N", fill = 0L))
+# For each key, the pair's own boundary year first, else the nearest other (earlier on
+# a tie) -- the retired builder's fill order, so its rows are reproduced.
+reag_rows <- function(p, keys) {
+  own <- REAG_FOR[[p]]
+  yr <- as.integer(sub("^[a-z]+", "", p))
+  rr <- REAG[REAG$region == region_of_pair[[p]]]
+  vy <- as.integer(rr$bvint)
+  rr <- rr[order(rr$bvint != own, abs(vy - yr), vy)]
+  hit <- rr[match(keys, rr$skey)]
+  hit[, own_bounds := !is.na(bvint) & bvint == own]
+  hit
+}
+
+# ---- cells ------------------------------------------------------------------
 CAND <- fread(file.path(OUT, "candidacies.csv"), showProgress = FALSE)
 PAIRS <- unique(c(vapply(all_election_pairs(), function(p) p$election, ""), "vic2010",
-                  unique(OLD$pair), names(NEW_DATES)))
-cells <- unique(rbindlist(list(
-  OLD[, .(pair, seat)],
-  unique(data.table(pair = CAND$election, seat = CAND$seat))[pair %in% PAIRS])))
-cells <- cells[pair %in% PAIRS]
+                  names(SAME_BOUNDS), names(NEW_DATES)))
+.cand_keep <- CAND$election %in% PAIRS
+cand_cells <- unique(data.table(pair = CAND$election[.cand_keep], seat = CAND$seat[.cand_keep]))
+# Predecessor: the most recent election of the same region strictly before this one.
+.el <- unique(CAND$election)
+.el_reg <- sub("[0-9]{4}$", "", .el)
+.el_yr <- suppressWarnings(as.integer(sub("^[a-z]+", "", .el)))
+prev_of <- vapply(PAIRS, function(p) {
+  ok <- .el_reg == sub("[0-9]{4}$", "", p) & is.finite(.el_yr) & .el_yr < as.integer(sub("^[a-z]+", "", p))
+  if (!any(ok)) NA_character_ else .el[ok][which.max(.el_yr[ok])]
+}, character(1))
+PRED_PAIRS <- c(names(REAG_FOR), grep("^fed", PAIRS, value = TRUE))
+prev_cells_for <- function(pp) rbindlist(lapply(pp[!is.na(prev_of[pp])], function(p)
+  data.table(pair = p, seat = CAND$seat[CAND$election == prev_of[[p]]])))
+cells <- unique(rbindlist(list(cand_cells, prev_cells_for(PRED_PAIRS))))
 cells[, skey := seat_key(seat)]
 cells <- cells[!duplicated(cells[, .(pair, skey)])]
-OLD[, skey := seat_key(seat)]
-OLD[, real_census := ifelse(grepl("^(vic|nsw|qld|sa|wa)", pair), "2016", as.character(vintage))]
-cat(sprintf("CW3  %d cells over %d pairs (old file: %d cells, %d pairs; vic2010 new)\n",
-            nrow(cells), uniqueN(cells$pair), nrow(OLD), uniqueN(OLD$pair)))
+if (!all(PAIRS %in% cells$pair)) stop("CW3! no contested seats in candidacies.csv for: ",
+                                      paste(setdiff(PAIRS, cells$pair), collapse = ", "))
+cat(sprintf("CW3  %d cells over %d pairs: contested seats, plus the previous election's seats for the %d pairs the retired builder covered\n",
+            nrow(cells), uniqueN(cells$pair), length(PRED_PAIRS)))
+# CW3b: what the other pairs would gain from the same rule (rows NOT written).
+.other <- setdiff(PAIRS, PRED_PAIRS)
+.gain <- prev_cells_for(.other)
+if (nrow(.gain)) {
+  .gain[, skey := seat_key(seat)]
+  .gk <- paste(.gain$pair, .gain$skey); .ck <- paste(cells$pair, cells$skey)
+  .g <- unique(.gain[!.gk %in% .ck], by = c("pair", "skey"))
+  cat(sprintf("CW3b %d previous-election seats have NO row under %d of the %d other pairs (abolished at a redistribution; not added, see header):\n",
+              nrow(.g), uniqueN(.g$pair), length(.other)))
+  if (nrow(.g)) print(.g[, .(n = .N, seats = paste(seat, collapse = ", ")), by = pair])
+}
 
 ED <- c(election_dates(setdiff(PAIRS, names(NEW_DATES))),
         stats::setNames(as.Date(NEW_DATES), names(NEW_DATES)))[PAIRS]
@@ -284,7 +447,6 @@ for (p in PAIRS) {
   G <- GEO[GEO$kind == gkind & GEO$region == greg, ]
   Gp <- G[G$census == y]
   exact_geo <- length(contested) > 0 && setequal(contested, Gp$skey)
-  o <- OLD[OLD$pair == p]
   n <- nrow(cp)
   cat(sprintf("CW3a %-8s preferred census %s (%s) | contested seats %3d, geography seats %3d, in both %3d | boundaries identical: %s\n",
               p, y, pc$why, length(contested), nrow(Gp), length(intersect(contested, Gp$skey)), exact_geo))
@@ -304,11 +466,19 @@ for (p in PAIRS) {
     i <- which(!is.na(m)); put(i, Gp[m[i]], y, TRUE,
       sprintf("%scensus %s %s, seat set identical to the election's (%d seats)", note_la(y, p), y, toupper(gkind), length(contested)))
   }
-  # B (state pairs, preferred census >= 2016): existing 2016-census reaggregated row
-  if (gkind == "sed" && as.integer(y) >= 2016) {
-    mo <- match(cp$skey, o$skey); i <- which(!done & !is.na(mo) & is.finite(o$yr12_pct[mo]))
-    if (length(i)) put(i, o[mo[i]], "2016", o$exact[mo[i]],
-      sprintf("census 2016 reaggregated onto election boundaries (existing file, old label %s); 2021 not reaggregated, so older census on exact boundaries -- not look-ahead", o$vintage[mo[i]]))
+  # B (state pairs in REAG_FOR, preferred census >= 2016): 2016 census reaggregated
+  if (gkind == "sed" && as.integer(y) >= 2016 && p %in% names(REAG_FOR)) {
+    b <- reag_rows(p, cp$skey)
+    i <- which(!done & !is.na(b$bvint) & is.finite(b$yr12_pct))
+    if (length(i)) {
+      own_i <- b$own_bounds[i]; ex_i <- own_i & (p %in% REAG_EXACT)
+      note_i <- ifelse(ex_i,
+        sprintf("census 2016 reaggregated onto election boundaries (ABS %s SED boundaries); 2021 not reaggregated, so older census on exact boundaries -- not look-ahead", b$bvint[i]),
+        ifelse(own_i,
+          sprintf("census 2016 reaggregated onto the ABS %s SED boundaries, matched by seat name (not recorded as this election's boundaries); 2021 not reaggregated -- not look-ahead", b$bvint[i]),
+          sprintf("census 2016 reaggregated onto the ABS %s SED boundaries, BORROWED: seat not in this election's own %s reaggregation, matched by name, boundaries differ -- not look-ahead", b$bvint[i], REAG_FOR[[p]])))
+      put(i, b[i], "2016", ex_i, note_i)
+    }
   }
   # C
   i <- which(!done & !is.na(m))
@@ -316,17 +486,12 @@ for (p in PAIRS) {
     sprintf("%scensus %s %s matched by seat name; boundaries differ from the election's%s", note_la(y, p), y, toupper(gkind),
             if (pc$why != "override" && !length(which(as.Date(CENSUS_DATE) < ED[[p]]))) "; no earlier census on disk" else ""))
   # D: nearest later census by name
-  later <- setdiff(names(CENSUS_DATE)[as.integer(names(CENSUS_DATE)) > as.integer(y)], character())
+  later <- names(CENSUS_DATE)[as.integer(names(CENSUS_DATE)) > as.integer(y)]
   for (ly in later) {
     Gl <- G[G$census == ly]; ml <- match(cp$skey, Gl$skey); i <- which(!done & !is.na(ml))
     if (length(i)) put(i, Gl[ml[i]], ly, FALSE,
       sprintf("%scensus %s %s matched by name: no match in the preferred %s census; nearest later census used", note_la(ly, p), ly, toupper(gkind), y))
   }
-  # E: existing row
-  mo <- match(cp$skey, o$skey); i <- which(!done & !is.na(mo) & is.finite(o$yr12_pct[mo]))
-  if (length(i)) put(i, o[mo[i]], o$real_census[mo[i]], FALSE,
-    sprintf("%sexisting census-features.csv row (census %s, old label %s); no census %s match",
-            vapply(o$real_census[mo[i]], function(v) note_la(v, p), ""), o$real_census[mo[i]], o$vintage[mo[i]], y))
   # F: federal seats only in the PREVIOUS election's set (abolished at the last
   # redistribution) can live only in the 2006 census on 2004 boundaries.
   if (gkind == "ced") {
@@ -354,63 +519,46 @@ if (any(vapply(FEATS, function(f) mean(is.finite(R[[f]])) == 0, logical(1)))) st
 cat("\nCW4b how rows were sourced (note text prefix):\n")
 print(R[, .N, by = .(src = sub("\\d{4}", "YYYY", substr(vintage_note, 1, 60)))][order(-N)])
 
-# ---- validation vs the old file ----------------------------------------------
-cat("\nCW5  PROOF OF VINTAGE CHOICE: polling day against census day (3 pairs, plus every fallback is flagged)\n")
+cat("\nCW5  PROOF OF VINTAGE CHOICE: polling day against census day (every fallback is flagged)\n")
 for (p in c("fed2007", "vic2010", "nsw2019", "fed2016", "nsw2011", "qld2012", "nt2016", "nt2024")) {
   y <- unique(R$pref[R$pair == p])
   cat(sprintf("CW5  %-8s polling day %s | census used %s taken %s | census before election: %s\n",
               p, format(ED[[p]]), y, CENSUS_DATE[[y]], as.Date(CENSUS_DATE[[y]]) < ED[[p]]))
 }
-cat("CW5  rows by vintage actually used, against the old file's real census year:\n")
-cmp <- merge(R[, c("pair", "seat", "vintage", FEATS), with = FALSE][, skey := seat_key(seat)],
-             OLD[, c("pair", "skey", "real_census", FEATS), with = FALSE],
-             by = c("pair", "skey"), suffixes = c("", "_old"))
-print(cmp[, .(rows = .N, new = paste(sort(unique(vintage)), collapse = "/"),
-              old = paste(sort(unique(real_census)), collapse = "/"),
-              changed_vintage = sum(vintage != real_census, na.rm = TRUE)), by = pair][order(pair)])
-chg <- cmp[!is.na(real_census) & !is.na(vintage) & vintage != real_census & is.finite(yr12_pct) & is.finite(yr12_pct_old)]
-cat(sprintf("\nCW6  where the census year changed (n = %d rows): per pair, correlation new vs old and mean (new - old)\n", nrow(chg)))
-cat("CW6  correlation near 1 = same ranking of seats; mean difference in percentage points (new minus old)\n")
-corr_tab <- rbindlist(lapply(FEATS, function(f) {
-  chg[, {
-    a <- get(f); b <- get(paste0(f, "_old")); ok <- is.finite(a) & is.finite(b)
-    .(feature = f, n = sum(ok), r = if (sum(ok) > 3) round(cor(a[ok], b[ok]), 3) else NA_real_,
-      mean_diff = round(mean(a[ok] - b[ok]), 2))
-  }, by = pair]
-}))
-print(dcast(corr_tab, pair ~ feature, value.var = "r")[order(pair)], nrows = 100)
-print(dcast(corr_tab, pair ~ feature, value.var = "mean_diff")[order(pair)], nrows = 100)
-cat("\nCW6  pooled over changed rows, per feature:\n")
-print(rbindlist(lapply(FEATS, function(f) {
-  a <- chg[[f]]; b <- chg[[paste0(f, "_old")]]; ok <- is.finite(a) & is.finite(b)
-  data.table(feature = f, n = sum(ok), r = round(cor(a[ok], b[ok]), 3),
-             mean_diff = round(mean(a[ok] - b[ok]), 2), sd_diff = round(sd(a[ok] - b[ok]), 2))
-})))
-# CW7: identical rows are suspicious if the census changed (an old row copied as new).
-same <- chg[, Reduce(`&`, lapply(FEATS, function(f) abs(get(f) - get(paste0(f, "_old"))) < 1e-9))]
-cat(sprintf("CW7  rows whose census year changed but whose features are byte-equal to the old row: %d (expect 0)\n", sum(same, na.rm = TRUE)))
 
 OUTCOLS <- c("pair", "seat", "vintage", "exact", FEATS, "vintage_note")
 # No census taken after polling day reaches the model (Pete, 2026-10-14): LOOKAHEAD rows are blanked.
 source(file.path("scripts", "blank_census_lookahead.R"))
 R <- blank_census_lookahead(R, "this build")
-# AFTER THE SWAP, output/census-features.csv IS the vintage file, so OLD above is no longer
-# the pre-vintage file and source B (reaggregated rows) would re-derive the existing pairs
-# from already-vintaged rows. AUSPOL_CENSUS_VINTAGE_BASE names a copy of the vintage file
-# as it stood: its pairs are kept VERBATIM and only pairs absent from it are taken from R.
-BASE_F <- Sys.getenv("AUSPOL_CENSUS_VINTAGE_BASE", "")
-if (nzchar(BASE_F)) {
-  BASE <- fread(BASE_F, showProgress = FALSE)
-  add <- R[!pair %in% BASE$pair, OUTCOLS, with = FALSE]
-  cat(sprintf("CW9  base %s: %d rows, %d pairs kept verbatim; %d rows for %d new pairs taken from this build\n",
-              BASE_F, nrow(BASE), uniqueN(BASE$pair), nrow(add), uniqueN(add$pair)))
-  # Textual append: the base file's bytes are copied as they are, never re-serialised.
-  file.copy(BASE_F, file.path(OUT, "census-features-vintage.csv"), overwrite = TRUE)
-  fwrite(add, file.path(OUT, "census-features-vintage.csv"), append = TRUE, col.names = FALSE)
-  R <- rbind(BASE[, OUTCOLS, with = FALSE], add)
-} else fwrite(R[, OUTCOLS, with = FALSE], file.path(OUT, "census-features-vintage.csv"))
-# The rows for the pairs added 2026-10-13, on their own, for merging into a main
-# checkout whose census-features-vintage.csv has the older pairs.
-fwrite(R[pair %in% names(NEW_DATES), c("pair", "seat", "vintage", "exact", FEATS, "vintage_note"), with = FALSE],
-       file.path(OUT, "census-features-vintage-newpairs.csv"))
-cat(sprintf("\nCW8  wrote %s/census-features-vintage.csv (%d rows)\n", OUT, nrow(R)))
+
+v7 <- exact_label_violations(R)
+cat(sprintf("CW7  rows whose note and exact flag disagree about the election's boundaries: %d (expect 0)\n", nrow(v7)))
+if (nrow(v7)) { print(v7[, .(pair, seat, exact, vintage_note)]); stop("CW7! boundary label and exact flag disagree") }
+v10 <- pre_census_violations(R, ED, min(as.Date(CENSUS_RELEASE)))
+cat(sprintf("CW10 pairs polled before the first census release on disk (%s): %s | carrying a census value: %s (expect none)\n",
+            min(CENSUS_RELEASE), paste(v10$early, collapse = ", "),
+            if (length(v10$bad)) paste(v10$bad, collapse = ", ") else "none"))
+if (length(v10$bad)) stop("CW10! a pair polled before any census was published carries census values: ",
+                          paste(v10$bad, collapse = ", "))
+
+# CW9: what this build changes against the table it replaces (or --compare).
+if (file.exists(COMPARE)) {
+  dd <- census_diff(R[, OUTCOLS, with = FALSE], fread(COMPARE, showProgress = FALSE))
+  cat(sprintf("\nCW9  against %s: rows %d (was %d), %d matched by (pair, seat), %d only in the new build, %d only in the old\n",
+              COMPARE, dd$n_new, dd$n_old, dd$common, nrow(dd$only_new), nrow(dd$only_old)))
+  if (nrow(dd$only_new)) print(dd$only_new[, .(n = .N, seats = paste(seat, collapse = ", ")), by = pair])
+  if (nrow(dd$only_old)) print(dd$only_old[, .(n = .N, seats = paste(seat, collapse = ", ")), by = pair])
+  cat(sprintf("CW9  cells that differ: %d\n", nrow(dd$cells)))
+  if (nrow(dd$cells)) {
+    print(dcast(dd$cells[, .N, by = .(pair, column)], pair ~ column, value.var = "N", fill = 0L), nrows = 100)
+    nn <- dd$cells[dd$cells$column != "vintage_note"]
+    cat(sprintf("CW9  every differing cell outside vintage_note (%d):\n", nrow(nn)))
+    if (nrow(nn)) print(nn, nrows = 500)
+    cat("CW9  vintage_note changes, old -> new text (pair counts):\n")
+    print(dd$cells[dd$cells$column == "vintage_note", .N, by = .(pair, old = substr(old, 1, 70), new = substr(new, 1, 90))], nrows = 100)
+  }
+} else cat(sprintf("\nCW9  no table at %s to compare against\n", COMPARE))
+
+dir.create(OUT_DIR, recursive = TRUE, showWarnings = FALSE)
+fwrite(R[, OUTCOLS, with = FALSE], file.path(OUT_DIR, "census-features.csv"))
+cat(sprintf("\nCW8  wrote %s (%d rows, %d pairs)\n", file.path(OUT_DIR, "census-features.csv"), nrow(R), uniqueN(R$pair)))
