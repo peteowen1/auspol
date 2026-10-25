@@ -101,8 +101,8 @@ postxgb_net_port <- function(x, adj_fun = .port_adj_memo) {
 # .seat_poll_memo_key(), so a cache over current_seat_predictions(net = TRUE)
 # cannot miss a rebuilt port input.
 .port_input_files <- function() {
-  c(file.path(election_data_path(), "fed-swing-transposed.csv"),
-    Sys.getenv("AUSPOL_SEAT_SWING_WA_FILE", file.path(election_data_path(), "fed-swing-transposed-wa.csv")),
+  c(election_data_path("fed-swing-transposed.csv"),
+    Sys.getenv("AUSPOL_SEAT_SWING_WA_FILE", election_data_path("fed-swing-transposed-wa.csv")),
     out_path(c("seat-tpp-estimates.csv", "xgb-primary-asat-predictions.csv", "forecasts.csv")),
     sort(list.files(out_path(), pattern = "^seat-swing-port-.*\\.csv$", full.names = TRUE)))
 }

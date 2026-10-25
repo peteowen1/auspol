@@ -147,9 +147,9 @@ seat_swing_port_wa_mode <- function(target_election) {
 #' @param target_election Label such as `"wa2025"`.
 #' @keywords internal
 seat_swing_port_fs <- function(target_election) {
-  fs <- data.table::fread(file.path(election_data_path(), "fed-swing-transposed.csv"), showProgress = FALSE)
+  fs <- data.table::fread(election_data_path("fed-swing-transposed.csv"), showProgress = FALSE)
   if (seat_swing_port_wa_mode(target_election) != "0") {
-    f <- Sys.getenv("AUSPOL_SEAT_SWING_WA_FILE", file.path(election_data_path(), "fed-swing-transposed-wa.csv"))
+    f <- Sys.getenv("AUSPOL_SEAT_SWING_WA_FILE", election_data_path("fed-swing-transposed-wa.csv"))
     if (!file.exists(f)) stop("AUSPOL_SEAT_SWING_PORT_WA is on but ", f, " does not exist; run scripts/transpose_fed_swing.R with TRANSPOSE_REGION=wa")
     fs <- data.table::rbindlist(list(fs, data.table::fread(f, showProgress = FALSE)), fill = TRUE)
   }
@@ -171,7 +171,7 @@ seat_swing_port_fs <- function(target_election) {
 #'   from [seat_swing_port_coef()]).
 #' @export
 seat_swing_port_table <- function(target_election, write = FALSE) {
-  src_fs <- file.path(election_data_path(), "fed-swing-transposed.csv")
+  src_fs <- election_data_path("fed-swing-transposed.csv")
   src_tp <- out_path("seat-tpp-estimates.csv")
   cache <- out_path(sprintf("seat-swing-port-%s.csv", target_election))
   if (file.exists(src_fs) && file.exists(src_tp)) {
