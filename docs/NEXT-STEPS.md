@@ -137,10 +137,8 @@ scoring each election x sqrt(votes). Leak fixes shipped: conserve, MP slopes, ce
   after): LEAVE-ONE-OUT but OFF at published flags, so any arm switching them on measures a leaked number:
   `fit_xgb_primary_sd.R:108` (`AUSPOL_XGB_PRIMARY_SD`), `fit_flow_drift.R` (`AUSPOL_FLOW_CELL_SD`),
   `fit_insurgency_risk.R:33` (`AUSPOL_INSURGENCY_SHRINK`), `party_positions(exclude=)` in `R/reentry_prior.R:288`,
-  `xgb-primary-v6-oof-predictions.csv` (static-cache arm). `state_swing_adjustment()` (R/state_swing_prior.R:73) has no caller: dead code (re-confirmed 23 Oct). Its signal
-  is now gone on 37 state-years too (DECISIONS 2026-10-23), so the variant route is closed. Pete to choose: delete
-  (`git rm` is blocked for the session, so he runs it) or keep as `@keywords internal`; either way `devtools::document()`
-  and the full `check_like_ci.R` after.
+  `xgb-primary-v6-oof-predictions.csv` (static-cache arm). (`state_swing_adjustment()`, dead code: DELETED 25 Oct on
+  Pete's yes, DECISIONS.)
 - OPEN (lead, NOT a result) sitting non-major members (Sonnet, 16 Oct; scratchpad `minor-mp/`): published-path
   signed error +0.36 pts, SE 1.11, n 84 sitting minor/IND members in 29 elections: no overall over-call. Hints only:
   falling own vote -3.8 (SE 3.9, n 9); trend slope +0.26 (SE 0.17); **leader-seat bonus on a sitting minor member
@@ -332,8 +330,7 @@ mode everywhere, time-forward folds, registry classified, zero-placeholder
 audit, smoke loop + as-at cache + `tidy_output.R`, `out_path()`.
 
 Still open:
-- NB 23 Oct: neither branch below exists any more; only the commits b21fb77 and ae91f62 survive (unreferenced, so
-  `git gc` can drop them). Pete: recreate the branch to keep the work, or let it go.
+- Both branches below RECREATED 25 Oct on Pete's yes (local only, not pushed).
 - Branch `fed-timing-resume-fixed` (b21fb77, unmerged, NOT through the review gate or `check_like_ci`): fixes
   the federal `PARTY_COR` loop leak (a full fed run simulates every pair with the LAST pair's matrix; dormant
   at published defaults because `AUSPOL_FORECAST_MODE=1` skips the matrix; live for fed with FORECAST_MODE=0),
@@ -366,8 +363,9 @@ Still open:
   seat-boundary matching (`external/reference/boundaries/` has CED 2016).
 - GDELT parked (needs a GCP project); Census 2006/2001 have no bulk pack.
 - OPEN: ITG page: a seat map (regions are in the JSON now), per-seat cards, a forecast-over-time chart.
-- Provisional candidate list (`output/candidacies.csv`, ABC + Wikipedia, uploaded to the `shipped-models`
-  release): LDP (4 rows) is classed OTH, probably OTH_RIGHT; confirm.
+- OPEN: bare "LDP" -> OTH_RIGHT is in `classify_party()` (Pete, 25 Oct; 47 fed2007 + 4 vic2026 rows). Takes effect
+  only after `build_candidacies.R` reruns and `candidacies.csv` is re-uploaded to `shipped-models`; fed2007 needs a
+  screen (`quick_arm.R --pairs=fed2007`) after that rebuild.
 
 ## Awaiting Pete
 
