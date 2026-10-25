@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (240 switches from `published_flags.R`, 7 entry points)
+## Switch parity (241 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -110,7 +110,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_HONOUR_DEPARTED` | yes | yes | yes | yes | yes | yes | yes |  |
 | `AUSPOL_HTV_EXCLUDE` | NO | NO | NO | NO | NO | NO | NO | htv_flow.R |
 | `AUSPOL_HTV_FLOW` | yes | yes | yes | yes | yes | yes | yes | htv_flow.R |
-| `AUSPOL_IND_MIXTURE` | NO | NO | NO | NO | NO | NO | NO | ind_mixture.R, new_ind_shrink.R |
+| `AUSPOL_IND_MIXTURE` | NO | NO | NO | NO | NO | NO | NO | ind_mixture.R, new_ind_shrink.R, surge_level.R |
 | `AUSPOL_IND_PERSON` | NO | NO | NO | NO | NO | NO | NO | ind_person.R, new_ind_shrink.R |
 | `AUSPOL_IND_PERSON_CARRY` | NO | NO | NO | NO | NO | NO | NO | ind_person.R |
 | `AUSPOL_IND_PERSON_DIR` | NO | NO | NO | NO | NO | NO | NO | ind_person.R |
@@ -235,6 +235,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_SURGE_FROM_ZERO` | yes | yes | yes | yes | yes | yes | NO |  |
 | `AUSPOL_SURGE_H` | yes | yes | yes | yes | yes | yes | yes |  |
 | `AUSPOL_SURGE_H_TF` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_SURGE_LEVEL` | NO | NO | NO | NO | NO | NO | NO | seat_sim.R, surge_level.R |
 | `AUSPOL_SURGE_RECIPIENT` | yes | yes | yes | yes | yes | yes | NO |  |
 | `AUSPOL_SURGE_SCALE` | yes | yes | yes | yes | yes | yes | NO |  |
 | `AUSPOL_SURGE_SOURCE` | NO | NO | NO | NO | NO | NO | NO | party_surge.R, salience_screen.R |
@@ -274,7 +275,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_XGB_SEATPREV_NAFILL` | NO | NO | NO | NO | NO | NO | NO | xgb_primary_override.R |
 | `AUSPOL_XGB_SEED` | NO | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_XGB_SENATE` | NO | NO | NO | NO | NO | NO | NO | xgb_primary_override.R |
-| `AUSPOL_XGB_SURGE` | NO | yes | yes | yes | yes | yes | yes | xgb_surge_override.R |
+| `AUSPOL_XGB_SURGE` | NO | yes | yes | yes | yes | yes | yes | surge_level.R, xgb_surge_override.R |
 | `AUSPOL_XGB_SURGE_SRC` | NO | NO | NO | NO | NO | NO | NO | xgb_surge_override.R |
 | `AUSPOL_ZERO_ABSENT` | NO | NO | NO | NO | NO | NO | NO | zero_absent.R |
 
@@ -450,6 +451,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_STATE_POLL_POOL`** (**adopted, shared-function wiring**): SHIPPED v60 2026-10-02 (Pete overrode the prereg clause). FEDERAL-HARNESS-ONLY by design: pools a state signal from seat polls before the seat-poll blend (R/state_poll_pool.R); published_flags.R states 'federal harness only'. Only backtest_candidate_fed.R calls it.
 - **`AUSPOL_SURGE_FROM_ZERO`** (intentional / dead experiment): WA has no candidate-level salience corpus -- same exclusion as AUSPOL_SALIENCE_EXPECTED, intentional.
 - **`AUSPOL_SURGE_H_TF`** (**adopted, shared-function wiring**): SHIPPED 2026-10-18 as a leak fix, TRAINING-ONLY by design: read in scripts/fit_xgb_primary_v6.R, which builds the xgb training features (stage 3). Harnesses and fit_seats_full.R were already time-forward.
+- **`AUSPOL_SURGE_LEVEL`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: the default of simulate_seat_contests(surge_level = surge_level_on()) (R/surge_level.R), so every harness, NT and fit_seats_full.R honour it with no call-site argument; the C++ core takes it as an argument. 'NO' in the harness columns is the grep, not a gap. plans/prereg-surge-level-2026-10-25.md
 - **`AUSPOL_SURGE_RECIPIENT`** (**OPEN GAP**): OPEN GAP in WA, part of the AUSPOL_SALIENCE_SURGE_V2 gap below: WA has no surge-v2 hazard, so it has no recipient step to switch. Read directly in fit_seats_full.R and the other five harnesses; no R/ function reads it. The old WA 'yes' was a comment.
 - **`AUSPOL_SURGE_SCALE`** (**OPEN GAP**): OPEN GAP in WA, part of the AUSPOL_SALIENCE_SURGE_V2 gap below: no surge-v2 hazard in WA, so nothing to scale. Read directly in fit_seats_full.R and the other five harnesses; no R/ function reads it. The old WA 'yes' was a comment.
 - **`AUSPOL_SURGE_SOURCE`** (intentional / dead experiment): UNIVERSAL via R/: read inside surging_parties() (R/party_surge.R), which every harness reaches through salience_permit_for() and fit_xgb_primary_v4/v6.R reach directly, so the per-harness greps cannot see it. Published "actual" LEAKS and is being replaced (plans/prereg-surge-flag-time-forward-2026-10-15.md); fit_seats_full.R already behaves as "none" because vic2026 has no votes.
@@ -532,4 +534,4 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR2  every non-universal switch (211 of 240) has a recorded classification.
+MR2  every non-universal switch (212 of 241) has a recorded classification.

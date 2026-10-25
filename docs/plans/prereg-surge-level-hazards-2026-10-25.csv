@@ -1,0 +1,1701 @@
+pair,seat,surge_h
+fed2016,Adelaide,0.03627
+fed2016,Aston,0.01351
+fed2016,Ballarat,0.02125
+fed2016,Banks,0.01167
+fed2016,Barker,0.02145
+fed2016,Barton,0.02343
+fed2016,Bass,0.01331
+fed2016,Batman,0.01771
+fed2016,Bendigo,0.01152
+fed2016,Bennelong,0.02125
+fed2016,Berowra,0.02017
+fed2016,Blair,0.01178
+fed2016,Blaxland,0.01316
+fed2016,Bonner,0.01132
+fed2016,Boothby,0.01687
+fed2016,Bowman,0.01259
+fed2016,Braddon,0.006641
+fed2016,Bradfield,0.0114
+fed2016,Brand,0.006641
+fed2016,Brisbane,0.01085
+fed2016,Bruce,0.009713
+fed2016,Burt,0.01888
+fed2016,Calare,0.02057
+fed2016,Calwell,0.0114
+fed2016,Canberra,0.006443
+fed2016,Canning,0.0137
+fed2016,Capricornia,0.0114
+fed2016,Casey,0.01186
+fed2016,Chifley,0.01484
+fed2016,Chisholm,0.01123
+fed2016,Cook,0.0173
+fed2016,Corangamite,0.02435
+fed2016,Corio,0.01229
+fed2016,Cowan,0.01525
+fed2016,Cowper,0.0114
+fed2016,Cunningham,0.008259
+fed2016,Curtin,0.0114
+fed2016,Dawson,0.01361
+fed2016,Deakin,0.01643
+fed2016,Denison,0.04815
+fed2016,Dickson,0.01454
+fed2016,Dobell,0.02901
+fed2016,Dunkley,0.01183
+fed2016,Durack,0.00834
+fed2016,Eden-Monaro,0.03436
+fed2016,Fadden,0.006795
+fed2016,Fairfax,0.02191
+fed2016,Farrer,0.01241
+fed2016,Fenner,0.0332
+fed2016,Fisher,0.01213
+fed2016,Flinders,0.01178
+fed2016,Flynn,0.01959
+fed2016,Forde,0.01273
+fed2016,Forrest,0.0114
+fed2016,Fowler,0.007769
+fed2016,Franklin,0.009004
+fed2016,Fremantle,0.0133
+fed2016,Gellibrand,0.01597
+fed2016,Gilmore,0.01711
+fed2016,Gippsland,0.01208
+fed2016,Goldstein,0.007982
+fed2016,Gorton,0.005659
+fed2016,Grayndler,0.01736
+fed2016,Greenway,0.0171
+fed2016,Grey,0.01226
+fed2016,Griffith,0.01164
+fed2016,Groom,0.0114
+fed2016,Hasluck,0.006641
+fed2016,Herbert,0.006641
+fed2016,Higgins,0.02283
+fed2016,Hindmarsh,0.0114
+fed2016,Hinkler,0.01165
+fed2016,Holt,0.006641
+fed2016,Hotham,0.006641
+fed2016,Hughes,0.01321
+fed2016,Hume,0.006885
+fed2016,Hunter,0.0114
+fed2016,Indi,0.04796
+fed2016,Isaacs,0.01404
+fed2016,Jagajaga,0.01563
+fed2016,Kennedy,0.01848
+fed2016,Kingsford Smith,0.01189
+fed2016,Kingston,0.0114
+fed2016,Kooyong,0.03741
+fed2016,Lalor,0.006798
+fed2016,La Trobe,0.01189
+fed2016,Leichhardt,0.02125
+fed2016,Lilley,0.01376
+fed2016,Lindsay,0.016
+fed2016,Lingiari,0.01189
+fed2016,Longman,0.02899
+fed2016,Lyne,0.01387
+fed2016,Lyons,0.006641
+fed2016,Macarthur,0.01219
+fed2016,Mackellar,0.01562
+fed2016,Macquarie,0.009969
+fed2016,Makin,0.0332
+fed2016,Mallee,0.006732
+fed2016,Maranoa,0.006641
+fed2016,Maribyrnong,0.01629
+fed2016,Mayo,0.03103
+fed2016,McEwen,0.01825
+fed2016,McMahon,0.01273
+fed2016,McMillan,0.007006
+fed2016,McPherson,0.03854
+fed2016,Melbourne,0.01613
+fed2016,Melbourne Ports,0.02449
+fed2016,Menzies,0.03219
+fed2016,Mitchell,0.006318
+fed2016,Moncrieff,0.006641
+fed2016,Moore,0.009129
+fed2016,Moreton,0.0114
+fed2016,Murray,0.02198
+fed2016,Newcastle,0.02004
+fed2016,New England,0.0724
+fed2016,North Sydney,0.02973
+fed2016,O'Connor,0.008545
+fed2016,Oxley,0.006641
+fed2016,Page,0.01386
+fed2016,Parkes,0.01139
+fed2016,Parramatta,0.01185
+fed2016,Paterson,0.01055
+fed2016,Pearce,0.006641
+fed2016,Perth,0.01407
+fed2016,Petrie,0.01243
+fed2016,Port Adelaide,0.01865
+fed2016,Rankin,0.006641
+fed2016,Reid,0.01437
+fed2016,Richmond,0.009457
+fed2016,Riverina,0.0114
+fed2016,Robertson,0.01556
+fed2016,Ryan,0.006641
+fed2016,Scullin,0.006443
+fed2016,Shortland,0.006641
+fed2016,Solomon,0.01825
+fed2016,Stirling,0.01153
+fed2016,Sturt,0.0114
+fed2016,Swan,0.006459
+fed2016,Sydney,0.01621
+fed2016,Tangney,0.01194
+fed2016,Wakefield,0.01736
+fed2016,Wannon,0.0114
+fed2016,Warringah,0.0488
+fed2016,Watson,0.01513
+fed2016,Wentworth,0.01772
+fed2016,Werriwa,0.01341
+fed2016,Whitlam,0.01662
+fed2016,Wide Bay,0.006641
+fed2016,Wills,0.03006
+fed2016,Wright,0.007038
+fed2019,Adelaide,0.007372
+fed2019,Aston,0.005354
+fed2019,Ballarat,0.01909
+fed2019,Banks,0.005197
+fed2019,Barker,0.02026
+fed2019,Barton,0.009617
+fed2019,Bass,0.01805
+fed2019,Bean,0.03153
+fed2019,Bendigo,0.005274
+fed2019,Bennelong,0.005465
+fed2019,Berowra,0.01648
+fed2019,Blair,0.01054
+fed2019,Blaxland,0.004963
+fed2019,Bonner,0.005388
+fed2019,Boothby,0.05222
+fed2019,Bowman,0.01426
+fed2019,Braddon,0.008336
+fed2019,Bradfield,0.01481
+fed2019,Brand,0.004963
+fed2019,Brisbane,0.007503
+fed2019,Bruce,0.004963
+fed2019,Burt,0.008336
+fed2019,Calare,0.006593
+fed2019,Calwell,0.005522
+fed2019,Canberra,0.03153
+fed2019,Canning,0.004963
+fed2019,Capricornia,0.008954
+fed2019,Casey,0.008725
+fed2019,Chifley,0.008654
+fed2019,Chisholm,0.01805
+fed2019,Clark,0.00657
+fed2019,Cook,0.00552
+fed2019,Cooper,0.01244
+fed2019,Corangamite,0.01217
+fed2019,Corio,0.004963
+fed2019,Cowan,0.01651
+fed2019,Cowper,0.03217
+fed2019,Cunningham,0.004963
+fed2019,Curtin,0.03257
+fed2019,Dawson,0.009609
+fed2019,Deakin,0.008336
+fed2019,Dickson,0.008778
+fed2019,Dobell,0.008752
+fed2019,Dunkley,0.005452
+fed2019,Durack,0.004963
+fed2019,Eden-Monaro,0.009334
+fed2019,Fadden,0.004963
+fed2019,Fairfax,0.02118
+fed2019,Farrer,0.03901
+fed2019,Fenner,0.01185
+fed2019,Fisher,0.005523
+fed2019,Flinders,0.01981
+fed2019,Flynn,0.02023
+fed2019,Forde,0.006016
+fed2019,Forrest,0.009926
+fed2019,Fowler,0.004963
+fed2019,Franklin,0.00827
+fed2019,Fraser,0.01027
+fed2019,Fremantle,0.004963
+fed2019,Gellibrand,0.005788
+fed2019,Gilmore,0.01079
+fed2019,Gippsland,0.009227
+fed2019,Goldstein,0.02613
+fed2019,Gorton,0.008336
+fed2019,Grayndler,0.004963
+fed2019,Greenway,0.005273
+fed2019,Grey,0.02023
+fed2019,Griffith,0.005212
+fed2019,Groom,0.006277
+fed2019,Hasluck,0.004963
+fed2019,Herbert,0.01895
+fed2019,Higgins,0.01477
+fed2019,Hindmarsh,0.007891
+fed2019,Hinkler,0.008847
+fed2019,Holt,0.004963
+fed2019,Hotham,0.004963
+fed2019,Hughes,0.01805
+fed2019,Hume,0.008336
+fed2019,Hunter,0.01529
+fed2019,Indi,0.09881
+fed2019,Isaacs,0.004963
+fed2019,Jagajaga,0.01079
+fed2019,Kennedy,0.004963
+fed2019,Kingsford Smith,0.004963
+fed2019,Kingston,0.008423
+fed2019,Kooyong,0.03825
+fed2019,Lalor,0.01519
+fed2019,La Trobe,0.01055
+fed2019,Leichhardt,0.01054
+fed2019,Lilley,0.005263
+fed2019,Lindsay,0.008897
+fed2019,Lingiari,0.01213
+fed2019,Longman,0.005337
+fed2019,Lyne,0.01182
+fed2019,Lyons,0.005512
+fed2019,Macarthur,0.00556
+fed2019,Mackellar,0.03689
+fed2019,Macnamara,0.01805
+fed2019,Macquarie,0.004963
+fed2019,Makin,0.008864
+fed2019,Mallee,0.01805
+fed2019,Maranoa,0.004963
+fed2019,Maribyrnong,0.007418
+fed2019,Mayo,0.04222
+fed2019,McEwen,0.009045
+fed2019,McMahon,0.005245
+fed2019,McPherson,0.009523
+fed2019,Melbourne,0.02398
+fed2019,Menzies,0.006263
+fed2019,Mitchell,0.004963
+fed2019,Monash,0.01805
+fed2019,Moncrieff,0.004963
+fed2019,Moore,0.008336
+fed2019,Moreton,0.005753
+fed2019,Newcastle,0.005941
+fed2019,New England,0.07696
+fed2019,Nicholls,0.01244
+fed2019,North Sydney,0.01001
+fed2019,O'Connor,0.004963
+fed2019,Oxley,0.004963
+fed2019,Page,0.02138
+fed2019,Parkes,0.01488
+fed2019,Parramatta,0.00536
+fed2019,Paterson,0.004963
+fed2019,Pearce,0.01805
+fed2019,Perth,0.004963
+fed2019,Petrie,0.004963
+fed2019,Rankin,0.009264
+fed2019,Reid,0.004963
+fed2019,Richmond,0.008336
+fed2019,Riverina,0.0118
+fed2019,Robertson,0.01969
+fed2019,Ryan,0.004963
+fed2019,Scullin,0.008336
+fed2019,Shortland,0.004963
+fed2019,Solomon,0.009143
+fed2019,Spence,0.008336
+fed2019,Stirling,0.00538
+fed2019,Sturt,0.03489
+fed2019,Swan,0.004963
+fed2019,Sydney,0.004963
+fed2019,Tangney,0.012
+fed2019,Wannon,0.04237
+fed2019,Warringah,0.06436
+fed2019,Watson,0.004963
+fed2019,Wentworth,0.008634
+fed2019,Werriwa,0.008336
+fed2019,Whitlam,0.004963
+fed2019,Wide Bay,0.008336
+fed2019,Wills,0.006626
+fed2019,Wright,0.008336
+fed2022,Adelaide,0.002034
+fed2022,Aston,0.002875
+fed2022,Ballarat,0.03401
+fed2022,Banks,0.002034
+fed2022,Barker,0.02102
+fed2022,Barton,0.002034
+fed2022,Bass,0.008243
+fed2022,Bean,0.03532
+fed2022,Bendigo,0.0527
+fed2022,Bennelong,0.01033
+fed2022,Berowra,0.02774
+fed2022,Blair,0.00282
+fed2022,Blaxland,0.002034
+fed2022,Bonner,0.002034
+fed2022,Boothby,0.06579
+fed2022,Bowman,0.002034
+fed2022,Braddon,0.02421
+fed2022,Bradfield,0.0527
+fed2022,Brand,0.002034
+fed2022,Brisbane,0.005879
+fed2022,Bruce,0.002034
+fed2022,Burt,0.002178
+fed2022,Calare,0.06646
+fed2022,Calwell,0.002034
+fed2022,Canberra,0.05848
+fed2022,Canning,0.06534
+fed2022,Capricornia,0.005809
+fed2022,Casey,0.05375
+fed2022,Chifley,0.005709
+fed2022,Chisholm,0.04963
+fed2022,Clark,0.1156
+fed2022,Cook,0.002034
+fed2022,Cooper,0.002481
+fed2022,Corangamite,0.006135
+fed2022,Corio,0.009455
+fed2022,Cowan,0.002034
+fed2022,Cowper,0.06707
+fed2022,Cunningham,0.002578
+fed2022,Curtin,0.1033
+fed2022,Dawson,0.02521
+fed2022,Deakin,0.05723
+fed2022,Dickson,0.02044
+fed2022,Dobell,0.007963
+fed2022,Dunkley,0.03285
+fed2022,Durack,0.002034
+fed2022,Eden-Monaro,0.01431
+fed2022,Fadden,0.01808
+fed2022,Fairfax,0.06633
+fed2022,Farrer,0.01706
+fed2022,Fenner,0.002034
+fed2022,Fisher,0.01108
+fed2022,Flinders,0.06137
+fed2022,Flynn,0.006387
+fed2022,Forde,0.005482
+fed2022,Forrest,0.002185
+fed2022,Fowler,0.07485
+fed2022,Franklin,0.002034
+fed2022,Fraser,0.002748
+fed2022,Fremantle,0.002034
+fed2022,Gellibrand,0.002034
+fed2022,Gilmore,0.06238
+fed2022,Gippsland,0.002399
+fed2022,Goldstein,0.08269
+fed2022,Gorton,0.008702
+fed2022,Grayndler,0.005633
+fed2022,Greenway,0.006761
+fed2022,Grey,0.02649
+fed2022,Griffith,0.009243
+fed2022,Groom,0.01239
+fed2022,Hasluck,0.01445
+fed2022,Hawke,0.01808
+fed2022,Herbert,0.005482
+fed2022,Higgins,0.02015
+fed2022,Hindmarsh,0.002034
+fed2022,Hinkler,0.06765
+fed2022,Holt,0.005482
+fed2022,Hotham,0.002034
+fed2022,Hughes,0.06703
+fed2022,Hume,0.07883
+fed2022,Hunter,0.006694
+fed2022,Indi,0.1341
+fed2022,Isaacs,0.002034
+fed2022,Jagajaga,0.02928
+fed2022,Kennedy,0.009126
+fed2022,Kingsford Smith,0.002034
+fed2022,Kingston,0.01153
+fed2022,Kooyong,0.1338
+fed2022,Lalor,0.005482
+fed2022,La Trobe,0.004874
+fed2022,Leichhardt,0.004551
+fed2022,Lilley,0.002034
+fed2022,Lindsay,0.007851
+fed2022,Lingiari,0.006895
+fed2022,Longman,0.002034
+fed2022,Lyne,0.02353
+fed2022,Lyons,0.004292
+fed2022,Macarthur,0.002034
+fed2022,Mackellar,0.1291
+fed2022,Macnamara,0.04166
+fed2022,Macquarie,0.009455
+fed2022,Makin,0.002034
+fed2022,Mallee,0.09534
+fed2022,Maranoa,0.01069
+fed2022,Maribyrnong,0.03117
+fed2022,Mayo,0.06521
+fed2022,McEwen,0.004671
+fed2022,McMahon,0.002034
+fed2022,McPherson,0.002233
+fed2022,Melbourne,0.06711
+fed2022,Menzies,0.002034
+fed2022,Mitchell,0.004787
+fed2022,Monash,0.05798
+fed2022,Moncrieff,0.004622
+fed2022,Moore,0.01025
+fed2022,Moreton,0.006918
+fed2022,Newcastle,0.002034
+fed2022,New England,0.05308
+fed2022,Nicholls,0.09152
+fed2022,North Sydney,0.08531
+fed2022,O'Connor,0.002034
+fed2022,Oxley,0.002034
+fed2022,Page,0.04199
+fed2022,Parkes,0.007974
+fed2022,Parramatta,0.005482
+fed2022,Paterson,0.002034
+fed2022,Pearce,0.002195
+fed2022,Perth,0.005046
+fed2022,Petrie,0.01264
+fed2022,Rankin,0.002034
+fed2022,Reid,0.0439
+fed2022,Richmond,0.02472
+fed2022,Riverina,0.005482
+fed2022,Robertson,0.005705
+fed2022,Ryan,0.003389
+fed2022,Scullin,0.002229
+fed2022,Shortland,0.006761
+fed2022,Solomon,0.002627
+fed2022,Spence,0.002699
+fed2022,Sturt,0.007765
+fed2022,Swan,0.004281
+fed2022,Sydney,0.006403
+fed2022,Tangney,0.01159
+fed2022,Wannon,0.08756
+fed2022,Warringah,0.2105
+fed2022,Watson,0.002034
+fed2022,Wentworth,0.327
+fed2022,Werriwa,0.007611
+fed2022,Whitlam,0.002034
+fed2022,Wide Bay,0.03637
+fed2022,Wills,0.007373
+fed2022,Wright,0.002691
+fed2025,Adelaide,0.01023
+fed2025,Aston,0.04495
+fed2025,Ballarat,0.05436
+fed2025,Banks,0.003828
+fed2025,Barker,0.00483
+fed2025,Barton,0.001021
+fed2025,Bass,0.01598
+fed2025,Bean,0.1436
+fed2025,Bendigo,0.02787
+fed2025,Bennelong,0.001021
+fed2025,Berowra,0.09669
+fed2025,Blair,0.001021
+fed2025,Blaxland,0.02714
+fed2025,Bonner,0.001021
+fed2025,Boothby,0.001465
+fed2025,Bowman,0.003828
+fed2025,Braddon,0.03365
+fed2025,Bradfield,0.1853
+fed2025,Brand,0.0009827
+fed2025,Brisbane,0.008919
+fed2025,Bruce,0.003781
+fed2025,Bullwinkel,0.001171
+fed2025,Burt,0.01478
+fed2025,Calare,0.09142
+fed2025,Calwell,0.01478
+fed2025,Canberra,0.09779
+fed2025,Canning,0.001115
+fed2025,Capricornia,0.001202
+fed2025,Casey,0.04798
+fed2025,Chifley,0.01938
+fed2025,Chisholm,0.04033
+fed2025,Clark,0.1416
+fed2025,Cook,0.00203
+fed2025,Cooper,0.001161
+fed2025,Corangamite,0.01478
+fed2025,Corio,0.01478
+fed2025,Cowan,0.003828
+fed2025,Cowper,0.126
+fed2025,Cunningham,0.00161
+fed2025,Curtin,0.1688
+fed2025,Dawson,0.001021
+fed2025,Deakin,0.06209
+fed2025,Dickson,0.1174
+fed2025,Dobell,0.003009
+fed2025,Dunkley,0.01777
+fed2025,Durack,0.001021
+fed2025,Eden-Monaro,0.02984
+fed2025,Fadden,0.004087
+fed2025,Fairfax,0.008634
+fed2025,Farrer,0.02833
+fed2025,Fenner,0.007367
+fed2025,Fisher,0.03601
+fed2025,Flinders,0.1932
+fed2025,Flynn,0.006148
+fed2025,Forde,0.004454
+fed2025,Forrest,0.08322
+fed2025,Fowler,0.1622
+fed2025,Franklin,0.08138
+fed2025,Fraser,0.005394
+fed2025,Fremantle,0.09298
+fed2025,Gellibrand,0.001021
+fed2025,Gilmore,0.04383
+fed2025,Gippsland,0.002091
+fed2025,Goldstein,0.1767
+fed2025,Gorton,0.001154
+fed2025,Grayndler,0.06821
+fed2025,Greenway,0.005461
+fed2025,Grey,0.06421
+fed2025,Griffith,0.00895
+fed2025,Groom,0.05674
+fed2025,Hasluck,0.001216
+fed2025,Hawke,0.001498
+fed2025,Herbert,0.001254
+fed2025,Hindmarsh,0.003828
+fed2025,Hinkler,0.007178
+fed2025,Holt,0.001181
+fed2025,Hotham,0.01629
+fed2025,Hughes,0.006448
+fed2025,Hume,0.07631
+fed2025,Hunter,0.05219
+fed2025,Indi,0.1411
+fed2025,Isaacs,0.001021
+fed2025,Jagajaga,0.06163
+fed2025,Kennedy,0.01161
+fed2025,Kingsford Smith,0.03601
+fed2025,Kingston,0.003001
+fed2025,Kooyong,0.2244
+fed2025,Lalor,0.004004
+fed2025,La Trobe,0.001021
+fed2025,Leichhardt,0.003828
+fed2025,Lilley,0.001307
+fed2025,Lindsay,0.003828
+fed2025,Lingiari,0.001178
+fed2025,Longman,0.001021
+fed2025,Lyne,0.07514
+fed2025,Lyons,0.003829
+fed2025,Macarthur,0.003976
+fed2025,Mackellar,0.2211
+fed2025,Macnamara,0.07262
+fed2025,Macquarie,0.001021
+fed2025,Makin,0.007367
+fed2025,Mallee,0.00184
+fed2025,Maranoa,0.003976
+fed2025,Maribyrnong,0.001084
+fed2025,Mayo,0.1024
+fed2025,McEwen,0.001021
+fed2025,McMahon,0.03601
+fed2025,McPherson,0.006363
+fed2025,Melbourne,0.09559
+fed2025,Menzies,0.03601
+fed2025,Mitchell,0.001021
+fed2025,Monash,0.1037
+fed2025,Moncrieff,0.01478
+fed2025,Moore,0.01478
+fed2025,Moreton,0.00202
+fed2025,Newcastle,0.002905
+fed2025,New England,0.02244
+fed2025,Nicholls,0.003505
+fed2025,O'Connor,0.001021
+fed2025,Oxley,0.001021
+fed2025,Page,0.02756
+fed2025,Parkes,0.01665
+fed2025,Parramatta,0.004715
+fed2025,Paterson,0.03601
+fed2025,Pearce,0.00101
+fed2025,Perth,0.001072
+fed2025,Petrie,0.001021
+fed2025,Rankin,0.001021
+fed2025,Reid,0.004607
+fed2025,Richmond,0.01185
+fed2025,Riverina,0.01684
+fed2025,Robertson,0.003828
+fed2025,Ryan,0.002139
+fed2025,Scullin,0.001021
+fed2025,Shortland,0.004328
+fed2025,Solomon,0.03019
+fed2025,Spence,0.008922
+fed2025,Sturt,0.06066
+fed2025,Swan,0.001021
+fed2025,Sydney,0.007297
+fed2025,Tangney,0.001021
+fed2025,Wannon,0.1724
+fed2025,Warringah,0.1902
+fed2025,Watson,0.01478
+fed2025,Wentworth,0.1907
+fed2025,Werriwa,0.003828
+fed2025,Whitlam,0.06953
+fed2025,Wide Bay,0.005403
+fed2025,Wills,0.008023
+fed2025,Wright,0.00135
+nsw2015,Albury,0.009689
+nsw2015,Auburn,0.01458
+nsw2015,Ballina,0.01312
+nsw2015,Balmain,0.01208
+nsw2015,Bankstown,0.01701
+nsw2015,Barwon,0.0114
+nsw2015,Bathurst,0.007692
+nsw2015,Baulkham Hills,0.006161
+nsw2015,Bega,0.007429
+nsw2015,Blacktown,0.007611
+nsw2015,Blue Mountains,0.01778
+nsw2015,Cabramatta,0.006641
+nsw2015,Camden,0.006339
+nsw2015,Campbelltown,0.007558
+nsw2015,Canterbury,0.01982
+nsw2015,Castle Hill,0.007254
+nsw2015,Cessnock,0.014
+nsw2015,Charlestown,0.01483
+nsw2015,Clarence,0.01767
+nsw2015,Coffs Harbour,0.007701
+nsw2015,Coogee,0.007415
+nsw2015,Cootamundra,0.008272
+nsw2015,Cronulla,0.007207
+nsw2015,Davidson,0.007196
+nsw2015,Drummoyne,0.007912
+nsw2015,Dubbo,0.02538
+nsw2015,East Hills,0.007768
+nsw2015,Epping,0.01219
+nsw2015,Fairfield,0.008333
+nsw2015,Gosford,0.02566
+nsw2015,Goulburn,0.008365
+nsw2015,Granville,0.01476
+nsw2015,Hawkesbury,0.0114
+nsw2015,Heathcote,0.0133
+nsw2015,Heffron,0.007488
+nsw2015,Holsworthy,0.0114
+nsw2015,Hornsby,0.02097
+nsw2015,Keira,0.008252
+nsw2015,Kiama,0.009526
+nsw2015,Kogarah,0.006641
+nsw2015,Ku-ring-gai,0.006641
+nsw2015,Lake Macquarie,0.01963
+nsw2015,Lakemba,0.007095
+nsw2015,Lane Cove,0.0114
+nsw2015,Lismore,0.00725
+nsw2015,Liverpool,0.0146
+nsw2015,Londonderry,0.006641
+nsw2015,Macquarie Fields,0.01603
+nsw2015,Maitland,0.0353
+nsw2015,Manly,0.006641
+nsw2015,Maroubra,0.006443
+nsw2015,Miranda,0.01198
+nsw2015,Monaro,0.007125
+nsw2015,Mount Druitt,0.006641
+nsw2015,Mulgoa,0.007662
+nsw2015,Murray,0.0114
+nsw2015,Myall Lakes,0.01397
+nsw2015,Newcastle,0.009658
+nsw2015,Newtown,0.02582
+nsw2015,Northern Tablelands,0.057
+nsw2015,North Shore,0.02719
+nsw2015,Oatley,0.006641
+nsw2015,Orange,0.01006
+nsw2015,Oxley,0.007643
+nsw2015,Parramatta,0.01425
+nsw2015,Penrith,0.0375
+nsw2015,Pittwater,0.006641
+nsw2015,Port Macquarie,0.01706
+nsw2015,Port Stephens,0.006641
+nsw2015,Prospect,0.006641
+nsw2015,Riverstone,0.00717
+nsw2015,Rockdale,0.01381
+nsw2015,Ryde,0.007478
+nsw2015,Seven Hills,0.0114
+nsw2015,Shellharbour,0.0114
+nsw2015,South Coast,0.006641
+nsw2015,Strathfield,0.007118
+nsw2015,Summer Hill,0.0114
+nsw2015,Swansea,0.01729
+nsw2015,Sydney,0.127
+nsw2015,Tamworth,0.03072
+nsw2015,Terrigal,0.007524
+nsw2015,The Entrance,0.006641
+nsw2015,Tweed,0.006641
+nsw2015,Upper Hunter,0.01872
+nsw2015,Vaucluse,0.006512
+nsw2015,Wagga Wagga,0.02504
+nsw2015,Wakehurst,0.009087
+nsw2015,Wallsend,0.01078
+nsw2015,Willoughby,0.006641
+nsw2015,Wollondilly,0.01512
+nsw2015,Wollongong,0.04428
+nsw2015,Wyong,0.0114
+nsw2019,Albury,0.004851
+nsw2019,Auburn,0.009902
+nsw2019,Ballina,0.00651
+nsw2019,Balmain,0.01065
+nsw2019,Bankstown,0.00864
+nsw2019,Barwon,0.01398
+nsw2019,Bathurst,0.004963
+nsw2019,Baulkham Hills,0.004963
+nsw2019,Bega,0.004963
+nsw2019,Blacktown,0.005493
+nsw2019,Blue Mountains,0.005448
+nsw2019,Cabramatta,0.03224
+nsw2019,Camden,0.008336
+nsw2019,Campbelltown,0.004963
+nsw2019,Canterbury,0.004963
+nsw2019,Castle Hill,0.004851
+nsw2019,Cessnock,0.004851
+nsw2019,Charlestown,0.007058
+nsw2019,Clarence,0.01008
+nsw2019,Coffs Harbour,0.01346
+nsw2019,Coogee,0.004963
+nsw2019,Cootamundra,0.02335
+nsw2019,Cronulla,0.004851
+nsw2019,Davidson,0.004851
+nsw2019,Drummoyne,0.004851
+nsw2019,Dubbo,0.01631
+nsw2019,East Hills,0.008336
+nsw2019,Epping,0.01024
+nsw2019,Fairfield,0.004963
+nsw2019,Gosford,0.005895
+nsw2019,Goulburn,0.007851
+nsw2019,Granville,0.008835
+nsw2019,Hawkesbury,0.0109
+nsw2019,Heathcote,0.005563
+nsw2019,Heffron,0.01631
+nsw2019,Holsworthy,0.005441
+nsw2019,Hornsby,0.02501
+nsw2019,Keira,0.004851
+nsw2019,Kiama,0.004963
+nsw2019,Kogarah,0.004851
+nsw2019,Ku-ring-gai,0.004963
+nsw2019,Lake Macquarie,0.05589
+nsw2019,Lakemba,0.004963
+nsw2019,Lane Cove,0.02117
+nsw2019,Lismore,0.008336
+nsw2019,Liverpool,0.008336
+nsw2019,Londonderry,0.004963
+nsw2019,Macquarie Fields,0.00939
+nsw2019,Maitland,0.01014
+nsw2019,Manly,0.004851
+nsw2019,Maroubra,0.008336
+nsw2019,Miranda,0.005318
+nsw2019,Monaro,0.008336
+nsw2019,Mount Druitt,0.004963
+nsw2019,Mulgoa,0.004851
+nsw2019,Murray,0.02088
+nsw2019,Myall Lakes,0.01325
+nsw2019,Newcastle,0.004851
+nsw2019,Newtown,0.01715
+nsw2019,Northern Tablelands,0.006191
+nsw2019,North Shore,0.03162
+nsw2019,Oatley,0.004963
+nsw2019,Orange,0.008336
+nsw2019,Oxley,0.004963
+nsw2019,Parramatta,0.009016
+nsw2019,Penrith,0.01135
+nsw2019,Pittwater,0.01346
+nsw2019,Port Macquarie,0.004851
+nsw2019,Port Stephens,0.008336
+nsw2019,Prospect,0.01346
+nsw2019,Riverstone,0.01219
+nsw2019,Rockdale,0.008913
+nsw2019,Ryde,0.004963
+nsw2019,Seven Hills,0.01336
+nsw2019,Shellharbour,0.006125
+nsw2019,South Coast,0.003823
+nsw2019,Strathfield,0.004963
+nsw2019,Summer Hill,0.005004
+nsw2019,Swansea,0.008187
+nsw2019,Sydney,0.0671
+nsw2019,Tamworth,0.02426
+nsw2019,Terrigal,0.008336
+nsw2019,The Entrance,0.004751
+nsw2019,Tweed,0.007851
+nsw2019,Upper Hunter,0.01407
+nsw2019,Vaucluse,0.008336
+nsw2019,Wagga Wagga,0.0263
+nsw2019,Wakehurst,0.00951
+nsw2019,Wallsend,0.004963
+nsw2019,Willoughby,0.008336
+nsw2019,Wollondilly,0.009384
+nsw2019,Wollongong,0.01558
+nsw2019,Wyong,0.007143
+nsw2023,Albury,0.001124
+nsw2023,Auburn,0.004905
+nsw2023,Badgerys Creek,0.001271
+nsw2023,Ballina,0.004081
+nsw2023,Balmain,0.002944
+nsw2023,Bankstown,0.006366
+nsw2023,Barwon,0.01504
+nsw2023,Bathurst,0.004081
+nsw2023,Bega,0.004235
+nsw2023,Blacktown,0.001115
+nsw2023,Blue Mountains,0.001124
+nsw2023,Cabramatta,0.02318
+nsw2023,Camden,0.001367
+nsw2023,Campbelltown,0.004081
+nsw2023,Canterbury,0.001115
+nsw2023,Castle Hill,0.004081
+nsw2023,Cessnock,0.001124
+nsw2023,Charlestown,0.001124
+nsw2023,Clarence,0.005567
+nsw2023,Coffs Harbour,0.00637
+nsw2023,Coogee,0.001074
+nsw2023,Cootamundra,0.004283
+nsw2023,Cronulla,0.001039
+nsw2023,Davidson,0.009897
+nsw2023,Drummoyne,0.001124
+nsw2023,Dubbo,0.00469
+nsw2023,East Hills,0.004302
+nsw2023,Epping,0.004327
+nsw2023,Fairfield,0.004081
+nsw2023,Gosford,0.004081
+nsw2023,Goulburn,0.001115
+nsw2023,Granville,0.004976
+nsw2023,Hawkesbury,0.005915
+nsw2023,Heathcote,0.001115
+nsw2023,Heffron,0.004081
+nsw2023,Holsworthy,0.004081
+nsw2023,Hornsby,0.005386
+nsw2023,Keira,0.005329
+nsw2023,Kellyville,0.001124
+nsw2023,Kiama,0.02289
+nsw2023,Kogarah,0.02653
+nsw2023,Lake Macquarie,0.2404
+nsw2023,Lane Cove,0.01145
+nsw2023,Leppington,0.001271
+nsw2023,Lismore,0.00532
+nsw2023,Liverpool,0.005797
+nsw2023,Londonderry,0.0009834
+nsw2023,Macquarie Fields,0.00184
+nsw2023,Maitland,0.03294
+nsw2023,Manly,0.06234
+nsw2023,Maroubra,0.002219
+nsw2023,Miranda,0.003261
+nsw2023,Monaro,0.004275
+nsw2023,Mount Druitt,0.001124
+nsw2023,Murray,0.00746
+nsw2023,Myall Lakes,0.006197
+nsw2023,Newcastle,0.001124
+nsw2023,Newtown,0.004131
+nsw2023,Northern Tablelands,0.004081
+nsw2023,North Shore,0.1519
+nsw2023,Oatley,0.004081
+nsw2023,Orange,0.00122
+nsw2023,Oxley,0.004081
+nsw2023,Parramatta,0.001377
+nsw2023,Penrith,0.001254
+nsw2023,Pittwater,0.06923
+nsw2023,Port Macquarie,0.001124
+nsw2023,Port Stephens,0.001344
+nsw2023,Prospect,0.001546
+nsw2023,Riverstone,0.004081
+nsw2023,Rockdale,0.001294
+nsw2023,Ryde,0.001124
+nsw2023,Shellharbour,0.004081
+nsw2023,South Coast,0.009897
+nsw2023,Strathfield,0.001124
+nsw2023,Summer Hill,0.001124
+nsw2023,Swansea,0.001124
+nsw2023,Sydney,0.2397
+nsw2023,Tamworth,0.005538
+nsw2023,Terrigal,0.02381
+nsw2023,The Entrance,0.001124
+nsw2023,Tweed,0.001124
+nsw2023,Upper Hunter,0.004081
+nsw2023,Vaucluse,0.05767
+nsw2023,Wagga Wagga,0.09666
+nsw2023,Wahroonga,0.009897
+nsw2023,Wakehurst,0.09891
+nsw2023,Wallsend,0.004081
+nsw2023,Willoughby,0.07411
+nsw2023,Winston Hills,0.001124
+nsw2023,Wollondilly,0.01436
+nsw2023,Wollongong,0.001485
+nsw2023,Wyong,0.001271
+qld2015,Albert,0.006641
+qld2015,Algester,0.0114
+qld2015,Ashgrove,0.01156
+qld2015,Aspley,0.005569
+qld2015,Barron River,0.006894
+qld2015,Beaudesert,0.006641
+qld2015,Brisbane Central,0.0121
+qld2015,Broadwater,0.01355
+qld2015,Buderim,0.006641
+qld2015,Bulimba,0.005319
+qld2015,Bundaberg,0.01188
+qld2015,Bundamba,0.008244
+qld2015,Burdekin,0.0114
+qld2015,Burleigh,0.006876
+qld2015,Burnett,0.02114
+qld2015,Cairns,0.0127
+qld2015,Callide,0.01202
+qld2015,Caloundra,0.0114
+qld2015,Capalaba,0.005557
+qld2015,Chatsworth,0.006641
+qld2015,Clayfield,0.03328
+qld2015,Cleveland,0.00618
+qld2015,Condamine,0.03717
+qld2015,Cook,0.0114
+qld2015,Coomera,0.007024
+qld2015,Currumbin,0.006641
+qld2015,Dalrymple,0.006012
+qld2015,Everton,0.005587
+qld2015,Ferny Grove,0.0114
+qld2015,Gaven,0.01229
+qld2015,Gladstone,0.0398
+qld2015,Glass House,0.006641
+qld2015,Greenslopes,0.006641
+qld2015,Gregory,0.01185
+qld2015,Gympie,0.006641
+qld2015,Hervey Bay,0.0114
+qld2015,Hinchinbrook,0.00681
+qld2015,Inala,0.005588
+qld2015,Indooroopilly,0.01954
+qld2015,Ipswich,0.04442
+qld2015,Ipswich West,0.0114
+qld2015,Kallangur,0.005527
+qld2015,Kawana,0.04724
+qld2015,Keppel,0.0114
+qld2015,Lockyer,0.006641
+qld2015,Logan,0.01336
+qld2015,Lytton,0.01207
+qld2015,Mackay,0.0114
+qld2015,Mansfield,0.0115
+qld2015,Maroochydore,0.006641
+qld2015,Maryborough,0.02474
+qld2015,Mermaid Beach,0.006641
+qld2015,Mirani,0.006641
+qld2015,Moggill,0.01019
+qld2015,Morayfield,0.0114
+qld2015,Mount Coot-tha,0.0114
+qld2015,Mount Isa,0.006584
+qld2015,Mount Ommaney,0.01547
+qld2015,Mudgeeraba,0.0256
+qld2015,Mulgrave,0.007189
+qld2015,Mundingburra,0.006641
+qld2015,Murrumba,0.006641
+qld2015,Nanango,0.01636
+qld2015,Nicklin,0.03813
+qld2015,Noosa,0.006836
+qld2015,Nudgee,0.01176
+qld2015,Pine Rivers,0.0114
+qld2015,Pumicestone,0.0114
+qld2015,Redcliffe,0.0114
+qld2015,Redlands,0.0114
+qld2015,Rockhampton,0.01463
+qld2015,Sandgate,0.01189
+qld2015,South Brisbane,0.01197
+qld2015,Southern Downs,0.006419
+qld2015,Southport,0.01159
+qld2015,Springwood,0.01711
+qld2015,Stafford,0.005245
+qld2015,Stretton,0.0139
+qld2015,Sunnybank,0.005388
+qld2015,Surfers Paradise,0.02161
+qld2015,Thuringowa,0.0114
+qld2015,Toowoomba North,0.01183
+qld2015,Toowoomba South,0.006209
+qld2015,Townsville,0.006641
+qld2015,Warrego,0.01602
+qld2015,Waterford,0.01181
+qld2015,Whitsunday,0.0114
+qld2015,Woodridge,0.0114
+qld2015,Yeerongpilly,0.009534
+qld2017,Algester,0.005557
+qld2017,Aspley,0.008336
+qld2017,Bancroft,0.008336
+qld2017,Barron River,0.008336
+qld2017,Bonney,0.008336
+qld2017,Broadwater,0.004806
+qld2017,Buderim,0.02253
+qld2017,Bulimba,0.01449
+qld2017,Bundaberg,0.009078
+qld2017,Bundamba,0.01182
+qld2017,Burdekin,0.00593
+qld2017,Burleigh,0.003976
+qld2017,Burnett,0.005567
+qld2017,Cairns,0.004478
+qld2017,Callide,0.01001
+qld2017,Caloundra,0.006105
+qld2017,Capalaba,0.008336
+qld2017,Chatsworth,0.0041
+qld2017,Clayfield,0.004439
+qld2017,Condamine,0.02104
+qld2017,Cook,0.00517
+qld2017,Coomera,0.004966
+qld2017,Cooper,0.0158
+qld2017,Currumbin,0.008336
+qld2017,Everton,0.003982
+qld2017,Ferny Grove,0.01831
+qld2017,Gaven,0.006479
+qld2017,Gladstone,0.01192
+qld2017,Glass House,0.008336
+qld2017,Greenslopes,0.003824
+qld2017,Gregory,0.009071
+qld2017,Gympie,0.008336
+qld2017,Hervey Bay,0.01036
+qld2017,Hill,0.008336
+qld2017,Hinchinbrook,0.008336
+qld2017,Inala,0.004126
+qld2017,Ipswich,0.009994
+qld2017,Ipswich West,0.004708
+qld2017,Jordan,0.008336
+qld2017,Kawana,0.008779
+qld2017,Keppel,0.005536
+qld2017,Kurwongbah,0.01328
+qld2017,Lockyer,0.008336
+qld2017,Logan,0.009259
+qld2017,Lytton,0.005925
+qld2017,Macalister,0.02811
+qld2017,Mackay,0.01639
+qld2017,Maiwar,0.02367
+qld2017,Mansfield,0.005504
+qld2017,Maroochydore,0.004966
+qld2017,Maryborough,0.01645
+qld2017,McConnel,0.01253
+qld2017,Mermaid Beach,0.008336
+qld2017,Miller,0.01449
+qld2017,Mirani,0.004966
+qld2017,Moggill,0.005927
+qld2017,Morayfield,0.009008
+qld2017,Mount Ommaney,0.004966
+qld2017,Mudgeeraba,0.008806
+qld2017,Mulgrave,0.00549
+qld2017,Mundingburra,0.008336
+qld2017,Murrumba,0.004966
+qld2017,Nanango,0.005396
+qld2017,Nicklin,0.03158
+qld2017,Ninderry,0.008837
+qld2017,Noosa,0.02977
+qld2017,Nudgee,0.009014
+qld2017,Oodgeroo,0.004712
+qld2017,Pine Rivers,0.009618
+qld2017,Pumicestone,0.01971
+qld2017,Redcliffe,0.009973
+qld2017,Redlands,0.01172
+qld2017,Rockhampton,0.009574
+qld2017,Sandgate,0.005485
+qld2017,Scenic Rim,0.004966
+qld2017,South Brisbane,0.02842
+qld2017,Southern Downs,0.008336
+qld2017,Southport,0.02071
+qld2017,Springwood,0.02078
+qld2017,Stafford,0.003748
+qld2017,Stretton,0.01338
+qld2017,Surfers Paradise,0.008336
+qld2017,Theodore,0.004966
+qld2017,Thuringowa,0.008857
+qld2017,Toohey,0.004966
+qld2017,Toowoomba North,0.008624
+qld2017,Toowoomba South,0.008336
+qld2017,Townsville,0.0211
+qld2017,Traeger,0.008336
+qld2017,Warrego,0.02383
+qld2017,Waterford,0.01059
+qld2017,Whitsunday,0.008721
+qld2017,Woodridge,0.01027
+qld2020,Algester,0.002519
+qld2020,Aspley,0.02596
+qld2020,Bancroft,0.006159
+qld2020,Barron River,0.01751
+qld2020,Bonney,0.03939
+qld2020,Broadwater,0.003178
+qld2020,Buderim,0.01462
+qld2020,Bulimba,0.02101
+qld2020,Bundaberg,0.003136
+qld2020,Bundamba,0.008902
+qld2020,Burdekin,0.005115
+qld2020,Burleigh,0.003653
+qld2020,Burnett,0.01736
+qld2020,Cairns,0.0334
+qld2020,Callide,0.02578
+qld2020,Caloundra,0.005482
+qld2020,Capalaba,0.006712
+qld2020,Chatsworth,0.002519
+qld2020,Clayfield,0.02109
+qld2020,Condamine,0.002519
+qld2020,Cook,0.005482
+qld2020,Coomera,0.005482
+qld2020,Cooper,0.05726
+qld2020,Currumbin,0.007107
+qld2020,Everton,0.03172
+qld2020,Ferny Grove,0.007119
+qld2020,Gaven,0.002519
+qld2020,Gladstone,0.005482
+qld2020,Glass House,0.003784
+qld2020,Greenslopes,0.005808
+qld2020,Gregory,0.003547
+qld2020,Gympie,0.04411
+qld2020,Hervey Bay,0.006392
+qld2020,Hill,0.00659
+qld2020,Hinchinbrook,0.006992
+qld2020,Inala,0.03972
+qld2020,Ipswich,0.02227
+qld2020,Ipswich West,0.008315
+qld2020,Jordan,0.006433
+qld2020,Kawana,0.003855
+qld2020,Keppel,0.01925
+qld2020,Kurwongbah,0.005994
+qld2020,Lockyer,0.002851
+qld2020,Logan,0.003042
+qld2020,Lytton,0.002519
+qld2020,Macalister,0.02415
+qld2020,Mackay,0.0159
+qld2020,Maiwar,0.03456
+qld2020,Mansfield,0.005482
+qld2020,Maroochydore,0.04695
+qld2020,Maryborough,0.002937
+qld2020,McConnel,0.07297
+qld2020,Mermaid Beach,0.1399
+qld2020,Miller,0.006566
+qld2020,Mirani,0.002519
+qld2020,Moggill,0.002519
+qld2020,Morayfield,0.01449
+qld2020,Mount Ommaney,0.004438
+qld2020,Mudgeeraba,0.01167
+qld2020,Mulgrave,0.002519
+qld2020,Mundingburra,0.005015
+qld2020,Murrumba,0.03631
+qld2020,Nanango,0.03798
+qld2020,Nicklin,0.08064
+qld2020,Ninderry,0.003869
+qld2020,Noosa,0.1218
+qld2020,Nudgee,0.008002
+qld2020,Oodgeroo,0.01176
+qld2020,Pine Rivers,0.01216
+qld2020,Pumicestone,0.008054
+qld2020,Redcliffe,0.05559
+qld2020,Redlands,0.004197
+qld2020,Rockhampton,0.01868
+qld2020,Sandgate,0.005482
+qld2020,Scenic Rim,0.002519
+qld2020,South Brisbane,0.04345
+qld2020,Southern Downs,0.006208
+qld2020,Southport,0.009142
+qld2020,Springwood,0.007493
+qld2020,Stafford,0.005482
+qld2020,Stretton,0.00276
+qld2020,Surfers Paradise,0.01106
+qld2020,Theodore,0.005482
+qld2020,Thuringowa,0.003316
+qld2020,Toohey,0.002519
+qld2020,Toowoomba North,0.003042
+qld2020,Toowoomba South,0.006375
+qld2020,Townsville,0.003228
+qld2020,Traeger,0.006779
+qld2020,Warrego,0.006919
+qld2020,Waterford,0.006847
+qld2020,Whitsunday,0.002761
+qld2020,Woodridge,0.01693
+qld2024,Algester,0.003828
+qld2024,Aspley,0.003433
+qld2024,Bancroft,0.004031
+qld2024,Barron River,0.004216
+qld2024,Bonney,0.001122
+qld2024,Broadwater,0.007598
+qld2024,Buderim,0.00173
+qld2024,Bulimba,0.02268
+qld2024,Bundaberg,0.003828
+qld2024,Bundamba,0.003828
+qld2024,Burdekin,0.001021
+qld2024,Burleigh,0.0009274
+qld2024,Burnett,0.003457
+qld2024,Cairns,0.005453
+qld2024,Callide,0.007208
+qld2024,Caloundra,0.004013
+qld2024,Capalaba,0.01618
+qld2024,Chatsworth,0.00106
+qld2024,Clayfield,0.001159
+qld2024,Condamine,0.0008698
+qld2024,Cook,0.001231
+qld2024,Coomera,0.0009608
+qld2024,Cooper,0.01039
+qld2024,Currumbin,0.006083
+qld2024,Everton,0.004816
+qld2024,Ferny Grove,0.00114
+qld2024,Gaven,0.01349
+qld2024,Gladstone,0.00408
+qld2024,Glass House,0.000837
+qld2024,Greenslopes,0.00108
+qld2024,Gregory,0.0009316
+qld2024,Gympie,0.001255
+qld2024,Hervey Bay,0.009142
+qld2024,Hill,0.004142
+qld2024,Hinchinbrook,0.0009833
+qld2024,Inala,0.003953
+qld2024,Ipswich,0.0007751
+qld2024,Ipswich West,0.000869
+qld2024,Jordan,0.0008147
+qld2024,Kawana,0.002204
+qld2024,Keppel,0.01281
+qld2024,Kurwongbah,0.0009746
+qld2024,Lockyer,0.001896
+qld2024,Logan,0.000836
+qld2024,Lytton,0.05065
+qld2024,Macalister,0.001704
+qld2024,Mackay,0.001043
+qld2024,Maiwar,0.001175
+qld2024,Mansfield,0.003424
+qld2024,Maroochydore,0.005367
+qld2024,Maryborough,0.003828
+qld2024,McConnel,0.01415
+qld2024,Mermaid Beach,0.00119
+qld2024,Miller,0.001427
+qld2024,Mirani,0.0009431
+qld2024,Moggill,0.001065
+qld2024,Morayfield,0.003269
+qld2024,Mount Ommaney,0.001072
+qld2024,Mudgeeraba,0.001063
+qld2024,Mulgrave,0.01412
+qld2024,Mundingburra,0.001021
+qld2024,Murrumba,0.01198
+qld2024,Nanango,0.003828
+qld2024,Nicklin,0.004796
+qld2024,Ninderry,0.0009548
+qld2024,Noosa,0.1405
+qld2024,Nudgee,0.003828
+qld2024,Oodgeroo,0.02721
+qld2024,Pine Rivers,0.001302
+qld2024,Pumicestone,0.002661
+qld2024,Redcliffe,0.004465
+qld2024,Redlands,0.001023
+qld2024,Rockhampton,0.005315
+qld2024,Sandgate,0.004157
+qld2024,Scenic Rim,0.0007881
+qld2024,South Brisbane,0.00125
+qld2024,Southern Downs,0.001021
+qld2024,Southport,0.001087
+qld2024,Springwood,0.003828
+qld2024,Stafford,0.001128
+qld2024,Stretton,0.001011
+qld2024,Surfers Paradise,0.0009547
+qld2024,Theodore,0.001024
+qld2024,Thuringowa,0.003828
+qld2024,Toohey,0.001053
+qld2024,Toowoomba North,0.002325
+qld2024,Toowoomba South,0.01946
+qld2024,Townsville,0.003828
+qld2024,Traeger,0.00518
+qld2024,Warrego,0.004202
+qld2024,Waterford,0.001664
+qld2024,Whitsunday,0.001021
+qld2024,Woodridge,0.003395
+sa2014,Adelaide,0.006443
+sa2014,Ashford,0.006188
+sa2014,Bragg,0.005149
+sa2014,Bright,0.006794
+sa2014,Chaffey,0.006992
+sa2014,Cheltenham,0.008104
+sa2014,Colton,0.006641
+sa2014,Croydon,0.007713
+sa2014,Davenport,0.007137
+sa2014,Dunstan,0.006443
+sa2014,Elder,0.006641
+sa2014,Enfield,0.01166
+sa2014,Finniss,0.006005
+sa2014,Fisher,0.01907
+sa2014,Flinders,0.006161
+sa2014,Florey,0.006641
+sa2014,Frome,0.0176
+sa2014,Giles,0.006053
+sa2014,Goyder,0.0114
+sa2014,Hammond,0.006641
+sa2014,Hartley,0.006641
+sa2014,Heysen,0.006443
+sa2014,Kaurna,0.0114
+sa2014,Kavel,0.006641
+sa2014,Lee,0.0138
+sa2014,Light,0.006641
+sa2014,Little Para,0.006641
+sa2014,MacKillop,0.01775
+sa2014,Mawson,0.006777
+sa2014,Mitchell,0.01528
+sa2014,Morialta,0.006641
+sa2014,Morphett,0.006641
+sa2014,Mount Gambier,0.01779
+sa2014,Napier,0.006179
+sa2014,Newland,0.006961
+sa2014,Playford,0.006641
+sa2014,Port Adelaide,0.008073
+sa2014,Ramsay,0.006641
+sa2014,Reynell,0.006641
+sa2014,Schubert,0.007393
+sa2014,Stuart,0.006584
+sa2014,Taylor,0.006641
+sa2014,Torrens,0.005907
+sa2014,Unley,0.006443
+sa2014,Waite,0.006641
+sa2014,West Torrens,0.006641
+sa2014,Wright,0.0114
+sa2018,Adelaide,0.004851
+sa2018,Badcoe,0.008336
+sa2018,Black,0.008336
+sa2018,Bragg,0.004851
+sa2018,Chaffey,0.008336
+sa2018,Cheltenham,0.008336
+sa2018,Colton,0.008336
+sa2018,Croydon,0.008336
+sa2018,Davenport,0.008336
+sa2018,Dunstan,0.008336
+sa2018,Elder,0.008336
+sa2018,Elizabeth,0.009114
+sa2018,Enfield,0.009132
+sa2018,Finniss,0.008336
+sa2018,Flinders,0.004963
+sa2018,Florey,0.004963
+sa2018,Frome,0.04558
+sa2018,Gibson,0.008336
+sa2018,Giles,0.008336
+sa2018,Hammond,0.008336
+sa2018,Hartley,0.03737
+sa2018,Heysen,0.008336
+sa2018,Hurtle Vale,0.008336
+sa2018,Kaurna,0.005342
+sa2018,Kavel,0.008336
+sa2018,King,0.008336
+sa2018,Lee,0.01224
+sa2018,Light,0.004963
+sa2018,MacKillop,0.01036
+sa2018,Mawson,0.008336
+sa2018,Morialta,0.01668
+sa2018,Morphett,0.008336
+sa2018,Mount Gambier,0.0325
+sa2018,Narungga,0.008336
+sa2018,Newland,0.008336
+sa2018,Playford,0.02062
+sa2018,Port Adelaide,0.008336
+sa2018,Ramsay,0.01774
+sa2018,Reynell,0.008336
+sa2018,Schubert,0.008336
+sa2018,Stuart,0.004352
+sa2018,Taylor,0.008336
+sa2018,Torrens,0.004851
+sa2018,Unley,0.01129
+sa2018,Waite,0.008336
+sa2018,West Torrens,0.004851
+sa2018,Wright,0.009163
+sa2022,Adelaide,0.03253
+sa2022,Badcoe,0.07285
+sa2022,Black,0.01851
+sa2022,Bragg,0.007246
+sa2022,Chaffey,0.009301
+sa2022,Cheltenham,0.01307
+sa2022,Colton,0.0151
+sa2022,Croydon,0.06671
+sa2022,Davenport,0.02589
+sa2022,Dunstan,0.07563
+sa2022,Elder,0.05156
+sa2022,Elizabeth,0.006738
+sa2022,Enfield,0.00698
+sa2022,Finniss,0.1589
+sa2022,Flinders,0.005482
+sa2022,Florey,0.02694
+sa2022,Frome,0.07276
+sa2022,Gibson,0.0468
+sa2022,Giles,0.01476
+sa2022,Hammond,0.0179
+sa2022,Hartley,0.06937
+sa2022,Heysen,0.01987
+sa2022,Hurtle Vale,0.01254
+sa2022,Kaurna,0.004926
+sa2022,Kavel,0.0435
+sa2022,King,0.01478
+sa2022,Lee,0.004914
+sa2022,Light,0.004008
+sa2022,MacKillop,0.009027
+sa2022,Mawson,0.06975
+sa2022,Morialta,0.03066
+sa2022,Morphett,0.01704
+sa2022,Mount Gambier,0.2111
+sa2022,Narungga,0.06733
+sa2022,Newland,0.08145
+sa2022,Playford,0.0155
+sa2022,Port Adelaide,0.08602
+sa2022,Ramsay,0.0224
+sa2022,Reynell,0.02591
+sa2022,Schubert,0.01522
+sa2022,Stuart,0.04403
+sa2022,Taylor,0.03343
+sa2022,Torrens,0.01307
+sa2022,Unley,0.009332
+sa2022,Waite,0.01923
+sa2022,West Torrens,0.03595
+sa2022,Wright,0.006679
+sa2026,Adelaide,0.003828
+sa2026,Badcoe,0.002394
+sa2026,Black,0.02933
+sa2026,Bragg,0.001021
+sa2026,Chaffey,0.003828
+sa2026,Cheltenham,0.00436
+sa2026,Colton,0.003828
+sa2026,Croydon,0.003828
+sa2026,Davenport,0.004379
+sa2026,Dunstan,0.01134
+sa2026,Elder,0.001021
+sa2026,Elizabeth,0.001021
+sa2026,Enfield,0.01123
+sa2026,Finniss,0.00981
+sa2026,Flinders,0.04101
+sa2026,Florey,0.005104
+sa2026,Gibson,0.001183
+sa2026,Giles,0.001752
+sa2026,Hammond,0.008169
+sa2026,Hartley,0.001357
+sa2026,Heysen,0.003828
+sa2026,Hurtle Vale,0.001242
+sa2026,Kaurna,0.001021
+sa2026,Kavel,0.332
+sa2026,King,0.001021
+sa2026,Lee,0.001823
+sa2026,Light,0.001021
+sa2026,MacKillop,0.003828
+sa2026,Mawson,0.01092
+sa2026,Morialta,0.001021
+sa2026,Morphett,0.001171
+sa2026,Mount Gambier,0.03394
+sa2026,Narungga,0.009511
+sa2026,Newland,0.001872
+sa2026,Ngadjuri,0.01134
+sa2026,Playford,0.001261
+sa2026,Port Adelaide,0.04132
+sa2026,Ramsay,0.001021
+sa2026,Reynell,0.001021
+sa2026,Schubert,0.001174
+sa2026,Stuart,0.01057
+sa2026,Taylor,0.002394
+sa2026,Torrens,0.001021
+sa2026,Unley,0.001348
+sa2026,Waite,0.01975
+sa2026,West Torrens,0.001171
+sa2026,Wright,0.001021
+vic2014,Albert Park,0.0537
+vic2014,Altona,0.01167
+vic2014,Bass,0.0114
+vic2014,Bayswater,0.0114
+vic2014,Bellarine,0.01674
+vic2014,Benambra,0.007349
+vic2014,Bendigo East,0.007349
+vic2014,Bendigo West,0.007349
+vic2014,Bentleigh,0.01553
+vic2014,Box Hill,0.0114
+vic2014,Brighton,0.0117
+vic2014,Broadmeadows,0.01213
+vic2014,Brunswick,0.01541
+vic2014,Bulleen,0.02654
+vic2014,Bundoora,0.007811
+vic2014,Buninyong,0.007349
+vic2014,Burwood,0.0114
+vic2014,Carrum,0.03016
+vic2014,Caulfield,0.01175
+vic2014,Clarinda,0.0114
+vic2014,Cranbourne,0.0212
+vic2014,Croydon,0.0114
+vic2014,Dandenong,0.007349
+vic2014,Eildon,0.0114
+vic2014,Eltham,0.01245
+vic2014,Essendon,0.01373
+vic2014,Euroa,0.01959
+vic2014,Evelyn,0.0114
+vic2014,Ferntree Gully,0.01739
+vic2014,Footscray,0.01258
+vic2014,Forest Hill,0.007349
+vic2014,Frankston,0.01202
+vic2014,Geelong,0.01177
+vic2014,Gembrook,0.0118
+vic2014,Gippsland East,0.02185
+vic2014,Gippsland South,0.01824
+vic2014,Hastings,0.01156
+vic2014,Hawthorn,0.007349
+vic2014,Ivanhoe,0.01171
+vic2014,Kew,0.007349
+vic2014,Keysborough,0.0114
+vic2014,Kororoit,0.01307
+vic2014,Lara,0.007349
+vic2014,Lowan,0.0114
+vic2014,Macedon,0.007999
+vic2014,Malvern,0.007349
+vic2014,Melbourne,0.02363
+vic2014,Melton,0.01243
+vic2014,Mildura,0.02584
+vic2014,Mill Park,0.007349
+vic2014,Monbulk,0.02669
+vic2014,Mordialloc,0.01179
+vic2014,Mornington,0.007675
+vic2014,Morwell,0.01365
+vic2014,Mount Waverley,0.00959
+vic2014,Mulgrave,0.03215
+vic2014,Murray Plains,0.0114
+vic2014,Narracan,0.007747
+vic2014,Narre Warren North,0.01491
+vic2014,Narre Warren South,0.007736
+vic2014,Nepean,0.0114
+vic2014,Niddrie,0.01392
+vic2014,Northcote,0.01192
+vic2014,Oakleigh,0.01171
+vic2014,Ovens Valley,0.0114
+vic2014,Pascoe Vale,0.01199
+vic2014,Polwarth,0.00813
+vic2014,Prahran,0.01429
+vic2014,Preston,0.01593
+vic2014,Richmond,0.02547
+vic2014,Ringwood,0.02205
+vic2014,Ripon,0.007349
+vic2014,Rowville,0.007349
+vic2014,Sandringham,0.0114
+vic2014,Shepparton,0.04076
+vic2014,South Barwon,0.008176
+vic2014,South-West Coast,0.045
+vic2014,St Albans,0.0114
+vic2014,Sunbury,0.0114
+vic2014,Sydenham,0.007349
+vic2014,Tarneit,0.0114
+vic2014,Thomastown,0.02103
+vic2014,Warrandyte,0.007577
+vic2014,Wendouree,0.007349
+vic2014,Werribee,0.007349
+vic2014,Williamstown,0.0114
+vic2014,Yan Yean,0.008488
+vic2014,Yuroke,0.0114
+vic2018,Albert Park,0.009779
+vic2018,Altona,0.008764
+vic2018,Bass,0.01161
+vic2018,Bayswater,0.005004
+vic2018,Bellarine,0.004917
+vic2018,Benambra,0.01324
+vic2018,Bendigo East,0.008336
+vic2018,Bendigo West,0.004851
+vic2018,Bentleigh,0.008529
+vic2018,Box Hill,0.00387
+vic2018,Brighton,0.0206
+vic2018,Broadmeadows,0.005082
+vic2018,Brunswick,0.008653
+vic2018,Bulleen,0.004024
+vic2018,Bundoora,0.004851
+vic2018,Buninyong,0.008336
+vic2018,Burwood,0.005246
+vic2018,Carrum,0.008336
+vic2018,Caulfield,0.005055
+vic2018,Clarinda,0.009069
+vic2018,Cranbourne,0.0141
+vic2018,Croydon,0.005074
+vic2018,Dandenong,0.005077
+vic2018,Eildon,0.01548
+vic2018,Eltham,0.005506
+vic2018,Essendon,0.02137
+vic2018,Euroa,0.008336
+vic2018,Evelyn,0.004501
+vic2018,Ferntree Gully,0.004066
+vic2018,Footscray,0.01931
+vic2018,Forest Hill,0.008336
+vic2018,Frankston,0.01332
+vic2018,Geelong,0.03924
+vic2018,Gembrook,0.004375
+vic2018,Gippsland East,0.01006
+vic2018,Gippsland South,0.004433
+vic2018,Hastings,0.005826
+vic2018,Hawthorn,0.01774
+vic2018,Ivanhoe,0.0146
+vic2018,Kew,0.004851
+vic2018,Keysborough,0.009312
+vic2018,Kororoit,0.006085
+vic2018,Lara,0.004851
+vic2018,Lowan,0.01288
+vic2018,Macedon,0.008336
+vic2018,Malvern,0.004851
+vic2018,Melbourne,0.008336
+vic2018,Melton,0.009667
+vic2018,Mildura,0.04433
+vic2018,Mill Park,0.004851
+vic2018,Monbulk,0.008447
+vic2018,Mordialloc,0.009391
+vic2018,Mornington,0.004851
+vic2018,Morwell,0.02686
+vic2018,Mount Waverley,0.004038
+vic2018,Mulgrave,0.004963
+vic2018,Murray Plains,0.005328
+vic2018,Narracan,0.008336
+vic2018,Narre Warren North,0.005193
+vic2018,Narre Warren South,0.004851
+vic2018,Nepean,0.008559
+vic2018,Niddrie,0.005624
+vic2018,Northcote,0.01085
+vic2018,Oakleigh,0.008947
+vic2018,Ovens Valley,0.009136
+vic2018,Pascoe Vale,0.03875
+vic2018,Polwarth,0.004851
+vic2018,Prahran,0.008698
+vic2018,Preston,0.0156
+vic2018,Richmond,0.0382
+vic2018,Ringwood,0.004476
+vic2018,Ripon,0.008336
+vic2018,Rowville,0.008336
+vic2018,Sandringham,0.01907
+vic2018,Shepparton,0.01461
+vic2018,South Barwon,0.008336
+vic2018,South-West Coast,0.009057
+vic2018,St Albans,0.008591
+vic2018,Sunbury,0.005434
+vic2018,Sydenham,0.008336
+vic2018,Tarneit,0.0101
+vic2018,Thomastown,0.009757
+vic2018,Warrandyte,0.004851
+vic2018,Wendouree,0.008336
+vic2018,Werribee,0.02231
+vic2018,Williamstown,0.02307
+vic2018,Yan Yean,0.008336
+vic2018,Yuroke,0.009494
+vic2022,Albert Park,0.1114
+vic2022,Ashwood,0.005215
+vic2022,Bass,0.007237
+vic2022,Bayswater,0.01858
+vic2022,Bellarine,0.005215
+vic2022,Benambra,0.01355
+vic2022,Bendigo East,0.005867
+vic2022,Bendigo West,0.005215
+vic2022,Bentleigh,0.00586
+vic2022,Berwick,0.001368
+vic2022,Box Hill,0.04413
+vic2022,Brighton,0.01924
+vic2022,Broadmeadows,0.005215
+vic2022,Brunswick,0.08002
+vic2022,Bulleen,0.005215
+vic2022,Bundoora,0.005215
+vic2022,Carrum,0.005499
+vic2022,Caulfield,0.009863
+vic2022,Clarinda,0.08368
+vic2022,Cranbourne,0.006228
+vic2022,Croydon,0.00139
+vic2022,Dandenong,0.00139
+vic2022,Eildon,0.006881
+vic2022,Eltham,0.001368
+vic2022,Essendon,0.001993
+vic2022,Eureka,0.005215
+vic2022,Euroa,0.001978
+vic2022,Evelyn,0.005215
+vic2022,Footscray,0.00139
+vic2022,Frankston,0.005817
+vic2022,Geelong,0.01943
+vic2022,Gippsland East,0.002165
+vic2022,Gippsland South,0.01858
+vic2022,Glen Waverley,0.001368
+vic2022,Greenvale,0.005215
+vic2022,Hastings,0.005215
+vic2022,Hawthorn,0.1276
+vic2022,Ivanhoe,0.02026
+vic2022,Kalkallo,0.005215
+vic2022,Kew,0.1149
+vic2022,Kororoit,0.005215
+vic2022,Lara,0.02528
+vic2022,Laverton,0.005215
+vic2022,Lowan,0.007242
+vic2022,Macedon,0.006093
+vic2022,Malvern,0.009863
+vic2022,Melbourne,0.005433
+vic2022,Melton,0.0311
+vic2022,Mildura,0.2188
+vic2022,Mill Park,0.004065
+vic2022,Monbulk,0.03775
+vic2022,Mordialloc,0.006011
+vic2022,Mornington,0.1303
+vic2022,Morwell,0.02166
+vic2022,Mulgrave,0.1386
+vic2022,Murray Plains,0.005215
+vic2022,Narre Warren North,0.005215
+vic2022,Narre Warren South,0.005215
+vic2022,Nepean,0.007276
+vic2022,Niddrie,0.00139
+vic2022,Northcote,0.03915
+vic2022,Oakleigh,0.005498
+vic2022,Ovens Valley,0.00417
+vic2022,Pakenham,0.06614
+vic2022,Pascoe Vale,0.02737
+vic2022,Point Cook,0.009863
+vic2022,Polwarth,0.005215
+vic2022,Prahran,0.01868
+vic2022,Preston,0.008416
+vic2022,Richmond,0.02073
+vic2022,Ringwood,0.00141
+vic2022,Ripon,0.005623
+vic2022,Rowville,0.006838
+vic2022,Sandringham,0.008007
+vic2022,Shepparton,0.1247
+vic2022,South Barwon,0.02706
+vic2022,South-West Coast,0.0199
+vic2022,St Albans,0.02238
+vic2022,Sunbury,0.005215
+vic2022,Sydenham,0.001689
+vic2022,Tarneit,0.008891
+vic2022,Thomastown,0.002508
+vic2022,Warrandyte,0.005215
+vic2022,Wendouree,0.005558
+vic2022,Werribee,0.02126
+vic2022,Williamstown,0.002651
+vic2022,Yan Yean,0.001439

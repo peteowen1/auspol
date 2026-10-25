@@ -39,7 +39,8 @@ simulate_seat_contests(
   breakout_q = NULL,
   coalition_split = NULL,
   error_q = NULL,
-  zero_absent = zero_absent_on()
+  zero_absent = zero_absent_on(),
+  surge_level = surge_level_on()
 )
 }
 \arguments{
@@ -421,6 +422,15 @@ cell and linear interpolation between that class's quantiles, instead of \code{r
 \item{zero_absent}{Logical. \code{TRUE} sets a cell whose predicted share is 0 (the class is not standing) back
 to 0 after its draw, so it takes no votes; the draw is still made, so every other cell is unchanged.
 Defaults to the \code{AUSPOL_ZERO_ABSENT} switch (\code{\link[=zero_absent_on]{zero_absent_on()}}); \code{FALSE} is the previous behaviour.}
+
+\item{surge_level}{Logical. \code{TRUE} reads each fired surge's \code{N(surge_mu, surge_sd)} draw as the
+LEVEL the recipient reaches (percent of the draw's total) rather than an amount added: the
+recipient becomes \code{max(v, L)}, the difference coming from the others pro rata, and a recipient
+already at or above \code{L} is unchanged. The random number is the same one, so every other draw
+is identical. Defaults to the \code{AUSPOL_SURGE_LEVEL} switch (\code{\link[=surge_level_on]{surge_level_on()}}); \code{FALSE} is the
+previous (gain) behaviour, byte for byte. Under \code{TRUE} the result also carries
+\code{surge_level_raised} and \code{surge_level_unchanged} (per seat, draws) and prints \code{SLV1}.
+docs/plans/prereg-surge-level-2026-10-25.md.}
 }
 \value{
 List: \code{win_prob} (data.frame, one row per seat and party with a
