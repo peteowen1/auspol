@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (251 switches from `published_flags.R`, 7 entry points)
+## Switch parity (252 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -181,6 +181,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_REENTRY_LINK` | NO | NO | NO | NO | NO | NO | NO | reentry_prior.R |
 | `AUSPOL_REENTRY_SPLIT` | NO | NO | NO | NO | NO | NO | NO | reentry_prior.R |
 | `AUSPOL_REENTRY_WINSOR` | NO | NO | NO | NO | NO | NO | NO | reentry_prior.R |
+| `AUSPOL_RETURNING_MEMBER_RULE` | NO | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_SA_CUTOFF` | NO | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_SA_FLOWS` | NO | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_SALIENCE_BLEND` | NO | NO | NO | NO | NO | NO | NO | salience_surge.R |
@@ -410,6 +411,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_REENTRY_LINK`** (intentional / dead experiment): Read inside R/reentry_prior.R, not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).
 - **`AUSPOL_REENTRY_SPLIT`** (intentional / dead experiment): Read inside R/reentry_prior.R, not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).
 - **`AUSPOL_REENTRY_WINSOR`** (intentional / dead experiment): Read inside R/reentry_prior.R, not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).
+- **`AUSPOL_RETURNING_MEMBER_RULE`** (intentional / dead experiment): BUILT 2026-10-25, OFF ("0" = legacy flag, candidacies.csv byte-identical). Read ONCE at build time by scripts/build_candidacies.R (BC9) and baked into output/candidacies.csv, so no harness or fit_seats_full.R reads it at runtime; "1" makes historic_elected mean the same person as the sitting member (previous general election winner or later by-election winner) instead of a surname+initial match at any earlier election. It is a TRAINING feature (historic_elected_i) as well as a live one, so it must be flipped for training and live together: build with =1, then retrain. docs/reviews/vic2026-sitting-member-audit-2026-10-25.md.
 - **`AUSPOL_SA_CUTOFF`** (intentional / dead experiment): Read inside R/external_flows.R (pool_configured_flows), not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).
 - **`AUSPOL_SA_FLOWS`** (intentional / dead experiment): Read inside R/external_flows.R (pool_configured_flows), not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).
 - **`AUSPOL_SALIENCE_BLEND`** (intentional / dead experiment): Read inside R/salience_surge.R's blend_salience_shares(), not per-harness -- universal in practice, and gated there deliberately so all five harnesses and the published forecast get the switch from one change. Exists to make a suspected DOUBLE COUNT measurable: the same hazard drives both a shift of the point estimate and an additive jump in the draw. Measured 2026-09-11 -- the double count is real (surge_h is the per-seat max of p_hat, correlation 0.984) and turning the blend OFF makes things WORSE, because the under-prediction of emergences is larger than the over-counting. Stays at 1 until the per-cell variance is fixed.
@@ -553,4 +555,4 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR2  every non-universal switch (221 of 251) has a recorded classification.
+MR2  every non-universal switch (222 of 252) has a recorded classification.
