@@ -318,7 +318,9 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_XGB_ENDORSE         = "1",          # SHIPPED v59 2026-10-02: Climate 200 / Voices endorsement as xgb features (R/endorsement_features.R). plans/prereg-endorsement-2026-10-02.md
   AUSPOL_UPSET_FLOOR         = "0",          # TESTING 2026-10-02: time-forward upset insurance for minor contenders (R/upset_floor.R, stage 6b). plans/prereg-upset-floor-2026-10-02.md
   AUSPOL_ONP_ORDER           = "federal",    # "senate" REFUSED 2026-10-01 (plans/prereg-onp-senate-2026-10-01.md): SA 2026 seat log loss +1.7 SE.
+                                             # "senate_rank" TESTING 2026-10-25 (plans/prereg-onp-senate-rank-2026-10-25.md): ordering only, spread kept; live + sa/qld/nsw/wa harnesses (R/onp_order.R).
   AUSPOL_ONP_FIX             = "1",
+  AUSPOL_ONP_FILL            = "prop",       # TESTING 2026-10-25 "uniform_major" (plans/prereg-onp-fill-uniform-2026-10-25.md): One Nation's seat gap filled by the statewide draw betas, not by size. LIVE ONLY (fit_seats_full.R); no harness has the fill.
   AUSPOL_QLD_FLOWS           = "1",
   AUSPOL_WA_FLOWS            = "0",
   # Added 2026-10-08 (Haiku audit of every Sys.getenv("AUSPOL_ read on the published

@@ -66,8 +66,8 @@ if (.flag("AUSPOL_DEPARTED_FED") %in% c("1", "gap")) { invisible(departed_fed_ta
 # And the Senate One Nation table (AUSPOL_ONP_ORDER=senate): the daily run has
 # no AEC Senate booths, so it reads Victoria's district Senate shares and the
 # curve from this file (written by scripts/build_onp_senate.R).
-if (identical(.flag("AUSPOL_ONP_ORDER"), "senate")) {
-  if (!file.exists(file.path(OUT, "onp-senate-vic2026.csv"))) stop("AUSPOL_ONP_ORDER=senate but output/onp-senate-vic2026.csv is missing -- run scripts/build_onp_senate.R")
+if (.flag("AUSPOL_ONP_ORDER") %in% c("senate", "senate_rank")) {   # senate_rank reads its senate_pct column
+  if (!file.exists(file.path(OUT, "onp-senate-vic2026.csv"))) stop("AUSPOL_ONP_ORDER=", .flag("AUSPOL_ONP_ORDER"), " but output/onp-senate-vic2026.csv is missing -- run scripts/build_onp_senate.R")
   .arm_tables <- c(.arm_tables, "onp-senate-vic2026.csv")
 }
 # And the Senate geography features (AUSPOL_XGB_SENATE=1): Victoria's slice of

@@ -765,6 +765,16 @@ if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate") && "ONP" %in%
     ONS_APPLIED <- TRUE
   }
 }
+# SENATE RANK (AUSPOL_ONP_ORDER = "senate_rank", 2026-10-25,
+# docs/plans/prereg-onp-senate-rank-2026-10-25.md). Keeps this harness's own
+# One Nation values (the swing off the previous state election) and only
+# re-orders them, over the seats One Nation contests, by the most recent
+# earlier federal SENATE One Nation vote. Rows are renormalised below, as the
+# shipped path's are.
+if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate_rank")) {
+  .onr <- onp_senate_rank_apply(shares, TGT, code = "ONR1", refill = "none")
+  if (!is.null(.onr)) shares <- .onr
+}
 
 # ZERO IND WHERE NO INDEPENDENT STOOD. Ported from backtest_candidate_fed.R,
 # which got this fix today; this harness never had it.

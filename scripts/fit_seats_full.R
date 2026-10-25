@@ -189,9 +189,16 @@ cat(sprintf("TG0  target %s (previous %s, region %s, %d seats)
 # overrides so the S6 default-run check below can see them. Defined only
 # further down, a toggle would change the published allocation with nothing in
 # the run log -- which is exactly what S6 exists to prevent.
-ONP_ORDER   <- Sys.getenv("AUSPOL_ONP_ORDER", "federal")   # federal | greens | senate
+ONP_ORDER   <- Sys.getenv("AUSPOL_ONP_ORDER", "federal")   # federal | greens | senate | senate_rank
 ONP_FIX     <- Sys.getenv("AUSPOL_ONP_FIX", "1")           # 1 = compression fixed
-stopifnot(ONP_ORDER %in% c("federal", "greens", "senate"), ONP_FIX %in% c("0", "1"))
+# prop = the other classes fill One Nation's seat-level gap in proportion to
+# their size (shipped); uniform_major = by the statewide draw betas
+# (R/onp_order.R, docs/plans/prereg-onp-fill-uniform-2026-10-25.md). Live
+# only: no harness has this fill.
+ONP_FILL    <- Sys.getenv("AUSPOL_ONP_FILL", "prop")
+stopifnot(ONP_ORDER %in% c("federal", "greens", "senate", "senate_rank"), ONP_FIX %in% c("0", "1"),
+          ONP_FILL %in% c("prop", "uniform_major"),
+          !(ONP_FILL == "uniform_major" && ONP_FIX == "0"))   # the fill only exists under the compression fix
 stopifnot(FP_SD_MODE %in% c("growth", "additive"))
 stopifnot(is.finite(SEED))
 
@@ -764,6 +771,28 @@ if (anyNA(idx_v)) {
        ". Run scripts/transpose_federal_to_state.R.")
 }
 ord <- if (Sys.getenv("AUSPOL_ONP_ORDER", "federal") == "greens") order(ONP_B1 * mat22[, "GRN"]) else order(idx_v)
+# SENATE RANK (AUSPOL_ONP_ORDER = "senate_rank", 2026-10-25,
+# docs/plans/prereg-onp-senate-rank-2026-10-25.md). The same SA spread and CV
+# as the shipped rule; ONLY the ordering changes, from the 2025 federal HOUSE
+# One Nation vote to the 2025 SENATE One Nation vote in the same booths. The
+# House vote moves with who else stood locally (Maribyrnong and Corio had no
+# other right-wing minor in 2025; Bendigo had a first-time Nationals
+# candidate); the Senate ballot is the same everywhere. The refused "senate"
+# value also replaced the spread, which this does not.
+if (identical(ONP_ORDER, "senate_rank")) {
+  .osr_f <- file.path("output", sprintf("onp-senate-%s.csv", TGT))
+  .osr <- if (file.exists(.osr_f)) fread(.osr_f, showProgress = FALSE) else NULL
+  .osr_k <- if (!is.null(.osr)) .osr$senate_pct[match(rownames(mat22), .osr$seat)] else
+    unname(onp_senate_key(rownames(mat22), TGT))
+  if (!length(.osr_k) || anyNA(.osr_k))
+    stop("AUSPOL_ONP_ORDER=senate_rank but no Senate One Nation share for: ",
+         paste(utils::head(rownames(mat22)[is.na(.osr_k)], 8), collapse = ", "),
+         " (", .osr_f, " or output/senate-onp-by-district.csv; run scripts/build_onp_senate.R)")
+  ord <- order(.osr_k)
+  cat(sprintf("ONR1  One Nation ORDERED by the SENATE vote (%s), spread unchanged: rank corr with the House ordering %.3f over %d seats\n",
+              if (!is.null(.osr)) basename(.osr_f) else "senate-onp-by-district.csv",
+              stats::cor(rank(idx_v), rank(.osr_k)), length(.osr_k)))
+}
 onp_ratio <- numeric(nrow(mat22)); names(onp_ratio) <- rownames(mat22)
 for (r in seq_along(ord)) {
   q <- (r - 1) / (length(ord) - 1)
@@ -1305,17 +1334,30 @@ if (!is.null(.re_cells) && nrow(.re_cells)) {
 # pre-registration requires: without them a spread increase from the
 # compression fix would be credited to the new ordering. Both default to the
 # adopted behaviour.
-ONP_ORDER <- Sys.getenv("AUSPOL_ONP_ORDER", "federal")   # federal | greens
+ONP_ORDER <- Sys.getenv("AUSPOL_ONP_ORDER", "federal")   # federal | greens | senate | senate_rank
 ONP_FIX   <- Sys.getenv("AUSPOL_ONP_FIX", "1")           # 1 = compression fixed
-stopifnot(ONP_ORDER %in% c("federal", "greens", "senate"))
+stopifnot(ONP_ORDER %in% c("federal", "greens", "senate", "senate_rank"))
 cat(sprintf("ONP arms: ordering %s, compression fix %s
 ", ONP_ORDER, ONP_FIX))
+if (!identical(ONP_FILL, "prop")) cat(sprintf("ONF0  One Nation fill: %s (shipped: prop)\n", ONP_FILL))
 # A sanity bound, not a modelling choice: no district comes near it (the
 # maximum allocation is 33.0). It exists so a future statewide forecast times
 # the largest quantile ratio cannot exceed 100 and drive the fill negative.
 ONP_CAP <- 80
 onp_target <- pmin(pmax(0, state_mean[["ONP"]] * onp_ratio[rownames(mat22)]), ONP_CAP)
-if (ONP_FIX == "1") {
+if (ONP_FIX == "1" && identical(ONP_FILL, "uniform_major")) {
+  # AUSPOL_ONP_FILL=uniform_major: the gap One Nation leaves (or takes) in each
+  # seat is handed out by the statewide draw betas, not by each class's size
+  # there. Betas from the last default run's draws (the file the scenario
+  # tool's AUSPOL_FORCE_FP_RULE=draws reads); this run's own come later. Live
+  # only -- no harness has a One Nation fill to change.
+  .ofb_f <- sprintf("output/statewide-draw-betas-%s.csv", TARGET$out_stem)
+  if (!file.exists(.ofb_f)) stop("AUSPOL_ONP_FILL=uniform_major needs ", .ofb_f, ", written by a default run of this script")
+  cat(sprintf("ONF1  betas from %s (modified %s)\n", .ofb_f, format(file.mtime(.ofb_f), "%Y-%m-%d %H:%M")))
+  shares <- onp_fill_betas(shares, unname(onp_target), fread(.ofb_f, showProgress = FALSE),
+                           held = if (.departed_hold) HELD else NULL, code = "ONF1")
+  attr(shares, "onp_fill") <- NULL
+} else if (ONP_FIX == "1") {
   other_cols <- setdiff(colnames(shares), "ONP")
   rest <- rowSums(shares[, other_cols, drop = FALSE])
   fill <- pmax(0, 100 - onp_target) / pmax(rest, 1e-9)

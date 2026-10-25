@@ -910,6 +910,17 @@ if (ONP_CONC > 0) {
               min(newonp), max(newonp)))
   shares[, "ONP"] <- newonp
 }
+# SENATE RANK (AUSPOL_ONP_ORDER = "senate_rank", 2026-10-25,
+# docs/plans/prereg-onp-senate-rank-2026-10-25.md). Keeps whatever One Nation
+# values the shipped path produced (BS1c's spread, or the swing where BS1c is
+# skipped) and only re-orders them by the most recent earlier federal SENATE
+# One Nation vote. Rows are renormalised below, as the shipped path's are.
+if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate_rank")) {
+  .onr_lk <- rownames(shares)
+  if (identical(TGT, "sa2026")) .onr_lk[.onr_lk == "Frome"] <- "Ngadjuri"   # 2025 rename; the Senate table uses the new name
+  .onr <- onp_senate_rank_apply(shares, TGT, lookup = .onr_lk, code = "ONR1", refill = "none")
+  if (!is.null(.onr)) shares <- .onr
+}
 
 # ZERO IND WHERE NO INDEPENDENT STOOD. Ported from backtest_candidate_fed.R,
 # which got this fix today; this harness never had it.

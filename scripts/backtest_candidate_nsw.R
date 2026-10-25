@@ -820,6 +820,16 @@ if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate") && "ONP" %in%
     ONS_APPLIED <- TRUE
   }
 }
+# SENATE RANK (AUSPOL_ONP_ORDER = "senate_rank", 2026-10-25,
+# docs/plans/prereg-onp-senate-rank-2026-10-25.md). Keeps this harness's own
+# One Nation values (the swing off the previous state election) and only
+# re-orders them, over the seats One Nation contests, by the most recent
+# earlier federal SENATE One Nation vote. Rows already sum to 100 here, so the
+# other classes in a moved seat give up or take the difference in proportion.
+if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate_rank")) {
+  .onr <- onp_senate_rank_apply(shares, TGT, code = "ONR1", refill = "prop")
+  if (!is.null(.onr)) shares <- .onr
+}
 
 # ZERO IND WHEREVER NOBODY ACTUALLY STOOD AT THE TARGET ELECTION. Ported from
 # backtest_candidate_fed.R (present there and in SA; missing here and in vic and
