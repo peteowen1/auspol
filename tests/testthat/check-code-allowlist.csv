@@ -250,3 +250,7 @@
 "ONN1","scripts/backtest_candidate_vic.R","same_meaning","One Nation in seats with no state history (AUSPOL_ONP_NEWSEAT_RULE): onp_newseat_prepare()/onp_newseat_apply() and their seven harness callers, and the live allocation line in fit_seats_full.R"
 "ONN1","scripts/backtest_candidate_wa.R","same_meaning","One Nation in seats with no state history (AUSPOL_ONP_NEWSEAT_RULE): onp_newseat_prepare()/onp_newseat_apply() and their seven harness callers, and the live allocation line in fit_seats_full.R"
 "ONN1","scripts/fit_seats_full.R","same_meaning","One Nation in seats with no state history (AUSPOL_ONP_NEWSEAT_RULE): onp_newseat_prepare()/onp_newseat_apply() and their seven harness callers, and the live allocation line in fit_seats_full.R"
+"LLP1","R/level_recent.R","same_meaning","one check (audit F12, plans/prereg-live-level-pred-2026-10-25.md): the library function prints it and its caller passes the same code to it or stops with it"
+"LLP1","scripts/fit_seats_full.R","same_meaning","one check (audit F12, plans/prereg-live-level-pred-2026-10-25.md): the library function prints it and its caller passes the same code to it or stops with it"
+"LPR1","R/level_recent.R","same_meaning","one check (audit F12, plans/prereg-live-level-pred-2026-10-25.md): the library function prints it and its caller passes the same code to it or stops with it"
+"LPR1","scripts/build_level_pred.R","same_meaning","one check (audit F12, plans/prereg-live-level-pred-2026-10-25.md): the library function prints it and its caller passes the same code to it or stops with it"

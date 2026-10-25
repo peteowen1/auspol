@@ -732,6 +732,14 @@ CLASSIFY <- list(
   AUSPOL_LIVE_LEVEL_SPLIT = paste(
     "SHIPPED 2026-10-18 as a train/serve fix, LIVE-ONLY by design: read only in fit_seats_full.R, which serves the xgb layer a",
     "level_pred split by bucket_split_ratio(). The harnesses read level_pred from output/level-pred.csv, built by the same function."),
+  AUSPOL_LIVE_LEVEL_PRED_TREND = paste(
+    "DIAGNOSTIC, off (audit F12, plans/prereg-live-level-pred-2026-10-25.md), LIVE-ONLY by design: read in R/level_recent.R",
+    "(live_level_pred_trend), called only from fit_seats_full.R (LLP1), which then serves the xgb layer the pre-blend level.",
+    "The harnesses' trees read level_pred from output/level-pred.csv, which has no blend, so they have no mismatch to remove."),
+  AUSPOL_LEVEL_PRED_RECENT = paste(
+    "ARM, off (audit F12, plans/prereg-live-level-pred-2026-10-25.md), TRAINING-SIDE by design: read in R/level_recent.R",
+    "(level_pred_recent), called only from scripts/build_level_pred.R (rebuild stage 3), so no harness or fit_seats_full.R",
+    "reads it; it reaches every harness and the live forecast through level-pred.csv and the retrained trees."),
   AUSPOL_LIVE_DRAW_BUCKET = paste(
     "SHIPPED 2026-09-28 as a parity fix, LIVE-ONLY by design: read only in fit_seats_full.R, where the live statewide draws split the",
     "unpolled bucket by its 2022 ratio. The harnesses use candidate_bucket_ratio() (AUSPOL_BUCKET_SPLIT) instead."),
