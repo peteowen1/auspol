@@ -425,6 +425,13 @@ CLASSIFY <- list(
     "SHIPPED 2026-09-15 on judgement (costs 0.0141 pooled RMSE in the backtest, but vic2026 is never a",
     "training pair so the 62 returning members can only move the live forecast, which the backtest cannot",
     "see). Read ONCE at build time by scripts/build_candidacies.R and baked into output/candidacies.csv, so no harness reads it at runtime; reversible by rebuilding candidacies with the flag off."),
+  AUSPOL_RETURNING_MEMBER_RULE = paste(
+    "BUILT 2026-10-25, OFF (\"0\" = legacy flag, candidacies.csv byte-identical). Read ONCE at build time by",
+    "scripts/build_candidacies.R (BC9) and baked into output/candidacies.csv, so no harness or fit_seats_full.R",
+    "reads it at runtime; \"1\" makes historic_elected mean the same person as the sitting member (previous general",
+    "election winner or later by-election winner) instead of a surname+initial match at any earlier election.",
+    "It is a TRAINING feature (historic_elected_i) as well as a live one, so it must be flipped for training and",
+    "live together: build with =1, then retrain. docs/reviews/vic2026-sitting-member-audit-2026-10-25.md."),
   AUSPOL_NB_TARGET = paste(
     "NOT A MODEL SWITCH: an argument to scripts/build_notional_baselines.R (which federal election year to build",
     "notional post-redistribution baselines for). Reads NO everywhere by construction; listed in published_flags.R",

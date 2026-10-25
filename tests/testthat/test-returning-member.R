@@ -29,8 +29,11 @@ winners <- rbind(
   mk(2022, "Hawthorn", "PESUTTO", "John")
 )
 byel <- data.table::data.table(
-  region = "vic", year = c(2023L, 2025L), seat = c("Narracan", "Werribee"),
+  region = "vic", date = as.Date(c("2023-01-28", "2025-02-08")), seat = c("Narracan", "Werribee"),
   sur = c("FARNHAM", "LISTER"), giv = c("WAYNE", "JOHN"))
+edates <- c(vic2010 = as.Date("2010-11-27"), vic2014 = as.Date("2014-11-29"),
+            vic2018 = as.Date("2018-11-24"), vic2022 = as.Date("2022-11-26"),
+            vic2026 = as.Date("2026-11-28"))
 
 cand <- rbind(
   mk(2022, "Bayswater", "TAYLOR", "Jackson"),   # placeholder so 2022 exists as an election
@@ -58,7 +61,7 @@ test_that("the legacy rule flagged the two people the audit found wrong", {
 })
 
 test_that("a different first name at the same surname is a different person", {
-  f <- returning_member_flags(cand, winners, byel)
+  f <- returning_member_flags(cand, winners, byel, edates)
   names(f) <- paste(cand$year, cand$seat, cand$sur, cand$giv)
   expect_false(f[["2026 Bayswater KENNEDY Jess"]])
   expect_false(f[["2026 Werribee CLARK Reece"]])
@@ -66,7 +69,7 @@ test_that("a different first name at the same surname is a different person", {
 })
 
 test_that("only the previous general election and later by-elections count", {
-  f <- returning_member_flags(cand, winners, byel)
+  f <- returning_member_flags(cand, winners, byel, edates)
   names(f) <- paste(cand$year, cand$seat, cand$sur, cand$giv)
   expect_false(f[["2026 Mildura CUPPER Ali"]])      # won 2018, not 2022
   expect_true(f[["2026 Mildura BENHAM Jade"]])
@@ -74,7 +77,7 @@ test_that("only the previous general election and later by-elections count", {
 })
 
 test_that("a by-election winner is sitting and supersedes the member they replaced", {
-  f <- returning_member_flags(cand, winners, byel)
+  f <- returning_member_flags(cand, winners, byel, edates)
   names(f) <- paste(cand$year, cand$seat, cand$sur, cand$giv)
   expect_true(f[["2026 Werribee LISTER John"]])
   expect_false(f[["2026 Werribee PALLAS Tim"]])
@@ -82,7 +85,7 @@ test_that("a by-election winner is sitting and supersedes the member they replac
 })
 
 test_that("a compound surname written two ways is still one person", {
-  f <- returning_member_flags(cand, winners, byel)
+  f <- returning_member_flags(cand, winners, byel, edates)
   names(f) <- paste(cand$year, cand$seat, cand$sur, cand$giv)
   expect_true(f[["2026 Clarinda HEANG TAK Meng"]])
 })

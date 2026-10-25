@@ -5,10 +5,13 @@ tells the live Victorian forecast a candidate is a sitting member. Three of its 
 were people who are not sitting members, and seven real sitting members carried FALSE. The
 live forecast feeds it to the XGBoost primary-vote model as `historic_elected_i`.
 
-Status: **the flags in the published `output/candidacies.csv` are still wrong (live).**
-The builder is fixed in this branch; the file has not been rebuilt (the worktree has no
-`external/` inputs, and the main checkout's `output/` was not touched). Pete decides when to
-rebuild and whether the XGBoost models need a retrain (see "What to do next").
+Status: **the flags in the published `output/candidacies.csv` are still wrong (live), and
+merging this branch does not change that.** The fix is behind a build-time switch,
+`AUSPOL_RETURNING_MEMBER_RULE`, default `"0"` (the old flag, `candidacies.csv`
+byte-identical). `"1"` is the corrected rule. The flag is also a TRAINING feature
+(`historic_elected_i`), so it flips only through a deliberate rebuild-and-retrain (sequence
+below). Nothing was rebuilt: the worktree has no `external/` inputs, and the main
+checkout's `output/` was not touched.
 
 ## Counts
 
@@ -23,7 +26,7 @@ the 87 current Legislative Assembly members listed by the Parliament of Victoria
 | sitting members recontesting (candidate row found) | 67 |
 | of those, MISSING the flag in the old file | 7 |
 | sitting members with no candidate row (not recontesting, or not yet listed) | 20, unverifiable |
-| flagged TRUE after the fix | 67, equal to the verified recontesting set |
+| flagged TRUE under the corrected rule (`AUSPOL_RETURNING_MEMBER_RULE=1`, not yet adopted) | 67, equal to the verified recontesting set |
 
 ## Sources
 
@@ -72,23 +75,57 @@ the present.
 
 - `R/returning_member.R` (new): `same_person()` (surname, or last word of a compound surname
   with the same full first name; first initial must agree; `given_conflict()` rules out
-  Jess/John and Reece/Robert) and `returning_member_flags()` (winner of the region's PREVIOUS
-  general election, with a later by-election winner superseding that seat's general-election
-  winner).
-- `scripts/build_candidacies.R` BC9: uses them. `.parse_name()` was split out of `.key()`
-  (`.key()` output is identical). By-election winners come from the new
-  `external/reference/byelections/byelection-winner-names.csv`.
+  Jess/John and Reece/Robert), `returning_member_flags()` (winner of the region's PREVIOUS
+  general election; a by-election or supplementary winner dated strictly between the
+  previous and this general election, compared as full dates against `election_dates()`,
+  supersedes that seat's general-election winner; the last by-election in a seat decides)
+  and `missing_byelection_names()`.
+- A by-election seat with no previous-general-election winner row prints an `RMF1!` line
+  (winner added, nobody removed). On the real corpus it fires twice, both legitimate:
+  vic2010 (Albert Park, Williamstown, Kororoit, Altona: the corpus has no vic2006 winner
+  rows at all) and vic2026 (Narracan: no 2022 row, the poll did not complete).
+- `scripts/build_candidacies.R` BC9: `AUSPOL_RETURNING_MEMBER_RULE` picks the rule. `"0"`
+  (default) runs the old code unchanged; `"1"` runs the new one and first `stop()`s,
+  naming each one, if any by-election between a target election and its predecessor has no
+  winner name. `.parse_name()` was split out of `.key()` (`.key()` output is identical).
+  The switch is in `scripts/published_flags.R` (`"0"`), classified in
+  `scripts/build_model_registry.R`, and `docs/MODEL-REGISTRY.md` is regenerated (247 switches).
+- By-election winner names: `external/reference/byelections/byelection-winner-names.csv`,
+  108 rows, one per row of `byelection-winners.csv` outside the federal level: nsw 38,
+  nt 12, qld 16, sa 10, vic 18, wa 14. Sources: 6 rows (the 2023-26 Victorian ones) are
+  from the VEC result pages, URL on each row. The other 102 are winner names from the
+  Wikipedia by-election list for that state, the same page `byelection-winners.csv` already
+  cites; 36 of them were checked against candidate lists in `byelection-results.csv` (36
+  of 36 found). **66 of the 102 Wikipedia names are NOT independently verified against
+  the NSWEC, ECQ, ECSA, WAEC, NTEC or VEC.** Northcote 2017 is Lidia Thorpe (Greens); at
+  vic2018 the rule flags her as sitting (Northcote vic2018 row: THORPE, Lidia FALSE under
+  rule 0, TRUE under rule 1) and does not flag Kat Theophanous, the 2018 winner.
 - Federal rows still carry the AEC's own `HistoricElected`.
-- Test: `tests/testthat/test-returning-member.R` (17 expectations, all pass). It first asserts
-  that the legacy rule flags Kennedy, Clark and Cupper (so the test would fail if the old
-  logic came back), then asserts the new rule does not, and checks the by-election,
-  supersession, compound-surname and surname-only (WA) cases.
+- Tests: `tests/testthat/test-returning-member.R` and `test-returning-member-window.R`
+  (37 expectations, none skipped, all pass). They first assert that the legacy rule flags
+  Kennedy, Clark and Cupper (so they would fail if the old logic came back), then that the
+  new rule does not, and cover by-election supersession, full-date windows, the Thorpe
+  case, the loud orphan line, the unnamed-by-election stop, name coverage of the tracked
+  file against every state window, and the default of the switch. **BC9 itself cannot run
+  in a test**: it needs `external/` inputs that CI and worktrees lack. The wiring test only
+  guards the default; the branch logic was checked separately (next paragraph).
 
-Check on the real file (the new function applied to the main checkout's `candidacies.csv`,
-read only, nothing written there): vic2026 goes from 63 to 67 flags, exactly the three
-removals and seven additions in the tables below. The old logic reproduces the old file on
-vic2026 in 500 of 500 rows, so the check isolates the logic change. The builder itself was
-parsed but not run: the worktree lacks the `external/` inputs it reads.
+Checks on the real file (main checkout's `candidacies.csv`, read only, nothing written):
+
+1. The legacy branch, extracted from the builder as written, reproduces the deployed
+   `historic_elected` on all 13,829 state rows (0 differences), so the default is a no-op.
+2. The new rule on vic2026: 63 to 67 flags, exactly the three removals and seven additions
+   in the tables below.
+3. The new rule on the other state elections, with all 108 by-election names and dates:
+   173 TRUE flags removed and 84 added, a net drop of 89 (earlier draft: 167, before all
+   by-elections had names). Of the 173 removed, 147 are former members (won at an election
+   before the previous one only), 20 matched a previous winner on surname and initial but
+   have a different first name, and 6 are previous winners whose seat a by-election gave to
+   someone else. Of the 84 added, 83 are by-election or supplementary winners and 1 is a
+   previous winner the old key missed. Across all state rows, TRUE goes from 1,832 to 1,747.
+
+The builder itself was parsed but not run end to end: the worktree lacks the `external/`
+inputs it reads.
 
 ## Where the column is read
 
@@ -135,19 +172,43 @@ Liberal in Werribee, Cupper in Mildura), and the seven unflagged incumbents lose
 
 ## What to do next (Pete decides)
 
-1. Rebuild `output/candidacies.csv` from a checkout that has `external/` (builder now carries
-   the fix), regenerate `docs/DATA-REGISTRY.md`, and run the live forecast with and without
-   to size the seat moves.
-2. Decide on retraining the XGBoost primary and emergence models. Applied to the current
-   file, the new rule drops 167 net TRUE values in the state elections other than vic2026
-   (1,832 old TRUE in all 13,829 state rows against 1,669 new, vic2026 itself +4; largest
-   drops wa2025 21, wa2017 17, wa2021 16, qld2017 13). Most are surname-only collisions in WA and former members under the old
-   "any earlier election" rule. The deployed trees were fitted on the old flags, so the
-   live feature (new meaning) and the training feature (old meaning) disagree until
-   retrained. Not retrained here.
-3. The corpus has no vic2026 row for Jacinta Allan (Bendigo East), listed below among the
-   members without a candidate row. If she is standing, that is a nomination-list gap, not a
-   flag error.
+The flag is a training feature as well as a live one, so the rule must change for training
+and live together. The deployed trees were fitted on rule `"0"` flags; building with `"1"`
+and not retraining would make the live feature mean something the trees never saw.
+
+Rebuild-and-retrain sequence that flips it (run outside a session; `rebuild_forecasts.sh`
+is a multi-hour job):
+
+1. In one commit set `AUSPOL_RETURNING_MEMBER_RULE = "1"` in `scripts/published_flags.R`
+   and regenerate `docs/MODEL-REGISTRY.md` (`Rscript scripts/build_model_registry.R`).
+2. From a checkout that has `external/`:
+   `AUSPOL_CAND_ALLOW_OTHER_CHANGE=1 Rscript scripts/build_candidacies.R`. The override is
+   needed because BC11 stops when any non-vic2026 line changes, and most other state
+   elections change (item 3 above). Check the BC9r line says rule 1, the BC9b line lists
+   108 names, and no `BC9!` stop fired. Regenerate `docs/DATA-REGISTRY.md`.
+3. `AUSPOL_REBUILD_FROM=3 bash scripts/rebuild_forecasts.sh`. Stage 3 (`fit_xgb_primary_v6.R`)
+   is the first stage that reads the flag (`xgb-primary-features-v6.csv`, and the
+   leave-one-out predictions file); stage 4 refits the as-at models and the OOF pool
+   (`xgb-primary-asat-predictions.csv`) the harnesses read; stage 5 refits the production
+   model (`fit_xgb_primary_v6_final.R`) that the live forecast loads; stages 6-9 rerun the
+   harnesses, pool, ledger and promote. Stages 1-2 do not read the flag.
+4. The emergence model also reads the flag (`scripts/fit_xgb_emergence_v5.R`,
+   `scripts/build_emergence_cases_v2.R:94`) and is outside `rebuild_forecasts.sh`; rerun it
+   by hand if it feeds the live path (not checked here).
+5. Walk the live forecast with and without the corrected flags before publishing, to size
+   the ten seat rows above.
+
+Only after step 3 completes should the live path read the new `candidacies.csv`: a rebuild
+of `candidacies.csv` alone, with trees not retrained, is the mismatch to avoid.
+
+Also:
+
+- The corpus has no vic2026 row for Jacinta Allan (Bendigo East), listed below among the
+  members without a candidate row. If she is standing, that is a nomination-list gap, not a
+  flag error.
+- The corpus has no vic2006 winner rows, so the rule cannot supersede the 2006 member in
+  the four 2007-10 by-election seats for vic2010 (the `RMF1!` line). vic2010 flags are
+  unchanged from "0" except for the 4 by-election winners themselves.
 
 ## Sitting members recontesting (67): all verified
 
