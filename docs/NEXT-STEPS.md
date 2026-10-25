@@ -8,6 +8,25 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
+- OPEN, 25 Oct evening state (all switches below are on `dev`, default off, reviewed by Sonnet):
+  1. One Nation new-seat rule + Senate ranking (`AUSPOL_ONP_NEWSEAT_RULE`, `AUSPOL_ONP_ORDER=senate_rank`): screens
+     running (A, B, B v A, then all-pairs guards); Pete ships live if not worse by > 1 SE. Bendigo East overshoots in
+     the live walk (ONP 0.69 vs market 0.29): trace before shipping. `plans/prereg-onp-newseat-rule-2026-10-25.md`.
+  2. `AUSPOL_LIVE_LEVEL_PRED_TREND=1` SHIP DECIDED (Pete): flip in `published_flags.R` after the run queue's last
+     launch (~02:15), before the 07:00 refresh; walk showed 0 change today.
+  3. Sitting-member rule (`AUSPOL_RETURNING_MEMBER_RULE`): go/wait on the candidacies rebuild + retrain from stage 3
+     (~2 h detached, after the F7 deciding run). 66 of 108 by-election winner names are from Wikipedia, unverified.
+  4. F7 deciding run 03:15 26 Oct (`deciding-runs/20261025-1801-f7-demo-resid-full/`): Pete decides on its result.
+  5. Delete `C:\dev\auspol-iso-decay4` (16 GB, decay4 done)? Pete's call.
+  6. `dev` -> `main` PR: pre-PR review done (0 Important after fixes); needs full `check_like_ci.R` then open.
+- OPEN, run queue (detached agent, one at a time, >= 6.5 GB, no launch after 02:15): One Nation arms; surge-level
+  all pairs (AEF-7: guard -0.0016, SE 0.0011; primary within 1 SE); F8 arms N and RN (arm R AEF-7 +0.0008, SE
+  0.0021); GRN_TREE_SHRINK; departed-origin A; width A0/A1; level-conserve (base/final/both); port 3C.
+- OPEN, building (Opus worktrees, 25 Oct evening): F16 `AUSPOL_ROW_SHIFT_EXACT`, F18 `AUSPOL_NOM_ZERO_PRE_XGB`,
+  dead-party level `AUSPOL_LEVEL_DEAD_PARTY` (nt2024 Territory Alliance carried at 14.8).
+- FOUND 25 Oct, LIVE in backtests: nsw2019, sa2022 and vic2022 predict One Nation 0 in every seat it contested
+  (party list from the previous election); fixed only under `AUSPOL_ONP_NEWSEAT_RULE=1`.
+
 - OPEN, DATED (Tue 27 Oct, 3, 10, 17 and Fri 27 Nov): vic2026 benchmark capture. Built and run 22 Oct (all four
   sources, `docs/benchmarks/vic2026/2026-10-22/`). Each date: `Rscript scripts/snapshot_benchmarks.R`, plus the GES
   Chrome step (`scripts/ges_read_calls.js`; plan Amendment 1), rerun the script, commit the calls folder, rerun
@@ -78,7 +97,9 @@ contest features / contest base / partial-contest arm A refused, first-term fill
   last 8 weeks vs 9.3 before), so batches cannot be linked and `jump` is not comparable with the backtests' polling-day
   values. Each refresh: `AUSPOL_SALIENCE_TO=<date> Rscript scripts/fetch_salience_vic2026_full.R` (~100 requests,
   resumable; anchor now Jacinta Allan, was Daniel Andrews), then `scripts/build_vic2026_salience_jump.R`
-  (output/vic2026-salience-jump.csv). Not yet wired into the live forecast.
+  (output/vic2026-salience-jump.csv). Local runs DO use a vic2026 salience corpus (live walk log: XG5 43 cells,
+  31 surge seats); the CI publish does not have one yet (DS3 falls back to flat surge_h), so the surge double count
+  (`AUSPOL_SURGE_LEVEL`) reaches the published forecast only once a corpus reaches CI.
 - OPEN F8, F10, F12-F19 (F5 and F9 REFUSED, F7 waiting above, IND override shipped as arm H): post-xgb tables fitted
   on residuals the shares no longer carry, HTV overwriting xgb flows, and the rest of the audit's list
   (`reviews/pipeline-overwrite-audit-2026-10-18.md`). F20 DONE 23 Oct: the model registry parses the code (comments

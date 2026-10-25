@@ -516,7 +516,12 @@ was caught only against a number someone already knew.
   (the six harnesses and `fit_seats_full.R`) and (b) pre-registration clause ids
   (`C2`, `C3`, `R1`–`R3`, `T3`, `P4`), which name a different clause in each plan
   and so are left alone. A new script takes a prefix nothing uses; that test is
-  the check, not this paragraph. The scan also reads `code = "XX1"` arguments and
+  the check, not this paragraph. Prefixes added 2026-10-25, one switch each: `SLV`
+  (`AUSPOL_SURGE_LEVEL`), `PXN`/`PXR` (F8 netting and residual port), `ONR`/`ONF`
+  (One Nation Senate rank and fill), `ONN` (One Nation new-seat rule), `OH`
+  (`build_onp_house.R`), `LCV` (`AUSPOL_LEVEL_CONSERVE`), `LLP`/`LPR` (F12 live and
+  training level_pred), `S3C` (port line-up change), `RMF` (returning-member rule).
+  The scan also reads `code = "XX1"` arguments and
   `.py`/`.sh` scripts, which the grep below misses.
 
   Codes must be unique and `run_all.R` stops if two stages claim the same one
