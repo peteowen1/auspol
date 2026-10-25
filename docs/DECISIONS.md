@@ -8,6 +8,27 @@ live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 - **2026-10-26 Greens tree shrink left OFF; no Greens-only incumbency fix.** Primary passed (Greens error -0.12, SE 0.11), seat log loss unchanged, vic2022 +2.5 SE. The worst over-calls are the trees' incumbency features (+6-7 pts in South Brisbane, Melbourne, Griffith 2025), but clustered on election the strong Greens MP overshoot is +1.9 (SE 1.8, 12 elections) and no other party has one. `reviews/greens-overcall-shap-trace-2026-10-26.md`.
 - **2026-10-26 One Nation ordering SHIPPED: `AUSPOL_ONP_ORDER=senate_rank` with `AUSPOL_ONP_NEWSEAT_RULE=1` (arm B), on Pete's call, overriding the leave-one-out clause.** His rule: ship if B v A is not worse by more than 1 SE. B v A -0.0095 (SE 0.0089); where both rules apply +0.0012 (SE 0.0012). All 35 elections -0.0014 (SE 0.0015), 20 untouched elections exactly 0. Clause 3 failed (qld2017 carries the gain) and clause 4a fired (sa2026 +1.89 SE); that is the override. Both are post-xgb: stage 1 pins them to `0`/`federal`. Bendigo East (ONP 0.69 vs market 0.29) traced and found not a defect of the rule (`reviews/bendigo-east-onp-2026-10-25.md`). A fitted Senate/House/previous-state blend tied with Senate alone (+0.041 pts SE 0.051, 21 elections) and was not built. `plans/prereg-onp-newseat-rule-2026-10-25.md`.
 - **2026-10-26 `AUSPOL_LIVE_LEVEL_PRED_TREND=1` flipped** (decided 25 Oct, below).
+- **2026-10-26 Queue decisions, one sitting (Pete, AskUserQuestion; all logged here, builds on local branches).**
+  - Deleted `C:\dev\auspol-iso-decay4` (17 GB): no junctions; its 36 staged files were an older dev snapshot (every blob already in the main repo, per the other auspol session).
+  - Cleared the ledger page's 28 stored notes (artifact 3YAUawbwdQBn96Bi5nqF4A): every one has a row in `docs/aef7-seat-notes.csv`; raw copy kept in `docs/backlog/ledger-notes-store-2026-10-25.json`.
+  - Centre Alliance / NXT / SA-BEST stay `IND` (`R/parties.R:65`).
+  - The four off-branches (XGB_CLASS_JUR_CAL, OTHERS_SCALE_JUR, SALIENCE_STATE, departed-rate-refit) get a prereg and a screen each, not closure.
+  - Public repo: tone down `docs/plans/product-features.md` and the pollster scorecard, keeping every fact.
+  - ANCHOR-MODEL.md "improvement quiz" closed as superseded, each bullet annotated.
+  - Overcalled independents: build `AUSPOL_IND_GAP_RESTAND` (class gap carried only when an earlier candidate of that class re-stands), base_pred and xgb, prereg and screen.
+  - Census: retire `build_census_features.R`; the vintage builder becomes the only writer of `output/census-features.csv`.
+  - MP-slope party cutoff (live `n_member >= 8`, harnesses none): shrinkage with no cutoff in both (`AUSPOL_MP_SLOPE_POOL`). `AUSPOL_SLOPE_SHRINK` (min_n cliffs, `R/split_slope.R:395,416`): prereg and screen.
+  - 120 unregistered switches: delete the dead, register the rest, after the other session's 02:15 flag flip.
+  - `seat_sd`: NOT removed yet. Pete asked whether it is tested; it is only read under `AUSPOL_LEVEL_SD="off"` (`R/seat_sim.R:1451`), never in the shipped config, but no run has proved it. A broken-input screen comes first.
+  - New independents: published seat polls as a direct input first (`AUSPOL_NEWIND_SEATPOLL`); betting odds stay out (no archived history to backtest).
+  - Poll weighting: prereg federal polls' state breakdowns as extra state-trend polls, with a fitted federal-to-state offset.
+  - Fat tails: build a time-forward fitted per-cell student-t draw (`AUSPOL_CELL_TAIL_NU`), variance unchanged; it covers the NSW per-seat variance and floor-seat items. Decided on all 22 at 20k (it acts in the tails).
+  - F7 (`DEMO_RESID_FULL`): ship if the 20k deciding run's pooled log loss beats baseline and no election is more than 1 SE worse.
+  - Sitting-member rule: verify the by-election winner names against commission sources first, then the candidacies rebuild and retrain.
+  - Scenario CI straggler: 15-minute step timeout plus one retry.
+  - wa2017 / fed2019 day-before walk-throughs: in the morning, from a prepared page.
+  - WA Nationals fold: stale "held for Pete" note; it shipped with `AUSPOL_LEVEL_RECENT` (124270b, 4df458e).
+
 - **2026-10-25 Live trees fed the pre-blend statewide level (audit F12), SHIP decided (Pete: "Ship it, live only").** `AUSPOL_LIVE_LEVEL_PRED_TREND=1`: the backtests score a blended base with an unblended `level_pred`; live fed both blended. Walked: 0 change in all 88 seats (no tree split falls in the 0.4-0.6 point gap; `deciding-runs/20261025-f12-walk/`). Flag flipped after tonight's screens so the harness fingerprint does not change mid-queue. `plans/prereg-live-level-pred-2026-10-25.md`.
 - **2026-10-25 F7 (full demographic correction) goes to a 20k deciding run (Pete's override of two clause refusals).** 1k screen: primary -0.0653 pts^2 (SE 0.0499) pass, guard pass, AEF-7 0.2644 -> 0.2625; leave-one-out fails narrowly (0.95 SE dropping nsw2023), qld2020 +2.15 SE. Deciding run scheduled 03:15 26 Oct. `plans/prereg-demo-resid-full-2026-10-19.md`.
 - **2026-10-25 One Nation Senate ranking: screen first, then ship (Pete).** Live walk moved Niddrie ONP 0.57 -> 0.09 (market 0.07), Lara 0.75 -> 0.23 (0.28), Benambra 0.05 -> 0.34 (0.33). Pete then asked for the method to apply to all elections: `AUSPOL_ONP_NEWSEAT_RULE` built so every harness ranks no-history seats the live way; screens running. `plans/prereg-onp-newseat-rule-2026-10-25.md`.
