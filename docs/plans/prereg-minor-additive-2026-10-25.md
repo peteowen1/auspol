@@ -54,3 +54,24 @@ federal pairs. A clause refusing an otherwise-passing result goes to Pete with t
 
 vic2026 with and without the switch: Mildura, Kew, Mulgrave, Shepparton, Benambra, and every seat whose IND share
 moves by more than 2 points; statewide IND total before and after the row renormalisation.
+
+## Result, federal screen (2026-10-25, quick_arm, 7 pairs, 1,000 sims, --reuse --slots=1): REFUSED on the primary
+
+Run `deciding-runs/20261025-minor-additive-fed/results.txt` (exit 0, 611 s). HD1: the switch applied, nothing leaked.
+Switch-off parity: the fed2025 canary re-ran byte-identical under the new code. Scored with
+`scratchpad/score_minor_additive.R` (arm 022fac962142 vs baseline 40cea88204b7); targets are the 935 seats with any
+IND/OTH_RIGHT/OTH cell moved by more than 0.05 points (1,604 cells).
+
+1. Primary FAILS (just): target-seat log loss 0.2677 -> 0.2664 (-0.0014, SE 0.0015), better but not by 1 SE.
+2. Guard holds: all 1,047 federal seats -0.0011 (SE 0.0014). AEF-7 subset (301 federal ledger seats) -0.0012, SE 0.0006.
+3. Leave-one-election-out: sign kept in 7 of 7 (dropping fed2019 leaves -0.0000).
+4. FIRES: fed2007 worse by 0.481 summed seat log loss against 2 SE = 0.450. fed2007 has the largest cut (x0.59).
+5. Without the two largest gains (Indi and Wentworth, both fed2019): -0.0002, sign kept but near zero.
+6. Direction: 424 IND cells moved, 168 raised, 256 lowered; squared error on moved minor cells 24,214 -> 24,293.
+7. Does not fire: largest drop for a winning independent 0.044.
+8. Holds: only fit_seats_full.R and backtest_candidate_fed.R read the switch.
+
+Reading: neutral on the federal pairs. It helps a big returning personal vote (Indi 2019 IND 25.2 -> 34.9, actual
+32.4) and hurts where a large prior IND cell belonged to someone else or nobody (Sturt and Boothby 2019 12.5/11.9 ->
+18.1/16.9, actual 2.6). Not decided here: the live forecast currently uses the multiplicative rule, which no state
+harness measures; the 28 state elections' scores come from the additive one. That is a parity question for Pete.
