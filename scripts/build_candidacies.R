@@ -1122,7 +1122,7 @@ if (length(WV)) {
 # coverage check.
 # Name -> "SURNAME|G" key shared by BC10 (prior-class lookup) and BC9 (returning
 # members); formats and traps are documented at BC9 below.
-.key <- function(x) {
+.parse_name <- function(x) {
   s <- trimws(gsub("[^A-Za-z, ]", "", as.character(x)))
   sur <- character(length(s)); giv <- character(length(s))
   for (i in seq_along(s)) {
@@ -1164,8 +1164,12 @@ if (length(WV)) {
   # initial rather than arrived at by a parser accident -- and it carries a
   # real collision risk between different people sharing a surname, which the
   # BC9a line below quantifies.
-  out <- paste0(sur, "|", substr(giv, 1, 1))
-  out[!nzchar(sur)] <- NA_character_
+  list(sur = sur, giv = giv)
+}
+.key <- function(x) {
+  p <- .parse_name(x)
+  out <- paste0(p$sur, "|", substr(p$giv, 1, 1))
+  out[!nzchar(p$sur)] <- NA_character_
   out
 }
 
@@ -1588,12 +1592,29 @@ if (!.backfill) {
       "     and cannot ship without the live-path change -- see the note here.\n")
 }
 if (any(.state)) {
-  .won <- C[elected %in% c(TRUE, "TRUE", "Y", "1") & nzchar(.nm),
-            list(region, year, .nm)]
-  .before <- vapply(which(.state), function(i) {
-    w <- .won[.won$region == C$region[i] & .won$year < C$year[i]]
-    C$.nm[i] %in% w$.nm
-  }, logical(1))
+  # WHAT THE FLAG MEANS (fixed 2026-10-25): the candidate is the SAME PERSON as
+  # the member who held this seat when the election was called -- the winner of
+  # the region's PREVIOUS general election, or of a later by-election or
+  # supplementary election, which supersedes that seat's general-election
+  # winner. See returning_member_flags() / same_person() in R/returning_member.R.
+  # It used to mean "a surname-plus-first-initial key matched a winner at ANY
+  # earlier election", which flagged Jess KENNEDY (Bayswater) because of John
+  # Kennedy (Hawthorn, 2018), Reece CLARK (Werribee) because of Robert Clark
+  # (Box Hill, 2010/2014) and Ali CUPPER (Mildura, lost her seat in 2022); and it
+  # missed every by-election winner (docs/reviews/vic2026-sitting-member-audit-2026-10-25.md).
+  .pn <- .parse_name(C$name)
+  .candp <- data.table(region = C$region, year = C$year, seat = C$seat,
+                       sur = .pn$sur, giv = .pn$giv)
+  .isw <- C$elected %in% c(TRUE, "TRUE", "Y", "1") & nzchar(.pn$sur)
+  .wonp <- .candp[.isw]
+  .bef <- fread(file.path("external", "reference", "byelections",
+                          "byelection-winner-names.csv"), showProgress = FALSE)
+  .bef <- .bef[, list(region, year = as.integer(substr(date, 1, 4)), seat,
+                      sur = toupper(surname), giv = toupper(given))]
+  cat(sprintf("BC9b by-election/supplementary winners loaded: %d (%s)
+", nrow(.bef),
+              paste(sprintf("%s %s %d", .bef$region, .bef$seat, .bef$year), collapse = "; ")))
+  .before <- returning_member_flags(.candp[which(.state)], .wonp, .bef)
   .n_before <- sum(C$historic_elected[.state] %in% c(TRUE, "TRUE", "Y", "1"),
                    na.rm = TRUE)
   C[which(.state), historic_elected := .before]
@@ -1623,8 +1644,14 @@ if (any(.state)) {
            by = list(region, year)][order(region, year)]
   .wn <- C[.state & C$elected %in% c(TRUE, "TRUE", "Y", "1"),
            list(w = .N), by = list(region, year)]
-  .by[, avail := vapply(seq_len(.N), function(k)
-    sum(.wn$w[.wn$region == region[k] & .wn$year < year[k]]), numeric(1))]
+  # Winners who can be returning members: the previous general election's
+  # winners (a seat won at a by-election swaps one for another, so the count
+  # does not grow by the by-election rows).
+  .by[, avail := vapply(seq_len(.N), function(k) {
+    py <- suppressWarnings(max(.wn$year[.wn$region == region[k] & .wn$year < year[k]]))
+    if (!is.finite(py)) return(0)
+    sum(.wn$w[.wn$region == region[k] & .wn$year == py])
+  }, numeric(1))]
   for (k in seq_len(nrow(.by))) {
     cat(sprintf("     %s%d: %d of %d  (prior winners available: %d)\n",
                 .by$region[k], .by$year[k], .by$hits[k], .by$n[k], .by$avail[k]))
