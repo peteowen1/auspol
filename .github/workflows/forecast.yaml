@@ -730,11 +730,37 @@ jobs:
         mode: [exact, polled]
     steps:
       - uses: actions/checkout@v4
+      # The two R install steps are the only ones that crawl on the runner's
+      # network: 96 scenario jobs over six runs (19-25 Oct 2026) took a median
+      # 0.7 min (setup-r) and 0.6 min (setup-r-dependencies), but 13 of them
+      # had one or both steps take 4-22 min, and on 22 Oct one hit the 50-minute job limit. Each gets
+      # a 15-minute step timeout (over 20x its normal time) and ONE retry. The
+      # first attempt has continue-on-error so its failure does not end the job;
+      # the retry runs only if the first attempt's outcome was a failure and has
+      # no continue-on-error, so a step that fails twice still fails the job.
       - uses: r-lib/actions/setup-r@v2
+        id: setup_r
+        timeout-minutes: 15
+        continue-on-error: true
+        with:
+          r-version: release
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r@v2
+        if: steps.setup_r.outcome == 'failure'
+        timeout-minutes: 15
         with:
           r-version: release
           use-public-rspm: true
       - uses: r-lib/actions/setup-r-dependencies@v2
+        id: setup_r_deps
+        timeout-minutes: 15
+        continue-on-error: true
+        with:
+          extra-packages: any::devtools, any::jsonlite
+          needs: check
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        if: steps.setup_r_deps.outcome == 'failure'
+        timeout-minutes: 15
         with:
           extra-packages: any::devtools, any::jsonlite
           needs: check
