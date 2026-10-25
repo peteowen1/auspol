@@ -1464,21 +1464,18 @@ if (!identical(level_conserve_mode(), "0")) {
     if (length(unmodelled) && !is.na(state_mean["OTH"]))
       for (p in c(unmodelled, "OTH")) .lc_level[p] <- a22[[p]] * scale_to
   }
-  .lc_target <- tryCatch(live_nominations(rownames(shares), election = TGT, prior = PREV)$target, error = function(e) {
-    cat(sprintf("LCV1! live nomination list unavailable (%s): every class with share counts as standing\n", conditionMessage(e)))
-    NULL
-  })
+  # NOT caught: with the switch on, a nomination list that is asked for (AUSPOL_NOM_LIVE=1) and cannot be read
+  # stops the run rather than silently changing which classes stand. "auto"/"0" return no list, by design.
+  .lc_nm <- live_nominations(rownames(shares), election = TGT, prior = PREV)
+  .lc_target <- .lc_nm$target
   cat(sprintf("LCV1  live level source: %s; standing from %s\n",
               if (!is.null(.level_split)) "per-class split (.level_split)" else "seat-layer targets (state_mean, a22 * scale_to)",
-              if (is.null(.lc_target)) "shares > 0 (no final nomination list)" else "the live nomination list"))
+              if (is.null(.lc_target)) sprintf("shares > 0 (no final nomination list: %s)", .lc_nm$reason) else "the live nomination list"))
 }
-if (level_conserve_mode() %in% c("base", "both")) {   # off: not even the .try timing entry, so "0" is byte-identical
-  .lcb <- .try("level_conserve_base", level_conserve_apply(shares, .lc_level, TGT, stage = "base", target = .lc_target,
-                                                           held = if (.departed_hold) HELD else NULL))
-  if (!is.null(.lcb)) shares <- .lcb else
-    cat(sprintf("LCV1!! level_conserve_apply(stage = \"base\") FAILED%s -- the level is NOT conserved in this forecast\n",
-                .reason("level_conserve_base")))
-}
+# NOT wrapped in .try(): with the switch on, any failure (the rake's own infeasible refusal included) stops the
+# run, so a forecast asked to conserve the level is never published without it. Off, the call returns at once.
+shares <- level_conserve_apply(shares, .lc_level, TGT, stage = "base", target = .lc_target,
+                               held = if (.departed_hold) HELD else NULL)
 shares_x <- .try("xgb_live", xgb_primary_predict_live(shares, .mat22_xgb, a22, state_mean, .returns,
                                                         level_split = .level_split,
                                                         own_prev = .own_prev_xgb, region = REGION,
@@ -1573,13 +1570,9 @@ shares <- tryCatch(zero_unnominated_live(shares, fm, TGT, prior = PREV), error =
 })
 .nz_cells <- nomination_zeroed_cells(.nz_before, shares)
 # AUSPOL_LEVEL_CONSERVE "final"/"both": after the nomination zero (a 0 stays 0). See the base call above.
-if (level_conserve_mode() %in% c("final", "both")) {
-  .lcf <- .try("level_conserve_final", level_conserve_apply(shares, .lc_level, TGT, stage = "final", target = .lc_target,
-                                                            held = if (.departed_hold) HELD else NULL))
-  if (!is.null(.lcf)) shares <- .lcf else
-    cat(sprintf("LCV1!! level_conserve_apply(stage = \"final\") FAILED%s -- the level is NOT conserved in this forecast\n",
-                .reason("level_conserve_final")))
-}
+# Not wrapped either: with the switch on, a failure stops the run.
+shares <- level_conserve_apply(shares, .lc_level, TGT, stage = "final", target = .lc_target,
+                               held = if (.departed_hold) HELD else NULL)
 cvf <- function(x) stats::sd(x) / mean(x)
 cat(sprintf("ONP allocation: target CV %.3f, delivered %.3f (previously compressed to 0.283)
 ",

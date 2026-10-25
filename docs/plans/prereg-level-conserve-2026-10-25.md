@@ -113,7 +113,7 @@ class the implied statewide share before -> after against its target, and the wo
 | `backtest_candidate_wa.R` | `sb` | `:633` | `:691` | `fb` |
 | `backtest_candidate_qld.R` | `st_b` | `:900` | `:1092` | `fb` |
 | `backtest_candidate_nt.R` | `sb` | `:657` | `:712` | `fb` |
-| `fit_seats_full.R` (live vic2026) | `.level_split` (the per-class split the trees are served; `AUSPOL_LIVE_LEVEL_SPLIT=1`, shipped), else the seat layer's own targets (`state_mean`, `a22 * scale_to`) | `:1476`, before `xgb_primary_predict_live()`, so the raked base is the trees' `base_margin` | `:1577`, after `zero_unnominated_live()` | the live nomination list when `AUSPOL_NOM_LIVE=1` opens it, else every class with share |
+| `fit_seats_full.R` (live vic2026) | `.level_split` (the per-class split the trees are served; `AUSPOL_LIVE_LEVEL_SPLIT=1`, shipped), else the seat layer's own targets (`state_mean`, `a22 * scale_to`) | `:1477`, before `xgb_primary_predict_live()`, so the raked base is the trees' `base_margin` | `:1574`, after `zero_unnominated_live()` | the live nomination list when `AUSPOL_NOM_LIVE=1` opens it, else every class with share |
 
 Both placements are supported at every entry point. In the backtests `base` reaches the xgb layer only
 through `AUSPOL_XGB_BASE_DELTA=1` (shipped): the frozen as-at trees re-predict a cell from cached
@@ -142,8 +142,13 @@ through `AUSPOL_XGB_BASE_DELTA=1` (shipped): the frozen as-at trees re-predict a
    1e-8 points (at most 10,000 sweeps; each is microseconds) and REFUSE with `stop()` if the gap is still
    above 0.01, the draft's own tolerance. Refused up front too: a class whose held cells already exceed its
    target, or one with a positive target and nothing adjustable. A refusal stops that harness run; it is
-   loud by design, and a refused pair is reported, not dropped. Live, a failure prints `LCV1!!` and the
-   forecast runs without conservation.
+   loud by design, and a refused pair is reported, not dropped. Live, the same: with the switch on, any
+   failure (the refusal included, or a nomination list asked for with `AUSPOL_NOM_LIVE=1` that cannot be
+   read) stops `fit_seats_full.R`; a forecast asked to conserve the level is never published without it
+   (review fix, 2026-10-25; the first build caught the error and published unconserved shares).
+6. **Fed seat sets differ between the two placements.** The federal `final` rake runs on `X$shares`, already
+   cut to the divisions with a declared winner (`keep`), while `base` rakes every division, so the national
+   weights cover slightly different seat sets at the two points.
 5. **Lambda.** `AUSPOL_LEVEL_CONSERVE_LAMBDA` (default 1) gives the 0.5 sensitivity. The time-forward fitted
    lambda is NOT built as a switch: it is computed afterwards from the `LCV1` lines (current and raked
    implied share per class and election) and the actual statewide shares, earlier elections only, shrunk to
