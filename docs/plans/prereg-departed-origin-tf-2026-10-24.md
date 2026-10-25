@@ -57,3 +57,38 @@ the trees as they are. A separate xgb FEATURE (`origin_released_i`: points of a 
 attributable to the origin party) needs the as-at tree models retrained (rebuild stage 4), which quick_arm cannot
 screen. It is run only if part 1 passes or comes within 1 SE, as an isolated stage-4 rebuild with its own
 addendum to this file.
+
+## RESULT, arm A screen, all elections (2026-10-26 01:29-02:05; appended, nothing above edited)
+
+`quick_arm.R "AUSPOL_DEPARTED_ORIGIN=1" --pairs=all --no-reuse --slots=1`, 1,000 sims, code t181ee5f. Baseline
+050d4221173d, arm 11424223b6df. Log `deciding-runs/quickarm-20261026-departed-origin-A-all.log`, score `...-all-score.txt`
+(scorer `score_dep.R`, session e7e809d4 scratchpad). Arm B (`mean`) was not run, for time.
+
+`BF0o` lines show the arm ran. Fitted, time-forward, shrunk go-home shares range from 0.041 (1 earlier case) to 0.451
+(28 cases); 1 to 5 seats routed per election; 4 elections print `BF0o!` (0 cases, nothing routed), the limiting case.
+Cells moved by more than 0.05 points: 176 of 19,616, in 21 of 35 elections.
+
+**Approximation, stated:** the run log gives route counts but not seat names, so the primary is scored on every cell
+that moved by more than 0.05 points. In practice that is the origin and departed cells of the routed seats, plus
+whatever renormalisation and the trees moved alongside them. It is not a list frozen in advance.
+
+| clause (lower is better; SE clustered on election) | n | change | SE | result |
+|---|--:|--:|--:|---|
+| 1 primary: share squared error on changed cells (points^2 per cell) | 176 cells / 21 el. | +1.3301 | 2.5571 | within 1 SE: NOT PASSED |
+| 2 guard: seat log loss, every seat | 2,920 / 35 el. | +0.0001 | 0.0008 | holds |
+| (quick_arm Q3 / AEF-7) | 2,931 / 681 | +0.0006 / -0.0002 | 0.0010 / 0.0035 | |
+| 3 leave-one-election-out | 21 drops | never better by 1 SE; sign negative only without sa2026 | | FAIL |
+| 4 no election worse by >2 own SE | | worst sa2026 z 1.21 | | holds |
+| 5 without two largest-gain seats (Karama nt2020, Kavel sa2026) | | +3.1336 | 3.0087 | worse |
+| 6 case cells moving toward the actual | | 109 toward, 67 away; 24 of 39 seats net better | | |
+
+The large single-seat moves split both ways. Gains: Karama nt2020 -165, Kavel sa2026 -121, Waite sa2026 -90, Morwell
+vic2022 -90 (the motivating case, better), Brennan nt2024 -85. Losses: Mount Gambier sa2026 +481, Hillarys wa2021
++210 (a named 2026-09-18 harm case, again), Cabramatta nsw2023 +203, Goyder nt2024 +95.
+
+**Verdict: NOT PASSED.** The primary is within 1 SE but points the wrong way, and a few seats where the origin party
+was over-called (Mount Gambier, Hillarys, Cabramatta) outweigh the cases it fixes, Morwell among them. That is the
+unacceptable pattern this prereg named in advance, even though more cells move toward the result than away (clause 6).
+Part 2, the xgb feature: the rule is "run only if part 1 passes or comes within 1 SE", and part 1 is within 1 SE, so
+by the letter part 2 is eligible. It needs an isolated stage-4 rebuild and was not run. Whether to spend one on a
+part 1 that leans worse is Pete's call.

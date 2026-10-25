@@ -67,6 +67,22 @@ contest features / contest base / partial-contest arm A refused, first-term fill
 - OPEN (Pete): the 28 old notes in the ledger page's notes store now duplicate `docs/aef7-seat-notes.csv` under "Your
   notes"; clear them only on his yes.
 - OPEN: width arms A0/A1 (`AUSPOL_FP_EXTRA_SD` 0 / 1.2) pre-registered, not yet run (needs the memory F7 needs).
+  NOT RUN 25-26 Oct either: the night queue reached GRN_TREE_SHRINK by 00:59, and the next launch could not finish
+  before the 03:15 F7 deciding run (memory sat at 3-7 GB from 20:30, so harness runs took about 2 minutes each).
+- 25-26 Oct night screens (quick_arm, results appended to each prereg): One Nation new-seat rule arm A REFUSED (target
+  log loss +0.0007, SE 0.0004); arm B NOT PASSED (-0.0088, SE 0.0090; the whole gain is qld2017; sa2026 clause 4a).
+  B v A where both rules apply is +0.0012 (SE 0.0012), so no House-v-Senate difference is measurable. Surge-level all
+  35 NOT PASSED (target -0.0016, SE 0.0036; LOO sign lost). F8 arm R all 35: +0.0003 (SE 0.0005), not shipped. F8 arm N
+  WORSE on AEF-7 (+0.0003, SE 0.0002), stopped; its netting costs 579 s per harness run (cache it before any rerun).
+  RN not run (it needs R and N to pass). GRN_TREE_SHRINK all 35, LEFT OFF 26 Oct (Pete, after the trace): the primary passes (Greens squared error
+  -0.1247, SE 0.1133, 511 cells) but clause 3 refuses (vic2022 worse by 2.5 SE; leave-one-out above 1 SE in only 15 of 19
+  drops); seat log loss is unchanged (-0.0000). Departed-origin arm A all 35 NOT PASSED (changed-cell share error
+  +1.33, SE 2.56; Mount Gambier, Hillarys and Cabramatta outweigh Morwell). Its part 2 (the xgb feature, stage-4
+  rebuild) is eligible by the letter because part 1 is within 1 SE: Pete's call. NOT RUN for time (no launch after
+  02:15): departed arm B (`mean`), level-conserve (`prereg-level-conserve-2026-10-25.md`; NEXT after the reboot, needs
+  >= 6.5 GB: the majors' +0.6-0.8 tree overshoot in ~30 elections is this seat-layer effect,
+  `reviews/greens-overcall-shap-trace-2026-10-26.md`), port 3C
+  (`prereg-seat-swing-port-3c-2026-10-25.md`), and the `--pairs=all` guard of One Nation arm A (not needed after WORSE).
 - OPEN, DATED (from ~2 Nov, weekly; final snapshot 25-27 Nov): vic2026 salience snapshots. All 500 candidates fetched
   18 Oct (window to 6 Oct), but that is before the campaign: nobody's search interest is rising yet (Premier 1.1 in the
   last 8 weeks vs 9.3 before), so batches cannot be linked and `jump` is not comparable with the backtests' polling-day
