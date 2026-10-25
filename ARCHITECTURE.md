@@ -136,7 +136,7 @@ salience screen (`AUSPOL_SURGE_SOURCE = "none"`, `R/party_surge.R:95`, decided 2
 because the "surging" flag had been computed from the election's own swing). The same hazard
 feeds the xgb primary model as the feature `surge_h`; since 2026-10-18 that feature is built
 only from canon elections strictly before each training election (`AUSPOL_SURGE_H_TF`,
-`scripts/fit_xgb_primary_v6.R:555-566`), where it had been leave-one-out and so let fed2016
+`scripts/fit_xgb_primary_v6.R:576-588`), where it had been leave-one-out and so let fed2016
 learn from fed2022 and sa2026.
 
 **4. Renormalise every party in the seat to sum to 100%.**

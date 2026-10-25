@@ -24,10 +24,17 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   22 Oct: Pete said go, NOT launched: 4.8 GB available of 31.5 with no large process (kernel paged pool 10.2 GB,
   non-paged 2.8 GB, up since 15 Oct: a leak only a reboot clears). Pete chose no reboot; run F7 after the next one.
 
-- OPEN, after a reboot: returning-independent screen, arm A-base (`AUSPOL_IND_RETURN=base`, off; Amendment 1, commit
-  d1f1e26). `Rscript scripts/quick_arm.R "AUSPOL_IND_RETURN=base" --pairs=all --reuse` (~30 min, rebuilds the
-  baseline), then judge against `plans/prereg-ind-return-2026-10-25.md` + Amendment 1. Killed 25 Oct by the memory
-  watchdog at the compile step, 0 of 70 runs done (2.3 GB available, no R running). Arm A-final REFUSED 25 Oct.
+- OPEN, Pete: returning independents. Both arms REFUSED 25 Oct (A-final; A-base under Amendment 1: target-seat log
+  loss +0.0058, SE 0.0104, 0 of 33 leave-one-out; `plans/prereg-ind-return-2026-10-25.md`). Lead, untraced: the vic2022
+  harness already has Mildura IND at 38.7 (actual 41.2) and the arm never touched it, so the vic2026 cut (33.9 -> 17.6
+  via the x0.61 minor-field scale) may be a LIVE-path-only effect. TRACED 25 Oct: it is a train/serve split.
+  `fit_seats_full.R:1251-1272` MULTIPLIES IND/OTH_RIGHT/OTH cells by forecast OTH / 2022 others (x0.61), so a big
+  personal vote loses 39% of itself. The six state harnesses never take that path: each class gets its own statewide
+  level from the bucket split (vic2022 log `FST1 ... IND 0.35`; `BV0` IND 5.7 forecast vs 5.5 actual) and moves by
+  ADDITIVE `dev_slope()` (`backtest_candidate_vic.R:644-648`). Only `_fed.R` scales multiplicatively (fed2007 x0.59 ...
+  fed2025 x0.83). So the state backtests have never scored the rule that publishes Mildura. Live vic2026 also logs
+  `FST1! no candidate-model share for IND, OTH_RIGHT, OTH; prior-ratio split kept`. Fix to consider: live takes the
+  harnesses' path (bucket-split levels, additive slope) for the minor classes; walk Mildura/Kew/Mulgrave with/without.
   Why it matters: Mildura (Cupper 33.9 in 2022 -> 17.6 published, cut by the x0.61 minor-field scale), Kew and
   Hawthorn; the bookies price independents there far above us. Not covered: Benambra (a NEW independent succeeding
   Hawkins), still OPEN.
@@ -51,7 +58,8 @@ contest features / contest base / partial-contest arm A refused, first-term fill
   stage 4 is SCHEDULED 01:00 23 Oct (Scheduled Task `auspol-decay4-rebuild`, at 883a773, ~45 min). It refuses to start
   below 8 GB available. Next session: read `deciding-runs/decay4-rebuild/STATUS`, then score per the prereg.
   REFUSED 23 Oct 01:00 as expected: "only 2989 MB available (needs 8000)" (kernel pool leak, see F7 above). That is
-  memory, not the arm. After a reboot: `schtasks /run /tn auspol-decay4-rebuild` (~45 min), then score per the prereg.
+  memory, not the arm. Refused again 25 Oct 10:55 after the reboot: 6,609 MB available (paged pool fine at 0.9 GB, but
+  ~23 GB committed with no process over 1 GB). `schtasks /run /tn auspol-decay4-rebuild` (~45 min) once 8 GB is free.
 - OPEN, from the same diagnosis: Greens over-called in high-Greens seats by the trees (Melbourne, Griffith, Northcote);
   retiring Labor members about -2.0 (n 34); Dickson's published stage moved a correct tree LNP figure +5.5.
 - OPEN (Pete): the 28 old notes in the ledger page's notes store now duplicate `docs/aef7-seat-notes.csv` under "Your

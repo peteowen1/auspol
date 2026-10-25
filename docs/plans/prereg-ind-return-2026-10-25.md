@@ -84,3 +84,23 @@ Added after the A-final result; the text above is unedited. Two changes, both an
    `xgb_primary_predict_live()` so the arm reaches the published forecast; a no-op unless a base-stage switch is set.
 
 Criteria unchanged (sections above).
+
+## Result, arm A-base under Amendment 1 (2026-10-25, quick_arm, 35 elections, 1,000 sims, --reuse --slots=1): REFUSED
+
+Run `deciding-runs/20261025-ind-return-abase/results.txt` (exit 0, 3,795 s; HD1: AUSPOL_IND_RETURN applied, nothing
+leaked; every harness baseline reused on a byte-identical canary). Criteria scored by
+`scratchpad/score_ind_return_abase.R` on the cached runs (arm 57ced5f34606 vs baseline 391c069572b3); target seats = the
+158 whose IND cell moved by more than 0.05 points, in 33 elections.
+
+1. Primary FAILS, wrong sign: target-seat log loss 0.2928 -> 0.2986 (+0.0058, SE 0.0104).
+2. Guard holds: all 2,921 seats +0.0002 (SE 0.0006). AEF-7 ledger 0.2644 -> 0.2647 (SE 0.0009).
+3. Leave-one-election-out: better by more than 1 SE in 0 of 33.
+4. No election worse by more than 2 SE of its paired seat differences (largest: vic2010 +1.27 against 2.56).
+5. Without the two largest gains (Alfred Cove wa2008, Stuart sa2026): +0.0121, so worse still.
+6. Direction: 103 IND cells raised, 55 lowered; their squared share error 5,406 -> 6,072 (worse).
+7. FIRES, just: Wollondilly nsw2023 (IND won) win probability down 0.102.
+
+Worst moves: Gippsland East vic2010 (Ingram, sitting) IND 36.8 -> 48.1, actual 25.3; Narungga sa2026, Waterford qld2012,
+Shepparton vic2022 (39.3 -> 40.9, actual 29.4). Keeping the whole previous vote over-calls sitting independents who fade.
+Mildura vic2022 was NOT in the set (IND cell unchanged, 38.7 against actual 41.2): the known-answer case never fired, so
+the vic2026 Mildura question (Cupper 17.6 published) is not answered by this arm. Not yet traced why.
