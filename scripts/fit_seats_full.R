@@ -1261,14 +1261,22 @@ if (length(unmodelled) && !is.na(state_mean["OTH"])) {
   #
   # Shrink toward the class's own scaled statewide level, so at SLOPE 1 this is
   # exactly mat22[, p] * scale_to as before.
+  #
+  # AUSPOL_MINOR_ADDITIVE="1" (off; plans/prereg-minor-additive-2026-10-25.md): the same class levels, but each seat
+  # moves by POINTS (dev_slope from the 2022 level to the scaled one), as the five state harnesses already do
+  # (backtest_candidate_vic.R:644-648). Multiplying cuts a large personal vote by the same fraction as the whole
+  # minor field: Mildura's independent (Cupper, 33.9 in 2022) by 39% when One Nation takes the field's votes.
+  .minor_add <- identical(Sys.getenv("AUSPOL_MINOR_ADDITIVE", "0"), "1")
   for (p in c(unmodelled, if ("OTH" %in% modelled) "OTH")) {
     tgt <- a22[[p]] * scale_to
     .sl <- .vic_slope(p, rownames(mat22)); .hd <- attr(.sl, "departed"); if (.departed_hold && !is.null(.hd)) HELD[, p] <- ((.hd %in% TRUE) & (mat22[, p] >= .hold_min)) %in% TRUE
-    shares[, p] <- dev_slope(.own_x(p, rownames(mat22), mat22[, p]) * scale_to, tgt, tgt, .sl)
+    shares[, p] <- if (.minor_add) dev_slope(.own_x(p, rownames(mat22), mat22[, p]), a22[[p]], tgt, .sl)
+                   else dev_slope(.own_x(p, rownames(mat22), mat22[, p]) * scale_to, tgt, tgt, .sl)
   }
-  cat(sprintf("minor field scaled x%.2f: %s at 2022 %.1f%% -> forecast %.1f%%
+  cat(sprintf("minor field scaled x%.2f (%s): %s at 2022 %.1f%% -> forecast %.1f%%
 ",
-              scale_to, paste(c(unmodelled, "OTH"), collapse = "+"),
+              scale_to, if (.minor_add) "ADDITIVE, AUSPOL_MINOR_ADDITIVE=1" else "multiplicative",
+              paste(c(unmodelled, "OTH"), collapse = "+"),
               base_share, state_mean[["OTH"]]))
 }
 # Re-entry prior lands here, on the POST-swing projection (see BV1r above): the

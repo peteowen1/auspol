@@ -1239,6 +1239,16 @@ for (K in PAIRS) {
           }
         }
       }
+      # Scale one minor class to its forecast level. Default: MULTIPLY the prior matrix column and its level (every
+      # seat loses the same fraction). AUSPOL_MINOR_ADDITIVE="1" (off; plans/prereg-minor-additive-2026-10-25.md):
+      # keep both and record the scaled level as the class's target, so dev_slope() moves each seat by POINTS, as
+      # the five state harnesses and AUSPOL_MINOR_ADDITIVE in fit_seats_full.R do.
+      .minor_add <- identical(Sys.getenv("AUSPOL_MINOR_ADDITIVE", "0"), "1")
+      .add_tgt <- list()
+      .scale_class <- function(p, k) {
+        if (.minor_add) .add_tgt[[p]] <<- st_a[[p]] * k
+        else { mat[, p] <<- mat[, p] * k; st_a[[p]] <<- st_a[[p]] * k }
+      }
       if (identical(Sys.getenv("AUSPOL_IND_TREND", "0"), "1")) {
         for (p in setdiff(unmodelled, done_lvl)) {
           hist <- FP[election != eb & party == p,
@@ -1260,7 +1270,7 @@ for (K in PAIRS) {
               next
             }
           }
-          mat[, p] <- mat[, p] * scale_to; st_a[[p]] <- st_a[[p]] * scale_to
+          .scale_class(p, scale_to)
         }
       } else if (!is.null(cand_ratio)) {
         # Per-class level from the candidate split: the bucket's forecast total
@@ -1276,19 +1286,23 @@ for (K in PAIRS) {
             scale_p <- scale_to
             cat(sprintf("BCF2! fed%d %s: no prior vote to scale; common factor kept\n", K$to, p))
           }
-          mat[, p] <- mat[, p] * scale_p; st_a[[p]] <- st_a[[p]] * scale_p
+          .scale_class(p, scale_p)
         }
         cat(sprintf("BCF2  fed%d level by candidate split: %s\n", K$to,
-                    paste(sprintf("%s %.2f", bucket, unlist(st_a[bucket])), collapse = ", ")))
+                    paste(sprintf("%s %.2f", bucket, vapply(bucket, function(b)
+                      if (b %in% names(.add_tgt)) .add_tgt[[b]] else st_a[[b]], numeric(1))), collapse = ", ")))
       } else {
-      for (p in setdiff(unmodelled, done_lvl)) { mat[, p] <- mat[, p] * scale_to; st_a[[p]] <- st_a[[p]] * scale_to }
+      for (p in setdiff(unmodelled, done_lvl)) .scale_class(p, scale_to)
       }
       if (is.null(cand_ratio) || identical(Sys.getenv("AUSPOL_IND_TREND", "0"), "1"))
         st_a[["OTH"]] <- st_a[["OTH"]] * scale_to
       for (p in bucket) st_fc[[p]] <- st_a[[p]]
-      cat(sprintf("BF0  fed%d minor field scaled x%.2f: %s at prior %.1f%% -> forecast %.1f%%\n",
-                  K$to, scale_to, paste(bucket, collapse = "+"),
-                  base_share, st_a[["OTH"]] + sum(unlist(st_a[unmodelled]))))
+      # AUSPOL_MINOR_ADDITIVE: the class keeps its prior level as dev_slope()'s `prev` and the scaled one as its target
+      for (p in names(.add_tgt)) st_fc[[p]] <- .add_tgt[[p]]
+      cat(sprintf("BF0  fed%d minor field scaled x%.2f (%s): %s at prior %.1f%% -> forecast %.1f%%\n",
+                  K$to, scale_to, if (.minor_add) sprintf("ADDITIVE, AUSPOL_MINOR_ADDITIVE=1, %d class(es)", length(.add_tgt)) else "multiplicative",
+                  paste(bucket, collapse = "+"),
+                  base_share, sum(unlist(st_fc[bucket]))))
     }
     # F4: folded parties are REPORTED, never silently absorbed.
     cat(sprintf("BF0  fed%d forecast mode: %d polls to %s; folded into OTH: %s\n",
