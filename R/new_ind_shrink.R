@@ -42,7 +42,8 @@ post_xgb_switches <- function() {
            AUSPOL_DEPARTED_SUCCESSOR = departed_successor_mode(),
            AUSPOL_IND_TYPICAL = ind_typical_mode(), AUSPOL_IND_MIXTURE = ind_mixture_mode(),
            AUSPOL_IND_PERSON = ind_person_mode(), AUSPOL_GRN_TREE_SHRINK = grn_tree_shrink_mode(),
-           AUSPOL_LEVEL_CONSERVE = level_conserve_mode(), AUSPOL_IND_RETURN = ind_return_mode())
+           AUSPOL_LEVEL_CONSERVE = level_conserve_mode(), AUSPOL_IND_RETURN = ind_return_mode(),
+           AUSPOL_IND_GAP_RESTAND = ind_gap_restand_mode())
   cur[cur != "0"]
 }
 

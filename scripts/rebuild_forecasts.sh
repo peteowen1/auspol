@@ -242,7 +242,7 @@ fi
 if at_least 3; then
   python scripts/build_council_history.py > "$LOG/s3_council.log" 2>&1 || { echo "!! build_council_history.py failed -- see $LOG/s3_council.log"; exit 1; }
 fi
-if at_least 1; then stage "1-harnesses-base_pred"; AUSPOL_XGB_BASE_RECORD=1 AUSPOL_REENTRY=0 AUSPOL_NEW_IND_SHRINK=0 AUSPOL_DEPARTED_SUCCESSOR=0 AUSPOL_IND_PERSON=0 AUSPOL_GRN_TREE_SHRINK=0 AUSPOL_LEVEL_RECENT=0 AUSPOL_IND_TYPICAL=0 AUSPOL_IND_MIXTURE=0 AUSPOL_IND_RETURN=0 AUSPOL_LEVEL_CONSERVE=0 AUSPOL_N_SIMS="${AUSPOL_STAGE1_SIMS:-2000}" run6 0 s1; done_stage "1-harnesses-base_pred"; fi
+if at_least 1; then stage "1-harnesses-base_pred"; AUSPOL_XGB_BASE_RECORD=1 AUSPOL_REENTRY=0 AUSPOL_NEW_IND_SHRINK=0 AUSPOL_DEPARTED_SUCCESSOR=0 AUSPOL_IND_PERSON=0 AUSPOL_GRN_TREE_SHRINK=0 AUSPOL_LEVEL_RECENT=0 AUSPOL_IND_TYPICAL=0 AUSPOL_IND_MIXTURE=0 AUSPOL_IND_RETURN=0 AUSPOL_LEVEL_CONSERVE=0 AUSPOL_IND_GAP_RESTAND=0 AUSPOL_N_SIMS="${AUSPOL_STAGE1_SIMS:-2000}" run6 0 s1; done_stage "1-harnesses-base_pred"; fi
 if at_least 2; then stage "2-pool-sharedetail";    AUSPOL_POOL_MIN_SIMS="${AUSPOL_STAGE1_SIMS:-2000}" Rscript scripts/pool_sharedetail.R      > "$LOG/s2_pool.log" 2>&1; done_stage "2-pool-sharedetail"; fi
 # AUSPOL_LEVEL_PRED_RECENT=1 (audit F12, plans/prereg-live-level-pred-2026-10-25.md): build_level_pred.R blends
 # level_pred with the stage-5b tables, so build those two first (poll and candidacy inputs only; stage 5b

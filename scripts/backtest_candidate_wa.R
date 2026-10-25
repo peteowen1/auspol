@@ -378,6 +378,7 @@ for (K in PAIRS) {
   if (.succ_on && .departed_hold) stop("AUSPOL_DEPARTED_SUCCESSOR holds its own cells; do not combine it with AUSPOL_DEPARTED_HOLD", call. = FALSE)
   .hold_min <- as.numeric(Sys.getenv("AUSPOL_DEPARTED_HOLD_MIN_PRIOR", "0"))
   .SUCC_RATE <- departed_successor_rates(el_to)   # NULL when off
+  .GAP_RESTAND <- identical(ind_gap_restand_mode(), "1")   # AUSPOL_IND_GAP_RESTAND (off): IND gap carried only when an earlier IND candidate re-stands (IGR1 lines); prereg-ind-gap-restand-2026-10-25.md
   if (.succ_on) { cat(sprintf("DSR1 departed successor rates (%s): %d seat(s) for %s, held through renormalisation\n", departed_successor_mode(), length(.SUCC_RATE), el_to)); .departed_hold <- TRUE }
   # DECOUPLED FOR MEASUREMENT. .cond gates TWO independent mechanisms at once --
   # candidate-conditional dev slopes (.returns, below) and the personal-vote
@@ -572,10 +573,10 @@ for (K in PAIRS) {
     .sl <- if (!is.null(.permit)) {
       pm <- unname(.permit_lut(.permit[.permit$party == p, ])[rownames(mat)])   # a missing permit row is NOT a permit
       screened_slopes(p, rownames(mat), .returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES,
-                      honour_departed = .honour_departed, with_flags = .departed_hold, successor_rate = .SUCC_RATE,
+                      honour_departed = .honour_departed, with_flags = .departed_hold, successor_rate = .SUCC_RATE, gap_restand = .GAP_RESTAND,
                       same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same,
                       new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new)
-    } else if (.cond && !is.null(.returns)) conditional_slopes(p, rownames(mat), .returns, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new) else DEV_SLOPE[[p]]
+    } else if (.cond && !is.null(.returns)) conditional_slopes(p, rownames(mat), .returns, gap_restand = .GAP_RESTAND, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new) else DEV_SLOPE[[p]]
     .hd <- attr(.sl, "departed"); if (.departed_hold && !is.null(.hd)) HELD[, p] <- ((.hd %in% TRUE) & (mat[, p] >= .hold_min)) %in% TRUE
     mat[, p] <- if (is.null(.split)) dev_slope(.own_x(p, rownames(mat), mat[, p]), from_pc, to_pc, .sl) else
       split_dev_slope(.own_x(p, rownames(mat), mat[, p]), .split$frac(p, rownames(mat)), from_pc, to_pc, .split$s_ret, .split$s_dep)

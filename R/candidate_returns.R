@@ -40,6 +40,11 @@
 #'   the whole IND class even though Matt Sharpham, the actual class leader,
 #'   was new). `screened_slopes()`/`conditional_slopes()` key their same/new
 #'   slope choice on `leader_same`, not `same`.
+#'   `class_gap_restand` (added 2026-10-25) is FALSE only when the class had
+#'   general-election candidates in this seat at `election_from`, none of them
+#'   stands here again for the class, and the current leader has no record in
+#'   the seat under any label: the class's earlier vote has nobody to carry it.
+#'   Read by [screened_slopes()] under `AUSPOL_IND_GAP_RESTAND`.
 #' @export
 candidate_returns <- function(election_from, election_to, corpus = NULL) {
   C <- corpus
@@ -90,6 +95,7 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
         PREVT <- data.table::copy(PREVT)
         PREVT[normalise_seat(PREVT$seat) %in% normalise_seat(bw$seat), elected := FALSE]   # normalised key, same as the joins below
         add <- data.table::copy(bw)[, election := election_from]
+        add[, .byel := TRUE]   # marks rows that are not general-election candidates (class_gap_restand below)
         PREVT <- data.table::rbindlist(list(PREVT, add), fill = TRUE)
         cat(sprintf("CDR1 by-election member override %s -> %s: %d seat(s) (%s)\n", election_from, election_to, nrow(bw),
                     paste(sprintf("%s=%s", bw$seat, bw$party), collapse = ", ")))
@@ -267,6 +273,44 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
     res[, prior_leader_returns := TRUE]
     res[, leader_same := same]
   }
+  # CLASS_GAP_RESTAND (read by screened_slopes()/conditional_slopes() under
+  # AUSPOL_IND_GAP_RESTAND, docs/plans/prereg-ind-gap-restand-2026-10-25.md).
+  # Is anyone who earned this class's vote in this seat last time on the ballot
+  # for it again? Pascoe Vale vic2022: the 2018 IND class was Yildiz 23.5,
+  # Kavanagh 7.7 and Timpano 1.7; none stood in 2022, and a new independent
+  # (Bolton, 4.2) was called 18.4 because the class's gap above the statewide
+  # level was carried onto her. TRUE when:
+  #   - some candidate of this class here now stood for THIS CLASS in this seat
+  #     at `election_from` (same person, same seat, same class; the person key
+  #     and both spellings of a renamed seat, as `same` above uses), or
+  #   - the class's current leader personally stood in this seat before under
+  #     any label (`leader_same`): their own prior vote is what own_prev_substitute()
+  #     puts in the base, so the gap is theirs, or
+  #   - the class had no general-election candidate in this seat at
+  #     `election_from` (there is no earlier candidate whose vote could have
+  #     left), or one of them has no usable name key (cannot be checked, so
+  #     the old behaviour is kept rather than a gap dropped on a missing name).
+  # By-election rows appended above are excluded: the class base comes from the
+  # general-election results.
+  .pc <- if (".byel" %in% names(PREVT)) PREVT[is.na(PREVT$.byel)] else PREVT
+  .pc_rows <- unique(rbind(.pc[, list(.s = .s,         party, .k)],
+                           .pc[, list(.s = .s_renamed, party, .k)]))
+  .pc_rows[, .ok_key := !is.na(.k) & nzchar(.k)]
+  .had <- .pc_rows[, list(.had_prev = TRUE, .unkeyed = any(!.ok_key)), by = list(.s, party)]
+  .gap_smap <- unique(NOWT[, list(seat, .s)])
+  .had <- merge(.had, .gap_smap, by = ".s", allow.cartesian = TRUE)
+  .had <- .had[, list(.had_prev = any(.had_prev), .unkeyed = any(.unkeyed)), by = list(seat, party)]
+  .nk <- unique(NOWT[!is.na(NOWT$.k) & nzchar(NOWT$.k), list(seat, .s, party, .k)])
+  .pk <- unique(.pc_rows[.pc_rows$.ok_key, list(.s, party, .k)])[, .rs_hit := TRUE]
+  .rs <- merge(.nk, .pk, by = c(".s", "party", ".k"), all.x = TRUE)
+  .rs <- .rs[, list(.restand = any(.rs_hit %in% TRUE)), by = list(seat, party)]
+  res <- merge(res, .had, by = c("seat", "party"), all.x = TRUE)
+  res <- merge(res, .rs,  by = c("seat", "party"), all.x = TRUE)
+  res[is.na(.had_prev), .had_prev := FALSE]
+  res[is.na(.unkeyed),  .unkeyed := FALSE]
+  res[is.na(.restand),  .restand := FALSE]
+  res[, class_gap_restand := !.had_prev | .unkeyed | .restand | (leader_same %in% TRUE)]
+  res[, c(".had_prev", ".unkeyed", ".restand") := NULL]
   res[]
 }
 
