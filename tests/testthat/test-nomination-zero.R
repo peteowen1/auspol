@@ -322,3 +322,76 @@ test_that("zero_unnominated_asat uses the flow matrix when one is given", {
   expect_equal(r[seat == "Narracan" & party == "LNP", xgb_pred], 38 + 24 * 0.1)
   expect_equal(r[seat == "Narracan", sum(xgb_pred)], 74)
 })
+
+# AUSPOL_NOM_ZERO_PRE_XGB (audit F18, plans/prereg-nom-zero-pre-xgb-2026-10-25.md)
+.nzp_run <- function(sh, corpus, today = as.Date("2026-11-10")) {
+  txt <- paste(capture.output(out <- zero_unnominated_live_pre_xgb(sh, .live_flows, "vic2026", corpus = corpus, today = today)),
+               collapse = "\n")
+  list(out = out, txt = txt)
+}
+
+test_that("pre-xgb zero: off (default) returns the base byte-identical and says so, even with the list open", {
+  withr::local_envvar(AUSPOL_NOM_LIVE = "1", AUSPOL_NOM_ZERO = "2", AUSPOL_NOM_ZERO_PRE_XGB = NA)
+  fx <- .live_fixture(); sh <- .live_shares(fx$seats)
+  r <- .nzp_run(sh, fx$corpus)
+  expect_identical(r$out, sh)
+  expect_match(r$txt, "NZP1  vic2026: pre-xgb nomination zero OFF", fixed = TRUE)
+  withr::local_envvar(AUSPOL_NOM_ZERO_PRE_XGB = "0")
+  expect_identical(.nzp_run(sh, fx$corpus)$out, sh)
+})
+
+test_that("pre-xgb zero: on gives exactly what the post-xgb live zero gives, and counts the cells", {
+  withr::local_envvar(AUSPOL_NOM_LIVE = "1", AUSPOL_NOM_ZERO = "2", AUSPOL_NOM_ZERO_PRE_XGB = "1")
+  fx <- .live_fixture(); sh <- .live_shares(fx$seats)
+  r <- .nzp_run(sh, fx$corpus)
+  ref <- .nz_run(sh, fx$corpus)$out
+  expect_identical(r$out, ref)                      # same function, same rule, same flows
+  expect_equal(unname(r$out["Narracan", "GRN"]), 0)
+  expect_equal(unname(r$out["Narracan", c("ALP", "LNP", "IND")]), c(50, 40, 10))
+  expect_match(r$txt, "NZP1  vic2026: pre-xgb nomination zero ON: 1 cell(s) zeroed before the trees (GRN 1), 3 cell(s) changed",
+               fixed = TRUE)
+  expect_match(r$txt, "NZP2  vic2026: zeroed 1 cell", fixed = TRUE)   # its own code, not the post-xgb NZ1
+})
+
+test_that("pre-xgb zero: on but the list not opened (auto) changes nothing and reports 0 cells", {
+  withr::local_envvar(AUSPOL_NOM_LIVE = "auto", AUSPOL_NOM_ZERO = "2", AUSPOL_NOM_ZERO_PRE_XGB = "1")
+  fx <- .live_fixture(); sh <- .live_shares(fx$seats)
+  r <- .nzp_run(sh, fx$corpus)
+  expect_identical(r$out, sh)
+  expect_match(r$txt, "NOT applied (provisional list", fixed = TRUE)
+  expect_match(r$txt, "pre-xgb nomination zero ON: 0 cell(s) zeroed before the trees, 0 cell(s) changed", fixed = TRUE)
+})
+
+test_that("pre-xgb zero: a deliberately broken input is caught, never a silent no-op", {
+  fx <- .live_fixture(); sh <- .live_shares(fx$seats)
+  # an unrecognised switch value stops
+  withr::local_envvar(AUSPOL_NOM_LIVE = "1", AUSPOL_NOM_ZERO = "2", AUSPOL_NOM_ZERO_PRE_XGB = "yes")
+  expect_error(capture.output(zero_unnominated_live_pre_xgb(sh, .live_flows, "vic2026", corpus = fx$corpus)), "NZP1!!")
+  # on, with the list asked for but truncated under the count floor: stops, as the post-xgb call does
+  withr::local_envvar(AUSPOL_NOM_ZERO_PRE_XGB = "1")
+  short <- fx$corpus[fx$corpus$election == "vic2022" | fx$corpus$seat == "Kew"]
+  expect_error(capture.output(zero_unnominated_live_pre_xgb(sh, .live_flows, "vic2026", corpus = short,
+                                                            today = as.Date("2026-11-10"))), "list too small")
+  # a pre-xgb cell the trees write share back into is caught by the final-write check
+  capture.output(z <- zero_unnominated_live_pre_xgb(sh, .live_flows, "vic2026", corpus = fx$corpus,
+                                                     today = as.Date("2026-11-10")))
+  cells <- nomination_zeroed_cells(sh, z)
+  expect_equal(nrow(cells), 1L)
+  revived <- z; revived["Narracan", "GRN"] <- 3
+  expect_error(assert_nomination_zeros(revived, cells), "no longer 0")
+  expect_true(assert_nomination_zeros(z, cells))
+})
+
+test_that("fit_seats_full.R zeroes before the trees (pre-xgb call) AND after the last reviving step", {
+  f <- testthat::test_path("..", "..", "scripts", "fit_seats_full.R")
+  skip_if_not(file.exists(f), "scripts/ not shipped in the check build")
+  l <- sub("#.*$", "", readLines(f, warn = FALSE))
+  at <- function(rx) { w <- grep(rx, l); expect_length(w, 1L); w[1] }
+  pre <- at("zero_unnominated_live_pre_xgb\\(shares")
+  tree <- at("xgb_primary_predict_live\\(shares")
+  sal <- at("!\\.sb_once\\) shares <- blend_salience_shares\\(shares")   # the post-tree blend
+  post <- at("zero_unnominated_live\\(shares")
+  expect_lt(pre, tree); expect_lt(tree, sal); expect_lt(sal, post)
+  # the pre-xgb cells join the final-write assertion
+  expect_true(any(grepl("rbind(.nz_cells, .nzp_cells)", l, fixed = TRUE)))
+})

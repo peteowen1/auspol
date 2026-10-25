@@ -366,10 +366,11 @@ nom_zero_assert_late <- function(shares, cells) {
 #' @param flows The live [build_flow_matrix()] result.
 #' @param label Election label (also the corpus label).
 #' @param prior The previous election's label, for the per-class seat counts.
+#' @param code Log code for [zero_unnominated()]'s summary line.
 #' @param ... passed on to `live_nominations()`.
 #' @return `shares`, unchanged unless `AUSPOL_NOM_LIVE=1` and the list passes the count floor.
 #' @export
-zero_unnominated_live <- function(shares, flows, label = "vic2026", prior = "vic2022", ...) {
+zero_unnominated_live <- function(shares, flows, label = "vic2026", prior = "vic2022", code = "NZ1", ...) {
   if (is.null(rownames(shares)))
     stop("NZL!! the share matrix has no rownames (seat names); nomination zeroing cannot match seats", call. = FALSE)
   nm <- live_nominations(rownames(shares), election = label, prior = prior, ...)
@@ -387,7 +388,7 @@ zero_unnominated_live <- function(shares, flows, label = "vic2026", prior = "vic
     .nz_stop(sprintf("AUSPOL_NOM_LIVE=1 asked for nomination zeroing but AUSPOL_NOM_ZERO='%s' is not 1 or 2 (it would turn zeroing off); set AUSPOL_NOM_ZERO=1 or 2, or AUSPOL_NOM_LIVE=0",
                      zmode))
   }
-  out <- zero_unnominated(shares, nm$target, label, flows = flows)
+  out <- zero_unnominated(shares, nm$target, label, code = code, flows = flows)
   zc <- nomination_zeroed_cells(shares, out)
   nchg <- sum(abs(out - shares) > 1e-9)
   absent <- setdiff(colnames(shares), unique(nm$target$party))
@@ -400,6 +401,50 @@ zero_unnominated_live <- function(shares, flows, label = "vic2026", prior = "vic
     cat(sprintf("NZL  %s: no-op: nothing changed (every class in the forecast stands where it is predicted; %s)%s\n",
                 label, nm$reason, note))
   }
+  out
+}
+
+#' Is the live pre-xgb nomination zero on? (`AUSPOL_NOM_ZERO_PRE_XGB`)
+#'
+#' `"0"` (default, published): off. `"1"`: the published forecast ALSO runs
+#' [zero_unnominated_live()] on the base just before the xgb trees, so the trees'
+#' `base_pred` / `base_margin` has the same exact zeros and flow-redistributed
+#' share the training base has (stage 1 of `rebuild_forecasts.sh` writes its
+#' sharedetail after the harnesses' nomination zero). Audit F18,
+#' plans/prereg-nom-zero-pre-xgb-2026-10-25.md. Anything else is an error.
+#' @return `"0"` or `"1"`.
+#' @export
+nom_zero_pre_xgb_mode <- function() {
+  m <- Sys.getenv("AUSPOL_NOM_ZERO_PRE_XGB", "0")
+  if (!m %in% c("0", "1"))
+    stop(sprintf("NZP1!! AUSPOL_NOM_ZERO_PRE_XGB='%s' is not '0' or '1'", m), call. = FALSE)
+  m
+}
+
+#' The live nomination zero on the BASE, before the xgb trees (`AUSPOL_NOM_ZERO_PRE_XGB`)
+#'
+#' Off (`"0"`), returns `shares` untouched and prints one `NZP1` line saying so.
+#' On, runs exactly [zero_unnominated_live()] (same list, same gate, same mode-2
+#' flow redistribution as training's zero) and prints how many cells it zeroed
+#' before the trees. Until `AUSPOL_NOM_LIVE=1` opens the gate it changes nothing,
+#' and says so. The post-xgb call is kept as the final guard: the trees write a
+#' prediction back into every cell, zeroed ones included.
+#' @inheritParams zero_unnominated_live
+#' @return `shares`, zeroed when on and the nomination gate is open.
+#' @export
+zero_unnominated_live_pre_xgb <- function(shares, flows, label = "vic2026", prior = "vic2022", ...) {
+  if (identical(nom_zero_pre_xgb_mode(), "0")) {
+    cat(sprintf("NZP1  %s: pre-xgb nomination zero OFF (AUSPOL_NOM_ZERO_PRE_XGB=0); base unchanged\n", label))
+    return(shares)
+  }
+  out <- zero_unnominated_live(shares, flows, label, prior = prior, code = "NZP2", ...)
+  zc <- nomination_zeroed_cells(shares, out)
+  nchg <- sum(abs(out - shares) > 1e-9)
+  per <- table(zc$class)
+  cat(sprintf("NZP1  %s: pre-xgb nomination zero ON: %d cell(s) zeroed before the trees%s, %d cell(s) changed\n",
+              label, nrow(zc),
+              if (nrow(zc)) sprintf(" (%s)", paste(sprintf("%s %d", names(per), as.integer(per)), collapse = ", ")) else "",
+              nchg))
   out
 }
 
