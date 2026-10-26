@@ -675,12 +675,14 @@ SA_RESPONSE <- c(LNP = -0.846, ALP = -0.123, IND = -0.086,
 # be read as a FUNCTION of the primary vote rather than only at today's point.
 # Nothing is forced by default.
 FORCE_FP <- Sys.getenv("AUSPOL_FORCE_FP", "")
-# AUSPOL_LIVE_LEVEL_PRED_TREND (audit F12): refused here, before anything reads the pre-blend level
-# (.state_mean_trend, captured above), because a forced scenario or the anchor shift lands after the capture and
-# the trees and the salience permit would silently lose it.
-if (live_level_pred_trend() && (nzchar(FORCE_FP) || LEVEL_ANCHOR))
-  stop("LLP1! AUSPOL_LIVE_LEVEL_PRED_TREND=1 with ", if (nzchar(FORCE_FP)) "AUSPOL_FORCE_FP" else "AUSPOL_LIVE_LEVEL_ANCHOR=1",
+# AUSPOL_LIVE_LEVEL_PRED_TREND (audit F12): the pre-blend level (.state_mean_trend, captured above) is read
+# by the trees and the salience permit, but the anchor shift and a forced scenario land after the capture.
+# A forced scenario is carried into it after the forcing below (LLP2, 2026-10-26: the what-if jobs force
+# every run); the anchor shift is not, so that combination is refused here.
+if (live_level_pred_trend() && LEVEL_ANCHOR)
+  stop("LLP1! AUSPOL_LIVE_LEVEL_PRED_TREND=1 with AUSPOL_LIVE_LEVEL_ANCHOR=1",
        ": the pre-blend level was captured before that shift, so the trees would silently lose it. Run them separately.")
+.state_mean_preforce <- state_mean
 # The what-if slider's zero point: the level BEFORE any forcing.
 cat(sprintf("FP0  statewide primaries before forcing: %s\n",
             paste(sprintf("%s %.2f", names(state_mean), state_mean), collapse = ", ")))
@@ -742,6 +744,24 @@ if (nzchar(FORCE_FP)) {
   cat(sprintf("FP1  statewide primaries now: %s (sum %.1f)\n",
               paste(sprintf("%s %.1f", names(state_mean), state_mean),
                     collapse = ", "), sum(state_mean)))
+  # The trees read the pre-blend level under AUSPOL_LIVE_LEVEL_PRED_TREND=1, so the scenario must reach it
+  # too: the forced party sits exactly at its target, every other class moves by the same change the
+  # forcing gave the blended level, and the non-forced classes are rescaled so both levels keep one total.
+  if (live_level_pred_trend()) {
+    if (!setequal(names(.state_mean_trend), names(state_mean)))
+      stop("LLP2! the pre-blend level and the forced level carry different classes")
+    .tr <- .state_mean_trend[names(state_mean)]
+    .tr <- .tr + (state_mean - .state_mean_preforce[names(state_mean)])
+    .fp_all <- trimws(vapply(strsplit(strsplit(FORCE_FP, ",", fixed = TRUE)[[1]], "=", fixed = TRUE), `[`, "", 1))
+    .tr[.fp_all] <- state_mean[.fp_all]
+    .free <- setdiff(names(.tr), .fp_all)
+    .tr[.free] <- pmax(0.1, .tr[.free])
+    .tr[.free] <- .tr[.free] * (sum(state_mean) - sum(.tr[.fp_all])) / sum(.tr[.free])
+    cat(sprintf("LLP2  forced scenario carried into the pre-blend level: %s (sum %.2f; was %s)\n",
+                paste(sprintf("%s %.2f", names(.tr), .tr), collapse = ", "), sum(.tr),
+                paste(sprintf("%s %.2f", names(.tr), .state_mean_trend[names(.tr)]), collapse = ", ")))
+    .state_mean_trend <- .tr
+  }
 }
 
 .stage("4. project each seat's primaries")
