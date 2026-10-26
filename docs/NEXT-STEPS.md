@@ -9,11 +9,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 ## NEEDS PETE
 
 - OPEN, 26 Oct morning state (replaces the 25 Oct evening block; results in DECISIONS.md and each prereg):
-  1. OPEN, FOUND 26 Oct, LIVE: the published Victorian forecast and a local run of the same code disagree by ~7 One
-     Nation seats (expected seats 13.9 published vs 21.1 local; favourites 12 vs 18; Hawthorn LNP 0.98 vs 0.56). Not
-     the models: local old vs new models agree (20.8 vs 21.1). Inputs differ: local has a vic2026 salience corpus
-     (XG5 43 seat-classes, 31 surge seats) and the CI job has none; local polls put ONP 21.77 vs CI 21.34. Isolate
-     which input (rerun local with the salience corpus moved aside), then decide which one is right to publish.
+  1. OPEN, Pete: local runs and the published Victorian forecast differ by ~7 One Nation seats (expected 21.1 local
+     vs 13.9 published, 26 Oct). Isolated: ~5.4 of it is the vic2026 salience corpus (`output/salience-v6.csv`; local
+     run with it moved aside: 15.7), which CI does not have (XG5! both lines); the other ~1.8 is the local poll clone,
+     13 days stale (`external/aus-polling-analyser` last commit 13 Oct). The corpus is the 18 Oct pre-campaign fetch
+     (item below: `jump` not comparable with the backtests), so the published forecast is the trustworthy one now.
+     Decide: keep the corpus out of CI until the campaign refresh (~2 Nov), or ship it. Local vic2026 numbers are not
+     the published ones until then.
      (Rebooted 26 Oct 12:49; the R checks below are unblocked.)
   2. Departed-origin part 2 (the xgb feature, a stage-4 rebuild): eligible by the prereg's letter because part 1 was
      within 1 SE, but part 1 leaned worse (+1.33, SE 2.56). Claude recommends not spending the rebuild.
