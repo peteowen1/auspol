@@ -22,8 +22,16 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
      above its poll level). (b) no gain on history (quick_arm, 1k sims, all 35, `deciding-runs/20261026-salience-screen/`):
      blend off 0.3069 -> 0.3064 (SE 0.0005); whole surge model off 0.3069 -> 0.3069 (SE 0.0023), AEF-7 0.2642 ->
      0.2565 (SE 0.0050); off helps 12 elections incl. sa2026 -0.013 and vic2022 -0.024, hurts 6 (qld2017 +0.044,
-     nsw2019 +0.028, vic2014 +0.027). NEXT: rebuild the vic2026 corpus the way the backtest corpora were built (every
-     candidate, same anchoring) before the ~2 Nov refresh; a prereg for surge-v2 OFF is a separate question.
+     nsw2019 +0.028, vic2014 +0.027). 27 Oct: root cause and gap closed locally. The 43 rows came from the retired
+     `scripts/build_vic2026_salience_corpus.R` (now stops with BVS0!), which wrote raw search LEVEL as `jump`, unscaled
+     (~1000x the backtests' jump: their median 0, 90th pct ~0.01). Removed from local `output/salience-v6.csv` (backup
+     `%TEMP%/salience-v6.before-vic2026-removal.csv`), so local runs now match CI's no-corpus state; poll clone pulled
+     to 26 Oct (145cd06). The comparable rows cannot be built yet: in vic2022's cache the Premier's 8-week rise is
+     negative at 28+ days out and positive (72 of 72 links) from 25 days out, so vic2026 links from ~3 Nov. Even then a
+     snapshot at lead L is a different statistic from the polling-day jump the hazard trained on; the comparable
+     design trains the hazard on jump-at-lead-L, computable from the cached backtest series (they run to poll-1).
+     Prereg for surge-v2 OFF is a separate question. DECIDED (Pete, 27 Oct: "go" on Claude's recommendation): no
+     lead-matched retrain; wait for the final snapshot (25-27 Nov), which measures what the hazard trained on.
      (Rebooted 26 Oct 12:49; the R checks below are unblocked.)
   2. Departed-origin part 2 (the xgb feature, a stage-4 rebuild): eligible by the prereg's letter because part 1 was
      within 1 SE, but part 1 leaned worse (+1.33, SE 2.56). Claude recommends not spending the rebuild.
@@ -113,7 +121,8 @@ contest features / contest base / partial-contest arm A refused, first-term fill
   >= 6.5 GB: the majors' +0.6-0.8 tree overshoot in ~30 elections is this seat-layer effect,
   `reviews/greens-overcall-shap-trace-2026-10-26.md`), port 3C
   (`prereg-seat-swing-port-3c-2026-10-25.md`), and the `--pairs=all` guard of One Nation arm A (not needed after WORSE).
-- OPEN, DATED (from ~2 Nov, weekly; final snapshot 25-27 Nov): vic2026 salience snapshots. All 500 candidates fetched
+- OPEN, DATED (final snapshot 25-27 Nov is the one that ships, per Pete 27 Oct; earlier weekly ones from ~3 Nov are
+  for watching only, not the forecast): vic2026 salience snapshots. 26 Oct snapshot fetched, 0 of 101 batches linkable. All 500 candidates fetched
   18 Oct (window to 6 Oct), but that is before the campaign: nobody's search interest is rising yet (Premier 1.1 in the
   last 8 weeks vs 9.3 before), so batches cannot be linked and `jump` is not comparable with the backtests' polling-day
   values. Each refresh: `AUSPOL_SALIENCE_TO=<date> Rscript scripts/fetch_salience_vic2026_full.R` (~100 requests,

@@ -93,7 +93,7 @@ The major-party case is now a fitted carry, not an exclusion. A sitting member w
 major party keeps a fraction of their previous personal vote, `discount_mp` from
 `fit_defector_discount()` (`R/candidate_returns.R:1162`), fitted on elections before the target
 (federal targets get their own shrunk rate, `AUSPOL_DEFECT_BY_LEVEL = "2"`, `:1268`). The live
-forecast fits it every run (`scripts/fit_seats_full.R:936-946`, `AUSPOL_LIVE_DEFECT_FIT`); it read
+forecast fits it every run (the `AUSPOL_LIVE_DEFECT_FIT` block calling `fit_defector_discount()` in `scripts/fit_seats_full.R`); it read
 a frozen 0.282 until 2026-10-18, and the fitted value then was 0.313 (the frozen number is
 now only the fallback if the fit fails). A minor-to-minor switcher gets the separate
 `fit_minor_defector_discount()` rate, passed to the live base and the live xgb feature alike
@@ -207,7 +207,7 @@ a factor fitted on earlier elections for small seats (`AUSPOL_SIZE_SD`, `R/size_
 seats with large non-major shares (`AUSPOL_COMPOSITION_SD`). Then, because `level_sd` was
 fitted net of a flat 1.5-point statewide piece while the live draws are about 2.6 points for
 the majors, the statewide miss was counted about twice. `harness_sw_net_sd()`
-(`R/forecast_statewide.R:491`, called at `fit_seats_full.R:1803`, `AUSPOL_SW_NET_LIVE = "1"`,
+(in `R/forecast_statewide.R`, called in `fit_seats_full.R` under the `AUSPOL_SW_NET_LIVE` block, `AUSPOL_SW_NET_LIVE = "1"`,
 shipped 2026-10-19) lowers each cell's sd so the total is what `level_sd` was fitted to,
 never below half the original sd. The state and federal harnesses do the same
 (`AUSPOL_HARNESS_SW_DRAWS = "net"`, so a backtest scores the spread the live forecast ships).
