@@ -745,18 +745,21 @@ if (nzchar(FORCE_FP)) {
               paste(sprintf("%s %.1f", names(state_mean), state_mean),
                     collapse = ", "), sum(state_mean)))
   # The trees read the pre-blend level under AUSPOL_LIVE_LEVEL_PRED_TREND=1, so the scenario must reach it
-  # too: the forced party sits exactly at its target, every other class moves by the same change the
-  # forcing gave the blended level, and the non-forced classes are rescaled so both levels keep one total.
+  # too: every class, the forced one included, moves by the same change the forcing gave the blended level,
+  # so a scenario at today's level serves the published run's level exactly (combine_scenarios.py CSC7
+  # checks that). Only where the 0.1 floor binds are the non-forced classes rescaled to keep one total.
   if (live_level_pred_trend()) {
     if (!setequal(names(.state_mean_trend), names(state_mean)))
       stop("LLP2! the pre-blend level and the forced level carry different classes")
     .tr <- .state_mean_trend[names(state_mean)]
     .tr <- .tr + (state_mean - .state_mean_preforce[names(state_mean)])
     .fp_all <- trimws(vapply(strsplit(strsplit(FORCE_FP, ",", fixed = TRUE)[[1]], "=", fixed = TRUE), `[`, "", 1))
-    .tr[.fp_all] <- state_mean[.fp_all]
+    .tr[.fp_all] <- pmax(0.1, .tr[.fp_all])
     .free <- setdiff(names(.tr), .fp_all)
-    .tr[.free] <- pmax(0.1, .tr[.free])
-    .tr[.free] <- .tr[.free] * (sum(state_mean) - sum(.tr[.fp_all])) / sum(.tr[.free])
+    if (any(.tr[.free] < 0.1) || abs(sum(.tr) - sum(state_mean)) > 1e-6) {
+      .tr[.free] <- pmax(0.1, .tr[.free])
+      .tr[.free] <- .tr[.free] * (sum(state_mean) - sum(.tr[.fp_all])) / sum(.tr[.free])
+    }
     cat(sprintf("LLP2  forced scenario carried into the pre-blend level: %s (sum %.2f; was %s)\n",
                 paste(sprintf("%s %.2f", names(.tr), .tr), collapse = ", "), sum(.tr),
                 paste(sprintf("%s %.2f", names(.tr), .state_mean_trend[names(.tr)]), collapse = ", ")))
