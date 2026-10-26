@@ -14,8 +14,16 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
      run with it moved aside: 15.7), which CI does not have (XG5! both lines); the other ~1.8 is the local poll clone,
      13 days stale (`external/aus-polling-analyser` last commit 13 Oct). The corpus is the 18 Oct pre-campaign fetch
      (item below: `jump` not comparable with the backtests), so the published forecast is the trustworthy one now.
-     Decide: keep the corpus out of CI until the campaign refresh (~2 Nov), or ship it. Local vic2026 numbers are not
-     the published ones until then.
+     Pete (26 Oct): ship only if it is right and improves performance. CHECKED 27 Oct, NOT SHIPPED, both fail:
+     (a) not right: vic2026 has 43 rows in `salience-v6.csv` (other elections 31-717, median jump 0); its median jump
+     is 12.5 (= one week at Google's 100 over 8 weeks, a low-volume spike; NT shows the same 12.5 cap); 27 of 43 rows
+     are One Nation unknowns with no previous vote, which the hazard reads as emergence, then the blend pulls each
+     toward 34.28 by a WIN probability (Mornington 19.8 -> 26.5, Richmond 6.9 -> 13.6; seat-average ONP 21.5 -> 22.5,
+     above its poll level). (b) no gain on history (quick_arm, 1k sims, all 35, `deciding-runs/20261026-salience-screen/`):
+     blend off 0.3069 -> 0.3064 (SE 0.0005); whole surge model off 0.3069 -> 0.3069 (SE 0.0023), AEF-7 0.2642 ->
+     0.2565 (SE 0.0050); off helps 12 elections incl. sa2026 -0.013 and vic2022 -0.024, hurts 6 (qld2017 +0.044,
+     nsw2019 +0.028, vic2014 +0.027). NEXT: rebuild the vic2026 corpus the way the backtest corpora were built (every
+     candidate, same anchoring) before the ~2 Nov refresh; a prereg for surge-v2 OFF is a separate question.
      (Rebooted 26 Oct 12:49; the R checks below are unblocked.)
   2. Departed-origin part 2 (the xgb feature, a stage-4 rebuild): eligible by the prereg's letter because part 1 was
      within 1 SE, but part 1 leaned worse (+1.33, SE 2.56). Claude recommends not spending the rebuild.
