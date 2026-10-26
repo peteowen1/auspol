@@ -528,6 +528,7 @@ jobs:
           ONP_ORDER=$(Rscript -e 'source("scripts/published_flags.R"); cat(PUBLISHED_FLAGS[["AUSPOL_ONP_ORDER"]])')
           if [ "$ONP_ORDER" = "senate" ] || [ "$ONP_ORDER" = "senate_rank" ]; then
             gh release download shipped-models -p onp-senate-nsw2027.csv -D output --clobber || { echo "::error::shipped-models has no onp-senate-nsw2027.csv -- promote_rebuild.R writes it at stage 9"; exit 1; }
+            test -s output/onp-senate-nsw2027.csv || { echo "::error::onp-senate-nsw2027.csv downloaded empty"; exit 1; }
           fi
           mkdir -p external/elections
           for f in nswec-2023-nsw-firstprefs.csv nswec-nsw-transfers.csv; do

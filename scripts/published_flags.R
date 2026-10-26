@@ -621,9 +621,10 @@ PUBLISHED_FLAGS <- c(
                                              # election was called: previous general election winner, or a later
                                              # by-election winner (R/returning_member.R). Built 2026-10-25 after the
                                              # vic2026 audit found Kennedy/Clark/Cupper wrongly flagged and seven
-                                             # sitting members missed. OFF until a deliberate rebuild-and-retrain:
-                                             # the flag is a TRAINING feature too, so flip it for training and
-                                             # live together (sequence: docs/reviews/vic2026-sitting-member-audit-2026-10-25.md).
+                                             # sitting members missed. The flag is a TRAINING feature too, so it was
+                                             # flipped for training and live together: candidacies rebuilt and trees
+                                             # retrained from stage 3, published 2026-10-26 22:06 (sequence:
+                                             # docs/reviews/vic2026-sitting-member-audit-2026-10-25.md).
   AUSPOL_XGB_BASE_DELTA      = "1",          # SHIPPED 2026-10-06 with AUSPOL_REENTRY="majors": the post-xgb path for a base_pred fix the trees did not train on (what the live forecast does via base_margin). "1" (harnesses only, inside xgb_primary_override()): a cell whose base share at the override differs from the same point of the stage-1 run (output/xgb-base-ref/<pair>.csv, recorded under AUSPOL_XGB_BASE_RECORD) by more than AUSPOL_XGB_BASE_DELTA_TOL is re-predicted by the FROZEN as-at trees (cached base_pred + that change, as both base_margin and the base_pred feature) instead of keeping the cached prediction; no retrain, so unrelated elections do not move.
   AUSPOL_XGB_BASE_RECORD     = "0",          # measurement plumbing, not a model change: "1" makes the disabled override (stage 1, AUSPOL_XGB_PRIMARY=0) write its shares to output/xgb-base-ref/<pair>.csv, the reference AUSPOL_XGB_BASE_DELTA compares against. scripts/rebuild_forecasts.sh sets it for stage 1.
   AUSPOL_XGB_BASE_DELTA_TOL  = "0.05",      # percentage points; cells whose base differs by no more than this keep the cached as-at prediction (later harness steps move base by dust). Only read when AUSPOL_XGB_BASE_DELTA = "1".
