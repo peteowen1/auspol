@@ -113,7 +113,7 @@ candidate is personally returning, 0.326 for a fresh face, or 1.0 (uniform
 swing, no penalty) when the salience screen (`salience_permit_for()`,
 `screened_slopes()`) judges a fresh face as a plausible emergence rather than
 a no-hoper. Sitting members take their own slope tier (`AUSPOL_MP_SLOPE`,
-`scripts/fit_seats_full.R:959-975`), and since 2026-10-14 that table and the minor-defector
+the `.MP_SLOPE` block in `scripts/fit_seats_full.R`), and since 2026-10-14 that table and the minor-defector
 carry are fitted on earlier elections only, shrunk toward a structural prior
 (`AUSPOL_MP_SLOPE_TF`, `AUSPOL_CONSERVE_TF`, `AUSPOL_CONSERVE_SHRINK_K = "3"`, which replaced an
 8-case cliff).
@@ -238,8 +238,8 @@ One statewide shift per draw (`:150-165`; the draws from step 4 are passed in as
 
 `published_flags.R` reads `AUSPOL_SURGE_H = "0"`, which looks like the surge is
 off. It is not. That is only the FLAT FALLBACK hazard. The real per-seat hazard
-comes from `AUSPOL_SALIENCE_SURGE_V2 = "1"` and **overwrites `surge_arg` at
-`fit_seats_full.R:1168`** (`surge_arg <- unname(v)`, inside the `.surge_v2_on` block that starts at `:1139`). What is genuinely off is `AUSPOL_IND_SALIENCE`,
+comes from `AUSPOL_SALIENCE_SURGE_V2 = "1"` and **overwrites `surge_arg` in
+`fit_seats_full.R`** (`surge_arg <- unname(v)`, inside the `if (.surge_v2_on)` block). What is genuinely off is `AUSPOL_IND_SALIENCE`,
 `AUSPOL_INSURGENCY_SHRINK`, `AUSPOL_SALIENCE_EXPECTED`, `AUSPOL_SALIENCE_EXP_SD`
 and the retired two-party `simulate_seats()`.
 
