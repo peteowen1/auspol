@@ -9,19 +9,17 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 ## NEEDS PETE
 
 - OPEN, 26 Oct morning state (replaces the 25 Oct evening block; results in DECISIONS.md and each prereg):
-  1. Sitting-member rule (`AUSPOL_RETURNING_MEMBER_RULE`): Pete said GO after name checks (26 Oct). Names checked
-     against commission results: 106 of 108 MATCH, 0 MISMATCH, 2 NOT-FOUND online (Marrickville 2005 Tebbutt,
-     Northcote 2017 Thorpe; indirect commission evidence only: Pete to accept or not).
-     `external/reference/byelections/byelection-winner-names-verified-2026-10-26.csv`. NEXT, after the reboot: candidacies
-     rebuild (also picks up the LDP fix `ec43512`) + retrain from stage 3, ~2 h detached.
-  0. Reboot pending (kernel pool leak, ~6-7 GB stuck; DEV session: caused by Git Bash process spawns, returns in days).
-     Every R check of the 26 Oct builds waits on it (branch list under "Builds waiting for R", below).
+  1. OPEN, IN FLIGHT: sitting-member rule SHIPPED in code (`30161358`, DECISIONS 26 Oct); candidacies rebuilt (with
+     the LDP fix); retrain from stage 3 launched 20:10 26 Oct, `deciding-runs/20261026-rule1-rebuild/` (DONE/FAILED
+     marker). NEXT when DONE: walk the live forecast with and without (the audit's ten seat rows), then
+     `AUSPOL_REBUILD_FROM=9 AUSPOL_PUBLISH=1` and upload `candidacies.csv` with the models, never before them.
+     (Rebooted 26 Oct 12:49; the R checks below are unblocked.)
   2. Departed-origin part 2 (the xgb feature, a stage-4 rebuild): eligible by the prereg's letter because part 1 was
      within 1 SE, but part 1 leaned worse (+1.33, SE 2.56). Claude recommends not spending the rebuild.
   3. `dev` -> `main` PR (172 files ahead of main): review what landed since the last pre-PR review (38d96a5,
      01e765d and the 25 Oct merges), full `check_like_ci.R`, then open.
 - OPEN, merge (reviewed, not on dev): F16 `AUSPOL_ROW_SHIFT_EXACT` (6306855; add the M~100-with-others guard at
-  merge), F18 `AUSPOL_NOM_ZERO_PRE_XGB` (c4b2cbd), work-5c ec43512 + cde69f5 (`C:\dev\auspol-5c`). Dead-party
+  merge), F18 `AUSPOL_NOM_ZERO_PRE_XGB` (c4b2cbd). (work-5c merged 26 Oct.) Dead-party
   `AUSPOL_LEVEL_DEAD_PARTY` (337f4cd) PARKED: its screen says not worth it; do not merge.
 - OPEN, screens not yet run (one at a time, >= 6.5 GB free, so after the reboot that clears the kernel pool leak):
   level-conserve FIRST (`prereg-level-conserve-2026-10-25.md`; the majors' +0.6-0.8 tree overshoot over ~30
@@ -392,4 +390,3 @@ Still open:
 - Departed-rate refit: fallback, fit rows, decision rule (`plans/prereg-departed-rate-screen-2026-10-25.md` on
   `prereg-offbranches-1025`).
 - Census: qld2017 from the 2021 reaggregation; previous-election rows for the 12 newer pairs.
-- By-elections: accept Marrickville 2005 and Northcote 2017 on indirect commission evidence?
