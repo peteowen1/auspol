@@ -106,6 +106,7 @@ PUBLISHED_FLAGS <- c(
                                              #
                                              # RE-CHECK AFTER 9 NOV. Re-run scripts/fetch_candidates_vic2026_prenomination.R,
                                              # fetch_seat_salience_vic2026_live.R and build_vic2026_salience_corpus.R
+                                             # (that builder RETIRED 2026-10-27, wrong scale; use build_vic2026_salience_jump.R)
                                              # once the full candidate list exists, then re-measure the statewide
                                              # IND/OTH_RIGHT sums -- that is when this weakness should actually
                                              # resolve. Set back to "0" to revert, no other change needed.

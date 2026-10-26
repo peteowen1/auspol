@@ -138,7 +138,10 @@ xgb_primary_override <- function(shares, pair_label, enabled = NULL) {
 #'
 #' **IMPORTANT CAVEAT, read before trusting this today**: the salience/surge
 #' features (jump/governed/permit/surge_h/is_recipient) need a salience
-#' corpus for the TARGET election. A PARTIAL one now exists for vic2026 --
+#' corpus for the TARGET election. RETIRED 2026-10-27: the path below wrote
+#' raw search level as `jump`, ~1000x the backtest scale, and its rows were
+#' removed; `scripts/build_vic2026_salience_jump.R` is the comparable builder
+#' (links from ~3 Nov). History of the retired path follows. A PARTIAL one existed for vic2026 --
 #' `scripts/fetch_candidates_vic2026_prenomination.R` (Wikipedia, pre-
 #' nomination, necessarily incomplete/unofficial) and
 #' `scripts/fetch_seat_salience_vic2026_live.R` (real Google Trends data for
