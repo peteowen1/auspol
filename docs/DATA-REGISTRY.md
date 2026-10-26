@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-10-26 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-10-27 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
@@ -134,7 +134,7 @@ cannot pass as a working one.
   - e.g. council/2008/aurukunshire/councillor_summary.html, council/2008/aurukunshire/mayoral_summary.html, council/2008/balonneshire/councillor_summary.html, council/2008/balonneshire/mayoral_summary.html
 - **waec/** -- 1916 files, 49.0 MB
   - e.g. app.html, app.min.js, config-loader.js, config.json
-- **trends/** -- 5266 files, 3.3 MB
+- **trends/** -- 5394 files, 3.5 MB
   - e.g. 2019_anch2_Adrian_Wone_Susie_Beveridge_Will_Landers_Ammar_Khan.rds, 2019_anch2_Bill_Chandler_Susan_Moylan_Dave_Blake_Tim_Bohm.rds, 2019_anch2_Robert_Oakeshott_Helen_Haines_Zali_Steggall_Kerryn_Phelps.rds, 2019_anch2_Trevor_Jones_Colin_Butland_David_Norman_Thor_Prohaska.rds
 - **boundaries/** -- 75 files, 770.5 MB
   - e.g. AEC-2025-esri.zip, AEC_2025/AUS_ELB_region.dbf, AEC_2025/AUS_ELB_region.prj, AEC_2025/AUS_ELB_region.shp
