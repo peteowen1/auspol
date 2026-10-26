@@ -165,6 +165,14 @@ if (identical(.flag("AUSPOL_PUBLISH_NSW2027"), "1")) {
     data.table::fwrite(.chn, file.path(OUT, "council-history-nsw2027.csv"))
     .nsw_tables <- c(.nsw_tables, "council-history-nsw2027.csv")
   }
+  # AUSPOL_ONP_ORDER=senate_rank: the daily job has no Senate table for nsw2027 (its
+  # shares live in senate-by-district-class.csv), so fit_seats_full.R reads this slice.
+  if (.flag("AUSPOL_ONP_ORDER") %in% c("senate", "senate_rank")) {
+    .osn <- onp_senate_key(.n27, "nsw2027")
+    if (is.null(.osn) || anyNA(.osn)) stop("no nsw2027 Senate One Nation share for: ", paste(utils::head(.n27[is.na(.osn)], 8), collapse = ", "), " -- rerun scripts/build_senate_by_district.R")
+    data.table::fwrite(data.table::data.table(seat = .n27, senate_pct = unname(.osn)), file.path(OUT, "onp-senate-nsw2027.csv"))
+    .nsw_tables <- c(.nsw_tables, "onp-senate-nsw2027.csv")
+  }
   for (.f in c("nswec-2023-nsw-firstprefs.csv", "nswec-nsw-transfers.csv")) {
     .src <- file.path(election_data_path(), .f)
     if (!file.exists(.src)) stop("AUSPOL_PUBLISH_NSW2027=1 but ", .src, " is missing -- run scripts/fetch_preferences_nsw.R")
