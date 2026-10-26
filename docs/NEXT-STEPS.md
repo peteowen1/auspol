@@ -9,10 +9,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 ## NEEDS PETE
 
 - OPEN, 26 Oct morning state (replaces the 25 Oct evening block; results in DECISIONS.md and each prereg):
-  1. OPEN, IN FLIGHT: sitting-member rule SHIPPED in code (`30161358`, DECISIONS 26 Oct); candidacies rebuilt (with
-     the LDP fix); retrain from stage 3 launched 20:10 26 Oct, `deciding-runs/20261026-rule1-rebuild/` (DONE/FAILED
-     marker). NEXT when DONE: walk the live forecast with and without (the audit's ten seat rows), then
-     `AUSPOL_REBUILD_FROM=9 AUSPOL_PUBLISH=1` and upload `candidacies.csv` with the models, never before them.
+  1. OPEN, FOUND 26 Oct, LIVE: the published Victorian forecast and a local run of the same code disagree by ~7 One
+     Nation seats (expected seats 13.9 published vs 21.1 local; favourites 12 vs 18; Hawthorn LNP 0.98 vs 0.56). Not
+     the models: local old vs new models agree (20.8 vs 21.1). Inputs differ: local has a vic2026 salience corpus
+     (XG5 43 seat-classes, 31 surge seats) and the CI job has none; local polls put ONP 21.77 vs CI 21.34. Isolate
+     which input (rerun local with the salience corpus moved aside), then decide which one is right to publish.
      (Rebooted 26 Oct 12:49; the R checks below are unblocked.)
   2. Departed-origin part 2 (the xgb feature, a stage-4 rebuild): eligible by the prereg's letter because part 1 was
      within 1 SE, but part 1 leaned worse (+1.33, SE 2.56). Claude recommends not spending the rebuild.
