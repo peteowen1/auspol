@@ -611,7 +611,7 @@ PUBLISHED_FLAGS <- c(
                                              # protect a 0.014 number on elections already decided.
                                              # Was OFF from b2c5572 to e8c5eab, when the live path had no Victorian
                                              # candidate data and this would have made the 0-default a false claim.
-  AUSPOL_RETURNING_MEMBER_RULE = "0",
+  AUSPOL_RETURNING_MEMBER_RULE = "1",        # SHIPPED 2026-10-26 (Pete: GO after the by-election name checks, 106 of 108 MATCH; Marrickville 2005 and Northcote 2017 accepted on indirect commission evidence). Was "0".
                                              # build-time (scripts/build_candidacies.R, BC9), only read when the
                                              # backfill above is on. "0" = the legacy flag: SURNAME|first-initial
                                              # matches a winner at ANY earlier election (what the deployed XGBoost

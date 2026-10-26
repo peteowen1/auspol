@@ -1594,11 +1594,11 @@ if (!.backfill) {
 if (any(.state)) {
   # TWO RULES FOR WHAT THE FLAG MEANS, chosen by AUSPOL_RETURNING_MEMBER_RULE:
   #
-  #   "0" (default, what the deployed XGBoost trees were fitted on): the
+  #   "0" (legacy, what the trees were fitted on until 2026-10-26): the
   #       candidate's SURNAME|FIRST-INITIAL key equals a winner's key at ANY
   #       earlier election in the region. Byte-identical to the file built before
   #       2026-10-25.
-  #   "1" (fixed 2026-10-25, NOT yet adopted): the candidate is the SAME PERSON as
+  #   "1" (default since 2026-10-26, shipped with a retrain from stage 3): the candidate is the SAME PERSON as
   #       the member who held this seat when the election was called -- the winner
   #       of the region's PREVIOUS general election, or of a later by-election or
   #       supplementary election, which supersedes that seat's general-election
@@ -1609,11 +1609,11 @@ if (any(.state)) {
   # 2018), Reece CLARK (Werribee) because of Robert Clark (Box Hill, 2010/2014)
   # and Ali CUPPER (Mildura, lost her seat in 2022); and it missed every
   # by-election winner (docs/reviews/vic2026-sitting-member-audit-2026-10-25.md).
-  # It stays the default because the flag is also a TRAINING feature
+  # The default changes only with a retrain, because the flag is also a TRAINING feature
   # (historic_elected_i): flipping the meaning at build time without retraining
   # makes the live feature and the fitted trees disagree. Flip it for training
   # and live together -- the rebuild sequence is in the audit doc.
-  .rule <- Sys.getenv("AUSPOL_RETURNING_MEMBER_RULE", "0")
+  .rule <- Sys.getenv("AUSPOL_RETURNING_MEMBER_RULE", "1")
   if (!.rule %in% c("0", "1")) stop("AUSPOL_RETURNING_MEMBER_RULE must be \"0\" or \"1\", got \"", .rule, "\"")
   cat(sprintf("BC9r returning-member rule %s (%s)\n", .rule,
               if (.rule == "1") "same person, previous general election + later by-elections"
