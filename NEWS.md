@@ -1,3 +1,10 @@
+# auspol 0.4.108
+
+- **Same-person sitting-member rule shipped** (`AUSPOL_RETURNING_MEMBER_RULE` default `"1"`): `historic_elected` now marks the member holding the seat when the election was called (previous general-election winner or a later by-election winner), not any surname/initial match at any earlier election. Candidacies rebuilt and the trees retrained; published 2026-10-26.
+- **What-if scenarios carry the forced vote into the pre-blend level (LLP2)**, so scenarios run with `AUSPOL_LIVE_LEVEL_PRED_TREND=1`; a +0.0 scenario is byte-identical to the published forecast.
+- **CI fetches the One Nation Senate tables** (`onp-senate-vic2026.csv`, `onp-senate-nsw2027.csv`) from `shipped-models` and fails if missing or empty; `promote_rebuild.R` writes the NSW one.
+- `state_swing_adjustment()` removed (no callers). `scripts/build_vic2026_salience_corpus.R` retired: it wrote raw search level as `jump`, ~1000x the backtest scale.
+
 # auspol 0.4.107
 
 - **`fp_now` first-preference shares add to 100.0** on the Victorian and every `build_trend_page_data.R` page (issue #131; they summed to 97.5 for Victoria and 98.2 for NSW because each party's trend is fitted alone). The exported endpoint means are rescaled to 100 and rounded by largest remainder (`R/fp_now.R`), the 95% half-widths scaled by the same factor and centred on the rounded mean; the build stops unless the sum is 100 +/- 0.1 (log line `TP4`). Display only: the trend series, the headline two-party estimate and the seat forecast are unchanged. Rescaling, not a joint refit, because a refit would move published numbers.
