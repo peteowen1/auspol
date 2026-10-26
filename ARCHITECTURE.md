@@ -113,7 +113,7 @@ candidate is personally returning, 0.326 for a fresh face, or 1.0 (uniform
 swing, no penalty) when the salience screen (`salience_permit_for()`,
 `screened_slopes()`) judges a fresh face as a plausible emergence rather than
 a no-hoper. Sitting members take their own slope tier (`AUSPOL_MP_SLOPE`,
-`scripts/fit_seats_full.R:914-930`), and since 2026-10-14 that table and the minor-defector
+`scripts/fit_seats_full.R:959-975`), and since 2026-10-14 that table and the minor-defector
 carry are fitted on earlier elections only, shrunk toward a structural prior
 (`AUSPOL_MP_SLOPE_TF`, `AUSPOL_CONSERVE_TF`, `AUSPOL_CONSERVE_SHRINK_K = "3"`, which replaced an
 8-case cliff).
@@ -136,7 +136,7 @@ salience screen (`AUSPOL_SURGE_SOURCE = "none"`, `R/party_surge.R:95`, decided 2
 because the "surging" flag had been computed from the election's own swing). The same hazard
 feeds the xgb primary model as the feature `surge_h`; since 2026-10-18 that feature is built
 only from canon elections strictly before each training election (`AUSPOL_SURGE_H_TF`,
-`scripts/fit_xgb_primary_v6.R:555-566`), where it had been leave-one-out and so let fed2016
+`scripts/fit_xgb_primary_v6.R:576-588`), where it had been leave-one-out and so let fed2016
 learn from fed2022 and sa2026.
 
 **4. Renormalise every party in the seat to sum to 100%.**
@@ -191,7 +191,7 @@ and `shares` are different objects that never touch until `simulate_seat_contest
 | 11 | per-cell seat sd: level form, widened by seat size and seat composition, then re-derived net of the statewide draws; empirical error quantiles per class; Liberal/National split | `:1780-1792` |
 
 **The seat-poll blend (step 8).** Each polled (seat, class) cell is pulled toward its poll
-average by `v / (v + 1/P + t2)` (`R/seat_poll_blend.R:906-1048`). `P` is the sum over that
+average by `v / (v + 1/P + t2)` (`seat_poll_blend_apply()`, `R/seat_poll_blend.R:909-1039`; the weight itself is `wvec <- v / (v + 1 / tb$wsum + t2)` at `:999`). `P` is the sum over that
 cell's polls of recency x precision: a weight `0.5^(days/H)` (half-life `H`, prior 60 days,
 fitted on earlier elections; the old 90-day window is gone) divided by sampling variance
 plus a non-sampling floor for the poll's method group (mrp, independent direct, stake-holder
@@ -239,7 +239,7 @@ One statewide shift per draw (`:150-165`; the draws from step 4 are passed in as
 `published_flags.R` reads `AUSPOL_SURGE_H = "0"`, which looks like the surge is
 off. It is not. That is only the FLAT FALLBACK hazard. The real per-seat hazard
 comes from `AUSPOL_SALIENCE_SURGE_V2 = "1"` and **overwrites `surge_arg` at
-`fit_seats_full.R:1123`**. What is genuinely off is `AUSPOL_IND_SALIENCE`,
+`fit_seats_full.R:1168`** (`surge_arg <- unname(v)`, inside the `.surge_v2_on` block that starts at `:1139`). What is genuinely off is `AUSPOL_IND_SALIENCE`,
 `AUSPOL_INSURGENCY_SHRINK`, `AUSPOL_SALIENCE_EXPECTED`, `AUSPOL_SALIENCE_EXP_SD`
 and the retired two-party `simulate_seats()`.
 
@@ -516,7 +516,12 @@ was caught only against a number someone already knew.
   (the six harnesses and `fit_seats_full.R`) and (b) pre-registration clause ids
   (`C2`, `C3`, `R1`–`R3`, `T3`, `P4`), which name a different clause in each plan
   and so are left alone. A new script takes a prefix nothing uses; that test is
-  the check, not this paragraph. The scan also reads `code = "XX1"` arguments and
+  the check, not this paragraph. Prefixes added 2026-10-25, one switch each: `SLV`
+  (`AUSPOL_SURGE_LEVEL`), `PXN`/`PXR` (F8 netting and residual port), `ONR`/`ONF`
+  (One Nation Senate rank and fill), `ONN` (One Nation new-seat rule), `OH`
+  (`build_onp_house.R`), `LCV` (`AUSPOL_LEVEL_CONSERVE`), `LLP`/`LPR` (F12 live and
+  training level_pred), `S3C` (port line-up change), `RMF` (returning-member rule).
+  The scan also reads `code = "XX1"` arguments and
   `.py`/`.sh` scripts, which the grep below misses.
 
   Codes must be unique and `run_all.R` stops if two stages claim the same one

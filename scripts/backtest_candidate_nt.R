@@ -386,6 +386,12 @@ for (K in PAIRS) {
   mat <- matrix(0, nrow = nrow(A), ncol = length(parties),
                 dimnames = list(rownames(A), parties))
   mat[, colnames(A)] <- A
+  # ONE NATION IN SEATS WITH NO STATE HISTORY (AUSPOL_ONP_NEWSEAT_RULE, default "0"). One Nation has
+  # stood in no Territory election in the corpus, so the call below prints ONN1 and changes nothing;
+  # it is wired so a future NT candidacy gets the same rule as every other harness. R/onp_newseat.R.
+  ONN_RULE <- onp_newseat_rule()
+  .onn_stand <- fb[fb$party == "ONP" & fb$votes > 0, unique(seat)]
+  .onn_hist <- stats::setNames(if ("ONP" %in% colnames(A)) A[, "ONP"] > 0 else rep(FALSE, nrow(A)), rownames(A))
   DEV_SLOPE <- dev_slopes_for(parties)
   # "screened" COUNTS TOO, as it does in the other five harnesses. The published
   # value of AUSPOL_DEV_SLOPE_MODE is "screened", and this line tested for
@@ -539,7 +545,7 @@ for (K in PAIRS) {
   ", if (is.null(.fdo)) 0L else .fdo$n)); return(m) }
     m2 <- route_departed_origin(m, el_from, el_to, .fdo$frac)
     .a <- attr(m2, "departed_origin")
-    cat(sprintf("BF0o departed-origin share %.3f from %d cases (target excluded): %d routed%s
+    cat(sprintf("BF0o departed-origin share %.3f (shrunk) from %d earlier-election cases: %d routed%s
   ", .fdo$frac, .fdo$n, .a$applied,
                 if (length(.a$skipped)) paste0("; SKIPPED ", paste(.a$skipped, collapse = ", ")) else ""))
     m2
@@ -639,6 +645,11 @@ for (K in PAIRS) {
                   el_to, length(zeroed), paste(sort(zeroed), collapse = ", ")))
     }
   }
+  if (ONN_RULE) {   # AUSPOL_ONP_NEWSEAT_RULE=1, see above; Senate key from output/senate-by-district-class.csv
+    mat <- onp_newseat_apply(mat, el_to, .onn_hist, order = Sys.getenv("AUSPOL_ONP_ORDER", "federal"),
+                             refill = "none", standing = .onn_stand, code = "ONN1")
+    attr(mat, "onp_newseat") <- NULL
+  }
   if (.departed_hold) {
     shares <- renorm_hold(mat, HELD)
     cat(sprintf("BH0  departed hold: %d cell(s) held in %d seat(s)%s\n", sum(HELD), sum(rowSums(HELD) > 0),
@@ -652,6 +663,9 @@ for (K in PAIRS) {
   # the typical vote for their signals, before ("base") or after ("final") the frozen trees. R/ind_typical.R.
   shares <- ind_typical_apply(shares, el_to, stage = "base", code = "BNT1T")
   shares <- ind_person_apply(shares, el_to, stage = "base", code = "BNT1P")  # AUSPOL_IND_PERSON (off): an independent starts from their own record. R/ind_person.R.
+  # AUSPOL_LEVEL_CONSERVE (off; plans/prereg-level-conserve-2026-10-25.md): rake the base so each standing
+  # class's implied statewide share equals the level it was built on. R/level_conserve.R.
+  shares <- level_conserve_apply(shares, sb, el_to, stage = "base", target = fb, held = HELD)
   shares <- xgb_primary_override(shares, el_to)
   shares <- ind_typical_apply(shares, el_to, stage = "final", code = "BNT1T")
   shares <- ind_person_apply(shares, el_to, stage = "final", code = "BNT1P")  # AUSPOL_IND_PERSON (off): an independent starts from their own record. R/ind_person.R.
@@ -706,6 +720,7 @@ for (K in PAIRS) {
   nom_zero_save_flows(fm, el_to)   # the as-at forecasts table zeroes with this same fm
   shares <- zero_unnominated_at("late", shares, fb, el_to, flows = fm)
   .nz_cells <- nomination_zeroed_cells(.nz_pre, shares)
+  shares <- level_conserve_apply(shares, sb, el_to, stage = "final", target = fb, held = HELD)  # AUSPOL_LEVEL_CONSERVE "final"/"both": after the last nomination zero
   # DIAGNOSTIC DUMP, off unless asked. Writes the projected primary the model
   # actually simulates from, so a seat can be inspected without reconstructing
   # the pipeline by hand and getting it subtly wrong.

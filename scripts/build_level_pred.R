@@ -64,6 +64,27 @@ CLASSES <- c("ALP", "LNP", "GRN", "IND", "ONP", "OTH", "OTH_RIGHT")
 mix <- fread(file.path(OUT, "projection-mix.csv"), showProgress = FALSE)
 fl <- fundamentals_loo_table()
 
+# AUSPOL_LEVEL_PRED_RECENT (audit F12, default "0", plans/prereg-live-level-pred-2026-10-25.md): blend each pair's
+# level_pred toward its recent polls exactly as the live forecast blends the level it serves the trees
+# (fit_seats_full.R FSLR, R/level_recent.R). Time-forward: polls fielded before polling day only, blend constant
+# fitted on earlier elections only. The blend's own settings come from published_flags.R when unset, so a
+# standalone run and the rebuild (which exports them) build the same file. Needs output/level-recent.csv and
+# output/fed-state-breakdowns.csv BUILT FIRST (rebuild stage 5b; rebuild_forecasts.sh runs them ahead of stage 3
+# under this switch). Off, nothing below changes and level-pred.csv is byte-identical.
+LP_RECENT <- level_pred_recent()
+if (LP_RECENT) {
+  source("scripts/published_flags.R")
+  for (n in c("AUSPOL_LEVEL_RECENT", "AUSPOL_LEVEL_RECENT_HALFLIFE", "AUSPOL_LEVEL_FED_R", "AUSPOL_LEVEL_FED_GAP_HL"))
+    if (!nzchar(Sys.getenv(n)) && n %in% names(PUBLISHED_FLAGS)) do.call(Sys.setenv, setNames(list(PUBLISHED_FLAGS[[n]]), n))
+  for (f in c("level-recent.csv", if (level_recent_fed_r() > 0) "fed-state-breakdowns.csv"))
+    if (!file.exists(out_path(f))) stop("LPR0! AUSPOL_LEVEL_PRED_RECENT=1 needs ", out_path(f), " -- run the rebuild's stage-5b builders first")
+  cat(sprintf("LPR0 AUSPOL_LEVEL_PRED_RECENT=1: level_pred blended toward recent polls (AUSPOL_LEVEL_RECENT=%s, half-life %s, fed r %s)\n",
+              level_recent_mode(), Sys.getenv("AUSPOL_LEVEL_RECENT_HALFLIFE", "20"), format(level_recent_fed_r())))
+  if (identical(level_recent_mode(), "0"))
+    cat("LPR0 AUSPOL_LEVEL_RECENT=0: the live forecast does not blend either, so this switch changes nothing\n")
+}
+lp_blended <- character(0)
+
 rows <- list(); failed <- character(0)
 for (pr in names(DATES)) {
   reg <- sub("[0-9]{4}$", "", pr); yr <- as.integer(sub("^[a-z]+", "", pr))
@@ -86,12 +107,26 @@ for (pr in names(DATES)) {
                            n_sims = 2000L, seed = 42L),
     error = function(e) { cat(sprintf("LP0! %s: %s\n", pr, conditionMessage(e))); NULL })
   if (is.null(r)) { failed <- c(failed, pr); next }
+  if (LP_RECENT) {
+    # NOT in the tryCatch above: a blend that cannot be computed stops the build rather than leaving an
+    # unblended row that reads as blended (or a prior-election fallback).
+    r$st_fc <- level_pred_recent_apply(r$st_fc, pr, reg, DATES[[pr]], code = "LPR1")
+    lp_blended <- c(lp_blended, pr)
+  }
   rows[[pr]] <- data.table(pair = pr, party = names(r$st_fc),
                            level_pred = unname(r$st_fc))
+}
+if (LP_RECENT) {
+  miss <- setdiff(names(rows), lp_blended)
+  cat(sprintf("LPR2 recent-poll blend applied to %d of %d poll-based pairs%s\n", length(lp_blended), length(rows),
+              if (length(miss)) sprintf("; NOT applied: %s", paste(miss, collapse = ", ")) else ""))
+  if (length(miss)) stop("LPR2! blend missing for ", paste(miss, collapse = ", "))
 }
 LP <- rbindlist(rows, fill = TRUE)
 if (!nrow(LP)) stop("no pair produced a predicted statewide")
 LP[, from_polls := 1L]
+# Which recipe built this file, on the rows themselves (only under the switch, so the default file is unchanged).
+if (LP_RECENT) LP[, level_recent := 1L]
 
 # A PAIR WITH NO POLL-BASED PREDICTION FALLS BACK TO THE PRIOR ELECTION, not to
 # NA. wa2021 has too thin a polling cycle to fit a trend at all, and leaving it

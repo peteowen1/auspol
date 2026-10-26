@@ -1,0 +1,236 @@
+Seat,Rank,Outcome,Sportsbet,TAB,Betfair,Best price,Bookies prob (margin removed),Our prob (party class),Our class
+Albert Park,1,Labor,1.53,1.44,,1.53,0.621,0.651,ALP
+Albert Park,2,Greens,3.75,3.4,,3.75,0.215,0.255,GRN
+Albert Park,3,Liberal,5,6,,6,0.129,0.081,LNP
+Albert Park,4,One Nation,15,26,,26,0.029,0.012,ONP
+Ashwood,1,Liberal,1.36,1.28,,1.36,0.706,0.182,LNP
+Ashwood,2,Labor,3.3,3.5,,3.5,0.214,0.8,ALP
+Ashwood,3,One Nation,10,10,,10,0.055,0.001,ONP
+Ashwood,4,Any other,26,34,,34,0.014,0,OTHER+IND
+Bass,1,One Nation,1.67,1.95,,1.95,0.487,0.255,ONP
+Bass,2,Liberal,2,1.8,,2,0.456,0.734,LNP
+Bass,3,Labor,18,13,,18,0.036,0.008,ALP
+Bass,4,Any other,26,26,,26,0.018,0.002,OTHER+IND
+Bayswater,1,Liberal,1.14,1.06,,1.14,0.877,0.564,LNP
+Bayswater,2,One Nation,6,7,,7,0.072,0.028,ONP
+Bayswater,3,Labor,7.5,12,,12,0.045,0.404,ALP
+Bayswater,4,Greens,51,81,,81,0.003,0.004,GRN
+Bellarine,1,Labor,2,2.1,,2.1,0.427,0.729,ALP
+Bellarine,2,Liberal,2.5,2.5,,2.5,0.337,0.248,LNP
+Bellarine,3,One Nation,4,3.75,,4,0.2,0.016,ONP
+Bellarine,4,Any other,18,19,,19,0.031,0.002,OTHER+IND
+Benambra,1,Liberal,1.72,1.75,,1.75,0.509,0.97,LNP
+Benambra,2,One Nation,2.2,2.8,,2.8,0.332,0.029,ONP
+Benambra,3,Any other,6.5,4,,6.5,0.142,0.001,OTHER+IND
+Benambra,4,Labor,34,41,,41,0.012,0,ALP
+Bendigo East,1,Nationals,1.45,1.4,,1.45,0.643,0.747,LNP
+Bendigo East,2,One Nation,2.62,2.85,,2.85,0.286,0.181,ONP
+Bendigo East,3,Labor,11,10,,11,0.053,0.065,ALP
+Bendigo East,4,Any other,26,26,,26,0.017,0.003,OTHER+IND
+Bendigo West,1,Labor,2,,,2,0.439,0.346,ALP
+Bendigo West,2,One Nation,2.1,,,2.1,0.414,0.08,ONP
+Bendigo West,3,Nationals,6,,,6,0.119,0.55,LNP
+Bendigo West,4,Any other,34,,,34,0.015,0.004,OTHER+IND
+Bentleigh,1,Liberal,1.67,1.65,,1.67,0.546,0.203,LNP
+Bentleigh,2,Labor,2.25,2.25,,2.25,0.38,0.777,ALP
+Bentleigh,3,One Nation,11,15,,15,0.048,0.016,ONP
+Bentleigh,4,Any other,23,26,,26,0.022,0.002,OTHER+IND
+Berwick,1,Liberal,1.14,1.36,,1.36,0.763,0.836,LNP
+Berwick,2,One Nation,6,3.4,,6,0.157,0.145,ONP
+Berwick,3,Labor,8.5,8,,8.5,0.068,0.016,ALP
+Berwick,4,Any other,34,51,,51,0.009,0.001,OTHER+IND
+Box Hill,1,Liberal,1.36,1.37,,1.37,0.678,0.076,LNP
+Box Hill,2,Labor,3,3.3,,3.3,0.239,0.906,ALP
+Box Hill,3,One Nation,12,15,,15,0.039,0.001,ONP
+Box Hill,4,Any other,18,11,,18,0.039,0.001,OTHER+IND
+Brighton,1,Liberal,1.04,1.04,1.02,1.04,0.944,0.989,LNP
+Brighton,2,One Nation,15,9,,15,0.028,0,ONP
+Brighton,3,Labor,21,17,,21,0.013,0.004,ALP
+Brighton,4,Any other,23,26,2,26,0.009,0,OTHER+IND
+Broadmeadows,1,Labor,1.12,1.04,1.02,1.12,0.897,0.954,ALP
+Broadmeadows,2,One Nation,6,7.5,,7.5,0.062,0.02,ONP
+Broadmeadows,3,Liberal,12,15,,15,0.023,0.022,LNP
+Broadmeadows,4,Any other,15,34,12.5,34,0.014,0.003,OTHER+IND
+Brunswick,1,Greens,1.14,1.07,,1.14,0.871,0.991,GRN
+Brunswick,2,Labor,4.33,6,,6,0.105,0.007,ALP
+Brunswick,3,Any other,15,29,,29,0.016,0,OTHER+IND
+Brunswick,4,One Nation,,21,,21,0.006,0.001,ONP
+Bulleen,1,Liberal,1.04,1.02,1.01,1.04,0.954,0.986,LNP
+Bulleen,2,One Nation,8.5,12,,12,0.025,0,ONP
+Bulleen,3,Labor,13,13,,13,0.015,0.01,ALP
+Bulleen,4,Any other,26,26,12.5,26,0.005,0,OTHER+IND
+Bundoora,1,Labor,1.33,1.35,,1.35,0.698,0.876,ALP
+Bundoora,2,Liberal,4.5,5,,5,0.147,0.059,LNP
+Bundoora,3,One Nation,5,5,,5,0.138,0.055,ONP
+Bundoora,4,Any other,26,51,,51,0.013,0.003,OTHER+IND
+Carrum,1,Labor,2.1,2,,2.1,0.428,0.63,ALP
+Carrum,2,One Nation,2.5,2.7,,2.7,0.323,0.245,ONP
+Carrum,3,Liberal,3.5,3.4,,3.5,0.231,0.123,LNP
+Carrum,4,Any other,34,41,,41,0.014,0.002,OTHER+IND
+Caulfield,1,Liberal,1.06,1.01,1.02,1.06,0.951,0.981,LNP
+Caulfield,2,One Nation,10,15,,15,0.022,0.001,ONP
+Caulfield,3,Labor,12,13,,13,0.019,0.007,ALP
+Caulfield,4,Any other,31,34,2.32,34,0.004,0,OTHER+IND
+Clarinda,1,Labor,1.62,1.65,,1.65,0.556,0.587,ALP
+Clarinda,2,Liberal,3.25,2.8,,3.25,0.269,0.195,LNP
+Clarinda,3,One Nation,4.5,5.5,,5.5,0.149,0.212,ONP
+Clarinda,4,Any other,26,26,,26,0.021,0.003,OTHER+IND
+Cranbourne,1,One Nation,1.91,1.95,,1.95,0.454,0.589,ONP
+Cranbourne,2,Labor,2.2,2.3,,2.3,0.378,0.402,ALP
+Cranbourne,3,Liberal,5,4.5,,5,0.155,0.007,LNP
+Cranbourne,4,Any other,41,51,,51,0.01,0.002,OTHER+IND
+Croydon,1,Liberal,1.22,1.25,,1.25,0.76,0.916,LNP
+Croydon,2,One Nation,4.33,3.75,,4.33,0.164,0.015,ONP
+Croydon,3,Labor,8,8.5,,8.5,0.064,0.061,ALP
+Croydon,4,Any other,34,41,,41,0.009,0.002,OTHER+IND
+Dandenong,1,Labor,1.11,1.1,,1.11,0.872,0.982,ALP
+Dandenong,2,One Nation,5.5,6,,6,0.091,0.016,ONP
+Dandenong,3,Liberal,14,13,,14,0.028,0.001,LNP
+Dandenong,4,Any other,36,67,,67,0.005,0.001,OTHER+IND
+Eildon,1,Liberal,1.3,1.5,,1.5,0.665,0.958,LNP
+Eildon,2,One Nation,3.25,2.5,,3.25,0.279,0.04,ONP
+Eildon,3,Labor,21,17,,21,0.027,0,ALP
+Eildon,4,Any other,21,21,,21,0.023,0.001,OTHER+IND
+Eltham,1,Labor,2,2.1,,2.1,0.427,0.703,ALP
+Eltham,2,Liberal,2.1,2.05,,2.1,0.421,0.248,LNP
+Eltham,3,One Nation,6.5,5.5,,6.5,0.12,0.042,ONP
+Eltham,4,Any other,34,26,,34,0.018,0.002,OTHER+IND
+Essendon,1,Labor,2.4,2.25,,2.4,0.376,0.354,ALP
+Essendon,2,Liberal,2.4,2.5,,2.5,0.353,0.269,LNP
+Essendon,3,One Nation,8,9,,9,0.084,0.325,ONP
+Essendon,4,Any other,26,5.5,,26,0.081,0.003,OTHER+IND
+Eureka,1,One Nation,2.1,2.25,,2.25,0.4,0.928,ONP
+Eureka,2,Labor,3.1,2.75,,3.1,0.283,0.021,ALP
+Eureka,3,Liberal,3,2.9,,3,0.279,0.048,LNP
+Eureka,4,Any other,18,19,,19,0.032,0.001,OTHER+IND
+Euroa,1,Nationals,1.3,1.32,,1.32,0.714,0.768,LNP
+Euroa,2,One Nation,3.3,3.2,,3.3,0.229,0.231,ONP
+Euroa,3,Labor,15,15,,15,0.034,0,ALP
+Euroa,4,Any other,21,26,,26,0.02,0.001,OTHER+IND
+Evelyn,1,Liberal,1.08,1.12,,1.12,0.878,0.988,LNP
+Evelyn,2,One Nation,6,5,,6,0.097,0.008,ONP
+Evelyn,3,Labor,21,21,,21,0.015,0.004,ALP
+Evelyn,4,Any other,34,41,,41,0.007,0.001,OTHER+IND
+Footscray,1,Labor,1.4,1.44,,1.44,0.648,0.708,ALP
+Footscray,2,Greens,3.5,3,,3.5,0.235,0.289,GRN
+Footscray,3,Any other,11,10,,11,0.055,0.001,OTHER+IND
+Footscray,4,One Nation,10,17,,17,0.044,0.002,ONP
+Frankston,1,Labor,1.91,1.72,,1.91,0.497,0.45,ALP
+Frankston,2,Liberal,2.88,3.5,,3.5,0.257,0.238,LNP
+Frankston,3,One Nation,3.6,3.5,,3.6,0.224,0.301,ONP
+Frankston,4,Any other,26,41,,41,0.017,0.003,OTHER+IND
+Geelong,1,Labor,1.36,1.38,,1.38,0.677,0.529,ALP
+Geelong,2,One Nation,4,3.25,,4,0.205,0.397,ONP
+Geelong,3,Liberal,7,6.5,,7,0.094,0.056,LNP
+Geelong,4,Greens,26,51,,51,0.013,0.016,GRN
+Gippsland East,1,Nationals,1.22,1.25,,1.25,0.768,0.81,LNP
+Gippsland East,2,One Nation,3.5,3.5,,3.5,0.208,0.189,ONP
+Gippsland East,3,Labor,26,34,,34,0.014,0,ALP
+Gippsland East,4,Any other,46,51,,51,0.008,0,OTHER+IND
+Gippsland South,1,Nationals,1.17,1.22,,1.22,0.792,0.792,LNP
+Gippsland South,2,One Nation,4,3.75,,4,0.169,0.208,ONP
+Gippsland South,3,Labor,21,13,,21,0.026,0,ALP
+Gippsland South,4,Any other,34,29,,34,0.011,0,OTHER+IND
+Glen Waverley,1,Liberal,1.14,1.14,,1.14,0.837,0.269,LNP
+Glen Waverley,2,Labor,5,4.5,,5,0.121,0.728,ALP
+Glen Waverley,3,One Nation,12,15,,15,0.03,0.001,ONP
+Glen Waverley,4,Any other,51,34,,51,0.006,0.001,OTHER+IND
+Greenvale,1,Labor,1.67,,,1.67,0.545,0.934,ALP
+Greenvale,2,One Nation,3,,,3,0.272,0.009,ONP
+Greenvale,3,Liberal,4.5,,,4.5,0.168,0.053,LNP
+Greenvale,4,Any other,34,,,34,0.015,0.003,OTHER+IND
+Hastings,1,Liberal,1.62,1.65,,1.65,0.554,0.44,LNP
+Hastings,2,One Nation,2.75,3.4,,3.4,0.264,0.523,ONP
+Hastings,3,Labor,5.5,3.75,,5.5,0.167,0.034,ALP
+Hastings,4,Any other,51,67,,67,0.008,0.002,OTHER+IND
+Hawthorn,1,Liberal,1.12,1.15,,1.15,0.844,0.978,LNP
+Hawthorn,2,Any other,21,5,,21,0.066,0.006,OTHER+IND
+Hawthorn,3,Independent (Shima Ibuki),7,,,7,0.036,0.006,OTHER+IND
+Hawthorn,4,One Nation,12,13,,13,0.033,0,ONP
+Ivanhoe,1,Labor,1.4,1.55,,1.55,0.627,0.868,ALP
+Ivanhoe,2,Liberal,4.5,3.4,,4.5,0.194,0.047,LNP
+Ivanhoe,3,One Nation,6,7,,7,0.105,0.01,ONP
+Ivanhoe,4,Greens,14,8,,14,0.061,0.073,GRN
+Kalkallo,1,Labor,1.2,1.25,,1.25,0.774,0.978,ALP
+Kalkallo,2,One Nation,4,3.75,,4,0.18,0.009,ONP
+Kalkallo,3,Liberal,15,15,,15,0.032,0.01,LNP
+Kalkallo,4,Any other,36,41,,41,0.01,0.003,OTHER+IND
+Kew,1,Liberal,,1.15,,1.15,0.836,0.992,LNP
+Kew,2,Any other,,5,,5,0.127,0.005,OTHER+IND
+Kew,3,One Nation,,19,,19,0.023,0,ONP
+Kew,4,Labor,,41,,41,0.009,0.002,ALP
+Kororoit,1,Labor,,2,,2,0.438,0.843,ALP
+Kororoit,2,One Nation,,2.3,,2.3,0.371,0.089,ONP
+Kororoit,3,Liberal,,4.5,,4.5,0.167,0.063,LNP
+Kororoit,4,Any other,,34,,34,0.015,0.004,OTHER+IND
+Lara,1,Labor,,1.4,,1.4,0.658,0.237,ALP
+Lara,2,One Nation,,2.75,,2.75,0.284,0.758,ONP
+Lara,3,Liberal,,15,,15,0.034,0.001,LNP
+Lara,4,Any other,,34,,34,0.012,0.001,OTHER+IND
+Laverton,1,Labor,,1.13,,1.13,0.851,0.977,ALP
+Laverton,2,One Nation,,5,,5,0.12,0.015,ONP
+Laverton,3,Liberal,,21,,21,0.018,0.004,LNP
+Laverton,4,Any other,,51,,51,0.006,0.002,OTHER+IND
+Lowan,1,Nationals,,1.5,,1.5,0.616,0.955,LNP
+Lowan,2,One Nation,,2.4,,2.4,0.351,0.045,ONP
+Lowan,3,Any other,,34,,34,0.015,0,OTHER+IND
+Lowan,4,Labor,,51,,51,0.009,0,ALP
+Macedon,1,One Nation,,2.1,,2.1,0.415,0.549,ONP
+Macedon,2,Liberal,,2.75,,2.75,0.301,0.127,LNP
+Macedon,3,Labor,,3.25,,3.25,0.247,0.294,ALP
+Macedon,4,Any other,,21,,21,0.027,0.014,OTHER+IND
+Malvern,1,Liberal,1.08,1.04,,1.08,0.921,0.982,LNP
+Malvern,2,One Nation,12,8,,12,0.037,0,ONP
+Malvern,3,Any other,15,26,,26,0.016,0,OTHER+IND
+Malvern,4,Labor,19,17,,19,0.016,0.005,ALP
+Melbourne,1,Greens,,1.42,,1.42,0.661,0.994,GRN
+Melbourne,2,Labor,,2.75,,2.75,0.302,0.004,ALP
+Melbourne,3,Liberal,,41,,41,0.012,0.001,LNP
+Melbourne,4,Any other,,41,,41,0.012,0,OTHER+IND
+Melton,1,One Nation,1.72,1.9,,1.9,0.493,0.676,ONP
+Melton,2,Liberal,3.1,3.4,,3.4,0.245,0.236,LNP
+Melton,3,Labor,4,2.75,,4,0.244,0.083,ALP
+Melton,4,Any other,34,51,,51,0.012,0.004,OTHER+IND
+Mildura,1,Nationals,,1.5,,1.5,0.61,0.848,LNP
+Mildura,2,One Nation,,3,,3,0.262,0.143,ONP
+Mildura,3,Any other,,6,,6,0.112,0.009,OTHER+IND
+Mildura,4,Labor,,51,,51,0.008,0,ALP
+Mill Park,1,Labor,,1.95,,1.95,0.453,0.316,ALP
+Mill Park,2,One Nation,,2.4,,2.4,0.354,0.538,ONP
+Mill Park,3,Liberal,,4.5,,4.5,0.168,0.141,LNP
+Mill Park,4,Greens,,41,,41,0.012,0.002,GRN
+Niddrie,1,Liberal,1.91,1.76,,1.91,0.473,0.21,LNP
+Niddrie,2,Labor,1.91,2,,2,0.436,0.213,ALP
+Niddrie,3,One Nation,7.5,9,,9,0.074,0.574,ONP
+Niddrie,4,Greens,51,41,,51,0.009,0.001,GRN
+Northcote,1,Greens,1.4,1.38,,1.4,0.664,0.736,GRN
+Northcote,2,Labor,2.88,2.75,,2.88,0.277,0.262,ALP
+Northcote,3,Liberal,21,19,,21,0.024,0,LNP
+Northcote,4,One Nation,15,34,,34,0.024,0.001,ONP
+Pakenham,1,One Nation,1.4,1.4,,1.4,0.656,0.616,ONP
+Pakenham,2,Liberal,3,2.75,,3,0.266,0.331,LNP
+Pakenham,3,Labor,10,8,,10,0.064,0.05,ALP
+Pakenham,4,Any other,36,81,,81,0.008,0.002,OTHER+IND
+Richmond,1,Greens,1.33,,,1.33,0.702,0.989,GRN
+Richmond,2,Labor,3.1,,,3.1,0.246,0.009,ALP
+Richmond,3,Any other,11,,,11,0.051,0,OTHER+IND
+Ripon,1,One Nation,1.57,1.55,,1.57,0.584,0.869,ONP
+Ripon,2,Liberal,2.7,2.85,,2.85,0.291,0.121,LNP
+Ripon,3,Nationals,8.5,7.5,,8.5,0.081,0.121,LNP
+Ripon,4,Labor,15,19,,19,0.033,0.007,ALP
+South Barwon,1,Liberal,2.62,,,2.62,0.323,0.401,LNP
+South Barwon,2,One Nation,2.7,,,2.7,0.312,0.133,ONP
+South Barwon,3,Labor,2.88,,,2.88,0.289,0.443,ALP
+South Barwon,4,Independent (Ron Nelson),11,,,11,0.06,0.005,OTHER+IND
+Sunbury,1,One Nation,1.53,,,1.53,0.601,0.898,ONP
+Sunbury,2,Labor,4,,,4,0.19,0.033,ALP
+Sunbury,3,Liberal,4,,,4,0.19,0.067,LNP
+Sunbury,4,Greens,51,,,51,0.009,0.001,GRN
+Tarneit,1,Labor,1.33,,,1.33,0.706,0.843,ALP
+Tarneit,2,One Nation,4.33,,,4.33,0.167,0.111,ONP
+Tarneit,3,Liberal,6.5,,,6.5,0.102,0.044,LNP
+Tarneit,4,Any other,21,,,21,0.024,0.002,OTHER+IND
+Yan Yean,1,One Nation,1.72,1.85,,1.85,0.499,0.313,ONP
+Yan Yean,2,Liberal,2.37,2.25,,2.37,0.366,0.44,LNP
+Yan Yean,3,Labor,6,6,,6,0.116,0.242,ALP
+Yan Yean,4,Any other,51,41,,51,0.01,0.003,OTHER+IND

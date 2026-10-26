@@ -47,6 +47,12 @@ classify_party <- function(name, code = NULL) {
   # because the NAME rule below was reached first for three federal elections.
   # See the note on that rule.
   set(cd == "DLP", "OTH_RIGHT")
+  # "LDP" is the Liberal Democratic Party everywhere it appears. The AEC's 2007
+  # files and the ABC's vic2026 list give only the bare acronym as the party
+  # NAME, which no name rule matched, so 47 fed2007 and 4 vic2026 candidates
+  # were filed OTH while every later spelled-out "Liberal Democrats" was
+  # OTH_RIGHT (found 2026-10-25; Pete chose OTH_RIGHT). Name and code both.
+  set(cd == "LDP" | n == "ldp", "OTH_RIGHT")
 
   # Centre Alliance / Nick Xenophon Team / SA-BEST function as a community
   # independent rather than a bloc party -- Mayo has returned Rebekha Sharkie

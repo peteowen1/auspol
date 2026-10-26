@@ -721,6 +721,15 @@ for (K in PAIRS) {
                                target = eb,
                                pairs = all_election_pairs(), code = "BF1r"),
                         "reentry")
+  # ONE NATION IN DIVISIONS WITH NO HISTORY (AUSPOL_ONP_NEWSEAT_RULE, default "0" = nothing happens
+  # here). Recorded now, before any transfer moves a candidate's vote, so "history" means One Nation
+  # had a vote in the division at the previous federal election. R/onp_newseat.R.
+  ONN_RULE <- onp_newseat_rule()
+  .onn_hist <- NULL; .onn_stand <- fb[fb$party == "ONP" & fb$votes > 0, unique(seat)]
+  if (ONN_RULE) {
+    .onn <- onp_newseat_prepare(mat, st_a, .onn_stand, eb, code = "ONN1")
+    mat <- .onn$mat; st_a <- .onn$prev_level; .onn_hist <- .onn$history
+  }
 
   # ---- FORECAST MODE, against docs/plans/prereg-forecast-mode.md -----------
   # Default OFF, in which case the block below is the original: shift each
@@ -870,7 +879,7 @@ for (K in PAIRS) {
   ", if (is.null(.fdo)) 0L else .fdo$n)); return(m) }
     m2 <- route_departed_origin(m, ea, eb, .fdo$frac)
     .a <- attr(m2, "departed_origin")
-    cat(sprintf("BF0o departed-origin share %.3f from %d cases (target excluded): %d routed%s
+    cat(sprintf("BF0o departed-origin share %.3f (shrunk) from %d earlier-election cases: %d routed%s
   ", .fdo$frac, .fdo$n, .a$applied,
                 if (length(.a$skipped)) paste0("; SKIPPED ", paste(.a$skipped, collapse = ", ")) else ""))
     m2
@@ -1239,6 +1248,16 @@ for (K in PAIRS) {
           }
         }
       }
+      # Scale one minor class to its forecast level. Default: MULTIPLY the prior matrix column and its level (every
+      # seat loses the same fraction). AUSPOL_MINOR_ADDITIVE_FED="1" (off, measured neutral 2026-10-25; plans/prereg-minor-additive-2026-10-25.md):
+      # keep both and record the scaled level as the class's target, so dev_slope() moves each seat by POINTS, as
+      # the five state harnesses and AUSPOL_MINOR_ADDITIVE in fit_seats_full.R do.
+      .minor_add <- identical(Sys.getenv("AUSPOL_MINOR_ADDITIVE_FED", "0"), "1")
+      .add_tgt <- list()
+      .scale_class <- function(p, k) {
+        if (.minor_add) .add_tgt[[p]] <<- st_a[[p]] * k
+        else { mat[, p] <<- mat[, p] * k; st_a[[p]] <<- st_a[[p]] * k }
+      }
       if (identical(Sys.getenv("AUSPOL_IND_TREND", "0"), "1")) {
         for (p in setdiff(unmodelled, done_lvl)) {
           hist <- FP[election != eb & party == p,
@@ -1260,7 +1279,7 @@ for (K in PAIRS) {
               next
             }
           }
-          mat[, p] <- mat[, p] * scale_to; st_a[[p]] <- st_a[[p]] * scale_to
+          .scale_class(p, scale_to)
         }
       } else if (!is.null(cand_ratio)) {
         # Per-class level from the candidate split: the bucket's forecast total
@@ -1276,19 +1295,23 @@ for (K in PAIRS) {
             scale_p <- scale_to
             cat(sprintf("BCF2! fed%d %s: no prior vote to scale; common factor kept\n", K$to, p))
           }
-          mat[, p] <- mat[, p] * scale_p; st_a[[p]] <- st_a[[p]] * scale_p
+          .scale_class(p, scale_p)
         }
         cat(sprintf("BCF2  fed%d level by candidate split: %s\n", K$to,
-                    paste(sprintf("%s %.2f", bucket, unlist(st_a[bucket])), collapse = ", ")))
+                    paste(sprintf("%s %.2f", bucket, vapply(bucket, function(b)
+                      if (b %in% names(.add_tgt)) .add_tgt[[b]] else st_a[[b]], numeric(1))), collapse = ", ")))
       } else {
-      for (p in setdiff(unmodelled, done_lvl)) { mat[, p] <- mat[, p] * scale_to; st_a[[p]] <- st_a[[p]] * scale_to }
+      for (p in setdiff(unmodelled, done_lvl)) .scale_class(p, scale_to)
       }
       if (is.null(cand_ratio) || identical(Sys.getenv("AUSPOL_IND_TREND", "0"), "1"))
         st_a[["OTH"]] <- st_a[["OTH"]] * scale_to
       for (p in bucket) st_fc[[p]] <- st_a[[p]]
-      cat(sprintf("BF0  fed%d minor field scaled x%.2f: %s at prior %.1f%% -> forecast %.1f%%\n",
-                  K$to, scale_to, paste(bucket, collapse = "+"),
-                  base_share, st_a[["OTH"]] + sum(unlist(st_a[unmodelled]))))
+      # AUSPOL_MINOR_ADDITIVE_FED: the class keeps its prior level as dev_slope()'s `prev` and the scaled one as its target
+      for (p in names(.add_tgt)) st_fc[[p]] <- .add_tgt[[p]]
+      cat(sprintf("BF0  fed%d minor field scaled x%.2f (%s): %s at prior %.1f%% -> forecast %.1f%%\n",
+                  K$to, scale_to, if (.minor_add) sprintf("ADDITIVE, AUSPOL_MINOR_ADDITIVE_FED=1, %d class(es)", length(.add_tgt)) else "multiplicative",
+                  paste(bucket, collapse = "+"),
+                  base_share, sum(unlist(st_fc[bucket]))))
     }
     # F4: folded parties are REPORTED, never silently absorbed.
     cat(sprintf("BF0  fed%d forecast mode: %d polls to %s; folded into OTH: %s\n",
@@ -1448,6 +1471,16 @@ for (K in PAIRS) {
     cat(sprintf("BF1r  re-entry applied post-swing to %d cell(s)%s\n", sum(.rk),
                 if (.protected) sprintf(" | %d protected by own_prev", .protected) else ""))
   }
+  # ONE NATION IN DIVISIONS WITH NO HISTORY (AUSPOL_ONP_NEWSEAT_RULE=1). Only the Senate ordering
+  # (AUSPOL_ONP_ORDER=senate_rank) has a key here: the previous federal election's Senate One Nation
+  # share by division. Under the House ordering the key would be the division's own previous House
+  # vote, which a no-history division does not have, so the rule prints ONN1! and changes nothing.
+  # Rows are renormalised below. R/onp_newseat.R.
+  if (ONN_RULE) {
+    shares <- onp_newseat_apply(shares, eb, .onn_hist, order = Sys.getenv("AUSPOL_ONP_ORDER", "federal"),
+                                refill = "none", standing = .onn_stand, code = "ONN1")
+    attr(shares, "onp_newseat") <- NULL
+  }
   # Zero IND wherever nobody actually stood at the TARGET election. This is
   # nomination data, not the result being predicted: which classes contest a
   # seat is knowable from the ballot before polling day (nominations close
@@ -1486,6 +1519,10 @@ for (K in PAIRS) {
   # the typical vote for their signals, before ("base") or after ("final") the frozen trees. R/ind_typical.R.
   shares <- ind_typical_apply(shares, sprintf("fed%d", K$to), stage = "base", code = "BF1T")
   shares <- ind_person_apply(shares, sprintf("fed%d", K$to), stage = "base", code = "BF1P")  # AUSPOL_IND_PERSON (off): an independent starts from their own record. R/ind_person.R.
+  # AUSPOL_LEVEL_CONSERVE (off; plans/prereg-level-conserve-2026-10-25.md): rake the base so each standing
+  # class's implied NATIONAL share equals the level the seats were built on (st_fc in forecast mode, else st_b).
+  .lc_level <- if (FORECAST_MODE) unlist(st_fc) else st_b
+  shares <- level_conserve_apply(shares, .lc_level, sprintf("fed%d", K$to), stage = "base", target = fb, held = HELD)
   shares <- xgb_primary_override(shares, sprintf("fed%d", K$to))
   shares <- ind_typical_apply(shares, sprintf("fed%d", K$to), stage = "final", code = "BF1T")
   shares <- ind_person_apply(shares, sprintf("fed%d", K$to), stage = "final", code = "BF1P")  # AUSPOL_IND_PERSON (off): an independent starts from their own record. R/ind_person.R.
@@ -1591,6 +1628,7 @@ for (K in PAIRS) {
                                           truth = truth, keep = keep,
                                           parties = parties, sd_w = sd_w,
                                           sw_draws = sw_draws, fb = fb,
+                                          lc_level = .lc_level, held = HELD,   # AUSPOL_LEVEL_CONSERVE "final"
                                           nz_cells = .nz_cells,
                                           # Carried per pair -- see the FED-2
                                           # finding in docs/plans/
@@ -1831,6 +1869,7 @@ for (X in out_all) {
   nom_zero_save_flows(X$fm, sprintf("fed%d", X$K$to))   # the as-at forecasts table zeroes with this same fm
   X$shares <- zero_unnominated_at("late", X$shares, X$fb, sprintf("fed%d", X$K$to), code = "NZ1b", flows = X$fm)
   X$nz_cells <- rbind(X$nz_cells, nomination_zeroed_cells(.nz_pre, X$shares))
+  X$shares <- level_conserve_apply(X$shares, X$lc_level, sprintf("fed%d", X$K$to), stage = "final", target = X$fb, held = X$held)  # AUSPOL_LEVEL_CONSERVE "final"/"both": after the last nomination zero
   set.seed(SEED)
   # ARM H, docs/plans/prereg-reentry-flatratio-variance-2026-09-08.md. Widens
   # the SIMULATED uncertainty, not the point estimate, for cells that fell

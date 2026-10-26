@@ -189,9 +189,16 @@ cat(sprintf("TG0  target %s (previous %s, region %s, %d seats)
 # overrides so the S6 default-run check below can see them. Defined only
 # further down, a toggle would change the published allocation with nothing in
 # the run log -- which is exactly what S6 exists to prevent.
-ONP_ORDER   <- Sys.getenv("AUSPOL_ONP_ORDER", "federal")   # federal | greens | senate
+ONP_ORDER   <- Sys.getenv("AUSPOL_ONP_ORDER", "federal")   # federal | greens | senate | senate_rank
 ONP_FIX     <- Sys.getenv("AUSPOL_ONP_FIX", "1")           # 1 = compression fixed
-stopifnot(ONP_ORDER %in% c("federal", "greens", "senate"), ONP_FIX %in% c("0", "1"))
+# prop = the other classes fill One Nation's seat-level gap in proportion to
+# their size (shipped); uniform_major = by the statewide draw betas
+# (R/onp_order.R, docs/plans/prereg-onp-fill-uniform-2026-10-25.md). Live
+# only: no harness has this fill.
+ONP_FILL    <- Sys.getenv("AUSPOL_ONP_FILL", "prop")
+stopifnot(ONP_ORDER %in% c("federal", "greens", "senate", "senate_rank"), ONP_FIX %in% c("0", "1"),
+          ONP_FILL %in% c("prop", "uniform_major"),
+          !(ONP_FILL == "uniform_major" && ONP_FIX == "0"))   # the fill only exists under the compression fix
 stopifnot(FP_SD_MODE %in% c("growth", "additive"))
 stopifnot(is.finite(SEED))
 
@@ -624,6 +631,10 @@ if (LEVEL_ANCHOR && "OTH" %in% names(state_mean)) {
 # toward the mean of the last 28 days of polls, the window ending TODAY (one ending on the
 # future polling day would hold nothing). Same function the harnesses call.
 # (.try() is defined further down, so the fallback is inline here.)
+# The level as it stands BEFORE the blend: the recipe the trees' level_pred was trained on
+# (scripts/build_level_pred.R has no blend unless AUSPOL_LEVEL_PRED_RECENT=1). Served to the xgb layer only
+# under AUSPOL_LIVE_LEVEL_PRED_TREND=1 (audit F12, plans/prereg-live-level-pred-2026-10-25.md; LLP1 below).
+.state_mean_trend <- state_mean
 .slr <- tryCatch(level_recent_apply(state_mean, TGT, REGION, as.Date(unname(election_dates()[TGT])),
                                     code = "FSLR", as_at = Sys.Date()),
                  error = function(e) { cat(sprintf("FSLR!! level_recent_apply() FAILED (%s) -- the statewide level is the trend alone\n",
@@ -664,6 +675,14 @@ SA_RESPONSE <- c(LNP = -0.846, ALP = -0.123, IND = -0.086,
 # be read as a FUNCTION of the primary vote rather than only at today's point.
 # Nothing is forced by default.
 FORCE_FP <- Sys.getenv("AUSPOL_FORCE_FP", "")
+# AUSPOL_LIVE_LEVEL_PRED_TREND (audit F12): the pre-blend level (.state_mean_trend, captured above) is read
+# by the trees and the salience permit, but the anchor shift and a forced scenario land after the capture.
+# A forced scenario is carried into it after the forcing below (LLP2, 2026-10-26: the what-if jobs force
+# every run); the anchor shift is not, so that combination is refused here.
+if (live_level_pred_trend() && LEVEL_ANCHOR)
+  stop("LLP1! AUSPOL_LIVE_LEVEL_PRED_TREND=1 with AUSPOL_LIVE_LEVEL_ANCHOR=1",
+       ": the pre-blend level was captured before that shift, so the trees would silently lose it. Run them separately.")
+.state_mean_preforce <- state_mean
 # The what-if slider's zero point: the level BEFORE any forcing.
 cat(sprintf("FP0  statewide primaries before forcing: %s\n",
             paste(sprintf("%s %.2f", names(state_mean), state_mean), collapse = ", ")))
@@ -725,6 +744,27 @@ if (nzchar(FORCE_FP)) {
   cat(sprintf("FP1  statewide primaries now: %s (sum %.1f)\n",
               paste(sprintf("%s %.1f", names(state_mean), state_mean),
                     collapse = ", "), sum(state_mean)))
+  # The trees read the pre-blend level under AUSPOL_LIVE_LEVEL_PRED_TREND=1, so the scenario must reach it
+  # too: every class, the forced one included, moves by the same change the forcing gave the blended level,
+  # so a scenario at today's level serves the published run's level exactly (combine_scenarios.py CSC7
+  # checks that). Only where the 0.1 floor binds are the non-forced classes rescaled to keep one total.
+  if (live_level_pred_trend()) {
+    if (!setequal(names(.state_mean_trend), names(state_mean)))
+      stop("LLP2! the pre-blend level and the forced level carry different classes")
+    .tr <- .state_mean_trend[names(state_mean)]
+    .tr <- .tr + (state_mean - .state_mean_preforce[names(state_mean)])
+    .fp_all <- trimws(vapply(strsplit(strsplit(FORCE_FP, ",", fixed = TRUE)[[1]], "=", fixed = TRUE), `[`, "", 1))
+    .tr[.fp_all] <- pmax(0.1, .tr[.fp_all])
+    .free <- setdiff(names(.tr), .fp_all)
+    if (any(.tr[.free] < 0.1) || abs(sum(.tr) - sum(state_mean)) > 1e-6) {
+      .tr[.free] <- pmax(0.1, .tr[.free])
+      .tr[.free] <- .tr[.free] * (sum(state_mean) - sum(.tr[.fp_all])) / sum(.tr[.free])
+    }
+    cat(sprintf("LLP2  forced scenario carried into the pre-blend level: %s (sum %.2f; was %s)\n",
+                paste(sprintf("%s %.2f", names(.tr), .tr), collapse = ", "), sum(.tr),
+                paste(sprintf("%s %.2f", names(.tr), .state_mean_trend[names(.tr)]), collapse = ", ")))
+    .state_mean_trend <- .tr
+  }
 }
 
 .stage("4. project each seat's primaries")
@@ -764,14 +804,37 @@ if (anyNA(idx_v)) {
        ". Run scripts/transpose_federal_to_state.R.")
 }
 ord <- if (Sys.getenv("AUSPOL_ONP_ORDER", "federal") == "greens") order(ONP_B1 * mat22[, "GRN"]) else order(idx_v)
-onp_ratio <- numeric(nrow(mat22)); names(onp_ratio) <- rownames(mat22)
-for (r in seq_along(ord)) {
-  q <- (r - 1) / (length(ord) - 1)
-  pos <- q * (length(sa_ratio) - 1)
-  lo <- floor(pos) + 1; hi <- min(lo + 1, length(sa_ratio))
-  onp_ratio[rownames(mat22)[ord[r]]] <-
-    sa_ratio[lo] + (pos - (lo - 1)) * (sa_ratio[hi] - sa_ratio[lo])
+# SENATE RANK (AUSPOL_ONP_ORDER = "senate_rank", 2026-10-25,
+# docs/plans/prereg-onp-senate-rank-2026-10-25.md). The same SA spread and CV
+# as the shipped rule; ONLY the ordering changes, from the 2025 federal HOUSE
+# One Nation vote to the 2025 SENATE One Nation vote in the same booths. The
+# House vote moves with who else stood locally (Maribyrnong and Corio had no
+# other right-wing minor in 2025; Bendigo had a first-time Nationals
+# candidate); the Senate ballot is the same everywhere. The refused "senate"
+# value also replaced the spread, which this does not.
+if (identical(ONP_ORDER, "senate_rank")) {
+  .osr_f <- file.path("output", sprintf("onp-senate-%s.csv", TGT))
+  .osr <- if (file.exists(.osr_f)) fread(.osr_f, showProgress = FALSE) else NULL
+  .osr_k <- if (!is.null(.osr)) .osr$senate_pct[match(rownames(mat22), .osr$seat)] else
+    unname(onp_senate_key(rownames(mat22), TGT))
+  if (!length(.osr_k) || anyNA(.osr_k))
+    stop("AUSPOL_ONP_ORDER=senate_rank but no Senate One Nation share for: ",
+         paste(utils::head(rownames(mat22)[is.na(.osr_k)], 8), collapse = ", "),
+         " (", .osr_f, " or output/senate-onp-by-district.csv; run scripts/build_onp_senate.R)")
+  ord <- order(.osr_k)
+  cat(sprintf("ONR1  One Nation ORDERED by the SENATE vote (%s), spread unchanged: rank corr with the House ordering %.3f over %d seats\n",
+              if (!is.null(.osr)) basename(.osr_f) else "senate-onp-by-district.csv",
+              stats::cor(rank(idx_v), rank(.osr_k)), length(.osr_k)))
 }
+# The quantile map, shared with every backtest harness since 2026-10-25 (R/onp_newseat.R,
+# onp_rank_ratio(): the loop that lived here, moved verbatim). AUSPOL_ONP_NEWSEAT_RULE is the
+# harnesses' version of this allocation for seats with no One Nation state history; here EVERY seat
+# is such a seat (One Nation polled 0.28% in 4 seats in 2022 and has no swing path in this script),
+# so the switch changes nothing in the live forecast at either value.
+onp_ratio <- onp_rank_ratio(ord, sa_ratio, rownames(mat22))
+cat(sprintf("ONN1  live: all %d seats allocated by rank on the %s One Nation vote (AUSPOL_ONP_NEWSEAT_RULE=%s; the live forecast has no One Nation history path, so the rule is the same here at both values)\n",
+            nrow(mat22), if (identical(ONP_ORDER, "senate_rank")) "federal SENATE" else if (identical(ONP_ORDER, "greens")) "Greens-share (not federal)" else "federal HOUSE",
+            if (onp_newseat_rule()) "1" else "0"))
 
 # SENATE RULE (AUSPOL_ONP_ORDER = "senate", 2026-10-01, from Pete's chart).
 # Replaces both the ordering and the borrowed SA spread above: each seat's
@@ -817,8 +880,9 @@ if (is.finite(ONP_CV) && ONP_CV > 0) {
   # VECTOR FIRST. pmax(0.02, x) drops x's NAMES, exactly as pmax(0.1, m) drops a
   # matrix's dim -- and onp_ratio is looked up BY SEAT NAME immediately after,
   # so the whole allocation silently became NA. Second time this argument order
-  # has bitten today.
-  onp_ratio <- pmax(1 + (ONP_CV / cur) * (onp_ratio - 1), 0.02)
+  # has bitten today. The expression lives in onp_cv_force() (R/onp_newseat.R),
+  # shared with the harnesses' AUSPOL_ONP_NEWSEAT_RULE; same arithmetic.
+  onp_ratio <- onp_cv_force(onp_ratio, ONP_CV)
   cat(sprintf("CN1  One Nation concentration forced: CV %.3f -> %.3f (delivered %.3f)\n",
               cur, ONP_CV, stats::sd(onp_ratio) / mean(onp_ratio)))
 }
@@ -887,9 +951,13 @@ if (.succ_on) { cat(sprintf("DSR1 departed successor rates (%s): %d seat(s) for 
 }
 .reason <- function(name) if (exists(name, envir = .why)) sprintf(" (%s)", get(name, envir = .why)) else ""
 .returns <- if (.cond) .try("returns", candidate_returns(PREV, TGT)) else NULL
+# Under AUSPOL_LIVE_LEVEL_PRED_TREND=1 (audit F12) the permit's surge levels come from the pre-blend level too, as
+# the harnesses' permit reads output/level-pred.csv (no blend): the arm is then the backtest-scored configuration.
+# Off, this is state_mean, unchanged.
+.permit_level <- if (live_level_pred_trend()) .state_mean_trend else state_mean
 .permit  <- if (.screened && !is.null(.returns))
               .try("permit", salience_permit_for(TGT, PREV, REGION,
-                                                 surge_levels = surge_levels_live(TGT, state_mean))) else NULL
+                                                 surge_levels = surge_levels_live(TGT, .permit_level))) else NULL
 if (.cond && is.null(.returns)) {
   cat(sprintf(sub("@T", TGT, "DS2  arm CS requested but @T has no candidate list yet -- FALLING BACK to uniform swing%s\n", fixed = TRUE),
               .reason("returns")))
@@ -1039,7 +1107,7 @@ mat22 <- (function(m) {
 ", if (is.null(.fdo)) 0L else .fdo$n)); return(m) }
   m2 <- route_departed_origin(m, PREV, TGT, .fdo$frac)
   .a <- attr(m2, "departed_origin")
-  cat(sprintf("BF0o departed-origin share %.3f from %d cases (target excluded): %d routed%s
+  cat(sprintf("BF0o departed-origin share %.3f (shrunk) from %d earlier-election cases: %d routed%s
 ", .fdo$frac, .fdo$n, .a$applied,
               if (length(.a$skipped)) paste0("; SKIPPED ", paste(.a$skipped, collapse = ", ")) else ""))
   m2
@@ -1261,14 +1329,22 @@ if (length(unmodelled) && !is.na(state_mean["OTH"])) {
   #
   # Shrink toward the class's own scaled statewide level, so at SLOPE 1 this is
   # exactly mat22[, p] * scale_to as before.
+  #
+  # AUSPOL_MINOR_ADDITIVE="1" (SHIPPED 2026-10-25, live only; plans/prereg-minor-additive-2026-10-25.md): the same class levels, but each seat
+  # moves by POINTS (dev_slope from the 2022 level to the scaled one), as the five state harnesses already do
+  # (backtest_candidate_vic.R:644-648). Multiplying cuts a large personal vote by the same fraction as the whole
+  # minor field: Mildura's independent (Cupper, 33.9 in 2022) by 39% when One Nation takes the field's votes.
+  .minor_add <- identical(Sys.getenv("AUSPOL_MINOR_ADDITIVE", "1"), "1")
   for (p in c(unmodelled, if ("OTH" %in% modelled) "OTH")) {
     tgt <- a22[[p]] * scale_to
     .sl <- .vic_slope(p, rownames(mat22)); .hd <- attr(.sl, "departed"); if (.departed_hold && !is.null(.hd)) HELD[, p] <- ((.hd %in% TRUE) & (mat22[, p] >= .hold_min)) %in% TRUE
-    shares[, p] <- dev_slope(.own_x(p, rownames(mat22), mat22[, p]) * scale_to, tgt, tgt, .sl)
+    shares[, p] <- if (.minor_add) dev_slope(.own_x(p, rownames(mat22), mat22[, p]), a22[[p]], tgt, .sl)
+                   else dev_slope(.own_x(p, rownames(mat22), mat22[, p]) * scale_to, tgt, tgt, .sl)
   }
-  cat(sprintf("minor field scaled x%.2f: %s at 2022 %.1f%% -> forecast %.1f%%
+  cat(sprintf("minor field scaled x%.2f (%s): %s at 2022 %.1f%% -> forecast %.1f%%
 ",
-              scale_to, paste(c(unmodelled, "OTH"), collapse = "+"),
+              scale_to, if (.minor_add) "ADDITIVE, AUSPOL_MINOR_ADDITIVE=1" else "multiplicative",
+              paste(c(unmodelled, "OTH"), collapse = "+"),
               base_share, state_mean[["OTH"]]))
 }
 # Re-entry prior lands here, on the POST-swing projection (see BV1r above): the
@@ -1297,17 +1373,30 @@ if (!is.null(.re_cells) && nrow(.re_cells)) {
 # pre-registration requires: without them a spread increase from the
 # compression fix would be credited to the new ordering. Both default to the
 # adopted behaviour.
-ONP_ORDER <- Sys.getenv("AUSPOL_ONP_ORDER", "federal")   # federal | greens
+ONP_ORDER <- Sys.getenv("AUSPOL_ONP_ORDER", "federal")   # federal | greens | senate | senate_rank
 ONP_FIX   <- Sys.getenv("AUSPOL_ONP_FIX", "1")           # 1 = compression fixed
-stopifnot(ONP_ORDER %in% c("federal", "greens", "senate"))
+stopifnot(ONP_ORDER %in% c("federal", "greens", "senate", "senate_rank"))
 cat(sprintf("ONP arms: ordering %s, compression fix %s
 ", ONP_ORDER, ONP_FIX))
+if (!identical(ONP_FILL, "prop")) cat(sprintf("ONF0  One Nation fill: %s (shipped: prop)\n", ONP_FILL))
 # A sanity bound, not a modelling choice: no district comes near it (the
 # maximum allocation is 33.0). It exists so a future statewide forecast times
 # the largest quantile ratio cannot exceed 100 and drive the fill negative.
 ONP_CAP <- 80
 onp_target <- pmin(pmax(0, state_mean[["ONP"]] * onp_ratio[rownames(mat22)]), ONP_CAP)
-if (ONP_FIX == "1") {
+if (ONP_FIX == "1" && identical(ONP_FILL, "uniform_major")) {
+  # AUSPOL_ONP_FILL=uniform_major: the gap One Nation leaves (or takes) in each
+  # seat is handed out by the statewide draw betas, not by each class's size
+  # there. Betas from the last default run's draws (the file the scenario
+  # tool's AUSPOL_FORCE_FP_RULE=draws reads); this run's own come later. Live
+  # only -- no harness has a One Nation fill to change.
+  .ofb_f <- sprintf("output/statewide-draw-betas-%s.csv", TARGET$out_stem)
+  if (!file.exists(.ofb_f)) stop("AUSPOL_ONP_FILL=uniform_major needs ", .ofb_f, ", written by a default run of this script")
+  cat(sprintf("ONF2  betas from %s (modified %s)\n", .ofb_f, format(file.mtime(.ofb_f), "%Y-%m-%d %H:%M")))
+  shares <- onp_fill_betas(shares, unname(onp_target), fread(.ofb_f, showProgress = FALSE),
+                           held = if (.departed_hold) HELD else NULL, code = "ONF1")
+  attr(shares, "onp_fill") <- NULL
+} else if (ONP_FIX == "1") {
   other_cols <- setdiff(colnames(shares), "ONP")
   rest <- rowSums(shares[, other_cols, drop = FALSE])
   fill <- pmax(0, 100 - onp_target) / pmax(rest, 1e-9)
@@ -1375,6 +1464,20 @@ if (identical(Sys.getenv("AUSPOL_LIVE_LEVEL_SPLIT", "1"), "1") && "OTH" %in% nam
   cat(sprintf("XG0s the xgb layer's level_pred, others bucket split as in training: %s (sum %.2f = state OTH %.2f)\n",
               paste(sprintf("%s %.2f", .bk, .level_split[.bk]), collapse = ", "), sum(.level_split[.bk]), state_mean[["OTH"]]))
 }
+# AUSPOL_LIVE_LEVEL_PRED_TREND (audit F12, default "0", plans/prereg-live-level-pred-2026-10-25.md): the trees'
+# level_pred (and the surge levels xgb_primary_predict_live() derives from the same vector) from the level BEFORE
+# the recent-poll blend, as build_level_pred.R trains it. base_margin and every other use of state_mean keep the
+# blended level, and so does .level_split (AUSPOL_LEVEL_CONSERVE reads it). Off, .xgb_level IS state_mean and
+# .level_split_xgb IS .level_split, so the published run is unchanged.
+.xgb_level <- live_level_pred_serve(state_mean, .state_mean_trend, code = "LLP1")
+.level_split_xgb <- .level_split
+if (!identical(.xgb_level, state_mean) && !is.null(.level_split)) {
+  .level_split_xgb <- .xgb_level[setdiff(names(.xgb_level), "OTH")]
+  .level_split_xgb[.bk] <- .xgb_level[["OTH"]] * .rt[.bk]
+  if (abs(sum(.level_split_xgb) - sum(.xgb_level)) > 1e-6) stop("LLP1: split pre-blend level does not keep the statewide total")
+  cat(sprintf("LLP1  pre-blend split served as level_pred: %s\n",
+              paste(sprintf("%s %.2f", names(.level_split_xgb), .level_split_xgb), collapse = ", ")))
+}
 .mat22_xgb <- if (identical(Sys.getenv("AUSPOL_LIVE_SEATPREV_RAW", "1"), "1")) .mat22_raw else mat22
 cat(sprintf("XG0p seat_prev_pcv served from the %s prior-election matrix (%d cells differ from the edited one by > 0.05)\n",
             if (identical(.mat22_xgb, .mat22_raw)) "raw (as trained)" else "edited",
@@ -1393,8 +1496,41 @@ if (.sb_once) {
               attr(shares, "cells"), if (is.null(if (exists(".hz")) .hz else NULL)) sprintf(" (no corpus for %s yet)", TGT) else ""))
   attr(shares, "cells") <- NULL
 }
-shares_x <- .try("xgb_live", xgb_primary_predict_live(shares, .mat22_xgb, a22, state_mean, .returns,
-                                                        level_split = .level_split,
+# Base-stage person rules (the harnesses' stage = "base" hook, before the trees): a no-op unless a
+# base-stage switch is set (AUSPOL_IND_PERSON or AUSPOL_IND_RETURN = "base"). plans/prereg-ind-return-2026-10-25.md.
+.ipb <- .try("ind_person_base", ind_person_apply(shares, TGT, stage = "base", code = "FSIPb"))
+if (!is.null(.ipb)) shares <- .ipb else if ("base" %in% c(ind_person_mode(), Sys.getenv("AUSPOL_IND_RETURN", "0")))
+  cat(sprintf("FSIPb!! ind_person_apply(stage = \"base\") FAILED%s -- the base-stage person rules are NOT applied\n",
+              .reason("ind_person_base")))
+# AUSPOL_LEVEL_CONSERVE (off; plans/prereg-level-conserve-2026-10-25.md): rake the seats so each standing class's
+# vote-weighted implied statewide share equals its level, here ("base", the base_margin the trees see) and/or after
+# the nomination zero below ("final"). The level is the per-class split the harnesses' sb carries (.level_split,
+# AUSPOL_LIVE_LEVEL_SPLIT=1, shipped); without it, the targets this seat layer scaled to (state_mean for the polled
+# classes, a22 * scale_to for the bucket). Which classes stand: the live nomination list when AUSPOL_NOM_LIVE=1
+# opens it, else every class with share. R/level_conserve.R.
+.lc_level <- NULL; .lc_target <- NULL
+if (!identical(level_conserve_mode(), "0")) {
+  if (!is.null(.level_split)) {
+    .lc_level <- .level_split
+  } else {
+    .lc_level <- state_mean
+    if (length(unmodelled) && !is.na(state_mean["OTH"]))
+      for (p in c(unmodelled, "OTH")) .lc_level[p] <- a22[[p]] * scale_to
+  }
+  # NOT caught: with the switch on, a nomination list that is asked for (AUSPOL_NOM_LIVE=1) and cannot be read
+  # stops the run rather than silently changing which classes stand. "auto"/"0" return no list, by design.
+  .lc_nm <- live_nominations(rownames(shares), election = TGT, prior = PREV)
+  .lc_target <- .lc_nm$target
+  cat(sprintf("LCV1  live level source: %s; standing from %s\n",
+              if (!is.null(.level_split)) "per-class split (.level_split)" else "seat-layer targets (state_mean, a22 * scale_to)",
+              if (is.null(.lc_target)) sprintf("shares > 0 (no final nomination list: %s)", .lc_nm$reason) else "the live nomination list"))
+}
+# NOT wrapped in .try(): with the switch on, any failure (the rake's own infeasible refusal included) stops the
+# run, so a forecast asked to conserve the level is never published without it. Off, the call returns at once.
+shares <- level_conserve_apply(shares, .lc_level, TGT, stage = "base", target = .lc_target,
+                               held = if (.departed_hold) HELD else NULL)
+shares_x <- .try("xgb_live", xgb_primary_predict_live(shares, .mat22_xgb, a22, .xgb_level, .returns,
+                                                        level_split = .level_split_xgb,
                                                         own_prev = .own_prev_xgb, region = REGION,
                                                         year = YEAR, prev_year = as.integer(sub("^[a-z]+", "", PREV))))
 if (!is.null(shares_x)) {
@@ -1486,6 +1622,10 @@ shares <- tryCatch(zero_unnominated_live(shares, fm, TGT, prior = PREV), error =
   .nz_before
 })
 .nz_cells <- nomination_zeroed_cells(.nz_before, shares)
+# AUSPOL_LEVEL_CONSERVE "final"/"both": after the nomination zero (a 0 stays 0). See the base call above.
+# Not wrapped either: with the switch on, a failure stops the run.
+shares <- level_conserve_apply(shares, .lc_level, TGT, stage = "final", target = .lc_target,
+                               held = if (.departed_hold) HELD else NULL)
 cvf <- function(x) stats::sd(x) / mean(x)
 cat(sprintf("ONP allocation: target CV %.3f, delivered %.3f (previously compressed to 0.283)
 ",

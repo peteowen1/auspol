@@ -55,14 +55,21 @@ DATES <- c(
   fed2004="2004-10-09", fed2007="2007-11-24", fed2010="2010-08-21",
   fed2013="2013-09-07", fed2016="2016-07-02", fed2019="2019-05-18",
   fed2022="2022-05-21", fed2025="2025-05-03",
+  # nsw2007/11, qld2009-15, sa2006-14, vic2006 and nt2012-24 joined the corpus after
+  # 2026-09-20; added 2026-10-23 so every state election we hold enters the prior.
+  nsw2007="2007-03-24", nsw2011="2011-03-26",
   nsw2015="2015-03-28", nsw2019="2019-03-23", nsw2023="2023-03-25",
+  qld2009="2009-03-21", qld2012="2012-03-24", qld2015="2015-01-31",
   qld2017="2017-11-25", qld2020="2020-10-31", qld2024="2024-10-26",
+  sa2006="2006-03-18",  sa2010="2010-03-20",  sa2014="2014-03-15",
   sa2018="2018-03-17",  sa2022="2022-03-19",  sa2026="2026-03-21",
+  vic2006="2006-11-25",
   vic2010="2010-11-27", vic2014="2014-11-29", vic2018="2018-11-24", vic2022="2022-11-26",
   wa1996="1996-12-14",  wa2001="2001-02-10",  wa2005="2005-02-26", wa2008="2008-09-06",
-  wa2013="2013-03-09",  wa2017="2017-03-11",  wa2021="2021-03-13", wa2025="2025-03-08")
+  wa2013="2013-03-09",  wa2017="2017-03-11",  wa2021="2021-03-13", wa2025="2025-03-08",
+  nt2012="2012-08-25",  nt2016="2016-08-27",  nt2020="2020-08-22", nt2024="2024-08-24")
 DATES <- as.Date(DATES)
-ST <- c(NSW="nsw", VIC="vic", QLD="qld", SA="sa", WA="wa", TAS="tas")
+ST <- c(NSW="nsw", VIC="vic", QLD="qld", SA="sa", WA="wa", TAS="tas", NT="nt")
 
 alp_share <- function(el) {
   d <- C[C$election == el & is.finite(votes) & is.finite(tot)]
@@ -75,7 +82,7 @@ alp_share <- function(el) {
 
 # Every state election we hold, with its date and its ALP swing on the previous
 # one in the same state.
-st_els <- grep("^(nsw|vic|qld|sa|wa)[0-9]{4}$", names(DATES), value = TRUE)
+st_els <- grep("^(nsw|vic|qld|sa|wa|nt)[0-9]{4}$", names(DATES), value = TRUE)
 SW <- rbindlist(lapply(st_els, function(el) {
   reg <- sub("[0-9]{4}$", "", el)
   sibs <- sort(st_els[sub("[0-9]{4}$", "", st_els) == reg])

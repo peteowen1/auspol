@@ -153,7 +153,10 @@ ind_person_carry_fit <- function(target, corpus = NULL) {
 #' @export
 ind_person_apply <- function(shares, target, stage = c("base", "final"), code = "IP1", corpus = NULL) {
   stage <- match.arg(stage)
-  if (!identical(ind_person_mode(), stage) || !"IND" %in% colnames(shares)) return(shares)
+  # AUSPOL_IND_RETURN (R/ind_return.R) rides on this call so every harness reaches it; its cells are
+  # disjoint from this rule's (a record in the same seat at the previous election vs none).
+  if (!identical(ind_person_mode(), stage) || !"IND" %in% colnames(shares))
+    return(ind_return_apply(shares, target, stage, paste0(code, "r"), corpus))
   cells <- ind_person_cells(target, corpus)
   how <- Sys.getenv("AUSPOL_IND_PERSON_CARRY", "linear")
   if (!how %in% c("ratio", "linear")) stop("AUSPOL_IND_PERSON_CARRY must be \"ratio\" or \"linear\", not ", how)
@@ -186,5 +189,5 @@ ind_person_apply <- function(shares, target, stage = c("base", "final"), code = 
   }
   cat(sprintf("%s  person-not-seat independents (%s, %s carry) for %s: %d cell(s) set from %d matched%s%s\n", code, stage, how,
               target, n, nrow(cells), fit_note, if (n) paste0(": ", paste(log, collapse = "; ")) else ""))
-  out
+  ind_return_apply(out, target, stage, paste0(code, "r"), corpus)
 }

@@ -507,6 +507,16 @@ REENTRY_CELLS <- attr(reentry_apply_harness(mat, fa, fb, st_b,
                              pairs = all_election_pairs(), code = "BS1r"),
                       "reentry")
 
+# ONE NATION IN SEATS WITH NO STATE HISTORY (AUSPOL_ONP_NEWSEAT_RULE, default "0" = this line does
+# nothing). One Nation did not stand in 2018, so sa2022 has no ONP column at all and is predicted 0
+# in all 19 seats it contested; under the rule the column is added at zero and allocated below.
+# R/onp_newseat.R, docs/plans/prereg-onp-newseat-rule-2026-10-25.md.
+ONN_RULE <- onp_newseat_rule()
+.onn_hist <- NULL; .onn_stand <- fb[fb$party == "ONP" & fb$votes > 0, unique(seat)]
+if (ONN_RULE) {
+  .onn <- onp_newseat_prepare(mat, st_a, .onn_stand, TGT, code = "ONN1")
+  mat <- .onn$mat; st_a <- .onn$prev_level; .onn_hist <- .onn$history
+}
 parties <- colnames(mat); shares <- mat
 
 # STRONGHOLD ELASTICITY, against docs/plans/prereg-stronghold-elasticity.md.
@@ -668,7 +678,7 @@ mat <- (function(m) {
 ", if (is.null(.fdo)) 0L else .fdo$n)); return(m) }
   m2 <- route_departed_origin(m, PRV, TGT, .fdo$frac)
   .a <- attr(m2, "departed_origin")
-  cat(sprintf("BF0o departed-origin share %.3f from %d cases (target excluded): %d routed%s
+  cat(sprintf("BF0o departed-origin share %.3f (shrunk) from %d earlier-election cases: %d routed%s
 ", .fdo$frac, .fdo$n, .a$applied,
               if (length(.a$skipped)) paste0("; SKIPPED ", paste(.a$skipped, collapse = ", ")) else ""))
   m2
@@ -910,6 +920,33 @@ if (ONP_CONC > 0) {
               min(newonp), max(newonp)))
   shares[, "ONP"] <- newonp
 }
+# ONE NATION IN SEATS WITH NO STATE HISTORY (AUSPOL_ONP_NEWSEAT_RULE=1). After BS1c, so the seats
+# One Nation held a vote in last time keep the shipped path (BS1c's House-ranked spread, or the swing
+# where BS1c is skipped) and only the no-history seats it contests are re-allocated: their mean kept,
+# ranked on the earlier federal House (AUSPOL_ONP_ORDER=federal) or Senate (senate_rank) One Nation
+# vote, spread to a CV fitted on earlier elections. Rows are renormalised below. R/onp_newseat.R.
+if (ONN_RULE) {
+  .onn_lk <- rownames(shares)
+  if (identical(TGT, "sa2026")) .onn_lk[.onn_lk == "Frome"] <- "Ngadjuri"   # 2025 rename; the federal tables use the new name
+  shares <- onp_newseat_apply(shares, TGT, .onn_hist, order = Sys.getenv("AUSPOL_ONP_ORDER", "federal"),
+                              lookup = .onn_lk, refill = "none", standing = .onn_stand, code = "ONN1")
+  attr(shares, "onp_newseat") <- NULL
+}
+# SENATE RANK (AUSPOL_ONP_ORDER = "senate_rank", 2026-10-25,
+# docs/plans/prereg-onp-senate-rank-2026-10-25.md). Keeps whatever One Nation
+# values the shipped path produced (BS1c's spread, or the swing where BS1c is
+# skipped) and only re-orders them by the most recent earlier federal SENATE
+# One Nation vote. Rows are renormalised below, as the shipped path's are.
+# Under AUSPOL_ONP_NEWSEAT_RULE=1 the rule above owns the Senate ordering (no-history seats only),
+# so this re-rank of every contested seat is skipped and arm B differs from arm A in that alone.
+if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate_rank") && ONN_RULE) {
+  cat("ONR1  skipped: AUSPOL_ONP_NEWSEAT_RULE=1 orders the no-history seats; seats with history keep their own path\n")
+} else if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate_rank")) {
+  .onr_lk <- rownames(shares)
+  if (identical(TGT, "sa2026")) .onr_lk[.onr_lk == "Frome"] <- "Ngadjuri"   # 2025 rename; the Senate table uses the new name
+  .onr <- onp_senate_rank_apply(shares, TGT, lookup = .onr_lk, code = "ONR1", refill = "none")
+  if (!is.null(.onr)) shares <- .onr
+}
 
 # ZERO IND WHERE NO INDEPENDENT STOOD. Ported from backtest_candidate_fed.R,
 # which got this fix today; this harness never had it.
@@ -1064,6 +1101,9 @@ shares <- new_ind_shrink_apply(shares, TGT, code = "BS1n")
 # the typical vote for their signals, before ("base") or after ("final") the frozen trees. R/ind_typical.R.
 shares <- ind_typical_apply(shares, TGT, stage = "base", code = "BS1T")
 shares <- ind_person_apply(shares, TGT, stage = "base", code = "BS1P")  # AUSPOL_IND_PERSON (off): an independent starts from their own record. R/ind_person.R.
+# AUSPOL_LEVEL_CONSERVE (off; plans/prereg-level-conserve-2026-10-25.md): rake the base so each standing
+# class's implied statewide share equals the level it was built on. R/level_conserve.R.
+shares <- level_conserve_apply(shares, st_b, TGT, stage = "base", target = fb, held = HELD)
 shares <- xgb_primary_override(shares, TGT)
 shares <- ind_typical_apply(shares, TGT, stage = "final", code = "BS1T")
 shares <- ind_person_apply(shares, TGT, stage = "final", code = "BS1P")  # AUSPOL_IND_PERSON (off): an independent starts from their own record. R/ind_person.R.
@@ -1255,6 +1295,7 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
 nom_zero_save_flows(fm, TGT)   # the as-at forecasts table zeroes with this same fm
 shares <- zero_unnominated_at("late", shares, fb, TGT, flows = fm)
 .nz_cells <- nomination_zeroed_cells(.nz_pre, shares)
+shares <- level_conserve_apply(shares, st_b, TGT, stage = "final", target = fb, held = HELD)  # AUSPOL_LEVEL_CONSERVE "final"/"both": after the last nomination zero
   # ARM H, docs/plans/prereg-reentry-flatratio-variance-2026-09-08.md. Widens
   # the SIMULATED uncertainty, not the point estimate, for cells that fell
   # back to the flat re-entry ratio -- point-shrinkage was tried and refused

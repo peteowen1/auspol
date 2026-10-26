@@ -1,0 +1,475 @@
+election,prev,seat,onp_actual,name_at_prev
+fed2007,fed2004,Bennelong,0.3006,TRUE
+fed2007,fed2004,Bowman,0.5275,TRUE
+fed2007,fed2004,Bruce,0.5377,TRUE
+fed2010,fed2007,Banks,1.9018,TRUE
+fed2010,fed2007,Hughes,1.8527,TRUE
+fed2010,fed2007,Hunter,3.3463,TRUE
+fed2010,fed2007,Kingsford Smith,0.8875,TRUE
+fed2010,fed2007,Macarthur,2.9897,TRUE
+fed2010,fed2007,Shortland,2.0618,TRUE
+fed2010,fed2007,Solomon,2.9535,TRUE
+fed2010,fed2007,Sturt,0.5018,TRUE
+fed2013,fed2010,Barton,0.8575,TRUE
+fed2013,fed2010,Charlton,2.6227,TRUE
+fed2013,fed2010,Fairfax,0.838,TRUE
+fed2013,fed2010,Herbert,0.8328,TRUE
+fed2013,fed2010,Hume,2.7705,TRUE
+fed2013,fed2010,Lindsay,2.1687,TRUE
+fed2013,fed2010,Lyne,2.5601,TRUE
+fed2013,fed2010,Moncrieff,0.7543,TRUE
+fed2013,fed2010,Page,1.607,TRUE
+fed2013,fed2010,Parramatta,1.0197,TRUE
+fed2013,fed2010,Werriwa,1.9631,TRUE
+fed2016,fed2013,Blair,15.581,TRUE
+fed2016,fed2013,Dobell,8.6125,TRUE
+fed2016,fed2013,Flynn,17.1528,TRUE
+fed2016,fed2013,Hinkler,19.1578,TRUE
+fed2016,fed2013,Leichhardt,7.6288,TRUE
+fed2016,fed2013,Longman,9.5062,TRUE
+fed2016,fed2013,Maranoa,17.8203,TRUE
+fed2016,fed2013,Oxley,8.4248,TRUE
+fed2016,fed2013,Paterson,13.0471,TRUE
+fed2016,fed2013,Richmond,6.2603,TRUE
+fed2016,fed2013,Wide Bay,15.5992,TRUE
+fed2016,fed2013,Wright,20.9029,TRUE
+fed2019,fed2016,Barton,3.6571,TRUE
+fed2019,fed2016,Bendigo,6.1754,TRUE
+fed2019,fed2016,Bonner,4.0037,TRUE
+fed2019,fed2016,Bowman,7.2962,TRUE
+fed2019,fed2016,Braddon,5.5436,TRUE
+fed2019,fed2016,Brand,8.4691,TRUE
+fed2019,fed2016,Brisbane,2.4883,TRUE
+fed2019,fed2016,Burt,5.811,TRUE
+fed2019,fed2016,Canning,7.1546,TRUE
+fed2019,fed2016,Capricornia,16.9782,TRUE
+fed2019,fed2016,Cook,3.4853,TRUE
+fed2019,fed2016,Cowan,5.6297,TRUE
+fed2019,fed2016,Curtin,1.1834,TRUE
+fed2019,fed2016,Dawson,13.0871,TRUE
+fed2019,fed2016,Dickson,5.1801,TRUE
+fed2019,fed2016,Durack,9.5302,TRUE
+fed2019,fed2016,Fisher,8.6786,TRUE
+fed2019,fed2016,Forde,11.8065,TRUE
+fed2019,fed2016,Forrest,5.9373,TRUE
+fed2019,fed2016,Fremantle,3.8253,TRUE
+fed2019,fed2016,Grey,8.6904,TRUE
+fed2019,fed2016,Griffith,2.1171,TRUE
+fed2019,fed2016,Groom,13.0888,TRUE
+fed2019,fed2016,Hasluck,5.2791,TRUE
+fed2019,fed2016,Hunter,21.5916,TRUE
+fed2019,fed2016,La Trobe,4.8597,TRUE
+fed2019,fed2016,Lilley,5.3465,TRUE
+fed2019,fed2016,Lyons,8.1326,TRUE
+fed2019,fed2016,Macarthur,8.5976,TRUE
+fed2019,fed2016,McEwen,5.9223,TRUE
+fed2019,fed2016,McMahon,8.2513,TRUE
+fed2019,fed2016,McPherson,5.8592,TRUE
+fed2019,fed2016,Monash,7.6194,FALSE
+fed2019,fed2016,Moncrieff,6.4405,TRUE
+fed2019,fed2016,Moore,4.6329,TRUE
+fed2019,fed2016,Moreton,3.3119,TRUE
+fed2019,fed2016,Nicholls,11.2853,FALSE
+fed2019,fed2016,O'Connor,8.4368,TRUE
+fed2019,fed2016,Pearce,8.2053,TRUE
+fed2019,fed2016,Perth,2.66,TRUE
+fed2019,fed2016,Petrie,7.5179,TRUE
+fed2019,fed2016,Rankin,8.6605,TRUE
+fed2019,fed2016,Ryan,2.1571,TRUE
+fed2019,fed2016,Stirling,3.6057,TRUE
+fed2019,fed2016,Swan,2.4222,TRUE
+fed2019,fed2016,Tangney,2.0763,TRUE
+fed2022,fed2019,Adelaide,2.9939,TRUE
+fed2022,fed2019,Aston,3.0786,TRUE
+fed2022,fed2019,Ballarat,3.6021,TRUE
+fed2022,fed2019,Banks,2.8852,TRUE
+fed2022,fed2019,Barker,6.5766,TRUE
+fed2022,fed2019,Bass,4.7078,TRUE
+fed2022,fed2019,Bean,2.7237,TRUE
+fed2022,fed2019,Bennelong,1.6699,TRUE
+fed2022,fed2019,Berowra,3.1852,TRUE
+fed2022,fed2019,Blaxland,5.4128,TRUE
+fed2022,fed2019,Boothby,2.0403,TRUE
+fed2022,fed2019,Bradfield,1.6214,TRUE
+fed2022,fed2019,Bruce,4.7686,TRUE
+fed2022,fed2019,Calare,8.4393,TRUE
+fed2022,fed2019,Calwell,7.0086,TRUE
+fed2022,fed2019,Canberra,1.6583,TRUE
+fed2022,fed2019,Casey,3.2724,TRUE
+fed2022,fed2019,Chifley,6.2085,TRUE
+fed2022,fed2019,Chisholm,1.4267,TRUE
+fed2022,fed2019,Clark,2.6027,TRUE
+fed2022,fed2019,Cooper,2.9941,TRUE
+fed2022,fed2019,Corangamite,2.5236,TRUE
+fed2022,fed2019,Corio,3.9074,TRUE
+fed2022,fed2019,Cowper,8.1332,TRUE
+fed2022,fed2019,Cunningham,5.1322,TRUE
+fed2022,fed2019,Deakin,2.2998,TRUE
+fed2022,fed2019,Dobell,7.455,TRUE
+fed2022,fed2019,Dunkley,2.8092,TRUE
+fed2022,fed2019,Eden-Monaro,4.286,TRUE
+fed2022,fed2019,Farrer,6.3262,TRUE
+fed2022,fed2019,Fenner,2.6501,TRUE
+fed2022,fed2019,Flinders,3.4104,TRUE
+fed2022,fed2019,Fowler,3.547,TRUE
+fed2022,fed2019,Franklin,2.853,TRUE
+fed2022,fed2019,Fraser,2.9261,TRUE
+fed2022,fed2019,Gellibrand,3.0391,TRUE
+fed2022,fed2019,Gilmore,3.9864,TRUE
+fed2022,fed2019,Gippsland,9.3582,TRUE
+fed2022,fed2019,Goldstein,1.2632,TRUE
+fed2022,fed2019,Gorton,7.269,TRUE
+fed2022,fed2019,Grayndler,1.5321,TRUE
+fed2022,fed2019,Greenway,2.6955,TRUE
+fed2022,fed2019,Hawke,5.5882,FALSE
+fed2022,fed2019,Hindmarsh,3.9341,TRUE
+fed2022,fed2019,Holt,4.8315,TRUE
+fed2022,fed2019,Hotham,2.9201,TRUE
+fed2022,fed2019,Hughes,2.6829,TRUE
+fed2022,fed2019,Hume,7.35,TRUE
+fed2022,fed2019,Indi,5.2834,TRUE
+fed2022,fed2019,Isaacs,3.1879,TRUE
+fed2022,fed2019,Jagajaga,2.2461,TRUE
+fed2022,fed2019,Kingsford Smith,3.1303,TRUE
+fed2022,fed2019,Kingston,4.8582,TRUE
+fed2022,fed2019,Kooyong,0.7228,TRUE
+fed2022,fed2019,Lalor,3.9414,TRUE
+fed2022,fed2019,Lindsay,5.9231,TRUE
+fed2022,fed2019,Lingiari,5.3916,TRUE
+fed2022,fed2019,Lyne,7.9274,TRUE
+fed2022,fed2019,Mackellar,2.6507,TRUE
+fed2022,fed2019,Macnamara,1.4501,TRUE
+fed2022,fed2019,Macquarie,5.1911,TRUE
+fed2022,fed2019,Makin,4.7351,TRUE
+fed2022,fed2019,Mallee,6.7505,TRUE
+fed2022,fed2019,Maribyrnong,2.37,TRUE
+fed2022,fed2019,Mayo,4.1088,TRUE
+fed2022,fed2019,Melbourne,0.9709,TRUE
+fed2022,fed2019,Menzies,2.2887,TRUE
+fed2022,fed2019,Mitchell,3.0113,TRUE
+fed2022,fed2019,New England,4.6982,TRUE
+fed2022,fed2019,Newcastle,4.5036,TRUE
+fed2022,fed2019,North Sydney,1.1831,TRUE
+fed2022,fed2019,Page,5.3754,TRUE
+fed2022,fed2019,Parkes,7.4787,TRUE
+fed2022,fed2019,Parramatta,2.3865,TRUE
+fed2022,fed2019,Reid,2.0383,TRUE
+fed2022,fed2019,Richmond,4.0818,TRUE
+fed2022,fed2019,Riverina,8.1509,TRUE
+fed2022,fed2019,Robertson,3.8239,TRUE
+fed2022,fed2019,Scullin,6.4825,TRUE
+fed2022,fed2019,Shortland,6.3779,TRUE
+fed2022,fed2019,Solomon,5.3478,TRUE
+fed2022,fed2019,Spence,10.856,TRUE
+fed2022,fed2019,Sturt,2.569,TRUE
+fed2022,fed2019,Sydney,1.8318,TRUE
+fed2022,fed2019,Wannon,3.2393,TRUE
+fed2022,fed2019,Warringah,2.1214,TRUE
+fed2022,fed2019,Watson,4.8736,TRUE
+fed2022,fed2019,Wentworth,1.0065,TRUE
+fed2022,fed2019,Werriwa,5.064,TRUE
+fed2022,fed2019,Whitlam,6.8989,TRUE
+fed2022,fed2019,Wills,2.8005,TRUE
+fed2025,fed2022,Bullwinkel,8.6095,FALSE
+fed2025,fed2022,Kennedy,7.7613,TRUE
+vic2022,vic2018,Bendigo East,5.6992,TRUE
+vic2022,vic2018,Macedon,3.6332,TRUE
+vic2022,vic2018,Morwell,6.121,TRUE
+vic2022,vic2018,Pakenham,3.3988,FALSE
+nsw2019,nsw2015,Blacktown,7.1799,TRUE
+nsw2019,nsw2015,Camden,13.2702,TRUE
+nsw2019,nsw2015,Goulburn,9.2504,TRUE
+nsw2019,nsw2015,Holsworthy,8.0943,TRUE
+nsw2019,nsw2015,Hornsby,4.4997,TRUE
+nsw2019,nsw2015,Kogarah,6.1216,TRUE
+nsw2019,nsw2015,Maitland,10.9048,TRUE
+nsw2019,nsw2015,Miranda,7.0538,TRUE
+nsw2019,nsw2015,Murray,8.3607,TRUE
+nsw2019,nsw2015,Oatley,4.4992,TRUE
+nsw2019,nsw2015,Penrith,7.1848,TRUE
+nsw2019,nsw2015,Wollondilly,11.2024,TRUE
+nsw2023,nsw2019,Badgerys Creek,8.1954,FALSE
+nsw2023,nsw2019,Campbelltown,11.5194,TRUE
+nsw2023,nsw2019,Cessnock,15.2688,TRUE
+nsw2023,nsw2019,Cronulla,6.0766,TRUE
+nsw2023,nsw2019,Hawkesbury,10.2973,TRUE
+nsw2023,nsw2019,Leppington,7.5139,FALSE
+nsw2023,nsw2019,Londonderry,8.174,TRUE
+nsw2023,nsw2019,Parramatta,5.1035,TRUE
+nsw2023,nsw2019,Port Stephens,12.8832,TRUE
+nsw2023,nsw2019,Wallsend,6.8175,TRUE
+nsw2023,nsw2019,Wyong,14.5602,TRUE
+sa2022,sa2018,Badcoe,3.0643,TRUE
+sa2022,sa2018,Chaffey,9.8835,TRUE
+sa2022,sa2018,Elizabeth,10.3629,TRUE
+sa2022,sa2018,Enfield,4.4867,TRUE
+sa2022,sa2018,Finniss,4.7408,TRUE
+sa2022,sa2018,Frome,11.0217,TRUE
+sa2022,sa2018,Giles,6.3577,TRUE
+sa2022,sa2018,Hammond,6.8654,TRUE
+sa2022,sa2018,Heysen,4.8595,TRUE
+sa2022,sa2018,Kaurna,8.1806,TRUE
+sa2022,sa2018,Kavel,3.6997,TRUE
+sa2022,sa2018,Light,6.7501,TRUE
+sa2022,sa2018,MacKillop,8.0627,TRUE
+sa2022,sa2018,Mawson,6.5561,TRUE
+sa2022,sa2018,Narungga,5.3883,TRUE
+sa2022,sa2018,Newland,3.7931,TRUE
+sa2022,sa2018,Schubert,6.7809,TRUE
+sa2022,sa2018,Stuart,5.5569,TRUE
+sa2022,sa2018,Taylor,8.7941,TRUE
+sa2026,sa2022,Adelaide,10.5972,TRUE
+sa2026,sa2022,Black,18.854,TRUE
+sa2026,sa2022,Bragg,8.5724,TRUE
+sa2026,sa2022,Cheltenham,20.6891,TRUE
+sa2026,sa2022,Colton,16.9098,TRUE
+sa2026,sa2022,Croydon,12.7255,TRUE
+sa2026,sa2022,Davenport,19.8352,TRUE
+sa2026,sa2022,Dunstan,11.2602,TRUE
+sa2026,sa2022,Elder,13.9722,TRUE
+sa2026,sa2022,Flinders,28.1667,TRUE
+sa2026,sa2022,Florey,22.6284,TRUE
+sa2026,sa2022,Gibson,14.2126,TRUE
+sa2026,sa2022,Hartley,15.1763,TRUE
+sa2026,sa2022,Hurtle Vale,26.5305,TRUE
+sa2026,sa2022,King,29.8415,TRUE
+sa2026,sa2022,Lee,24.6226,TRUE
+sa2026,sa2022,Morialta,17.6807,TRUE
+sa2026,sa2022,Morphett,14.6485,TRUE
+sa2026,sa2022,Mount Gambier,26.7637,TRUE
+sa2026,sa2022,Ngadjuri,34.7087,FALSE
+sa2026,sa2022,Playford,24.1088,TRUE
+sa2026,sa2022,Port Adelaide,20.9797,TRUE
+sa2026,sa2022,Ramsay,27.7215,TRUE
+sa2026,sa2022,Reynell,26.9964,TRUE
+sa2026,sa2022,Torrens,19.9797,TRUE
+sa2026,sa2022,Unley,9.0436,TRUE
+sa2026,sa2022,Waite,11.2227,TRUE
+sa2026,sa2022,West Torrens,17.669,TRUE
+sa2026,sa2022,Wright,28.2636,TRUE
+qld2012,qld2009,Ashgrove,0.222,TRUE
+qld2012,qld2009,Beaudesert,2.5877,TRUE
+qld2012,qld2009,Capalaba,1.5693,TRUE
+qld2012,qld2009,Cook,2.2254,TRUE
+qld2012,qld2009,Gympie,1.18,TRUE
+qld2012,qld2009,Logan,1.5477,TRUE
+qld2015,qld2012,Broadwater,3.7198,TRUE
+qld2015,qld2012,Burdekin,4.6316,TRUE
+qld2015,qld2012,Currumbin,3.6373,TRUE
+qld2015,qld2012,Hinchinbrook,4.0952,TRUE
+qld2015,qld2012,Ipswich West,10.0133,TRUE
+qld2015,qld2012,Lockyer,26.7394,TRUE
+qld2015,qld2012,Maryborough,6.9822,TRUE
+qld2015,qld2012,Mount Isa,3.9952,TRUE
+qld2015,qld2012,Thuringowa,7.3701,TRUE
+qld2015,qld2012,Townsville,3.8364,TRUE
+qld2017,qld2015,Algester,18.1959,TRUE
+qld2017,qld2015,Aspley,9.5957,TRUE
+qld2017,qld2015,Bancroft,19.0687,FALSE
+qld2017,qld2015,Barron River,16.7848,TRUE
+qld2017,qld2015,Buderim,28.5656,TRUE
+qld2017,qld2015,Bundaberg,22.4323,TRUE
+qld2017,qld2015,Burnett,26.7002,TRUE
+qld2017,qld2015,Cairns,14.6337,TRUE
+qld2017,qld2015,Callide,25.6288,TRUE
+qld2017,qld2015,Caloundra,22.6057,TRUE
+qld2017,qld2015,Capalaba,19.4997,TRUE
+qld2017,qld2015,Condamine,23.7778,TRUE
+qld2017,qld2015,Cook,18.4087,TRUE
+qld2017,qld2015,Coomera,20.4633,TRUE
+qld2017,qld2015,Gladstone,20.4236,TRUE
+qld2017,qld2015,Glass House,22.6775,TRUE
+qld2017,qld2015,Gregory,24.2185,TRUE
+qld2017,qld2015,Gympie,29.7308,TRUE
+qld2017,qld2015,Hervey Bay,25.2269,TRUE
+qld2017,qld2015,Ipswich,26.6053,TRUE
+qld2017,qld2015,Jordan,18.8859,FALSE
+qld2017,qld2015,Keppel,25.4539,TRUE
+qld2017,qld2015,Kurwongbah,21.7921,FALSE
+qld2017,qld2015,Logan,30.8959,TRUE
+qld2017,qld2015,Lytton,15.4066,TRUE
+qld2017,qld2015,Mackay,22.6477,TRUE
+qld2017,qld2015,Mansfield,9.1104,TRUE
+qld2017,qld2015,Maroochydore,16.1998,TRUE
+qld2017,qld2015,Mirani,32.0336,TRUE
+qld2017,qld2015,Morayfield,25.227,TRUE
+qld2017,qld2015,Mount Ommaney,7.2707,TRUE
+qld2017,qld2015,Mudgeeraba,17.785,TRUE
+qld2017,qld2015,Mulgrave,22.3456,TRUE
+qld2017,qld2015,Mundingburra,16.6697,TRUE
+qld2017,qld2015,Murrumba,19.4195,TRUE
+qld2017,qld2015,Nanango,27.4417,TRUE
+qld2017,qld2015,Nicklin,21.0194,TRUE
+qld2017,qld2015,Ninderry,18.6564,FALSE
+qld2017,qld2015,Noosa,11.7606,TRUE
+qld2017,qld2015,Pine Rivers,12.1764,TRUE
+qld2017,qld2015,Pumicestone,23.3418,TRUE
+qld2017,qld2015,Redlands,17.7148,TRUE
+qld2017,qld2015,Rockhampton,21.3901,TRUE
+qld2017,qld2015,Sandgate,14.951,TRUE
+qld2017,qld2015,Scenic Rim,27.5886,FALSE
+qld2017,qld2015,Southern Downs,20.3864,TRUE
+qld2017,qld2015,Stretton,11.8693,TRUE
+qld2017,qld2015,Theodore,19.0196,FALSE
+qld2017,qld2015,Toohey,10.4986,FALSE
+qld2017,qld2015,Toowoomba North,14.659,TRUE
+qld2017,qld2015,Toowoomba South,16.4663,TRUE
+qld2017,qld2015,Waterford,20.6961,TRUE
+qld2017,qld2015,Whitsunday,20.0506,TRUE
+qld2020,qld2017,Bonney,3.8686,TRUE
+qld2020,qld2017,Bulimba,2.2586,TRUE
+qld2020,qld2017,Bundamba,14.9627,TRUE
+qld2020,qld2017,Burleigh,7.1484,TRUE
+qld2020,qld2017,Chatsworth,3.0567,TRUE
+qld2020,qld2017,Clayfield,2.3466,TRUE
+qld2020,qld2017,Cooper,1.7394,TRUE
+qld2020,qld2017,Currumbin,4.0147,TRUE
+qld2020,qld2017,Everton,3.114,TRUE
+qld2020,qld2017,Ferny Grove,2.9575,TRUE
+qld2020,qld2017,Gaven,8.2183,TRUE
+qld2020,qld2017,Greenslopes,2.4784,TRUE
+qld2020,qld2017,Inala,4.5462,TRUE
+qld2020,qld2017,Kawana,6.057,TRUE
+qld2020,qld2017,Macalister,7.4612,TRUE
+qld2020,qld2017,Maiwar,1.38,TRUE
+qld2020,qld2017,McConnel,1.4402,TRUE
+qld2020,qld2017,Mermaid Beach,5.0136,TRUE
+qld2020,qld2017,Miller,1.92,TRUE
+qld2020,qld2017,Moggill,2.9037,TRUE
+qld2020,qld2017,Nudgee,3.5123,TRUE
+qld2020,qld2017,Oodgeroo,3.3285,TRUE
+qld2020,qld2017,Redcliffe,4.3569,TRUE
+qld2020,qld2017,South Brisbane,1.7189,TRUE
+qld2020,qld2017,Southport,5.8377,TRUE
+qld2020,qld2017,Springwood,5.3688,TRUE
+qld2020,qld2017,Stafford,2.9628,TRUE
+qld2020,qld2017,Surfers Paradise,6.257,TRUE
+qld2020,qld2017,Warrego,8.8296,TRUE
+qld2020,qld2017,Woodridge,10.6317,TRUE
+qld2024,qld2020,Callide,15.8027,TRUE
+qld2024,qld2020,Hill,6.8711,TRUE
+qld2024,qld2020,Traeger,6.768,TRUE
+wa2001,wa1996,Albany,16.2397,TRUE
+wa2001,wa1996,Alfred Cove,5.3993,TRUE
+wa2001,wa1996,Armadale,13.5424,TRUE
+wa2001,wa1996,Avon,18.5198,TRUE
+wa2001,wa1996,Ballajura,5.7263,TRUE
+wa2001,wa1996,Bassendean,9.2369,TRUE
+wa2001,wa1996,Belmont,10.8284,TRUE
+wa2001,wa1996,Bunbury,10.4678,TRUE
+wa2001,wa1996,Burrup,11.2026,TRUE
+wa2001,wa1996,Carine,5.5874,TRUE
+wa2001,wa1996,Cockburn,7.4147,TRUE
+wa2001,wa1996,Collie,15.1043,TRUE
+wa2001,wa1996,Cottesloe,5.3508,TRUE
+wa2001,wa1996,Darling Range,9.802,TRUE
+wa2001,wa1996,Dawesville,12.7076,TRUE
+wa2001,wa1996,Eyre,17.6764,TRUE
+wa2001,wa1996,Fremantle,4.8583,TRUE
+wa2001,wa1996,Geraldton,21.0062,TRUE
+wa2001,wa1996,Girrawheen,8.3619,TRUE
+wa2001,wa1996,Greenough,27.5409,TRUE
+wa2001,wa1996,Hillarys,6.9535,TRUE
+wa2001,wa1996,Innaloo,5.2301,TRUE
+wa2001,wa1996,Joondalup,6.9085,TRUE
+wa2001,wa1996,Kalgoorlie,10.4733,TRUE
+wa2001,wa1996,Kimberley,10.4982,TRUE
+wa2001,wa1996,Kingsley,6.8391,TRUE
+wa2001,wa1996,Mandurah,12.6033,TRUE
+wa2001,wa1996,Maylands,5.8002,TRUE
+wa2001,wa1996,Merredin,20.3204,TRUE
+wa2001,wa1996,Midland,11.158,TRUE
+wa2001,wa1996,Mitchell,11.3656,TRUE
+wa2001,wa1996,Moore,24.4356,TRUE
+wa2001,wa1996,Murray-Wellington,20.8183,TRUE
+wa2001,wa1996,Nedlands,2.6992,TRUE
+wa2001,wa1996,Ningaloo,15.7796,TRUE
+wa2001,wa1996,Nollamara,7.5108,TRUE
+wa2001,wa1996,Peel,12.6642,TRUE
+wa2001,wa1996,Perth,4.1493,TRUE
+wa2001,wa1996,Pilbara,6.2603,TRUE
+wa2001,wa1996,Riverton,5.5869,TRUE
+wa2001,wa1996,Rockingham,11.9865,TRUE
+wa2001,wa1996,Roe,21.461,TRUE
+wa2001,wa1996,Roleystone,11.6506,TRUE
+wa2001,wa1996,Southern River,9.3198,TRUE
+wa2001,wa1996,Stirling,17.8195,TRUE
+wa2001,wa1996,Swan Hills,10.9357,TRUE
+wa2001,wa1996,Thornlie,10.8125,TRUE
+wa2001,wa1996,Vasse,12.3126,TRUE
+wa2001,wa1996,Victoria Park,6.7932,TRUE
+wa2001,wa1996,Wagin,19.6211,TRUE
+wa2001,wa1996,Wanneroo,9.7722,TRUE
+wa2001,wa1996,Warren-Blackwood,11.4707,TRUE
+wa2001,wa1996,Willagee,7.3441,TRUE
+wa2001,wa1996,Yokine,3.9076,TRUE
+wa2005,wa2001,Capel,2.8231,FALSE
+wa2005,wa2001,Central Kimberley-Pilbara,1.5487,FALSE
+wa2005,wa2001,Collie-Wellington,2.1033,FALSE
+wa2005,wa2001,Kenwick,4.2512,FALSE
+wa2005,wa2001,Leschenault,3.4146,FALSE
+wa2005,wa2001,Murchison-Eyre,3.5465,FALSE
+wa2005,wa2001,Murdoch,0.9659,TRUE
+wa2005,wa2001,Murray,1.9559,FALSE
+wa2005,wa2001,North West Coastal,1.6422,FALSE
+wa2005,wa2001,Serpentine-Jarrahdale,1.9851,FALSE
+wa2017,wa2013,Albany,6.8854,TRUE
+wa2017,wa2013,Baldivis,7.4124,FALSE
+wa2017,wa2013,Bateman,4.5726,TRUE
+wa2017,wa2013,Belmont,6.5128,TRUE
+wa2017,wa2013,Bunbury,8.9018,TRUE
+wa2017,wa2013,Butler,8.8918,TRUE
+wa2017,wa2013,Cannington,6.5737,TRUE
+wa2017,wa2013,Carine,5.1056,TRUE
+wa2017,wa2013,Central Wheatbelt,11.5328,TRUE
+wa2017,wa2013,Collie-Preston,8.3593,TRUE
+wa2017,wa2013,Darling Range,8.722,TRUE
+wa2017,wa2013,Dawesville,9.3317,TRUE
+wa2017,wa2013,Forrestfield,10.0389,TRUE
+wa2017,wa2013,Fremantle,4.28,TRUE
+wa2017,wa2013,Geraldton,9.4355,TRUE
+wa2017,wa2013,Jandakot,6.6804,TRUE
+wa2017,wa2013,Kalamunda,7.2348,TRUE
+wa2017,wa2013,Kalgoorlie,12.1471,TRUE
+wa2017,wa2013,Kimberley,8.1236,TRUE
+wa2017,wa2013,Kwinana,9.3983,TRUE
+wa2017,wa2013,Mandurah,12.9126,TRUE
+wa2017,wa2013,Midland,7.8797,TRUE
+wa2017,wa2013,Moore,13.0314,TRUE
+wa2017,wa2013,Murray-Wellington,11.2731,TRUE
+wa2017,wa2013,North West Central,11.2193,TRUE
+wa2017,wa2013,Pilbara,11.3546,TRUE
+wa2017,wa2013,Riverton,4.8807,TRUE
+wa2017,wa2013,Rockingham,8.6832,TRUE
+wa2017,wa2013,Roe,7.9701,FALSE
+wa2017,wa2013,Scarborough,4.003,TRUE
+wa2017,wa2013,Swan Hills,10.9722,TRUE
+wa2017,wa2013,Thornlie,7.673,FALSE
+wa2017,wa2013,Wanneroo,9.8012,TRUE
+wa2017,wa2013,Warnbro,11.9347,TRUE
+wa2017,wa2013,Warren-Blackwood,6.9616,TRUE
+wa2021,wa2017,Armadale,2.7532,TRUE
+wa2021,wa2017,Bassendean,2.0088,TRUE
+wa2021,wa2017,Bicton,1.207,TRUE
+wa2021,wa2017,Cockburn,1.7601,TRUE
+wa2021,wa2017,Kingsley,1.6615,TRUE
+wa2021,wa2017,Maylands,1.3737,TRUE
+wa2021,wa2017,Mirrabooka,4.1576,TRUE
+wa2021,wa2017,Morley,1.8238,TRUE
+wa2021,wa2017,Mount Lawley,0.8174,TRUE
+wa2021,wa2017,Southern River,1.3555,TRUE
+wa2021,wa2017,Vasse,0.9548,TRUE
+wa2021,wa2017,Victoria Park,1.3325,TRUE
+wa2021,wa2017,Willagee,1.843,TRUE
+wa2025,wa2021,Balcatta,4.1997,TRUE
+wa2025,wa2021,Bibra Lake,4.1711,FALSE
+wa2025,wa2021,Butler,7.8123,TRUE
+wa2025,wa2021,Mid-West,6.1774,FALSE
+wa2025,wa2021,Mindarie,7.0125,FALSE
+wa2025,wa2021,Nedlands,1.5227,TRUE
+wa2025,wa2021,Oakford,6.4967,FALSE
+wa2025,wa2021,Riverton,3.2133,TRUE
+wa2025,wa2021,Secret Harbour,8.4306,FALSE
+wa2025,wa2021,Swan Hills,7.7243,TRUE
+wa2025,wa2021,Thornlie,8.3206,TRUE
+wa2025,wa2021,West Swan,5.9106,TRUE

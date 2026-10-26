@@ -66,8 +66,8 @@ if (.flag("AUSPOL_DEPARTED_FED") %in% c("1", "gap")) { invisible(departed_fed_ta
 # And the Senate One Nation table (AUSPOL_ONP_ORDER=senate): the daily run has
 # no AEC Senate booths, so it reads Victoria's district Senate shares and the
 # curve from this file (written by scripts/build_onp_senate.R).
-if (identical(.flag("AUSPOL_ONP_ORDER"), "senate")) {
-  if (!file.exists(file.path(OUT, "onp-senate-vic2026.csv"))) stop("AUSPOL_ONP_ORDER=senate but output/onp-senate-vic2026.csv is missing -- run scripts/build_onp_senate.R")
+if (.flag("AUSPOL_ONP_ORDER") %in% c("senate", "senate_rank")) {   # senate_rank reads its senate_pct column
+  if (!file.exists(file.path(OUT, "onp-senate-vic2026.csv"))) stop("AUSPOL_ONP_ORDER=", .flag("AUSPOL_ONP_ORDER"), " but output/onp-senate-vic2026.csv is missing -- run scripts/build_onp_senate.R")
   .arm_tables <- c(.arm_tables, "onp-senate-vic2026.csv")
 }
 # And the Senate geography features (AUSPOL_XGB_SENATE=1): Victoria's slice of
@@ -164,6 +164,14 @@ if (identical(.flag("AUSPOL_PUBLISH_NSW2027"), "1")) {
       stop("council-history.csv has no nsw2027 councillors -- rerun scripts/build_lga_district_overlap.R then scripts/build_council_history.py")
     data.table::fwrite(.chn, file.path(OUT, "council-history-nsw2027.csv"))
     .nsw_tables <- c(.nsw_tables, "council-history-nsw2027.csv")
+  }
+  # AUSPOL_ONP_ORDER=senate_rank: the daily job has no Senate table for nsw2027 (its
+  # shares live in senate-by-district-class.csv), so fit_seats_full.R reads this slice.
+  if (.flag("AUSPOL_ONP_ORDER") %in% c("senate", "senate_rank")) {
+    .osn <- onp_senate_key(.n27, "nsw2027")
+    if (is.null(.osn) || anyNA(.osn)) stop("no nsw2027 Senate One Nation share for: ", paste(utils::head(.n27[is.na(.osn)], 8), collapse = ", "), " -- rerun scripts/build_senate_by_district.R")
+    data.table::fwrite(data.table::data.table(seat = .n27, senate_pct = unname(.osn)), file.path(OUT, "onp-senate-nsw2027.csv"))
+    .nsw_tables <- c(.nsw_tables, "onp-senate-nsw2027.csv")
   }
   for (.f in c("nswec-2023-nsw-firstprefs.csv", "nswec-nsw-transfers.csv")) {
     .src <- file.path(election_data_path(), .f)

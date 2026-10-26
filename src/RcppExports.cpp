@@ -25,8 +25,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // seat_sim_core
-List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode, NumericMatrix shift_mat, NumericVector sd_vec, NumericMatrix chol_t, NumericVector seat_sd_vec, bool has_level, NumericMatrix sd_cell_pre, NumericVector surge_h, IntegerVector surge_party_idx, IntegerVector surge_idx, double surge_floor, NumericVector surge_mu, NumericVector surge_sd, bool surge_from_zero, NumericMatrix cell_mat, LogicalVector cell_has, NumericMatrix ss_mat, LogicalVector ss_has, NumericMatrix pool_mat, bool has_pw, NumericMatrix pw_mat, NumericVector flow_sd_by, double smooth, double fallback_smooth, NumericVector shrink, IntegerVector ov_seat, IntegerVector ov_key, NumericMatrix ov_mat, double fallback_flow_sd, NumericVector ov_sd, bool keep_fp, bool has_bo, NumericMatrix bo_p, NumericVector bo_q, bool has_split, int split_lnp, NumericMatrix split_r, double split_f, bool has_eq, NumericMatrix eq, bool za, LogicalMatrix absent);
-RcppExport SEXP _auspol_seat_sim_core(SEXP sharesSEXP, SEXP n_simsSEXP, SEXP shift_modeSEXP, SEXP shift_matSEXP, SEXP sd_vecSEXP, SEXP chol_tSEXP, SEXP seat_sd_vecSEXP, SEXP has_levelSEXP, SEXP sd_cell_preSEXP, SEXP surge_hSEXP, SEXP surge_party_idxSEXP, SEXP surge_idxSEXP, SEXP surge_floorSEXP, SEXP surge_muSEXP, SEXP surge_sdSEXP, SEXP surge_from_zeroSEXP, SEXP cell_matSEXP, SEXP cell_hasSEXP, SEXP ss_matSEXP, SEXP ss_hasSEXP, SEXP pool_matSEXP, SEXP has_pwSEXP, SEXP pw_matSEXP, SEXP flow_sd_bySEXP, SEXP smoothSEXP, SEXP fallback_smoothSEXP, SEXP shrinkSEXP, SEXP ov_seatSEXP, SEXP ov_keySEXP, SEXP ov_matSEXP, SEXP fallback_flow_sdSEXP, SEXP ov_sdSEXP, SEXP keep_fpSEXP, SEXP has_boSEXP, SEXP bo_pSEXP, SEXP bo_qSEXP, SEXP has_splitSEXP, SEXP split_lnpSEXP, SEXP split_rSEXP, SEXP split_fSEXP, SEXP has_eqSEXP, SEXP eqSEXP, SEXP zaSEXP, SEXP absentSEXP) {
+List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode, NumericMatrix shift_mat, NumericVector sd_vec, NumericMatrix chol_t, NumericVector seat_sd_vec, bool has_level, NumericMatrix sd_cell_pre, NumericVector surge_h, IntegerVector surge_party_idx, IntegerVector surge_idx, double surge_floor, NumericVector surge_mu, NumericVector surge_sd, bool surge_from_zero, NumericMatrix cell_mat, LogicalVector cell_has, NumericMatrix ss_mat, LogicalVector ss_has, NumericMatrix pool_mat, bool has_pw, NumericMatrix pw_mat, NumericVector flow_sd_by, double smooth, double fallback_smooth, NumericVector shrink, IntegerVector ov_seat, IntegerVector ov_key, NumericMatrix ov_mat, double fallback_flow_sd, NumericVector ov_sd, bool keep_fp, bool has_bo, NumericMatrix bo_p, NumericVector bo_q, bool has_split, int split_lnp, NumericMatrix split_r, double split_f, bool has_eq, NumericMatrix eq, bool za, LogicalMatrix absent, bool surge_level);
+RcppExport SEXP _auspol_seat_sim_core(SEXP sharesSEXP, SEXP n_simsSEXP, SEXP shift_modeSEXP, SEXP shift_matSEXP, SEXP sd_vecSEXP, SEXP chol_tSEXP, SEXP seat_sd_vecSEXP, SEXP has_levelSEXP, SEXP sd_cell_preSEXP, SEXP surge_hSEXP, SEXP surge_party_idxSEXP, SEXP surge_idxSEXP, SEXP surge_floorSEXP, SEXP surge_muSEXP, SEXP surge_sdSEXP, SEXP surge_from_zeroSEXP, SEXP cell_matSEXP, SEXP cell_hasSEXP, SEXP ss_matSEXP, SEXP ss_hasSEXP, SEXP pool_matSEXP, SEXP has_pwSEXP, SEXP pw_matSEXP, SEXP flow_sd_bySEXP, SEXP smoothSEXP, SEXP fallback_smoothSEXP, SEXP shrinkSEXP, SEXP ov_seatSEXP, SEXP ov_keySEXP, SEXP ov_matSEXP, SEXP fallback_flow_sdSEXP, SEXP ov_sdSEXP, SEXP keep_fpSEXP, SEXP has_boSEXP, SEXP bo_pSEXP, SEXP bo_qSEXP, SEXP has_splitSEXP, SEXP split_lnpSEXP, SEXP split_rSEXP, SEXP split_fSEXP, SEXP has_eqSEXP, SEXP eqSEXP, SEXP zaSEXP, SEXP absentSEXP, SEXP surge_levelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -74,14 +74,15 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericMatrix >::type eq(eqSEXP);
     Rcpp::traits::input_parameter< bool >::type za(zaSEXP);
     Rcpp::traits::input_parameter< LogicalMatrix >::type absent(absentSEXP);
-    rcpp_result_gen = Rcpp::wrap(seat_sim_core(shares, n_sims, shift_mode, shift_mat, sd_vec, chol_t, seat_sd_vec, has_level, sd_cell_pre, surge_h, surge_party_idx, surge_idx, surge_floor, surge_mu, surge_sd, surge_from_zero, cell_mat, cell_has, ss_mat, ss_has, pool_mat, has_pw, pw_mat, flow_sd_by, smooth, fallback_smooth, shrink, ov_seat, ov_key, ov_mat, fallback_flow_sd, ov_sd, keep_fp, has_bo, bo_p, bo_q, has_split, split_lnp, split_r, split_f, has_eq, eq, za, absent));
+    Rcpp::traits::input_parameter< bool >::type surge_level(surge_levelSEXP);
+    rcpp_result_gen = Rcpp::wrap(seat_sim_core(shares, n_sims, shift_mode, shift_mat, sd_vec, chol_t, seat_sd_vec, has_level, sd_cell_pre, surge_h, surge_party_idx, surge_idx, surge_floor, surge_mu, surge_sd, surge_from_zero, cell_mat, cell_has, ss_mat, ss_has, pool_mat, has_pw, pw_mat, flow_sd_by, smooth, fallback_smooth, shrink, ov_seat, ov_key, ov_mat, fallback_flow_sd, ov_sd, keep_fp, has_bo, bo_p, bo_q, has_split, split_lnp, split_r, split_f, has_eq, eq, za, absent, surge_level));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
     {"_auspol_hc_stv_cpp", (DL_FUNC) &_auspol_hc_stv_cpp, 4},
-    {"_auspol_seat_sim_core", (DL_FUNC) &_auspol_seat_sim_core, 44},
+    {"_auspol_seat_sim_core", (DL_FUNC) &_auspol_seat_sim_core, 45},
     {NULL, NULL, 0}
 };
 

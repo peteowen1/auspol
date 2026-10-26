@@ -1662,22 +1662,30 @@ departed_defectors <- function(election_from, election_to, corpus = NULL, min_pc
 
 #' Fit the share of a departed defector's vote that returns to their origin party
 #'
-#' Leave-target-out over every other pair: for each case from
-#' [departed_defectors()], `(origin party's actual vote at election_to -
-#' origin_prev * statewide ratio) / lead_pcv`, clipped to `[0, 1]`, then the
-#' median (`stat = "median"`, the shipped arm) or mean (`"mean"`).
+#' Time-forward over the pairs dated before the target ([fit_pairs_for()]):
+#' for each case from [departed_defectors()], `(origin party's actual vote at
+#' election_to - origin_prev * statewide ratio) / lead_pcv`, clipped to
+#' `[0, 1]`, then the median (`stat = "median"`) or mean (`"mean"`), shrunk
+#' toward 0 (no vote goes home beyond the swing) by `n / (n + k)`, `k` =
+#' `AUSPOL_DEPARTED_ORIGIN_SHRINK_K` (default 3). The fit was leave-target-out
+#' until 2026-10-24, so it learned from later elections, and it refused below
+#' 5 cases rather than shrinking. docs/plans/prereg-departed-origin-tf-2026-10-24.md.
 #'
-#' @param target_election Pair whose own rows are excluded from the fit.
+#' @param target_election Election being forecast; only earlier pairs are used.
 #' @param corpus,pairs As in [fit_defector_discount()].
 #' @param stat `"median"` or `"mean"`.
-#' @param min_n Fewer usable cases than this returns `frac = NULL`.
-#' @return list(frac, n, cases).
+#' @param min_n Fewer usable cases than this returns `frac = NULL`. Default 1:
+#'   the shrinkage handles thin case counts.
+#' @return list(frac, frac_raw, n, k, cases).
 #' @export
 fit_departed_origin_return <- function(target_election, corpus = NULL, pairs = NULL,
-                                       stat = c("median", "mean"), min_n = 5L) {
+                                       stat = c("median", "mean"), min_n = 1L) {
   stat <- match.arg(stat)
   C <- .corpus_or_load(corpus, "fit_departed_origin_return")
   if (is.null(pairs)) pairs <- all_election_pairs()
+  pairs <- fit_pairs_for(target_election, pairs)
+  k <- as.numeric(Sys.getenv("AUSPOL_DEPARTED_ORIGIN_SHRINK_K", "3"))
+  if (!is.finite(k) || k < 0) stop("AUSPOL_DEPARTED_ORIGIN_SHRINK_K must be a non-negative number", call. = FALSE)
   ST <- C[, .(v = sum(votes)), by = .(election, party)][, share := 100 * v / sum(v), by = election]
   seat_share <- function(el, s, p) { v <- C[C$election == el & C$seat == s & C$party == p, sum(pcv)]; if (length(v)) v else 0 }
   rows <- lapply(pairs, function(pr) {
@@ -1697,7 +1705,8 @@ fit_departed_origin_return <- function(target_election, corpus = NULL, pairs = N
   cases[, frac := pmin(1, pmax(0, (origin_now - origin_prev * ratio) / lead_pcv))]
   n <- nrow(cases)
   if (n < min_n) return(list(frac = NULL, n = n, cases = cases))
-  list(frac = if (stat == "median") stats::median(cases$frac) else mean(cases$frac), n = n, cases = cases)
+  raw <- if (stat == "median") stats::median(cases$frac) else mean(cases$frac)
+  list(frac = raw * n / (n + k), frac_raw = raw, n = n, k = k, cases = cases)
 }
 
 #' Move a departed defector's vote to their origin party in the prior matrix

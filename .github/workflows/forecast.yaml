@@ -191,6 +191,13 @@ jobs:
           gh release download shipped-models -p demo-resid-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no demo-resid-vic2026.csv -- the forecast runs WITHOUT the demographic correction"
           gh release download shipped-models -p seat-poll-joint-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no seat-poll-joint-vic2026.csv -- AUSPOL_SEAT_POLL_BLEND=3 runs WITHOUT the joint blend"
           gh release download shipped-models -p departed-fed-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no departed-fed-vic2026.csv -- the forecast runs WITHOUT the departed-member blend"
+          # AUSPOL_ONP_ORDER (published "senate_rank", shipped 2026-10-26): fit_seats_full.R stops without
+          # the district Senate One Nation shares, so a missing table fails HERE with the reason.
+          ONP_ORDER=$(Rscript -e 'source("scripts/published_flags.R"); cat(PUBLISHED_FLAGS[["AUSPOL_ONP_ORDER"]])')
+          if [ "$ONP_ORDER" = "senate" ] || [ "$ONP_ORDER" = "senate_rank" ]; then
+            gh release download shipped-models -p onp-senate-vic2026.csv -D output --clobber || { echo "::error::shipped-models has no onp-senate-vic2026.csv -- AUSPOL_ONP_ORDER=$ONP_ORDER needs it (scripts/build_onp_senate.R; promote_rebuild.R uploads it at stage 9)"; exit 1; }
+            test -s output/onp-senate-vic2026.csv || { echo "::error::onp-senate-vic2026.csv downloaded empty"; exit 1; }
+          fi
           # AUSPOL_DEPARTED_SUCCESSOR (published "1"): fit_seats_full.R stops without the rate
           # table, and running with the switch off would trip its published-filename guard,
           # so a missing table fails here, loudly, and yesterday's forecast stays live.
@@ -517,6 +524,12 @@ jobs:
           for f in seat-swing-port-nsw2027.csv seat-poll-blend-nsw2027.csv leader-seat-nsw2027.csv demo-resid-nsw2027.csv council-history-nsw2027.csv; do
             gh release download shipped-models -p "$f" -D output --clobber
           done
+          # AUSPOL_ONP_ORDER=senate_rank (2026-10-26): fit_seats_full.R stops without nsw2027's Senate One Nation shares.
+          ONP_ORDER=$(Rscript -e 'source("scripts/published_flags.R"); cat(PUBLISHED_FLAGS[["AUSPOL_ONP_ORDER"]])')
+          if [ "$ONP_ORDER" = "senate" ] || [ "$ONP_ORDER" = "senate_rank" ]; then
+            gh release download shipped-models -p onp-senate-nsw2027.csv -D output --clobber || { echo "::error::shipped-models has no onp-senate-nsw2027.csv -- promote_rebuild.R writes it at stage 9"; exit 1; }
+            test -s output/onp-senate-nsw2027.csv || { echo "::error::onp-senate-nsw2027.csv downloaded empty"; exit 1; }
+          fi
           mkdir -p external/elections
           for f in nswec-2023-nsw-firstprefs.csv nswec-nsw-transfers.csv; do
             gh release download shipped-models -p "$f" -D external/elections --clobber

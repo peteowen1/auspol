@@ -9,7 +9,7 @@
 #' (`fed-swing-transposed.csv`), shrunk toward 0 by its precision across
 #' cycles (at least 3 cycles, else 0). docs/plans/prereg-seat-swing-port-v2-2026-09-29.md.
 #'
-#' Two switches, both default off (this function is unchanged when both are):
+#' Three switches (this function is unchanged when all are at their defaults):
 #' * `AUSPOL_SEAT_SWING_PORT_WA`: "1" adds the five Western Australian cycles
 #'   (`fed-swing-transposed-wa.csv`, built by `scripts/transpose_fed_swing.R`
 #'   with `TRANSPOSE_REGION=wa`) to every target's pooled fit; "2" adds them only
@@ -23,32 +23,72 @@
 #'   seat-level one (or the cluster one with two cycles, whichever is larger)
 #'   multiplied by `SEAT_SWING_NOCLIFF_SE_INFLATE` (2): a thin fit gets a
 #'   quarter of the weight its own error would give it, not zero.
+#' * `AUSPOL_SEAT_SWING_PORT_RESID` (audit F8, default "0"): "1" replaces the
+#'   dependent variable. Instead of the seat's whole two-party swing, the fit
+#'   uses what the trees left: the seat's as-at xgb residual in two-party terms,
+#'   `((actual ALP - xgb ALP) - (actual LNP - xgb LNP)) / 2`, demeaned within
+#'   the cycle ([seat_swing_port_resid_table()], read from
+#'   `current_seat_predictions(net = FALSE)`). The trees already see `fed_swing`
+#'   as a feature, so the default coefficient describes the total effect while
+#'   the port is applied on top of the trees. Same cycles-before-target rule, so
+#'   it stays time-forward; a cycle with no as-at predictions (wa2008) drops out.
+#'   docs/plans/prereg-postxgb-resid-net-2026-10-25.md.
 #'
 #' @param target_election Label such as `"vic2022"`.
 #' @return list: `coef`, `k` (earlier cycles), `n` (seats), `b` (unshrunk), `se`.
 #' @export
 seat_swing_port_coef <- function(target_election) {
+  mode3 <- seat_swing_port_3c_mode()
   fs <- seat_swing_port_fs(target_election)
-  fs$label <- paste0(fs$region, fs$cycle)
   tp <- data.table::fread(out_path("seat-tpp-estimates.csv"), showProgress = FALSE)
   d <- election_dates()
-  cyc <- unique(fs$label)
+  cyc <- unique(paste0(fs$region, fs$cycle))
   cyc <- cyc[cyc %in% names(d)]
   cyc <- cyc[elections_before(cyc, target_election)]
-  rows <- data.table::rbindlist(lapply(cyc, function(lab) {
+  resid <- seat_swing_port_resid_on()
+  rt <- if (resid) seat_swing_port_resid_table(current_seat_predictions(net = FALSE)) else NULL
+  rows <- .port_fit_rows(fs, cyc, tp, d, resid, rt)
+  w3c <- if (mode3 == "1") seat_swing_port_3c_w() else NULL
+  if (mode3 == "2") {
+    # The weight is fitted on the RAW deviations of the same earlier cycles,
+    # then the fit is rerun on the swings cleaned at that weight.
+    fw <- seat_swing_port_3c_fit_w(rows)
+    w3c <- fw$w
+    cat(sprintf("S3C2 %s: line-up weight fitted on %d earlier cycles: %d affected seat rows, b_unaffected %s, b_affected %s (se %s), w %.3f\n",
+                target_election, length(unique(rows$pair)), fw$n_aff, format(round(fw$b_u, 3)),
+                format(round(fw$b_a, 3)), format(round(fw$se_a, 3)), w3c))
+    fs <- .port_3c_apply_w(fs, w3c)
+    rows <- .port_fit_rows(fs, cyc, tp, d, resid, rt)
+  }
+  cf <- .seat_swing_port_coef_fit(rows, target_election, resid)
+  if (mode3 != "0") cf$w3c <- w3c
+  cf
+}
+
+# The seat rows of the port fit: one block per earlier cycle, the dependent
+# variable demeaned within the cycle and the transposed federal swing likewise.
+.port_fit_rows <- function(fs, cyc, tp, d, resid, rt) {
+  fs$label <- paste0(fs$region, fs$cycle)
+  data.table::rbindlist(lapply(cyc, function(lab) {
     rg <- sub("[0-9]{4}$", "", lab)
+    if (resid) return(.port_resid_rows(rt, fs, lab, rg))
     prior <- names(d)[startsWith(names(d), rg) & as.Date(unname(d)) < as.Date(unname(d[lab]))]
     if (!length(prior)) return(NULL)
     prv <- prior[which.max(as.Date(unname(d[prior])))]
     a <- tp[tp$election == lab, list(s, t_now = tpp)]
     b <- tp[tp$election == prv, list(s, t_prev = tpp)]
-    f <- fs[fs$label == lab, list(s = normalise_seat(seat), fed_swing)]
+    f <- .port_fs_cols(fs[fs$label == lab])
     m <- merge(merge(a, b, by = "s"), f, by = "s")
     m <- m[is.finite(t_now) & is.finite(t_prev) & is.finite(fed_swing)]
     if (nrow(m) < 5L) return(NULL)
     m[, `:=`(yy = (t_now - t_prev) - mean(t_now - t_prev), dev = fed_swing - mean(fed_swing), pair = lab, region = rg)]
     m
   }), fill = TRUE)
+}
+
+.seat_swing_port_coef_fit <- function(rows, target_election, resid) {
+  if (resid) cat(sprintf("PXR1 %s: port coefficient fitted on post-tree two-party residuals (AUSPOL_SEAT_SWING_PORT_RESID=1): %d earlier cycles with as-at predictions (%s), %d seats\n",
+                         target_election, length(unique(rows$pair)), paste(unique(rows$pair), collapse = ","), nrow(rows)))
   if (!nrow(rows)) return(list(coef = 0, k = 0L, n = 0L, b = NA_real_, se = NA_real_))
   G <- length(unique(rows$pair))
   thin <- G < 3L
@@ -129,14 +169,27 @@ seat_swing_port_wa_mode <- function(target_election) {
 #' `AUSPOL_SEAT_SWING_PORT_WA` asks for it. The WA file defaults to
 #' `fed-swing-transposed-wa.csv` beside the main one; `AUSPOL_SEAT_SWING_WA_FILE`
 #' points elsewhere. A missing WA file is an error, never a silent skip.
+#'
+#' Under `AUSPOL_SEAT_SWING_PORT_3C` ([seat_swing_port_3c_mode()]) the target
+#' and every cycle before it are cleaned for Coalition line-up changes
+#' ([seat_swing_port_3c_clean()]): at the fixed weight for "1", at `w3c` for
+#' "2" (with `w3c = NULL` only `frac` and `fed_swing_raw` are added).
 #' @param target_election Label such as `"wa2025"`.
+#' @param w3c Mode "2" only: the fitted weight from [seat_swing_port_coef()].
 #' @keywords internal
-seat_swing_port_fs <- function(target_election) {
-  fs <- data.table::fread(file.path(election_data_path(), "fed-swing-transposed.csv"), showProgress = FALSE)
+seat_swing_port_fs <- function(target_election, w3c = NULL) {
+  fs <- data.table::fread(election_data_path("fed-swing-transposed.csv"), showProgress = FALSE)
   if (seat_swing_port_wa_mode(target_election) != "0") {
-    f <- Sys.getenv("AUSPOL_SEAT_SWING_WA_FILE", file.path(election_data_path(), "fed-swing-transposed-wa.csv"))
+    f <- Sys.getenv("AUSPOL_SEAT_SWING_WA_FILE", election_data_path("fed-swing-transposed-wa.csv"))
     if (!file.exists(f)) stop("AUSPOL_SEAT_SWING_PORT_WA is on but ", f, " does not exist; run scripts/transpose_fed_swing.R with TRANSPOSE_REGION=wa")
     fs <- data.table::rbindlist(list(fs, data.table::fread(f, showProgress = FALSE)), fill = TRUE)
+  }
+  mode3 <- seat_swing_port_3c_mode()
+  if (mode3 != "0") {
+    labs <- unique(paste0(fs$region, fs$cycle))
+    labs <- labs[labs %in% names(election_dates())]
+    keep <- unique(c(labs[elections_before(labs, target_election)], target_election))
+    fs <- seat_swing_port_3c_clean(fs, w = if (mode3 == "1") seat_swing_port_3c_w() else w3c, labels = keep)
   }
   fs
 }
@@ -156,24 +209,42 @@ seat_swing_port_fs <- function(target_election) {
 #'   from [seat_swing_port_coef()]).
 #' @export
 seat_swing_port_table <- function(target_election, write = FALSE) {
-  src_fs <- file.path(election_data_path(), "fed-swing-transposed.csv")
+  src_fs <- election_data_path("fed-swing-transposed.csv")
   src_tp <- out_path("seat-tpp-estimates.csv")
   cache <- out_path(sprintf("seat-swing-port-%s.csv", target_election))
   if (file.exists(src_fs) && file.exists(src_tp)) {
     cf <- seat_swing_port_coef(target_election)
-    fs <- seat_swing_port_fs(target_election)
+    fs <- seat_swing_port_fs(target_election, w3c = cf$w3c)
     tb <- fs[paste0(fs$region, fs$cycle) == target_election, list(seat, fed_swing)]
     if (write) {
       out <- data.table::copy(tb)
       out$coef <- cf$coef; out$coef_unshrunk <- cf$b; out$coef_se <- cf$se
       out$cycles <- cf$k; out$n_fit <- cf$n
+      # Only under the arm, so the default shipped table is byte-identical.
+      if (seat_swing_port_resid_on()) out$resid <- "1"
+      if (seat_swing_port_3c_mode() != "0") { out$lineup3c <- seat_swing_port_3c_mode(); out$w3c <- cf$w3c }
       data.table::fwrite(out, cache)
     }
   } else if (file.exists(cache)) {
     raw <- data.table::fread(cache, showProgress = FALSE)
     if (!nrow(raw) || length(unique(raw$coef)) != 1L) stop(cache, " is empty or has more than one coefficient")
+    # A table written under the other AUSPOL_SEAT_SWING_PORT_RESID mode carries
+    # the other coefficient; using it would silently run the wrong arm.
+    cached_resid <- if ("resid" %in% names(raw)) as.character(raw[["resid"]][1]) else "0"
+    want_resid <- if (seat_swing_port_resid_on()) "1" else "0"
+    if (!identical(cached_resid, want_resid))
+      stop(cache, " was written with AUSPOL_SEAT_SWING_PORT_RESID=", cached_resid, " but this run has ", want_resid,
+           "; rerun scripts/promote_rebuild.R under the same setting")
+    # Same for the line-up cleaning: the cached swings are already cleaned (or not).
+    cached_3c <- if ("lineup3c" %in% names(raw)) as.character(raw[["lineup3c"]][1]) else "0"
+    if (!identical(cached_3c, seat_swing_port_3c_mode()))
+      stop(cache, " was written with AUSPOL_SEAT_SWING_PORT_3C=", cached_3c, " but this run has ", seat_swing_port_3c_mode(),
+           "; rerun scripts/promote_rebuild.R under the same setting")
+    if (seat_swing_port_3c_mode() == "1" && !isTRUE(all.equal(as.numeric(raw[["w3c"]][1]), seat_swing_port_3c_w())))
+      stop(cache, " was written with AUSPOL_SEAT_SWING_PORT_3C_W=", raw[["w3c"]][1], " but this run has ", seat_swing_port_3c_w())
     cf <- list(coef = raw$coef[1], k = raw$cycles[1], n = raw$n_fit[1],
                b = raw$coef_unshrunk[1], se = raw$coef_se[1])
+    if ("w3c" %in% names(raw)) cf$w3c <- as.numeric(raw$w3c[1])
     tb <- raw[, list(seat, fed_swing)]
     cat(sprintf("SP2  %s: port inputs read from %s (sources absent)
 ", target_election, basename(cache)))
@@ -220,9 +291,7 @@ seat_swing_port_adj <- function(target_election, seats) {
 #'   `AUSPOL_SEAT_SWING_PORT_WA` is "0").
 #' @export
 seat_swing_port_apply <- function(shares, target_election) {
-  if (sub("[0-9]{4}$", "", target_election) == "wa") {
-    if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT_WA", "2"), "0")) return(shares)
-  } else if (!identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "2"), "2")) return(shares)
+  if (!seat_swing_port_on(target_election)) return(shares)
   stopifnot(all(c("ALP", "LNP") %in% colnames(shares)))
   adj <- seat_swing_port_adj(target_election, rownames(shares))
   stopifnot(all(is.finite(adj)))
@@ -231,4 +300,83 @@ seat_swing_port_apply <- function(shares, target_election) {
   shares[, "ALP"] <- pmax(0, shares[, "ALP"] + adj)
   shares[, "LNP"] <- pmax(0, shares[, "LNP"] - adj)
   100 * shares / rowSums(shares)
+}
+
+#' Whether the seat-swing port acts on a target election
+#'
+#' The gate [seat_swing_port_apply()] uses, shared with the residual netting in
+#' [current_seat_predictions()] so the two cannot disagree: WA targets follow
+#' `AUSPOL_SEAT_SWING_PORT_WA` (any value but "0"), every other target
+#' `AUSPOL_SEAT_SWING_PORT` ("2"). The federal harness never calls the port, so
+#' callers that walk every election must skip `fed` themselves.
+#' @param target_election Label such as `"vic2022"`.
+#' @return `TRUE` or `FALSE`.
+#' @keywords internal
+seat_swing_port_on <- function(target_election) {
+  if (sub("[0-9]{4}$", "", target_election) == "wa")
+    return(!identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT_WA", "2"), "0"))
+  identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "2"), "2")
+}
+
+#' Whether the port coefficient is fitted on post-tree residuals (audit F8)
+#' @return `TRUE` when `AUSPOL_SEAT_SWING_PORT_RESID` is "1"; an error for any
+#'   value other than "0" or "1", so a typo cannot silently run the default.
+#' @keywords internal
+seat_swing_port_resid_on <- function() {
+  v <- Sys.getenv("AUSPOL_SEAT_SWING_PORT_RESID", "0")
+  if (!v %in% c("0", "1")) stop("AUSPOL_SEAT_SWING_PORT_RESID must be \"0\" or \"1\", not \"", v, "\"")
+  identical(v, "1")
+}
+
+#' Each seat's as-at xgb residual in two-party terms, for the port fit
+#'
+#' `AUSPOL_SEAT_SWING_PORT_RESID=1`. For each election and seat,
+#' `((actual ALP - xgb ALP) - (actual LNP - xgb LNP)) / 2`: the part of the
+#' Labor-versus-Coalition result the trees missed, in the same units as the
+#' port's adjustment (which adds `adj` to Labor and takes it from the
+#' Coalition, moving that half-difference by `adj`). A seat with no row for one
+#' of the two classes counts that class as 0 predicted and 0 actual.
+#' @param preds [current_seat_predictions()] output (`election`, `seat`,
+#'   `party`, `xgb_pred_seat`, `actual_share`), un-netted.
+#' @return data.table `election`, `s` (normalised seat), `resid`.
+#' @export
+seat_swing_port_resid_table <- function(preds) {
+  if (is.null(preds))
+    stop("AUSPOL_SEAT_SWING_PORT_RESID=1 needs this rebuild's as-at seat predictions ",
+         "(output/xgb-primary-asat-predictions.csv); none found")
+  need <- c("election", "seat", "party", "xgb_pred_seat", "actual_share")
+  miss <- setdiff(need, names(preds))
+  if (length(miss)) stop("seat_swing_port_resid_table: predictions lack ", paste(miss, collapse = ", "))
+  el_v <- as.character(preds[["election"]])
+  seat_v <- normalise_seat(preds[["seat"]])
+  party_v <- as.character(preds[["party"]])
+  dup <- anyDuplicated(paste(el_v, seat_v, party_v, sep = "\r"))
+  if (dup) stop("seat_swing_port_resid_table: duplicate (election, seat, party) row, first at ",
+                el_v[dup], " ", seat_v[dup], " ", party_v[dup])
+  sgn <- ifelse(party_v == "ALP", 0.5, ifelse(party_v == "LNP", -0.5, 0))
+  keep <- sgn != 0
+  d <- data.table::data.table(election = el_v[keep], s = seat_v[keep],
+                              v = sgn[keep] * (preds[["actual_share"]][keep] - preds[["xgb_pred_seat"]][keep]))
+  d[, list(resid = sum(v)), by = c("election", "s")]
+}
+
+# One cycle's rows for the residual port fit: the residual table joined to the
+# transposed federal swing, both demeaned within the cycle. NULL under 5 seats,
+# as the default fit.
+.port_resid_rows <- function(rt, fs, lab, rg) {
+  a <- rt[rt$election == lab, list(s, resid)]
+  f <- .port_fs_cols(fs[fs$label == lab])
+  m <- merge(a, f, by = "s")
+  m <- m[is.finite(m$resid) & is.finite(m$fed_swing)]
+  if (nrow(m) < 5L) return(NULL)
+  m[, `:=`(yy = resid - mean(resid), dev = fed_swing - mean(fed_swing), pair = lab, region = rg)]
+  m
+}
+
+# One cycle's (s, fed_swing) for the fit, carrying the line-up share `frac`
+# when AUSPOL_SEAT_SWING_PORT_3C added it.
+.port_fs_cols <- function(x) {
+  out <- data.table::data.table(s = normalise_seat(x$seat), fed_swing = x$fed_swing)
+  if ("frac" %in% names(x)) out$frac <- x$frac
+  out
 }

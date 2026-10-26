@@ -41,7 +41,11 @@ post_xgb_switches <- function() {
   cur <- c(AUSPOL_REENTRY = reentry_mode(), AUSPOL_NEW_IND_SHRINK = new_ind_mode(),
            AUSPOL_DEPARTED_SUCCESSOR = departed_successor_mode(),
            AUSPOL_IND_TYPICAL = ind_typical_mode(), AUSPOL_IND_MIXTURE = ind_mixture_mode(),
-           AUSPOL_IND_PERSON = ind_person_mode())
+           AUSPOL_IND_PERSON = ind_person_mode(), AUSPOL_GRN_TREE_SHRINK = grn_tree_shrink_mode(),
+           AUSPOL_LEVEL_CONSERVE = level_conserve_mode(), AUSPOL_IND_RETURN = ind_return_mode(),
+           AUSPOL_ONP_NEWSEAT_RULE = if (onp_newseat_rule()) "1" else "0",
+           # "federal" is the order the as-at trees were trained under.
+           AUSPOL_ONP_ORDER = { o <- Sys.getenv("AUSPOL_ONP_ORDER", "senate_rank"); if (identical(o, "federal")) "0" else o })
   cur[cur != "0"]
 }
 

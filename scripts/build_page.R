@@ -427,6 +427,14 @@ if (all(present)) {
 card <- fread("output/pollster-scorecard.csv")
 card <- card[order(-n_polls)][1:12]
 
+# TP4 (same check as build_trend_page_data.R): the five first-preference shares the page shows add to 100.0 +/- 0.1.
+fp_now_vic <- fp_now_normalised(tr, c("LNP", "ALP", "ONP", "GRN", "OTH"))
+fp_now_vic_sum <- sum(vapply(fp_now_vic, `[[`, 0, "m"))
+cat(sprintf("TP4  vic fp_now %s; sum %.1f  %s\n",
+            paste(sprintf("%s %.1f", vapply(fp_now_vic, `[[`, "", "party"), vapply(fp_now_vic, `[[`, 0, "m")), collapse = ", "),
+            fp_now_vic_sum, if (abs(fp_now_vic_sum - 100) <= 0.1) "PASS" else "FAIL"))
+if (abs(fp_now_vic_sum - 100) > 0.1) stop(sprintf("TP4! fp_now adds to %.1f, not 100", fp_now_vic_sum))
+
 out <- list(
   # The freshness verdict travels WITH the page. A run told to proceed on old
   # data must not produce something indistinguishable from a clean run.
@@ -464,11 +472,8 @@ out <- list(
       dev = round(tk$dev[i], 1), breach = isTRUE(tk$breach[i])))
   },
   track_bound = POLL_TRACKING_BOUND,
-  fp_now = lapply(c("LNP", "ALP", "ONP", "GRN", "OTH"), function(p) {
-    d <- tr[party == p][which.max(date)]
-    list(party = p, m = round(d$mean, 1), lo = round(d$lo95, 1),
-         hi = round(d$hi95, 1))
-  }),
+  # rescaled to add to 100 (the per-party trends are fitted separately); R/fp_now.R
+  fp_now = fp_now_vic,
   proj = list(trend = round(now$tpp, 2), fund = round(fund, 2),
               mean = round(pj$mean, 2), lo = round(pj$lo95, 2),
               hi = round(pj$hi95, 2), w = round(pj$w, 2),

@@ -68,10 +68,9 @@ pl <- rbindlist(lapply(poll_cols, function(p) {
 cat(sprintf("TP2  %d polls this cycle (latest %s); %d poll points across %s\n",
             nrow(cp), max(cp$date), nrow(pl), paste(poll_cols, collapse = ", ")))
 
-fp_now <- lapply(fp_parties, function(p) {
-  d <- tr[party == p][which.max(date)]
-  list(party = p, m = round(d$mean, 1), lo = round(d$lo95, 1), hi = round(d$hi95, 1))
-})
+# The per-party trends are fitted separately, so their endpoints do not add to 100; rescale for display (R/fp_now.R).
+fp_now <- fp_now_normalised(tr, fp_parties)
+fp_now_sum <- sum(vapply(fp_now, `[[`, 0, "m"))
 
 card_f <- file.path("output", "pollster-scorecard.csv")
 scorecard <- if (file.exists(card_f)) {
@@ -92,6 +91,8 @@ json <- toJSON(out, auto_unbox = TRUE, digits = 6, na = "null", null = "null")
 # Same escaping as build_page.R: the leader rows carry text scraped from Wikipedia, and a page may inline this JSON.
 json <- gsub("&", "\\u0026", gsub(">", "\\u003e", gsub("<", "\\u003c", json, fixed = TRUE), fixed = TRUE), fixed = TRUE)
 writeLines(json, OUT_F)
-cat(sprintf("TP4  wrote %s (%.0f KB): fp_now %s\n", OUT_F, file.size(OUT_F) / 1024,
+cat(sprintf("TP4  wrote %s (%.0f KB): fp_now %s; sum %.1f  %s\n", OUT_F, file.size(OUT_F) / 1024,
             paste(sprintf("%s %.1f", vapply(fp_now, `[[`, "", "party"),
-                          vapply(fp_now, `[[`, 0, "m")), collapse = ", ")))
+                          vapply(fp_now, `[[`, 0, "m")), collapse = ", "),
+            fp_now_sum, if (abs(fp_now_sum - 100) <= 0.1) "PASS" else "FAIL"))
+if (abs(fp_now_sum - 100) > 0.1) stop(sprintf("TP4! fp_now adds to %.1f, not 100", fp_now_sum))

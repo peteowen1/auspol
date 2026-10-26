@@ -334,3 +334,103 @@ level_recent_apply <- function(levels, target, region, election_date, code = "LR
   td <- as.Date(unname(ed[target])); d <- as.Date(unname(same)); d <- d[is.finite(d) & d < td]
   if (!length(d)) NA else max(d)
 }
+
+# ---- F12: the trees' level_pred against the recent-poll blend ---------------
+# reviews/audit-f8-f19-status-2026-10-25.md F12; plans/prereg-live-level-pred-2026-10-25.md.
+# Training level_pred (scripts/build_level_pred.R -> forecast_statewide_for()) has no recent-poll blend, while
+# the live forecast serves the trees a level_pred built from the BLENDED state_mean. Two switches, both "0":
+# AUSPOL_LIVE_LEVEL_PRED_TREND serves the live trees the pre-blend level (diagnostic, matches today's training);
+# AUSPOL_LEVEL_PRED_RECENT blends the training level_pred (the fix; needs a stage-3 rebuild).
+
+#' Serve the live trees the pre-blend statewide level? (AUSPOL_LIVE_LEVEL_PRED_TREND)
+#'
+#' @return `TRUE` when `"1"` (default, shipped 2026-10-26), `FALSE` when `"0"`; anything else is an error.
+#' @export
+live_level_pred_trend <- function() {
+  v <- Sys.getenv("AUSPOL_LIVE_LEVEL_PRED_TREND", "1")
+  if (!v %in% c("0", "1")) stop("AUSPOL_LIVE_LEVEL_PRED_TREND must be \"0\" or \"1\", not ", v, call. = FALSE)
+  identical(v, "1")
+}
+
+#' The statewide level the live xgb layer is served as `level_pred`
+#'
+#' Returns `blended` (the level after [level_recent_apply()], which the rest of the forecast uses) unless
+#' `enabled`, when it returns `trend`, the same level captured just before the blend. That is the recipe the
+#' trees were trained on while `scripts/build_level_pred.R` runs without `AUSPOL_LEVEL_PRED_RECENT=1`.
+#' Either way it prints, per class, blended minus pre-blend and which one was served.
+#'
+#' @param blended,trend Named numeric statewide class shares (points), same classes.
+#' @param enabled Logical; defaults to [live_level_pred_trend()].
+#' @param code Check code for the printed line.
+#' @return The served level (named numeric, in `blended`'s class order).
+#' @export
+live_level_pred_serve <- function(blended, trend, enabled = live_level_pred_trend(), code = "LLP1") {
+  # OFF: the published path. Serve `blended` untouched and never stop -- a forced scenario (AUSPOL_FORCE_FP) can
+  # legitimately make the two differ in total -- but still print the gap when it can be computed.
+  if (!isTRUE(enabled)) {
+    ok <- is.numeric(trend) && !is.null(names(trend)) && setequal(names(trend), names(blended)) &&
+      !anyDuplicated(names(trend)) && all(is.finite(trend)) && all(is.finite(blended))
+    cat(sprintf("%s  xgb level_pred served from the BLENDED level (AUSPOL_LIVE_LEVEL_PRED_TREND=0); blended minus pre-blend: %s\n",
+                code, if (ok) {
+                  d <- blended - trend[names(blended)]
+                  sprintf("%s (max |diff| %.2f)", paste(sprintf("%s %+.2f", names(d), d), collapse = ", "), max(abs(d)))
+                } else "not comparable (class sets differ)"))
+    return(blended)
+  }
+  chk <- function(x, nm) {
+    if (!is.numeric(x) || is.null(names(x)) || anyNA(names(x)) || anyDuplicated(names(x)) || !all(nzchar(names(x))))
+      stop(sprintf("%s! live_level_pred_serve(): %s needs unique, non-empty class names", code, nm), call. = FALSE)
+    if (!all(is.finite(x)) || any(x < 0))
+      stop(sprintf("%s! live_level_pred_serve(): %s has a non-finite or negative share", code, nm), call. = FALSE)
+  }
+  chk(blended, "blended"); chk(trend, "trend")
+  if (!setequal(names(blended), names(trend)))
+    stop(sprintf("%s! live_level_pred_serve(): the pre-blend level has classes %s, the blended one %s", code,
+                 paste(sort(names(trend)), collapse = "/"), paste(sort(names(blended)), collapse = "/")), call. = FALSE)
+  trend <- trend[names(blended)]
+  # The blend moves its net change into the other classes, so the totals agree. A gap means `trend` was
+  # captured at a different point of the pipeline (before the rescale to 100, or before a forced scenario).
+  if (abs(sum(trend) - sum(blended)) > 1e-6)
+    stop(sprintf("%s! live_level_pred_serve(): pre-blend level sums to %.4f, blended to %.4f -- not the same pipeline point",
+                 code, sum(trend), sum(blended)), call. = FALSE)
+  d <- blended - trend
+  cat(sprintf("%s  xgb level_pred served from the PRE-BLEND trend level, the training recipe (AUSPOL_LIVE_LEVEL_PRED_TREND=1); blended minus pre-blend: %s (max |diff| %.2f)\n",
+              code, paste(sprintf("%s %+.2f", names(d), d), collapse = ", "), max(abs(d))))
+  trend
+}
+
+#' Blend the TRAINING level_pred toward recent polls? (AUSPOL_LEVEL_PRED_RECENT)
+#'
+#' @return `TRUE` when `"1"`, `FALSE` when `"0"` (default); anything else is an error.
+#' @export
+level_pred_recent <- function() {
+  v <- Sys.getenv("AUSPOL_LEVEL_PRED_RECENT", "0")
+  if (!v %in% c("0", "1")) stop("AUSPOL_LEVEL_PRED_RECENT must be \"0\" or \"1\", not ", v, call. = FALSE)
+  identical(v, "1")
+}
+
+#' The recent-poll blend for one training pair's level_pred, time-forward
+#'
+#' [level_recent_apply()] at `as_at = election_date`: only polls fielded BEFORE polling day count (state
+#' polls by date, federal breakdowns by fieldwork end), and the blend constant is fitted on elections dated
+#' before the pair ([level_recent_decay_fit()] through [elections_before()]). It is the call the state
+#' harnesses make through [forecast_statewide_or_oracle()]. Errors propagate: a pair whose blend cannot be
+#' computed must stop the build, not fall back to an unblended level that would be indistinguishable from it.
+#'
+#' @param levels Named numeric statewide class shares for the pair (`forecast_statewide_for()$st_fc`).
+#' @param pair Election label, e.g. `"vic2022"`.
+#' @param region Poll region.
+#' @param election_date Polling day (Date or ISO string).
+#' @param code Check code.
+#' @param tab Optional `level-recent.csv` table (tests); NULL reads the file.
+#' @return `levels` blended, with attribute `moved` = sum of absolute changes in points.
+#' @export
+level_pred_recent_apply <- function(levels, pair, region, election_date, code = "LPR1", tab = NULL) {
+  ed <- as.Date(election_date)
+  if (length(ed) != 1L || !is.finite(ed)) stop(sprintf("%s! %s: no polling day", code, pair), call. = FALSE)
+  out <- level_recent_apply(levels, pair, region, ed, code = code, tab = tab, as_at = ed)
+  if (!identical(names(out), names(levels)) || !all(is.finite(out)))
+    stop(sprintf("%s! %s: the blend returned a different or non-finite class set", code, pair), call. = FALSE)
+  attr(out, "moved") <- sum(abs(out - levels))
+  out
+}
