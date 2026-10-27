@@ -1,3 +1,9 @@
+# auspol 0.4.109
+
+- **Census table v2.** `scripts/build_census_features.R` retired; `build_census_features_vintage.R` builds from raw files, puts qld2017 on the 2021 reaggregation, adds previous-election rows for every pair, and stops (CW11) on any census published after polling day. Rebuilt and published 27 Oct: pooled seat log loss 0.3245 -> 0.3241, AEF-7 0.2643 -> 0.2638.
+- **Scenario CI.** R install steps time out at 10 minutes and retry once after releasing the orphaned dpkg lock; CSC7 compares within 0.005 instead of 1e-8.
+- **Forecast cron** at 17:37 UTC (was 20:00, where runs started 2-7 hours late).
+
 # auspol 0.4.108
 
 - **Same-person sitting-member rule shipped** (`AUSPOL_RETURNING_MEMBER_RULE` default `"1"`): `historic_elected` now marks the member holding the seat when the election was called (previous general-election winner or a later by-election winner), not any surname/initial match at any earlier election. Candidacies rebuilt and the trees retrained; published 2026-10-26.

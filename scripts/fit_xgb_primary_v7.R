@@ -316,7 +316,7 @@ if (file.exists(.sdf)) {
   for (j in sdev_f) FE[[j]] <- if (j == "state_elec_gap") 999 else 0
 }
 
-# ---- census demographics, from scripts/build_census_features.R -------------
+# ---- census demographics, from scripts/build_census_features_vintage.R -----
 # Pete asked for demographics as model features in August. This is the first
 # time they have actually reached a model.
 #
@@ -420,7 +420,7 @@ if (file.exists(.csf)) {
   # NA stays NA in both: a seat with no census match is excluded from its pair's
   # mean, sd and ranking rather than being scored against a value it lacks.
   # Computed on PLAIN VECTORS outside the data.table brackets. `get(v)` inside
-  # `[` is the pattern that broke build_census_features.R earlier tonight
+  # `[` is the pattern that broke the (since retired) build_census_features.R
   # (object not found despite the guard passing) and the one CLAUDE.md blames
   # for multi-GB unreclaimed RSS. Index arithmetic here, assignment after.
   .pr <- FE$pair
@@ -451,7 +451,7 @@ if (file.exists(.csf)) {
               diff(range(.pm$raw, na.rm = TRUE)),
               min(.pm$z, na.rm = TRUE), max(.pm$z, na.rm = TRUE)))
 } else {
-  cat(sprintf("\nX72e! %s missing -- run scripts/build_census_features.R; census arms are vacuous\n", .csf))
+  cat(sprintf("\nX72e! %s missing -- run scripts/build_census_features_vintage.R; census arms are vacuous\n", .csf))
   for (j in c(census_f, census_z, census_r)) data.table::set(FE, j = j, value = NA_real_)
 }
 

@@ -9,7 +9,10 @@ name: Forecast refresh
 
 on:
   schedule:
-    - cron: "0 20 * * *"     # 06:00 Melbourne (AEST, UTC+10) daily
+    # 17:37 UTC = 04:37 Melbourne in daylight time (03:37 in standard time). Off the hour on
+    # purpose: at "0 20" GitHub started 59 of 60 runs (28 Aug - 26 Oct 2026) over 2 h late
+    # (median 2.9 h, max 6.8 h), so the forecast landed ~10:00. Expect ~07:30 now.
+    - cron: "37 17 * * *"
   workflow_dispatch:
     inputs:
       quick:
@@ -732,7 +735,7 @@ jobs:
     # A manual --quick run may skip the seat model the scenarios rerun.
     if: ${{ !inputs.quick }}
     runs-on: ubuntu-latest
-    timeout-minutes: 50
+    timeout-minutes: 80   # worst case: two (10 + 7 + 10)-min install rounds + ~16 min of scenarios
     strategy:
       fail-fast: false
       matrix:
@@ -743,14 +746,70 @@ jobs:
         mode: [exact, polled]
     steps:
       - uses: actions/checkout@v4
+      # The two R install steps are the only ones that crawl on the runner's
+      # network: 96 scenario jobs over six runs (19-25 Oct 2026) took a median
+      # 0.7 min (setup-r) and 0.6 min (setup-r-dependencies), but 13 of them
+      # had one or both steps take 4-22 min, and on 22 Oct one hit the 50-minute job limit (27 Oct:
+      # 18 + 23 min, four jobs cancelled). Each gets a 10-minute step timeout (over 14x its normal
+      # time) and ONE retry. The
+      # first attempt has continue-on-error so its failure does not end the job;
+      # the retry runs only if the first attempt's outcome was a failure and has
+      # no continue-on-error, so a step that fails twice still fails the job.
+      # The slow part of both steps is `sudo apt-get install` from the runner's
+      # Ubuntu mirror. A step timeout kills R but NOT that sudo'd apt-get, which
+      # keeps the dpkg lock, so on 27 Oct both retries died in seconds on "Could
+      # not get lock /var/lib/dpkg/lock-frontend ... held by process 5392
+      # (apt-get)". Before each retry, a release step waits up to 5 min for the
+      # orphan to finish (keeping its progress), then stops it and repairs dpkg.
       - uses: r-lib/actions/setup-r@v2
+        id: setup_r
+        timeout-minutes: 10
+        continue-on-error: true
+        with:
+          r-version: release
+          use-public-rspm: true
+      - name: Release the dpkg lock the timed-out R setup left behind
+        if: steps.setup_r.outcome == 'failure'
+        timeout-minutes: 7
+        run: |
+          for i in $(seq 60); do pgrep -x 'apt-get|dpkg|apt' > /dev/null || break; sleep 5; done
+          if pgrep -x 'apt-get|dpkg|apt' > /dev/null; then
+            echo "::warning::apt still running after 5 min; stopping it"
+            sudo pkill -x 'apt-get|dpkg|apt' || true; sleep 3
+          fi
+          sudo dpkg --configure -a
+      - uses: r-lib/actions/setup-r@v2
+        if: steps.setup_r.outcome == 'failure'
+        timeout-minutes: 10
         with:
           r-version: release
           use-public-rspm: true
       - uses: r-lib/actions/setup-r-dependencies@v2
+        id: setup_r_deps
+        timeout-minutes: 10
+        continue-on-error: true
         with:
           extra-packages: any::devtools, any::jsonlite
           needs: check
+      - name: Release the dpkg lock the timed-out dependency install left behind
+        if: steps.setup_r_deps.outcome == 'failure'
+        timeout-minutes: 7
+        run: |
+          for i in $(seq 60); do pgrep -x 'apt-get|dpkg|apt' > /dev/null || break; sleep 5; done
+          if pgrep -x 'apt-get|dpkg|apt' > /dev/null; then
+            echo "::warning::apt still running after 5 min; stopping it"
+            sudo pkill -x 'apt-get|dpkg|apt' || true; sleep 3
+          fi
+          sudo dpkg --configure -a
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        if: steps.setup_r_deps.outcome == 'failure'
+        timeout-minutes: 10
+        with:
+          extra-packages: any::devtools, any::jsonlite
+          needs: check
+      - name: Say when an R install step needed its retry
+        if: steps.setup_r.outcome == 'failure' || steps.setup_r_deps.outcome == 'failure'
+        run: echo "::warning::R install retried (setup-r ${{ steps.setup_r.outcome }}, setup-r-dependencies ${{ steps.setup_r_deps.outcome }})"
       - uses: actions/download-artifact@v4
         with:
           name: scenario-inputs-${{ github.run_id }}
