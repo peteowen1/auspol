@@ -64,10 +64,6 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
     Shepparton is a true re-stand (Sheed 29.4 in 2022, VEC). Prereg `plans/prereg-ind-gap-restand-2026-10-25.md` (on that branch).
   - `mp-slope-shrink-1025` `f7f2cb8`: `AUSPOL_MP_SLOPE_POOL` (off), one tau^2 partially pooled MP-slope rule live
     and in every harness, replacing live's `n_member >= 8` cutoff. Two preregs.
-  - `census-retire-old-builder-1025` `3f82f83`: `build_census_features.R` deleted; the vintage builder builds from
-    raw files with no base. Diff against `output/census-features.csv` NOT run. Two open choices (Pete): qld2017
-    from the 2021 reaggregation (boundaries unchanged 2021-25), and previous-election rows for the 12 newer pairs
-    (qld2017 12 seats missing, nsw2015 7, sa2018 7, nt2020 2, sa2014 1, nt2016 1).
   - `prereg-offbranches-1025` `ee80497`: preregs for XGB_CLASS_JUR_CAL (merges clean), OTHERS_SCALE_JUR
     (identical to the refused pooled arm at every AEF-7 target on cached history), SALIENCE_STATE (needs two as-at
     retrains; blanks for fed/WA/vic2026 rows are a jurisdiction marker risk), departed-rate-refit (10 conflicts;
@@ -154,8 +150,12 @@ party-cor off) and the phantom-votes arm REFUSED: all in the journal and DECISIO
 - OPEN same one-run lag, older: the seat-poll weight is fitted on the PREVIOUS rebuild's output/forecasts.csv
   (R/seat_poll_blend.R:67; DECISIONS 2026-09-29), so stage 6 uses last run's predictions to weight seat polls. The
   spread fix's compare-and-rerun pattern (scripts/compare_spread_tables.R) could cover it too.
-- OPEN census builder traps: Pete chose (26 Oct) to retire the old builder; built on `census-retire-old-builder-1025`
-  (see "Builds waiting for R"). wa2001/wa2005 stay empty on purpose (Pete 14 Oct, `blank_census_lookahead.R`).
+- OPEN, Pete: two census choices left after the old builder was retired (merged to dev 27 Oct, reviewed; rebuilt
+  in scratch: 3,226 rows, every value identical to `output/census-features.csv`, only 698 note texts changed):
+  (a) qld2017 from the 2021 reaggregation (boundaries unchanged 2021-25); (b) previous-election rows for the 12
+  newer pairs (qld2017 12 seats missing, nsw2015 7, sa2018 7, nt2020 2, sa2014 1, nt2016 1). Review nit queued: a
+  CW11 check that every non-LOOKAHEAD row's census was released before polling day (today only CW10's pre-2007
+  pairs are checked; the rest rests on construction). wa2001/wa2005 stay empty on purpose (Pete 14 Oct).
 
 **State (15 Oct):** 35 scored single-member elections. AEF-7 seat log loss 0.2669 (published 15 Oct 15:33) vs AEF 0.2825;
 pooled 0.3347 over 2,931 seats. Tas/ACT on the Hare-Clark path: pooled 0.496 vs naive 0.974. Training rule P4;
