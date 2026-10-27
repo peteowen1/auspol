@@ -8,6 +8,23 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
+- **28 Oct, IN FLIGHT: port 3C ship (Pete: finish checks, then ship).** Mode 2 on 8 movable elections -0.0001 (SE
+  0.0004), not passed; live walk moves Bendigo West to ALP 0.36 / LNP 0.19 / ONP 0.43 (market 0.44 / 0.12 / 0.41). Pete
+  overrode clause 1 (prereg `plans/prereg-seat-swing-port-3c-2026-10-25.md`, RESULT + decision sections). Remaining:
+  `--pairs=all` control screen (launched 28 Oct, log `scratchpad/port3c-all.log`), then the 20k deciding run
+  (`deciding_run.ps1 -Arm "AUSPOL_SEAT_SWING_PORT_3C=2" -Label port-3c`); ship (published_flags + stage-1 rebuild) if
+  no election worse by 2 SE and the 27 controls are byte-identical.
+- 28 Oct: value-odds page https://claude.ai/artifact/GdrpxSB7zkY1xEvJvU3TKx (readiness, seat click-through, our
+  probabilities against Sportsbet/TAB/Betfair). Built from scratchpad scripts, not the repo: it does not refresh.
+  Contested-seat research, all committed: `reviews/contested-seats-vic2026-2026-10-28.md` (hub),
+  `new-party-fill-proportional-vs-uniform-2026-10-28.md` (proportional One Nation fill supported, 4 elections),
+  `contested-seats-light-checks-2026-10-28.md` (agent's sign error corrected at the top; other-right lead pooled over
+  20 elections is -0.040, SE 0.015: small), `live-walk-contested-seats-2026-10-28.md` (xgb cut to the eastern Liberals
+  0.1-1.6, not 3). Branch checks `ind-overcall-1025` and `mp-slope-shrink-1025`: both PASS `check_like_ci.R` 28 Oct.
+  Still open from it: One Nation spread pooling (needs code: spread fixed to SA 2026 at `fit_seats_full.R:781`);
+  Hastings/Cranbourne recheck after nominations (9 Nov); re-entry inflated bases (other classes over-called -2.9,
+  SE 0.84, where a party re-entered; Narracan Greens is the live case).
+
 - Status 27 Oct evening (detail in DECISIONS.md): census v2 published, local = published (13.9 One Nation) after the
   43 bad vic2026 salience rows were removed (backup `%TEMP%/salience-v6.before-vic2026-removal.csv`; their builder
   now stops with BVS0!), PRs #141/#143 merged, departed-origin closed. Rebooted 26 Oct 12:49, so R work is unblocked.

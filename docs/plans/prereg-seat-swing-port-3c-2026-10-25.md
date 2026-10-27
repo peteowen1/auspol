@@ -252,3 +252,14 @@ baseline). The targeted log loss is driven by Monaro +0.136, Mildura +0.103, Alb
 Not yet run: clause 4 controls (`--pairs=all`), mode 1 and `W=0.5` arms, the live walk (queued 28 Oct as a `port3c` run in
 the live-walk agent's experiment 1). Per the MDE paragraph this is "no measurable effect at this size, not a refusal";
 the decision goes to Pete with the live walk.
+
+### Live walk and Pete's decision (2026-10-28)
+
+Live walk (`reviews/live-walk-contested-seats-2026-10-28.md`, run `port3c`): `S3C2 vic2026 ... w 0.006` as dry-run. Bendigo West
+ALP 0.08 -> 0.36, LNP 0.54 -> 0.19, ONP 0.36 -> 0.43 (market 0.44 / 0.12 / 0.41); Bendigo East favourite LNP 0.60 -> ONP 0.64;
+no other seat moved more than 0.05 except Carrum ALP -0.05 (untouched; likely noise).
+
+**Pete, 28 Oct: finish the checks, then ship** (clause 1 not passed; his call under the MDE paragraph, recorded here as an
+override of clause 1's 1 SE bar). Remaining before shipping: clause 4 controls on `--pairs=all` (27 untouched elections
+byte-identical), then the 20k deciding run (`deciding_run.ps1 -Arm "AUSPOL_SEAT_SWING_PORT_3C=2" -Label port-3c`); ship only if
+neither shows harm (no election worse by more than 2 SE, clause 7).
