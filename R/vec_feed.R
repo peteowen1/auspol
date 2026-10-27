@@ -61,13 +61,13 @@ vec_feed_latest <- function(dir, kind = "verboselhv2") {
 }
 
 # A 2CP block that is really there: the element exists, is not withheld, carries an
-# update time, and names two candidates. Anything else is "no data".
+# update time, and names two candidates with a count each. Anything else is "no data".
 .vf_tcp <- function(tcp_node) {
   if (inherits(tcp_node, "xml_missing")) return(NULL)
-  if (identical(xml2::xml_attr(tcp_node, "Maverick"), "true")) return(NULL)
+  if (tolower(xml2::xml_attr(tcp_node, "Maverick")) %in% "true") return(NULL)
   if (is.na(.vf_attr(tcp_node, "Updated"))) return(NULL)
   d <- .vf_cands(tcp_node)
-  if (nrow(d) != 2L) return(NULL)
+  if (nrow(d) != 2L || anyNA(d$votes)) return(NULL)
   d
 }
 
@@ -119,7 +119,8 @@ vec_feed_read_lh <- function(path) {
         name = xml2::xml_text(.vf_1(cs, .vf_path("CandidateIdentifier", "CandidateName"))),
         ballot_position = as.integer(xml2::xml_text(.vf_1(cs, .vf_l("BallotPosition")))),
         affiliation_id = .vf_attr(.vf_1(cs, .vf_path("Affiliation", "AffiliationIdentifier")), "Id"),
-        independent = tolower(xml2::xml_attr(cs, "Independent")) %in% "true",
+        # the real feed writes "yes"/"no" (2026 sample: 1,608 yes); accept "true" too
+        independent = tolower(xml2::xml_attr(cs, "Independent")) %in% c("yes", "true"),
         votes = vapply(cs, function(x) .vf_num(x, .vf_l("Votes")), 0))
       tv <- list()
       for (j in seq_along(cs)) {

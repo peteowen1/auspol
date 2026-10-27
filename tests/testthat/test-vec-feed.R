@@ -7,11 +7,11 @@ vf_doc <- function(contests, root = "MediaFeed") {
 <Election><House><Contests>%s</Contests></House></Election></%s>', root, contests, root)
 }
 
-vf_cand <- function(id, votes, types = NULL) {
+vf_cand <- function(id, votes, types = NULL, independent = "no") {
   vt <- if (is.null(types)) "" else paste0("<VotesByType>",
     paste(sprintf('<Votes Type="%s">%s</Votes>', names(types), types), collapse = ""), "</VotesByType>")
-  sprintf('<Candidate Independent="false"><eml:CandidateIdentifier Id="%s"><eml:CandidateName>C %s</eml:CandidateName></eml:CandidateIdentifier><BallotPosition>1</BallotPosition><Elected>false</Elected><Votes>%s</Votes>%s</Candidate>',
-          id, id, votes, vt)
+  sprintf('<Candidate Independent="%s"><eml:CandidateIdentifier Id="%s"><eml:CandidateName>C %s</eml:CandidateName></eml:CandidateIdentifier><BallotPosition>1</BallotPosition><Elected>false</Elected><Votes>%s</Votes>%s</Candidate>',
+          independent, id, id, votes, vt)
 }
 
 vf_contest <- function(did, name, cands, tcp = "", booths = "", returned = 1) {
@@ -52,6 +52,18 @@ test_that("a two-district snapshot parses into the tidy tables", {
   # booth sums by class equal the district vote-type totals (the feed's own identity)
   expect_equal(x$booths[booth_class == "VotingCentre", sum(votes)],
                x$by_type[district_id == "100" & vote_type == "Ordinary" & !candidate_id %in% c("FORMAL", "INFORMAL"), sum(votes)])
+})
+
+test_that("the independent flag reads the feed's yes/no", {
+  x <- vec_feed_read_lh(vf_write(vf_doc(vf_contest("1", "A", paste0(vf_cand("1", 3, independent = "yes"), vf_cand("2", 4))))))
+  expect_identical(x$candidates$independent, c(TRUE, FALSE))
+})
+
+test_that("a 2CP block with no update time, one candidate, a missing count or Maverick=True is no data", {
+  nav <- '<TwoCandidatePreferred Updated="2026-11-28T19:10:00+11:00"><Candidate><eml:CandidateIdentifier Id="1"/><Votes>4</Votes></Candidate><Candidate><eml:CandidateIdentifier Id="2"/><Votes></Votes></Candidate></TwoCandidatePreferred>'
+  mavT <- '<TwoCandidatePreferred Maverick="True" Updated="2026-11-28T19:10:00+11:00"><Candidate><eml:CandidateIdentifier Id="1"/><Votes>4</Votes></Candidate><Candidate><eml:CandidateIdentifier Id="2"/><Votes>3</Votes></Candidate></TwoCandidatePreferred>'
+  y <- vec_feed_read_lh(vf_write(vf_doc(paste0(vf_contest("1", "A", vf_cand("1", 3), tcp = nav), vf_contest("2", "B", vf_cand("5", 3), tcp = mavT)))))
+  expect_equal(y$contests$tcp_status, c("none", "none"))
 })
 
 test_that("a 2CP block with no update time or one candidate is no data", {

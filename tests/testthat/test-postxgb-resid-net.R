@@ -155,6 +155,8 @@ test_that("the residual port fit stays time-forward and differs from the default
   def <- seat_swing_port_coef("nsw2023")
   withr::local_envvar(AUSPOL_SEAT_SWING_PORT_RESID = "1")
   log <- utils::capture.output(res <- seat_swing_port_coef("nsw2023"))
+  log <- grep("^PXR1", log, value = TRUE)   # 3C (shipped 2026-10-28) also prints S3C1/S3C2 lines
+  expect_length(log, 1L)
   expect_match(log, "^PXR1 nsw2023")
   used <- strsplit(sub(".*predictions \\(([^)]*)\\).*", "\\1", log), ",")[[1]]
   expect_true(length(used) > 0)
