@@ -2,7 +2,7 @@
 # the frozen as-at trees. Synthetic: a tiny as-at model is trained in a temp root.
 # Port 3C is a post-xgb switch shipped ON (2026-10-28): pin it off here like the other
 # post-xgb switches, or recording a reference stops (as it must in a real stage 1).
-withr::local_envvar(AUSPOL_SEAT_SWING_PORT_3C = "0", .local_envir = testthat::teardown_env())
+withr::local_envvar(AUSPOL_SEAT_SWING_PORT_3C = "0")   # file-scoped, as test-candidate_returns.R
 
 bd_root <- function(env = parent.frame()) {
   root <- withr::local_tempdir(.local_envir = env)
