@@ -38,7 +38,7 @@ tag's, read `built_at` / `MANIFEST.json` for the data's):
 
 | what | where |
 |---|---|
-| Today's forecast: `forecast-vic2026.json`, `forecast-history.csv`, seat probabilities and shares, the HTML page | [`forecast-latest` release](https://github.com/peteowen1/auspol/releases/tag/forecast-latest), rebuilt 06:00 Melbourne daily by `.github/workflows/forecast.yaml` |
+| Today's forecast: `forecast-vic2026.json`, `forecast-history.csv`, seat probabilities and shares, the HTML page | [`forecast-latest` release](https://github.com/peteowen1/auspol/releases/tag/forecast-latest), rebuilt daily at about 04:37 Melbourne time (17:37 UTC; runs typically land around 07:30) by `.github/workflows/forecast.yaml` |
 | The models the forecast runs on, their scoreboard, and the **AEF-7 ledger** (`aef7-ledger.html`: our model against AE Forecasts on 660 seats across seven elections, seat by seat) | [`shipped-models` release](https://github.com/peteowen1/auspol/releases/tag/shipped-models), promoted by `scripts/rebuild_forecasts.sh` stage 9 |
 | How the pipeline fits together, stage by stage | [`docs/PIPELINE.md`](docs/PIPELINE.md) |
 
