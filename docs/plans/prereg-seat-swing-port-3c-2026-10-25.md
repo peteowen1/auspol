@@ -263,3 +263,10 @@ no other seat moved more than 0.05 except Carrum ALP -0.05 (untouched; likely no
 override of clause 1's 1 SE bar). Remaining before shipping: clause 4 controls on `--pairs=all` (27 untouched elections
 byte-identical), then the 20k deciding run (`deciding_run.ps1 -Arm "AUSPOL_SEAT_SWING_PORT_3C=2" -Label port-3c`); ship only if
 neither shows harm (no election worse by more than 2 SE, clause 7).
+
+### Controls and clause 7, all 35 elections (2026-10-28)
+
+`quick_arm.R "AUSPOL_SEAT_SWING_PORT_3C=2" --pairs=all` (1,000 sims, 1,778 s): **clause 4 PASSES**, 27 of 35 elections
+byte-identical and the 8 that moved are exactly the 8 named movable. Pooled over 2,931 seats: −0.0000 (SE 0.0001); AEF-7 681
+seats +0.0002 (SE 0.0003). **Clause 7 holds**: paired seat-difference SE per movable election, worst sa2026 +0.0024 (SE
+0.0016, +1.5 SE), then wa2025 +1.0 SE; best qld2024 −1.7 SE. Next: the 20k deciding run, then ship per Pete's decision.
