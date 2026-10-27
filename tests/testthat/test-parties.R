@@ -13,6 +13,9 @@ test_that("parties that LOOK like a major but are not", {
   expect_equal(classify_party("Liberal Democrats"), "OTH_RIGHT")
   expect_equal(classify_party("Labour DLP"), "OTH_RIGHT")
   expect_equal(classify_party("Democratic Labour Party"), "OTH_RIGHT")
+  # The bare acronym, as the AEC's 2007 files and the ABC's vic2026 list print it.
+  expect_equal(classify_party("LDP", "LDP"), "OTH_RIGHT")
+  expect_equal(classify_party("LDP"), "OTH_RIGHT")
 })
 
 test_that("independents are their own class, however recorded", {

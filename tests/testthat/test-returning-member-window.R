@@ -93,13 +93,13 @@ test_that("the tracked name file covers every state by-election in every window"
   expect_true(all(nzchar(nm$surname)))
 })
 
-test_that("the builder keeps the legacy flag as its default (rule 0)", {
+test_that("the builder defaults to the shipped same-person rule (rule 1, 2026-10-26)", {
   # BC9 itself needs external/ inputs that CI and worktrees do not have, so it
   # cannot run here. This only guards the two places that set the default.
   root <- if (file.exists("scripts/build_candidacies.R")) "." else file.path("..", "..")
   skip_if(!file.exists(file.path(root, "scripts", "build_candidacies.R")), "scripts/ not present")
   bc <- readLines(file.path(root, "scripts", "build_candidacies.R"), warn = FALSE)
-  expect_true(any(grepl('Sys.getenv("AUSPOL_RETURNING_MEMBER_RULE", "0")', bc, fixed = TRUE)))
+  expect_true(any(grepl('Sys.getenv("AUSPOL_RETURNING_MEMBER_RULE", "1")', bc, fixed = TRUE)))
   pf <- readLines(file.path(root, "scripts", "published_flags.R"), warn = FALSE)
-  expect_true(any(grepl('^\\s*AUSPOL_RETURNING_MEMBER_RULE = "0",', pf)))
+  expect_true(any(grepl('^\\s*AUSPOL_RETURNING_MEMBER_RULE = "1",', pf)))
 })

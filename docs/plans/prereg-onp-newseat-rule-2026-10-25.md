@@ -136,3 +136,94 @@ Ship rule for the switch: criterion 1 passes, 2-3 hold, 4 does not fire, then th
 refusing an otherwise-passing result goes to Pete with the split shown. Shipping "1" does not change the
 Victorian forecast; the ordering for Victoria is decided under the senate-rank pre-registration, with B v A
 as its harness evidence.
+
+## RESULT, arm A (2026-10-25 screen; appended, nothing above edited)
+
+`quick_arm.R "AUSPOL_ONP_NEWSEAT_RULE=1" --pairs=<the 22 listed> --no-reuse --slots=1` ran 19:15-20:04 at 1,000
+sims, code 58e6740 (launched with 8,273 MB available). Baseline cache 050d4221173d, arm cache 8190e146012a. Log
+`deciding-runs/quickarm-20261025-onp-newseat-A.log`, score `...-A-score.txt`.
+
+Dry runs: (1) `score_onp_newseat.R` on the same key twice gives +0.0000. (3) The `ONN1` lines match the applicability
+list. The rule allocated in vic2022, nsw2023, sa2026 and qld2020. nsw2019 and sa2022 added the column, then the House
+key refused (11 of 12 and 15 of 19 seats have no key), so those two measure the column fix alone. Every other election
+printed `ONN1!` or "needs 3". (5) Changed cells: 456 of 15,003, in exactly those 6 elections.
+
+| measure (arm minus baseline, lower is better; SE clustered on election) | n | change | SE |
+|---|--:|--:|--:|
+| 1. primary, target-seat log loss (SNS3) | 465 seats / 22 el. | **+0.0007** | 0.0004 |
+| 1. co-primary, target-seat One Nation squared error (RMSE 5.629 -> 5.540) | 465 | -0.990 | 0.739 |
+| 2. guard over the 22 listed elections (SNS4) | 2,156 seats | +0.0002 | 0.0001 |
+| AEF-7 (reported) | 681 | +0.0004 | 0.0003 |
+
+Leave-one-election-out on the primary ranges from +0.0005 to +0.0009 and is positive in every drop. All-seat change per
+election: sa2022 +0.0047 (own SE 0.0049), vic2022 +0.0020 (0.0041), sa2026 +0.0015 (0.0013), qld2020 0.0000, nsw2023
+0.0000, nsw2019 -0.0004. Clause 4a would fire (sa2026 more than 1 SE worse). Clause 4b does not fire: no One Nation
+winner moves by more than 0.001.
+
+**Verdict: REFUSED.** The primary is worse by more than 1 SE, not better. The One Nation shares themselves improve, but
+seat log loss on the target seats gets slightly worse. The `--pairs=all` guard for A was not run: WORSE stops.
+
+## RESULT, arm B (2026-10-25 screen; appended)
+
+`quick_arm.R "AUSPOL_ONP_NEWSEAT_RULE=1 AUSPOL_ONP_ORDER=senate_rank" --pairs=<the 22 listed> --no-reuse --slots=1`
+ran 20:04-20:30, 1,000 sims, code 58e6740, against the same baseline 050d4221173d. Arm cache d8938e03307e. Log
+`deciding-runs/quickarm-20261025-onp-newseat-B.log`, score `...-B-score.txt`. Changed cells: 1,373 of 15,003, in 15
+of 22 elections.
+
+| measure (arm minus baseline, lower is better; SE clustered on election) | n | change | SE |
+|---|--:|--:|--:|
+| 1. primary, target-seat log loss (SNS3) | 465 seats / 22 el. | -0.0088 | 0.0090 |
+| 1. co-primary, target-seat One Nation squared error (RMSE 5.629 -> 5.212) | 465 | -4.525 | 2.270 |
+| 2. guard over the 22 listed elections (SNS4) | 2,156 seats | -0.0018 | 0.0020 |
+| AEF-7 (reported) | 681 | +0.0005 | 0.0004 |
+
+- Clause 1: the primary is within 1 SE, so it is NOT passed. The co-primary holds (One Nation share error is better by
+  about 2 SE).
+- Clause 3, leave-one-election-out: FAILS. Without qld2017 the primary is +0.0006 (SE 0.0007). Every other drop stays
+  between -0.0111 and -0.0088. The whole log-loss gain is qld2017, which moves -0.0465 (own SE 0.0422) on all seats and
+  0.560 -> 0.478 on its 53 targets.
+- Clause 4a fires: sa2026 all-seat log loss is +0.0036 (own SE 0.0019, 1.9 SE). qld2024 is 0.0000.
+- Clause 4b does not fire: no One Nation winner loses (Ngadjuri 0.887, Mirani qld2020 0.624).
+- Per election, all seats: qld2017 -0.0465, fed2019 -0.0011, wa2017 -0.0007, wa2025 -0.0004, nsw2019 -0.0003;
+  sa2022 +0.0046, sa2026 +0.0036, vic2022 +0.0020, fed2022 +0.0004. Every other election is 0.
+
+**Verdict: NOT PASSED.** The primary is within 1 SE, the leave-one-out sign is lost without qld2017, and clause 4a
+fires on sa2026. It goes to Pete with this split, because the One Nation shares improve clearly while seat log loss
+does not. Arm B's `--pairs=all` guard and the B-v-A run are next in the queue.
+
+## RESULT, B v A (the Senate question; 2026-10-25, appended)
+
+`quick_arm.R "AUSPOL_ONP_ORDER=senate_rank" --base="AUSPOL_ONP_NEWSEAT_RULE=1" --pairs=<22>`. Both caches were already
+built (base 8190e146012a = arm A, arm d8938e03307e = arm B), so no harness was re-run. Score in
+`deciding-runs/quickarm-20261025-onp-newseat-BvA-score.txt`.
+
+| scope (Senate minus House ordering, lower is better; SE clustered on election) | n | target-seat log loss | One Nation squared error |
+|---|--:|--:|--:|
+| all 22 listed elections | 465 seats | -0.0095 (SE 0.0089) | -3.535 (SE 2.216); RMSE 5.540 -> 5.212 |
+| without qld2017 (SNS5) | | -0.0002 (SE 0.0005) | |
+| where both rules apply (vic2022, nsw2023, sa2026, qld2020) | 74 seats / 4 el. | **+0.0012 (SE 0.0012)** | -0.193 (SE 0.112) |
+| guard, all seats of the 22 | 2,156 | -0.0020 (SE 0.0020) | |
+| AEF-7 (quick_arm Q4) | 681 | +0.0002 (SE 0.0002) | |
+
+Reading: no measurable House-v-Senate difference on log loss on the elections where both rules apply (+0.0012, within
+1 SE, pointing toward House), though One Nation shares are slightly better there under the Senate ordering (-0.193,
+1.7 SE). The all-22 figure is qld2017 alone, and qld2017 is a B-only election, which measures "Senate rule v nothing",
+not House v Senate.
+
+## RESULT, arm B `--pairs=all` guard (2026-10-25 20:56-21:24; appended)
+
+`deciding-runs/quickarm-20261025-onp-newseat-B-all.log`, baseline 050d4221173d (now 35 elections), arm d8938e03307e.
+Dry run 2 passes: 15 of 35 elections changed, the same 15 as on the listed run, and every election outside the list
+scores exactly 0. Seat-winner log loss over all 2,931 seats in 35 elections: 0.3085 -> 0.3071, **-0.0014 (SE
+0.0015)**, within 1 SE, so the guard holds. The worst single election is sa2026 at 1.89 of its own SE, under the 2 SE
+bar. AEF-7 is +0.0005 (SE 0.0004). This leaves arm B's verdict unchanged: NOT PASSED on the primary and on clause 3
+(qld2017 carries the whole gain), and clause 4a fires. Pete has the split.
+
+## SHIPPED (2026-10-26; appended, nothing above edited)
+
+Arm B shipped in 38d96a5: `AUSPOL_ONP_NEWSEAT_RULE=1` with `AUSPOL_ONP_ORDER=senate_rank`, on Pete's rule "Wait for B-v-A,
+then ship" (ship if B v A is not worse by more than 1 SE: it was -0.0095, SE 0.0089). This is **Pete's override** of
+clause 3 (leave-one-out: qld2017 carries the gain) and of clause 4a (sa2026 +1.89 SE), recorded here as such. Both
+switches are post-xgb: stage 1 of `rebuild_forecasts.sh` pins them to `0` / `federal`. Bendigo East's 0.69 was traced
+before shipping and found not a defect of the rule (`docs/reviews/bendigo-east-onp-2026-10-25.md`). A fitted Senate /
+House / previous-state blend tied with Senate alone and was not built (`docs/DECISIONS.md`, 2026-10-26).

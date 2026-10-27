@@ -1,0 +1,170 @@
+{
+ "fed2022__Brisbane": {
+  "pair": "fed2022",
+  "seat": "Brisbane",
+  "text": "Part of the inner-Brisbane Greens cluster with Ryan and Griffith, and missed again in 2025 in the opposite direction. Group D is an observation awaiting a diagnosis -- the under-concentration explanation was retracted as selection bias.",
+  "updatedAt": "2026-09-15T12:00:00Z"
+ },
+ "fed2022__Fowler": {
+  "pair": "fed2022",
+  "seat": "Fowler",
+  "text": "Dai Le (IND) won on 29.5 vs our 13.6, +15.9, and we favoured ALP at 0.86 -- the Keneally parachute. Candidate-level, not swing.",
+  "updatedAt": "2026-09-15T00:00:00Z"
+ },
+ "fed2022__Griffith": {
+  "pair": "fed2022",
+  "seat": "Griffith",
+  "text": "Third of the inner-Brisbane Greens trio, GRN 34.6 vs our 27.3. Missed again in fed2025, that time by over-predicting the Greens.",
+  "updatedAt": "2026-09-15T12:00:00Z"
+ },
+ "fed2022__Hasluck": {
+  "pair": "fed2022",
+  "seat": "Hasluck",
+  "text": "Same cause as Tangney: the WA 2022 state swing. Measured after the state-deviation correction shipped and fed2022 was re-run -- seat log loss 1.50 -> 1.24, p(ALP) 0.223 -> 0.288 against AEF's 0.526. The correction moves every WA seat the right way and closes roughly 8% of the fed2022 gap to AEF, not the whole thing.",
+  "updatedAt": "2026-09-16T00:00:00Z"
+ },
+ "fed2022__Ryan": {
+  "pair": "fed2022",
+  "seat": "Ryan",
+  "text": "GRN won on 30.2 vs our 20.5, one of three inner-Brisbane Greens seats missed together with Brisbane and Griffith. NOTE: the 'Greens are under-concentrated' explanation I first gave for this cluster was RETRACTED the same day -- it came from selecting seats by their actual result, and a shuffled placebo reproduced most of the effect. The cluster is real; the cause is unknown.",
+  "updatedAt": "2026-09-15T12:00:00Z"
+ },
+ "fed2022__Swan": {
+  "pair": "fed2022",
+  "seat": "Swan",
+  "text": "Improved by the state-swing correction shipped 15 Sep: log loss 0.62 -> 0.49. Every WA seat in fed2022 moved the right way when AUSPOL_STATE_DEV was applied, and fed2022 was re-run that evening because its backtest predated the ship by seven hours.",
+  "updatedAt": "2026-09-16T00:00:00Z"
+ },
+ "fed2022__Tangney": {
+  "pair": "fed2022",
+  "seat": "Tangney",
+  "text": "Our most confident miss of fed2022: we gave the winner 0.029 and favoured LNP at 0.97. CAUSE FOUND and now SHIPPED -- WA swung to Labor far harder than the nation in 2022 (mean ALP per-seat primary error +6.43 over 15 seats, positive in 14). AUSPOL_STATE_DEV was adopted 15 Sep and fed2022 re-run: seat log loss 3.53 -> 3.11, p(ALP) 0.029 -> 0.044. Real but only about a quarter of the gap, because the state polls knew only +3.53 of the +6.43. AEF still sits at 2.48.",
+  "updatedAt": "2026-09-16T00:00:00Z"
+ },
+ "fed2025__Bass": {
+  "pair": "fed2025",
+  "seat": "Bass",
+  "text": "Same Tasmanian swing as Braddon (+8.06 statewide). Outside the reach of the state-swing correction for the same reason -- no Tasmanian state-level federal polling.",
+  "updatedAt": "2026-09-15T12:00:00Z"
+ },
+ "fed2025__Braddon": {
+  "pair": "fed2025",
+  "seat": "Braddon",
+  "text": "ALP won on 39.5 against our 22.2, +17.4, with LNP favoured at 0.93 -- the second-largest primary miss in the corpus. Tasmania swung +8.06 to Labor against the national trend. The state-swing correction CANNOT reach this: Tasmania never has state-level federal polling, and fed2025 has no state-deviation data at all.",
+  "updatedAt": "2026-09-15T12:00:00Z"
+ },
+ "fed2025__Goldstein": {
+  "pair": "fed2025",
+  "seat": "Goldstein",
+  "text": "Zoe Daniel (IND) held it on 34.5 in 2022, recontested and fell to 30.7; Tim Wilson (LNP) took it back on 43.4. A sitting independent defeated while standing again, not a departure.",
+  "updatedAt": "2026-09-15T12:00:00Z"
+ },
+ "nsw2019__Orange": {
+  "pair": "nsw2019",
+  "seat": "Orange",
+  "text": "Given the log-loss floor: we assigned the winner ~0. A 21.7-point Nationals seat that had ALREADY gone to the Shooters at a 2016 by-election, so the previous general election's winner was long gone. The worst single case of the NSW departed-member failure.",
+  "updatedAt": "2026-09-16T00:00:00Z"
+ },
+ "nsw2023__Bega": {
+  "pair": "nsw2023",
+  "seat": "Bega",
+  "text": "Andrew Constance left for a federal tilt. Note this seat ALSO carries the by-election contamination CLAUDE.md records for load_seats()$incumbent. Our derived column asks the right question instead -- was the previous GENERAL election's winner on the ballot -- which is the quantity the model projects forward from.",
+  "updatedAt": "2026-09-16T00:00:00Z"
+ },
+ "nsw2023__Heathcote": {
+  "pair": "nsw2023",
+  "seat": "Heathcote",
+  "text": "NOT a departed-member seat -- Lee Evans stood again, so this one is not explained by the NSW pattern. ALP won on 44.2 against our 36.9; AEF had 43.6 and gave ALP 0.945 against our 0.233. Still unexplained.",
+  "updatedAt": "2026-09-16T00:00:00Z"
+ },
+ "nsw2023__Monaro": {
+  "pair": "nsw2023",
+  "seat": "Monaro",
+  "text": "John Barilaro's seat, held by 11.6 and he was not on the ballot. Part of the clearest pattern in the corpus: across both NSW pairs, a seat held by 5+ points whose previous winner is absent is called WRONG 26.2% of the time (11 of 42) against 1.8% when the member stands again. The effect is biggest in the SAFEST seats, so it is not a marginality story. See docs/reviews/nsw-departed-member-2026-09-15.md.",
+  "updatedAt": "2026-09-16T00:00:00Z"
+ },
+ "nsw2023__Parramatta": {
+  "pair": "nsw2023",
+  "seat": "Parramatta",
+  "text": "Geoff Lee retired; ALP won on 47.0 against our 34.6 while AEF said 41.9. One of eleven safe NSW seats whose previous winner was absent and which we then called wrong. We gave ALP 0.148, AEF 0.718. The departed-member effect is confirmed out of sample on nsw2019 (z=+3.89) and is NSW-specific: pooled over all seven elections it is z=+0.74, nothing. TRIED 16 Sep: sized and tested a major-party same/new conditional slope fix (screened_slopes()/dev_slope.R never had one for ALP/LNP, only minors) -- LNP's fitted 'new' slope is 0.83 vs 'same' 0.92, a real ~9% reduction. Tested base_pred layer on NSW: Parramatta's LNP error improved modestly (-1.25) but the pooled NSW ALP+LNP aggregate got WORSE (+0.066 MAE), so NOT SHIPPED. Parramatta is still wrong. Real fix needs a per-seat variance widening for departed-member seats (item 3 in the NSW variance-fault entry), not a point-estimate slope tweak -- that's designed with Pete, not solo-built.",
+  "updatedAt": "2026-09-16T00:00:00Z"
+ },
+ "nsw2023__Riverstone": {
+  "pair": "nsw2023",
+  "seat": "Riverstone",
+  "text": "Kevin Conolly gone, ALP won on 44.2 against our 35.5; AEF had 44.6, essentially exact. Same departed-member group as Monaro, Parramatta, Bega, South Coast and Wakehurst.",
+  "updatedAt": "2026-09-16T00:00:00Z"
+ },
+ "nsw2023__South-Coast": {
+  "pair": "nsw2023",
+  "seat": "South Coast",
+  "text": "Shelley Hancock retired from a 10.6-point seat and Labor took it; we gave ALP 0.235. One of the eleven safe departed-member seats. Curiously we still beat AEF here on log loss -- they were more wrong -- which is why this seat does not appear in the top-25 losses.",
+  "updatedAt": "2026-09-16T00:00:00Z"
+ },
+ "nsw2023__Wakehurst": {
+  "pair": "nsw2023",
+  "seat": "Wakehurst",
+  "text": "Largest primary miss in the AEF-7: an independent won on 35.9 against our 13.7, +22.2, from no prior vote in the seat. The surge model's HAZARD works on cases like this -- top-decile seats produce a 10-point surge 20.2% of the time against 9.3% elsewhere -- but its recipient set is only IND/OTH/OTH_RIGHT and it names the right class barely half the time.",
+  "updatedAt": "2026-09-15T12:00:00Z"
+ },
+ "qld2024__Mirani": {
+  "pair": "qld2024",
+  "seat": "Mirani",
+  "text": "Stephen Andrew (ONP, held 2017/2020) disendorsed, ran as KAP (OTH_RIGHT) 2024, lost to LNP. Primaries are the interesting part: our predicted LNP/OTH_RIGHT shares are essentially IDENTICAL to AEF's (32.5 vs 32.5), but we gave LNP only 8.8% to win against AEF's 41.6% -- despite LNP actually leading the real primary count. TRACED 16 Sep: the flow rate deciding this (ALP preferences split between LNP and OTH_RIGHT) has only 1 real exclusion-round observation in the whole qld2020 corpus for this exact survivor pair, so the model falls back to an availability-conditioned 'pairwise' rate -- ALP->OTH_RIGHT 71.9%, ALP->LNP 23.3%, renormalised to ~75/25. That's a decisive, thinly-evidenced assumption, not obviously wrong but not obviously right either -- a real gap in preference-flow granularity, not a primary-vote bug. Separately found and fixed a live bug the same night: the minor-to-minor defector discount (Andrew's own case) was leaking into base_pred via a flag-name collision with the already-shipped xgb-feature version -- fixed, doesn't change this seat's picture much (transfer-fixed base_pred is closer to correct but still worse than no discount at all here). Next step: check whether AEF hedges via wider seat-level variance rather than a different flow rate.",
+  "updatedAt": "2026-09-16T00:00:00Z"
+ },
+ "qld2024__South-Brisbane": {
+  "pair": "qld2024",
+  "seat": "South Brisbane",
+  "text": "Our most confident miss of qld2024: ALP won, we gave them 0.025 and favoured GRN at 0.97. The Greens' direction of travel reversed here as it did federally in 2025. TRACED 16 Sep, same shape as Mirani: our ALP primary (25.8) and AEF's (25.2) are essentially identical, both undershooting actual (32.0) by about the same margin -- but our ALP win probability (2.8%) is far below AEF's (16.2%). The deciding flow (LNP preferences splitting between ALP and GRN) has NO real exact-cell measurement in qld2020 -- LNP is never the excluded party in a round where only ALP+GRN survive -- so it falls back to the availability-conditioned pairwise rate: LNP->GRN 63.75, LNP->ALP 25.24, renormalised to ~72/28 GRN. A decisive assumption built on indirect evidence, same mechanism as Mirani. Not yet checked whether this specific rate is actually wrong, just that it's thinly evidenced for this exact contest shape.",
+  "updatedAt": "2026-09-15T12:00:00Z"
+ },
+ "sa2026__Black": {
+  "pair": "sa2026",
+  "seat": "Black",
+  "text": "Our single worst seat here: ALP won and we gave them 0.058 while favouring IND at 0.94. An IND over-prediction, the opposite failure to the ONP seats. TRACED 16 Sep, different mechanism to Mirani/South Brisbane -- this one IS a primary-level miss, not a flows/variance one: our ALP primary (27.6) is 15 points below AEF's (41.0, close to actual 43.0). Cause: David Speirs was the sitting LNP member (50.1% in 2022), disendorsed/defected and recontested as an INDEPENDENT in 2026. candidate_returns() correctly flags him as the same person, same MP (same=TRUE, same_mp=TRUE); the major-defector discount correctly fires and gives his IND base a discounted 18.7 (from a fitted ~0.28-0.37 retention rate). But the IND class's predicted share still comes out at 30.8 against an actual 13.9 -- the discounted base plus the standard 'same' carry-forward slope (0.907 for a returning identity) still overshoots badly. NOT YET EXPLAINED why the discount isn't enough here specifically; needs the same per-example trace CLAUDE.md asks for (walk level_prev/level_now/slope arithmetic for IND at Black) before proposing a fix.",
+  "updatedAt": "2026-09-15T00:00:00Z"
+ },
+ "sa2026__Hammond": {
+  "pair": "sa2026",
+  "seat": "Hammond",
+  "text": "ONP won on 27.4 vs our 23.4; we favoured LNP at 0.81. Third of the ONP trio -- these three are the only statistically real concentration in the AEF-7 (p=0.007 against a 9% base rate).",
+  "updatedAt": "2026-09-15T00:00:00Z"
+ },
+ "sa2026__MacKillop": {
+  "pair": "sa2026",
+  "seat": "MacKillop",
+  "text": "Biggest ONP primary miss in the corpus: 35.3 actual vs 23.8 predicted, +11.5. Rural, Yorke/south-east, lowest Year 12 band. The demographic correction moved it only +0.5. Concentration failure, not a statewide level failure.",
+  "updatedAt": "2026-09-15T00:00:00Z"
+ },
+ "sa2026__Narungga": {
+  "pair": "sa2026",
+  "seat": "Narungga",
+  "text": "ONP 37.5 actual vs 29.6 predicted; we favoured IND at 0.86. One of three ONP seats making sa2026 the worst election in the corpus -- ONP took 4 of its ten worst seats against a 9% base rate, p=0.007, the only statistically real concentration in the AEF-7. Our own preference reconstruction also gets this seat's two-candidate pair in the wrong ORDER (we say LNP by 50.4, official is ONP by 50.16).",
+  "updatedAt": "2026-09-15T12:00:00Z"
+ },
+ "vic2022__Mildura": {
+  "pair": "vic2022",
+  "seat": "Mildura",
+  "text": "A PREFERENCE-FLOW miss, not a primary one. Ali Cupper (IND) held it on 32.7 in 2018, recontested and INCREASED to 33.9 -- she led the primary vote and still lost. Jade Benham (Nat) won from 25.9 on preferences. Our primary call was essentially right; the two-candidate count was not.",
+  "updatedAt": "2026-09-15T12:00:00Z"
+ },
+ "vic2022__Morwell": {
+  "pair": "vic2022",
+  "seat": "Morwell",
+  "text": "The ONLY true departure of the four. Russell Northe (IND) held it on 19.6 and did not recontest; Martin Cameron (Nat) won while Labor led the primaries on 31.4. Measured over 305 comparable cases, a departing sitting non-major keeps 38% of their vote against 101% for one who recontests -- and the model assumes ~100% for both.",
+  "updatedAt": "2026-09-15T12:00:00Z"
+ },
+ "vic2022__Shepparton": {
+  "pair": "vic2022",
+  "seat": "Shepparton",
+  "text": "NOT a departure -- my earlier note here was wrong. Suzanna Sheed (IND) held it on 38.4 in 2018, RECONTESTED and fell to 29.4; Kim O'Keeffe (Nat) won on 32.1 (LNP class 52.6 with the second Nationals candidate). A sitting independent defeated while standing again, so the honour_departed rule does not address this seat.",
+  "updatedAt": "2026-09-15T12:00:00Z"
+ },
+ "wa2025__Pilbara": {
+  "pair": "wa2025",
+  "seat": "Pilbara",
+  "text": "Primary miss runs against us by 8.3 here. wa2025 is our best election despite the lowest hit rate -- its worst seats were close calls, not confident errors.",
+  "updatedAt": "2026-09-15T00:00:00Z"
+ }
+}

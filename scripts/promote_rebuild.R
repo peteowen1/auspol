@@ -153,7 +153,7 @@ if (identical(.flag("AUSPOL_PUBLISH_NSW2027"), "1")) {
   invisible(leader_seat_table("nsw2027", write = TRUE))
   .csf_n <- data.table::fread(file.path(OUT, "census-features.csv"), showProgress = FALSE)
   .n27 <- unique(.csf_n$seat[.csf_n$pair == "nsw2027"])
-  if (length(.n27) != 93L) stop("census-features.csv has ", length(.n27), " nsw2027 seats, not 93 -- rerun scripts/build_census_features.R")
+  if (length(.n27) != 93L) stop("census-features.csv has ", length(.n27), " nsw2027 seats, not 93 -- rerun scripts/build_census_features_vintage.R")
   invisible(withr::with_envvar(c(AUSPOL_DEMO_RESID = "2"), demographic_residual_apply(
     matrix(50, length(.n27), 2, dimnames = list(.n27, c("ALP", "GRN"))), "nsw2027", write_table = TRUE)))
   .nsw_tables <- c("seat-swing-port-nsw2027.csv", "seat-poll-blend-nsw2027.csv", "leader-seat-nsw2027.csv", "demo-resid-nsw2027.csv")
@@ -164,6 +164,14 @@ if (identical(.flag("AUSPOL_PUBLISH_NSW2027"), "1")) {
       stop("council-history.csv has no nsw2027 councillors -- rerun scripts/build_lga_district_overlap.R then scripts/build_council_history.py")
     data.table::fwrite(.chn, file.path(OUT, "council-history-nsw2027.csv"))
     .nsw_tables <- c(.nsw_tables, "council-history-nsw2027.csv")
+  }
+  # AUSPOL_ONP_ORDER=senate_rank: the daily job has no Senate table for nsw2027 (its
+  # shares live in senate-by-district-class.csv), so fit_seats_full.R reads this slice.
+  if (.flag("AUSPOL_ONP_ORDER") %in% c("senate", "senate_rank")) {
+    .osn <- onp_senate_key(.n27, "nsw2027")
+    if (is.null(.osn) || anyNA(.osn)) stop("no nsw2027 Senate One Nation share for: ", paste(utils::head(.n27[is.na(.osn)], 8), collapse = ", "), " -- rerun scripts/build_senate_by_district.R")
+    data.table::fwrite(data.table::data.table(seat = .n27, senate_pct = unname(.osn)), file.path(OUT, "onp-senate-nsw2027.csv"))
+    .nsw_tables <- c(.nsw_tables, "onp-senate-nsw2027.csv")
   }
   for (.f in c("nswec-2023-nsw-firstprefs.csv", "nswec-nsw-transfers.csv")) {
     .src <- file.path(election_data_path(), .f)

@@ -63,7 +63,8 @@ test_that("a deliberately broken input fails: wrong ranking is detected, missing
                                  key = stats::setNames(senate$senate_pct, seats)), "no history flag")
   expect_error(onp_newseat_apply(sh, "qld2020", hist, order = "greens", cv = 0.3), "House|Senate")
   withr::with_envvar(c(AUSPOL_ONP_NEWSEAT_RULE = "yes"), expect_error(onp_newseat_rule(), "must be"))
-  withr::with_envvar(c(AUSPOL_ONP_NEWSEAT_RULE = NA), expect_false(onp_newseat_rule()))
+  withr::with_envvar(c(AUSPOL_ONP_NEWSEAT_RULE = NA), expect_true(onp_newseat_rule()))   # shipped 2026-10-26
+  withr::with_envvar(c(AUSPOL_ONP_NEWSEAT_RULE = "0"), expect_false(onp_newseat_rule()))
   withr::with_envvar(c(AUSPOL_ONP_NEWSEAT_RULE = "1"), expect_true(onp_newseat_rule()))
 })
 
