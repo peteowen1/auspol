@@ -242,7 +242,8 @@ Tools: misses via `scripts/biggest_misses.R` / skill `biggest-misses` (never `fo
 Verbatim in `backlog/journal-2026-10-07-to-10-08.md`. Still OPEN from them:
 - OPEN: NSW 2027 page, blog side: seat pages need an election switch in inthegame-blog's `politics/seat.qmd` (still
   Victoria-only 23 Oct; `politics/nsw.qmd:43` has `seatPage: false`; data on R2 since PR #107). Owned by the `inthegame-blog` session.
-- OPEN (verify): scenario-job straggler: per-step timeout (10 min) + one retry merged to dev 27 Oct (job limit 65), reviewed;
+- VERIFIED 27 Oct (run 40431850192: a job timed out on both install steps, the dpkg-lock cleanup stopped the orphan apt,
+  both retries succeeded, scenarios published; remove this item next sweep). Was: scenario-job straggler, timeout + retry, reviewed;
   first real test is run 40428241119. Same day: CSC7 tolerance 1e-8 -> 0.005 (runner floating point, gap 0.0004, blocked
   the 27 Oct scenarios). The 27 Oct scheduled run started 3.6 h late (23:39 UTC vs cron 20:00); if late starts recur,
   add a backup trigger.
