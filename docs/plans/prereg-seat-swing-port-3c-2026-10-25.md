@@ -226,3 +226,29 @@ touched by this arm; that is the review's fix 1 (`AUSPOL_ONP_ORDER=senate_rank`)
 **Prerequisite before shipping:** the daily CI run reads `output/seat-swing-port-vic2026.csv`, written by
 `scripts/promote_rebuild.R`. Under the arm that table carries `lineup3c`/`w3c` and is refused under any other setting,
 so promote must run with the shipped value set.
+
+## RESULT, mode 2 screen on the 8 movable elections (2026-10-28, quick_arm 1,000 sims, run from `dev` 7299d304)
+
+`quick_arm.R "AUSPOL_SEAT_SWING_PORT_3C=2" --pairs=vic2022,nsw2023,qld2020,qld2024,sa2022,sa2026,wa2021,wa2025`; HD1 confirmed the
+switch applied in all 16 runs. Clause 5: `S3C2` printed for all 8 targets with exactly the dry-run weights (vic2022 0.790,
+nsw2023 0.763, qld2020 0.468, qld2024 0.019, sa2022 0.460, sa2026 0.020, wa2021 0.785, wa2025 0.312).
+
+Seat-winner log loss, lower is better (SE clustered on election):
+
+| scope | seats | baseline | arm | change (SE) |
+|---|---:|---:|---:|---|
+| clause 1, the 8 movable elections | 579 | 0.2186 | 0.2185 | −0.0001 (0.0004): within 1 SE, NOT PASSED |
+| AEF-7 subset of those | 380 | 0.2423 | 0.2426 | +0.0003 (0.0006) |
+| clause 2, affected seats (frac ≥ 0.5) | 31 of 34 | | | mean +0.0077 per seat (worse); ALP+LNP squared share error −73.1 (better) |
+
+Per election (log loss change): sa2026 +0.0024, wa2025 +0.0012, vic2022 +0.0004, nsw2023 +0.0002, sa2022 −0.0002, wa2021
+−0.0008, qld2020 −0.0009, qld2024 −0.0013. Share squared error on the 442 changed cells −83.5 (SE 62.7), not clear.
+
+Clause 2 seats come from each `S3C1` line's "largest" list, which prints the top six, so 3 of the 34 are missing (wa2025's
+7th-8th and one other); scored from the quick_arm cache (`%TEMP%/auspol-quickarm/cache/91cbf27330cf` arm, `c5e66bdf0fca`
+baseline). The targeted log loss is driven by Monaro +0.136, Mildura +0.103, Albany +0.067, Flinders +0.057; South Coast
+−0.127 the other way. Shares improve while winner probabilities slightly worsen.
+
+Not yet run: clause 4 controls (`--pairs=all`), mode 1 and `W=0.5` arms, the live walk (queued 28 Oct as a `port3c` run in
+the live-walk agent's experiment 1). Per the MDE paragraph this is "no measurable effect at this size, not a refusal";
+the decision goes to Pete with the live walk.
