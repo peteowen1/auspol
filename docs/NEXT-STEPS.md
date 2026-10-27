@@ -77,8 +77,6 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
     amendment NOT yet written into the prereg.
   - `docs-public-tone-1025` `ccae7fd`: neutral wording in `plans/product-features.md` and the pollster page text
     (`scripts/page-template.html`); ANCHOR-MODEL weak-spots list annotated and closed. Pete to glance at the tone.
-  - `ci-step-timeout-1026` `345cc7b`: 15-minute timeout + one retry on the scenario jobs' R install steps
-    (YAML parse checked only). Needs review-gate, then a real CI run.
 - OPEN, 26 Oct decisions not yet built: hunt the real primaries for two-candidate-only seat polls (Fowler 2022
   Laidlaw, Pittwater 2023 Freshwater, Cowper and New England 2016) into `hand_keyed_primaries.csv`; if none found,
   try inferring the primary from the two-candidate split (J4 30 Sep is the refused relative). Prereg a shrunk,
@@ -244,7 +242,10 @@ Tools: misses via `scripts/biggest_misses.R` / skill `biggest-misses` (never `fo
 Verbatim in `backlog/journal-2026-10-07-to-10-08.md`. Still OPEN from them:
 - OPEN: NSW 2027 page, blog side: seat pages need an election switch in inthegame-blog's `politics/seat.qmd` (still
   Victoria-only 23 Oct; `politics/nsw.qmd:43` has `seatPage: false`; data on R2 since PR #107). Owned by the `inthegame-blog` session.
-- OPEN: scenario-job straggler: Pete chose (26 Oct) a per-step timeout plus one retry; built on `ci-step-timeout-1026`.
+- OPEN (verify): scenario-job straggler: per-step timeout (10 min) + one retry merged to dev 27 Oct (job limit 65), reviewed;
+  first real test is run 40428241119. Same day: CSC7 tolerance 1e-8 -> 0.005 (runner floating point, gap 0.0004, blocked
+  the 27 Oct scenarios). The 27 Oct scheduled run started 3.6 h late (23:39 UTC vs cron 20:00); if late starts recur,
+  add a backup trigger.
 - OPEN: fed2025 seat polls deserved weight ~0.13 and got 0.55; no pre-election signal found yet. Worst case McMahon,
   Camenzuli (IND) published 29.0, actual 9.8: ONE poll, Compass Polling 8 Apr 2025 (opt-in SMS link, n=1,003, IND 41);
   base_pred 6.0 and xgb 4.9 were both under, so the 29 is the seat-poll step (AUSPOL_SEAT_POLL_IND_MAP). ROOT: the
