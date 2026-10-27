@@ -152,8 +152,8 @@ party-cor off) and the phantom-votes arm REFUSED: all in the journal and DECISIO
   spread fix's compare-and-rerun pattern (scripts/compare_spread_tables.R) could cover it too.
 - OPEN: census table v2 (8b6c12f4, installed in local output/ 27 Oct; backup %TEMP%/census-features.before-2026-10-27.csv)
   reaches the model through the demographic correction (AUSPOL_DEMO_RESID=2, read in the harnesses and live), not
-  the trees directly (v7 reads it but is bypassed; v6 does not). Not in rebuild_forecasts.sh or the release. Rebuild
-  from stage 1 in flight 27 Oct (deciding-runs/20261027-census-rebuild/), then walk + publish. CW11 (every valued row's
+  the trees directly (v7 reads it but is bypassed; v6 does not). Not in rebuild_forecasts.sh or the release. Rebuilt
+  from stage 1 and PUBLISHED 27 Oct 16:30 (DECISIONS); remove this item next sweep. CW11 (every valued row's
   census published before polling day) added 27 Oct, 658df1a2. wa2001/wa2005 stay empty on purpose (Pete 14 Oct).
 
 **State (15 Oct):** 35 scored single-member elections. AEF-7 seat log loss 0.2669 (published 15 Oct 15:33) vs AEF 0.2825;
