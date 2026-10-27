@@ -244,8 +244,8 @@ Verbatim in `backlog/journal-2026-10-07-to-10-08.md`. Still OPEN from them:
 - VERIFIED 27 Oct (run 40431850192: a job timed out on both install steps, the dpkg-lock cleanup stopped the orphan apt,
   both retries succeeded, scenarios published; remove this item next sweep). Was: scenario-job straggler, timeout + retry, reviewed;
   first real test is run 40428241119. Same day: CSC7 tolerance 1e-8 -> 0.005 (runner floating point, gap 0.0004, blocked
-  the 27 Oct scenarios). The 27 Oct scheduled run started 3.6 h late (23:39 UTC vs cron 20:00); if late starts recur,
-  add a backup trigger.
+  the 27 Oct scenarios). Scheduled runs started 2.0-6.8 h late (median 2.9, 59 of 60, 28 Aug-26 Oct) at cron 20:00;
+  moved to 17:37 UTC 27 Oct (274c499e). CHECK 28 Oct: start time of the first 17:37 run (expect before ~21:00 UTC).
 - OPEN: fed2025 seat polls deserved weight ~0.13 and got 0.55; no pre-election signal found yet. Worst case McMahon,
   Camenzuli (IND) published 29.0, actual 9.8: ONE poll, Compass Polling 8 Apr 2025 (opt-in SMS link, n=1,003, IND 41);
   base_pred 6.0 and xgb 4.9 were both under, so the 29 is the seat-poll step (AUSPOL_SEAT_POLL_IND_MAP). ROOT: the
