@@ -32,8 +32,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 - Builds waiting for R (26 Oct, each on a LOCAL branch, not pushed). 27 Oct evening: `ind-overcall-1025` and
   `mp-slope-shrink-1025` merged up to dev and documented (stale .Rd fixed on ind-overcall; mp-slope's test regex fixed,
-  its 62 tests pass); both `check_like_ci.R` runs were reaped at low memory (paged pool 3.4 GB again, 5.3 GB free).
-  NEXT after a reboot: rerun `check_like_ci.R` in each worktree ONE AT A TIME, then level-conserve dry run 1.
+  its 62 tests pass); both `check_like_ci.R` runs were reaped at low memory: they ran IN PARALLEL from ~6-7 GB free
+  (paged pool 3.4 GB, not the 10 GB leak of 22 Oct; 5.3 GB free afterwards). NEXT: rerun `check_like_ci.R` in each
+  worktree ONE AT A TIME (reboot first if Available MBytes < 8,000), then level-conserve dry run 1.
   Then one quick_arm screen at a time:
   - `ind-overcall-1025` `7252acb`: `AUSPOL_IND_GAP_RESTAND` (off). As built (yes/no: gap kept if any earlier
     candidate of the class re-stands) it reaches only Pascoe Vale of the 5 targets. Pete chose the SHARE version
