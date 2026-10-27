@@ -8,7 +8,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
-- **28 Oct, IN FLIGHT: port 3C ship (Pete: finish checks, then ship).** Mode 2 on 8 movable elections -0.0001 (SE
+- **28 Oct 10:26, IN FLIGHT: 3C SHIPPED in code (be44e2d5 on dev; deciding run passed, DECISIONS) and the stage-6
+  rebuild + publish is running** (log `scratchpad/rebuild-3c.log`). ORDER: the publish puts a port table with `lineup3c`
+  on shipped-models, which main's daily run (3C off) refuses, and main with 3C on refuses the old table: so open the
+  dev->main PR right after the publish and merge it before the 17:37 UTC cron, then read that run's conclusion.
+- **28 Oct, earlier: port 3C ship (Pete: finish checks, then ship).** Mode 2 on 8 movable elections -0.0001 (SE
   0.0004), not passed; live walk moves Bendigo West to ALP 0.36 / LNP 0.19 / ONP 0.43 (market 0.44 / 0.12 / 0.41). Pete
   overrode clause 1 (prereg `plans/prereg-seat-swing-port-3c-2026-10-25.md`, RESULT + decision sections). Remaining:
   `--pairs=all` control screen (launched 28 Oct, log `scratchpad/port3c-all.log`), then the 20k deciding run
