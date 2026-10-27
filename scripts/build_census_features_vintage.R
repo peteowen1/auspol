@@ -211,6 +211,16 @@ pre_census_violations <- function(x, polling_day, first_release) {
   has <- Reduce(`|`, lapply(FEATS, function(f) is.finite(x[[f]][rows])), FALSE)
   list(early = early, bad = unique(x$pair[rows][has]))
 }
+# CW11: every row carrying any census value must name a census year that was PUBLISHED
+# before its election's polling day. Independent of the LOOKAHEAD note text: it reads
+# only vintage, the release dates and the polling dates, so a row mislabelled or missed
+# by the blanking cannot pass. An unknown vintage or polling day on a valued row fails.
+lookahead_violations <- function(x, polling_day, release) {
+  has <- Reduce(`|`, lapply(FEATS, function(f) is.finite(x[[f]])), rep(FALSE, nrow(x)))
+  rel <- as.Date(unname(release[as.character(x$vintage)]))
+  pd <- as.Date(unname(polling_day[as.character(x$pair)]))
+  x[has & (is.na(rel) | is.na(pd) | !(rel < pd))]
+}
 # CW9: cell-by-cell difference between two census-features tables, keyed on (pair, seat key).
 census_diff <- function(new, old) {
   cols <- c("seat", "vintage", "exact", FEATS, "vintage_note")
@@ -541,6 +551,11 @@ cat(sprintf("CW10 pairs polled before the first census release on disk (%s): %s 
             if (length(v10$bad)) paste(v10$bad, collapse = ", ") else "none"))
 if (length(v10$bad)) stop("CW10! a pair polled before any census was published carries census values: ",
                           paste(v10$bad, collapse = ", "))
+v11 <- lookahead_violations(R, ED, CENSUS_RELEASE)
+cat(sprintf("CW11 rows with census values: %d | of those, census not published before polling day (or year/date unknown): %d (expect 0)\n",
+            sum(Reduce(`|`, lapply(FEATS, function(f) is.finite(R[[f]])), rep(FALSE, nrow(R)))), nrow(v11)))
+if (nrow(v11)) { print(v11[, .(pair, seat, vintage, vintage_note)], nrows = 50)
+  stop("CW11! census values from a census published after polling day") }
 
 # CW9: what this build changes against the table it replaces (or --compare).
 if (file.exists(COMPARE)) {
