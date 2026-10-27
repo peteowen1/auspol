@@ -18,7 +18,8 @@ screened_slopes(
   major_departed = NULL,
   major_present = NULL,
   with_flags = FALSE,
-  successor_rate = NULL
+  successor_rate = NULL,
+  gap_restand = FALSE
 )
 }
 \arguments{
@@ -97,6 +98,11 @@ this rate instead of \code{departed_rate} WHEN the departed decay fires, and
 only those seats are flagged in attribute \code{departed}, so a hold applies to
 them alone. From \code{\link[=departed_successor_rates]{departed_successor_rates()}};
 \verb{docs/plans/prereg-departed-successor-flag-2026-10-07.md}.}
+
+\item{gap_restand}{Logical, default \code{FALSE} (byte-identical). \code{TRUE}
+(\code{AUSPOL_IND_GAP_RESTAND=1}) gives the IND class slope 0 in a seat where
+no earlier IND candidate re-stands (\code{ind_gap_drop()}, R/ind_gap_restand.R), unless the screen
+permits the newcomer or the seat is named in \code{successor_rate}.}
 }
 \value{
 Numeric vector the length of \code{seats}.
