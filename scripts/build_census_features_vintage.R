@@ -41,14 +41,11 @@
 #                (CHECK CW9; default the file this build replaces). Printed, never read
 #                into the build.
 #
-# SEAT UNIVERSE per pair: its contested seats (candidacies.csv), plus, for the 25
-# pairs the retired builder covered (the REAG_FOR pairs and the federal pairs), the
-# PREVIOUS election's seats filed under the current pair. The harnesses project each
-# seat's previous primaries forward, so a division abolished at a redistribution still
-# needs a row. That is the retired builder's universe, reproduced exactly; the other
-# 12 pairs (added 2026-10-13) never had predecessor rows, and CW3b prints what they
-# lack. Extending it changes which elections the demographic corrections apply to, so
-# it is not done here.
+# SEAT UNIVERSE per pair: its contested seats (candidacies.csv), plus the PREVIOUS
+# election's seats filed under the current pair. The harnesses project each seat's
+# previous primaries forward, so a division abolished at a redistribution still needs
+# a row. Until 2026-10-27 only the retired builder's 25 pairs got previous-election
+# rows; Pete chose (27 Oct) to extend it to all pairs. CW3b now prints nothing to add.
 #
 # SOURCE ORDER per (pair, seat):
 #   A  the preferred census's own geography, when the pair's contested seat set
@@ -144,7 +141,9 @@ SAME_BOUNDS <- c(vic2026 = "vic2022", nsw2027 = "nsw2023")
 # the ABS correspondences: Queensland's SED boundaries do not move 2021 -> 2025, so the
 # 2021 file IS qld2017's 93 districts; South Australia's 2021 file is sa2022's, not
 # sa2018's. Adding qld2017 here would move its census inputs: Pete's call.)
-REAG_FOR <- c(wa2021 = "2021", vic2022 = "2022", sa2022 = "2022", sa2026 = "2025",
+# ADDED 2026-10-27 (Pete: GO): qld2017 = "2021", in REAG_EXACT, for that reason.
+REAG_FOR <- c(qld2017 = "2021",
+              wa2021 = "2021", vic2022 = "2022", sa2022 = "2022", sa2026 = "2025",
               nsw2023 = "2022", qld2024 = "2024", wa2025 = "2025",
               vic2018 = "2021", vic2014 = "2021", nsw2019 = "2021",
               qld2020 = "2021", wa2017 = "2021", wa2013 = "2021",
@@ -153,7 +152,7 @@ REAG_FOR <- c(wa2021 = "2021", vic2022 = "2022", sa2022 = "2022", sa2026 = "2025
               vic2026 = "2022",
               # NSW 2027 keeps the 2021 redistribution's boundaries.
               nsw2027 = "2022")
-REAG_EXACT <- c("wa2021", "vic2022", "sa2022", "nsw2023", "qld2024", "wa2025", "sa2026",
+REAG_EXACT <- c("qld2017", "wa2021", "vic2022", "sa2022", "nsw2023", "qld2024", "wa2025", "sa2026",
                 "vic2026", "nsw2027")
 
 .sum_cols <- function(d, cols) {
@@ -401,7 +400,9 @@ prev_of <- vapply(PAIRS, function(p) {
   ok <- .el_reg == sub("[0-9]{4}$", "", p) & is.finite(.el_yr) & .el_yr < as.integer(sub("^[a-z]+", "", p))
   if (!any(ok)) NA_character_ else .el[ok][which.max(.el_yr[ok])]
 }, character(1))
-PRED_PAIRS <- c(names(REAG_FOR), grep("^fed", PAIRS, value = TRUE))
+# Every pair since 2026-10-27 (Pete: GO): the 12 pairs added 2026-10-13 now get their
+# previous election's seats too, as the harnesses need for abolished divisions.
+PRED_PAIRS <- PAIRS
 prev_cells_for <- function(pp) rbindlist(lapply(pp[!is.na(prev_of[pp])], function(p)
   data.table(pair = p, seat = CAND$seat[CAND$election == prev_of[[p]]])))
 cells <- unique(rbindlist(list(cand_cells, prev_cells_for(PRED_PAIRS))))
@@ -409,7 +410,7 @@ cells[, skey := seat_key(seat)]
 cells <- cells[!duplicated(cells[, .(pair, skey)])]
 if (!all(PAIRS %in% cells$pair)) stop("CW3! no contested seats in candidacies.csv for: ",
                                       paste(setdiff(PAIRS, cells$pair), collapse = ", "))
-cat(sprintf("CW3  %d cells over %d pairs: contested seats, plus the previous election's seats for the %d pairs the retired builder covered\n",
+cat(sprintf("CW3  %d cells over %d pairs: contested seats, plus the previous election's seats for %d pairs\n",
             nrow(cells), uniqueN(cells$pair), length(PRED_PAIRS)))
 # CW3b: what the other pairs would gain from the same rule (rows NOT written).
 .other <- setdiff(PAIRS, PRED_PAIRS)
