@@ -90,7 +90,7 @@ mp_fixture_dir <- function() {
 mp_block <- function(file) {
   l <- readLines(file, warn = FALSE)
   s <- grep("^\\s*\\.MP_SLOPE <- NULL", l)[1]
-  e <- s + grep("^\\s*cat\\(sprintf\\(\"B[A-Z0-9]+\\s+MP tier|^# FITTED, as every harness does", l[-seq_len(s)])[1] - 1L
+  e <- s + grep("^\\s*cat\\(sprintf\\(\"B[A-Za-z0-9]+\\s+MP tier|^# FITTED, as every harness does", l[-seq_len(s)])[1] - 1L
   stopifnot(is.finite(s), is.finite(e), e > s)
   l[s:e]
 }
