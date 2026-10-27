@@ -11,8 +11,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - Status 27 Oct evening (detail in DECISIONS.md): census v2 published, local = published (13.9 One Nation) after the
   43 bad vic2026 salience rows were removed (backup `%TEMP%/salience-v6.before-vic2026-removal.csv`; their builder
   now stops with BVS0!), PRs #141/#143 merged, departed-origin closed. Rebooted 26 Oct 12:49, so R work is unblocked.
-- OPEN, merge (reviewed, not on dev): F16 `AUSPOL_ROW_SHIFT_EXACT` (6306855; add the M~100-with-others guard at
-  merge), F18 `AUSPOL_NOM_ZERO_PRE_XGB` (c4b2cbd). (work-5c merged 26 Oct.) Dead-party
+- OPEN, screen: F16 `AUSPOL_ROW_SHIFT_EXACT` and F18 `AUSPOL_NOM_ZERO_PRE_XGB` MERGED 27 Oct (PR #144, both off,
+  guard added at merge); each needs its prereg screen. Dead-party
   `AUSPOL_LEVEL_DEAD_PARTY` (337f4cd) PARKED: its screen says not worth it; do not merge.
 - OPEN, screens not yet run (one at a time, >= 6.5 GB free, so after the reboot that clears the kernel pool leak):
   level-conserve FIRST (`prereg-level-conserve-2026-10-25.md`; the majors' +0.6-0.8 tree overshoot over ~30
@@ -312,8 +312,8 @@ plan, **Pete to send**; To Do reminder set).
 - **Time-forward fits still use `min_n` cliffs**: `R/split_slope.R:395,416` sit in `fit_conditional_slopes()`,
   which the shipped config never calls (`AUSPOL_FIT_SLOPES=0`). Live: `fit_major_departed_slope()` falls back to 1.0
   below 40 seats (fed2007, fed2010, sa2010, wa2001, wa2005, wa2008). `AUSPOL_SLOPE_SHRINK` shrinks toward 1, not the
-  pooled slope, and was refused 29 Sep (+0.0056, SE 0.0035). Pete to choose: screen it as is, or a tau^2 arm toward
-  the pooled slope. Prereg on `mp-slope-shrink-1025`. The `SHIP_SAME/NEW`
+  pooled slope, and was refused 29 Sep (+0.0056, SE 0.0035). DECIDED 27 Oct (Pete): build a tau^2 arm toward
+  the pooled slope; NOT built yet. Prereg on `mp-slope-shrink-1025`. The `SHIP_SAME/NEW`
   leak is DONE: `AUSPOL_SHIP_TIME_FORWARD=1` (v51) makes the fallback time-forward; the constants are opt-out only.
 - **Seat context phase 2**: margin BUILT 28 Sep as arm `AUSPOL_SEAT_CONTEXT_MARGIN` (published "0"; `5e50f07`), no
   recorded verdict; previous swing not filled (r 0.875 vs the seat file); first-term fill refused (Oct 20 prereg).
@@ -373,7 +373,6 @@ Still open:
 
 ## Awaiting Pete (26 Oct; the earlier four were answered, DECISIONS 2026-10-26)
 
-- `AUSPOL_SLOPE_SHRINK`: screen as is, or a tau^2 arm toward the pooled slope (item under "Model, open").
 - Departed-rate refit: fallback, fit rows, decision rule (`plans/prereg-departed-rate-screen-2026-10-25.md` on
   `prereg-offbranches-1025`).
 - Census: qld2017 from the 2021 reaggregation; previous-election rows for the 12 newer pairs.
