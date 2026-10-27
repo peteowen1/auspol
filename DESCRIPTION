@@ -18,7 +18,8 @@ Imports:
     Rcpp,
     stats,
     utils,
-    xgboost
+    xgboost,
+    xml2
 LinkingTo:
     Rcpp
 Suggests:
