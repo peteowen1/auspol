@@ -96,7 +96,9 @@ if (length(skip)) cat(sprintf("VO2  left out of the value table (Liberal and Nat
 
 ok <- px[!key %in% skip]
 best <- ok[, .(best_price = max(price), book = source[which.max(price)], nbook = uniqueN(source),
-               mkt_p = mean(prob), our_p = our_p[1], cls = cls[1], seat = seat[1]), by = .(key, selection)]
+               mkt_p = mean(prob), our_p = our_p[which.max(price)], cls = cls[1], seat = seat[1]), by = .(key, selection)]
+# our_p is taken from the book with the best price: our class mapping can differ by book ("Other" includes IND
+# only where that book names no Independent), and the edge is for the price actually on offer.
 best[, edge := our_p * best_price - 1]
 best[, seat := ours$seat[match(key, ours$key)]]
 setorder(best, -edge)
@@ -105,7 +107,10 @@ fwrite(best[, .(seat, selection, class = cls, best_price, book, nbook, mkt_p = r
                 our_p = round(our_p, 4), edge = round(edge, 4))], file.path(OUT, "value-odds.csv"))
 
 # ---- favourites, both sides, by class ----
-mk <- px[, .(m = mean(prob)), by = .(key, source, cls)][, .(m = sum(m) / uniqueN(source)), by = .(key, cls)]
+# a class a book prices as several selections (Liberal + Nationals) is their sum; a class a book does not list
+# counts as 0 there, so divide by the books pricing the seat, not the books listing the class
+px[, nb_seat := uniqueN(source), by = key]
+mk <- px[, .(m = sum(prob)), by = .(key, source, cls, nb_seat)][, .(m = sum(m) / nb_seat[1]), by = .(key, cls)]
 fav_m <- mk[, .SD[which.max(m)], by = key][, .(key, mf = cls)]
 fav_o <- oc[key %in% mk$key][, .SD[which.max(p)], by = key][, .(key, of = c)]
 fav <- merge(fav_m, fav_o, by = "key")
@@ -135,7 +140,7 @@ for (s in fj$seats) {
     v22 = lapply(seq_len(nrow(vk)), function(i) list(vk$party[i], round(vk$actual[i], 1), vk$candidate[i])),
     port = round(port$fed_swing[match(k, port_keys)], 2),
     onp = round(onp$senate_pct[match(k, onp_keys)], 2),
-    px = lapply(seq_len(nrow(sx)), function(i) list(sx$source[i], sx$selection[i], sx$cls[i], sx$price[i], round(sx$prob[i], 4))))
+    px = lapply(seq_len(nrow(sx)), function(i) list(sx$source[i], sx$selection[i], sx$cls[i], sx$price[i], round(sx$prob[i], 4), round(sx$our_p[i], 4))))
 }
 no22 <- names(seats)[vapply(seats, function(x) !length(x$v22), TRUE)]
 if (length(no22)) cat(sprintf("VO2  no 2022 result row for: %s\n", paste(no22, collapse = ", ")))

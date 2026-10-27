@@ -142,7 +142,7 @@ section > p, .verdict p{max-width:80ch}
 <section>
   <h2>Which odds look like value</h2>
   <p>Click a seat to see both sides' numbers for every candidate, every book's price, the 2022 result, and for the contested seats what would settle who is right. The review behind those notes is <code>docs/reviews/contested-seats-vic2026-2026-10-28.md</code>.</p>
-  <p>Edge is what $1 returns on average if our probability is right: our probability × best price − 1. +0.50 means 50c profit per dollar. Every price is the best available across the three books. The grade says whether we know of a reason our number is wrong there.</p>
+  <p>Edge is what $1 returns on average if our probability is right: our probability × best price − 1. +0.50 means 50c profit per dollar. Every price is the best available across the three books for that wording of the outcome (books word some outcomes differently, such as "Other" and "Any Other", so those appear as separate rows). The grade says whether we know of a reason our number is wrong there.</p>
   <div class="legend">
     <span><span class="grade ok">Clean</span> no known problem</span>
     <span><span class="grade warn">Contested</span> plausible reason the bookies are closer</span>
@@ -248,13 +248,14 @@ function showSeat(key){
   const v22 = s.v22.filter(x => x[1] >= 1).map(x => `<tr><td><span class="dot" style="background:var(${colOf(x[0])})"></span>${PNAME[x[0]]||x[0]}</td><td>${esc(x[2])}</td><td class="n">${x[1].toFixed(1)}%</td></tr>`).join("");
   let px = "";
   if (s.px.length) {
-    const sels = {}; for (const [src,sel,c,price,prob] of s.px) { (sels[sel] ||= {c, b:{}}).b[src] = [price,prob]; }
+    const sels = {}; for (const [src,sel,c,price,prob,op] of s.px) { (sels[sel] ||= {c, b:{}}).b[src] = [price,prob,op]; }
     const order = Object.entries(sels).sort((a,b) => Math.min(...Object.values(a[1].b).map(v=>v[0])) - Math.min(...Object.values(b[1].b).map(v=>v[0])));
     px = order.map(([sel,o]) => {
       const cell = src => o.b[src] ? o.b[src][0].toFixed(2) : "–";
       const mk = Object.values(o.b).reduce((a,v)=>a+v[1],0)/Object.values(o.b).length;
       const best = Math.max(...Object.values(o.b).map(v=>v[0]));
-      const ours = o.c==="OTHER" ? (ourCls.OTHER||0) + (Object.keys(sels).some(k=>sels[k].c==="IND") ? 0 : (ourCls.IND||0)) : (ourCls[o.c]||0);
+      // our probability for this selection as the builder matched it, taken from the book with the best price
+      const ours = Object.values(o.b).reduce((a,v) => v[0] > a[0] ? v : a)[2] ?? 0;
       const e = ours*best-1;
       return `<tr><td><span class="dot" style="background:var(${colOf(o.c)})"></span>${esc(sel)}</td><td class="n">${cell("sportsbet")}</td><td class="n">${cell("tab")}</td><td class="n">${cell("betfair")}</td><td class="n">${pct(mk)}</td><td class="n">${pct(ours)}</td><td class="n" style="color:var(${e>0?"--ok":"--muted"})">${e>0?"+":""}${e.toFixed(2)}</td></tr>`;
     }).join("");
