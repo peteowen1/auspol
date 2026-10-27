@@ -159,7 +159,7 @@ seat_poll_weights_joint <- function(target_election) {
       n_tpp <- n_tpp + 1L
     }
   }
-  shares <- 100 * shares / rowSums(shares)
+  shares <- row_shift_exact(before, shares, target_election, "seat-poll blend (mode 3)")   # audit F16 (RSX1)
   cat(sprintf("SPB3 %s: joint weights w_primary %.3f (raw %.3f, se %.3f), w_twoparty %.3f (raw %.3f, se %.3f); %d cells in %d earlier elections; %d primary cells, %d two-party seats applied; mean |change| %.2f\n",
               target_election, w$w1, w$b[1], w$se[1], w$w2, w$b[2], w$se[2], w$n, w$k,
               nrow(sp), n_tpp, mean(abs(shares - before))))

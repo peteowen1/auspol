@@ -264,6 +264,10 @@ CLASSIFY <- list(
   AUSPOL_DEMO_RESID_FULL = paste(
     "ARM (0), UNIVERSAL via R/: read inside R/demographic_residual.R (the demographic correction every harness and",
     "fit_seats_full.R reach). plans/prereg-demo-resid-full-2026-10-19.md"),
+  AUSPOL_ROW_SHIFT_EXACT = paste(
+    "ARM (0), UNIVERSAL via R/: read by row_shift_exact_on() in R/row_shift_exact.R, called from blend_salience_shares()",
+    "(R/salience_surge.R) and the three seat-poll blend modes (R/seat_poll_blend.R, R/seat_poll_joint.R), which every",
+    "harness and fit_seats_full.R reach. plans/prereg-row-shift-exact-2026-10-25.md"),
   AUSPOL_SURGE_H_TF = paste(
     "SHIPPED 2026-10-18 as a leak fix, TRAINING-ONLY by design: read in scripts/fit_xgb_primary_v6.R, which builds the xgb",
     "training features (stage 3). Harnesses and fit_seats_full.R were already time-forward."),
@@ -785,6 +789,10 @@ CLASSIFY <- list(
     "SHIPPED 2026-10-04 ('late', Pete overriding the R2 refusal). Read in R/nomination_zero.R and named by all six harnesses;",
     "per published_flags.R, fit_seats_full.R already zeroes after the last step that can write a share back, so the switch does",
     "not apply to it."),
+  AUSPOL_NOM_ZERO_PRE_XGB = paste(
+    "ARM (audit F18, plans/prereg-nom-zero-pre-xgb-2026-10-25.md), LIVE-ONLY by design: fit_seats_full.R zeroes non-standing classes",
+    "before xgb_primary_predict_live() as well as after it. The harnesses need no switch: their stage-1 base (what the trees train on)",
+    "already carries the zero, and their backtest override substitutes cached predictions. A no-op until AUSPOL_NOM_LIVE=1."),
   AUSPOL_OTHERS_SCALE = paste(
     "ARM, REFUSED 2026-09-28 (plans/prereg-others-bucket-size-2026-09-27.md). Backtest path only (R/forecast_mode.R, R/others_bucket.R);",
     "published_flags.R says the live script is deliberately not wired because it did not pass."),

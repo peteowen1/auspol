@@ -4,7 +4,14 @@
 \alias{zero_unnominated_live}
 \title{Zero non-standing parties in the live forecast, or say why not}
 \usage{
-zero_unnominated_live(shares, flows, label = "vic2026", prior = "vic2022", ...)
+zero_unnominated_live(
+  shares,
+  flows,
+  label = "vic2026",
+  prior = "vic2022",
+  code = "NZ1",
+  ...
+)
 }
 \arguments{
 \item{shares}{Seat-by-class matrix of primaries, with rownames.}
@@ -14,6 +21,8 @@ zero_unnominated_live(shares, flows, label = "vic2026", prior = "vic2022", ...)
 \item{label}{Election label (also the corpus label).}
 
 \item{prior}{The previous election's label, for the per-class seat counts.}
+
+\item{code}{Log code for \code{\link[=zero_unnominated]{zero_unnominated()}}'s summary line.}
 
 \item{...}{passed on to \code{live_nominations()}.}
 }

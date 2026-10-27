@@ -1,3 +1,8 @@
+# auspol 0.4.110
+
+- **`AUSPOL_ROW_SHIFT_EXACT`** (audit F16, off): the salience and seat-poll blends can keep the cells they moved exact and scale only the others, instead of rescaling the whole row. Rows where the moved cells reach ~100 beside unmoved cells, or that have an NA cell, fall back to the rescale (RSX1).
+- **`AUSPOL_NOM_ZERO_PRE_XGB`** (audit F18, off): zero the classes with no standing candidate before the live trees as well as after; stops on any failure while on.
+
 # auspol 0.4.109
 
 - **Census table v2.** `scripts/build_census_features.R` retired; `build_census_features_vintage.R` builds from raw files, puts qld2017 on the 2021 reaggregation, adds previous-election rows for every pair, and stops (CW11) on any census published after polling day. Rebuilt and published 27 Oct: pooled seat log loss 0.3245 -> 0.3241, AEF-7 0.2643 -> 0.2638.

@@ -92,3 +92,8 @@ unacceptable pattern this prereg named in advance, even though more cells move t
 Part 2, the xgb feature: the rule is "run only if part 1 passes or comes within 1 SE", and part 1 is within 1 SE, so
 by the letter part 2 is eligible. It needs an isolated stage-4 rebuild and was not run. Whether to spend one on a
 part 1 that leans worse is Pete's call.
+
+## DECISION (2026-10-27; appended, nothing above edited)
+
+Pete agreed with Claude's recommendation: part 2 is not run. Part 1 leaned worse (+1.33, SE 2.56), so a stage-4
+rebuild to test the same mechanism in the trees is not worth spending. `AUSPOL_DEPARTED_ORIGIN` stays off. Closed.

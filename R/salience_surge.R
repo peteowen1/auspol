@@ -419,6 +419,7 @@ blend_salience_shares <- function(shares, hz, surge_mu, expected = FALSE) {
   }
   sn <- rownames(shares)
   moved <- 0L
+  before <- shares
   for (pp in unique(hz$seat_party_hazard$party)) {
     if (!pp %in% colnames(shares)) next
     if (expected && !is.null(hz$seat_party_expected)) {
@@ -437,7 +438,8 @@ blend_salience_shares <- function(shares, hz, surge_mu, expected = FALSE) {
       moved <- moved + sum(w > 0.001)
     }
   }
-  shares <- 100 * shares / rowSums(shares)
+  # Whole-row rescale by default; AUSPOL_ROW_SHIFT_EXACT=1 keeps the moved cells exact (audit F16, RSX1).
+  shares <- row_shift_exact(before, shares, step = "salience blend")
   attr(shares, "cells") <- as.integer(moved)
   shares
 }

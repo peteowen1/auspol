@@ -1529,6 +1529,17 @@ if (!identical(level_conserve_mode(), "0")) {
 # run, so a forecast asked to conserve the level is never published without it. Off, the call returns at once.
 shares <- level_conserve_apply(shares, .lc_level, TGT, stage = "base", target = .lc_target,
                                held = if (.departed_hold) HELD else NULL)
+# AUSPOL_NOM_ZERO_PRE_XGB (default "0"; audit F18, plans/prereg-nom-zero-pre-xgb-2026-10-25.md): the trees were
+# trained on a base_pred that already had non-standing classes zeroed and their share sent by flows (stage 1's
+# harness sharedetail is written after the harnesses' zero). "1" gives the live base_margin the same zeros, with
+# the same function and flow matrix as the post-xgb call below, which stays as the final guard (the trees write a
+# prediction back into every cell). A no-op until AUSPOL_NOM_LIVE=1 opens the list. Logged NZP1 (NZP2 is its
+# zeroing line). NOT wrapped in tryCatch/.try(): with the switch on (or set to a bad value) ANY failure STOPS the
+# run, whatever AUSPOL_NOM_LIVE says, so a forecast asked for the pre-xgb zero is never published without it.
+# Off ("0"), the call returns before anything that can fail.
+.nzp_before <- shares
+shares <- zero_unnominated_live_pre_xgb(shares, fm, TGT, prior = PREV)
+.nzp_cells <- nomination_zeroed_cells(.nzp_before, shares)
 shares_x <- .try("xgb_live", xgb_primary_predict_live(shares, .mat22_xgb, a22, .xgb_level, .returns,
                                                         level_split = .level_split_xgb,
                                                         own_prev = .own_prev_xgb, region = REGION,
@@ -1622,6 +1633,8 @@ shares <- tryCatch(zero_unnominated_live(shares, fm, TGT, prior = PREV), error =
   .nz_before
 })
 .nz_cells <- nomination_zeroed_cells(.nz_before, shares)
+# Cells zeroed before the trees must be 0 at the final write too (empty when AUSPOL_NOM_ZERO_PRE_XGB=0).
+.nz_cells <- unique(rbind(.nz_cells, .nzp_cells))
 # AUSPOL_LEVEL_CONSERVE "final"/"both": after the nomination zero (a 0 stays 0). See the base call above.
 # Not wrapped either: with the switch on, a failure stops the run.
 shares <- level_conserve_apply(shares, .lc_level, TGT, stage = "final", target = .lc_target,

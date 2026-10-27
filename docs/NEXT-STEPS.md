@@ -8,35 +8,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
-- OPEN, 26 Oct morning state (replaces the 25 Oct evening block; results in DECISIONS.md and each prereg):
-  1. OPEN, Pete: local runs and the published Victorian forecast differ by ~7 One Nation seats (expected 21.1 local
-     vs 13.9 published, 26 Oct). Isolated: ~5.4 of it is the vic2026 salience corpus (`output/salience-v6.csv`; local
-     run with it moved aside: 15.7), which CI does not have (XG5! both lines); the other ~1.8 is the local poll clone,
-     13 days stale (`external/aus-polling-analyser` last commit 13 Oct). The corpus is the 18 Oct pre-campaign fetch
-     (item below: `jump` not comparable with the backtests), so the published forecast is the trustworthy one now.
-     Pete (26 Oct): ship only if it is right and improves performance. CHECKED 27 Oct, NOT SHIPPED, both fail:
-     (a) not right: vic2026 has 43 rows in `salience-v6.csv` (other elections 31-717, median jump 0); its median jump
-     is 12.5 (= one week at Google's 100 over 8 weeks, a low-volume spike; NT shows the same 12.5 cap); 27 of 43 rows
-     are One Nation unknowns with no previous vote, which the hazard reads as emergence, then the blend pulls each
-     toward 34.28 by a WIN probability (Mornington 19.8 -> 26.5, Richmond 6.9 -> 13.6; seat-average ONP 21.5 -> 22.5,
-     above its poll level). (b) no gain on history (quick_arm, 1k sims, all 35, `deciding-runs/20261026-salience-screen/`):
-     blend off 0.3069 -> 0.3064 (SE 0.0005); whole surge model off 0.3069 -> 0.3069 (SE 0.0023), AEF-7 0.2642 ->
-     0.2565 (SE 0.0050); off helps 12 elections incl. sa2026 -0.013 and vic2022 -0.024, hurts 6 (qld2017 +0.044,
-     nsw2019 +0.028, vic2014 +0.027). 27 Oct: root cause and gap closed locally. The 43 rows came from the retired
-     `scripts/build_vic2026_salience_corpus.R` (now stops with BVS0!), which wrote raw search LEVEL as `jump`, unscaled
-     (~1000x the backtests' jump: their median 0, 90th pct ~0.01). Removed from local `output/salience-v6.csv` (backup
-     `%TEMP%/salience-v6.before-vic2026-removal.csv`), so local runs now match CI's no-corpus state; poll clone pulled
-     to 26 Oct (145cd06). The comparable rows cannot be built yet: in vic2022's cache the Premier's 8-week rise is
-     negative at 28+ days out and positive (72 of 72 links) from 25 days out, so vic2026 links from ~3 Nov. Even then a
-     snapshot at lead L is a different statistic from the polling-day jump the hazard trained on; the comparable
-     design trains the hazard on jump-at-lead-L, computable from the cached backtest series (they run to poll-1).
-     Prereg for surge-v2 OFF is a separate question. DECIDED (Pete, 27 Oct: "go" on Claude's recommendation): no
-     lead-matched retrain; wait for the final snapshot (25-27 Nov), which measures what the hazard trained on.
-     (Rebooted 26 Oct 12:49; the R checks below are unblocked.)
-  2. Departed-origin part 2 (the xgb feature, a stage-4 rebuild): eligible by the prereg's letter because part 1 was
-     within 1 SE, but part 1 leaned worse (+1.33, SE 2.56). Claude recommends not spending the rebuild.
-  3. `dev` -> `main` PR (172 files ahead of main): review what landed since the last pre-PR review (38d96a5,
-     01e765d and the 25 Oct merges), full `check_like_ci.R`, then open.
+- Status 27 Oct evening (detail in DECISIONS.md): census v2 published, local = published (13.9 One Nation) after the
+  43 bad vic2026 salience rows were removed (backup `%TEMP%/salience-v6.before-vic2026-removal.csv`; their builder
+  now stops with BVS0!), PRs #141/#143 merged, departed-origin closed. Rebooted 26 Oct 12:49, so R work is unblocked.
 - OPEN, merge (reviewed, not on dev): F16 `AUSPOL_ROW_SHIFT_EXACT` (6306855; add the M~100-with-others guard at
   merge), F18 `AUSPOL_NOM_ZERO_PRE_XGB` (c4b2cbd). (work-5c merged 26 Oct.) Dead-party
   `AUSPOL_LEVEL_DEAD_PARTY` (337f4cd) PARKED: its screen says not worth it; do not merge.
@@ -110,7 +84,7 @@ contest features / contest base / partial-contest arm A refused, first-term fill
   -0.1247, SE 0.1133, 511 cells) but clause 3 refuses (vic2022 worse by 2.5 SE; leave-one-out above 1 SE in only 15 of 19
   drops); seat log loss is unchanged (-0.0000). Departed-origin arm A all 35 NOT PASSED (changed-cell share error
   +1.33, SE 2.56; Mount Gambier, Hillarys and Cabramatta outweigh Morwell). Its part 2 (the xgb feature, stage-4
-  rebuild) is eligible by the letter because part 1 is within 1 SE: Pete's call. NOT RUN for time (no launch after
+  rebuild) CLOSED 27 Oct, not run (Pete agreed). NOT RUN for time (no launch after
   02:15): departed arm B (`mean`), level-conserve (`prereg-level-conserve-2026-10-25.md`; NEXT after the reboot, needs
   >= 6.5 GB: the majors' +0.6-0.8 tree overshoot in ~30 elections is this seat-layer effect,
   `reviews/greens-overcall-shap-trace-2026-10-26.md`), port 3C
@@ -150,11 +124,6 @@ party-cor off) and the phantom-votes arm REFUSED: all in the journal and DECISIO
 - OPEN same one-run lag, older: the seat-poll weight is fitted on the PREVIOUS rebuild's output/forecasts.csv
   (R/seat_poll_blend.R:67; DECISIONS 2026-09-29), so stage 6 uses last run's predictions to weight seat polls. The
   spread fix's compare-and-rerun pattern (scripts/compare_spread_tables.R) could cover it too.
-- OPEN: census table v2 (8b6c12f4, installed in local output/ 27 Oct; backup %TEMP%/census-features.before-2026-10-27.csv)
-  reaches the model through the demographic correction (AUSPOL_DEMO_RESID=2, read in the harnesses and live), not
-  the trees directly (v7 reads it but is bypassed; v6 does not). Not in rebuild_forecasts.sh or the release. Rebuilt
-  from stage 1 and PUBLISHED 27 Oct 16:30 (DECISIONS); remove this item next sweep. CW11 (every valued row's
-  census published before polling day) added 27 Oct, 658df1a2. wa2001/wa2005 stay empty on purpose (Pete 14 Oct).
 
 **State (15 Oct):** 35 scored single-member elections. AEF-7 seat log loss 0.2669 (published 15 Oct 15:33) vs AEF 0.2825;
 pooled 0.3347 over 2,931 seats. Tas/ACT on the Hare-Clark path: pooled 0.496 vs naive 0.974. Training rule P4;
@@ -241,11 +210,8 @@ Tools: misses via `scripts/biggest_misses.R` / skill `biggest-misses` (never `fo
 Verbatim in `backlog/journal-2026-10-07-to-10-08.md`. Still OPEN from them:
 - OPEN: NSW 2027 page, blog side: seat pages need an election switch in inthegame-blog's `politics/seat.qmd` (still
   Victoria-only 23 Oct; `politics/nsw.qmd:43` has `seatPage: false`; data on R2 since PR #107). Owned by the `inthegame-blog` session.
-- VERIFIED 27 Oct (run 40431850192: a job timed out on both install steps, the dpkg-lock cleanup stopped the orphan apt,
-  both retries succeeded, scenarios published; remove this item next sweep). Was: scenario-job straggler, timeout + retry, reviewed;
-  first real test is run 40428241119. Same day: CSC7 tolerance 1e-8 -> 0.005 (runner floating point, gap 0.0004, blocked
-  the 27 Oct scenarios). Scheduled runs started 2.0-6.8 h late (median 2.9, 59 of 60, 28 Aug-26 Oct) at cron 20:00;
-  moved to 17:37 UTC 27 Oct (274c499e). CHECK 28 Oct: start time of the first 17:37 run (expect before ~21:00 UTC).
+- OPEN, CHECK 28 Oct: start time of the first scheduled forecast run at the new 17:37 UTC cron (274c499e; at 20:00
+  runs started 2.0-6.8 h late, 59 of 60). Expect a start before ~21:00 UTC.
 - OPEN: fed2025 seat polls deserved weight ~0.13 and got 0.55; no pre-election signal found yet. Worst case McMahon,
   Camenzuli (IND) published 29.0, actual 9.8: ONE poll, Compass Polling 8 Apr 2025 (opt-in SMS link, n=1,003, IND 41);
   base_pred 6.0 and xgb 4.9 were both under, so the 29 is the seat-poll step (AUSPOL_SEAT_POLL_IND_MAP). ROOT: the
