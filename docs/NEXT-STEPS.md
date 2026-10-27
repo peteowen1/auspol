@@ -8,8 +8,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
-- OPEN, 26 Oct morning state (replaces the 25 Oct evening block; results in DECISIONS.md and each prereg):
-  1. OPEN, Pete: local runs and the published Victorian forecast differ by ~7 One Nation seats (expected 21.1 local
+- OPEN, 27 Oct evening state (replaces the 26 Oct block; results in DECISIONS.md and each prereg). Today: census v2
+  rebuilt and published, scenario CI fixed, cron moved, PRs #141 and #143 merged (main = dev except the departed-origin docs):
+  1. DONE 27 Oct (local = published, 13.9 One Nation, after removing the 43 bad salience rows and pulling polls). Was: local runs and the published Victorian forecast differ by ~7 One Nation seats (expected 21.1 local
      vs 13.9 published, 26 Oct). Isolated: ~5.4 of it is the vic2026 salience corpus (`output/salience-v6.csv`; local
      run with it moved aside: 15.7), which CI does not have (XG5! both lines); the other ~1.8 is the local poll clone,
      13 days stale (`external/aus-polling-analyser` last commit 13 Oct). The corpus is the 18 Oct pre-campaign fetch
@@ -34,8 +35,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
      lead-matched retrain; wait for the final snapshot (25-27 Nov), which measures what the hazard trained on.
      (Rebooted 26 Oct 12:49; the R checks below are unblocked.)
   2. CLOSED 27 Oct: departed-origin part 2 not run (Pete agreed; DECISIONS).
-  3. `dev` -> `main` PR (172 files ahead of main): review what landed since the last pre-PR review (38d96a5,
-     01e765d and the 25 Oct merges), full `check_like_ci.R`, then open.
+  3. DONE 27 Oct: PRs #141 and #143 merged after review.
 - OPEN, merge (reviewed, not on dev): F16 `AUSPOL_ROW_SHIFT_EXACT` (6306855; add the M~100-with-others guard at
   merge), F18 `AUSPOL_NOM_ZERO_PRE_XGB` (c4b2cbd). (work-5c merged 26 Oct.) Dead-party
   `AUSPOL_LEVEL_DEAD_PARTY` (337f4cd) PARKED: its screen says not worth it; do not merge.
