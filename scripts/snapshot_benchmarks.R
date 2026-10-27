@@ -180,7 +180,14 @@ if (!DERIVE_ONLY) {
       if (!nrow(vic)) stop("no Victorian markets in Betfair's politics search")
       oddsdata::bf_prices(vic$market_id, store = store)
     })
-    # TAB's feed is behind bot protection and is NOT automated around. Save it by hand from a normal browser.
+    # TAB's feed is behind bot protection and is NOT automated around (no headless Chrome, no faked user agent).
+    # It loads normally in Pete's own Chrome, so Claude does this step itself with Claude in Chrome (done 27 Oct):
+    #   1. navigate a new tab to the URL below; it shows the JSON;
+    #   2. javascript_tool in that tab: fetch(location.href) -> text; check JSON.parse(text).matches is an array;
+    #      download it with a Blob + <a download="Politics-Victorian-Politics.json">.click() (lands in ~/Downloads);
+    #      do not print location.href or the body: the tool blocks output carrying query strings;
+    #   3. mv it from ~/Downloads to the path below, and append a manifest.tsv row (source tab, url, UTC time,
+    #      200, bytes, sha256, tab/Politics-Victorian-Politics.json); then rerun this script.
     if (!length(list.files(file.path(RAW, "tab"), "^Politics-Victorian-Politics.*\\.json$"))) {
       cat(sprintf("VB4! TAB not captured: open %s in a normal browser on tab.com.au and save the response as received to %s\n",
                   "https://api.beta.tab.com.au/v1/tab-info-service/sports/Politics/competitions/Victorian%20Politics?jurisdiction=NSW",
