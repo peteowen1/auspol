@@ -57,6 +57,10 @@ test_that("infeasible rows fall back to the rescale and are counted, never left 
   expect_match(txt3, "1 row\\(s\\) fell back")
   expect_equal(o3["D", ], (100 * a3 / rowSums(a3))["D", ])
   expect_gt(o3[["D", "Z"]], 0)
+  # an NA in an unmoved cell falls back rather than erroring
+  b4 <- matrix(c(30, 30, NA), 1, dimnames = list("E", c("X", "Y", "Z"))); a4 <- b4; a4[1, "X"] <- 35
+  o4 <- NULL; txt4 <- utils::capture.output(o4 <- row_shift_exact(b4, a4))
+  expect_match(txt4, "1 row\\(s\\) fell back")
 })
 
 test_that("a value other than 0 or 1 stops", {

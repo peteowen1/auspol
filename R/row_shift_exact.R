@@ -50,7 +50,7 @@ row_shift_exact <- function(before, after, label = "", step = "") {
     M <- sum(a[m]); O <- sum(a[!m])
     # Feasible: moved cells alone fit in 100 and either leave room for the others or (with no others) make 100.
     # Moved cells at ~100 beside unmoved cells that hold share would scale those cells to ~0: fall back instead.
-    ok_room <- if (O > 0) M < 100 - 1e-6 else abs(M - 100) < 1e-9
+    ok_room <- is.finite(M) && is.finite(O) && (if (O > 0) M < 100 - 1e-6 else abs(M - 100) < 1e-9)
     if (all(is.finite(a)) && all(a >= 0) && ok_room) {
       if (O > 0) a[!m] <- a[!m] * (100 - M) / O
       out[r, ] <- a
