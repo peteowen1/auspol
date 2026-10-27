@@ -151,9 +151,10 @@ party-cor off) and the phantom-votes arm REFUSED: all in the journal and DECISIO
   (R/seat_poll_blend.R:67; DECISIONS 2026-09-29), so stage 6 uses last run's predictions to weight seat polls. The
   spread fix's compare-and-rerun pattern (scripts/compare_spread_tables.R) could cover it too.
 - OPEN: census table v2 (8b6c12f4, installed in local output/ 27 Oct; backup %TEMP%/census-features.before-2026-10-27.csv)
-  reaches the trees only at the next stage-3 retrain (fit_xgb_primary_v7.R reads it; not in rebuild_forecasts.sh or the
-  release). Fold into the next retrain. Review nit queued: a CW11 check that every non-LOOKAHEAD row's census was
-  released before polling day (CW10 covers only pairs before mid-2007). wa2001/wa2005 stay empty on purpose (Pete 14 Oct).
+  reaches the model through the demographic correction (AUSPOL_DEMO_RESID=2, read in the harnesses and live), not
+  the trees directly (v7 reads it but is bypassed; v6 does not). Not in rebuild_forecasts.sh or the release. Rebuild
+  from stage 1 in flight 27 Oct (deciding-runs/20261027-census-rebuild/), then walk + publish. CW11 (every valued row's
+  census published before polling day) added 27 Oct, 658df1a2. wa2001/wa2005 stay empty on purpose (Pete 14 Oct).
 
 **State (15 Oct):** 35 scored single-member elections. AEF-7 seat log loss 0.2669 (published 15 Oct 15:33) vs AEF 0.2825;
 pooled 0.3347 over 2,931 seats. Tas/ACT on the Hare-Clark path: pooled 0.496 vs naive 0.974. Training rule P4;
