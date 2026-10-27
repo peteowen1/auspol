@@ -376,3 +376,50 @@ Outcomes:
 ## Amendments
 
 (any change is added below this line with the original text left as is)
+
+### Amendment 1 (2026-10-27): error 90 and 180 days out becomes a second deciding metric
+
+Added before any model code or arm has run. Source: Pete, 25 Oct 2026, answering *"Federal breakdowns: the
+polling-day metric you named can barely see this arm (the blend already puts 0.89-1.00 weight on late polls). It
+should matter most months out (nsw2027: 33 state polls against 129 breakdowns). Make the error 90 and 180 days out
+a second deciding metric?"* with **"Yes, add 90/180 days"**. The original text above is left as written; where it
+conflicts with this amendment, this amendment governs.
+
+**Second deciding metric (H):** RMSE of the statewide level the forecast would have PUBLISHED 90 and 180 days
+before polling day, against the actual result.
+- Same cells as the primary (ALP, LNP, GRN, ONP wherever the state trend fits the class) and the same seven target
+  elections.
+- "Would have published" means the full published path as at that date: the trend refitted on state polls and
+  breakdowns that ended before it, the shipped blend, and the fundamentals mix at that horizon. The as-at date is
+  the horizon date for admission, offsets and B3's r. The implementing commit prints which of these components ran
+  at each horizon. If a component cannot be computed as at a horizon, that is printed and the level is whatever
+  the forecast actually published without it, never a stand-in.
+- One pooled RMSE over both horizons (cells x 2), paired against B0, SE by the same delete-one-election jackknife
+  over 7 clusters. The 90-day and 180-day RMSEs are also reported separately; they do not decide on their own.
+
+**Decision rule (replaces the PASS/TIE/FAIL outcomes above):**
+- **PASS:** the primary OR H is better than B0 by more than 1 SE, and neither is worse by more than 1 SE.
+- **FAIL:** either the primary or H is worse than B0 by more than 1 SE. Refused.
+- **TIE:** anything else. Not a ship; goes to Pete as before.
+- The guards (deciding-run seat log loss, leave-one-election-out, no election materially worse, direction) are
+  unchanged and apply to a PASS on either metric. Leave-one-election-out is run on whichever metric passed.
+
+**Consequences for the original text:**
+- "Horizons ... Reported, not decisive": 90 and 180 days are now decisive through H; 30 days stays reported only.
+- The unacceptable-win clause "a day-before PASS while the 90-day and the 180-day horizons are each worse by more
+  than 1 SE" is now a FAIL under H whenever H is worse by more than 1 SE, so it no longer needs Pete.
+- Size check: compute the bound for both metrics. Stop and report only if BOTH bounds are under 1.84 SE of their
+  own metric.
+- Mechanism checks: add that on the targeted cells the level at 90 or 180 days changes by more than 0.05 points in
+  at least one cell.
+
+**Dry run on a known answer** (`plans/prereg-responsive-trend-2026-10-12.md`, which reported 90 days out):
+- T2 (time-forward faster walk): day-before -0.163 (SE 0.082) against its control, 90 days out +0.252 (SE 0.162),
+  1.56 SE worse. Under this rule: FAIL. Known answer: refused on its 90-day guard. Matches.
+- T1 (pooled noise): day-before -0.079 (SE 0.040), 90 days out +0.017 (SE 0.046). Under this rule against that
+  control: PASS on the primary, H within 1 SE. Known answer: it passed that control and was refused on a different
+  clause (worse than the shipped blend). Consistent: this amendment does not touch that clause.
+- That prereg had no 180-day figure, so the pooled two-horizon H itself has not been dry-run. Marked.
+
+**Not verified here (no R was run):** whether the fundamentals mix and the blend can be computed as at 90 and 180
+days for all seven targets (the blend window may hold few polls that far out). The first run prints it.
