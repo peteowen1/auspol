@@ -365,6 +365,9 @@ if (requireNamespace("oddsdata", quietly = TRUE)) {
 if (sum(c("sportsbet", "tab", "betfair") %in% written) >= 2L) {
   st <- system2(file.path(R.home("bin"), "Rscript"), c("scripts/compare_bookmaker_odds.R", paste0("--date=", DAY)))
   if (!identical(as.integer(st), 0L)) { cat("VB18! scripts/compare_bookmaker_odds.R failed\n"); fails <- c(fails, "bookmaker-odds") }
+  # the value table and page (ours against every price, with a click-through per seat); publishing it is manual
+  st <- system2(file.path(R.home("bin"), "Rscript"), c("scripts/value_odds_vic2026.R", paste0("--date=", DAY)))
+  if (!identical(as.integer(st), 0L)) { cat("VB19! scripts/value_odds_vic2026.R failed\n"); fails <- c(fails, "value-odds") }
 }
 
 cat(sprintf("\nVB13 %s: calls written for %s%s\n", DAY, paste(written, collapse = ", "),

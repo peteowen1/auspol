@@ -33,6 +33,14 @@ moved verbatim 2026-10-24. Every row below still has something open.
 
 ---
 
+## 2026-10-28
+
+| Request | Status |
+|---|---|
+| Readiness and value-odds artifact (us against TAB, Sportsbet and Betfair) | **SHIPPED** as a page, https://claude.ai/artifact/GdrpxSB7zkY1xEvJvU3TKx (private). Not in the repo pipeline: built from scratchpad scripts, so it does not refresh itself. |
+| Click a seat in that page for its detail; wider table | **IN PROGRESS** 28 Oct. |
+| Review the top contested seats (Box Hill, Glen Waverley, Ashwood, Bayswater, Hastings, Narracan, Eureka, Cranbourne): what work would fix them, or research whether they are a problem at all | **REVIEWED, WORK NOT DONE.** `docs/reviews/contested-seats-vic2026-2026-10-28.md` lists the research per seat; none of it is run yet. |
+
 ## 2026-10-26
 
 Rows from the NEXT-STEPS session's 25-26 Oct work, as it reported them (details in `docs/NEXT-STEPS.md`, "Builds

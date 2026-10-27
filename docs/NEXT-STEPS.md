@@ -8,11 +8,28 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
+- **28 Oct, IN FLIGHT: port 3C ship (Pete: finish checks, then ship).** Mode 2 on 8 movable elections -0.0001 (SE
+  0.0004), not passed; live walk moves Bendigo West to ALP 0.36 / LNP 0.19 / ONP 0.43 (market 0.44 / 0.12 / 0.41). Pete
+  overrode clause 1 (prereg `plans/prereg-seat-swing-port-3c-2026-10-25.md`, RESULT + decision sections). Remaining:
+  `--pairs=all` control screen (launched 28 Oct, log `scratchpad/port3c-all.log`), then the 20k deciding run
+  (`deciding_run.ps1 -Arm "AUSPOL_SEAT_SWING_PORT_3C=2" -Label port-3c`); ship (published_flags + stage-1 rebuild) if
+  no election worse by 2 SE and the 27 controls are byte-identical.
+- 28 Oct: value-odds page https://claude.ai/artifact/GdrpxSB7zkY1xEvJvU3TKx (readiness, seat click-through, our
+  probabilities against Sportsbet/TAB/Betfair). Built from scratchpad scripts, not the repo: it does not refresh.
+  Contested-seat research, all committed: `reviews/contested-seats-vic2026-2026-10-28.md` (hub),
+  `new-party-fill-proportional-vs-uniform-2026-10-28.md` (proportional One Nation fill supported, 4 elections),
+  `contested-seats-light-checks-2026-10-28.md` (agent's sign error corrected at the top; other-right lead pooled over
+  20 elections is -0.040, SE 0.015: small), `live-walk-contested-seats-2026-10-28.md` (xgb cut to the eastern Liberals
+  0.1-1.6, not 3). Branch checks `ind-overcall-1025` and `mp-slope-shrink-1025`: both PASS `check_like_ci.R` 28 Oct.
+  Still open from it: One Nation spread pooling (needs code: spread fixed to SA 2026 at `fit_seats_full.R:781`);
+  Hastings/Cranbourne recheck after nominations (9 Nov); re-entry inflated bases (other classes over-called -2.9,
+  SE 0.84, where a party re-entered; Narracan Greens is the live case).
+
 - Status 27 Oct evening (detail in DECISIONS.md): census v2 published, local = published (13.9 One Nation) after the
   43 bad vic2026 salience rows were removed (backup `%TEMP%/salience-v6.before-vic2026-removal.csv`; their builder
   now stops with BVS0!), PRs #141/#143 merged, departed-origin closed. Rebooted 26 Oct 12:49, so R work is unblocked.
-- OPEN, merge (reviewed, not on dev): F16 `AUSPOL_ROW_SHIFT_EXACT` (6306855; add the M~100-with-others guard at
-  merge), F18 `AUSPOL_NOM_ZERO_PRE_XGB` (c4b2cbd). (work-5c merged 26 Oct.) Dead-party
+- OPEN, screen: F16 `AUSPOL_ROW_SHIFT_EXACT` and F18 `AUSPOL_NOM_ZERO_PRE_XGB` MERGED 27 Oct (PR #144, both off,
+  guard added at merge); each needs its prereg screen. Dead-party
   `AUSPOL_LEVEL_DEAD_PARTY` (337f4cd) PARKED: its screen says not worth it; do not merge.
 - OPEN, screens not yet run (one at a time, >= 6.5 GB free, so after the reboot that clears the kernel pool leak):
   level-conserve FIRST (`prereg-level-conserve-2026-10-25.md`; the majors' +0.6-0.8 tree overshoot over ~30
@@ -30,8 +47,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   its known answer now (ours 88/88 against its own favourites). Still to build: the VEC 2026 results file itself.
   Roy Morgan dropped 21 Oct (no seat winners) (`plans/external-benchmark-vic2026-2026-10-20.md`).
 
-- Builds waiting for R (26 Oct, each on a LOCAL branch, not pushed, nothing run under R because of the leak).
-  Order after the reboot: tests + `devtools::document()` on each, then one quick_arm screen at a time:
+- Builds waiting for R (26 Oct, each on a LOCAL branch, not pushed). 27 Oct evening: `ind-overcall-1025` and
+  `mp-slope-shrink-1025` merged up to dev and documented (stale .Rd fixed on ind-overcall; mp-slope's test regex fixed,
+  its 62 tests pass); both `check_like_ci.R` runs were reaped at low memory: they ran IN PARALLEL from ~6-7 GB free
+  (paged pool 3.4 GB, not the 10 GB leak of 22 Oct; 5.3 GB free afterwards). NEXT: rerun `check_like_ci.R` in each
+  worktree ONE AT A TIME (reboot first if Available MBytes < 8,000), then level-conserve dry run 1.
+  Then one quick_arm screen at a time:
   - `ind-overcall-1025` `7252acb`: `AUSPOL_IND_GAP_RESTAND` (off). As built (yes/no: gap kept if any earlier
     candidate of the class re-stands) it reaches only Pascoe Vale of the 5 targets. Pete chose the SHARE version
     (carry only the re-standers' share of the old class vote; Geelong ~2% of Lyons's gap): NOT built yet.
@@ -312,8 +333,8 @@ plan, **Pete to send**; To Do reminder set).
 - **Time-forward fits still use `min_n` cliffs**: `R/split_slope.R:395,416` sit in `fit_conditional_slopes()`,
   which the shipped config never calls (`AUSPOL_FIT_SLOPES=0`). Live: `fit_major_departed_slope()` falls back to 1.0
   below 40 seats (fed2007, fed2010, sa2010, wa2001, wa2005, wa2008). `AUSPOL_SLOPE_SHRINK` shrinks toward 1, not the
-  pooled slope, and was refused 29 Sep (+0.0056, SE 0.0035). Pete to choose: screen it as is, or a tau^2 arm toward
-  the pooled slope. Prereg on `mp-slope-shrink-1025`. The `SHIP_SAME/NEW`
+  pooled slope, and was refused 29 Sep (+0.0056, SE 0.0035). DECIDED 27 Oct (Pete): build a tau^2 arm toward
+  the pooled slope; NOT built yet. Prereg on `mp-slope-shrink-1025`. The `SHIP_SAME/NEW`
   leak is DONE: `AUSPOL_SHIP_TIME_FORWARD=1` (v51) makes the fallback time-forward; the constants are opt-out only.
 - **Seat context phase 2**: margin BUILT 28 Sep as arm `AUSPOL_SEAT_CONTEXT_MARGIN` (published "0"; `5e50f07`), no
   recorded verdict; previous swing not filled (r 0.875 vs the seat file); first-term fill refused (Oct 20 prereg).
@@ -373,7 +394,6 @@ Still open:
 
 ## Awaiting Pete (26 Oct; the earlier four were answered, DECISIONS 2026-10-26)
 
-- `AUSPOL_SLOPE_SHRINK`: screen as is, or a tau^2 arm toward the pooled slope (item under "Model, open").
 - Departed-rate refit: fallback, fit rows, decision rule (`plans/prereg-departed-rate-screen-2026-10-25.md` on
   `prereg-offbranches-1025`).
 - Census: qld2017 from the 2021 reaggregation; previous-election rows for the 12 newer pairs.

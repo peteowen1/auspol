@@ -1,3 +1,8 @@
+# auspol 0.4.111
+
+- **Value-odds page** (`scripts/value_odds_vic2026.R`, template `scripts/value-page-template.html`): our published Victoria 2026 seat probabilities against every Sportsbet, TAB and Betfair price on a capture date, with edge, a value table and a click-through per seat. `snapshot_benchmarks.R` runs it after each capture (VB19). Scraped names are escaped.
+- **Port 3C screened** (`AUSPOL_SEAT_SWING_PORT_3C`, still off): no measurable effect over all 35 elections, controls byte-identical; Pete chose to ship after the 20k deciding run. Contested-seat research in `docs/reviews/*-2026-10-28.md`.
+
 # auspol 0.4.110
 
 - **`AUSPOL_ROW_SHIFT_EXACT`** (audit F16, off): the salience and seat-poll blends can keep the cells they moved exact and scale only the others, instead of rescaling the whole row. Rows where the moved cells reach ~100 beside unmoved cells, or that have an NA cell, fall back to the rescale (RSX1).
