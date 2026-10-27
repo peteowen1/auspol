@@ -2,9 +2,9 @@
 # Coalition's federal candidate line-up changed.
 # docs/plans/prereg-seat-swing-port-3c-2026-10-25.md
 
-test_that("both switches parse strictly and default off", {
+test_that("both switches parse strictly; 3C defaults to the shipped mode 2", {
   withr::local_envvar(AUSPOL_SEAT_SWING_PORT_3C = NA, AUSPOL_SEAT_SWING_PORT_3C_W = NA)
-  expect_identical(seat_swing_port_3c_mode(), "0")
+  expect_identical(seat_swing_port_3c_mode(), "2")
   expect_identical(seat_swing_port_3c_w(), 0)
   withr::local_envvar(AUSPOL_SEAT_SWING_PORT_3C = "3")
   expect_error(seat_swing_port_3c_mode(), "must be")
@@ -198,13 +198,16 @@ local_3c_fixture <- function(env = parent.frame()) {
   invisible(root)
 }
 
-test_that("off is byte-identical to unset; on, the fit and the target are both cleaned", {
+test_that("unset is the shipped mode 2; on, the fit and the target are both cleaned relative to off", {
   local_3c_fixture()
   withr::local_envvar(AUSPOL_SEAT_SWING_PORT_NOCLIFF = "1", AUSPOL_SEAT_SWING_PORT_WA = "0", AUSPOL_SEAT_SWING_PORT_3C = NA)
-  unset <- seat_swing_port_coef("vic2022"); t_unset <- seat_swing_port_table("vic2022")
+  shipped <- seat_swing_port_coef("vic2022"); t_shipped <- seat_swing_port_table("vic2022")
+  withr::local_envvar(AUSPOL_SEAT_SWING_PORT_3C = "2")
+  expect_identical(seat_swing_port_coef("vic2022"), shipped)
+  expect_identical(seat_swing_port_table("vic2022"), t_shipped)
+  # "unset" below is the pre-3C port, i.e. switched off (the name is kept from when off was the default)
   withr::local_envvar(AUSPOL_SEAT_SWING_PORT_3C = "0")
-  expect_identical(seat_swing_port_coef("vic2022"), unset)
-  expect_identical(seat_swing_port_table("vic2022"), t_unset)
+  unset <- seat_swing_port_coef("vic2022"); t_unset <- seat_swing_port_table("vic2022")
   withr::local_envvar(AUSPOL_SEAT_SWING_PORT_3C = "1")
   log <- utils::capture.output(on <- seat_swing_port_coef("vic2022"))
   expect_true(any(grepl("^S3C1 vic2018 <- fed2016: 1 Coalition line-up change.*d1 LP->LP\\+NP.*10 of 30 seats touched", log)))

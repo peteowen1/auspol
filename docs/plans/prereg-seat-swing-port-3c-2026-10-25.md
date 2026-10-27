@@ -270,3 +270,12 @@ neither shows harm (no election worse by more than 2 SE, clause 7).
 byte-identical and the 8 that moved are exactly the 8 named movable. Pooled over 2,931 seats: −0.0000 (SE 0.0001); AEF-7 681
 seats +0.0002 (SE 0.0003). **Clause 7 holds**: paired seat-difference SE per movable election, worst sa2026 +0.0024 (SE
 0.0016, +1.5 SE), then wa2025 +1.0 SE; best qld2024 −1.7 SE. Next: the 20k deciding run, then ship per Pete's decision.
+
+### Deciding run and SHIP (2026-10-28)
+
+`deciding-runs/20261028-0822-port-3c/` (DONE 09:53, 20,000 sims, all 35, code 1ab03e1f): pooled seat log loss 0.3153 -> 0.3153
+(-0.0000, SE 0.0001) over 2,931 seats; AEF-7 0.2638 -> 0.2639 (+0.0001, SE 0.0003); 27 of 35 elections byte-identical (clause 4
+passes). Clause 7 from the run's cache, paired seat SE per movable election: sa2026 +0.0022 (SE 0.0017, +1.3 SE), wa2025 +0.9 SE,
+vic2022 +0.3, sa2022 +0.3, nsw2023 -0.1, qld2020 -0.4, wa2021 -1.1, qld2024 -1.9: none worse by 2 SE. **SHIPPED** on Pete's
+decision (clause 1 overridden, recorded above): `published_flags.R` and the inline default to "2", added to
+`post_xgb_switches()` and pinned "0" in stage 1 of `rebuild_forecasts.sh`.
