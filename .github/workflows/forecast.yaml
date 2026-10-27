@@ -9,7 +9,10 @@ name: Forecast refresh
 
 on:
   schedule:
-    - cron: "0 20 * * *"     # 06:00 Melbourne (AEST, UTC+10) daily
+    # 17:37 UTC = 04:37 Melbourne in daylight time (03:37 in standard time). Off the hour on
+    # purpose: at "0 20" GitHub started 59 of 60 runs (28 Aug - 26 Oct 2026) over 2 h late
+    # (median 2.9 h, max 6.8 h), so the forecast landed ~10:00. Expect ~07:30 now.
+    - cron: "37 17 * * *"
   workflow_dispatch:
     inputs:
       quick:
