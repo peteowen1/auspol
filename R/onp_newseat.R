@@ -1,7 +1,7 @@
 #' One Nation in seats with no state history: the shared rule
 #'
-#' `AUSPOL_ONP_NEWSEAT_RULE` (default `"0"`, the shipped behaviour; `"1"` the
-#' rule). docs/plans/prereg-onp-newseat-rule-2026-10-25.md,
+#' `AUSPOL_ONP_NEWSEAT_RULE` (default `"1"`, the rule, shipped 2026-10-26;
+#' `"0"` the old behaviour, which stage 1 of rebuild_forecasts.sh pins). docs/plans/prereg-onp-newseat-rule-2026-10-25.md,
 #' docs/reviews/onp-newseat-parity-2026-10-25.md.
 #'
 #' The live Victorian forecast has no One Nation state history to swing (0.28%
@@ -33,7 +33,7 @@ NULL
 #'   typo must not run as the default and read as "no effect").
 #' @export
 onp_newseat_rule <- function() {
-  v <- Sys.getenv("AUSPOL_ONP_NEWSEAT_RULE", "0")
+  v <- Sys.getenv("AUSPOL_ONP_NEWSEAT_RULE", "1")
   if (!v %in% c("0", "1")) stop("AUSPOL_ONP_NEWSEAT_RULE must be \"0\" or \"1\", got \"", v, "\"", call. = FALSE)
   identical(v, "1")
 }
@@ -296,7 +296,7 @@ onp_newseat_prepare <- function(mat, prev_level, standing, target, code = "ONN1"
 #' @return `shares`, changed or not; when applied, attribute `onp_newseat`
 #'   (seats, fed, source, level, cv).
 #' @export
-onp_newseat_apply <- function(shares, target, history, order = Sys.getenv("AUSPOL_ONP_ORDER", "federal"),
+onp_newseat_apply <- function(shares, target, history, order = Sys.getenv("AUSPOL_ONP_ORDER", "senate_rank"),
                               lookup = rownames(shares), refill = c("none", "prop"), standing = NULL, code = "ONN1",
                               key = NULL, cv = NULL) {
   refill <- match.arg(refill)

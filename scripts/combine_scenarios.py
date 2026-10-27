@@ -150,15 +150,23 @@ for k in keys:
         "seat_probs": pm})
 
 
+# Runners differ in CPU, so floating point differs in the last bits and a few of 20,000 simulations
+# land differently: on 27 Oct two offset-0 runs on separate runners differed from the published file
+# (and from each other) by at most 0.0004, while the smallest real offset (2.5 points) moved some seat
+# by 0.196 or more. 0.005 is 12x that noise and 40x below the smallest real change.
+SAME_TOL = 0.005
+
+
 def same_probs(a, b):
+    """(matches, largest absolute probability gap); a row mismatch is gap infinity."""
     if len(a) != len(b):
-        return False
+        return False, float("inf")
+    gap = 0.0
     for x, y in zip(a, b):
         if x["seat"] != y["seat"] or x["party"] != y["party"]:
-            return False
-        if abs(float(x["prob"]) - float(y["prob"])) > 1e-8:
-            return False
-    return True
+            return False, float("inf")
+        gap = max(gap, abs(float(x["prob"]) - float(y["prob"])))
+    return gap <= SAME_TOL, gap
 
 
 # The free check: polled at offset 0 forces nothing, so it IS the published run.
@@ -166,9 +174,9 @@ zero = [k for k in keys if k["mode"] == "polled" and k["off"] == 0]
 if zero:
     for k in zero:
         f = os.path.join(OUT, k["file"].replace("seat-sims-full", "seat-probs", 1))
-        same = same_probs(pub_rows, read_csv(f))
-        print("CSC7  polled %s at today's level %s the published seat probabilities"
-              % (k["party"], "MATCHES" if same else "DOES NOT MATCH"))
+        same, gap = same_probs(pub_rows, read_csv(f))
+        print("CSC7  polled %s at today's level %s the published seat probabilities (largest gap %.4f, tolerance %.3f)"
+              % (k["party"], "MATCHES" if same else "DOES NOT MATCH", gap, SAME_TOL))
         if not same:
             die("CSC7! %s differs from %s: the scenarios do not describe the published forecast" % (f, pub_f))
 else:

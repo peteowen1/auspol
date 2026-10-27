@@ -93,7 +93,7 @@ The major-party case is now a fitted carry, not an exclusion. A sitting member w
 major party keeps a fraction of their previous personal vote, `discount_mp` from
 `fit_defector_discount()` (`R/candidate_returns.R:1162`), fitted on elections before the target
 (federal targets get their own shrunk rate, `AUSPOL_DEFECT_BY_LEVEL = "2"`, `:1268`). The live
-forecast fits it every run (`scripts/fit_seats_full.R:936-946`, `AUSPOL_LIVE_DEFECT_FIT`); it read
+forecast fits it every run (the `AUSPOL_LIVE_DEFECT_FIT` block calling `fit_defector_discount()` in `scripts/fit_seats_full.R`); it read
 a frozen 0.282 until 2026-10-18, and the fitted value then was 0.313 (the frozen number is
 now only the fallback if the fit fails). A minor-to-minor switcher gets the separate
 `fit_minor_defector_discount()` rate, passed to the live base and the live xgb feature alike
@@ -113,7 +113,7 @@ candidate is personally returning, 0.326 for a fresh face, or 1.0 (uniform
 swing, no penalty) when the salience screen (`salience_permit_for()`,
 `screened_slopes()`) judges a fresh face as a plausible emergence rather than
 a no-hoper. Sitting members take their own slope tier (`AUSPOL_MP_SLOPE`,
-`scripts/fit_seats_full.R:959-975`), and since 2026-10-14 that table and the minor-defector
+the `.MP_SLOPE` block in `scripts/fit_seats_full.R`), and since 2026-10-14 that table and the minor-defector
 carry are fitted on earlier elections only, shrunk toward a structural prior
 (`AUSPOL_MP_SLOPE_TF`, `AUSPOL_CONSERVE_TF`, `AUSPOL_CONSERVE_SHRINK_K = "3"`, which replaced an
 8-case cliff).
@@ -207,7 +207,7 @@ a factor fitted on earlier elections for small seats (`AUSPOL_SIZE_SD`, `R/size_
 seats with large non-major shares (`AUSPOL_COMPOSITION_SD`). Then, because `level_sd` was
 fitted net of a flat 1.5-point statewide piece while the live draws are about 2.6 points for
 the majors, the statewide miss was counted about twice. `harness_sw_net_sd()`
-(`R/forecast_statewide.R:491`, called at `fit_seats_full.R:1803`, `AUSPOL_SW_NET_LIVE = "1"`,
+(in `R/forecast_statewide.R`, called in `fit_seats_full.R` under the `AUSPOL_SW_NET_LIVE` block, `AUSPOL_SW_NET_LIVE = "1"`,
 shipped 2026-10-19) lowers each cell's sd so the total is what `level_sd` was fitted to,
 never below half the original sd. The state and federal harnesses do the same
 (`AUSPOL_HARNESS_SW_DRAWS = "net"`, so a backtest scores the spread the live forecast ships).
@@ -238,8 +238,8 @@ One statewide shift per draw (`:150-165`; the draws from step 4 are passed in as
 
 `published_flags.R` reads `AUSPOL_SURGE_H = "0"`, which looks like the surge is
 off. It is not. That is only the FLAT FALLBACK hazard. The real per-seat hazard
-comes from `AUSPOL_SALIENCE_SURGE_V2 = "1"` and **overwrites `surge_arg` at
-`fit_seats_full.R:1168`** (`surge_arg <- unname(v)`, inside the `.surge_v2_on` block that starts at `:1139`). What is genuinely off is `AUSPOL_IND_SALIENCE`,
+comes from `AUSPOL_SALIENCE_SURGE_V2 = "1"` and **overwrites `surge_arg` in
+`fit_seats_full.R`** (`surge_arg <- unname(v)`, inside the `if (.surge_v2_on)` block). What is genuinely off is `AUSPOL_IND_SALIENCE`,
 `AUSPOL_INSURGENCY_SHRINK`, `AUSPOL_SALIENCE_EXPECTED`, `AUSPOL_SALIENCE_EXP_SD`
 and the retired two-party `simulate_seats()`.
 

@@ -1,6 +1,6 @@
 # Model registry
 
-**Generated 2026-10-25 by `scripts/build_model_registry.R`. Do not hand-edit** --
+**Generated 2026-10-26 by `scripts/build_model_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate whenever a switch is added to
 `published_flags.R` or a harness's wiring changes.
 
@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (252 switches from `published_flags.R`, 7 entry points)
+## Switch parity (253 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -156,14 +156,15 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_NOM_LIVE` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R, xgb_primary_override.R |
 | `AUSPOL_NOM_ZERO` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R |
 | `AUSPOL_NOM_ZERO_ORDER` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R |
+| `AUSPOL_NOM_ZERO_PRE_XGB` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R |
 | `AUSPOL_NOTIONAL` | NO | yes | NO | NO | NO | NO | NO |  |
 | `AUSPOL_NSW_THIN_WALK` | NO | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_ONP_CONC_SD` | NO | NO | NO | yes | yes | NO | NO |  |
 | `AUSPOL_ONP_CV` | yes | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_ONP_FILL` | yes | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_ONP_FIX` | yes | NO | NO | NO | NO | NO | NO |  |
-| `AUSPOL_ONP_NEWSEAT_RULE` | yes | NO | yes | yes | yes | NO | yes | onp_newseat.R |
-| `AUSPOL_ONP_ORDER` | yes | yes | yes | yes | yes | yes | yes | onp_newseat.R |
+| `AUSPOL_ONP_NEWSEAT_RULE` | yes | NO | yes | yes | yes | NO | yes | new_ind_shrink.R, onp_newseat.R |
+| `AUSPOL_ONP_ORDER` | yes | yes | yes | yes | yes | yes | yes | new_ind_shrink.R, onp_newseat.R |
 | `AUSPOL_OTHERS_SCALE` | NO | NO | NO | NO | NO | NO | NO | forecast_mode.R, others_bucket.R |
 | `AUSPOL_PARTY_COR` | yes | yes | yes | yes | yes | yes | NO | forecast_statewide.R |
 | `AUSPOL_PB_COALITION_COMBINED` | NO | NO | NO | NO | NO | NO | NO | poll_source.R |
@@ -182,6 +183,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_REENTRY_SPLIT` | NO | NO | NO | NO | NO | NO | NO | reentry_prior.R |
 | `AUSPOL_REENTRY_WINSOR` | NO | NO | NO | NO | NO | NO | NO | reentry_prior.R |
 | `AUSPOL_RETURNING_MEMBER_RULE` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_ROW_SHIFT_EXACT` | NO | NO | NO | NO | NO | NO | NO | row_shift_exact.R |
 | `AUSPOL_SA_CUTOFF` | NO | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_SA_FLOWS` | NO | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_SALIENCE_BLEND` | NO | NO | NO | NO | NO | NO | NO | salience_surge.R |
@@ -387,6 +389,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_NOM_LIVE`** (**adopted, shared-function wiring**): SHIPPED v61, LIVE-ONLY by design: the published Victorian forecast zeroes non-standing parties only when set to '1' by hand once the VEC final list is loaded (R/nomination_zero.R, fit_seats_full.R). The six harnesses use AUSPOL_NOM_ZERO instead.
 - **`AUSPOL_NOM_ZERO`** (**adopted, shared-function wiring**): SHIPPED v61 2026-10-03 (mode 2). All six harnesses read it. fit_seats_full.R does not name it, by design: the published run uses AUSPOL_NOM_LIVE for the same zeroing (R/nomination_zero.R) once the real nomination list exists.
 - **`AUSPOL_NOM_ZERO_ORDER`** (**adopted, shared-function wiring**): SHIPPED 2026-10-04 ('late', Pete overriding the R2 refusal). Read in R/nomination_zero.R and named by all six harnesses; per published_flags.R, fit_seats_full.R already zeroes after the last step that can write a share back, so the switch does not apply to it.
+- **`AUSPOL_NOM_ZERO_PRE_XGB`** (intentional / dead experiment): ARM (audit F18, plans/prereg-nom-zero-pre-xgb-2026-10-25.md), LIVE-ONLY by design: fit_seats_full.R zeroes non-standing classes before xgb_primary_predict_live() as well as after it. The harnesses need no switch: their stage-1 base (what the trees train on) already carries the zero, and their backtest override substitutes cached predictions. A no-op until AUSPOL_NOM_LIVE=1.
 - **`AUSPOL_NOTIONAL`** (**adopted, shared-function wiring**): SHIPPED (2) and FEDERAL-BACKTEST-ONLY by design: the redistribution-adjusted (notional) prior only exists where build_notional_baselines.R has a table (federal). State harnesses have no notional table to read, so 'no' there is a data fact, not a parity gap. docs/reviews/notional-prior-redistribution-2026-09-13.md
 - **`AUSPOL_NSW_THIN_WALK`** (intentional / dead experiment): NOT A PUBLISHED-CONFIG SWITCH: read by scripts/fit_nsw.R (the NSW poll-trend validation stage), which does not source published_flags.R. The comment block in published_flags.R says why it is deliberately unregistered.
 - **`AUSPOL_ONP_CONC_SD`** (**adopted, shared-function wiring**): SHIPPED 2026-09-14 ('auto') for the harnesses that model a One Nation seat concentration from federal booth-transposed votes: qld and sa (where One Nation contests every seat). fed/nsw/vic/wa have no ONP concentration mechanism, and fit_seats_full.R has its own live ONP path; a gap only if One Nation's Victorian seat spread is ever driven from this switch (the VIC2022 IND-coupling regression is the reason it is not: docs/reviews/sa2026-onp-base-pred-diagnosis-2026-09-14.md).
@@ -412,6 +415,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_REENTRY_SPLIT`** (intentional / dead experiment): Read inside R/reentry_prior.R, not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).
 - **`AUSPOL_REENTRY_WINSOR`** (intentional / dead experiment): Read inside R/reentry_prior.R, not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).
 - **`AUSPOL_RETURNING_MEMBER_RULE`** (intentional / dead experiment): BUILT 2026-10-25, OFF ("0" = legacy flag, candidacies.csv byte-identical). Read ONCE at build time by scripts/build_candidacies.R (BC9) and baked into output/candidacies.csv, so no harness or fit_seats_full.R reads it at runtime; "1" makes historic_elected mean the same person as the sitting member (previous general election winner or later by-election winner) instead of a surname+initial match at any earlier election. It is a TRAINING feature (historic_elected_i) as well as a live one, so it must be flipped for training and live together: build with =1, then retrain. docs/reviews/vic2026-sitting-member-audit-2026-10-25.md.
+- **`AUSPOL_ROW_SHIFT_EXACT`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: read by row_shift_exact_on() in R/row_shift_exact.R, called from blend_salience_shares() (R/salience_surge.R) and the three seat-poll blend modes (R/seat_poll_blend.R, R/seat_poll_joint.R), which every harness and fit_seats_full.R reach. plans/prereg-row-shift-exact-2026-10-25.md
 - **`AUSPOL_SA_CUTOFF`** (intentional / dead experiment): Read inside R/external_flows.R (pool_configured_flows), not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).
 - **`AUSPOL_SA_FLOWS`** (intentional / dead experiment): Read inside R/external_flows.R (pool_configured_flows), not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).
 - **`AUSPOL_SALIENCE_BLEND`** (intentional / dead experiment): Read inside R/salience_surge.R's blend_salience_shares(), not per-harness -- universal in practice, and gated there deliberately so all five harnesses and the published forecast get the switch from one change. Exists to make a suspected DOUBLE COUNT measurable: the same hazard drives both a shift of the point estimate and an additive jump in the draw. Measured 2026-09-11 -- the double count is real (surge_h is the per-seat max of p_hat, correlation 0.984) and turning the blend OFF makes things WORSE, because the under-prediction of emergences is larger than the over-counting. Stays at 1 until the per-cell variance is fixed.
@@ -555,4 +559,4 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR2  every non-universal switch (222 of 252) has a recorded classification.
+MR2  every non-universal switch (223 of 253) has a recorded classification.

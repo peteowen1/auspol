@@ -135,3 +135,9 @@ Pete's call on the result.
 Stage 1 still builds the training `base_pred` with `AUSPOL_LEVEL_RECENT=0` (`rebuild_forecasts.sh:245`) while live
 `base_margin` is blended. That is the base side of the same blend, already scored by the stage-6 base-delta path, and
 not what F12 is about.
+
+## SHIPPED (2026-10-26; appended)
+
+`AUSPOL_LIVE_LEVEL_PRED_TREND` flipped to "1" in `scripts/published_flags.R`, with the `R/level_recent.R` inline default, on
+Pete's 25 Oct call ("Ship it, live only"). Live walk 25 Oct: no seat moved (`deciding-runs/20261025-f12-walk/`).
+`AUSPOL_LEVEL_PRED_RECENT` stays "0" (needs a stage-3 retrain).

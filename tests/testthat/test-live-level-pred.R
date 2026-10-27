@@ -6,8 +6,13 @@
 blended <- c(ALP = 24.6, LNP = 28.9, GRN = 14.3, ONP = 21.86, OTH = 10.34)
 trend   <- c(ALP = 25.2, LNP = 29.3, GRN = 14.2, ONP = 21.25, OTH = 10.05)   # same total (100.00)
 
-test_that("off (the default) serves the blended level untouched, and says so", {
+test_that("on is the default (shipped 2026-10-26)", {
   withr::local_envvar(AUSPOL_LIVE_LEVEL_PRED_TREND = NA)
+  expect_true(live_level_pred_trend())
+})
+
+test_that("off serves the blended level untouched, and says so", {
+  withr::local_envvar(AUSPOL_LIVE_LEVEL_PRED_TREND = "0")
   expect_false(live_level_pred_trend())
   out <- NULL
   txt <- capture.output(out <- live_level_pred_serve(blended, trend))

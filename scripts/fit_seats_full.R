@@ -675,12 +675,14 @@ SA_RESPONSE <- c(LNP = -0.846, ALP = -0.123, IND = -0.086,
 # be read as a FUNCTION of the primary vote rather than only at today's point.
 # Nothing is forced by default.
 FORCE_FP <- Sys.getenv("AUSPOL_FORCE_FP", "")
-# AUSPOL_LIVE_LEVEL_PRED_TREND (audit F12): refused here, before anything reads the pre-blend level
-# (.state_mean_trend, captured above), because a forced scenario or the anchor shift lands after the capture and
-# the trees and the salience permit would silently lose it.
-if (live_level_pred_trend() && (nzchar(FORCE_FP) || LEVEL_ANCHOR))
-  stop("LLP1! AUSPOL_LIVE_LEVEL_PRED_TREND=1 with ", if (nzchar(FORCE_FP)) "AUSPOL_FORCE_FP" else "AUSPOL_LIVE_LEVEL_ANCHOR=1",
+# AUSPOL_LIVE_LEVEL_PRED_TREND (audit F12): the pre-blend level (.state_mean_trend, captured above) is read
+# by the trees and the salience permit, but the anchor shift and a forced scenario land after the capture.
+# A forced scenario is carried into it after the forcing below (LLP2, 2026-10-26: the what-if jobs force
+# every run); the anchor shift is not, so that combination is refused here.
+if (live_level_pred_trend() && LEVEL_ANCHOR)
+  stop("LLP1! AUSPOL_LIVE_LEVEL_PRED_TREND=1 with AUSPOL_LIVE_LEVEL_ANCHOR=1",
        ": the pre-blend level was captured before that shift, so the trees would silently lose it. Run them separately.")
+.state_mean_preforce <- state_mean
 # The what-if slider's zero point: the level BEFORE any forcing.
 cat(sprintf("FP0  statewide primaries before forcing: %s\n",
             paste(sprintf("%s %.2f", names(state_mean), state_mean), collapse = ", ")))
@@ -742,6 +744,27 @@ if (nzchar(FORCE_FP)) {
   cat(sprintf("FP1  statewide primaries now: %s (sum %.1f)\n",
               paste(sprintf("%s %.1f", names(state_mean), state_mean),
                     collapse = ", "), sum(state_mean)))
+  # The trees read the pre-blend level under AUSPOL_LIVE_LEVEL_PRED_TREND=1, so the scenario must reach it
+  # too: every class, the forced one included, moves by the same change the forcing gave the blended level,
+  # so a scenario at today's level serves the published run's level exactly (combine_scenarios.py CSC7
+  # checks that). Only where the 0.1 floor binds are the non-forced classes rescaled to keep one total.
+  if (live_level_pred_trend()) {
+    if (!setequal(names(.state_mean_trend), names(state_mean)))
+      stop("LLP2! the pre-blend level and the forced level carry different classes")
+    .tr <- .state_mean_trend[names(state_mean)]
+    .tr <- .tr + (state_mean - .state_mean_preforce[names(state_mean)])
+    .fp_all <- trimws(vapply(strsplit(strsplit(FORCE_FP, ",", fixed = TRUE)[[1]], "=", fixed = TRUE), `[`, "", 1))
+    .tr[.fp_all] <- pmax(0.1, .tr[.fp_all])
+    .free <- setdiff(names(.tr), .fp_all)
+    if (any(.tr[.free] < 0.1) || abs(sum(.tr) - sum(state_mean)) > 1e-6) {
+      .tr[.free] <- pmax(0.1, .tr[.free])
+      .tr[.free] <- .tr[.free] * (sum(state_mean) - sum(.tr[.fp_all])) / sum(.tr[.free])
+    }
+    cat(sprintf("LLP2  forced scenario carried into the pre-blend level: %s (sum %.2f; was %s)\n",
+                paste(sprintf("%s %.2f", names(.tr), .tr), collapse = ", "), sum(.tr),
+                paste(sprintf("%s %.2f", names(.tr), .state_mean_trend[names(.tr)]), collapse = ", ")))
+    .state_mean_trend <- .tr
+  }
 }
 
 .stage("4. project each seat's primaries")
@@ -1507,6 +1530,17 @@ if (!identical(level_conserve_mode(), "0")) {
 # run, so a forecast asked to conserve the level is never published without it. Off, the call returns at once.
 shares <- level_conserve_apply(shares, .lc_level, TGT, stage = "base", target = .lc_target,
                                held = if (.departed_hold) HELD else NULL)
+# AUSPOL_NOM_ZERO_PRE_XGB (default "0"; audit F18, plans/prereg-nom-zero-pre-xgb-2026-10-25.md): the trees were
+# trained on a base_pred that already had non-standing classes zeroed and their share sent by flows (stage 1's
+# harness sharedetail is written after the harnesses' zero). "1" gives the live base_margin the same zeros, with
+# the same function and flow matrix as the post-xgb call below, which stays as the final guard (the trees write a
+# prediction back into every cell). A no-op until AUSPOL_NOM_LIVE=1 opens the list. Logged NZP1 (NZP2 is its
+# zeroing line). NOT wrapped in tryCatch/.try(): with the switch on (or set to a bad value) ANY failure STOPS the
+# run, whatever AUSPOL_NOM_LIVE says, so a forecast asked for the pre-xgb zero is never published without it.
+# Off ("0"), the call returns before anything that can fail.
+.nzp_before <- shares
+shares <- zero_unnominated_live_pre_xgb(shares, fm, TGT, prior = PREV)
+.nzp_cells <- nomination_zeroed_cells(.nzp_before, shares)
 shares_x <- .try("xgb_live", xgb_primary_predict_live(shares, .mat22_xgb, a22, .xgb_level, .returns,
                                                         level_split = .level_split_xgb,
                                                         own_prev = .own_prev_xgb, region = REGION,
@@ -1600,6 +1634,8 @@ shares <- tryCatch(zero_unnominated_live(shares, fm, TGT, prior = PREV), error =
   .nz_before
 })
 .nz_cells <- nomination_zeroed_cells(.nz_before, shares)
+# Cells zeroed before the trees must be 0 at the final write too (empty when AUSPOL_NOM_ZERO_PRE_XGB=0).
+.nz_cells <- unique(rbind(.nz_cells, .nzp_cells))
 # AUSPOL_LEVEL_CONSERVE "final"/"both": after the nomination zero (a 0 stays 0). See the base call above.
 # Not wrapped either: with the switch on, a failure stops the run.
 shares <- level_conserve_apply(shares, .lc_level, TGT, stage = "final", target = .lc_target,

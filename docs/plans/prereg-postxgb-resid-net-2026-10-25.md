@@ -176,3 +176,39 @@ at 1,000 sims, at the code after 5dd64ec. Baseline cache d3f07d6e21f7, arm cache
 Reading: within 1 SE either way, which is "no measurable effect at this size" (the prereg's MDE note), not a
 refusal. The deciding primary is `--pairs=all`, with the 27 controls; that run has not been done yet (queued behind
 Pete's One Nation priority).
+
+## RESULT, arm N AEF-7 screen (2026-10-25 22:51-23:13; appended)
+
+`quick_arm.R "AUSPOL_POSTXGB_RESID_NET=1" --no-reuse --slots=1`, 1,000 sims, code t181ee5f, baseline cache
+050d4221173d, arm cache 72b66415f12e. Log `deciding-runs/quickarm-20261025-f8-N-aef7.log`.
+
+- Clause 4 (it ran): `PXN1` names the 8 elections with a non-zero port (qld2020, wa2021, sa2022, vic2022, nsw2023,
+  qld2024, wa2025, sa2026). That is the same list as the dry run.
+- Changed cells: 303 of 4,767, in all 7 elections. fed2022 and fed2025 are on the movable list for N.
+- Seat-winner log loss (lower is better), SE clustered on election: 0.2644 -> 0.2647, **+0.0003 (SE 0.0002), WORSE by
+  more than 1 SE**. Per election: qld2024 +0.0013, fed2025 +0.0004, wa2025 +0.0003, fed2022 +0.0002, vic2022 +0.0001,
+  nsw2023 -0.0001, sa2026 -0.0006. Changed-cell share squared error: -35.7 (SE 16.2), slightly better.
+
+Verdict: STOPPED at the screen (WORSE by more than 1 SE). The `--pairs=all` run was not done. RN was not run either,
+because the prereg needs both R and N to pass before RN matters. Cost note: `PXN1` reports 579 s for the netting step
+in EVERY harness run. The memo is per session, and each harness run is its own process, so arm N costs about 10
+minutes per election. That needs caching to disk before any all-pairs or 20k run of N.
+
+## RESULT, arm R `--pairs=all` (2026-10-25 23:23 to 26 Oct 00:36; appended)
+
+`quick_arm.R "AUSPOL_SEAT_SWING_PORT_RESID=1" --pairs=all --no-reuse --slots=1`, 1,000 sims, code t181ee5f. Baseline
+cache 050d4221173d, arm cache 6545b6bb8954. Log `deciding-runs/quickarm-20261025-f8-R-all.log`.
+
+- Clause 3 (controls): PASS. Only the 8 listed elections move (vic2022, nsw2023, qld2020, qld2024, sa2022, sa2026,
+  wa2021, wa2025). The other 27 score exactly 0. qld2020 has no cell moving more than 0.05 points (its coefficient
+  barely changes, 0.161 -> 0.157), although 28 of its seats move slightly.
+- Clause 1 (primary), seat-winner log loss pooled over all 35 elections and 2,931 seats: 0.3085 -> 0.3088, **+0.0003
+  (SE 0.0005)**, within 1 SE, so it does NOT pass. The movable set alone (579 seats, seat-weighted mean of the
+  per-election changes) is +0.0014, the same sign.
+- Per election: qld2024 +0.0116, sa2022 +0.0037, sa2026 +0.0027, wa2021 +0.0023, wa2025 +0.0011, vic2022 +0.0002,
+  qld2020 -0.0001, nsw2023 -0.0083. That is 6 of 8 worse.
+- Clause 2 (guard), changed-cell share squared error: -72.9 (SE 204.1), within 1 SE.
+
+Verdict: NOT SHIPPED. The primary is within 1 SE and leans worse. This is the "no measurable effect at this size"
+outcome the MDE note anticipated, not a refusal of the F8 diagnosis. It also means the smaller residual coefficient
+(about 0.24 against the shipped 0.42) is not better on seats.

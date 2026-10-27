@@ -4,8 +4,8 @@
 \alias{onp_newseat}
 \title{One Nation in seats with no state history: the shared rule}
 \description{
-\code{AUSPOL_ONP_NEWSEAT_RULE} (default \code{"0"}, the shipped behaviour; \code{"1"} the
-rule). docs/plans/prereg-onp-newseat-rule-2026-10-25.md,
+\code{AUSPOL_ONP_NEWSEAT_RULE} (default \code{"1"}, the rule, shipped 2026-10-26;
+\code{"0"} the old behaviour, which stage 1 of rebuild_forecasts.sh pins). docs/plans/prereg-onp-newseat-rule-2026-10-25.md,
 docs/reviews/onp-newseat-parity-2026-10-25.md.
 }
 \details{

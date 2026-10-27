@@ -17,6 +17,14 @@
 # IDEMPOTENT: removes any existing vic2026 rows before appending fresh ones,
 # so re-running (e.g. after more candidates are fetched, or after 9 Nov
 # nominations close and a fuller fetch replaces this one) is safe.
+#
+# RETIRED 2026-10-27. Its `jump` is the raw search LEVEL (sal_raw), never a rise and never
+# scaled to the anchor, so it sat ~1000x above every backtest election's jump (their median
+# is 0, 90th percentile ~0.01) and the hazard read 27 unknown One Nation candidates as
+# emergences (+5.4 One Nation seats in local runs). The comparable vic2026 rows come from
+# scripts/build_vic2026_salience_jump.R, which links to the Premier like fetch_salience_v6.R.
+stop("BVS0! retired 2026-10-27: writes search LEVEL as jump, not comparable with the backtest ",
+     "corpora. See docs/NEXT-STEPS.md (vic2026 salience) and scripts/build_vic2026_salience_jump.R.")
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))

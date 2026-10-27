@@ -142,3 +142,29 @@ fed2022 +0.0011. Reading: on AEF-7 the primary points the right way but is withi
 in AEF-7. This is NOT a refusal: "within 1 SE" stops nothing, and the prereg's own primary is over all 196 targets.
 The `--pairs=all` step was held, because the coordinator's queue said "only if AEF-7 passes"; that decision has been
 referred back.
+
+## RESULT, all elections (2026-10-25 21:24-22:50; appended)
+
+`quick_arm.R "AUSPOL_SURGE_LEVEL=1" --pairs=all --sims=5000 --no-reuse --slots=1` at code t181ee5f (58e6740 plus
+ef09ee5). Baseline cache 6e4cb6a8d04e, arm cache 05a0e9e05752. Log `deciding-runs/quickarm-20261025-surge-level-all.log`,
+score `...-all-score.txt`. 35 elections, 2,931 seats, floor 1e-4. SLV1 shows seat-draws raised in the 17 elections
+with a hazard and 0 everywhere else.
+
+| clause | scope | n | change (lower is better) | SE | result |
+|---|---|--:|--:|--:|---|
+| 1 primary (SLS2) | target seats | 196 / 17 el. | -0.0016 | 0.0036 | within 1 SE: NOT PASSED |
+| 2 guard (SLS3) | all seats | 2,931 / 35 el. | -0.0000 | 0.0007 | holds |
+| 3 per election (SLS4) | | | worst qld2017 +0.0181 (SE 0.0184) | | none worse by 2 SE |
+| 4 LOO (SLS5) | | | -0.0038 to +0.0006 | | sign LOST |
+| 5 without Mildura, Wannon (SLS6) | | | -0.0004 | | sign kept |
+| U1 (SLS7) | 75 winning recipients | | 0 lose > 0.10 | | ok |
+| U2 (SLS8) | hazard-0 seats | | 0 move > 0.001 | | ok |
+
+Elections that gain: vic2022 -0.0064, fed2025 -0.0035, qld2015 -0.0019, qld2020 -0.0019, nsw2023 -0.0018. Elections
+that lose: qld2017 +0.0181, nsw2019 +0.0014, fed2022 +0.0011. quick_arm's AEF-7 subset is -0.0016 (SE 0.0011), the
+same as the AEF-7 screen.
+
+**Verdict: NOT SHIPPED.** The primary is within 1 SE and leave-one-out loses its sign, so the rule does not clear it.
+This is not a headline-positive result refused by a clause: the primary itself did not pass. Mildura and Wannon carry
+most of what gain there is (-0.0016 -> -0.0004 without them). The AEF-7 gain does not hold up across all 35
+elections, mainly because of qld2017.
