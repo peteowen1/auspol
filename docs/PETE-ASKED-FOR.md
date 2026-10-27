@@ -40,6 +40,8 @@ moved verbatim 2026-10-24. Every row below still has something open.
 | Readiness and value-odds artifact (us against TAB, Sportsbet and Betfair) | **SHIPPED** as a page, https://claude.ai/artifact/GdrpxSB7zkY1xEvJvU3TKx (private). Not in the repo pipeline: built from scratchpad scripts, so it does not refresh itself. |
 | Click a seat in that page for its detail; wider table | **IN PROGRESS** 28 Oct. |
 | Review the top contested seats (Box Hill, Glen Waverley, Ashwood, Bayswater, Hastings, Narracan, Eureka, Cranbourne): what work would fix them, or research whether they are a problem at all | **REVIEWED, WORK NOT DONE.** `docs/reviews/contested-seats-vic2026-2026-10-28.md` lists the research per seat; none of it is run yet. |
+| A "while we wait" skill run automatically during long jobs, via a hook | **SHIPPED** 28 Oct: `~/.claude/skills/while-we-wait/SKILL.md` + `waitNudge()` in `~/.claude/hooks/shell-hooks.js` (global, not in any repo). |
+| Live election-night model updating the forecast as booth results come in, learning from AE Forecasts and the NYT Upshot; plan it, build it, put it on the website | **CHARTING** 28 Oct (wayfinder map). Builds on `plans/election-night-booth-model.md` (19 Sep: projection + prior combination built and rehearsed on 2022). VEC feed needs Pete's signed terms + access request; access from 4 Nov, trial 25 Nov. |
 
 ## 2026-10-26
 
