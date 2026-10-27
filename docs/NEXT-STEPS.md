@@ -33,8 +33,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
      Prereg for surge-v2 OFF is a separate question. DECIDED (Pete, 27 Oct: "go" on Claude's recommendation): no
      lead-matched retrain; wait for the final snapshot (25-27 Nov), which measures what the hazard trained on.
      (Rebooted 26 Oct 12:49; the R checks below are unblocked.)
-  2. Departed-origin part 2 (the xgb feature, a stage-4 rebuild): eligible by the prereg's letter because part 1 was
-     within 1 SE, but part 1 leaned worse (+1.33, SE 2.56). Claude recommends not spending the rebuild.
+  2. CLOSED 27 Oct: departed-origin part 2 not run (Pete agreed; DECISIONS).
   3. `dev` -> `main` PR (172 files ahead of main): review what landed since the last pre-PR review (38d96a5,
      01e765d and the 25 Oct merges), full `check_like_ci.R`, then open.
 - OPEN, merge (reviewed, not on dev): F16 `AUSPOL_ROW_SHIFT_EXACT` (6306855; add the M~100-with-others guard at
@@ -110,7 +109,7 @@ contest features / contest base / partial-contest arm A refused, first-term fill
   -0.1247, SE 0.1133, 511 cells) but clause 3 refuses (vic2022 worse by 2.5 SE; leave-one-out above 1 SE in only 15 of 19
   drops); seat log loss is unchanged (-0.0000). Departed-origin arm A all 35 NOT PASSED (changed-cell share error
   +1.33, SE 2.56; Mount Gambier, Hillarys and Cabramatta outweigh Morwell). Its part 2 (the xgb feature, stage-4
-  rebuild) is eligible by the letter because part 1 is within 1 SE: Pete's call. NOT RUN for time (no launch after
+  rebuild) CLOSED 27 Oct, not run (Pete agreed). NOT RUN for time (no launch after
   02:15): departed arm B (`mean`), level-conserve (`prereg-level-conserve-2026-10-25.md`; NEXT after the reboot, needs
   >= 6.5 GB: the majors' +0.6-0.8 tree overshoot in ~30 elections is this seat-layer effect,
   `reviews/greens-overcall-shap-trace-2026-10-26.md`), port 3C
