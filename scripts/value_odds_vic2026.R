@@ -153,7 +153,12 @@ meta <- list(
   favs = as.list(table(vapply(fj$seats, function(s) s$favourite, ""))))
 
 rows <- best[, .(seat, selection, cls, best_price, book, nbook, mkt_p = round(mkt_p, 4), our_p = round(our_p, 4), edge = round(edge, 4))]
-tj <- function(x) as.character(toJSON(x, auto_unbox = TRUE, null = "null", na = "null", digits = NA))
+# Scraped names (bookmaker selections, candidates) land inside a <script> block, so <, > and & are written as
+# \u escapes: valid JSON, and no value can close the tag. The page also escapes every string it puts in HTML.
+tj <- function(x) {
+  s <- as.character(toJSON(x, auto_unbox = TRUE, null = "null", na = "null", digits = NA))
+  gsub(">", "\\u003e", gsub("<", "\\u003c", gsub("&", "\\u0026", s, fixed = TRUE), fixed = TRUE), fixed = TRUE)
+}
 page <- rd(TEMPLATE)
 for (ph in c("__ROWS__", "__SEATS__", "__META__")) if (!grepl(ph, page, fixed = TRUE)) stop("VO3! template has no ", ph)
 page <- sub("__ROWS__", tj(unname(lapply(seq_len(nrow(rows)), function(i) unname(as.list(rows[i]))))), page, fixed = TRUE)

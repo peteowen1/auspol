@@ -225,7 +225,7 @@ function render(){
     if(g==="Clean"&&gr!=="Clean") continue;
     if(g==="noDefect"&&gr==="Known defect") continue;
     const kelly=Math.max(0,(ours*price-1)/(price-1))/4;
-    out.push(`<tr><td>${seatBtn(seat)}</td><td><span class="dot" style="background:var(${col[c]||"--ind"})"></span>${sel}</td><td class="n">${price.toFixed(2)}</td><td>${{sportsbet:"Sportsbet",tab:"TAB",betfair:"Betfair"}[book]}${nb>1?"":" (only book)"}</td><td class="n">${pct(mkt)}</td><td class="n">${pct(ours)}</td><td class="n">+${edge.toFixed(2)}</td><td class="n">${(100*kelly).toFixed(1)}%</td><td><span class="grade ${cls[gr]}">${gr}</span></td><td class="why">${why}</td></tr>`);
+    out.push(`<tr><td>${seatBtn(seat)}</td><td><span class="dot" style="background:var(${col[c]||"--ind"})"></span>${esc(sel)}</td><td class="n">${price.toFixed(2)}</td><td>${esc({sportsbet:"Sportsbet",tab:"TAB",betfair:"Betfair"}[book]||book)}${nb>1?"":" (only book)"}</td><td class="n">${pct(mkt)}</td><td class="n">${pct(ours)}</td><td class="n">+${edge.toFixed(2)}</td><td class="n">${(100*kelly).toFixed(1)}%</td><td><span class="grade ${cls[gr]}">${gr}</span></td><td class="why">${esc(why)}</td></tr>`);
   }
   $("rows").innerHTML = out.join("") || `<tr><td colspan="10" class="sub">No selections pass these filters. Lower the minimum edge or widen the grade.</td></tr>`;
   $("count").textContent = out.length+" selections";
@@ -285,7 +285,7 @@ const BK = {sportsbet:"Sportsbet",tab:"TAB",betfair:"Betfair"};
 const days = Math.round((Date.parse("2026-11-28") - Date.parse(META.day)) / 864e5);
 $("daysout").textContent = days;
 const fetchedTxt = Object.entries(META.books).map(([b,v]) => `${BK[b]} ${v.seats} seats, fetched ${v.fetched_utc ? v.fetched_utc.replace("T"," ").slice(0,16)+" UTC" : "time not recorded"}`).join("; ");
-$("provenance").innerHTML = `Capture of ${META.day}. Forecast built ${esc(META.built_at.slice(0,16).replace("T"," "))} UTC (git <code>${esc(META.git_sha)}</code>, ${META.n_sims.toLocaleString()} simulations). ${esc(fetchedTxt)}.`;
+$("provenance").innerHTML = `Capture of ${esc(META.day)}. Forecast built ${esc(META.built_at.slice(0,16).replace("T"," "))} UTC (git <code>${esc(META.git_sha)}</code>, ${META.n_sims.toLocaleString()} simulations). ${esc(fetchedTxt)}.`;
 const P = META.parties, ORDER = ["LNP","ALP","ONP","GRN"];
 $("seatbar").setAttribute("aria-label", "Expected seats: " + ORDER.map(k => `${PNAME[k]} ${P[k].expected.toFixed(1)}`).join(", "));
 $("seatbar").innerHTML = ORDER.map(k => `<span style="flex:${P[k].expected};background:var(${col[k]})">${k} ${P[k].expected.toFixed(1)}</span>`).join("") + `<span style="flex:${Math.max(0, 88 - ORDER.reduce((a,k)=>a+P[k].expected,0))};background:var(--ind)"></span>`;
