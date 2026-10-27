@@ -23,7 +23,8 @@ row_shift_exact_on <- function() {
 #' new values exactly, and the cells it did not move are scaled in proportion
 #' to fill `100 - moved`, the rule `.shift_cell()` uses for the leader-seat
 #' bonus. A row where that cannot be done (a negative cell, the moved cells
-#' alone above 100, or nothing left to scale) falls back to the whole-row
+#' alone at or above 100 while unmoved cells still hold share, which would
+#' zero those cells, or nothing left to scale) falls back to the whole-row
 #' rescale and is counted. Rows with no moved cell are rescaled exactly as
 #' before. Prints one RSX1 line (cells, rows, the lift kept against what the
 #' rescale would have kept, fallbacks). plans/prereg-row-shift-exact-2026-10-25.md.
@@ -47,7 +48,10 @@ row_shift_exact <- function(before, after, label = "", step = "") {
     m <- mv[r, ]
     a <- after[r, ]
     M <- sum(a[m]); O <- sum(a[!m])
-    if (all(is.finite(a)) && all(a >= 0) && M <= 100 && (O > 0 || abs(M - 100) < 1e-9)) {
+    # Feasible: moved cells alone fit in 100 and either leave room for the others or (with no others) make 100.
+    # Moved cells at ~100 beside unmoved cells that hold share would scale those cells to ~0: fall back instead.
+    ok_room <- if (O > 0) M < 100 - 1e-6 else abs(M - 100) < 1e-9
+    if (all(is.finite(a)) && all(a >= 0) && ok_room) {
       if (O > 0) a[!m] <- a[!m] * (100 - M) / O
       out[r, ] <- a
     } else fb <- fb + 1L

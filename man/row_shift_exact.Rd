@@ -33,7 +33,8 @@ Default (\code{AUSPOL_ROW_SHIFT_EXACT = "0"}): exactly that rescale,
 new values exactly, and the cells it did not move are scaled in proportion
 to fill \code{100 - moved}, the rule \code{.shift_cell()} uses for the leader-seat
 bonus. A row where that cannot be done (a negative cell, the moved cells
-alone above 100, or nothing left to scale) falls back to the whole-row
+alone at or above 100 while unmoved cells still hold share, which would
+zero those cells, or nothing left to scale) falls back to the whole-row
 rescale and is counted. Rows with no moved cell are rescaled exactly as
 before. Prints one RSX1 line (cells, rows, the lift kept against what the
 rescale would have kept, fallbacks). plans/prereg-row-shift-exact-2026-10-25.md.

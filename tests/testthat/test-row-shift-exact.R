@@ -51,6 +51,12 @@ test_that("infeasible rows fall back to the rescale and are counted, never left 
   o2 <- NULL; txt2 <- utils::capture.output(o2 <- row_shift_exact(b2, a2))
   expect_equal(unname(o2[1, ]), c(0, 60, 40))
   expect_match(txt2, "0 row\\(s\\) fell back")
+  # moved cells making exactly 100 beside unmoved cells that hold share: the exact rule would zero those cells
+  b3 <- matrix(c(30, 30, 40), 1, dimnames = list("D", c("X", "Y", "Z"))); a3 <- b3; a3[1, c("X", "Y")] <- c(50, 50)
+  o3 <- NULL; txt3 <- utils::capture.output(o3 <- row_shift_exact(b3, a3))
+  expect_match(txt3, "1 row\\(s\\) fell back")
+  expect_equal(o3["D", ], (100 * a3 / rowSums(a3))["D", ])
+  expect_gt(o3[["D", "Z"]], 0)
 })
 
 test_that("a value other than 0 or 1 stops", {
