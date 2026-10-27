@@ -30,8 +30,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   its known answer now (ours 88/88 against its own favourites). Still to build: the VEC 2026 results file itself.
   Roy Morgan dropped 21 Oct (no seat winners) (`plans/external-benchmark-vic2026-2026-10-20.md`).
 
-- Builds waiting for R (26 Oct, each on a LOCAL branch, not pushed, nothing run under R because of the leak).
-  Order after the reboot: tests + `devtools::document()` on each, then one quick_arm screen at a time:
+- Builds waiting for R (26 Oct, each on a LOCAL branch, not pushed). 27 Oct evening: `ind-overcall-1025` and
+  `mp-slope-shrink-1025` merged up to dev and documented (stale .Rd fixed on ind-overcall; mp-slope's test regex fixed,
+  its 62 tests pass); both `check_like_ci.R` runs were reaped at low memory (paged pool 3.4 GB again, 5.3 GB free).
+  NEXT after a reboot: rerun `check_like_ci.R` in each worktree ONE AT A TIME, then level-conserve dry run 1.
+  Then one quick_arm screen at a time:
   - `ind-overcall-1025` `7252acb`: `AUSPOL_IND_GAP_RESTAND` (off). As built (yes/no: gap kept if any earlier
     candidate of the class re-stands) it reaches only Pascoe Vale of the 5 targets. Pete chose the SHARE version
     (carry only the re-standers' share of the old class vote; Geelong ~2% of Lyons's gap): NOT built yet.
