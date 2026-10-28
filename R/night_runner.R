@@ -266,7 +266,8 @@ night_booth_table <- function(feed, lookup, places = NULL, include_late = FALSE)
 #' `OTH`, as in the page's `booths-vic2022.json`). The two-candidate count keeps [classify_party()]'s class, so an independent
 #' in the final two reads as `IND`.
 #' @param conv [night_booth_table()] output.
-#' @return Named list by district of lists `{n, counted = TRUE, now = {ALP, LNP, GRN, OTH}, tn = [[party, votes], [party, votes]] | NULL}`,
+#' @return Named list by district of lists `{n, counted = TRUE, now = {ALP, LNP, GRN, OTH}, tn = [[party, votes], [party, votes]] | NULL}`
+#'   (`tn` classes are [classify_party()]'s, so `ONP` and `OTH_RIGHT` can appear there, unlike `now`),
 #'   `tn` larger first and `NULL` until the VEC posts that booth's two-candidate count (or when two candidates share a class).
 #' @export
 night_booth_results <- function(conv) {
@@ -293,6 +294,14 @@ night_booth_results <- function(conv) {
     list(n = tot$booth[i], counted = TRUE, now = now, tn = tn)
   })
   split(rows, tot$district)
+}
+
+#' [night_booth_results()] that never stops a cycle: on any error the map's booth block is left out (`NULL`, logged NW13)
+#' and the seats still publish.
+#' @param conv [night_booth_table()] output.
+#' @export
+night_booth_results_safe <- function(conv) {
+  tryCatch(night_booth_results(conv), error = function(e) { message("NW13  booth block skipped: ", conditionMessage(e)); NULL })
 }
 
 #' Stop (NW7) unless the saved state's seats and the feed's districts are the same set
@@ -570,7 +579,7 @@ night_cycle <- function(cfg) {
                             sims = cfg$sims, use_tcp = !isFALSE(cfg$use_tcp)); stamp_t("update_simulate")
     res$denominator <- denom; res$n_placeholder <- conv$n_placeholder_booths; res$n_unlisted <- conv$n_unlisted_booths
     if (length(res$nu$fallback_projected)) message("NW12  ", length(res$nu$fallback_projected), " seat(s) fell back to the projected denominator (no usable expected votes): ", paste(res$nu$fallback_projected, collapse = ", "))
-    doc <- night_build_json(cache$st, res, list(file = basename(snap), stamp = stamp, archived = arch$new), base = cache$base, booths = night_booth_results(conv))
+    doc <- night_build_json(cache$st, res, list(file = basename(snap), stamp = stamp, archived = arch$new), base = cache$base, booths = night_booth_results_safe(conv))
     night_publish_json(doc, cfg$out, min_seats = nrow(cache$st$shares)); stamp_t("publish")
     sm <- sprintf("OK %s | seats with feed data %d of %d, updated %d, 2CP %d | mean counted %.1f%% | chamber ALP %.1f LNP %.1f | %s",
                   stamp, length(res$matched), nrow(cache$st$shares), res$n_updated, res$n_tcp, 100 * mean(res$nu$counted),

@@ -10,7 +10,8 @@ night_booth_results(conv)
 \item{conv}{\code{\link[=night_booth_table]{night_booth_table()}} output.}
 }
 \value{
-Named list by district of lists \verb{\{n, counted = TRUE, now = \{ALP, LNP, GRN, OTH\}, tn = [[party, votes], [party, votes]] | NULL\}},
+Named list by district of lists \verb{\{n, counted = TRUE, now = \{ALP, LNP, GRN, OTH\}, tn = [[party, votes], [party, votes]] | NULL\}}
+(\code{tn} classes are \code{\link[=classify_party]{classify_party()}}'s, so \code{ONP} and \code{OTH_RIGHT} can appear there, unlike \code{now}),
 \code{tn} larger first and \code{NULL} until the VEC posts that booth's two-candidate count (or when two candidates share a class).
 }
 \description{

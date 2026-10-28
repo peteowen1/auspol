@@ -417,4 +417,9 @@ test_that("per-booth results for the map: reported ordinary booths only, four fi
   expect_null(night_booth_results(conv)$Hawthorn[[1]]$tn)
   conv$live$votes[] <- 0                                       # nothing reported
   expect_length(night_booth_results(conv), 0L)
+
+  conv$live$votes <- as.character(conv$live$votes)             # a damaged table: the plain builder errors, the cycle's wrapper does not
+  expect_error(night_booth_results(conv))
+  expect_message(bk <- night_booth_results_safe(conv), "NW13")
+  expect_null(bk)
 })
