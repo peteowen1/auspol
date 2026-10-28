@@ -162,6 +162,9 @@ cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f
   }
 })
 CAL_TAG <- paste0(
+  # An election-night replay is not a forecast: marked so scripts/pool_backtests.R never pools it
+  # (review of #153: a replay at 1 counted would otherwise be the newest vic2022 file).
+  if (!is.na(night_replay_frac())) sprintf("-night%03d", round(100 * night_replay_frac())) else "",
   if (as.numeric(Sys.getenv("AUSPOL_SURGE_H", "0")) > 0) "-surge" else "",
   if (as.numeric(Sys.getenv("AUSPOL_SHRINK", "0")) != 0)
     sprintf("-sh%s", sub("0[.]", "", format(as.numeric(Sys.getenv("AUSPOL_SHRINK")), nsmall = 2)))
@@ -988,6 +991,8 @@ for (K in PAIRS) {
   # Computed once, before the flow-uncertainty branch, so both calls get it.
   .bo <- breakout_mix_args(sprintf("vic%d", K$to), shares)
   FLOW_UNC <- identical(Sys.getenv("AUSPOL_FLOW_UNC", "0"), "1")
+  if (FLOW_UNC && !is.na(night_replay_frac()))
+    stop("NX4! AUSPOL_NIGHT_REPLAY_FRAC is only wired into the single-flow branch; with AUSPOL_FLOW_UNC=1 it would silently not run")
   if (FLOW_UNC) {
     sds <- readRDS("output/flow-uncertainty-sd.rds")
     R_ENS <- 40L; per <- N_SIMS %/% R_ENS
@@ -1061,7 +1066,22 @@ for (K in PAIRS) {
     .imx <- ind_mixture_surge(sprintf("vic%d", K$to), rownames(shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BV1N")
     surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
     .swd <- harness_sw_draws(SWD, colnames(shares), N_SIMS, sprintf("vic%d", K$to), "BVW")
-    sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = harness_sw_net_sd(size_sd_apply(SD_OVR, shares, .eb, .level_sd, .lm(shares)), .swd, shares, .level_sd, .lm(shares), psd, sprintf("vic%d", K$to), "BVW"), level_mult = .lm(shares), shares, fm, party_sd = psd, statewide_draws = .swd,
+    .sdo <- harness_sw_net_sd(size_sd_apply(SD_OVR, shares, .eb, .level_sd, .lm(shares)), .swd, shares, .level_sd, .lm(shares), psd, sprintf("vic%d", K$to), "BVW")
+    # ELECTION-NIGHT REPLAY (AUSPOL_NIGHT_REPLAY_FRAC, R/night_update.R, issue #153): the afternoon forecast above is
+    # the prior; booths counted by that fraction of the night update each seat's primaries and spread, and the
+    # statewide draws shrink by the share of uncertainty resolved. Unset: nothing here runs.
+    .nf <- night_replay_frac()
+    if (!is.na(.nf)) {
+      .bl <- file.path("output", sprintf("booths-vic%d.csv", K$to)); .br <- file.path("output", sprintf("booths-vic%d.csv", K$from))
+      if (!file.exists(.bl) || !file.exists(.br)) stop(sprintf("NX1! night replay needs %s and %s (scripts/fetch_booths_vic2022.R)", .bl, .br))
+      .nu <- night_booth_update(shares, night_prior_sd(shares, .level_sd, .lm(shares), .sdo), .nf,
+                                data.table::fread(.bl, showProgress = FALSE), data.table::fread(.br, showProgress = FALSE))
+      if (.nf > 0 && .nu$n_updated == 0L) stop("NX2! night replay at ", .nf, " updated no seat: booth districts do not match the harness's seats")
+      cat(sprintf("NX3  night replay vic%d at %.2f of the night vote: %d of %d seats updated, median counted %.1f%% of all votes, %.0f%% of cell spread resolved; statewide draws kept at %.2f\n",
+                  K$to, .nf, .nu$n_updated, nrow(shares), 100 * stats::median(.nu$counted[.nu$counted > 0]), 100 * .nu$resolved, 1 - .nu$resolved))
+      shares <- .nu$shares; .sdo <- .nu$sd; .swd <- night_shrink_draws(.swd, 1 - .nu$resolved)
+    }
+    sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = .sdo, level_mult = .lm(shares), shares, fm, party_sd = psd, statewide_draws = .swd,
                                   seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = N_SIMS,
                                   breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(.eb, rownames(shares)), error_q = error_dist_args(.eb, colnames(shares)),
                                   smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,

@@ -180,3 +180,31 @@ will be published, and whether there is anything I need to register for?
 
 Thanks,
 Pete Owen
+
+## Dress rehearsal 3: win probabilities and chamber totals through the shipped simulator (2026-10-28, issue #153)
+
+`AUSPOL_NIGHT_REPLAY_FRAC` (`R/night_update.R`, hooked into `scripts/backtest_candidate_vic.R` before the final
+`simulate_seat_contests()`): the harness's own afternoon vic2022 forecast is the prior; booths counted by that
+fraction of the night update each seat's primaries cell by cell (rehearsal 2's projection and precision weighting),
+the posterior sds replace the per-cell spread, and the statewide draws shrink around their centre by the mean share
+of spread resolved. The shipped flows, Coalition split and simulator then give win probabilities and chamber totals.
+Scored with `quick_arm.R --pairs=vic2022` (1,000 sims; baseline = the afternoon forecast, same seed).
+
+Seat-winner log loss over 88 seats, lower is better (afternoon forecast 0.2643):
+
+| night vote counted | 0 | 10% | 25% | 50% | 75% | 100% |
+|---|---:|---:|---:|---:|---:|---:|
+| log loss | 0.2643 (byte-identical) | 0.1556 | 0.1395 | 0.1112 | 0.1112 | 0.0897 |
+
+50% and 75% are identical because 2022 early votes are one unit per district (rehearsal 1); in 2026 every early
+voting centre is its own booth row, which will smooth the curve. Chamber at 50% counted, 90% range (median), against
+the 2022 result: Labor 51-57 (55), actual 56; Coalition 22-29 (26), actual 28; Greens 4-5 (5), actual 4: all covered.
+**Independents 1-6 (3), actual 0: not covered.** The seats are close independent contests decided on preferences
+(Mildura IND 0.92 at 50% counted, lost on preferences; Mornington 0.31, Hawthorn 0.24), plus South-West Coast, which
+is missing from the 2022 booth file and so never updates. That is the preference model, not the count update.
+
+Caveats (review of #153): (1) **not held out**: `booth_projection_sd()` and the report-order seed were fitted on this
+same 2018 -> 2022 replay; (2) **not all knowable on the night**: "fraction of the night vote" and `counted_share` use
+final totals as the denominator; live, they need a turnout estimate; (3) the statewide shrink is a heuristic (mean of
+1 - posterior sd / prior sd); (4) breakout, surge and error-quantile components keep their afternoon strength after
+the update. Replay outputs carry `-nightNNN` in their names and `scripts/pool_backtests.R` skips them (PB0).
