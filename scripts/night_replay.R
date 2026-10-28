@@ -55,7 +55,8 @@ run_one <- function(fr) {
   tot <- sim$totals
   rng <- function(p) if (p %in% colnames(tot)) { q <- stats::quantile(tot[, p], c(.05, .5, .95), type = 1); sprintf("%s %d-%d (%d)", p, q[1], q[3], q[2]) } else ""
   gp <- if (!is.null(nu) && !is.null(nu$type_gap)) paste(sprintf("%s/%s %+.1f (%d seats)", nu$type_gap$booth_type, nu$type_gap$cls, 100 * nu$type_gap$gap, nu$type_gap$n_seats)[nu$type_gap$cls %in% c("ALP", "LNP", "GRN")], collapse = ", ") else "none measured"
-  list(frac = fr, logloss = mean(-log(pmax(pa$prob, eps))), n = nrow(pa), wp = wp, gaps = gp,
+  cnt <- if (is.null(nu)) setNames(rep(0, nrow(st$shares)), rownames(st$shares)) else nu$counted
+  list(frac = fr, logloss = mean(-log(pmax(pa$prob, eps))), n = nrow(pa), wp = wp, gaps = gp, totals = tot, counted = cnt,
        chamber = paste(vapply(c("ALP", "LNP", "GRN", "IND"), rng, ""), collapse = "; "))
 }
 res <- lapply(fracs, run_one)
@@ -63,3 +64,8 @@ for (r in res) cat(sprintf("NRP2  %.2f counted: seat log loss %.4f over %d seats
 out <- sub("[.]rds$", sprintf("-replay%s.csv", if (use_tcp) "-tcp" else ""), state_f)
 fwrite(rbindlist(lapply(res, function(r) cbind(frac = r$frac, r$wp))), out)
 cat(sprintf("NRP2  win probabilities per fraction -> %s\n", out))
+# per-draw seat totals and each seat's counted share, for chamber ranges and a page prototype
+fwrite(rbindlist(lapply(res, function(r) data.table(frac = r$frac, sim = seq_len(nrow(r$totals)), as.data.table(r$totals)))),
+       sub("[.]csv$", "-totals.csv", out))
+fwrite(rbindlist(lapply(res, function(r) data.table(frac = r$frac, seat = names(r$counted), counted = round(unname(r$counted), 4)))),
+       sub("[.]csv$", "-counted.csv", out))
