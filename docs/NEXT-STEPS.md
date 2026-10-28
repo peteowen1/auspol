@@ -10,8 +10,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 - **28 Oct: 3C SHIPPED, PUBLISHED AND MERGED.** Stage-6 rebuild published 11:09 (shipped-models port table carries
   `lineup3c=2`; AEF-7 0.2639 vs AEF 0.2825), PR #159 merged 11:24 after CI passed. Forecast workflow run 40608663021
-  triggered by hand on main: READ ITS CONCLUSION and Bendigo West in `forecast-vic2026.json` (expect ALP ~0.36 / LNP
-  ~0.19 / ONP ~0.43). Snapshot to restore if needed: `output/snapshots/20261028-1109-14111624-from6`.
+  triggered by hand on main: **success**, published 11:33 (66fede0): Bendigo West ONP 0.435 / ALP 0.364 / LNP 0.188,
+  Bendigo East ONP 0.641, exactly the live walk; chamber LNP 36.0 / ALP 31.4 / ONP 14.3, hung 78%. Snapshot to restore if needed: `output/snapshots/20261028-1109-14111624-from6`.
 - **28 Oct, earlier: port 3C ship (Pete: finish checks, then ship).** Mode 2 on 8 movable elections -0.0001 (SE
   0.0004), not passed; live walk moves Bendigo West to ALP 0.36 / LNP 0.19 / ONP 0.43 (market 0.44 / 0.12 / 0.41). Pete
   overrode clause 1 (prereg `plans/prereg-seat-swing-port-3c-2026-10-25.md`, RESULT + decision sections). Remaining:
