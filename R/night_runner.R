@@ -381,6 +381,11 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
 #' a `night` block (built_at, the snapshot it came from, how many seats had feed data). Fields the night
 #' model does not recompute (`track_record`, `poll_source`, `region`) are copied from `base` when given, else NULL.
 #' `primary_q` is not produced (the update gives a posterior sd, not draws); `primary_sd` is given instead.
+#' Added for the live page (#162), all additive: per party `chamber$parties[[p]]$hist` (draws giving k seats, k = 0..`chamber_seats`),
+#' per seat party `primary_prior` (the afternoon first preference, so the page can show movement) and per seat `vec_2cp`
+#' (the VEC's two-candidate count where the update used it, else `null`: `vec_share_a` is the RAW counted share of `a` over `a` + `b`
+#' in the booths reported, `flow_share_a` the flow-based projection of the final share from first preferences and flow, `model_share_a` the
+#' simulated posterior mean, and `wrong_pair` TRUE when the VEC's pair is not one the model expected).
 #' @param base A parsed published `forecast-vic2026.json` (list), or `NULL`.
 #' @param st Saved afternoon state (an `AUSPOL_NIGHT_DUMP` RDS, read).
 #' @param res Result of [night_run_update()].
@@ -398,18 +403,22 @@ night_build_json <- function(st, res, snapshot, base = NULL, election = "vic2026
                                               p_majority = round(mean(tot[[p]] >= majority), 4),
                                               p_most_seats = round(mean(tot[[p]] == row_max), 4),
                                               p_most_seats_strict = round(mean(tot[[p]] == row_max & n_at_max == 1L), 4),
-                                              quantiles = q(tot[[p]])))
+                                              quantiles = q(tot[[p]]),
+                                              # draws that gave this party k seats, k = 0..chamber_seats (index k + 1): the page's histograms
+                                              hist = unname(as.integer(table(factor(as.integer(tot[[p]]), levels = 0:n_seats))))))
   names(chamber) <- parties
   maj_l <- if ("LNP" %in% parties) tot$LNP else 0; maj_a <- if ("ALP" %in% parties) tot$ALP else 0
   onp <- if ("ONP" %in% parties) tot$ONP else 0
   onp_bop <- mean(pmax(maj_l, maj_a) < majority & pmax(maj_l, maj_a) + onp >= majority & onp > 0)
   region <- if (!is.null(base$seats)) stats::setNames(vapply(base$seats, function(s) if (is.null(s$region)) NA_character_ else s$region, ""), vapply(base$seats, `[[`, "", "seat")) else NULL
   wp <- as.data.frame(sim$win_prob)
+  nt <- attr(sim, "night_tcp"); if (!is.null(nt)) nt <- as.data.frame(nt)
   tw <- sim$tcp_winner; tr <- sim$tcp_runnerup
   seat_rows <- lapply(seats, function(s) {
     w <- wp[wp$seat == s, ]
     ps <- lapply(colnames(res$shares), function(p) list(party = p, win_prob = round(if (p %in% w$party) w$prob[w$party == p] else 0, 4),
                                                          primary = round(res$shares[s, p], 2), primary_sd = round(res$sd[s, p], 2),
+                                                         primary_prior = if (!is.null(st$shares) && s %in% rownames(st$shares) && p %in% colnames(st$shares)) round(st$shares[s, p], 2) else NULL,
                                                          candidate = NULL, sitting = NULL))
     ps <- ps[order(-vapply(ps, `[[`, numeric(1), "win_prob"))]
     ft <- NULL
@@ -420,7 +429,12 @@ night_build_json <- function(st, res, snapshot, base = NULL, election = "vic2026
       ft <- list(leader = lead, other = setdiff(ab, lead), p_pair = round(mean(hit), 4), p_leader_wins_pair = round(mean(tw[hit, s] == lead), 4))
       if (!length(ft$other)) ft$other <- NULL
     }
-    list(seat = s, region = if (!is.null(region) && s %in% names(region) && !is.na(region[[s]])) region[[s]] else NULL,
+    # the VEC's two-candidate count where the update used it: `wrong_pair` TRUE = the VEC's pair is not one the model expected
+    v2 <- NULL
+    if (!is.null(nt) && s %in% nt$seat) { r <- nt[nt$seat == s, ][1L, ]
+      v2 <- list(a = r$a, b = r$b, vec_share_a = if (is.finite(r$raw_a)) round(r$raw_a, 4) else NULL, flow_share_a = round(r$obs_a, 4), model_share_a = if (is.finite(r$post_a)) round(r$post_a, 4) else NULL,
+                 pair_share = round(r$pair_share, 4), wrong_pair = isTRUE(r$flag)) }
+    list(seat = s, vec_2cp = v2, region = if (!is.null(region) && s %in% names(region) && !is.na(region[[s]])) region[[s]] else NULL,
          favourite = ps[[1]]$party, favourite_prob = ps[[1]]$win_prob, final_two = ft,
          counted_pct = round(100 * unname(res$nu$counted[s]), 1), parties = ps)
   })
