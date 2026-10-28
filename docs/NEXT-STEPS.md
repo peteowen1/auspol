@@ -32,9 +32,16 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   simulator, VEC 2CP as evidence on the preference flow, pooled vote-type gap; seat log loss vs afternoon 0.2643:
   0.1133 at 10% counted, 0.0968 at 25%, 0.0929 at 50%, 0.0712 at 75% (early votes interleaved). Feed reader
   (`R/vec_feed.R`), upper-house 2022/2018 results (`output/council-*`), fast replay (`scripts/night_replay.R`).
-  OPEN: **Pete #150, sign the VEC feed terms + access form (access from 4 Nov)**; #154 the live page prototype (with
-  Pete); fog: the poller, upper-house reader, 2026 centre matching (needs the 10 Nov set-up files), the night runner
-  and R2 output, the upper-house model.
+  DONE 28 Oct: VEC sign-up (#150; Pete sent the form and signed terms; access details by email from 4 Nov, set-up
+  files 10 Nov, trial 25 Nov with no 2CP); live page decided (#154: all three layouts, needle / race to 45 / seat
+  grid, plus a seat map, booth maps and NYT-style swing arrows; prototypes
+  https://claude.ai/artifact/FsCAXFqbj3ciiaFDppydQm and https://claude.ai/artifact/REkUoQmPLWPkrUmj5SRRVy);
+  upper-house design `docs/plans/upper-house-night-model.md`. IN FLIGHT: night runner, branch `night-runner`
+  (review round 1 found an unchecked seat-coverage gap; fixes + enrolment-based counted share being added; 2022
+  test: enrolment x own 2018 turnout misses a seat's total by 2.7% on average against 9.2% for 2018 totals).
+  OPEN: #162 build the live page on ITG, #163 maps (needs the VEC's official 2022 boundaries; the prototype's are
+  rebuilt from booth locations); fog: SharePoint fetch (after 4 Nov), 2026 centre matching (10 Nov files), R2
+  upload + Actions backup, the upper-house model.
 - 28 Oct: value-odds page https://claude.ai/artifact/GdrpxSB7zkY1xEvJvU3TKx (readiness, seat click-through, our
   probabilities against Sportsbet/TAB/Betfair). Built from scratchpad scripts, not the repo: it does not refresh.
   Contested-seat research, all committed: `reviews/contested-seats-vic2026-2026-10-28.md` (hub),
@@ -403,8 +410,7 @@ Tasmanian primaries table and state-swing prior rows, district-to-region
 table on the blog page, To Do reminders (9 Nov, HTV row, VEC email).
 
 Still open:
-- VEC feed: 2026 configuration not yet published; **Pete to send the email**
-  drafted in the booth-model plan.
+- VEC feed: access requested 28 Oct (form + signed terms sent); details by email from 4 Nov.
 - Federal results as a correlated signal for state seat lean: needs
   seat-boundary matching (`external/reference/boundaries/` has CED 2016).
 - GDELT parked (needs a GCP project); Census 2006/2001 have no bulk pack.
