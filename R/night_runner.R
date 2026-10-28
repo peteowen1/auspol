@@ -383,7 +383,9 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
 #' `primary_q` is not produced (the update gives a posterior sd, not draws); `primary_sd` is given instead.
 #' Added for the live page (#162), all additive: per party `chamber$parties[[p]]$hist` (draws giving k seats, k = 0..`chamber_seats`),
 #' per seat party `primary_prior` (the afternoon first preference, so the page can show movement) and per seat `vec_2cp`
-#' (the VEC's two-candidate count where the update used it, with `wrong_pair`), else `null`.
+#' (the VEC's two-candidate count where the update used it, else `null`: `vec_share_a` is the RAW counted share of `a` over `a` + `b`
+#' in the booths reported, `flow_share_a` the flow-based projection of the final share from first preferences and flow, `model_share_a` the
+#' simulated posterior mean, and `wrong_pair` TRUE when the VEC's pair is not one the model expected).
 #' @param base A parsed published `forecast-vic2026.json` (list), or `NULL`.
 #' @param st Saved afternoon state (an `AUSPOL_NIGHT_DUMP` RDS, read).
 #' @param res Result of [night_run_update()].
@@ -411,7 +413,7 @@ night_build_json <- function(st, res, snapshot, base = NULL, election = "vic2026
   region <- if (!is.null(base$seats)) stats::setNames(vapply(base$seats, function(s) if (is.null(s$region)) NA_character_ else s$region, ""), vapply(base$seats, `[[`, "", "seat")) else NULL
   wp <- as.data.frame(sim$win_prob)
   nt <- attr(sim, "night_tcp"); if (!is.null(nt)) nt <- as.data.frame(nt)
-  tw <-sim$tcp_winner; tr <- sim$tcp_runnerup
+  tw <- sim$tcp_winner; tr <- sim$tcp_runnerup
   seat_rows <- lapply(seats, function(s) {
     w <- wp[wp$seat == s, ]
     ps <- lapply(colnames(res$shares), function(p) list(party = p, win_prob = round(if (p %in% w$party) w$prob[w$party == p] else 0, 4),
@@ -430,7 +432,7 @@ night_build_json <- function(st, res, snapshot, base = NULL, election = "vic2026
     # the VEC's two-candidate count where the update used it: `wrong_pair` TRUE = the VEC's pair is not one the model expected
     v2 <- NULL
     if (!is.null(nt) && s %in% nt$seat) { r <- nt[nt$seat == s, ][1L, ]
-      v2 <- list(a = r$a, b = r$b, vec_share_a = round(r$obs_a, 4), model_share_a = if (is.finite(r$post_a)) round(r$post_a, 4) else NULL,
+      v2 <- list(a = r$a, b = r$b, vec_share_a = if (is.finite(r$raw_a)) round(r$raw_a, 4) else NULL, flow_share_a = round(r$obs_a, 4), model_share_a = if (is.finite(r$post_a)) round(r$post_a, 4) else NULL,
                  pair_share = round(r$pair_share, 4), wrong_pair = isTRUE(r$flag)) }
     list(seat = s, vec_2cp = v2, region = if (!is.null(region) && s %in% names(region) && !is.na(region[[s]])) region[[s]] else NULL,
          favourite = ps[[1]]$party, favourite_prob = ps[[1]]$win_prob, final_two = ft,

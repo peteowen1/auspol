@@ -359,7 +359,7 @@ test_that("the night JSON carries seat-count histograms, the afternoon primary a
   tot <- cbind(ALP = c(2L, 1L, 1L, 0L), LNP = c(0L, 1L, 1L, 2L))
   sim <- list(totals = tot, win_prob = data.frame(seat = c("S1", "S2"), party = c("ALP", "LNP"), prob = c(0.75, 0.75)),
               tcp_winner = NULL, tcp_runnerup = NULL)
-  attr(sim, "night_tcp") <- data.table::data.table(seat = "S1", a = "ALP", b = "LNP", pair_share = 0.9, prior_a = 0.5, post_a = 0.52, obs_a = 0.55, changed = 1L, flag = FALSE)
+  attr(sim, "night_tcp") <- data.table::data.table(seat = "S1", a = "ALP", b = "LNP", pair_share = 0.9, prior_a = 0.5, post_a = 0.52, obs_a = 0.55, raw_a = 0.6, changed = 1L, flag = FALSE)
   res <- list(sim = sim, shares = sh1, sd = sdm, matched = c("S1", "S2"), n_updated = 2L, n_tcp = 1L,
               nu = list(counted = c(S1 = 0.4, S2 = 0.1), fallback_projected = character()), denominator = "expected", n_placeholder = 0L, n_unlisted = 0L)
   doc <- night_build_json(list(shares = sh0, pair = "t"), res, list(file = "f", stamp = "s", archived = TRUE))
@@ -368,9 +368,26 @@ test_that("the night JSON carries seat-count histograms, the afternoon primary a
   expect_equal(sum(doc$chamber$parties$ALP$hist), doc$n_sims)
   s1 <- doc$seats[[1]]
   expect_equal(vapply(s1$parties, function(x) x$primary_prior, 0)[order(vapply(s1$parties, `[[`, "", "party"))], c(50, 40))
-  expect_equal(s1$vec_2cp$vec_share_a, 0.55); expect_false(s1$vec_2cp$wrong_pair)
+  expect_equal(s1$vec_2cp$vec_share_a, 0.6); expect_equal(s1$vec_2cp$flow_share_a, 0.55);   # raw counted share, not the projection
+   expect_false(s1$vec_2cp$wrong_pair)
   expect_null(doc$seats[[2]]$vec_2cp)
   expect_true(all(c("chamber", "night", "majority", "seats", "n_sims", "built_at") %in% names(doc)))
   js <- jsonlite::fromJSON(jsonlite::toJSON(doc, auto_unbox = TRUE, null = "null"), simplifyVector = FALSE)
   expect_equal(unlist(js$chamber$parties$ALP$hist), c(1, 2, 1))
+})
+
+test_that("the VEC's raw counted 2CP share is carried through night_tcp_obs and night_apply_tcp, apart from the flow projection (#162)", {
+  tcp <- data.table::data.table(district = "S1", booth = c("B1", "B1"), vote_type = "ordinary", party_raw = c("Australian Labor Party", "Liberal"), votes = c(60, 40))
+  fp  <- data.table::data.table(district = "S1", booth = "B1", booth_type = "ordinary", party = c("Australian Labor Party", "Liberal", "Independent"), votes = c(45, 35, 20))
+  post <- matrix(c(50, 30), 1, dimnames = list("S1", c("ALP", "LNP")))
+  obs <- night_tcp_obs(tcp, fp, list(S1 = "B1"), post)
+  expect_equal(obs$raw_share_a, 0.6)                       # 60 of 100 counted two-candidate votes, hand-computed
+  expect_false(isTRUE(all.equal(obs$raw_share_a, obs$share_a)))   # the projection is a different number
+  sim <- list(totals = cbind(ALP = c(1L, 1L, 0L, 1L), LNP = c(0L, 0L, 1L, 0L)),
+              win_prob = data.frame(seat = "S1", party = c("ALP", "LNP"), prob = c(0.75, 0.25)),
+              tcp_winner = matrix(c("ALP", "ALP", "LNP", "ALP"), 4, 1, dimnames = list(NULL, "S1")),
+              tcp_runnerup = matrix(c("LNP", "LNP", "ALP", "LNP"), 4, 1, dimnames = list(NULL, "S1")),
+              tcp_share = matrix(c(.6, .55, .52, .58), 4, 1, dimnames = list(NULL, "S1")))
+  rep <- attr(night_apply_tcp(sim, obs, pair_min = 0.2), "night_tcp")
+  expect_equal(rep$raw_a, 0.6); expect_equal(rep$obs_a, obs$share_a)
 })
