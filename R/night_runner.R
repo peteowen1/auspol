@@ -259,6 +259,51 @@ night_booth_table <- function(feed, lookup, places = NULL, include_late = FALSE)
   list(live = live[], counted = counted[], tcp = tcp[], unmapped = unmapped, n_placeholder_booths = n_placeholder_booths, n_unlisted_booths = n_unlisted)
 }
 
+#' Per-booth results for the live page's map: every ordinary booth that has reported
+#'
+#' Only booths with counted votes appear; an unreported booth is absent (the page draws it from last time's file). First
+#' preferences are in the map's four classes (`ALP`, `LNP`, `GRN`, `OTH`: One Nation, independents and minor-right all fall in
+#' `OTH`, as in the page's `booths-vic2022.json`). The two-candidate count keeps [classify_party()]'s class, so an independent
+#' in the final two reads as `IND`.
+#' @param conv [night_booth_table()] output.
+#' @return Named list by district of lists `{n, counted = TRUE, now = {ALP, LNP, GRN, OTH}, tn = [[party, votes], [party, votes]] | NULL}`
+#'   (`tn` classes are [classify_party()]'s, so `ONP` and `OTH_RIGHT` can appear there, unlike `now`),
+#'   `tn` larger first and `NULL` until the VEC posts that booth's two-candidate count (or when two candidates share a class).
+#' @export
+night_booth_results <- function(conv) {
+  lv <- conv$live[conv$live$booth_type == "ordinary", ]
+  if (!nrow(lv)) return(stats::setNames(list(), character()))
+  cls4 <- classify_party(lv$party); cls4[!cls4 %in% c("ALP", "LNP", "GRN")] <- "OTH"
+  fp <- data.table::data.table(district = lv$district, booth = lv$booth, cls = cls4, votes = lv$votes)[, list(votes = sum(votes)), by = c("district", "booth", "cls")]
+  tot <- fp[, list(tv = sum(votes)), by = c("district", "booth")]
+  tot <- tot[tot$tv > 0, ]
+  tc <- conv$tcp
+  tc <- if (!is.null(tc) && nrow(tc)) tc[tc$vote_type == "ordinary", ] else tc
+  tkey <- if (!is.null(tc) && nrow(tc)) paste(tc$district, tc$booth, sep = "\r") else character()
+  tcls <- if (length(tkey)) classify_party(tc$party_raw) else character()
+  fkey <- paste(fp$district, fp$booth, sep = "\r")
+  by_f <- split(seq_len(nrow(fp)), fkey); by_t <- split(seq_along(tkey), tkey)
+  rows <- lapply(seq_len(nrow(tot)), function(i) {
+    k <- paste(tot$district[i], tot$booth[i], sep = "\r"); r <- by_f[[k]]
+    now <- lapply(c(ALP = "ALP", LNP = "LNP", GRN = "GRN", OTH = "OTH"), function(p) sum(fp$votes[r][fp$cls[r] == p]))
+    tn <- NULL; hit <- by_t[[k]]
+    if (length(hit)) {
+      v <- tapply(tc$votes[hit], tcls[hit], sum)
+      if (length(v) == 2L && sum(v) > 0) { v <- sort(v, decreasing = TRUE); tn <- lapply(seq_along(v), function(j) list(names(v)[j], unname(v[[j]]))) }
+    }
+    list(n = tot$booth[i], counted = TRUE, now = now, tn = tn)
+  })
+  split(rows, tot$district)
+}
+
+#' [night_booth_results()] that never stops a cycle: on any error the map's booth block is left out (`NULL`, logged NW13)
+#' and the seats still publish.
+#' @param conv [night_booth_table()] output.
+#' @export
+night_booth_results_safe <- function(conv) {
+  tryCatch(night_booth_results(conv), error = function(e) { message("NW13  booth block skipped: ", conditionMessage(e)); NULL })
+}
+
 #' Stop (NW7) unless the saved state's seats and the feed's districts are the same set
 #'
 #' A seat missing from the feed would silently keep its prior as if nothing had been counted there, and a feed
@@ -392,8 +437,9 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
 #' @param snapshot Path of the snapshot the update came from.
 #' @param election Election label.
 #' @param election_date Polling day, `YYYY-MM-DD`.
+#' @param booths [night_booth_results()] output, written as top-level `booths` (by district: the booths reported so far); `NULL` writes `"booths": null`, which the page reads as none reported.
 #' @export
-night_build_json <- function(st, res, snapshot, base = NULL, election = "vic2026", election_date = "2026-11-28") {
+night_build_json <- function(st, res, snapshot, base = NULL, election = "vic2026", election_date = "2026-11-28", booths = NULL) {
   sim <- res$sim; tot <- as.data.frame(sim$totals); parties <- colnames(sim$totals)
   seats <- rownames(res$shares); n_seats <- length(seats)
   majority <- if (!is.null(base$majority)) base$majority else floor(n_seats / 2) + 1L
@@ -448,7 +494,7 @@ night_build_json <- function(st, res, snapshot, base = NULL, election = "vic2026
        night = list(snapshot = snapshot$file, snapshot_stamp = snapshot$stamp, snapshot_archived = snapshot$archived,
                     seats_with_feed_data = length(res$matched), seats_updated = res$n_updated, seats_with_2cp = res$n_tcp,
                     prior_state = st$pair, counted_denominator = res$denominator, unreported_booths_listed = res$n_placeholder, snapshot_booths_not_listed = res$n_unlisted, seats_on_projected_denominator = length(res$nu$fallback_projected), mean_counted_pct = round(100 * mean(res$nu$counted), 1)),
-       seats = seat_rows)
+       seats = seat_rows, booths = booths)
 }
 
 #' Write a JSON document atomically and validated: temp file, read it back, then rename over the target
@@ -533,7 +579,7 @@ night_cycle <- function(cfg) {
                             sims = cfg$sims, use_tcp = !isFALSE(cfg$use_tcp)); stamp_t("update_simulate")
     res$denominator <- denom; res$n_placeholder <- conv$n_placeholder_booths; res$n_unlisted <- conv$n_unlisted_booths
     if (length(res$nu$fallback_projected)) message("NW12  ", length(res$nu$fallback_projected), " seat(s) fell back to the projected denominator (no usable expected votes): ", paste(res$nu$fallback_projected, collapse = ", "))
-    doc <- night_build_json(cache$st, res, list(file = basename(snap), stamp = stamp, archived = arch$new), base = cache$base)
+    doc <- night_build_json(cache$st, res, list(file = basename(snap), stamp = stamp, archived = arch$new), base = cache$base, booths = night_booth_results_safe(conv))
     night_publish_json(doc, cfg$out, min_seats = nrow(cache$st$shares)); stamp_t("publish")
     sm <- sprintf("OK %s | seats with feed data %d of %d, updated %d, 2CP %d | mean counted %.1f%% | chamber ALP %.1f LNP %.1f | %s",
                   stamp, length(res$matched), nrow(cache$st$shares), res$n_updated, res$n_tcp, 100 * mean(res$nu$counted),

@@ -1,3 +1,7 @@
+# auspol 0.4.115
+
+- **Per-booth results in the night JSON** (`night_booth_results()`, `night_booth_results_safe()`, `night_build_json(booths =)`): each reported ordinary booth's first preferences (Labor, Coalition, Greens, other) and the VEC's two-candidate count once posted, by district, for the live page's map. Any error in it drops the block (NW13) and the seats still publish.
+
 # auspol 0.4.114
 
 - **Night JSON for the live page** (`night_build_json()`): each party's seat-count histogram, each candidate's afternoon first preference, and the VEC's raw two-candidate count per seat beside the flow projection and the model's estimate. `scripts/night_replay_json.R` writes a replayed vic2022 night as the runner would.
