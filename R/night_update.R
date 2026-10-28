@@ -211,7 +211,7 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
 #' @param units Named list: the counted units per seat ([night_booth_update()]'s `units`).
 #' @param post Seat x class matrix of updated first preferences (percent).
 #' @return data.table `seat, a, b, flow` (share of the others' votes reaching `a`, 0-1), `share_a`
-#'   (projected final 2CP share of `a`, 0-1), `votes` (2CP votes counted). Seats with no counted
+#'   (projected final 2CP share of `a`, 0-1), `raw_share_a` (the RAW counted 2CP share of `a` over `a` + `b` in the counted units, no projection), `votes` (2CP votes counted). Seats with no counted
 #'   2CP, not exactly two classes, a class missing from `post`, or no other votes, are absent.
 #' @export
 night_tcp_obs <- function(tcp, fp, units, post) {
@@ -257,7 +257,7 @@ night_tcp_obs <- function(tcp, fp, units, post) {
     pa <- post[s, a]; pb <- post[s, b]
     out[[s]] <- data.table::data.table(seat = s, a = a, b = b, flow = flow, flow_se = max(se, 0.02),
                                        fp_a = pa, fp_b = pb,
-                                       share_a = (pa + flow * (100 - pa - pb)) / 100, votes = sum(x$v))
+                                       share_a = (pa + flow * (100 - pa - pb)) / 100, raw_share_a = x$v[1] / sum(x$v), votes = sum(x$v))
   }
   data.table::rbindlist(out)
 }
@@ -292,13 +292,14 @@ night_apply_tcp <- function(sim, obs, pair_min = 0.2) {
   wp <- sim$win_prob; rep <- list()
   for (k in seq_len(nrow(obs))) {
     s <- obs$seat[k]; a <- obs$a[k]; b <- obs$b[k]
+    raw_k <- if ("raw_share_a" %in% names(obs)) obs$raw_share_a[k] else NA_real_   # raw counted 2CP share of a, not the flow projection
     j <- match(s, seats); if (is.na(j)) next
     W <- sim$tcp_winner[, j]; R <- sim$tcp_runnerup[, j]
     hit <- which((W == a & R == b) | (W == b & R == a))
     frac_pair <- length(hit) / n
     if (frac_pair < pair_min || length(hit) < 2L) {
       rep[[k]] <- data.table::data.table(seat = s, a = a, b = b, pair_share = frac_pair, prior_a = NA_real_,
-                                         post_a = NA_real_, obs_a = obs$share_a[k], changed = 0L, flag = TRUE)
+                                         post_a = NA_real_, obs_a = obs$share_a[k], raw_a = raw_k, changed = 0L, flag = TRUE)
       next
     }
     sh <- sim$tcp_share[hit, j]
@@ -338,7 +339,7 @@ night_apply_tcp <- function(sim, obs, pair_min = 0.2) {
     sim$tcp_runnerup[hit, j] <- ifelse(newW == a, b, a)
     sim$tcp_share[hit, j] <- ifelse(newW == a, na, 1 - na)
     rep[[k]] <- data.table::data.table(seat = s, a = a, b = b, pair_share = frac_pair, prior_a = pm,
-                                       post_a = cm$mean, obs_a = obs$share_a[k], changed = length(ch), flag = FALSE)
+                                       post_a = cm$mean, obs_a = obs$share_a[k], raw_a = raw_k, changed = length(ch), flag = FALSE)
   }
   sim$win_prob <- wp[wp$prob > 0, ]
   attr(sim, "night_tcp") <- data.table::rbindlist(rep)
