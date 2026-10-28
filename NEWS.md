@@ -1,3 +1,9 @@
+# auspol 0.4.113
+
+- **Election-night update** (`night_booth_update()`, `night_tcp_obs()`, `night_apply_tcp()`): the afternoon forecast updated from counted booths through the shipped simulator, with the VEC's 2CP count as evidence on the preference flow and pooled vote-type gaps. vic2022 replay seat log loss 0.2643 (afternoon) -> 0.1133 at 10% counted, 0.0929 at 50%. Switches default off; the published forecast is unchanged.
+- **Election-night runner** (`night_cycle()`, `scripts/night_runner.R`, `scripts/night_loop.R`): VEC feed snapshot -> raw archive -> booth tables -> update + simulate -> atomic JSON. Refuses to publish on a seat/feed mismatch, a damaged or stale snapshot, no turnout file, or a seat with no listed voting centres (NW1-NW12). Counted share from enrolment x the seat's previous night-vote rate.
+- **Upper-house results** 2022 and 2018 (`scripts/fetch_council_results.R`, `output/council-*`).
+
 # auspol 0.4.112
 
 - **Port 3C shipped** (`AUSPOL_SEAT_SWING_PORT_3C="2"`): the seat-swing port no longer treats a federal Coalition line-up change as a swing the state seat shares. Null on the 20k deciding run over 2,931 seats; Bendigo West Nationals 0.54 -> 0.19. Post-xgb (stage 1 pins it to 0). Republished from stage 6.
