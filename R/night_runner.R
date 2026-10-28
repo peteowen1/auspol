@@ -437,7 +437,7 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
 #' @param snapshot Path of the snapshot the update came from.
 #' @param election Election label.
 #' @param election_date Polling day, `YYYY-MM-DD`.
-#' @param booths [night_booth_results()] output, written as top-level `booths` (by district: the booths reported so far); `NULL` omits it.
+#' @param booths [night_booth_results()] output, written as top-level `booths` (by district: the booths reported so far); `NULL` writes `"booths": null`, which the page reads as none reported.
 #' @export
 night_build_json <- function(st, res, snapshot, base = NULL, election = "vic2026", election_date = "2026-11-28", booths = NULL) {
   sim <- res$sim; tot <- as.data.frame(sim$totals); parties <- colnames(sim$totals)
