@@ -242,20 +242,40 @@ night_check_fresh <- function(stamp, out_file) {
   "ok"
 }
 
-#' Expected final formal votes per seat: enrolment x the seat's turnout at the previous election
+#' Previous election's Assembly votes per district, as a turnout table
 #'
-#' Turnout is the seat's own formal votes over enrolment at the previous election (`rbvc_formal / enrolment` in
-#' `output/council-district-stats-<year>.csv`); a seat not in that file takes the statewide rate. Measured on
-#' 2022 (coordinator, n = 86): mean absolute error 2.7% (worst -10.7%), against 9.2% for using the previous
-#' election's totals.
-#' @param enrolment Named numeric: enrolment per seat now (the feed's contests carry it).
-#' @param prev_stats Data frame with `district` (names ending " District"), `enrolment`, `rbvc_formal`.
+#' The turnout base must be the Assembly count the night counts: `rbvc_formal` in the council stats file is the
+#' UPPER-HOUSE formal count (1.026x the Assembly booth-file total in 2022, n = 86), so it is not used. Enrolment is a
+#' district roll and is taken from the council stats file.
+#' @param stats Data frame `district` (names ending " District"), `enrolment` (previous election's council stats file).
+#' @param booths_prev Previous election's booth table (`district, booth, booth_type, party, votes`).
+#' @return data.table `district, enrolment, total_votes` (all vote types, final), `night_votes` (ordinary + early +
+#'   postal: what is counted on the night; absent, provisional and marked-as-voted come later).
 #' @export
-night_expected_votes <- function(enrolment, prev_stats) {
-  nm <- sub(" District$", "", prev_stats$district)
-  rate <- prev_stats$rbvc_formal / prev_stats$enrolment
-  state_rate <- sum(prev_stats$rbvc_formal) / sum(prev_stats$enrolment)
-  r <- rate[match(names(enrolment), nm)]; r[is.na(r)] <- state_rate
+night_turnout_table <- function(stats, booths_prev) {
+  b <- data.table::as.data.table(booths_prev)
+  v <- ifelse(is.na(b$votes), 0, b$votes)
+  tot <- data.table::data.table(district = b$district, v = v, night = b$booth_type %in% c("ordinary", "early", "postal"))
+  agg <- tot[, list(total_votes = sum(v), night_votes = sum(v[night])), by = "district"]
+  e <- data.table::data.table(district = sub(" District$", "", stats$district), enrolment = stats$enrolment)
+  merge(e, agg, by = "district")
+}
+
+#' Expected votes per seat: enrolment x the seat's Assembly turnout at the previous election
+#'
+#' `basis = "final"`: the final all-vote-type Assembly total. `basis = "night"`: the part counted on the night
+#' (ordinary + early + postal), i.e. expected-final times the seat's previous night share. A seat not in the
+#' table takes the statewide rate.
+#' @param enrolment Named numeric: enrolment per seat now (the feed's contests carry it).
+#' @param prev [night_turnout_table()] output.
+#' @param basis `"night"` or `"final"`.
+#' @export
+night_expected_votes <- function(enrolment, prev, basis = c("night", "final")) {
+  basis <- match.arg(basis)
+  col <- if (basis == "night") prev$night_votes else prev$total_votes
+  rate <- col / prev$enrolment
+  state_rate <- sum(col) / sum(prev$enrolment)
+  r <- rate[match(names(enrolment), prev$district)]; r[is.na(r)] <- state_rate
   stats::setNames(unname(enrolment) * r, names(enrolment))
 }
 
@@ -267,7 +287,7 @@ night_expected_votes <- function(enrolment, prev_stats) {
 #' @param conv [night_booth_table()] output.
 #' @param ref Booth table of the election before the one being counted (`output/booths-vicYYYY.csv`).
 #' @param gap_k Pooled vote-type gap shrinkage (5 = the setting rehearsed in #160); `NULL` off.
-#' @param total Counted-share denominator: `"expected"` (live: enrolment x turnout, see [night_expected_votes()]),
+#' @param total Counted-share denominator: `"expected"` (live: enrolment x turnout, see [night_expected_votes()], night basis),
 #'   `"projected"` (from previous-election booth sizes; the over-confident fallback) or `"table"` (replay equivalence).
 #' @param expected Named numeric of expected final votes per seat, for `total = "expected"`.
 #' @param sims Simulations (default the state's).
@@ -380,7 +400,7 @@ night_publish_json <- function(doc, out_file, min_seats = 1L) {
 #'
 #' @param cfg List: `source`, `archive`, `setup`, `state` (RDS path or already-read list), `ref` (booth CSV path),
 #'   `out` (JSON path), optional `base_json`, `gap_k` (5), `sims`, `use_tcp` (TRUE), `allow_stub` (FALSE),
-#'   `turnout` (previous-election `council-district-stats-<year>.csv`, for the live denominator; without it the cycle falls
+#'   `turnout` (previous-election `council-district-stats-<year>.csv`, for its enrolment; turnout comes from the `ref` Assembly table; without it the cycle falls
 #'   back to the over-confident projected one and says so), `allow_unmatched` (NR7 off; sample-vs-vic2022 test only),
 #'   `last_stamp` (skip when the newest snapshot has this stamp), `cache` (environment for the state and lookup).
 #' @return List: `status` ("ok", "no_new" or "failed"), `stamp`, `timings` (seconds per step), `message`, `summary`.
@@ -430,7 +450,7 @@ night_cycle <- function(cfg) {
     if (!is.null(cfg$turnout)) {
       if (is.null(cache$turnout)) cache$turnout <- data.table::fread(cfg$turnout, showProgress = FALSE)
       enr <- stats::setNames(feed$contests$enrolment, sub(" District$", "", feed$contests$district))
-      expected <- night_expected_votes(enr, cache$turnout); denom <- "expected"
+      expected <- night_expected_votes(enr, night_turnout_table(cache$turnout, cache$ref), "night"); denom <- "expected"
     } else message("NR9  no --turnout file: counted share projected from previous-election booth sizes, which over-states it (vic2022 check: 56.5% vs 33.8%)")
     res <- night_run_update(cache$st, conv, cache$ref, gap_k = if (is.null(cfg$gap_k)) 5 else cfg$gap_k, total = denom, expected = expected,
                             sims = cfg$sims, use_tcp = !isFALSE(cfg$use_tcp)); stamp_t("update_simulate")

@@ -24,7 +24,7 @@ night_run_update(
 
 \item{gap_k}{Pooled vote-type gap shrinkage (5 = the setting rehearsed in #160); \code{NULL} off.}
 
-\item{total}{Counted-share denominator: \code{"expected"} (live: enrolment x turnout, see \code{\link[=night_expected_votes]{night_expected_votes()}}),
+\item{total}{Counted-share denominator: \code{"expected"} (live: enrolment x turnout, see \code{\link[=night_expected_votes]{night_expected_votes()}}, night basis),
 \code{"projected"} (from previous-election booth sizes; the over-confident fallback) or \code{"table"} (replay equivalence).}
 
 \item{expected}{Named numeric of expected final votes per seat, for \code{total = "expected"}.}

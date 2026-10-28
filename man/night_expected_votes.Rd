@@ -2,18 +2,19 @@
 % Please edit documentation in R/night_runner.R
 \name{night_expected_votes}
 \alias{night_expected_votes}
-\title{Expected final formal votes per seat: enrolment x the seat's turnout at the previous election}
+\title{Expected votes per seat: enrolment x the seat's Assembly turnout at the previous election}
 \usage{
-night_expected_votes(enrolment, prev_stats)
+night_expected_votes(enrolment, prev, basis = c("night", "final"))
 }
 \arguments{
 \item{enrolment}{Named numeric: enrolment per seat now (the feed's contests carry it).}
 
-\item{prev_stats}{Data frame with \code{district} (names ending " District"), \code{enrolment}, \code{rbvc_formal}.}
+\item{prev}{\code{\link[=night_turnout_table]{night_turnout_table()}} output.}
+
+\item{basis}{\code{"night"} or \code{"final"}.}
 }
 \description{
-Turnout is the seat's own formal votes over enrolment at the previous election (\code{rbvc_formal / enrolment} in
-\verb{output/council-district-stats-<year>.csv}); a seat not in that file takes the statewide rate. Measured on
-2022 (coordinator, n = 86): mean absolute error 2.7\% (worst -10.7\%), against 9.2\% for using the previous
-election's totals.
+\code{basis = "final"}: the final all-vote-type Assembly total. \code{basis = "night"}: the part counted on the night
+(ordinary + early + postal), i.e. expected-final times the seat's previous night share. A seat not in the
+table takes the statewide rate.
 }

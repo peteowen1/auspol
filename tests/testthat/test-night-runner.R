@@ -244,11 +244,19 @@ test_that("a snapshot older than the published one is refused; the same one is s
   writeLines('{"last":"good"}', out); expect_identical(night_check_fresh("20261128_190000", out), "ok")   # no night block
 })
 
-test_that("expected votes are enrolment x the seat's previous turnout, statewide rate for a new seat", {
-  prev <- data.frame(district = c("A District", "B District"), enrolment = c(100, 200), rbvc_formal = c(90, 160))
-  e <- night_expected_votes(c(A = 110, B = 200, C = 50), prev)
-  expect_equal(e[["A"]], 110 * 0.9); expect_equal(e[["B"]], 200 * 0.8)
-  expect_equal(e[["C"]], 50 * 250 / 300)                                          # statewide rate (new seat)
+test_that("turnout comes from the previous ASSEMBLY booth table (all types; night = ordinary+early+postal), not the council count", {
+  stats <- data.frame(district = c("A District", "B District"), enrolment = c(100, 200), rbvc_formal = c(999, 999))   # upper-house base must be ignored
+  bp <- data.table::rbindlist(list(
+    data.table::data.table(district = "A", booth = c("a1", "x", "y"), booth_type = c("ordinary", "postal", "absent"), party = "Liberal", votes = c(70, 10, 6)),
+    data.table::data.table(district = "B", booth = c("b1", "x"), booth_type = c("ordinary", "early"), party = "Liberal", votes = c(100, 60))))
+  pt <- night_turnout_table(stats, bp)
+  expect_equal(pt$total_votes[pt$district == "A"], 86); expect_equal(pt$night_votes[pt$district == "A"], 80)
+  expect_equal(pt$enrolment[pt$district == "B"], 200)
+  nf <- night_expected_votes(c(A = 110, B = 200, C = 50), pt, "final")
+  expect_equal(nf[["A"]], 110 * 0.86); expect_equal(nf[["B"]], 200 * 0.8)
+  expect_equal(nf[["C"]], 50 * (86 + 160) / 300)                                  # statewide rate for a new seat
+  nn <- night_expected_votes(c(A = 110, B = 200), pt, "night")
+  expect_equal(nn[["A"]], 110 * 0.8)                                              # absent votes are not in the night base
 })
 
 test_that("the expected denominator sets counted share and rescales the uncounted remainder", {
