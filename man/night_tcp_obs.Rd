@@ -18,7 +18,7 @@ night_tcp_obs(tcp, fp, units, post)
 }
 \value{
 data.table \verb{seat, a, b, flow} (share of the others' votes reaching \code{a}, 0-1), \code{share_a}
-(projected final 2CP share of \code{a}, 0-1), \code{votes} (2CP votes counted). Seats with no counted
+(projected final 2CP share of \code{a}, 0-1), \code{raw_share_a} (the RAW counted 2CP share of \code{a} over \code{a} + \code{b} in the counted units, no projection), \code{votes} (2CP votes counted). Seats with no counted
 2CP, not exactly two classes, a class missing from \code{post}, or no other votes, are absent.
 }
 \description{
