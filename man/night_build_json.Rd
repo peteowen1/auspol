@@ -10,7 +10,8 @@ night_build_json(
   snapshot,
   base = NULL,
   election = "vic2026",
-  election_date = "2026-11-28"
+  election_date = "2026-11-28",
+  booths = NULL
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ night_build_json(
 \item{election}{Election label.}
 
 \item{election_date}{Polling day, \code{YYYY-MM-DD}.}
+
+\item{booths}{\code{\link[=night_booth_results]{night_booth_results()}} output, written as top-level \code{booths} (by district: the booths reported so far); \code{NULL} omits it.}
 }
 \description{
 Same top-level keys as \code{forecast-vic2026.json} (scripts/build_forecast_json.R) plus \code{counted_pct} per seat and

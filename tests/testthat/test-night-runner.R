@@ -391,3 +391,30 @@ test_that("the VEC's raw counted 2CP share is carried through night_tcp_obs and 
   rep <- attr(night_apply_tcp(sim, obs, pair_min = 0.2), "night_tcp")
   expect_equal(rep$raw_a, 0.6); expect_equal(rep$obs_a, obs$share_a)
 })
+
+test_that("per-booth results for the map: reported ordinary booths only, four first-preference classes, final two when posted", {
+  dt <- data.table::data.table
+  conv <- list(
+    live = dt(district = c(rep("Hawthorn", 8), "Hawthorn", "Bass"),
+              booth = c(rep("Auburn", 4), rep("Camberwell", 4), "(district postal)", "Bass Hill"),
+              booth_type = c(rep("ordinary", 8), "postal", "ordinary"),
+              party = c("Australian Labor Party - Victorian Branch", "Liberal", "Independent", "Pauline Hanson's One Nation",
+                        "Australian Labor Party - Victorian Branch", "Liberal", "Independent", "Australian Greens", "Liberal", "Liberal"),
+              votes = c(100, 300, 250, 20, 0, 0, 0, 0, 900, 0)),
+    tcp = dt(district = c("Hawthorn", "Hawthorn", "Hawthorn"), booth = c("Auburn", "Auburn", "Auburn"),
+             vote_type = c("ordinary", "ordinary", "postal"), party_raw = c("Liberal", "Independent", "Liberal"), votes = c(330, 340, 5)))
+  b <- night_booth_results(conv)
+  expect_identical(names(b), "Hawthorn")                       # Camberwell and Bass Hill have no votes; postal is not a booth
+  expect_length(b$Hawthorn, 1L)
+  a <- b$Hawthorn[[1]]
+  expect_identical(a$n, "Auburn"); expect_true(a$counted)
+  expect_identical(unlist(a$now), c(ALP = 100, LNP = 300, GRN = 0, OTH = 270))   # independent + One Nation pooled as OTH
+  expect_identical(a$tn, list(list("IND", 340), list("LNP", 330)))               # larger first, class kept, postal 2CP not mixed in
+  js <- jsonlite::fromJSON(jsonlite::toJSON(b, auto_unbox = TRUE, null = "null"), simplifyVector = FALSE)
+  expect_identical(js$Hawthorn[[1]]$tn[[1]], list("IND", 340L))
+
+  conv$tcp <- conv$tcp[0, ]                                    # 2CP not posted yet: first preferences only
+  expect_null(night_booth_results(conv)$Hawthorn[[1]]$tn)
+  conv$live$votes[] <- 0                                       # nothing reported
+  expect_length(night_booth_results(conv), 0L)
+})
