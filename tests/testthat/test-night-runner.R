@@ -352,3 +352,25 @@ test_that("a published JSON that exists but cannot be read stops the cycle inste
   d <- withr::local_tempdir(); out <- file.path(d, "o.json"); writeLines('{"night": {"snapshot_stamp": ', out)
   expect_error(night_check_fresh("20261128_190000", out), "NW8!.*cannot be read")
 })
+
+test_that("the night JSON carries seat-count histograms, the afternoon primary and the VEC 2CP (#162), and keeps its old keys", {
+  sh0 <- matrix(c(50, 45, 40, 55), 2, dimnames = list(c("S1", "S2"), c("ALP", "LNP")))
+  sh1 <- sh0 + 2; sdm <- matrix(3, 2, 2, dimnames = dimnames(sh0))
+  tot <- cbind(ALP = c(2L, 1L, 1L, 0L), LNP = c(0L, 1L, 1L, 2L))
+  sim <- list(totals = tot, win_prob = data.frame(seat = c("S1", "S2"), party = c("ALP", "LNP"), prob = c(0.75, 0.75)),
+              tcp_winner = NULL, tcp_runnerup = NULL)
+  attr(sim, "night_tcp") <- data.table::data.table(seat = "S1", a = "ALP", b = "LNP", pair_share = 0.9, prior_a = 0.5, post_a = 0.52, obs_a = 0.55, changed = 1L, flag = FALSE)
+  res <- list(sim = sim, shares = sh1, sd = sdm, matched = c("S1", "S2"), n_updated = 2L, n_tcp = 1L,
+              nu = list(counted = c(S1 = 0.4, S2 = 0.1), fallback_projected = character()), denominator = "expected", n_placeholder = 0L, n_unlisted = 0L)
+  doc <- night_build_json(list(shares = sh0, pair = "t"), res, list(file = "f", stamp = "s", archived = TRUE))
+  expect_equal(doc$chamber$parties$ALP$hist, c(1L, 2L, 1L))                          # draws with 0, 1, 2 ALP seats (chamber of 2)
+  expect_equal(doc$chamber$parties$LNP$hist, c(1L, 2L, 1L))
+  expect_equal(sum(doc$chamber$parties$ALP$hist), doc$n_sims)
+  s1 <- doc$seats[[1]]
+  expect_equal(vapply(s1$parties, function(x) x$primary_prior, 0)[order(vapply(s1$parties, `[[`, "", "party"))], c(50, 40))
+  expect_equal(s1$vec_2cp$vec_share_a, 0.55); expect_false(s1$vec_2cp$wrong_pair)
+  expect_null(doc$seats[[2]]$vec_2cp)
+  expect_true(all(c("chamber", "night", "majority", "seats", "n_sims", "built_at") %in% names(doc)))
+  js <- jsonlite::fromJSON(jsonlite::toJSON(doc, auto_unbox = TRUE, null = "null"), simplifyVector = FALSE)
+  expect_equal(unlist(js$chamber$parties$ALP$hist), c(1, 2, 1))
+})
