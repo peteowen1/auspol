@@ -1,0 +1,340 @@
+# ELECTION-NIGHT RUNNER (map #148): one cycle of poll -> archive -> parse -> convert -> update -> simulate -> JSON.
+#
+# The pieces are separate functions so each can be tested alone; scripts/night_runner.R runs one cycle and
+# scripts/night_loop.R polls. Nothing here holds a credential: the SOURCE of snapshots is one function,
+# `night_fetch_snapshot()`, which today reads a folder of ZIPs (the VEC's 2026 sample) and on the night is
+# swapped for the SharePoint download (needs the token and site from the access request, 4 Nov; the token
+# goes in an environment variable on the laptop, never in the repo).
+#
+# Check codes: NR1 (feed fails a sanity check), NR2 (bad conversion input), NR3 (no affiliation lookup),
+# NR4 (output failed validation, nothing published), NR5 (no snapshot in the source).
+
+#' Newest snapshot in the source (THE function to swap for the real feed)
+#'
+#' Today: the newest `verboselhv2` ZIP or XML in a folder. On the night: download whatever the VEC site
+#' lists that is newer than the newest archived snapshot, save it into a folder, and return its path.
+#' @param source A folder of snapshots.
+#' @return Path of the newest snapshot, or `NA`.
+#' @export
+night_fetch_snapshot <- function(source) vec_feed_latest(source)
+
+#' Stamp (`YYYYMMDD_HHMMSS`) in a snapshot's file name
+#' @export
+night_snapshot_stamp <- function(path) {
+  m <- regmatches(basename(path), regexpr("[0-9]{8}_[0-9]{6}", basename(path)))
+  if (!length(m)) NA_character_ else m
+}
+
+#' Copy a snapshot, byte for byte, into the dated raw archive (before anything parses it)
+#'
+#' Layout `<archive>/<YYYY-MM-DD>/<file name>`; the date is the one in the file name. An identical copy already
+#' there is left alone; a DIFFERENT file with the same name is kept too (renamed `.v2`, `.v3`), so no raw
+#' snapshot is ever overwritten.
+#' @return List: `path` (the archived copy), `new` (TRUE when a copy was made).
+#' @export
+night_archive_snapshot <- function(path, archive_dir) {
+  stamp <- night_snapshot_stamp(path)
+  day <- if (is.na(stamp)) "undated" else sub("^([0-9]{4})([0-9]{2})([0-9]{2}).*$", "\\1-\\2-\\3", stamp)
+  dest_dir <- file.path(archive_dir, day); dir.create(dest_dir, recursive = TRUE, showWarnings = FALSE)
+  dest <- file.path(dest_dir, basename(path)); k <- 1L
+  repeat {
+    if (!file.exists(dest)) { ok <- file.copy(path, dest); if (!isTRUE(ok)) stop("NR2! could not copy ", path, " to ", dest, call. = FALSE)
+      return(list(path = dest, new = TRUE)) }
+    if (unname(tools::md5sum(dest)) == unname(tools::md5sum(path))) return(list(path = dest, new = FALSE))
+    k <- k + 1L; dest <- file.path(dest_dir, sprintf("%s.v%d", basename(path), k))
+  }
+}
+
+#' Affiliation id -> registered party name, from the VEC set-up "Candidates" file
+#'
+#' @param setup_dir Folder holding `*MediaFileCandidates*.xml` (set-up files; on the sample, in the sample folder).
+#' @return data.table `affiliation_id, registered_name`, or `NULL` when the file is not there.
+#' @export
+night_party_lookup <- function(setup_dir) {
+  f <- list.files(setup_dir, pattern = "Candidates.*\\.xml$", full.names = TRUE, ignore.case = TRUE)
+  if (!length(f)) return(NULL)
+  doc <- xml2::read_xml(f[1])
+  aff <- xml2::xml_find_all(doc, "//*[local-name()='AffiliationIdentifier']")
+  if (!length(aff)) return(NULL)
+  out <- data.table::data.table(
+    affiliation_id = xml2::xml_attr(aff, "Id"),
+    registered_name = vapply(aff, function(a) xml2::xml_text(xml2::xml_find_first(a, "*[local-name()='RegisteredName']")), ""))
+  out <- unique(out[!is.na(out$affiliation_id) & nzchar(out$affiliation_id), ])
+  dup <- out[, list(n = data.table::uniqueN(registered_name)), by = "affiliation_id"]
+  if (any(dup$n > 1L)) stop("NR2! affiliation ids with two names in ", basename(f[1]), ": ", paste(dup$affiliation_id[dup$n > 1L], collapse = ", "), call. = FALSE)
+  unique(out, by = "affiliation_id")
+}
+
+#' STUB affiliation lookup, used only when the set-up file is missing and the caller allows it
+#'
+#' Every party candidate becomes "UNMAPPED" (which `classify_party()` files under OTH). Results from this are
+#' NOT a usable update: it exists so the pipeline can be exercised without the set-up files (due 10 Nov).
+#' @export
+night_affiliation_stub <- function(ids) {
+  ids <- unique(ids[!is.na(ids)])
+  data.table::data.table(affiliation_id = ids, registered_name = rep("UNMAPPED", length(ids)))
+}
+
+# VEC booth classification -> the booth_type night_booth_update() expects. An early voting centre is one
+# unit per district ("early"), as are mobile teams; anything unrecognised is treated as ordinary and said so.
+.night_class_map <- c(VotingCentre = "ordinary", EarlyVotingCentre = "early", MobileVoting = "early")
+# District-level vote types (counts the VEC gives per district instead of per booth).
+.night_type_map <- c(Ordinary = "ordinary", EVCEarly = "early", MobileVotingEarly = "early", Early = "early",
+                     Postal = "postal", Absent = "absent", Provisional = "provisional", MarkedAsVoted = "marked_as_voted")
+.night_unit_types <- c("early", "postal", "absent", "provisional", "marked_as_voted")
+
+#' Sanity-check a parsed snapshot; stops (NR1) rather than let a damaged one reach the model
+#' @param feed Output of [vec_feed_read_lh()].
+#' @export
+night_check_feed <- function(feed) {
+  if (is.null(feed$contests) || !nrow(feed$contests)) stop("NR1! snapshot has no contests", call. = FALSE)
+  if (is.null(feed$candidates) || !nrow(feed$candidates)) stop("NR1! snapshot has no candidates", call. = FALSE)
+  for (nm in c("candidates", "booths", "by_type")) {
+    v <- feed[[nm]]$votes
+    if (length(v) && (anyNA(v) || any(v < 0))) stop("NR1! snapshot table '", nm, "' has missing or negative votes", call. = FALSE)
+  }
+  cs <- feed$candidates[, list(s = sum(votes)), by = "district_id"]
+  m <- merge(cs, feed$contests[, c("district_id", "formal")], by = "district_id")
+  bad <- m$district_id[!is.finite(m$formal) | abs(m$s - m$formal) > 0.5]
+  if (length(bad)) stop("NR1! candidate votes do not add to the formal total in district id(s): ", paste(bad, collapse = ", "), call. = FALSE)
+  if (anyDuplicated(feed$contests$district)) stop("NR1! duplicate district names in snapshot", call. = FALSE)
+  invisible(TRUE)
+}
+
+#' Convert a parsed Assembly snapshot into the booth table shape the night update expects
+#'
+#' @param feed Output of [vec_feed_read_lh()].
+#' @param lookup [night_party_lookup()] output (or [night_affiliation_stub()]).
+#' @return List: `live` (`district, booth, booth_type, party, votes`; every unit of every district, reported
+#'   or not), `counted` (`district, unit` of units with votes), `tcp` (`district, booth, vote_type, party_raw,
+#'   votes`: the VEC's 2CP in booths, empty when none), `unmapped` (affiliation ids with no name).
+#'   District names lose a trailing " District" (2026 contests are "Bass District", our seats "Bass").
+#'   Counts per booth where the district has booth rows of that kind, per district vote type otherwise: never both.
+#' @export
+night_booth_table <- function(feed, lookup) {
+  dn <- function(x) sub(" District$", "", x)
+  cd <- data.table::copy(feed$candidates)
+  cd[, affiliation_id := as.character(affiliation_id)]
+  cd <- merge(cd, lookup, by = "affiliation_id", all.x = TRUE, sort = FALSE)
+  unmapped <- unique(cd$affiliation_id[!cd$independent & is.na(cd$registered_name) & !is.na(cd$affiliation_id)])
+  cd[, party := data.table::fifelse(independent, "Independent", data.table::fifelse(is.na(registered_name), "UNMAPPED", registered_name))]
+  dis <- feed$contests[, c("district_id", "district")]; dis[, seat := dn(district)]
+  cd <- merge(cd, dis[, c("district_id", "seat")], by = "district_id", sort = FALSE)
+  cmap <- cd[, c("district_id", "candidate_id", "seat", "party")]
+
+  rows <- list()
+  bo <- feed$booths
+  if (!is.null(bo) && nrow(bo)) {
+    bt <- unname(.night_class_map[bo$booth_class])
+    unk <- is.na(bt)
+    if (any(unk)) { message("NR2  unrecognised booth classification(s) treated as ordinary: ", paste(unique(bo$booth_class[unk]), collapse = ", ")); bt[unk] <- "ordinary" }
+    bo <- data.table::copy(bo); bo[, booth_type := bt]
+    bo <- merge(bo, cmap, by = c("district_id", "candidate_id"), all.x = TRUE, sort = FALSE)
+    if (anyNA(bo$party)) stop("NR2! booth votes for a candidate id that is not in the district's candidate list", call. = FALSE)
+    rows[[1]] <- bo[, list(district = seat, booth, booth_type, party, votes)]
+  }
+  have_booth <- if (length(rows)) unique(rows[[1]][, c("district", "booth_type")]) else data.table::data.table(district = character(), booth_type = character())
+  bty <- feed$by_type
+  if (!is.null(bty) && nrow(bty)) {
+    bty <- bty[!bty$candidate_id %in% c("FORMAL", "INFORMAL"), ]
+    tt <- unname(.night_type_map[bty$vote_type])
+    if (anyNA(tt)) { message("NR2  unrecognised vote type(s) skipped: ", paste(unique(bty$vote_type[is.na(tt)]), collapse = ", ")) }
+    bty <- data.table::copy(bty); bty[, booth_type := tt]; bty <- bty[!is.na(bty$booth_type), ]
+    bty <- merge(bty, cmap, by = c("district_id", "candidate_id"), all.x = TRUE, sort = FALSE)
+    if (anyNA(bty$party)) stop("NR2! district vote-type counts for a candidate id that is not in the district's list", call. = FALSE)
+    # booth rows of a kind exist for the district -> its per-type district count would count the same votes twice
+    # (only the three types a booth can carry; postal, absent etc. exist only at district level)
+    covered <- paste(have_booth$district, have_booth$booth_type)
+    carried <- bty$vote_type %in% c("Ordinary", "EVCEarly", "MobileVotingEarly")
+    drop <- carried & paste(bty$seat, bty$booth_type) %in% covered
+    bty <- bty[!drop, ]
+    rows[[length(rows) + 1L]] <- bty[, list(district = seat, booth = paste0("(district ", booth_type, ")"), booth_type, party, votes)]
+  }
+  live <- data.table::rbindlist(rows, use.names = TRUE)
+  # placeholders: a district-level unit with no rows at all still has to exist (uncounted) so it is projected
+  p1 <- cmap[!duplicated(cmap$seat), c("seat", "party")]
+  ph <- data.table::rbindlist(lapply(.night_unit_types, function(ty) {
+    have <- live$district[live$booth_type == ty]
+    x <- p1[!p1$seat %in% have, ]
+    if (!nrow(x)) NULL else x[, list(district = seat, booth = paste0("(district ", ty, ")"), booth_type = ty, party, votes = 0)]
+  }))
+  if (!is.null(ph) && nrow(ph)) live <- rbind(live, ph)
+  live[, unit := data.table::fifelse(booth_type == "ordinary", booth, booth_type)]
+  tot <- live[, list(tv = sum(votes)), by = c("district", "unit")]
+  counted <- tot[tot$tv > 0, c("district", "unit")]
+  live[, unit := NULL]
+
+  tcp <- data.table::data.table(district = character(), booth = character(), vote_type = character(), party_raw = character(), votes = numeric())
+  bt2 <- feed$booth_tcp
+  if (!is.null(bt2) && nrow(bt2)) {
+    btt <- unname(.night_class_map[bt2$booth_class]); btt[is.na(btt)] <- "ordinary"
+    bt2 <- data.table::copy(bt2); bt2[, vote_type := btt]
+    bt2 <- merge(bt2, cmap, by = c("district_id", "candidate_id"), all.x = TRUE, sort = FALSE)
+    bt2 <- bt2[!is.na(bt2$party), ]
+    tcp <- bt2[, list(district = seat, booth, vote_type, party_raw = party, votes)]
+  }
+  list(live = live[], counted = counted[], tcp = tcp[], unmapped = unmapped)
+}
+
+#' Run the night update, simulation and 2CP flow update from a prior state and a live booth table
+#'
+#' The same steps as `scripts/night_replay.R` (`run_one`), driven by a table of reported units instead of a
+#' simulated fraction. A seat with no feed data (or none that matches a reference booth) keeps the prior.
+#' @param st Saved prior state (`AUSPOL_NIGHT_DUMP` shape).
+#' @param conv [night_booth_table()] output.
+#' @param ref Booth table of the election before the one being counted (`output/booths-vicYYYY.csv`).
+#' @param gap_k Pooled vote-type gap shrinkage (5 = the setting rehearsed in #160); `NULL` off.
+#' @param total Counted-share denominator: `"projected"` (live) or `"table"` (replay equivalence).
+#' @param sims Simulations (default the state's).
+#' @param use_tcp Condition on the VEC's 2CP flow where its pair is plausible.
+#' @return List: `sim`, `nu` (the update), `shares`, `sd`, `matched` (seats in both state and feed),
+#'   `n_updated`.
+#' @export
+night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "table"), sims = NULL, use_tcp = TRUE) {
+  total <- match.arg(total)
+  if (is.null(sims)) sims <- st$n_sims
+  if (!is.null(st$swd) && nrow(st$swd) != sims) stop("NR2! the saved state has ", nrow(st$swd), " statewide draws; sims must equal that (dump the state at the sim count wanted)", call. = FALSE)
+  seats <- rownames(st$shares)
+  matched <- intersect(seats, unique(conv$live$district))
+  shares <- st$shares; sdo <- st$sdo; swd <- st$swd
+  nu <- night_booth_update(shares, night_prior_sd(shares, st$level_sd, st$level_mult, sdo), 1, conv$live, ref,
+                           gap_k = gap_k, reported = conv$counted, total = total)
+  if (nu$n_updated > 0L) {
+    shares <- nu$shares; sdo <- nu$sd; swd <- night_shrink_draws(swd, 1 - nu$resolved)
+  }
+  sim <- simulate_seat_contests(level_sd = st$level_sd, sd_override = sdo, level_mult = st$level_mult, shares, st$fm,
+                                party_sd = st$psd, statewide_draws = swd, seat_sd = st$seat_sd, n_sims = sims,
+                                breakout_p = st$bo$p, breakout_q = st$bo$q, coalition_split = st$coalition_split, error_q = st$error_q,
+                                smooth = st$smooth, seed = st$seed, party_cor = st$party_cor, shrink = st$shrink,
+                                conditional_override = st$htv_ov, conditional_override_sd = attr(st$htv_ov, "sd"),
+                                fallback_smooth = st$fb_smooth, shrink_k = st$shrink_k, flow_sd = st$flow_sd,
+                                surge_h = st$surge_h, surge_party = st$surge_party, surge_from_zero = st$surge_from_zero,
+                                surge_mu = st$surge_mu, surge_sd = st$surge_sd)
+  n_tcp <- 0L
+  if (use_tcp && nu$n_updated > 0L && nrow(conv$tcp)) {
+    obs <- night_tcp_obs(conv$tcp, conv$live, nu$units, shares)
+    n_tcp <- nrow(obs)
+    sim <- night_apply_tcp(sim, obs)
+  }
+  list(sim = sim, nu = nu, shares = shares, sd = sdo, matched = matched, n_updated = nu$n_updated, n_tcp = n_tcp)
+}
+
+#' Build the published-shape JSON document from a night update
+#'
+#' Same top-level keys as `forecast-vic2026.json` (scripts/build_forecast_json.R) plus `counted_pct` per seat and
+#' a `night` block (built_at, the snapshot it came from, how many seats had feed data). Fields the night
+#' model does not recompute (`track_record`, `poll_source`, `region`) are copied from `base` when given, else NULL.
+#' `primary_q` is not produced (the update gives a posterior sd, not draws); `primary_sd` is given instead.
+#' @param base A parsed published `forecast-vic2026.json` (list), or `NULL`.
+#' @export
+night_build_json <- function(st, res, snapshot, base = NULL, election = "vic2026", election_date = "2026-11-28") {
+  sim <- res$sim; tot <- as.data.frame(sim$totals); parties <- colnames(sim$totals)
+  seats <- rownames(res$shares); n_seats <- length(seats)
+  majority <- if (!is.null(base$majority)) base$majority else floor(n_seats / 2) + 1L
+  q <- function(x) as.list(round(stats::quantile(x, c(0.05, 0.25, 0.5, 0.75, 0.95), type = 1), 1))
+  row_max <- do.call(pmax, as.list(tot)); n_at_max <- Reduce(`+`, lapply(parties, function(p) tot[[p]] == row_max))
+  chamber <- lapply(parties, function(p) list(party = p, expected = round(mean(tot[[p]]), 2),
+                                              p_majority = round(mean(tot[[p]] >= majority), 4),
+                                              p_most_seats = round(mean(tot[[p]] == row_max), 4),
+                                              p_most_seats_strict = round(mean(tot[[p]] == row_max & n_at_max == 1L), 4),
+                                              quantiles = q(tot[[p]])))
+  names(chamber) <- parties
+  maj_l <- if ("LNP" %in% parties) tot$LNP else 0; maj_a <- if ("ALP" %in% parties) tot$ALP else 0
+  onp <- if ("ONP" %in% parties) tot$ONP else 0
+  onp_bop <- mean(pmax(maj_l, maj_a) < majority & pmax(maj_l, maj_a) + onp >= majority & onp > 0)
+  region <- if (!is.null(base$seats)) stats::setNames(vapply(base$seats, function(s) if (is.null(s$region)) NA_character_ else s$region, ""), vapply(base$seats, `[[`, "", "seat")) else NULL
+  wp <- as.data.frame(sim$win_prob)
+  tw <- sim$tcp_winner; tr <- sim$tcp_runnerup
+  seat_rows <- lapply(seats, function(s) {
+    w <- wp[wp$seat == s, ]
+    ps <- lapply(colnames(res$shares), function(p) list(party = p, win_prob = round(if (p %in% w$party) w$prob[w$party == p] else 0, 4),
+                                                         primary = round(res$shares[s, p], 2), primary_sd = round(res$sd[s, p], 2),
+                                                         candidate = NULL, sitting = NULL))
+    ps <- ps[order(-vapply(ps, `[[`, numeric(1), "win_prob"))]
+    ft <- NULL
+    if (!is.null(tw) && s %in% colnames(tw)) {
+      pr <- paste(pmin(tw[, s], tr[, s]), pmax(tw[, s], tr[, s]), sep = "|"); top <- names(sort(table(pr), decreasing = TRUE))[1]
+      hit <- pr == top; ab <- strsplit(top, "|", fixed = TRUE)[[1]]
+      lead <- names(sort(table(tw[hit, s]), decreasing = TRUE))[1]
+      ft <- list(leader = lead, other = setdiff(ab, lead), p_pair = round(mean(hit), 4), p_leader_wins_pair = round(mean(tw[hit, s] == lead), 4))
+      if (!length(ft$other)) ft$other <- NULL
+    }
+    list(seat = s, region = if (!is.null(region) && s %in% names(region) && !is.na(region[[s]])) region[[s]] else NULL,
+         favourite = ps[[1]]$party, favourite_prob = ps[[1]]$win_prob, final_two = ft,
+         counted_pct = round(100 * unname(res$nu$counted[s]), 1), parties = ps)
+  })
+  list(election = election, election_date = election_date, built_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z"),
+       git_sha = tryCatch(trimws(system2("git", c("rev-parse", "--short", "HEAD"), stdout = TRUE, stderr = FALSE)), error = function(e) NA_character_),
+       models_promoted_at = base$models_promoted_at, track_record = base$track_record, poll_source = base$poll_source,
+       chamber_seats = n_seats, seats_simulated = n_seats, seats_not_simulated = I(character()), majority = majority,
+       n_sims = nrow(tot),
+       chamber = list(parties = chamber, p_hung = round(mean(row_max < majority), 4), p_onp_balance_of_power = round(onp_bop, 4),
+                      p_tie_most = round(mean(n_at_max > 1L), 4)),
+       night = list(snapshot = snapshot$file, snapshot_stamp = snapshot$stamp, snapshot_archived = snapshot$archived,
+                    seats_with_feed_data = length(res$matched), seats_updated = res$n_updated, seats_with_2cp = res$n_tcp,
+                    prior_state = st$pair, mean_counted_pct = round(100 * mean(res$nu$counted), 1)),
+       seats = seat_rows)
+}
+
+#' Write a JSON document atomically and validated: temp file, read it back, then rename over the target
+#' @return The target path. Stops (NR4) without touching the target if the document does not read back as expected.
+#' @export
+night_publish_json <- function(doc, out_file, min_seats = 1L) {
+  dir.create(dirname(out_file), recursive = TRUE, showWarnings = FALSE)
+  tmp <- paste0(out_file, ".tmp-", Sys.getpid())
+  on.exit(if (file.exists(tmp)) unlink(tmp), add = TRUE)
+  writeLines(jsonlite::toJSON(doc, auto_unbox = TRUE, null = "null", digits = 4), tmp)
+  back <- tryCatch(jsonlite::fromJSON(tmp, simplifyVector = FALSE), error = function(e) NULL)
+  if (is.null(back) || length(back$seats) < min_seats || is.null(back$chamber) || is.null(back$night))
+    stop("NR4! output did not read back as a full document; nothing published", call. = FALSE)
+  if (!isTRUE(file.rename(tmp, out_file))) stop("NR4! could not rename ", tmp, " to ", out_file, call. = FALSE)
+  out_file
+}
+
+#' One election-night cycle
+#'
+#' @param cfg List: `source`, `archive`, `setup`, `state` (RDS path or already-read list), `ref` (booth CSV path),
+#'   `out` (JSON path), optional `base_json`, `gap_k` (5), `sims`, `use_tcp` (TRUE), `allow_stub` (FALSE),
+#'   `last_stamp` (skip when the newest snapshot has this stamp), `cache` (environment for the state and lookup).
+#' @return List: `status` ("ok", "no_new" or "failed"), `stamp`, `timings` (seconds per step), `message`, `summary`.
+#' @export
+night_cycle <- function(cfg) {
+  tm <- list(); t0 <- proc.time()[["elapsed"]]; stamp_t <- function(nm) { t1 <- proc.time()[["elapsed"]]; tm[[nm]] <<- round(t1 - t0, 2); t0 <<- t1 }
+  cache <- if (is.null(cfg$cache)) new.env() else cfg$cache
+  fail <- function(e, stamp = NA_character_) list(status = "failed", stamp = stamp, timings = tm, message = conditionMessage(e),
+                                                   summary = sprintf("FAILED %s: %s", stamp, conditionMessage(e)))
+  snap <- night_fetch_snapshot(cfg$source); stamp_t("fetch")
+  if (is.na(snap)) return(list(status = "failed", stamp = NA_character_, timings = tm, message = "NR5! no snapshot in source",
+                               summary = "FAILED: NR5! no snapshot in source"))
+  stamp <- night_snapshot_stamp(snap)
+  if (!is.null(cfg$last_stamp) && identical(stamp, cfg$last_stamp)) return(list(status = "no_new", stamp = stamp, timings = tm, message = "", summary = paste("no new snapshot after", stamp)))
+  tryCatch({
+    arch <- night_archive_snapshot(snap, cfg$archive); stamp_t("archive")
+    feed <- vec_feed_read_lh(arch$path); stamp_t("parse")
+    night_check_feed(feed)
+    if (is.null(cache$lookup)) {
+      lk <- night_party_lookup(cfg$setup)
+      if (is.null(lk)) {
+        if (!isTRUE(cfg$allow_stub)) stop("NR3! no *Candidates*.xml set-up file in ", cfg$setup, " (party names unknown); pass allow_stub only to exercise the pipeline", call. = FALSE)
+        message("NR3  USING THE STUB AFFILIATION LOOKUP: every party is UNMAPPED; the update below is NOT meaningful")
+        lk <- night_affiliation_stub(feed$candidates$affiliation_id)
+      }
+      cache$lookup <- lk
+    }
+    if (is.null(cache$st)) cache$st <- if (is.character(cfg$state)) readRDS(cfg$state) else cfg$state
+    if (is.null(cache$ref)) cache$ref <- if (is.character(cfg$ref)) data.table::fread(cfg$ref, showProgress = FALSE) else cfg$ref
+    if (is.null(cache$base) && !is.null(cfg$base_json)) cache$base <- jsonlite::fromJSON(cfg$base_json, simplifyVector = FALSE)
+    stamp_t("load")
+    conv <- night_booth_table(feed, cache$lookup); stamp_t("convert")
+    if (length(conv$unmapped)) message("NR3  affiliation ids with no name: ", paste(conv$unmapped, collapse = ", "))
+    res <- night_run_update(cache$st, conv, cache$ref, gap_k = if (is.null(cfg$gap_k)) 5 else cfg$gap_k, total = "projected",
+                            sims = cfg$sims, use_tcp = !isFALSE(cfg$use_tcp)); stamp_t("update_simulate")
+    doc <- night_build_json(cache$st, res, list(file = basename(snap), stamp = stamp, archived = arch$new), base = cache$base)
+    night_publish_json(doc, cfg$out, min_seats = nrow(cache$st$shares)); stamp_t("publish")
+    sm <- sprintf("OK %s | seats with feed data %d of %d, updated %d, 2CP %d | mean counted %.1f%% | chamber ALP %.1f LNP %.1f | %s",
+                  stamp, length(res$matched), nrow(cache$st$shares), res$n_updated, res$n_tcp, 100 * mean(res$nu$counted),
+                  doc$chamber$parties$ALP$expected, if (is.null(doc$chamber$parties$LNP)) NA_real_ else doc$chamber$parties$LNP$expected,
+                  paste(sprintf("%s %.1fs", names(tm), unlist(tm)), collapse = ", "))
+    list(status = "ok", stamp = stamp, timings = tm, message = "", summary = sm, doc = doc, res = res)
+  }, error = function(e) fail(e, stamp))
+}

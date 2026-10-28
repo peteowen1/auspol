@@ -42,10 +42,13 @@ match_booth_units <- function(live, ref) {
 #'   unit in this seat, its swing is the seat's all-types swing PLUS this gap (the type's swing
 #'   relative to ordinary booths, measured in other seats and shrunk; issue #160). `NULL` (the
 #'   default) is byte-identical to the previous behaviour.
+#' @param total `"table"` (default): counted share is counted votes over the votes in `live`. `"projected"`: over
+#'   counted votes plus the projected size of the uncounted units (a live feed has no final total).
 #' @return data.table `cls, projected, counted_share`, or `NULL` if no
 #'   counted unit has a reference (nothing to measure a swing on).
 #' @export
-project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL) {
+project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, total = c("table", "projected")) {
+  total <- match.arg(total)
   live <- data.table::as.data.table(live); ref <- data.table::as.data.table(ref)
   classes <- unique(live$cls)
   units <- unique(live[, .(unit, booth_type)])
@@ -84,6 +87,10 @@ project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL) 
   ref_cls <- unique(ref$cls)
   grid[, proj := data.table::fifelse(has_ref & cls %in% ref_cls, pmax(0, (rv / pmax(rt, 1) + sw) * size), sh * size)]
   out <- rbind(live[unit %in% counted_units, .(v), by = cls], grid[, .(v = proj), by = cls])[, .(projected = sum(v)), by = cls]
+  if (total == "projected") {
+    cv <- sum(live[unit %in% counted_units]$v)
+    counted_share <- cv / (cv + sum(unique(grid[, .(unit, size)])$size))
+  }
   out[, counted_share := counted_share][]
 }
 

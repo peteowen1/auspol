@@ -4,7 +4,13 @@
 \alias{project_seat_from_booths}
 \title{Project a seat's final first preferences from the booths counted so far}
 \usage{
-project_seat_from_booths(live, ref, counted_units, type_gap = NULL)
+project_seat_from_booths(
+  live,
+  ref,
+  counted_units,
+  type_gap = NULL,
+  total = c("table", "projected")
+)
 }
 \arguments{
 \item{live}{data.table of ONE seat: \verb{unit, booth_type, cls, v} (votes so
@@ -19,6 +25,9 @@ the LIVE unit names: \verb{unit, booth_type, cls, v}.}
 unit in this seat, its swing is the seat's all-types swing PLUS this gap (the type's swing
 relative to ordinary booths, measured in other seats and shrunk; issue #160). \code{NULL} (the
 default) is byte-identical to the previous behaviour.}
+
+\item{total}{\code{"table"} (default): counted share is counted votes over the votes in \code{live}. \code{"projected"}: over
+counted votes plus the projected size of the uncounted units (a live feed has no final total).}
 }
 \value{
 data.table \verb{cls, projected, counted_share}, or \code{NULL} if no

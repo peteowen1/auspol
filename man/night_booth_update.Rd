@@ -13,7 +13,9 @@ night_booth_update(
   seed = 2022L,
   gap_k = NULL,
   early = "last",
-  new_sd_mult = 1
+  new_sd_mult = 1,
+  reported = NULL,
+  total = c("table", "projected")
 )
 }
 \arguments{
@@ -40,6 +42,15 @@ ordinary booth, or \code{"interleaved"} among them (see \code{.night_order()}).}
 
 \item{new_sd_mult}{Multiplier on the projection's sd for a class with no previous-election votes in the
 seat (a new candidate); 1 (default) treats it like every other class.}
+
+\item{reported}{Live-feed mode (election-night runner): \code{NULL} (default) simulates the report order and counts
+\code{frac} of the night. A table \verb{district, unit} of the units that HAVE reported (unit = booth name for an
+ordinary booth, else the booth type) counts exactly those; \code{frac} is then ignored. \code{live} must still list every
+unit of the seat (uncounted ones with any votes, ignored) so the uncounted ones can be projected.}
+
+\item{total}{Denominator of a seat's counted share: \code{"table"} (default) is the votes in \code{live} (right for a replay,
+where \code{live} is the final result); \code{"projected"} is counted / (counted + the projected size of the uncounted units),
+which is all a live feed can know.}
 }
 \value{
 List: \code{shares} (posterior means, rows renormalised to 100), \code{sd} (posterior sds),
