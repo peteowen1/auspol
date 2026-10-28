@@ -1,3 +1,8 @@
+# auspol 0.4.114
+
+- **Night JSON for the live page** (`night_build_json()`): each party's seat-count histogram, each candidate's afternoon first preference, and the VEC's raw two-candidate count per seat beside the flow projection and the model's estimate. `scripts/night_replay_json.R` writes a replayed vic2022 night as the runner would.
+- **Night upload** (`scripts/night_publish_r2.sh`, `night_loop.R --upload-key`): each good cycle goes to R2 `auspol/night/<name>.json` with a 30-second cache; refuses damaged, afternoon or stale files and any key outside `auspol/night/`.
+
 # auspol 0.4.113
 
 - **Election-night update** (`night_booth_update()`, `night_tcp_obs()`, `night_apply_tcp()`): the afternoon forecast updated from counted booths through the shipped simulator, with the VEC's 2CP count as evidence on the preference flow and pooled vote-type gaps. vic2022 replay seat log loss 0.2643 (afternoon) -> 0.1133 at 10% counted, 0.0929 at 50%. Switches default off; the published forecast is unchanged.
