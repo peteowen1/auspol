@@ -124,7 +124,7 @@ cannot pass as a working one.
 
 - **aec/** -- 1214 files, 893.5 MB
   - e.g. booths/fed2016-NSW.csv, booths/fed2016-QLD.csv, booths/fed2016-VIC.csv, booths/fed2019-QLD.csv
-- **vec/** -- 2608 files, 76.5 MB
+- **vec/** -- 3451 files, 435.8 MB
   - e.g. 2006/vc/fpv-albertpark.html, 2006/vc/fpv-altona.html, 2006/vc/fpv-ballarateast.html, 2006/vc/fpv-ballaratwest.html
 - **nsw/** -- 5889 files, 81.0 MB
   - e.g. byelections/SB1602-orange-fp.html, byelections/SB1801-wagga-wagga-fp.html, council/2008/lgeindex.html, council/2008/pages/result.Albury.html
@@ -136,7 +136,7 @@ cannot pass as a working one.
   - e.g. app.html, app.min.js, config-loader.js, config.json
 - **trends/** -- 5394 files, 3.5 MB
   - e.g. 2019_anch2_Adrian_Wone_Susie_Beveridge_Will_Landers_Ammar_Khan.rds, 2019_anch2_Bill_Chandler_Susan_Moylan_Dave_Blake_Tim_Bohm.rds, 2019_anch2_Robert_Oakeshott_Helen_Haines_Zali_Steggall_Kerryn_Phelps.rds, 2019_anch2_Trevor_Jones_Colin_Butland_David_Norman_Thor_Prohaska.rds
-- **boundaries/** -- 75 files, 770.5 MB
+- **boundaries/** -- 85 files, 849.9 MB
   - e.g. AEC-2025-esri.zip, AEC_2025/AUS_ELB_region.dbf, AEC_2025/AUS_ELB_region.prj, AEC_2025/AUS_ELB_region.shp
 - **census/** -- 24 files, 86.7 MB
   - e.g. 2016_GCP_CED_AUS.zip, 2016_GCP_SED_NSW.zip, 2016_GCP_SED_NT.zip, 2016_GCP_SED_QLD.zip
@@ -244,6 +244,28 @@ parser checks booth sums against the district results above.
 | wa2017-booth-fp.csv | 59 | 811 | 7435 | 1321640 | 0 |
 | wa2021-booth-fp.csv | 59 | 795 | 8270 | 1411990 | 0 |
 | wa2025-booth-fp.csv | 59 | 802 | 6694 | 1527968 | 0 |
+
+## Victorian upper-house results (`output/council-*`)
+
+Legislative Council, by region, group and voting centre, from the VEC's per-region Excel downloads
+(`scripts/fetch_council_results.R`, raw files and manifests under `external/reference/vec/<year>/council/`).
+Votes Received and the Distribution of preferences are authoritative for totals; Results by Voting
+Centre is the voting-centre detail from a slightly different snapshot (gaps in `council-extract-gaps-*`).
+Not to be confused with `council-results-*.csv`, which are LOCAL-GOVERNMENT council results.
+2010 exists only as the raw `external/reference/vec/state2010*RegionFPVbyVC.xls` files.
+
+| file | rows | regions | districts | voting centres | size |
+|---|---:|---:|---:|---:|---:|
+| `council-dist-2018.csv` | 242,432 | 8 | - | - | 48.6 MB |
+| `council-dist-2022.csv` | 340,432 | 8 | - | - | 75.0 MB |
+| `council-district-stats-2018.csv` |      88 | 8 | 88 | - | 10 KB |
+| `council-district-stats-2022.csv` |      88 | 8 | 88 | - | 10 KB |
+| `council-extract-gaps-2018.csv` |     162 | 8 | - | - | 18 KB |
+| `council-extract-gaps-2022.csv` |     194 | 8 | - | - | 22 KB |
+| `council-fp-2018.csv` |  71,615 | 8 | 89 | 3,388 | 16.5 MB |
+| `council-fp-2022.csv` |  87,695 | 8 | 89 | 2,124 | 21.1 MB |
+| `council-fp-cand-2018.csv` | 216,867 | 8 | 89 | 1,779 | 36.8 MB |
+| `council-fp-cand-2022.csv` | 262,116 | 8 | 89 | 1,668 | 46.4 MB |
 
 ## Known gaps
 

@@ -286,6 +286,10 @@ run_unit <- function(task) {
   if (ok) {
     file.copy(sd_f, file.path(task$dir, "sharedetail.csv"), overwrite = TRUE)
     file.copy(ap_f, file.path(task$dir, "allprobs.csv"), overwrite = TRUE)
+    # the simulated seat totals too, when the harness writes them: chamber ranges are not
+    # recoverable from per-seat probabilities (seats are correlated). Not used in scoring.
+    to_f <- pick1("-totals")
+    if (!is.na(to_f)) file.copy(to_f, file.path(task$dir, "totals.csv"), overwrite = TRUE)
   }
   unlink(new)   # the scratch output stays small and a later run cannot pick up this one's files
   secs <- as.numeric(difftime(Sys.time(), t0, units = "secs"))

@@ -33,6 +33,11 @@ EPS <- 1e-6
 
 OUT <- "output"
 files <- list.files(OUT, pattern = "^backtest-.*[.]csv$", full.names = TRUE)
+# election-night replays (AUSPOL_NIGHT_REPLAY_FRAC, file tag -nightNNN) update the forecast with the
+# count itself; they are not forecasts and must never be pooled as one
+.night <- grepl("-night[0-9]{3}", basename(files))
+if (any(.night)) cat(sprintf("PB0  skipping %d election-night replay file(s) (-nightNNN)\n", sum(.night)))
+files <- files[!.night]
 # The directory listed ONCE: the sibling lookup below used to call list.files()
 # over the whole of output/ (7,000+ files) for every one of ~4,400 candidate
 # files. Same pattern, same order, searched in memory (2026-10-02).

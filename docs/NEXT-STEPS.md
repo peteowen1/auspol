@@ -8,10 +8,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
-- **28 Oct 10:26, IN FLIGHT: 3C SHIPPED in code (be44e2d5 on dev; deciding run passed, DECISIONS) and the stage-6
-  rebuild + publish is running** (log `scratchpad/rebuild-3c.log`). ORDER: the publish puts a port table with `lineup3c`
-  on shipped-models, which main's daily run (3C off) refuses, and main with 3C on refuses the old table: so open the
-  dev->main PR right after the publish and merge it before the 17:37 UTC cron, then read that run's conclusion.
+- **28 Oct: 3C SHIPPED, PUBLISHED AND MERGED.** Stage-6 rebuild published 11:09 (shipped-models port table carries
+  `lineup3c=2`; AEF-7 0.2639 vs AEF 0.2825), PR #159 merged 11:24 after CI passed. Forecast workflow run 40608663021
+  triggered by hand on main: **success**, published 11:33 (66fede0): Bendigo West ONP 0.435 / ALP 0.364 / LNP 0.188,
+  Bendigo East ONP 0.641, exactly the live walk; chamber LNP 36.0 / ALP 31.4 / ONP 14.3, hung 78%. Snapshot to restore if needed: `output/snapshots/20261028-1109-14111624-from6`.
 - **28 Oct, earlier: port 3C ship (Pete: finish checks, then ship).** Mode 2 on 8 movable elections -0.0001 (SE
   0.0004), not passed; live walk moves Bendigo West to ALP 0.36 / LNP 0.19 / ONP 0.43 (market 0.44 / 0.12 / 0.41). Pete
   overrode clause 1 (prereg `plans/prereg-seat-swing-port-3c-2026-10-25.md`, RESULT + decision sections). Remaining:
@@ -27,10 +27,24 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
     under another setting); (6) live walk: Bendigo West ALP ~0.36 / LNP ~0.19 / ONP ~0.43 in the published JSON. If it
     shows harm: record the refusal in the prereg and tell Pete, leave "0".
 - 28 Oct: **election-night live model, wayfinder map https://github.com/peteowen1/auspol/issues/148** (Pete: plan AND
-  build; Assembly first, upper house second; laptop runner with an Actions backup). Resolved: VEC feed contents (#149),
-  live-model methods (#151), upper-house rules (#152). Frontier: #153 2022 replay go/no-go (needs ~10 GB), #155 vote
-  types + VEC 2CP (with Pete), #158 feed parser on the sample, #156 fetch 2022/2018 upper-house results, #157 ticket
-  commencement. **Pete: #150, sign the VEC feed terms + access form (access from 4 Nov).**
+  build; Assembly first, upper house second; laptop runner with an Actions backup). 10 of 12 tickets closed. BUILT and
+  replayed on vic2022 (`docs/plans/election-night-booth-model.md`, rehearsals 3-5): booth update through the shipped
+  simulator, VEC 2CP as evidence on the preference flow, pooled vote-type gap; seat log loss vs afternoon 0.2643:
+  0.1133 at 10% counted, 0.0968 at 25%, 0.0929 at 50%, 0.0712 at 75% (early votes interleaved). Feed reader
+  (`R/vec_feed.R`), upper-house 2022/2018 results (`output/council-*`), fast replay (`scripts/night_replay.R`).
+  DONE 28 Oct: VEC sign-up (#150; Pete sent the form and signed terms; access details by email from 4 Nov, set-up
+  files 10 Nov, trial 25 Nov with no 2CP); live page decided (#154: all three layouts, needle / race to 45 / seat
+  grid, plus a seat map, booth maps and NYT-style swing arrows; prototypes
+  https://claude.ai/artifact/FsCAXFqbj3ciiaFDppydQm and https://claude.ai/artifact/REkUoQmPLWPkrUmj5SRRVy);
+  upper-house design `docs/plans/upper-house-night-model.md`. MERGED 28 Oct: night runner (`R/night_runner.R`,
+  `scripts/night_runner.R`, `scripts/night_loop.R`; two review rounds; refuses to publish on seat/feed mismatch NW7, 
+  damaged/stale snapshot NW1/NW8, no turnout file NW9, a seat with no listed voting centres NW10). Counted share =
+  counted / (enrolment x the seat's previous Assembly night-vote rate); vic2022 at 50%: 35.9% vs true 33.8%, seat
+  log loss 0.0838 (replay 0.0929; one election, one fraction). Late votes (absent/provisional) left out of the night
+  projection. Not built: SharePoint fetch, R2 upload, Actions backup.
+  OPEN: #162 build the live page on ITG, #163 maps (needs the VEC's official 2022 boundaries; the prototype's are
+  rebuilt from booth locations); fog: SharePoint fetch (after 4 Nov), 2026 centre matching (10 Nov files), R2
+  upload + Actions backup, the upper-house model.
 - 28 Oct: value-odds page https://claude.ai/artifact/GdrpxSB7zkY1xEvJvU3TKx (readiness, seat click-through, our
   probabilities against Sportsbet/TAB/Betfair). Built from scratchpad scripts, not the repo: it does not refresh.
   Contested-seat research, all committed: `reviews/contested-seats-vic2026-2026-10-28.md` (hub),
@@ -399,8 +413,7 @@ Tasmanian primaries table and state-swing prior rows, district-to-region
 table on the blog page, To Do reminders (9 Nov, HTV row, VEC email).
 
 Still open:
-- VEC feed: 2026 configuration not yet published; **Pete to send the email**
-  drafted in the booth-model plan.
+- VEC feed: access requested 28 Oct (form + signed terms sent); details by email from 4 Nov.
 - Federal results as a correlated signal for state seat lean: needs
   seat-boundary matching (`external/reference/boundaries/` has CED 2016).
 - GDELT parked (needs a GCP project); Census 2006/2001 have no bulk pack.
