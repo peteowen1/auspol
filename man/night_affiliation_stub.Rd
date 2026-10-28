@@ -6,6 +6,9 @@
 \usage{
 night_affiliation_stub(ids)
 }
+\arguments{
+\item{ids}{Affiliation ids to map.}
+}
 \description{
 Every party candidate becomes "UNMAPPED" (which \code{classify_party()} files under OTH). Results from this are
 NOT a usable update: it exists so the pipeline can be exercised without the set-up files (due 10 Nov).

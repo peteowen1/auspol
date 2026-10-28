@@ -6,6 +6,13 @@
 \usage{
 night_check_coverage(seats, feed_districts, allow = FALSE)
 }
+\arguments{
+\item{seats}{Seat names in the saved state.}
+
+\item{feed_districts}{District names in the converted feed.}
+
+\item{allow}{\code{TRUE} to report the mismatch instead of stopping.}
+}
 \description{
 A seat missing from the feed would silently keep its prior as if nothing had been counted there, and a feed
 district the state does not know would be ignored; either means the wrong state, a renamed district or a damaged

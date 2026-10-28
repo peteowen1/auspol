@@ -6,6 +6,9 @@
 \usage{
 night_polling_places(setup_dir)
 }
+\arguments{
+\item{setup_dir}{Folder holding the VEC set-up files.}
+}
 \value{
 data.table \verb{district_id, district, booth_id, booth, booth_class}, or \code{NULL} when the file is not there.
 }

@@ -6,6 +6,13 @@
 \usage{
 night_publish_json(doc, out_file, min_seats = 1L)
 }
+\arguments{
+\item{doc}{The document (a list) to write.}
+
+\item{out_file}{Target path.}
+
+\item{min_seats}{Fewest seats the read-back document must hold.}
+}
 \value{
 The target path. Stops (NW4) without touching the target if the document does not read back as expected.
 }

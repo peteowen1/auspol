@@ -19,6 +19,7 @@
 night_fetch_snapshot <- function(source) vec_feed_latest(source)
 
 #' Stamp (`YYYYMMDD_HHMMSS`) in a snapshot's file name
+#' @param path Snapshot file path.
 #' @export
 night_snapshot_stamp <- function(path) {
   m <- regmatches(basename(path), regexpr("[0-9]{8}_[0-9]{6}", basename(path)))
@@ -31,6 +32,8 @@ night_snapshot_stamp <- function(path) {
 #' there is left alone; a DIFFERENT file with the same name is kept too (renamed `.v2`, `.v3`), so no raw
 #' snapshot is ever overwritten.
 #' @return List: `path` (the archived copy), `new` (TRUE when a copy was made).
+#' @param path Snapshot file to archive.
+#' @param archive_dir Root of the raw archive.
 #' @export
 night_archive_snapshot <- function(path, archive_dir) {
   stamp <- night_snapshot_stamp(path)
@@ -69,6 +72,7 @@ night_party_lookup <- function(setup_dir) {
 #'
 #' Every party candidate becomes "UNMAPPED" (which `classify_party()` files under OTH). Results from this are
 #' NOT a usable update: it exists so the pipeline can be exercised without the set-up files (due 10 Nov).
+#' @param ids Affiliation ids to map.
 #' @export
 night_affiliation_stub <- function(ids) {
   ids <- unique(ids[!is.na(ids)])
@@ -116,7 +120,9 @@ night_check_feed <- function(feed) {
 #'
 #' With the list in use, a seat with none listed would have no way to know its unreported booths (and its district-level
 #' ordinary count is dropped), so its counted share would read as complete.
-#' @param seats State seat names. @param places [night_polling_places()] output.
+#' @param seats State seat names.
+#' @param places [night_polling_places()] output.
+#' @param allow `TRUE` to report the missing seats instead of stopping.
 #' @export
 night_check_places <- function(seats, places, allow = FALSE) {
   have <- sub(" District$", "", places$district[places$booth_class == "VotingCentre"])
@@ -131,6 +137,7 @@ night_check_places <- function(seats, places, allow = FALSE) {
 #' A snapshot carries booth rows only for booths that have reported (checked on the 2026 sample: the first
 #' snapshot has none, the second one per district), so this list is what says which booths are still to come.
 #' @return data.table `district_id, district, booth_id, booth, booth_class`, or `NULL` when the file is not there.
+#' @param setup_dir Folder holding the VEC set-up files.
 #' @export
 night_polling_places <- function(setup_dir) {
   f <- list.files(setup_dir, pattern = "PollingLocations.*[.]xml$", full.names = TRUE, ignore.case = TRUE)
@@ -258,6 +265,9 @@ night_booth_table <- function(feed, lookup, places = NULL, include_late = FALSE)
 #' district the state does not know would be ignored; either means the wrong state, a renamed district or a damaged
 #' conversion, so the cycle refuses to publish. `allow` is for exercising the pipeline on mismatched data (the
 #' 2026 sample against the vic2022 state) only.
+#' @param seats Seat names in the saved state.
+#' @param feed_districts District names in the converted feed.
+#' @param allow `TRUE` to report the mismatch instead of stopping.
 #' @export
 night_check_coverage <- function(seats, feed_districts, allow = FALSE) {
   miss <- setdiff(seats, feed_districts); extra <- setdiff(feed_districts, seats)
@@ -269,6 +279,8 @@ night_check_coverage <- function(seats, feed_districts, allow = FALSE) {
 
 #' Refuse a snapshot that is older than the one the last published JSON came from (NW8)
 #' @return `"ok"`, or `"same"` when it is the snapshot already published.
+#' @param stamp Stamp of the snapshot about to be used ([night_snapshot_stamp()]).
+#' @param out_file The published JSON.
 #' @export
 night_check_fresh <- function(stamp, out_file) {
   if (!file.exists(out_file)) return("ok")
@@ -370,6 +382,11 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
 #' model does not recompute (`track_record`, `poll_source`, `region`) are copied from `base` when given, else NULL.
 #' `primary_q` is not produced (the update gives a posterior sd, not draws); `primary_sd` is given instead.
 #' @param base A parsed published `forecast-vic2026.json` (list), or `NULL`.
+#' @param st Saved afternoon state (an `AUSPOL_NIGHT_DUMP` RDS, read).
+#' @param res Result of [night_run_update()].
+#' @param snapshot Path of the snapshot the update came from.
+#' @param election Election label.
+#' @param election_date Polling day, `YYYY-MM-DD`.
 #' @export
 night_build_json <- function(st, res, snapshot, base = NULL, election = "vic2026", election_date = "2026-11-28") {
   sim <- res$sim; tot <- as.data.frame(sim$totals); parties <- colnames(sim$totals)
@@ -422,6 +439,9 @@ night_build_json <- function(st, res, snapshot, base = NULL, election = "vic2026
 
 #' Write a JSON document atomically and validated: temp file, read it back, then rename over the target
 #' @return The target path. Stops (NW4) without touching the target if the document does not read back as expected.
+#' @param doc The document (a list) to write.
+#' @param out_file Target path.
+#' @param min_seats Fewest seats the read-back document must hold.
 #' @export
 night_publish_json <- function(doc, out_file, min_seats = 1L) {
   dir.create(dirname(out_file), recursive = TRUE, showWarnings = FALSE)

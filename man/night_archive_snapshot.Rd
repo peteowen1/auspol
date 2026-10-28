@@ -6,6 +6,11 @@
 \usage{
 night_archive_snapshot(path, archive_dir)
 }
+\arguments{
+\item{path}{Snapshot file to archive.}
+
+\item{archive_dir}{Root of the raw archive.}
+}
 \value{
 List: \code{path} (the archived copy), \code{new} (TRUE when a copy was made).
 }

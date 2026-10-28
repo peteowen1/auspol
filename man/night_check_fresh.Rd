@@ -6,6 +6,11 @@
 \usage{
 night_check_fresh(stamp, out_file)
 }
+\arguments{
+\item{stamp}{Stamp of the snapshot about to be used (\code{\link[=night_snapshot_stamp]{night_snapshot_stamp()}}).}
+
+\item{out_file}{The published JSON.}
+}
 \value{
 \code{"ok"}, or \code{"same"} when it is the snapshot already published.
 }

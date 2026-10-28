@@ -7,7 +7,11 @@
 night_check_places(seats, places, allow = FALSE)
 }
 \arguments{
-\item{seats}{State seat names. @param places \code{\link[=night_polling_places]{night_polling_places()}} output.}
+\item{seats}{State seat names.}
+
+\item{places}{\code{\link[=night_polling_places]{night_polling_places()}} output.}
+
+\item{allow}{\code{TRUE} to report the missing seats instead of stopping.}
 }
 \description{
 With the list in use, a seat with none listed would have no way to know its unreported booths (and its district-level

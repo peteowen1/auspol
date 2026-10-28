@@ -6,6 +6,9 @@
 \usage{
 night_snapshot_stamp(path)
 }
+\arguments{
+\item{path}{Snapshot file path.}
+}
 \description{
 Stamp (\code{YYYYMMDD_HHMMSS}) in a snapshot's file name
 }

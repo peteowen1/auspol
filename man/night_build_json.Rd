@@ -14,7 +14,17 @@ night_build_json(
 )
 }
 \arguments{
+\item{st}{Saved afternoon state (an \code{AUSPOL_NIGHT_DUMP} RDS, read).}
+
+\item{res}{Result of \code{\link[=night_run_update]{night_run_update()}}.}
+
+\item{snapshot}{Path of the snapshot the update came from.}
+
 \item{base}{A parsed published \code{forecast-vic2026.json} (list), or \code{NULL}.}
+
+\item{election}{Election label.}
+
+\item{election_date}{Polling day, \code{YYYY-MM-DD}.}
 }
 \description{
 Same top-level keys as \code{forecast-vic2026.json} (scripts/build_forecast_json.R) plus \code{counted_pct} per seat and
