@@ -1,3 +1,8 @@
+# auspol 0.4.112
+
+- **Port 3C shipped** (`AUSPOL_SEAT_SWING_PORT_3C="2"`): the seat-swing port no longer treats a federal Coalition line-up change as a swing the state seat shares. Null on the 20k deciding run over 2,931 seats; Bendigo West Nationals 0.54 -> 0.19. Post-xgb (stage 1 pins it to 0). Republished from stage 6.
+- **VEC election-night feed reader** (`vec_feed_latest()`, `vec_feed_read_lh()`): newest snapshot and the verbose Assembly XML into tidy tables, for the live model (#148). Adds `xml2` to Imports.
+
 # auspol 0.4.111
 
 - **Value-odds page** (`scripts/value_odds_vic2026.R`, template `scripts/value-page-template.html`): our published Victoria 2026 seat probabilities against every Sportsbet, TAB and Betfair price on a capture date, with edge, a value table and a click-through per seat. `snapshot_benchmarks.R` runs it after each capture (VB19). Scraped names are escaped.
