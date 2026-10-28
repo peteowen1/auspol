@@ -140,42 +140,47 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L) 
 #'   2CP, not exactly two classes, a class missing from `post`, or no other votes, are absent.
 #' @export
 night_tcp_obs <- function(tcp, fp, units, post) {
-  T <- data.table::as.data.table(tcp)
-  T[is.na(votes), votes := 0]
-  T[, cls := classify_party(party_raw)]
-  T[, unit := ifelse(vote_type == "ordinary", booth, vote_type)]
-  F <- data.table::as.data.table(fp)
-  F[is.na(votes), votes := 0]
-  F[, cls := classify_party(party)]
-  F[, unit := ifelse(booth_type == "ordinary", booth, booth_type)]
+  # vote-type labels differ between the two files ("marked as voted" / "marked_as_voted"): one spelling
+  .vt <- function(x) gsub("[^a-z]+", "_", tolower(x))
+  TT <- data.table::as.data.table(tcp)
+  TT[is.na(votes), votes := 0]
+  TT[, cls := classify_party(party_raw)]
+  TT[, unit := ifelse(vote_type == "ordinary", booth, .vt(vote_type))]
+  FF <- data.table::as.data.table(fp)
+  FF[is.na(votes), votes := 0]
+  FF[, cls := classify_party(party)]
+  FF[, unit := ifelse(booth_type == "ordinary", booth, .vt(booth_type))]
   out <- list()
   for (s in intersect(names(units), rownames(post))) {
     u <- units[[s]]
     if (!length(u)) next
-    x <- T[T$district == s & T$unit %in% u, list(v = sum(votes)), by = "cls"]
+    u <- ifelse(u %in% FF$booth[FF$district == s & FF$booth_type == "ordinary"], u, .vt(u))
+    x <- TT[TT$district == s & TT$unit %in% u, list(v = sum(votes)), by = "cls"]
     if (nrow(x) != 2L || sum(x$v) <= 0) next
     x <- x[order(cls)]
     a <- x$cls[1]; b <- x$cls[2]
     if (!all(c(a, b) %in% colnames(post))) next
     # first preferences in the SAME counted units the 2CP covers
-    tu <- unique(T$unit[T$district == s & T$unit %in% u])
-    f <- F[F$district == s & F$unit %in% tu, list(v = sum(votes)), by = "cls"]
+    tu <- unique(TT$unit[TT$district == s & TT$unit %in% u])
+    f <- FF[FF$district == s & FF$unit %in% tu, list(v = sum(votes)), by = "cls"]
     tot <- sum(f$v); fa <- sum(f$v[f$cls == a]); fb <- sum(f$v[f$cls == b])
     rest <- tot - fa - fb
     if (rest <= 0) next
     flow <- min(1, max(0, (x$v[1] - fa) / rest))
-    # its standard error from the spread of the flow between counted booths (weighted by their
-    # other-party votes), with an effective count of booths: flows differ booth to booth far more
-    # than sampling alone implies, and that heterogeneity is what an early count does not pin down
-    pb_t <- T[T$district == s & T$unit %in% tu & T$cls == a, list(ta = sum(votes)), by = "unit"]
-    pb_f <- F[F$district == s & F$unit %in% tu, list(fa = sum(votes[cls == a]), fb = sum(votes[cls == b]), tot = sum(votes)), by = "unit"]
+    # Its standard error from the spread of the flow between counted booths, weighted by their
+    # other-party votes: flows differ booth to booth far more than sampling alone implies, and that
+    # heterogeneity is what an early count does not pin down. Unbiased weighted form (divides by
+    # 1 - sum(w^2)); under 3 booths the spread cannot be measured, so the flow is held loosely (0.25).
+    # Review of #161: the biased form gave 0.01 for two equal booths and the flow ~99% weight.
+    pb_t <- TT[TT$district == s & TT$unit %in% tu & TT$cls == a, list(ta = sum(votes)), by = "unit"]
+    pb_f <- FF[FF$district == s & FF$unit %in% tu, list(fa = sum(votes[cls == a]), fb = sum(votes[cls == b]), tot = sum(votes)), by = "unit"]
     pbk <- merge(pb_t, pb_f, by = "unit"); pbk[, rst := tot - fa - fb]; pbk <- pbk[pbk$rst > 0]
-    se <- if (nrow(pbk) >= 2L) {
+    se <- if (nrow(pbk) >= 3L) {
       fj <- pmin(1, pmax(0, (pbk$ta - pbk$fa) / pbk$rst)); w <- pbk$rst / sum(pbk$rst)
-      sqrt(sum(w * (fj - sum(w * fj))^2) * sum(w^2))
+      sqrt(sum(w * (fj - sum(w * fj))^2) * sum(w^2) / max(1 - sum(w^2), 1e-6))
     } else 0.25
     pa <- post[s, a]; pb <- post[s, b]
-    out[[s]] <- data.table::data.table(seat = s, a = a, b = b, flow = flow, flow_se = max(se, 0.01),
+    out[[s]] <- data.table::data.table(seat = s, a = a, b = b, flow = flow, flow_se = max(se, 0.02),
                                        fp_a = pa, fp_b = pb,
                                        share_a = (pa + flow * (100 - pa - pb)) / 100, votes = sum(x$v))
   }
@@ -200,12 +205,11 @@ night_tcp_obs <- function(tcp, fp, units, post) {
 #' per-draw calibration shrink toss (1% at the published setting) is not redone for a changed draw.
 #' @param sim Output of [simulate_seat_contests()].
 #' @param obs [night_tcp_obs()] output.
-#' @param counted Named per-seat counted share of all votes (0-1).
 #' @param pair_min Smallest share of draws with the VEC's pair for its count to be used.
 #' @return `sim`, updated, with attribute `night_tcp`: one row per observed seat (pair share
 #'   of draws, prior and posterior mean of a's share, draws changed, `flag`).
 #' @export
-night_apply_tcp <- function(sim, obs, counted, pair_min = 0.2) {
+night_apply_tcp <- function(sim, obs, pair_min = 0.2) {
   if (is.null(obs) || !nrow(obs)) return(sim)
   seats <- colnames(sim$tcp_winner)
   if (is.null(seats)) stop("NX5! sim$tcp_winner has no seat names: cannot match the VEC's 2CP to seats", call. = FALSE)
@@ -234,14 +238,18 @@ night_apply_tcp <- function(sim, obs, counted, pair_min = 0.2) {
     fi <- (pa - obs$fp_a[k] / 100) / rest                     # each draw's implied flow to a
     fm <- mean(fi); fsd <- max(stats::sd(fi), 0.01)
     cm <- combine_prior_projection(fm, obs$flow[k], fsd, obs$flow_se[k])
-    na <- pa + (cm$mean - fm) * rest
+    na <- pmin(1, pmax(0, pa + (cm$mean - fm) * rest))
     cm <- list(mean = mean(na))
     newW <- ifelse(na > 0.5, a, b); oldW <- W[hit]
     ch <- which(newW != oldW)
     for (d in ch) {
       i_old <- match(oldW[d], parties); i_new <- match(newW[d], parties); r <- hit[d]
-      if (sim$totals[r, i_old] > 0) sim$totals[r, i_old] <- sim$totals[r, i_old] - 1L
-      sim$totals[r, i_new] <- sim$totals[r, i_new] + 1L
+      # Move a seat from old to new in this draw ONLY if old holds one: after the shrink toss the
+      # credited winner can differ from the count winner, and an unmatched increment would double count.
+      if (sim$totals[r, i_old] > 0) {
+        sim$totals[r, i_old] <- sim$totals[r, i_old] - 1L
+        sim$totals[r, i_new] <- sim$totals[r, i_new] + 1L
+      }
     }
     if (length(ch)) {
       delta <- table(factor(newW[ch], parties)) - table(factor(oldW[ch], parties))

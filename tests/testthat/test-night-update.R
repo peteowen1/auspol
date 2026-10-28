@@ -97,7 +97,7 @@ test_that("a counted flow moves the draws, winners, totals and probabilities tog
   sim <- nu_sim(ifelse(sh > 0.5, "ALP", "LNP"), ifelse(sh > 0.5, "LNP", "ALP"), pmax(sh, 1 - sh))
   obs <- data.table::data.table(seat = "Seat A", a = "ALP", b = "LNP", flow = 0.9, flow_se = 0.01,
                                 fp_a = 40, fp_b = 40, share_a = 0.58, votes = 100)
-  out <- night_apply_tcp(sim, obs, c(`Seat A` = 0.5))
+  out <- night_apply_tcp(sim, obs)
   wp <- out$win_prob
   expect_gt(wp$prob[wp$party == "ALP"], 0.95)                      # strong flow to Labor decides it
   expect_equal(sum(out$totals[, "ALP"]) / 200, wp$prob[wp$party == "ALP"])
@@ -109,7 +109,17 @@ test_that("a VEC pair the model rarely produces is ignored and flagged", {
   sim <- nu_sim(rep("ALP", 100), rep("GRN", 100), rep(0.6, 100))
   obs <- data.table::data.table(seat = "Seat A", a = "ALP", b = "LNP", flow = 0.9, flow_se = 0.01,
                                 fp_a = 40, fp_b = 40, share_a = 0.58, votes = 100)
-  out <- night_apply_tcp(sim, obs, c(`Seat A` = 0.5))
+  out <- night_apply_tcp(sim, obs)
   expect_true(attr(out, "night_tcp")$flag)
   expect_identical(out$tcp_winner, sim$tcp_winner)
+})
+
+test_that("two counted booths cannot pin the flow down (review of #161)", {
+  fp <- data.table::rbindlist(lapply(c("B1", "B2", "B3"), function(b) data.table::data.table(
+    district = "Seat A", booth = b, booth_type = "ordinary",
+    party = c("Australian Labor Party", "Liberal", "Australian Greens"), votes = c(40, 40, 20))))
+  tcp <- nu_tcp(c(55, 55, 55), c(45, 45, 45))
+  post <- matrix(c(30, 50, 20), 1, dimnames = list("Seat A", c("ALP", "LNP", "GRN")))
+  expect_equal(night_tcp_obs(tcp, fp, list(`Seat A` = c("B1", "B2")), post)$flow_se, 0.25)
+  expect_equal(night_tcp_obs(tcp, fp, list(`Seat A` = c("B1", "B2", "B3")), post)$flow_se, 0.02)  # equal flows: the floor
 })

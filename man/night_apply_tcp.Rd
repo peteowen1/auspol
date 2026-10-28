@@ -4,14 +4,12 @@
 \alias{night_apply_tcp}
 \title{Condition simulated draws on the VEC's two-candidate count}
 \usage{
-night_apply_tcp(sim, obs, counted, pair_min = 0.2)
+night_apply_tcp(sim, obs, pair_min = 0.2)
 }
 \arguments{
 \item{sim}{Output of \code{\link[=simulate_seat_contests]{simulate_seat_contests()}}.}
 
 \item{obs}{\code{\link[=night_tcp_obs]{night_tcp_obs()}} output.}
-
-\item{counted}{Named per-seat counted share of all votes (0-1).}
 
 \item{pair_min}{Smallest share of draws with the VEC's pair for its count to be used.}
 }

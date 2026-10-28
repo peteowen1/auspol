@@ -219,7 +219,8 @@ a pair in under 20% of draws is ignored and flagged. Replayed on the FINAL 2022 
 wrong and 2CP lags).
 
 Seat-winner log loss, 88 seats, lower is better: first-preference update alone -> plus 2CP flow, same seed:
-10% counted 0.1556 -> **0.1146**; 25% 0.1395 -> **0.0994**; 50% 0.1112 -> **0.0970**. At 50%: Mildura (Nationals won)
+10% counted 0.1556 -> **0.1133**; 25% 0.1395 -> **0.0968**; 50% 0.1112 -> **0.0929** (after the review fix: unbiased between-booth
+flow SE, held at 0.25 under 3 counted booths; before it, 0.1146 / 0.0994 / 0.0970 with the flow over-trusted). At 50%: Mildura (Nationals won)
 0.08 -> 0.78, Morwell 0.43 -> 0.95, Berwick 0.48 -> 0.92; worse: Northcote (Labor v Greens) 0.32 -> 0.05. Independents at
 50% counted: 90% range 1-6 -> 0-5 seats (actual 0). Two designs failed first and are recorded so they are not retried:
 the raw counted 2CP share (0.1661: early booths are not a random sample), and combining 2CP shares with the draws

@@ -1094,7 +1094,7 @@ for (K in PAIRS) {
       .bt <- file.path("output", "booths", sprintf("vic%d-booth-tcp.csv", K$to))
       if (!file.exists(.bt)) stop("NX6! AUSPOL_NIGHT_TCP=1 needs ", .bt)
       .obs <- night_tcp_obs(data.table::fread(.bt, showProgress = FALSE), data.table::fread(.bl, showProgress = FALSE), .nu$units, shares)
-      sim <- night_apply_tcp(sim, .obs, .nu$counted)
+      sim <- night_apply_tcp(sim, .obs)
       .nt <- attr(sim, "night_tcp")
       cat(sprintf("NX7  night 2CP: %d seat(s) with a counted pair, %d used (%d draw(s) changed winner), %d ignored and flagged: %s\n",
                   nrow(.obs), sum(!.nt$flag), sum(.nt$changed), sum(.nt$flag),
