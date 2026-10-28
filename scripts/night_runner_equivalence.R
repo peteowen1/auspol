@@ -32,6 +32,17 @@ zer <- copy(full); zer[!is_c, votes := 0]
 conv_b <- list(live = zer, counted = cnt, tcp = conv_a$tcp, unmapped = character())
 rb <- night_run_update(st, conv_b, R, gap_k = 5, total = "projected")
 
+# (C) as B but with the live denominator: this election's enrolment x the previous election's turnout rate per seat
+S_prev <- fread(sprintf("output/council-district-stats-%d.csv", st$from), showProgress = FALSE)
+S_now <- fread(sprintf("output/council-district-stats-%d.csv", st$to), showProgress = FALSE)
+enr <- setNames(S_now$enrolment, sub(" District$", "", S_now$district))
+expd <- night_expected_votes(enr, S_prev)
+true_tot <- L[, list(v = sum(votes[booth_type %in% c("ordinary", "early", "postal")])), by = "district"]
+cat(sprintf("NEQ1  expected votes vs the replay's final night total (ordinary+early+postal), %d seats: mean abs error %.1f%%, mean signed %.1f%%
+",
+            nrow(true_tot), 100 * mean(abs(expd[true_tot$district] / true_tot$v - 1), na.rm = TRUE), 100 * mean(expd[true_tot$district] / true_tot$v - 1, na.rm = TRUE)))
+rc <- night_run_update(st, conv_b, R, gap_k = 5, total = "expected", expected = expd)
+
 csv <- flag("replay-csv")
 if (is.null(csv)) stop("NEQ1! --replay-csv= is required (run night_replay.R --fracs=<frac> --tcp=1 --gap_k=5 first)")
 rp <- fread(csv); rp <- rp[abs(frac - fr) < 1e-9]
@@ -46,8 +57,16 @@ cmp <- function(res, label) {
               label, nrow(m), d, sd_diff, mean(res$nu$counted)))
   invisible(d)
 }
+ll <- function(res) {
+  w <- as.data.table(res$sim$win_prob); eps <- 0.5 / st$n_sims
+  pa <- merge(data.table(seat = st$keep, actual = unname(st$truth[st$keep])), w, by.x = c("seat", "actual"), by.y = c("seat", "party"), all.x = TRUE)
+  pa[is.na(prob), prob := 0]; mean(-log(pmax(pa$prob, eps)))
+}
 da <- cmp(ra, "A exact (full table + counted list, table denominator)")
 db <- cmp(rb, "B live-like (uncounted votes zeroed, projected denominator)")
+dc <- cmp(rc, "C live-like, expected denominator (enrolment x turnout)")
+cat(sprintf("NEQ2  seat log loss over %d seats (lower is better): replay/A %.4f, B projected %.4f, C expected %.4f
+", length(st$keep), ll(ra), ll(rb), ll(rc)))
 cat(sprintf("NEQ2  replay mean counted %.3f\n", mean(nu0$counted)))
 cat(sprintf("NEQ2  VERDICT A: %s\n", if (da < 1e-9) "EQUAL to night_replay.R" else "DIFFERENT"))
 quit(status = if (da < 1e-9) 0L else 1L)

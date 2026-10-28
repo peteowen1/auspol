@@ -4,16 +4,20 @@
 \alias{night_booth_table}
 \title{Convert a parsed Assembly snapshot into the booth table shape the night update expects}
 \usage{
-night_booth_table(feed, lookup)
+night_booth_table(feed, lookup, places = NULL)
 }
 \arguments{
 \item{feed}{Output of \code{\link[=vec_feed_read_lh]{vec_feed_read_lh()}}.}
 
 \item{lookup}{\code{\link[=night_party_lookup]{night_party_lookup()}} output (or \code{\link[=night_affiliation_stub]{night_affiliation_stub()}}).}
+
+\item{places}{\code{\link[=night_polling_places]{night_polling_places()}} output. Ordinary booths listed there but absent from the snapshot get a
+zero-vote row (unreported units, so they can be projected); \code{NULL} adds none.}
 }
 \value{
 List: \code{live} (\verb{district, booth, booth_type, party, votes}; every unit of every district, reported
-or not), \code{counted} (\verb{district, unit} of units with votes), \code{tcp} (\verb{district, booth, vote_type, party_raw, votes}: the VEC's 2CP in booths, empty when none), \code{unmapped} (affiliation ids with no name).
+or not), \code{counted} (\verb{district, unit} of units with votes), \code{tcp} (\verb{district, booth, vote_type, party_raw, votes}: the VEC's 2CP in booths, empty when none), \code{unmapped} (affiliation ids with no name),
+\code{n_placeholder_booths} (listed booths with no row in the snapshot).
 District names lose a trailing " District" (2026 contests are "Bass District", our seats "Bass").
 Counts per booth where the district has booth rows of that kind, per district vote type otherwise: never both.
 }

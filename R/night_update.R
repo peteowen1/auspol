@@ -89,14 +89,17 @@ night_prior_sd <- function(shares, level_sd, level_mult = NULL, sd_override = NU
 #'   unit of the seat (uncounted ones with any votes, ignored) so the uncounted ones can be projected.
 #' @param total Denominator of a seat's counted share: `"table"` (default) is the votes in `live` (right for a replay,
 #'   where `live` is the final result); `"projected"` is counted / (counted + the projected size of the uncounted units),
-#'   which is all a live feed can know.
+#'   which is all a live feed can know; `"expected"` is `expected[seat]` (enrolment x turnout), with the uncounted units
+#'   rescaled to the remainder (see [project_seat_from_booths()]).
+#' @param expected For `total = "expected"`: named numeric, expected final votes per seat (a seat missing or NA falls
+#'   back to `"projected"`).
 #' @return List: `shares` (posterior means, rows renormalised to 100), `sd` (posterior sds),
 #'   `counted` (named per-seat share of the final night vote counted), `resolved` (mean over
 #'   updated cells of 1 - posterior sd / prior sd), `n_updated` (seats with booths), `units`
 #'   (counted units per seat), `type_gap` (the pooled gaps used, or `NULL`).
 #' @export
 night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, gap_k = NULL, early = "last", new_sd_mult = 1,
-                               reported = NULL, total = c("table", "projected")) {
+                               reported = NULL, total = c("table", "projected", "expected"), expected = NULL) {
   total <- match.arg(total)
   stopifnot(is.numeric(new_sd_mult), length(new_sd_mult) == 1L, new_sd_mult >= 1)
   stopifnot(identical(dim(shares), dim(prior_sd)), is.finite(frac), frac >= 0, frac <= 1)
@@ -139,7 +142,7 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
   for (s in names(units_by_seat)) {
     ld <- Lc[Lc$district == s]; rd <- Rk[Rk$district == s]
     units <- units_by_seat[[s]]
-    p <- project_seat_from_booths(ld, rd, units, type_gap = type_gap, total = total)
+    p <- project_seat_from_booths(ld, rd, units, type_gap = type_gap, total = total, expected_total = if (is.null(expected)) NA_real_ else unname(expected[s]))
     if (is.null(p) || !nrow(p)) next
     cs <- p$counted_share[1]
     counted[s] <- cs

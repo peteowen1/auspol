@@ -9,7 +9,8 @@ project_seat_from_booths(
   ref,
   counted_units,
   type_gap = NULL,
-  total = c("table", "projected")
+  total = c("table", "projected", "expected"),
+  expected_total = NA_real_
 )
 }
 \arguments{
@@ -27,7 +28,11 @@ relative to ordinary booths, measured in other seats and shrunk; issue #160). \c
 default) is byte-identical to the previous behaviour.}
 
 \item{total}{\code{"table"} (default): counted share is counted votes over the votes in \code{live}. \code{"projected"}: over
-counted votes plus the projected size of the uncounted units (a live feed has no final total).}
+counted votes plus the projected size of the uncounted units (a live feed has no final total). \code{"expected"}: over
+\code{expected_total} (enrolment x turnout), and the uncounted units' projected sizes are rescaled to sum to what is
+left of it (\code{expected_total} minus counted, floored at 0); with \code{expected_total} NA it behaves as \code{"projected"}.}
+
+\item{expected_total}{Expected final votes of the seat, for \code{total = "expected"}.}
 }
 \value{
 data.table \verb{cls, projected, counted_share}, or \code{NULL} if no

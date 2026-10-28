@@ -97,21 +97,47 @@ night_check_feed <- function(feed) {
   m <- merge(cs, feed$contests[, c("district_id", "formal")], by = "district_id")
   bad <- m$district_id[!is.finite(m$formal) | abs(m$s - m$formal) > 0.5]
   if (length(bad)) stop("NR1! candidate votes do not add to the formal total in district id(s): ", paste(bad, collapse = ", "), call. = FALSE)
+  nocand <- setdiff(feed$contests$district_id, feed$candidates$district_id)
+  if (length(nocand)) stop("NR1! contest(s) with no candidates in snapshot (district id ", paste(nocand, collapse = ", "), "): a seat would silently drop out", call. = FALSE)
   if (anyDuplicated(feed$contests$district)) stop("NR1! duplicate district names in snapshot", call. = FALSE)
   invisible(TRUE)
+}
+
+#' Every polling place the VEC lists, from the set-up "PollingLocations" file
+#'
+#' A snapshot carries booth rows only for booths that have reported (checked on the 2026 sample: the first
+#' snapshot has none, the second one per district), so this list is what says which booths are still to come.
+#' @return data.table `district_id, district, booth_id, booth, booth_class`, or `NULL` when the file is not there.
+#' @export
+night_polling_places <- function(setup_dir) {
+  f <- list.files(setup_dir, pattern = "PollingLocations.*[.]xml$", full.names = TRUE, ignore.case = TRUE)
+  if (!length(f)) return(NULL)
+  doc <- xml2::read_xml(f[1])
+  pds <- xml2::xml_find_all(doc, "//*[local-name()='PollingDistrict']")
+  out <- data.table::rbindlist(lapply(pds, function(pd) {
+    id <- xml2::xml_find_first(pd, "*[local-name()='PollingDistrictIdentifier']")
+    pp <- xml2::xml_find_all(pd, ".//*[local-name()='PollingPlaceIdentifier']")
+    if (!length(pp)) return(NULL)
+    data.table::data.table(district_id = xml2::xml_attr(id, "Id"), district = xml2::xml_text(xml2::xml_find_first(id, "*[local-name()='Name']")),
+                           booth_id = xml2::xml_attr(pp, "Id"), booth = xml2::xml_attr(pp, "Name"), booth_class = xml2::xml_attr(pp, "Classification"))
+  }))
+  if (is.null(out) || !nrow(out)) NULL else out
 }
 
 #' Convert a parsed Assembly snapshot into the booth table shape the night update expects
 #'
 #' @param feed Output of [vec_feed_read_lh()].
 #' @param lookup [night_party_lookup()] output (or [night_affiliation_stub()]).
+#' @param places [night_polling_places()] output. Ordinary booths listed there but absent from the snapshot get a
+#'   zero-vote row (unreported units, so they can be projected); `NULL` adds none.
 #' @return List: `live` (`district, booth, booth_type, party, votes`; every unit of every district, reported
 #'   or not), `counted` (`district, unit` of units with votes), `tcp` (`district, booth, vote_type, party_raw,
-#'   votes`: the VEC's 2CP in booths, empty when none), `unmapped` (affiliation ids with no name).
+#'   votes`: the VEC's 2CP in booths, empty when none), `unmapped` (affiliation ids with no name),
+#'   `n_placeholder_booths` (listed booths with no row in the snapshot).
 #'   District names lose a trailing " District" (2026 contests are "Bass District", our seats "Bass").
 #'   Counts per booth where the district has booth rows of that kind, per district vote type otherwise: never both.
 #' @export
-night_booth_table <- function(feed, lookup) {
+night_booth_table <- function(feed, lookup, places = NULL) {
   dn <- function(x) sub(" District$", "", x)
   cd <- data.table::copy(feed$candidates)
   cd[, affiliation_id := as.character(affiliation_id)]
@@ -145,12 +171,25 @@ night_booth_table <- function(feed, lookup) {
     # booth rows of a kind exist for the district -> its per-type district count would count the same votes twice
     # (only the three types a booth can carry; postal, absent etc. exist only at district level)
     covered <- paste(have_booth$district, have_booth$booth_type)
+    # "Early" is deliberately NOT in this list: the VEC guide defines it as early votes cast OUTSIDE the elector's
+    # district (not EVCEarly), which no in-district booth row carries. It is 0 on every 2026 sample snapshot, so this
+    # is from the guide, not confirmed on data; revisit on the 25 Nov trial.
     carried <- bty$vote_type %in% c("Ordinary", "EVCEarly", "MobileVotingEarly")
     drop <- carried & paste(bty$seat, bty$booth_type) %in% covered
+    # ordinary votes exist only in booths: with the polling list known, a district-level "Ordinary" row would be a phantom unit
+    if (!is.null(places)) drop <- drop | bty$vote_type == "Ordinary"
     bty <- bty[!drop, ]
     rows[[length(rows) + 1L]] <- bty[, list(district = seat, booth = paste0("(district ", booth_type, ")"), booth_type, party, votes)]
   }
   live <- data.table::rbindlist(rows, use.names = TRUE)
+  n_placeholder_booths <- 0L
+  if (!is.null(places)) {
+    pl <- places[places$booth_class == "VotingCentre", ]
+    pl <- merge(pl, cmap[!duplicated(cmap$district_id), c("district_id", "seat", "party")], by = "district_id")
+    pl <- pl[!paste(pl$seat, pl$booth) %in% paste(live$district, live$booth), ]
+    if (nrow(pl)) { n_placeholder_booths <- nrow(pl)
+      live <- rbind(live, pl[, list(district = seat, booth, booth_type = "ordinary", party, votes = 0)]) }
+  }
   # placeholders: a district-level unit with no rows at all still has to exist (uncounted) so it is projected
   p1 <- cmap[!duplicated(cmap$seat), c("seat", "party")]
   ph <- data.table::rbindlist(lapply(.night_unit_types, function(ty) {
@@ -173,7 +212,51 @@ night_booth_table <- function(feed, lookup) {
     bt2 <- bt2[!is.na(bt2$party), ]
     tcp <- bt2[, list(district = seat, booth, vote_type, party_raw = party, votes)]
   }
-  list(live = live[], counted = counted[], tcp = tcp[], unmapped = unmapped)
+  list(live = live[], counted = counted[], tcp = tcp[], unmapped = unmapped, n_placeholder_booths = n_placeholder_booths)
+}
+
+#' Stop (NR7) unless the saved state's seats and the feed's districts are the same set
+#'
+#' A seat missing from the feed would silently keep its prior as if nothing had been counted there, and a feed
+#' district the state does not know would be ignored; either means the wrong state, a renamed district or a damaged
+#' conversion, so the cycle refuses to publish. `allow` is for exercising the pipeline on mismatched data (the
+#' 2026 sample against the vic2022 state) only.
+#' @export
+night_check_coverage <- function(seats, feed_districts, allow = FALSE) {
+  miss <- setdiff(seats, feed_districts); extra <- setdiff(feed_districts, seats)
+  if ((length(miss) || length(extra)) && !isTRUE(allow))
+    stop(sprintf("NR7! seats and feed districts differ: %d state seat(s) not in the feed (%s); %d feed district(s) not in the state (%s)",
+                 length(miss), paste(utils::head(miss, 6), collapse = ", "), length(extra), paste(utils::head(extra, 6), collapse = ", ")), call. = FALSE)
+  invisible(list(missing = miss, extra = extra))
+}
+
+#' Refuse a snapshot that is older than the one the last published JSON came from (NR8)
+#' @return `"ok"`, or `"same"` when it is the snapshot already published.
+#' @export
+night_check_fresh <- function(stamp, out_file) {
+  if (!file.exists(out_file)) return("ok")
+  prev <- tryCatch(jsonlite::fromJSON(out_file, simplifyVector = FALSE)$night$snapshot_stamp, error = function(e) NULL)
+  if (is.null(prev) || is.na(stamp)) return("ok")
+  if (identical(prev, stamp)) return("same")
+  if (stamp < prev) stop("NR8! snapshot ", stamp, " is older than the published JSON's (", prev, "): stale or reordered file, not published", call. = FALSE)
+  "ok"
+}
+
+#' Expected final formal votes per seat: enrolment x the seat's turnout at the previous election
+#'
+#' Turnout is the seat's own formal votes over enrolment at the previous election (`rbvc_formal / enrolment` in
+#' `output/council-district-stats-<year>.csv`); a seat not in that file takes the statewide rate. Measured on
+#' 2022 (coordinator, n = 86): mean absolute error 2.7% (worst -10.7%), against 9.2% for using the previous
+#' election's totals.
+#' @param enrolment Named numeric: enrolment per seat now (the feed's contests carry it).
+#' @param prev_stats Data frame with `district` (names ending " District"), `enrolment`, `rbvc_formal`.
+#' @export
+night_expected_votes <- function(enrolment, prev_stats) {
+  nm <- sub(" District$", "", prev_stats$district)
+  rate <- prev_stats$rbvc_formal / prev_stats$enrolment
+  state_rate <- sum(prev_stats$rbvc_formal) / sum(prev_stats$enrolment)
+  r <- rate[match(names(enrolment), nm)]; r[is.na(r)] <- state_rate
+  stats::setNames(unname(enrolment) * r, names(enrolment))
 }
 
 #' Run the night update, simulation and 2CP flow update from a prior state and a live booth table
@@ -184,13 +267,15 @@ night_booth_table <- function(feed, lookup) {
 #' @param conv [night_booth_table()] output.
 #' @param ref Booth table of the election before the one being counted (`output/booths-vicYYYY.csv`).
 #' @param gap_k Pooled vote-type gap shrinkage (5 = the setting rehearsed in #160); `NULL` off.
-#' @param total Counted-share denominator: `"projected"` (live) or `"table"` (replay equivalence).
+#' @param total Counted-share denominator: `"expected"` (live: enrolment x turnout, see [night_expected_votes()]),
+#'   `"projected"` (from previous-election booth sizes; the over-confident fallback) or `"table"` (replay equivalence).
+#' @param expected Named numeric of expected final votes per seat, for `total = "expected"`.
 #' @param sims Simulations (default the state's).
 #' @param use_tcp Condition on the VEC's 2CP flow where its pair is plausible.
 #' @return List: `sim`, `nu` (the update), `shares`, `sd`, `matched` (seats in both state and feed),
 #'   `n_updated`.
 #' @export
-night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "table"), sims = NULL, use_tcp = TRUE) {
+night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "table", "expected"), expected = NULL, sims = NULL, use_tcp = TRUE) {
   total <- match.arg(total)
   if (is.null(sims)) sims <- st$n_sims
   if (!is.null(st$swd) && nrow(st$swd) != sims) stop("NR2! the saved state has ", nrow(st$swd), " statewide draws; sims must equal that (dump the state at the sim count wanted)", call. = FALSE)
@@ -198,7 +283,7 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
   matched <- intersect(seats, unique(conv$live$district))
   shares <- st$shares; sdo <- st$sdo; swd <- st$swd
   nu <- night_booth_update(shares, night_prior_sd(shares, st$level_sd, st$level_mult, sdo), 1, conv$live, ref,
-                           gap_k = gap_k, reported = conv$counted, total = total)
+                           gap_k = gap_k, reported = conv$counted, total = total, expected = expected)
   if (nu$n_updated > 0L) {
     shares <- nu$shares; sdo <- nu$sd; swd <- night_shrink_draws(swd, 1 - nu$resolved)
   }
@@ -272,7 +357,7 @@ night_build_json <- function(st, res, snapshot, base = NULL, election = "vic2026
                       p_tie_most = round(mean(n_at_max > 1L), 4)),
        night = list(snapshot = snapshot$file, snapshot_stamp = snapshot$stamp, snapshot_archived = snapshot$archived,
                     seats_with_feed_data = length(res$matched), seats_updated = res$n_updated, seats_with_2cp = res$n_tcp,
-                    prior_state = st$pair, mean_counted_pct = round(100 * mean(res$nu$counted), 1)),
+                    prior_state = st$pair, counted_denominator = res$denominator, unreported_booths_listed = res$n_placeholder, mean_counted_pct = round(100 * mean(res$nu$counted), 1)),
        seats = seat_rows)
 }
 
@@ -295,6 +380,8 @@ night_publish_json <- function(doc, out_file, min_seats = 1L) {
 #'
 #' @param cfg List: `source`, `archive`, `setup`, `state` (RDS path or already-read list), `ref` (booth CSV path),
 #'   `out` (JSON path), optional `base_json`, `gap_k` (5), `sims`, `use_tcp` (TRUE), `allow_stub` (FALSE),
+#'   `turnout` (previous-election `council-district-stats-<year>.csv`, for the live denominator; without it the cycle falls
+#'   back to the over-confident projected one and says so), `allow_unmatched` (NR7 off; sample-vs-vic2022 test only),
 #'   `last_stamp` (skip when the newest snapshot has this stamp), `cache` (environment for the state and lookup).
 #' @return List: `status` ("ok", "no_new" or "failed"), `stamp`, `timings` (seconds per step), `message`, `summary`.
 #' @export
@@ -312,6 +399,17 @@ night_cycle <- function(cfg) {
     arch <- night_archive_snapshot(snap, cfg$archive); stamp_t("archive")
     feed <- vec_feed_read_lh(arch$path); stamp_t("parse")
     night_check_feed(feed)
+    if (identical(night_check_fresh(stamp, cfg$out), "same"))
+      return(list(status = "no_new", stamp = stamp, timings = tm, message = "", summary = paste("snapshot", stamp, "is already published")))
+    if (is.null(cache$places)) {
+      pl <- night_polling_places(cfg$setup)
+      if (is.null(pl)) {
+        if (!isTRUE(cfg$allow_stub)) stop("NR6! no *PollingLocations*.xml set-up file in ", cfg$setup, ": unreported booths cannot be known, so counted share would read 100%", call. = FALSE)
+        message("NR6  NO POLLING LOCATIONS FILE (stub allowed): unreported booths are unknown and counted share is overstated")
+        pl <- data.table::data.table(district_id = character(), district = character(), booth_id = character(), booth = character(), booth_class = character())
+      }
+      cache$places <- pl
+    }
     if (is.null(cache$lookup)) {
       lk <- night_party_lookup(cfg$setup)
       if (is.null(lk)) {
@@ -325,10 +423,18 @@ night_cycle <- function(cfg) {
     if (is.null(cache$ref)) cache$ref <- if (is.character(cfg$ref)) data.table::fread(cfg$ref, showProgress = FALSE) else cfg$ref
     if (is.null(cache$base) && !is.null(cfg$base_json)) cache$base <- jsonlite::fromJSON(cfg$base_json, simplifyVector = FALSE)
     stamp_t("load")
-    conv <- night_booth_table(feed, cache$lookup); stamp_t("convert")
+    conv <- night_booth_table(feed, cache$lookup, cache$places); stamp_t("convert")
+    night_check_coverage(rownames(cache$st$shares), conv$live$district, cfg$allow_unmatched)
     if (length(conv$unmapped)) message("NR3  affiliation ids with no name: ", paste(conv$unmapped, collapse = ", "))
-    res <- night_run_update(cache$st, conv, cache$ref, gap_k = if (is.null(cfg$gap_k)) 5 else cfg$gap_k, total = "projected",
+    expected <- NULL; denom <- "projected"
+    if (!is.null(cfg$turnout)) {
+      if (is.null(cache$turnout)) cache$turnout <- data.table::fread(cfg$turnout, showProgress = FALSE)
+      enr <- stats::setNames(feed$contests$enrolment, sub(" District$", "", feed$contests$district))
+      expected <- night_expected_votes(enr, cache$turnout); denom <- "expected"
+    } else message("NR9  no --turnout file: counted share projected from previous-election booth sizes, which over-states it (vic2022 check: 56.5% vs 33.8%)")
+    res <- night_run_update(cache$st, conv, cache$ref, gap_k = if (is.null(cfg$gap_k)) 5 else cfg$gap_k, total = denom, expected = expected,
                             sims = cfg$sims, use_tcp = !isFALSE(cfg$use_tcp)); stamp_t("update_simulate")
+    res$denominator <- denom; res$n_placeholder <- conv$n_placeholder_booths
     doc <- night_build_json(cache$st, res, list(file = basename(snap), stamp = stamp, archived = arch$new), base = cache$base)
     night_publish_json(doc, cfg$out, min_seats = nrow(cache$st$shares)); stamp_t("publish")
     sm <- sprintf("OK %s | seats with feed data %d of %d, updated %d, 2CP %d | mean counted %.1f%% | chamber ALP %.1f LNP %.1f | %s",

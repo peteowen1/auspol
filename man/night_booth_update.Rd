@@ -15,7 +15,8 @@ night_booth_update(
   early = "last",
   new_sd_mult = 1,
   reported = NULL,
-  total = c("table", "projected")
+  total = c("table", "projected", "expected"),
+  expected = NULL
 )
 }
 \arguments{
@@ -50,7 +51,11 @@ unit of the seat (uncounted ones with any votes, ignored) so the uncounted ones 
 
 \item{total}{Denominator of a seat's counted share: \code{"table"} (default) is the votes in \code{live} (right for a replay,
 where \code{live} is the final result); \code{"projected"} is counted / (counted + the projected size of the uncounted units),
-which is all a live feed can know.}
+which is all a live feed can know; \code{"expected"} is \code{expected[seat]} (enrolment x turnout), with the uncounted units
+rescaled to the remainder (see \code{\link[=project_seat_from_booths]{project_seat_from_booths()}}).}
+
+\item{expected}{For \code{total = "expected"}: named numeric, expected final votes per seat (a seat missing or NA falls
+back to \code{"projected"}).}
 }
 \value{
 List: \code{shares} (posterior means, rows renormalised to 100), \code{sd} (posterior sds),

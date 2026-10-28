@@ -2,7 +2,7 @@
 #
 #   Rscript scripts/night_runner.R --source=<folder of snapshot ZIPs> --archive=<raw archive folder> \
 #     --setup=<folder holding the set-up Candidates XML> --state=<state.rds> --ref=<output/booths-vicYYYY.csv> \
-#     --out=<forecast-night.json> [--base-json=<published forecast json>] [--gap_k=5] [--sims=N] [--tcp=1] [--allow-stub=0]
+#     --out=<forecast-night.json> [--base-json=<published forecast json>] [--turnout=<output/council-district-stats-YYYY.csv of the previous election>] [--gap_k=5] [--tcp=1] [--allow-stub=0] [--allow-unmatched=0]
 #
 # --state is the afternoon forecast saved with AUSPOL_NIGHT_DUMP (scripts/night_replay.R header);
 # --ref is the booth table of the election BEFORE the one being counted (the state's `from`).
@@ -16,7 +16,8 @@ need <- function(n) { v <- flag(n); if (is.null(v)) stop("NR2! --", n, "= is req
 cfg <- list(source = need("source"), archive = need("archive"), setup = flag("setup", need("source")), state = need("state"), ref = need("ref"),
             out = need("out"), base_json = flag("base-json"), gap_k = as.numeric(flag("gap_k", "5")),
             sims = if (!is.null(flag("sims"))) as.integer(flag("sims")) else NULL,
-            use_tcp = identical(flag("tcp", "1"), "1"), allow_stub = identical(flag("allow-stub", "0"), "1"))
+            use_tcp = identical(flag("tcp", "1"), "1"), allow_stub = identical(flag("allow-stub", "0"), "1"),
+            turnout = flag("turnout"), allow_unmatched = identical(flag("allow-unmatched", "0"), "1"))
 r <- night_cycle(cfg)
 cat(r$summary, "\n")
 quit(status = if (r$status == "failed") 1L else 0L)

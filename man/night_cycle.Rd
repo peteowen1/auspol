@@ -9,6 +9,8 @@ night_cycle(cfg)
 \arguments{
 \item{cfg}{List: \code{source}, \code{archive}, \code{setup}, \code{state} (RDS path or already-read list), \code{ref} (booth CSV path),
 \code{out} (JSON path), optional \code{base_json}, \code{gap_k} (5), \code{sims}, \code{use_tcp} (TRUE), \code{allow_stub} (FALSE),
+\code{turnout} (previous-election \verb{council-district-stats-<year>.csv}, for the live denominator; without it the cycle falls
+back to the over-confident projected one and says so), \code{allow_unmatched} (NR7 off; sample-vs-vic2022 test only),
 \code{last_stamp} (skip when the newest snapshot has this stamp), \code{cache} (environment for the state and lookup).}
 }
 \value{
