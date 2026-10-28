@@ -1,0 +1,160 @@
+<title>Election Night Layouts</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one column; a control strip (slider + play) stays at the top, the chosen layout below, a variant bar fixed at the bottom. */
+:root{
+  --bg:#f5f6f8; --panel:#ffffff; --fg:#141a24; --muted:#5f6878; --rule:#dde1e8; --accent:#5b2bbf;
+  --alp:#d6202b; --lnp:#1f4fa8; --grn:#2b8a3e; --onp:#e07000; --ind:#7d8494; --oth:#a3a9b6;
+  --display:"Archivo",system-ui,sans-serif; --body:"Inter",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10141b;--panel:#181e28;--fg:#e8ebf1;--muted:#9aa3b3;--rule:#2b3341;--accent:#b49cf5;--alp:#ff6b6b;--lnp:#6f9cf0;--grn:#62c776;--onp:#ffa24a;--ind:#a7adba;--oth:#7f8695;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#10141b;--panel:#181e28;--fg:#e8ebf1;--muted:#9aa3b3;--rule:#2b3341;--accent:#b49cf5;--alp:#ff6b6b;--lnp:#6f9cf0;--grn:#62c776;--onp:#ffa24a;--ind:#a7adba;--oth:#7f8695;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5;margin:0}
+.wrap{max-width:1000px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 96px;display:flex;flex-direction:column;gap:18px}
+.proto{font:600 .72rem var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--display);font-weight:800;font-size:1.7rem;margin:0;line-height:1.15;text-wrap:balance}
+.sub{color:var(--muted);font-size:.88rem}
+.ctl{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:12px 14px;display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.ctl button{font:600 .9rem var(--body);background:var(--accent);color:#fff;border:0;border-radius:6px;padding:8px 14px;cursor:pointer}
+.ctl input[type=range]{flex:1;min-width:180px;accent-color:var(--accent)}
+.counted{font:600 1.05rem var(--mono);min-width:9ch}
+.view{display:flex;flex-direction:column;gap:16px}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:14px 16px;min-width:0}
+.card h2{font-family:var(--display);font-size:1.05rem;margin:0 0 8px}
+.big{font-family:var(--display);font-weight:800;font-size:2.2rem;line-height:1}
+.row{display:flex;gap:14px;flex-wrap:wrap}
+.stat{flex:1;min-width:140px}
+.stat .l{font-size:.78rem;color:var(--muted)}
+svg text{fill:var(--fg);font-family:var(--body)}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.86rem;font-variant-numeric:tabular-nums}
+td,th{padding:6px 8px;border-bottom:1px solid var(--rule);text-align:left;white-space:nowrap}
+th{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+td.n,th.n{text-align:right}
+.bar{height:8px;border-radius:4px;background:var(--rule);position:relative;min-width:80px}
+.bar i{position:absolute;inset:0 auto 0 0;border-radius:4px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:4px}
+.tile{aspect-ratio:1;max-width:100%;border-radius:4px;display:flex;align-items:flex-end;justify-content:flex-start;padding:3px;font:600 .58rem var(--body);color:#fff;cursor:pointer;border:0;text-align:left;line-height:1.05;overflow:hidden}
+.tile.called{outline:2px solid var(--fg);outline-offset:-2px}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.82rem;color:var(--muted)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.panel{border-left:4px solid var(--accent)}
+.vbar{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--panel);border-top:1px solid var(--rule);padding-block:10px calc(10px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.vbar button{font:600 .85rem var(--body);background:var(--bg);color:var(--fg);border:1px solid var(--rule);border-radius:999px;padding:7px 14px;cursor:pointer}
+.vbar button[aria-pressed=true]{background:var(--accent);color:#fff;border-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+
+<div class="wrap">
+  <div class="proto">Prototype - three layouts to compare - Victoria 2022 replayed booth by booth, not live data</div>
+  <h1>Election night: which layout?</h1>
+  <div class="sub">Drag the slider (or press Play) to watch the 2022 count arrive. Each layout shows the same numbers: the model's live update of the afternoon forecast as booths report. Switch layouts with the bar at the bottom. Tap a seat for its detail.</div>
+  <div class="ctl">
+    <button type="button" id="play">Play</button>
+    <input type="range" id="frac" min="0" max="10" step="1" value="0" aria-label="Share of the night vote counted">
+    <span class="counted" id="cl"></span>
+  </div>
+  <div class="view" id="view"></div>
+  <div class="card panel" id="seatpanel" hidden></div>
+</div>
+<div class="vbar" role="group" aria-label="Layout">
+  <button type="button" data-v="a">A: Needle</button>
+  <button type="button" data-v="b">B: Race to 45</button>
+  <button type="button" data-v="c">C: Seat grid</button>
+</div>
+
+<script>
+const D = __DATA__;
+const NAME = {ALP:"Labor", LNP:"Coalition", GRN:"Greens", ONP:"One Nation", IND:"Independent", OTH:"Other", OTH_RIGHT:"Other right"};
+const COL = p => `var(--${({ALP:"alp",LNP:"lnp",GRN:"grn",ONP:"onp",IND:"ind"})[p] || "oth"})`;
+const $ = id => document.getElementById(id);
+const pc = x => Math.round(100 * x) + "%";
+let variant = "a", seat = null, timer = null;
+function frame() { return D.frames[+$("frac").value]; }
+function leader(s) { const e = Object.entries(s.p).sort((a, b) => b[1] - a[1]); return e[0] || ["OTH", 0]; }
+
+function needle(f) {
+  // P(Labor wins most seats) as a gauge; band = where Labor's seat total sits (90%)
+  const pAlp = f.most.ALP || 0, pLnp = f.most.LNP || 0;
+  const ang = Math.PI * (1 - pAlp);                 // 0 = Coalition side (right), 1 = Labor side (left)
+  const cx = 160, cy = 150, r = 120;
+  const nx = cx + r * Math.cos(ang), ny = cy - r * Math.sin(ang);
+  const arc = (a0, a1, c) => { const p0 = [cx + r * Math.cos(a0), cy - r * Math.sin(a0)], p1 = [cx + r * Math.cos(a1), cy - r * Math.sin(a1)];
+    return `<path d="M${p0[0]},${p0[1]} A${r},${r} 0 0 1 ${p1[0]},${p1[1]}" stroke="${c}" stroke-width="18" fill="none"/>`; };
+  const ch = f.chamber;
+  return `<div class="card"><h2>Who wins the most seats?</h2>
+    <svg viewBox="0 0 320 175" style="width:100%;max-width:420px" role="img" aria-label="Labor ${pc(pAlp)} to win the most seats">
+      ${arc(Math.PI, Math.PI/2, "var(--alp)")}${arc(Math.PI/2, 0, "var(--lnp)")}
+      <line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="var(--fg)" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="${cx}" cy="${cy}" r="7" fill="var(--fg)"/>
+      <text x="22" y="170" font-size="13">Labor</text><text x="245" y="170" font-size="13">Coalition</text>
+    </svg>
+    <div class="row"><div class="stat"><div class="big" style="color:var(--alp)">${pc(pAlp)}</div><div class="l">Labor most seats</div></div>
+    <div class="stat"><div class="big" style="color:var(--lnp)">${pc(pLnp)}</div><div class="l">Coalition most seats</div></div>
+    <div class="stat"><div class="big">${ch.ALP ? pc(ch.ALP.pmaj) : "0%"}</div><div class="l">Labor majority (45+)</div></div></div></div>` + rangesCard(f);
+}
+function rangesCard(f) {
+  const ps = Object.keys(f.chamber).filter(p => f.chamber[p].q95 > 0).sort((a, b) => f.chamber[b].mean - f.chamber[a].mean);
+  const x = v => 10 + v / 70 * 280;
+  return `<div class="card"><h2>Seats, 90% range</h2><svg viewBox="0 0 320 ${30 + ps.length * 30}" style="width:100%">
+    <line x1="${x(45)}" y1="10" x2="${x(45)}" y2="${20 + ps.length * 30}" stroke="var(--muted)" stroke-dasharray="4 3"/><text x="${x(45) + 3}" y="18" font-size="10" fill="var(--muted)">45 = majority</text>
+    ${ps.map((p, i) => { const c = f.chamber[p], y = 32 + i * 30; return `<text x="0" y="${y - 6}" font-size="11">${NAME[p] || p}</text>
+      <rect x="${x(c.q05)}" y="${y - 2}" width="${Math.max(2, x(c.q95) - x(c.q05))}" height="10" rx="5" fill="${COL(p)}" opacity=".35"/>
+      <rect x="${x(c.q50) - 2}" y="${y - 4}" width="4" height="14" fill="${COL(p)}"/><text x="${x(c.q95) + 6}" y="${y + 7}" font-size="11">${c.q05}-${c.q95}</text>`; }).join("")}
+  </svg></div>`;
+}
+function race(f) {
+  const ps = Object.keys(f.chamber).filter(p => f.chamber[p].q95 > 0).sort((a, b) => f.chamber[b].mean - f.chamber[a].mean);
+  const rows = ps.map(p => { const c = f.chamber[p];
+    const hist = Object.entries(c.hist), mx = Math.max(...hist.map(h => h[1]));
+    const bars = hist.map(([k, n]) => `<rect x="${10 + (+k) / 70 * 290}" y="${40 - 34 * n / mx}" width="${290 / 70}" height="${34 * n / mx}" fill="${COL(p)}"/>`).join("");
+    return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><h2 style="margin:0">${NAME[p] || p}</h2><span class="big" style="font-size:1.6rem;color:${COL(p)}">${c.q50}</span></div>
+      <svg viewBox="0 0 310 52" style="width:100%"><line x1="${10 + 45 / 70 * 290}" y1="0" x2="${10 + 45 / 70 * 290}" y2="44" stroke="var(--muted)" stroke-dasharray="3 3"/>${bars}
+      <text x="10" y="51" font-size="9" fill="var(--muted)">0</text><text x="${10 + 45 / 70 * 290 - 6}" y="51" font-size="9" fill="var(--muted)">45</text><text x="292" y="51" font-size="9" fill="var(--muted)">70</text></svg>
+      <div class="sub">90% of simulations: ${c.q05} to ${c.q95} seats - majority ${pc(c.pmaj)}</div></div>`; }).join("");
+  return `<div class="card"><h2>Race to 45</h2><div class="sub">Each chart is how many seats the party wins across 1,000 simulations of the rest of the count. The dashed line is a majority.</div></div>` + rows;
+}
+function grid(f) {
+  const seats = Object.keys(f.seats).sort((a, b) => (f.seats[b].p.ALP || 0) - (f.seats[a].p.ALP || 0));
+  const tiles = seats.map(s => { const [p, pr] = leader(f.seats[s]); const called = pr >= 0.99 && f.seats[s].c >= 0.1;
+    return `<button type="button" class="tile${called ? " called" : ""}" data-seat="${s}" title="${s}: ${NAME[p] || p} ${pc(pr)}, ${pc(f.seats[s].c)} counted" style="background:${COL(p)};opacity:${0.25 + 0.75 * pr}">${s.length > 12 ? s.slice(0, 11) + "." : s}</button>`; }).join("");
+  const lead = {}; seats.forEach(s => { const p = leader(f.seats[s])[0]; lead[p] = (lead[p] || 0) + 1; });
+  return `<div class="card"><h2>Every seat, coloured by who leads</h2><div class="sub">Fainter = less certain. Outlined = called (99%+ with at least 10% counted, a rule to set from the replay). Tap a seat.</div>
+    <div class="legend" style="margin:8px 0">${Object.entries(lead).sort((a, b) => b[1] - a[1]).map(([p, n]) => `<span><span class="dot" style="background:${COL(p)}"></span>${NAME[p] || p} leads ${n}</span>`).join("")}</div>
+    <div class="tiles">${tiles}</div></div>` + table(f);
+}
+function table(f) {
+  const seats = Object.keys(f.seats).map(s => [s, ...leader(f.seats[s]), f.seats[s].c]).sort((a, b) => a[2] - b[2]);
+  return `<div class="card"><h2>Closest seats</h2><div class="scroll"><table><thead><tr><th>Seat</th><th>Leader</th><th class="n">Chance</th><th>Counted</th><th>2022 result</th></tr></thead><tbody>
+    ${seats.slice(0, 12).map(([s, p, pr, c]) => `<tr><td><button type="button" class="tile" style="all:unset;cursor:pointer;color:var(--accent);text-decoration:underline" data-seat="${s}">${s}</button></td><td><span class="dot" style="background:${COL(p)}"></span>${NAME[p] || p}</td><td class="n">${pc(pr)}</td>
+      <td><div class="bar"><i style="width:${100 * c}%;background:var(--accent)"></i></div></td><td>${NAME[D.actual[s]] || D.actual[s] || "-"}</td></tr>`).join("")}</tbody></table></div></div>`;
+}
+function seatPanel() {
+  const el = $("seatpanel"); if (!seat) { el.hidden = true; return; }
+  const f = frame(), s = f.seats[seat]; if (!s) { el.hidden = true; return; }
+  const ps = Object.entries(s.p).sort((a, b) => b[1] - a[1]);
+  el.hidden = false;
+  el.innerHTML = `<h2>${seat}</h2><div class="sub">${pc(s.c)} of all votes counted. Actual 2022 winner: ${NAME[D.actual[seat]] || D.actual[seat] || "-"}.</div>
+    <table><tbody>${ps.map(([p, pr]) => `<tr><td><span class="dot" style="background:${COL(p)}"></span>${NAME[p] || p}</td><td style="width:60%"><div class="bar"><i style="width:${100 * pr}%;background:${COL(p)}"></i></div></td><td class="n">${pc(pr)}</td></tr>`).join("")}</tbody></table>
+    <div class="sub" style="margin-top:6px">Next step on the real page: projected first preferences, swing in booths so far, the VEC's two-candidate count, and a note when the VEC's pair looks wrong.</div>`;
+}
+function render() {
+  const f = frame();
+  $("cl").textContent = pc(f.frac) + " counted";
+  $("view").innerHTML = variant === "a" ? needle(f) : variant === "b" ? race(f) : grid(f);
+  document.querySelectorAll(".vbar button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === variant));
+  seatPanel();
+}
+$("frac").addEventListener("input", render);
+$("play").addEventListener("click", () => {
+  if (timer) { clearInterval(timer); timer = null; $("play").textContent = "Play"; return; }
+  if (+$("frac").value >= 10) $("frac").value = 0;
+  $("play").textContent = "Pause";
+  timer = setInterval(() => { const v = +$("frac").value; if (v >= 10) { clearInterval(timer); timer = null; $("play").textContent = "Play"; return; } $("frac").value = v + 1; render(); }, 1100);
+});
+document.querySelectorAll(".vbar button").forEach(b => b.addEventListener("click", () => { variant = b.dataset.v; try { location.hash = variant; } catch (e) {} render(); }));
+document.addEventListener("click", e => { const t = e.target.closest("[data-seat]"); if (t) { seat = t.dataset.seat; seatPanel(); $("seatpanel").scrollIntoView({behavior: "smooth", block: "nearest"}); } });
+const h = (location.hash || "").replace("#", ""); if (["a", "b", "c"].includes(h)) variant = h;
+render();
+</script>

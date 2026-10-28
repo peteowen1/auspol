@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Election Night Maps</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#f5f6f8; --panel:#ffffff; --fg:#141a24; --muted:#5f6878; --rule:#dde1e8; --accent:#5b2bbf;
+  --alp:#d6202b; --lnp:#1f4fa8; --grn:#2b8a3e; --onp:#e07000; --ind:#7d8494; --oth:#a3a9b6;
+  --land:#e9ebf0; --sel:#141a24;
+  --display:"Archivo",system-ui,sans-serif; --body:"Inter",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10141b;--panel:#181e28;--fg:#e8ebf1;--muted:#9aa3b3;--rule:#2b3341;--accent:#b49cf5;--alp:#ff6b6b;--lnp:#6f9cf0;--grn:#62c776;--onp:#ffa24a;--ind:#a7adba;--oth:#7f8695;--land:#222a37;--sel:#e8ebf1;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#10141b;--panel:#181e28;--fg:#e8ebf1;--muted:#9aa3b3;--rule:#2b3341;--accent:#b49cf5;--alp:#ff6b6b;--lnp:#6f9cf0;--grn:#62c776;--onp:#ffa24a;--ind:#a7adba;--oth:#7f8695;--land:#222a37;--sel:#e8ebf1;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5;margin:0;overflow-x:hidden}
+.wrap{max-width:1000px;margin:0 auto;padding:16px max(16px,env(safe-area-inset-right,0px)) 48px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:16px}
+.proto{font:700 .76rem var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--display);font-weight:800;font-size:1.6rem;margin:0;line-height:1.15;text-wrap:balance}
+.sub{color:var(--muted);font-size:.86rem}
+.ctl{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.ctl button{font:600 .9rem var(--body);background:var(--accent);color:var(--panel);border:0;border-radius:6px;padding:8px 14px;cursor:pointer}
+.ctl input[type=range]{flex:1;min-width:140px;accent-color:var(--accent)}
+.counted{font:600 1rem var(--mono);min-width:9ch}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:14px 16px;min-width:0}
+.card h2{font-family:var(--display);font-size:1.05rem;margin:0 0 4px}
+svg{display:block;width:100%;height:auto}
+svg text{fill:var(--fg);font-family:var(--body)}
+.maps{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;margin-top:8px}
+.maps>div{flex:1 1 280px;min-width:0}
+.cap{font-size:.78rem;color:var(--muted);margin:2px 0 0}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.8rem;color:var(--muted);margin:8px 0;align-items:center}
+.legend svg{display:inline-block;width:auto;vertical-align:middle}
+.dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.hol{display:inline-block;width:10px;height:10px;border-radius:50%;border:2px solid var(--muted);margin-right:5px;vertical-align:middle}
+.sol{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--muted);margin-right:5px;vertical-align:middle}
+label.t{font-size:.84rem;display:inline-flex;gap:6px;align-items:center;cursor:pointer}
+select{font:500 .9rem var(--body);background:var(--bg);color:var(--fg);border:1px solid var(--rule);border-radius:6px;padding:6px 8px;max-width:100%}
+.d{cursor:pointer}
+.row{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin:6px 0}
+.info{min-height:2.6em;font-size:.84rem;margin-top:6px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style></head><body>
+<div class="wrap">
+  <div class="proto">Prototype - 2022 replayed, not live data</div>
+  <h1>Election night maps</h1>
+  <div class="sub">Victoria, 2022 state election replayed booth by booth. Drag the slider or press Play to watch the count arrive. Tap a district to open its booths. Boundaries are the official 2022 districts (ABS 2022 state electoral divisions).</div>
+  <div class="ctl">
+    <button type="button" id="play">Play</button>
+    <input type="range" id="frac" min="0" max="10" step="1" value="0" aria-label="Share of the night vote counted">
+    <span class="counted" id="cl"></span>
+  </div>
+
+  <div class="card">
+    <h2>Who leads each district</h2>
+    <div class="sub">Colour is the model's most likely winner; fainter means less certain. Arrows show the swing in the Labor-minus-Coalition first-preference gap, 2018 to 2022: left is toward Labor, right toward the Coalition. District arrows fade in as the count proceeds; they use the full 2022 district totals (prototype simplification).</div>
+    <div class="row"><label class="t"><input type="checkbox" id="arr" checked> Swing arrows</label></div>
+    <div class="legend" id="leg1"></div>
+    <div class="maps">
+      <div><svg id="m1" role="img" aria-label="Map of Victoria by leading party"></svg><div class="cap">Victoria. Melbourne's arrows are in the inset.</div></div>
+      <div><svg id="m2" role="img" aria-label="Map of Melbourne districts by leading party"></svg><div class="cap">Greater Melbourne (inset, larger scale).</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Booths in <span id="sn"></span></h2>
+    <div class="row"><label class="t" for="sel">District</label><select id="sel"></select><span class="sub" id="ss"></span></div>
+    <div class="legend" id="leg2"></div>
+    <svg id="m3" role="img" aria-label="Booth map for the selected district"></svg>
+    <div class="info" id="info">Tap a booth for its numbers.</div>
+    <div class="cap">Dot size is the booth's total ordinary votes. Smaller booths are counted first in this replay (a stand-in for the real order); the district's counted share comes from the model replay. A booth arrow appears once the booth is counted and matches a 2018 booth of the same name in the same district (<span id="mt"></span>).</div>
+  </div>
+  <div class="sub">Notes (unconfirmed items marked). Boundaries are the ABS 2022 state electoral divisions (the 2022 districts, which the 2026 election also uses), simplified for the web. Narracan has no booths in the booth file, so its booth map is empty. Swing is on first preferences: the Labor share minus the Coalition share, 2022 less 2018, where all other votes stay in the denominator. A district or booth with no 2018 counterpart shows no arrow.</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script>
+const GEO = __GEO__;
+const BD = __BOOTH__;
+const D = __DATA__;
+const NAME = {ALP:"Labor", LNP:"Coalition", GRN:"Greens", ONP:"One Nation", IND:"Independent", OTH:"Other", OTH_RIGHT:"Other right"};
+const COL = p => `var(--${({ALP:"alp",LNP:"lnp",GRN:"grn",ONP:"onp",IND:"ind"})[p] || "oth"})`;
+const $ = id => document.getElementById(id);
+const pc = x => Math.round(100 * x) + "%";
+let seat = "Bellarine", timer = null;
+const frame = () => D.frames[+$("frac").value];
+const leader = s => { const e = Object.entries(s.p).sort((a, b) => b[1] - a[1]); return e[0] || ["OTH", 0]; };
+const feats = GEO.features;
+const byName = {}; feats.forEach(f => byName[f.properties.name] = f);
+const MEL = {type:"Feature", geometry:{type:"Polygon", coordinates:[[[144.55,-38.45],[145.6,-38.45],[145.6,-37.5],[144.55,-37.5],[144.55,-38.45]]]}};
+const inMel = c => c[0] > 144.55 && c[0] < 145.6 && c[1] > -38.45 && c[1] < -37.5;
+
+// ---- arrows: left = swing to Labor, right = swing to Coalition
+function arrowPath(x, y, len, left) {
+  const dx = left ? -1 : 1, tail = x - dx * len / 2, tip = x + dx * len / 2, h = Math.min(5, Math.max(2.5, len * 0.45));
+  return `M${tail.toFixed(1)},${y.toFixed(1)}L${tip.toFixed(1)},${y.toFixed(1)}M${(tip - dx * h).toFixed(1)},${(y - h * 0.75).toFixed(1)}L${tip.toFixed(1)},${y.toFixed(1)}L${(tip - dx * h).toFixed(1)},${(y + h * 0.75).toFixed(1)}`;
+}
+function arrowSvg(x, y, sw, k, cap, op) {
+  const len = Math.min(cap, Math.abs(sw) * k); if (len < 1.5) return "";
+  const left = sw > 0, d = arrowPath(x, y, len, left), c = left ? "var(--alp)" : "var(--lnp)";
+  return `<g opacity="${op}" pointer-events="none"><path d="${d}" fill="none" stroke="var(--panel)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="${c}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g>`;
+}
+function arrowLegend(k, cap) {
+  const mk = (pts, neg) => { const w = Math.min(cap, pts * k) + 14; return `<svg width="${w}" height="14" viewBox="0 0 ${w} 14">${arrowSvg(w / 2, 7, neg ? -pts : pts, k, cap, 1)}</svg>`; };
+  return `<span>${mk(5, false)} to Labor: 5 points</span><span>${mk(10, false)} 10 points</span><span>${mk(5, true)} to Coalition: 5 points</span><span>(arrow length scale; points of the Labor-minus-Coalition gap)</span>`;
+}
+
+// ---- statewide + Melbourne inset
+const maps = [];
+function setupMap(id, region, W, kArrow, cap, melOnly) {
+  const svg = d3.select("#" + id), proj = d3.geoMercator();
+  proj.fitWidth(W, region);
+  const path = d3.geoPath(proj), b = path.bounds(region), H = Math.ceil(b[1][1] + 4);
+  svg.attr("viewBox", `0 0 ${W} ${H}`);
+  const m = {svg, proj, path, W, H, kArrow, cap, melOnly};
+  svg.html(`<defs><clipPath id="cp-${id}"><rect width="${W}" height="${H}"/></clipPath></defs><g clip-path="url(#cp-${id})"><g class="polys"></g><g class="arrs"></g></g>`);
+  const polys = svg.select(".polys").selectAll("path").data(feats).join("path").attr("class", "d").attr("d", path)
+    .attr("vector-effect", "non-scaling-stroke")
+    .on("click", (e, f) => pick(f.properties.name));
+  polys.append("title").text(f => f.properties.name);
+  m.polys = polys; m.cent = {};
+  feats.forEach(f => m.cent[f.properties.name] = path.centroid(f));
+  maps.push(m); return m;
+}
+const vicMap = setupMap("m1", GEO, 600, 3.2, 28, false);
+const melMap = setupMap("m2", MEL, 600, 5, 34, true);
+function renderState() {
+  const f = frame(), showArr = $("arr").checked;
+  maps.forEach(m => {
+    m.polys.attr("fill", d => { const s = f.seats[d.properties.name]; return s ? COL(leader(s)[0]) : "var(--land)"; })
+      .attr("fill-opacity", d => { const s = f.seats[d.properties.name]; return s ? 0.2 + 0.8 * leader(s)[1] : 0.3; })
+      .attr("stroke", d => d.properties.name === seat ? "var(--sel)" : "var(--panel)")
+      .attr("stroke-width", d => d.properties.name === seat ? 2 : 0.6);
+    let h = "";
+    if (showArr) feats.forEach(ft => {
+      const n = ft.properties.name, sw = BD.dswing[n], s = f.seats[n]; if (sw == null || !s) return;
+      const c = m.cent[n], ll = d3.geoCentroid(ft); if (m.melOnly !== inMel(ll)) return;
+      h += arrowSvg(c[0], c[1], sw, m.kArrow, m.cap, (0.15 + 0.85 * s.c).toFixed(2));
+    });
+    m.svg.select(".arrs").html(h);
+  });
+  const lead = {}; Object.values(f.seats).forEach(s => { const p = leader(s)[0]; lead[p] = (lead[p] || 0) + 1; });
+  $("leg1").innerHTML = Object.entries(lead).sort((a, b) => b[1] - a[1]).map(([p, n]) => `<span><span class="dot" style="background:${COL(p)}"></span>${NAME[p] || p} leads ${n}</span>`).join("") + (showArr ? arrowLegend(vicMap.kArrow, vicMap.cap) : "");
+}
+
+// ---- booth map for the selected district
+function renderBooths() {
+  const bl = (BD.booths[seat] || []), f = frame(), s = f.seats[seat];
+  $("sn").textContent = seat;
+  const svg = d3.select("#m3"), feat = byName[seat];
+  const proj = d3.geoMercator().fitExtent([[20, 20], [580, 560]], feat), path = d3.geoPath(proj), bb = path.bounds(feat);
+  const y0 = Math.max(0, bb[0][1] - 20), H = bb[1][1] + 20 - y0;
+  svg.attr("viewBox", `0 ${y0} 600 ${H}`);
+  const cfrac = s ? s.c : 0, order = bl.map((b, i) => i).sort((a, b) => bl[a][3] - bl[b][3]);
+  const tot = d3.sum(bl, b => b[3]) || 1, counted = new Set(); let cum = 0;
+  order.forEach(i => { cum += bl[i][3]; if (cum / tot <= cfrac + 1e-9) counted.add(i); });
+  const r = d3.scaleSqrt().domain([0, d3.max(bl, b => b[3]) || 1]).range([3, 13]);
+  const kA = 2.2, capA = 40, showArr = $("arr").checked, cls = {A:"alp", L:"lnp", G:"grn", O:"oth"};
+  let h = `<path d="${path(feat)}" fill="${s ? COL(leader(s)[0]) : "var(--land)"}" fill-opacity="0.12" stroke="var(--fg)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`, arrs = "";
+  order.slice().reverse().forEach(i => {
+    const b = bl[i], p = proj([b[2], b[1]]), c = "var(--" + cls[b[4]] + ")", on = counted.has(i);
+    h += `<circle class="bo" data-i="${i}" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${r(b[3]).toFixed(1)}" fill="${on ? c : "none"}" fill-opacity="0.85" stroke="${c}" stroke-width="${on ? 0.8 : 1.8}" style="cursor:pointer"><title>${b[0]}</title></circle>`;
+    if (on && showArr && b[6] != null) arrs += arrowSvg(p[0], p[1], b[6], kA, capA, 1);
+  });
+  svg.html(h + arrs);
+  svg.selectAll(".bo").on("click", e => { const i = +e.currentTarget.dataset.i, b = bl[i], t = b[5].reduce((a, c) => a + c, 0);
+    $("info").innerHTML = `<b>${b[0]}</b> (${counted.has(i) ? "counted" : "not yet counted"}): ${b[3].toLocaleString()} votes. First preferences: Labor ${pc(b[5][0] / t)}, Coalition ${pc(b[5][1] / t)}, Greens ${pc(b[5][2] / t)}, other ${pc(b[5][3] / t)}. ` + (b[6] == null ? "No matching 2018 booth." : `Swing ${Math.abs(b[6]).toFixed(1)} points toward ${b[6] > 0 ? "Labor" : "the Coalition"}.`); });
+  $("mt").textContent = `${bl.filter(b => b[6] != null).length} of ${bl.length} booths here match`;
+  $("ss").textContent = s ? `${pc(s.c)} counted; ${NAME[leader(s)[0]] || leader(s)[0]} ${pc(leader(s)[1])} to win; ${counted.size} of ${bl.length} booths in.` : "";
+  $("leg2").innerHTML = ["ALP","LNP","GRN","OTH"].map(p => `<span><span class="dot" style="background:${COL(p)}"></span>${NAME[p]} leads booth</span>`).join("") + `<span><span class="sol"></span>counted</span><span><span class="hol"></span>not yet</span>` + (showArr ? arrowLegend(kA, capA) : "");
+  if (!bl.length) $("info").textContent = "This district has no booths in the booth file.";
+}
+
+function pick(n) { seat = n; $("sel").value = n; $("info").textContent = "Tap a booth for its numbers."; render(); }
+function render() { $("cl").textContent = pc(frame().frac) + " counted"; renderState(); renderBooths(); }
+$("sel").innerHTML = feats.map(f => f.properties.name).sort().map(n => `<option>${n}</option>`).join(""); $("sel").value = seat;
+$("sel").addEventListener("change", e => pick(e.target.value));
+$("arr").addEventListener("change", render);
+$("frac").addEventListener("input", render);
+$("play").addEventListener("click", () => {
+  if (timer) { clearInterval(timer); timer = null; $("play").textContent = "Play"; return; }
+  if (+$("frac").value >= 10) $("frac").value = 0;
+  $("play").textContent = "Pause";
+  timer = setInterval(() => { const v = +$("frac").value; if (v >= 10) { clearInterval(timer); timer = null; $("play").textContent = "Play"; return; } $("frac").value = v + 1; render(); }, 1100);
+});
+render();
+</script></body></html>
