@@ -12,7 +12,7 @@ suppressMessages({ library(data.table); devtools::load_all(quiet = TRUE) })
 source("scripts/harness_defaults.R")   # the published configuration, as night_replay.R and the harnesses apply it
 a <- commandArgs(trailingOnly = TRUE)
 flag <- function(name, default = NULL) { h <- grep(paste0("^--", name, "="), a, value = TRUE); if (length(h)) sub("^[^=]*=", "", h[1]) else default }
-need <- function(n) { v <- flag(n); if (is.null(v)) stop("NW2! --", n, "= is required"); v }
+need <- function(n) { v <- flag(n); if (is.null(v)) stop("NWA1! --", n, "= is required"); v }
 cfg <- list(source = need("source"), archive = need("archive"), setup = flag("setup", need("source")), state = need("state"), ref = need("ref"),
             out = need("out"), base_json = flag("base-json"), gap_k = as.numeric(flag("gap_k", "5")),
             sims = if (!is.null(flag("sims"))) as.integer(flag("sims")) else NULL,
