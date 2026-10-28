@@ -27,10 +27,14 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
     under another setting); (6) live walk: Bendigo West ALP ~0.36 / LNP ~0.19 / ONP ~0.43 in the published JSON. If it
     shows harm: record the refusal in the prereg and tell Pete, leave "0".
 - 28 Oct: **election-night live model, wayfinder map https://github.com/peteowen1/auspol/issues/148** (Pete: plan AND
-  build; Assembly first, upper house second; laptop runner with an Actions backup). Resolved: VEC feed contents (#149),
-  live-model methods (#151), upper-house rules (#152). Frontier: #153 2022 replay go/no-go (needs ~10 GB), #155 vote
-  types + VEC 2CP (with Pete), #158 feed parser on the sample, #156 fetch 2022/2018 upper-house results, #157 ticket
-  commencement. **Pete: #150, sign the VEC feed terms + access form (access from 4 Nov).**
+  build; Assembly first, upper house second; laptop runner with an Actions backup). 10 of 12 tickets closed. BUILT and
+  replayed on vic2022 (`docs/plans/election-night-booth-model.md`, rehearsals 3-5): booth update through the shipped
+  simulator, VEC 2CP as evidence on the preference flow, pooled vote-type gap; seat log loss vs afternoon 0.2643:
+  0.1133 at 10% counted, 0.0968 at 25%, 0.0929 at 50%, 0.0712 at 75% (early votes interleaved). Feed reader
+  (`R/vec_feed.R`), upper-house 2022/2018 results (`output/council-*`), fast replay (`scripts/night_replay.R`).
+  OPEN: **Pete #150, sign the VEC feed terms + access form (access from 4 Nov)**; #154 the live page prototype (with
+  Pete); fog: the poller, upper-house reader, 2026 centre matching (needs the 10 Nov set-up files), the night runner
+  and R2 output, the upper-house model.
 - 28 Oct: value-odds page https://claude.ai/artifact/GdrpxSB7zkY1xEvJvU3TKx (readiness, seat click-through, our
   probabilities against Sportsbet/TAB/Betfair). Built from scratchpad scripts, not the repo: it does not refresh.
   Contested-seat research, all committed: `reviews/contested-seats-vic2026-2026-10-28.md` (hub),
