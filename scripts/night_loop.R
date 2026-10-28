@@ -34,7 +34,7 @@ repeat {
     if (identical(r$status, "ok")) { last_ok <- newest; fails <- 0L; last_try <- NULL
       # a failed upload leaves the site on the previous file; logged loudly, retried with the next snapshot
       if (!is.null(upload_key)) { up <- suppressWarnings(system2("bash", c("scripts/night_publish_r2.sh", shQuote(cfg$out), shQuote(upload_key)), stdout = TRUE, stderr = TRUE))
-        say(if (length(up)) paste(up, collapse = " | ") else "NWU2! upload produced no output", if (!is.null(attr(up, "status"))) paste0("  (exit ", attr(up, "status"), ")") else "") } }
+        say(if (length(up)) paste(up, collapse = " | ") else "NWL2! upload produced no output", if (!is.null(attr(up, "status"))) paste0("  (exit ", attr(up, "status"), ")") else "") } }
     else { fails <- if (identical(newest, last_try)) fails + 1L else 1L; last_try <- newest
            if (fails >= retries) say("giving up on ", newest, " after ", fails, " attempts; waiting for a newer snapshot (last good JSON untouched)") }
   }
