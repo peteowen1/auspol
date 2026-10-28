@@ -8,12 +8,29 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
-- **28 Oct, IN FLIGHT: port 3C ship (Pete: finish checks, then ship).** Mode 2 on 8 movable elections -0.0001 (SE
+- **28 Oct 10:26, IN FLIGHT: 3C SHIPPED in code (be44e2d5 on dev; deciding run passed, DECISIONS) and the stage-6
+  rebuild + publish is running** (log `scratchpad/rebuild-3c.log`). ORDER: the publish puts a port table with `lineup3c`
+  on shipped-models, which main's daily run (3C off) refuses, and main with 3C on refuses the old table: so open the
+  dev->main PR right after the publish and merge it before the 17:37 UTC cron, then read that run's conclusion.
+- **28 Oct, earlier: port 3C ship (Pete: finish checks, then ship).** Mode 2 on 8 movable elections -0.0001 (SE
   0.0004), not passed; live walk moves Bendigo West to ALP 0.36 / LNP 0.19 / ONP 0.43 (market 0.44 / 0.12 / 0.41). Pete
   overrode clause 1 (prereg `plans/prereg-seat-swing-port-3c-2026-10-25.md`, RESULT + decision sections). Remaining:
   `--pairs=all` control screen (launched 28 Oct, log `scratchpad/port3c-all.log`), then the 20k deciding run
   (`deciding_run.ps1 -Arm "AUSPOL_SEAT_SWING_PORT_3C=2" -Label port-3c`); ship (published_flags + stage-1 rebuild) if
   no election worse by 2 SE and the 27 controls are byte-identical.
+  - **Prepared ship steps (not applied):** if the deciding run's DONE shows no election worse by 2 SE and pooled not
+    worse by 1 SE: (1) `published_flags.R:738` `AUSPOL_SEAT_SWING_PORT_3C = "2"`; (2) the inline default in
+    `R/seat_swing_port_3c.R:37` to "2" in the same commit; (3) add `AUSPOL_SEAT_SWING_PORT_3C` to `post_xgb_switches()`
+    (`R/new_ind_shrink.R:40`) so stage 1 runs it at "0" (the port acts after the xgb override, `published_flags.R:730`;
+    the screen measured it that way); (4) `check_like_ci.R` (full: R/ changed); (5) rebuild from stage 6 with
+    `AUSPOL_PUBLISH=1` (promote must run with 3C set: the vic2026 port table carries `lineup3c`/`w3c` and is refused
+    under another setting); (6) live walk: Bendigo West ALP ~0.36 / LNP ~0.19 / ONP ~0.43 in the published JSON. If it
+    shows harm: record the refusal in the prereg and tell Pete, leave "0".
+- 28 Oct: **election-night live model, wayfinder map https://github.com/peteowen1/auspol/issues/148** (Pete: plan AND
+  build; Assembly first, upper house second; laptop runner with an Actions backup). Resolved: VEC feed contents (#149),
+  live-model methods (#151), upper-house rules (#152). Frontier: #153 2022 replay go/no-go (needs ~10 GB), #155 vote
+  types + VEC 2CP (with Pete), #158 feed parser on the sample, #156 fetch 2022/2018 upper-house results, #157 ticket
+  commencement. **Pete: #150, sign the VEC feed terms + access form (access from 4 Nov).**
 - 28 Oct: value-odds page https://claude.ai/artifact/GdrpxSB7zkY1xEvJvU3TKx (readiness, seat click-through, our
   probabilities against Sportsbet/TAB/Betfair). Built from scratchpad scripts, not the repo: it does not refresh.
   Contested-seat research, all committed: `reviews/contested-seats-vic2026-2026-10-28.md` (hub),

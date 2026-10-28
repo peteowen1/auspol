@@ -1,3 +1,7 @@
+# These fixtures test the port itself, with 3C off (3C shipped 2026-10-28 and needs a `fed`
+# column these synthetic tables do not carry; its own tests are test-seat-swing-port-3c.R).
+withr::local_envvar(AUSPOL_SEAT_SWING_PORT_3C = "0")   # file-scoped, as test-candidate_returns.R
+
 test_that("seat_swing_port_apply is a no-op unless AUSPOL_SEAT_SWING_PORT=2", {
   m <- matrix(c(40, 35, 25, 30, 45, 25), nrow = 2, byrow = TRUE,
               dimnames = list(c("A", "B"), c("ALP", "LNP", "OTH")))
