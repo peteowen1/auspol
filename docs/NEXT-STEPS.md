@@ -36,9 +36,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   files 10 Nov, trial 25 Nov with no 2CP); live page decided (#154: all three layouts, needle / race to 45 / seat
   grid, plus a seat map, booth maps and NYT-style swing arrows; prototypes
   https://claude.ai/artifact/FsCAXFqbj3ciiaFDppydQm and https://claude.ai/artifact/REkUoQmPLWPkrUmj5SRRVy);
-  upper-house design `docs/plans/upper-house-night-model.md`. IN FLIGHT: night runner, branch `night-runner`
-  (review round 1 found an unchecked seat-coverage gap; fixes + enrolment-based counted share being added; 2022
-  test: enrolment x own 2018 turnout misses a seat's total by 2.7% on average against 9.2% for 2018 totals).
+  upper-house design `docs/plans/upper-house-night-model.md`. MERGED 28 Oct: night runner (`R/night_runner.R`,
+  `scripts/night_runner.R`, `scripts/night_loop.R`; two review rounds; refuses to publish on seat/feed mismatch NR7,
+  damaged/stale snapshot NR1/NR8, no turnout file NR9, a seat with no listed voting centres NR10). Counted share =
+  counted / (enrolment x the seat's previous Assembly night-vote rate); vic2022 at 50%: 35.9% vs true 33.8%, seat
+  log loss 0.0838 (replay 0.0929; one election, one fraction). Late votes (absent/provisional) left out of the night
+  projection. Not built: SharePoint fetch, R2 upload, Actions backup.
   OPEN: #162 build the live page on ITG, #163 maps (needs the VEC's official 2022 boundaries; the prototype's are
   rebuilt from booth locations); fog: SharePoint fetch (after 4 Nov), 2026 centre matching (10 Nov files), R2
   upload + Actions backup, the upper-house model.
