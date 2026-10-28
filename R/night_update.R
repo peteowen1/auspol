@@ -83,14 +83,27 @@ night_prior_sd <- function(shares, level_sd, level_mult = NULL, sd_override = NU
 #'   seat (a new candidate); 1 (default) treats it like every other class.
 #' @param early Report position of each district's early-vote unit: `"last"` (default) after every
 #'   ordinary booth, or `"interleaved"` among them (see `.night_order()`).
+#' @param reported Live-feed mode (election-night runner): `NULL` (default) simulates the report order and counts
+#'   `frac` of the night. A table `district, unit` of the units that HAVE reported (unit = booth name for an
+#'   ordinary booth, else the booth type) counts exactly those; `frac` is then ignored. `live` must still list every
+#'   unit of the seat (uncounted ones with any votes, ignored) so the uncounted ones can be projected.
+#' @param total Denominator of a seat's counted share: `"table"` (default) is the votes in `live` (right for a replay,
+#'   where `live` is the final result); `"projected"` is counted / (counted + the projected size of the uncounted units),
+#'   which is all a live feed can know; `"expected"` is `expected[seat]` (enrolment x turnout), with the uncounted units
+#'   rescaled to the remainder (see [project_seat_from_booths()]).
+#' @param expected For `total = "expected"`: named numeric, expected final votes per seat (a seat missing or NA falls
+#'   back to `"projected"`).
 #' @return List: `shares` (posterior means, rows renormalised to 100), `sd` (posterior sds),
 #'   `counted` (named per-seat share of the final night vote counted), `resolved` (mean over
 #'   updated cells of 1 - posterior sd / prior sd), `n_updated` (seats with booths), `units`
 #'   (counted units per seat), `type_gap` (the pooled gaps used, or `NULL`).
 #' @export
-night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, gap_k = NULL, early = "last", new_sd_mult = 1) {
+night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, gap_k = NULL, early = "last", new_sd_mult = 1,
+                               reported = NULL, total = c("table", "projected", "expected"), expected = NULL) {
+  total <- match.arg(total)
   stopifnot(is.numeric(new_sd_mult), length(new_sd_mult) == 1L, new_sd_mult >= 1)
   stopifnot(identical(dim(shares), dim(prior_sd)), is.finite(frac), frac >= 0, frac <= 1)
+  if (!is.null(reported)) stopifnot(all(c("district", "unit") %in% names(reported)))
   prep <- function(X) {
     X <- data.table::as.data.table(X)
     X[is.na(votes), votes := 0]
@@ -102,16 +115,22 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
   M <- match_booth_units(Lc, Rc)
   Rk <- merge(Rc, M, by.x = c("district", "unit"), by.y = c("ref_district", "ref_unit"), suffixes = c(".ref", ".live"))
   Rk <- Rk[, list(district = district.live, unit = unit.live, booth_type = booth_type.live, cls, v)]
-  seq_units <- .night_order(Lc, seed, early)
+  seq_units <- if (is.null(reported)) .night_order(Lc, seed, early)
   night_total <- Lc[Lc$booth_type %in% c("ordinary", "early", "postal"), list(nt = sum(v)), by = "district"]
 
   post <- as.matrix(shares); psd <- as.matrix(prior_sd)
   seats <- rownames(post); cls_all <- colnames(post)
   counted <- setNames(rep(0, length(seats)), seats)
-  res <- numeric(0); n_up <- 0L; units_by_seat <- list()
+  res <- numeric(0); n_up <- 0L; units_by_seat <- list(); fallback_projected <- character(0); proj_total <- numeric(0)
   todo <- intersect(seats, unique(Lc$district))
+  cd <- if (!is.null(reported)) reported$district; cu <- if (!is.null(reported)) reported$unit
   for (s in todo) {
     ld <- Lc[Lc$district == s]
+    if (!is.null(reported)) {           # a LIVE feed says which units have reported; no report order to simulate
+      u <- intersect(cu[cd == s], ld$unit)
+      if (length(u)) units_by_seat[[s]] <- u
+      next
+    }
     su <- seq_units[seq_units$district == s][order(pos)]
     su <- merge(su, ld[, list(uv = sum(v)), by = "unit"], by = "unit")[order(pos)]
     nt <- night_total$nt[night_total$district == s]
@@ -123,9 +142,11 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
   for (s in names(units_by_seat)) {
     ld <- Lc[Lc$district == s]; rd <- Rk[Rk$district == s]
     units <- units_by_seat[[s]]
-    p <- project_seat_from_booths(ld, rd, units, type_gap = type_gap)
+    if (total == "expected" && !(!is.null(expected) && is.finite(unname(expected[s])) && unname(expected[s]) > 0)) fallback_projected <- c(fallback_projected, s)
+    p <- project_seat_from_booths(ld, rd, units, type_gap = type_gap, total = total, expected_total = if (is.null(expected)) NA_real_ else unname(expected[s]))
     if (is.null(p) || !nrow(p)) next
     cs <- p$counted_share[1]
+    proj_total[s] <- sum(p$projected)
     counted[s] <- cs
     proj <- 100 * p$projected / sum(p$projected)
     names(proj) <- p$cls
@@ -145,7 +166,8 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
     n_up <- n_up + 1L
   }
   list(shares = post, sd = psd, counted = counted,
-       resolved = if (length(res)) mean(res) else 0, n_updated = n_up, units = units_by_seat, type_gap = type_gap)
+       resolved = if (length(res)) mean(res) else 0, n_updated = n_up, units = units_by_seat, type_gap = type_gap,
+       fallback_projected = fallback_projected, proj_total = proj_total)
 }
 
 # Pooled swing gap of each non-ordinary booth type against ordinary booths, per class, over the
