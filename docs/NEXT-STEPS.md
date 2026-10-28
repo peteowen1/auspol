@@ -42,8 +42,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   counted / (enrolment x the seat's previous Assembly night-vote rate); vic2022 at 50%: 35.9% vs true 33.8%, seat
   log loss 0.0838 (replay 0.0929; one election, one fraction). Late votes (absent/provisional) left out of the night
   projection. Not built: SharePoint fetch, R2 upload, Actions backup.
-  OPEN: #162 build the live page on ITG, #163 maps (needs the VEC's official 2022 boundaries; the prototype's are
-  rebuilt from booth locations); fog: SharePoint fetch (after 4 Nov), 2026 centre matching (10 Nov files), R2
+  BUILT 28 Oct, not merged: live page `politics/live.qmd` (ITG branch `election-night-live`; reads R2
+  `auspol/night/vic2026.json`, 60 s poll, never goes backwards, keeps the last good count on a bad/missing file;
+  reviewed) and zoomable maps (ITG branch `election-night-maps`, Leaflet 1.9.4 self-hosted, ABS 2022 boundaries,
+  basemaps fill/OSM street/Esri satellite, booth popups, swing arrows), being wired together. Upload step
+  `scripts/night_publish_r2.sh` + `night_loop.R --upload-key`. OPEN: tile terms (Esri keyless use unconfirmed; OSM
+  best-effort under load), merge + deploy both, navbar link, the "called" rule (99% with 10% counted is a
+  placeholder); fog: SharePoint fetch (after 4 Nov), 2026 centre matching (10 Nov files), R2
   upload + Actions backup, the upper-house model.
 - 28 Oct: value-odds page https://claude.ai/artifact/GdrpxSB7zkY1xEvJvU3TKx (readiness, seat click-through, our
   probabilities against Sportsbet/TAB/Betfair). Built from scratchpad scripts, not the repo: it does not refresh.
