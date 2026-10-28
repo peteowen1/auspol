@@ -1075,6 +1075,7 @@ for (K in PAIRS) {
     # refitting this whole harness (~80 s) per fraction. One file per pair (the pair label is in the name).
     .dmp <- Sys.getenv("AUSPOL_NIGHT_DUMP", "")
     if (nzchar(.dmp)) {
+      if (!grepl("[.]rds$", .dmp)) stop("NX9! AUSPOL_NIGHT_DUMP must end in .rds (the pair label is inserted before it), not ", .dmp)
       .dpath <- sub("[.]rds$", sprintf("-vic%d.rds", K$to), .dmp)
       saveRDS(list(pair = sprintf("vic%d", K$to), from = K$from, to = K$to, shares = shares, level_sd = .level_sd,
                    level_mult = .lm(shares), fm = fm, psd = psd, swd = .swd, sdo = .sdo,

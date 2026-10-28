@@ -36,6 +36,7 @@ run_one <- function(fr) {
   shares <- st$shares; sdo <- st$sdo; swd <- st$swd; nu <- NULL
   if (fr > 0) {
     nu <- night_booth_update(shares, night_prior_sd(shares, st$level_sd, st$level_mult, sdo), fr, L, R, gap_k = gap_k, early = early, new_sd_mult = new_sd)
+    if (nu$n_updated == 0L) stop("NRP3! replay at ", fr, " updated no seat: booth districts do not match the saved state's seats")
     shares <- nu$shares; sdo <- nu$sd; swd <- night_shrink_draws(swd, 1 - nu$resolved)
   }
   sim <- simulate_seat_contests(level_sd = st$level_sd, sd_override = sdo, level_mult = st$level_mult, shares, st$fm,
