@@ -124,7 +124,7 @@ cannot pass as a working one.
 
 - **aec/** -- 1214 files, 893.5 MB
   - e.g. booths/fed2016-NSW.csv, booths/fed2016-QLD.csv, booths/fed2016-VIC.csv, booths/fed2019-QLD.csv
-- **vec/** -- 2608 files, 76.5 MB
+- **vec/** -- 3451 files, 435.8 MB
   - e.g. 2006/vc/fpv-albertpark.html, 2006/vc/fpv-altona.html, 2006/vc/fpv-ballarateast.html, 2006/vc/fpv-ballaratwest.html
 - **nsw/** -- 5889 files, 81.0 MB
   - e.g. byelections/SB1602-orange-fp.html, byelections/SB1801-wagga-wagga-fp.html, council/2008/lgeindex.html, council/2008/pages/result.Albury.html
