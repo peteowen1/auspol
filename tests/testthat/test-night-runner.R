@@ -80,13 +80,13 @@ test_that("an unmapped affiliation is reported and stubbed, never silently dropp
 
 test_that("a booth vote for a candidate the district does not list is refused", {
   f <- nr_feed(); f$booths[1, candidate_id := "99"]
-  expect_error(night_booth_table(f, nr_lookup()), "NR2!")
+  expect_error(night_booth_table(f, nr_lookup()), "NW2!")
 })
 
 test_that("the sanity check refuses damaged snapshots", {
   expect_true(night_check_feed(nr_feed()))
   f <- nr_feed(); f$candidates[1, votes := 71]
-  expect_error(night_check_feed(f), "NR1!.*formal")
+  expect_error(night_check_feed(f), "NW1!.*formal")
   f <- nr_feed(); f$booths[2, votes := -1]
   expect_error(night_check_feed(f), "negative")
   f <- nr_feed(); f$booths[2, votes := NA_real_]
@@ -112,8 +112,8 @@ test_that("publishing is atomic: a document that does not read back as a full on
   good <- list(seats = list(list(seat = "A")), chamber = list(parties = list()), night = list(snapshot = "s"))
   night_publish_json(good, out)
   before <- unname(tools::md5sum(out))
-  expect_error(night_publish_json(list(seats = list(), chamber = list(), night = list()), out), "NR4!")
-  expect_error(night_publish_json(list(seats = list(list(seat = "A")), chamber = list()), out), "NR4!")   # no night block
+  expect_error(night_publish_json(list(seats = list(), chamber = list(), night = list()), out), "NW4!")
+  expect_error(night_publish_json(list(seats = list(list(seat = "A")), chamber = list()), out), "NW4!")   # no night block
   expect_equal(unname(tools::md5sum(out)), before)
   expect_equal(list.files(d), "forecast-night.json")                          # no temp file left behind
   good$seats <- list(list(seat = "A"), list(seat = "B"))
@@ -154,7 +154,7 @@ test_that("the cycle stops loudly when the set-up affiliation file is missing, u
   nr_write_zip(src, "20261128_190000", xml)
   nr_setup_files(src); file.remove(file.path(src, "TestMediaFileCandidatesV2.xml"))   # polling list present, party names missing
   r <- night_cycle(list(source = src, archive = arch, setup = src, state = "unused.rds", ref = "unused.csv", out = file.path(outd, "o.json")))
-  expect_identical(r$status, "failed"); expect_match(r$message, "NR3!")
+  expect_identical(r$status, "failed"); expect_match(r$message, "NW3!")
   expect_false(file.exists(file.path(outd, "o.json")))
   r_same <- night_cycle(list(source = src, archive = arch, setup = src, state = "unused.rds", ref = "unused.csv", out = file.path(outd, "o.json"), last_stamp = "20261128_190000"))
   expect_identical(r_same$status, "no_new")
@@ -186,29 +186,29 @@ test_that("a feed district the saved state does not have (or a state seat the fe
   st <- list(shares = matrix(c(50, 50), 1, dimnames = list("Alpha", c("ALP", "LNP"))))
   cfg <- list(source = src, archive = arch, setup = src, state = st, ref = data.table::data.table(), out = out, cache = new.env())
   writeLines(nr_min_xml("Alpha District"), file.path(src, "SE26mediafileverboselhv2_20261128_190000.xml"))
-  # the matching name gets past NR7 (it fails later on the stub state, which is not what is tested here)
-  r_ok <- night_cycle(cfg); expect_false(grepl("NR7", r_ok$message))
+  # the matching name gets past NW7 (it fails later on the stub state, which is not what is tested here)
+  r_ok <- night_cycle(cfg); expect_false(grepl("NW7", r_ok$message))
   # a renamed district: the state's "Alpha" is not in the feed, the feed's "Alphaa" is not in the state
   file.remove(file.path(src, "SE26mediafileverboselhv2_20261128_190000.xml"))
   writeLines(nr_min_xml("Alphaa District"), file.path(src, "SE26mediafileverboselhv2_20261128_190500.xml"))
   cfg$cache <- new.env()
   r <- night_cycle(cfg)
-  expect_identical(r$status, "failed"); expect_match(r$message, "NR7!.*Alpha.*Alphaa")
+  expect_identical(r$status, "failed"); expect_match(r$message, "NW7!.*Alpha.*Alphaa")
   expect_equal(unname(tools::md5sum(out)), before)
   expect_equal(list.files(outd), "forecast-night.json")
   expect_silent(night_check_coverage(c("A", "B"), c("A", "C"), allow = TRUE))
-  expect_error(night_check_coverage(c("A", "B"), c("A", "B", "C")), "NR7!")
-  expect_error(night_check_coverage(c("A", "B"), "A"), "NR7!")
+  expect_error(night_check_coverage(c("A", "B"), c("A", "B", "C")), "NW7!")
+  expect_error(night_check_coverage(c("A", "B"), "A"), "NW7!")
   expect_silent(night_check_coverage(c("A", "B"), c("B", "A")))
 })
 
-test_that("a missing polling-locations file stops the cycle (NR6): without it every booth looks reported", {
+test_that("a missing polling-locations file stops the cycle (NW6): without it every booth looks reported", {
   src <- withr::local_tempdir(); arch <- withr::local_tempdir(); outd <- withr::local_tempdir()
   nr_setup_files(src); file.remove(file.path(src, "TestMediaFilePollingLocationsV2.xml"))
   writeLines(nr_min_xml("Alpha District"), file.path(src, "SE26mediafileverboselhv2_20261128_190000.xml"))
   r <- night_cycle(list(source = src, archive = arch, setup = src, state = list(shares = matrix(1, 1, 1, dimnames = list("Alpha", "ALP"))),
                         ref = data.table::data.table(), out = file.path(outd, "o.json")))
-  expect_match(r$message, "NR6!")
+  expect_match(r$message, "NW6!")
 })
 
 test_that("unreported booths in the polling-locations list get zero-vote rows; district-level Early is kept", {
@@ -231,14 +231,14 @@ test_that("unreported booths in the polling-locations list get zero-vote rows; d
 test_that("a contest with no candidate rows is refused rather than silently dropped", {
   f <- nr_feed(); extra <- data.table::copy(f$contests); extra$district_id <- "200"; extra$district <- "Beta District"
   f$contests <- rbind(f$contests, extra)
-  expect_error(night_check_feed(f), "NR1!.*no candidates")
+  expect_error(night_check_feed(f), "NW1!.*no candidates")
 })
 
 test_that("a snapshot older than the published one is refused; the same one is skipped", {
   d <- withr::local_tempdir(); out <- file.path(d, "o.json")
   expect_identical(night_check_fresh("20261128_190000", out), "ok")                 # nothing published yet
   writeLines('{"night":{"snapshot_stamp":"20261128_190500"}}', out)
-  expect_error(night_check_fresh("20261128_190000", out), "NR8!")
+  expect_error(night_check_fresh("20261128_190000", out), "NW8!")
   expect_identical(night_check_fresh("20261128_190500", out), "same")
   expect_identical(night_check_fresh("20261128_191000", out), "ok")
   writeLines('{"last":"good"}', out); expect_identical(night_check_fresh("20261128_190000", out), "ok")   # no night block
@@ -289,7 +289,7 @@ test_that("the night base leaves absent, provisional and marked-as-voted out of 
   expect_equal(sum(night$live$votes), sum(full$live$votes) - 12)
 })
 
-test_that("no turnout file stops the cycle (NR9) unless the projected denominator is explicitly allowed", {
+test_that("no turnout file stops the cycle (NW9) unless the projected denominator is explicitly allowed", {
   src <- withr::local_tempdir(); arch <- withr::local_tempdir(); outd <- withr::local_tempdir()
   nr_setup_files(src)
   out <- file.path(outd, "forecast-night.json"); writeLines('{"last":"good"}', out); before <- unname(tools::md5sum(out))
@@ -297,15 +297,15 @@ test_that("no turnout file stops the cycle (NR9) unless the projected denominato
   st <- list(shares = matrix(c(50, 50), 1, dimnames = list("Alpha", c("ALP", "LNP"))))
   cfg <- list(source = src, archive = arch, setup = src, state = st, ref = data.table::data.table(), out = out, cache = new.env())
   r <- night_cycle(cfg)
-  expect_identical(r$status, "failed"); expect_match(r$message, "NR9!")
+  expect_identical(r$status, "failed"); expect_match(r$message, "NW9!")
   expect_equal(unname(tools::md5sum(out)), before); expect_equal(list.files(outd), "forecast-night.json")
   cfg$cache <- new.env(); cfg$allow_projected <- TRUE
-  r2 <- night_cycle(cfg); expect_false(grepl("NR9!", r2$message))
+  r2 <- night_cycle(cfg); expect_false(grepl("NW9!", r2$message))
 })
 
-test_that("a state seat with no voting centre in the polling list stops the cycle (NR10); its district Ordinary rows are kept", {
+test_that("a state seat with no voting centre in the polling list stops the cycle (NW10); its district Ordinary rows are kept", {
   pl <- data.table::data.table(district_id = "100", district = "Alpha District", booth_id = "9", booth = "Alpha North", booth_class = "VotingCentre")
-  expect_error(night_check_places(c("Alpha", "Beta"), pl), "NR10!.*Beta")
+  expect_error(night_check_places(c("Alpha", "Beta"), pl), "NW10!.*Beta")
   expect_silent(night_check_places("Alpha", pl))
   expect_silent(night_check_places(c("Alpha", "Beta"), pl, allow = TRUE))
   # a polling file listing only another district: this district's Ordinary count must not be dropped
@@ -318,7 +318,7 @@ test_that("a state seat with no voting centre in the polling list stops the cycl
   expect_equal(sum(listed$live$votes[listed$live$booth_type == "ordinary"]), 0)       # listed: ordinary votes come from booths only
 })
 
-test_that("a booth the polling list spells differently is logged (NR11) and not duplicated by a placeholder", {
+test_that("a booth the polling list spells differently is logged (NW11) and not duplicated by a placeholder", {
   pl <- data.table::data.table(district_id = "100", district = "Alpha District", booth_id = c("9", "10"),
                                booth = c("Mount Alpha", "Alpha South"), booth_class = "VotingCentre")
   f <- nr_feed(); f$booths$booth[f$booths$booth == "Alpha North"] <- "Mt Alpha"      # reported as "Mt Alpha", listed as "Mount Alpha"
@@ -326,7 +326,7 @@ test_that("a booth the polling list spells differently is logged (NR11) and not 
   expect_equal(cv$n_placeholder_booths, 0L)                                         # South already has (zero) rows; Mount Alpha matches Mt Alpha
   expect_false("Mount Alpha" %in% cv$live$booth)
   f$booths$booth[f$booths$booth == "Mt Alpha"] <- "Alfa North"                       # a genuinely unknown name
-  expect_message(cv2 <- night_booth_table(f, nr_lookup(), pl), "NR11")
+  expect_message(cv2 <- night_booth_table(f, nr_lookup(), pl), "NW11")
   expect_equal(cv2$n_unlisted_booths, 1L)
 })
 
@@ -350,5 +350,5 @@ test_that("the per-seat fallback to the projected denominator is recorded, and a
 
 test_that("a published JSON that exists but cannot be read stops the cycle instead of being overwritten", {
   d <- withr::local_tempdir(); out <- file.path(d, "o.json"); writeLines('{"night": {"snapshot_stamp": ', out)
-  expect_error(night_check_fresh("20261128_190000", out), "NR8!.*cannot be read")
+  expect_error(night_check_fresh("20261128_190000", out), "NW8!.*cannot be read")
 })

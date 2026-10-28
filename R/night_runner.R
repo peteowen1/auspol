@@ -6,8 +6,8 @@
 # swapped for the SharePoint download (needs the token and site from the access request, 4 Nov; the token
 # goes in an environment variable on the laptop, never in the repo).
 #
-# Check codes: NR1 (feed fails a sanity check), NR2 (bad conversion input), NR3 (no affiliation lookup),
-# NR4 (output failed validation, nothing published), NR5 (no snapshot in the source).
+# Check codes: NW1 (feed fails a sanity check), NW2 (bad conversion input), NW3 (no affiliation lookup),
+# NW4 (output failed validation, nothing published), NW5 (no snapshot in the source).
 
 #' Newest snapshot in the source (THE function to swap for the real feed)
 #'
@@ -38,7 +38,7 @@ night_archive_snapshot <- function(path, archive_dir) {
   dest_dir <- file.path(archive_dir, day); dir.create(dest_dir, recursive = TRUE, showWarnings = FALSE)
   dest <- file.path(dest_dir, basename(path)); k <- 1L
   repeat {
-    if (!file.exists(dest)) { ok <- file.copy(path, dest); if (!isTRUE(ok)) stop("NR2! could not copy ", path, " to ", dest, call. = FALSE)
+    if (!file.exists(dest)) { ok <- file.copy(path, dest); if (!isTRUE(ok)) stop("NW2! could not copy ", path, " to ", dest, call. = FALSE)
       return(list(path = dest, new = TRUE)) }
     if (unname(tools::md5sum(dest)) == unname(tools::md5sum(path))) return(list(path = dest, new = FALSE))
     k <- k + 1L; dest <- file.path(dest_dir, sprintf("%s.v%d", basename(path), k))
@@ -61,7 +61,7 @@ night_party_lookup <- function(setup_dir) {
     registered_name = vapply(aff, function(a) xml2::xml_text(xml2::xml_find_first(a, "*[local-name()='RegisteredName']")), ""))
   out <- unique(out[!is.na(out$affiliation_id) & nzchar(out$affiliation_id), ])
   dup <- out[, list(n = data.table::uniqueN(registered_name)), by = "affiliation_id"]
-  if (any(dup$n > 1L)) stop("NR2! affiliation ids with two names in ", basename(f[1]), ": ", paste(dup$affiliation_id[dup$n > 1L], collapse = ", "), call. = FALSE)
+  if (any(dup$n > 1L)) stop("NW2! affiliation ids with two names in ", basename(f[1]), ": ", paste(dup$affiliation_id[dup$n > 1L], collapse = ", "), call. = FALSE)
   unique(out, by = "affiliation_id")
 }
 
@@ -86,23 +86,23 @@ night_affiliation_stub <- function(ids) {
 # ordinary + early + postal, so with include_late = FALSE these are left out of the numerator AND the projected units.
 .night_late_types <- c("absent", "provisional", "marked_as_voted")
 
-#' Sanity-check a parsed snapshot; stops (NR1) rather than let a damaged one reach the model
+#' Sanity-check a parsed snapshot; stops (NW1) rather than let a damaged one reach the model
 #' @param feed Output of [vec_feed_read_lh()].
 #' @export
 night_check_feed <- function(feed) {
-  if (is.null(feed$contests) || !nrow(feed$contests)) stop("NR1! snapshot has no contests", call. = FALSE)
-  if (is.null(feed$candidates) || !nrow(feed$candidates)) stop("NR1! snapshot has no candidates", call. = FALSE)
+  if (is.null(feed$contests) || !nrow(feed$contests)) stop("NW1! snapshot has no contests", call. = FALSE)
+  if (is.null(feed$candidates) || !nrow(feed$candidates)) stop("NW1! snapshot has no candidates", call. = FALSE)
   for (nm in c("candidates", "booths", "by_type")) {
     v <- feed[[nm]]$votes
-    if (length(v) && (anyNA(v) || any(v < 0))) stop("NR1! snapshot table '", nm, "' has missing or negative votes", call. = FALSE)
+    if (length(v) && (anyNA(v) || any(v < 0))) stop("NW1! snapshot table '", nm, "' has missing or negative votes", call. = FALSE)
   }
   cs <- feed$candidates[, list(s = sum(votes)), by = "district_id"]
   m <- merge(cs, feed$contests[, c("district_id", "formal")], by = "district_id")
   bad <- m$district_id[!is.finite(m$formal) | abs(m$s - m$formal) > 0.5]
-  if (length(bad)) stop("NR1! candidate votes do not add to the formal total in district id(s): ", paste(bad, collapse = ", "), call. = FALSE)
+  if (length(bad)) stop("NW1! candidate votes do not add to the formal total in district id(s): ", paste(bad, collapse = ", "), call. = FALSE)
   nocand <- setdiff(feed$contests$district_id, feed$candidates$district_id)
-  if (length(nocand)) stop("NR1! contest(s) with no candidates in snapshot (district id ", paste(nocand, collapse = ", "), "): a seat would silently drop out", call. = FALSE)
-  if (anyDuplicated(feed$contests$district)) stop("NR1! duplicate district names in snapshot", call. = FALSE)
+  if (length(nocand)) stop("NW1! contest(s) with no candidates in snapshot (district id ", paste(nocand, collapse = ", "), "): a seat would silently drop out", call. = FALSE)
+  if (anyDuplicated(feed$contests$district)) stop("NW1! duplicate district names in snapshot", call. = FALSE)
   invisible(TRUE)
 }
 
@@ -112,7 +112,7 @@ night_check_feed <- function(feed) {
   trimws(gsub(" +", " ", x))
 }
 
-#' Stop (NR10) when a state seat has no voting centre in the polling list
+#' Stop (NW10) when a state seat has no voting centre in the polling list
 #'
 #' With the list in use, a seat with none listed would have no way to know its unreported booths (and its district-level
 #' ordinary count is dropped), so its counted share would read as complete.
@@ -122,7 +122,7 @@ night_check_places <- function(seats, places, allow = FALSE) {
   have <- sub(" District$", "", places$district[places$booth_class == "VotingCentre"])
   miss <- setdiff(seats, have)
   if (length(miss) && !isTRUE(allow))
-    stop(sprintf("NR10! %d state seat(s) have no voting centre in the polling-locations list (%s)", length(miss), paste(utils::head(miss, 8), collapse = ", ")), call. = FALSE)
+    stop(sprintf("NW10! %d state seat(s) have no voting centre in the polling-locations list (%s)", length(miss), paste(utils::head(miss, 8), collapse = ", ")), call. = FALSE)
   invisible(miss)
 }
 
@@ -178,10 +178,10 @@ night_booth_table <- function(feed, lookup, places = NULL, include_late = FALSE)
   if (!is.null(bo) && nrow(bo)) {
     bt <- unname(.night_class_map[bo$booth_class])
     unk <- is.na(bt)
-    if (any(unk)) { message("NR2  unrecognised booth classification(s) treated as ordinary: ", paste(unique(bo$booth_class[unk]), collapse = ", ")); bt[unk] <- "ordinary" }
+    if (any(unk)) { message("NW2  unrecognised booth classification(s) treated as ordinary: ", paste(unique(bo$booth_class[unk]), collapse = ", ")); bt[unk] <- "ordinary" }
     bo <- data.table::copy(bo); bo[, booth_type := bt]
     bo <- merge(bo, cmap, by = c("district_id", "candidate_id"), all.x = TRUE, sort = FALSE)
-    if (anyNA(bo$party)) stop("NR2! booth votes for a candidate id that is not in the district's candidate list", call. = FALSE)
+    if (anyNA(bo$party)) stop("NW2! booth votes for a candidate id that is not in the district's candidate list", call. = FALSE)
     rows[[1]] <- bo[, list(district = seat, booth, booth_type, party, votes)]
   }
   have_booth <- if (length(rows)) unique(rows[[1]][, c("district", "booth_type")]) else data.table::data.table(district = character(), booth_type = character())
@@ -189,10 +189,10 @@ night_booth_table <- function(feed, lookup, places = NULL, include_late = FALSE)
   if (!is.null(bty) && nrow(bty)) {
     bty <- bty[!bty$candidate_id %in% c("FORMAL", "INFORMAL"), ]
     tt <- unname(.night_type_map[bty$vote_type])
-    if (anyNA(tt)) { message("NR2  unrecognised vote type(s) skipped: ", paste(unique(bty$vote_type[is.na(tt)]), collapse = ", ")) }
+    if (anyNA(tt)) { message("NW2  unrecognised vote type(s) skipped: ", paste(unique(bty$vote_type[is.na(tt)]), collapse = ", ")) }
     bty <- data.table::copy(bty); bty[, booth_type := tt]; bty <- bty[!is.na(bty$booth_type), ]
     bty <- merge(bty, cmap, by = c("district_id", "candidate_id"), all.x = TRUE, sort = FALSE)
-    if (anyNA(bty$party)) stop("NR2! district vote-type counts for a candidate id that is not in the district's list", call. = FALSE)
+    if (anyNA(bty$party)) stop("NW2! district vote-type counts for a candidate id that is not in the district's list", call. = FALSE)
     # booth rows of a kind exist for the district -> its per-type district count would count the same votes twice
     # (only the three types a booth can carry; postal, absent etc. exist only at district level)
     covered <- paste(have_booth$district, have_booth$booth_type)
@@ -202,7 +202,7 @@ night_booth_table <- function(feed, lookup, places = NULL, include_late = FALSE)
     carried <- bty$vote_type %in% c("Ordinary", "EVCEarly", "MobileVotingEarly")
     drop <- carried & paste(bty$seat, bty$booth_type) %in% covered
     # ordinary votes exist only in booths: for a district with listed voting centres a district-level "Ordinary" row would be a
-    # phantom unit; a district with none listed keeps it (night_check_places() stops the cycle on that anyway, NR10)
+    # phantom unit; a district with none listed keeps it (night_check_places() stops the cycle on that anyway, NW10)
     if (!is.null(places)) {
       listed <- merge(places[places$booth_class == "VotingCentre", "district_id"], cmap[!duplicated(cmap$district_id), c("district_id", "seat")], by = "district_id")$seat
       drop <- drop | (bty$vote_type == "Ordinary" & bty$seat %in% listed)
@@ -216,10 +216,10 @@ night_booth_table <- function(feed, lookup, places = NULL, include_late = FALSE)
   if (!is.null(places)) {
     pl <- places[places$booth_class == "VotingCentre", ]
     pl <- merge(pl, cmap[!duplicated(cmap$district_id), c("district_id", "seat", "party")], by = "district_id")
-    # snapshot booths the polling list does not know (a renamed or missing entry): logged, never stopping (NR11)
+    # snapshot booths the polling list does not know (a renamed or missing entry): logged, never stopping (NW11)
     ob <- unique(live[live$booth_type == "ordinary", c("district", "booth")])
     ob <- ob[!paste(ob$district, .norm_booth(ob$booth)) %in% paste(pl$seat, .norm_booth(pl$booth)), ]
-    if (nrow(ob)) message("NR11  ", nrow(ob), " snapshot booth(s) not in the polling list (no placeholder made for them): ", paste(utils::head(paste0(ob$booth, " [", ob$district, "]"), 8), collapse = "; "))
+    if (nrow(ob)) message("NW11  ", nrow(ob), " snapshot booth(s) not in the polling list (no placeholder made for them): ", paste(utils::head(paste0(ob$booth, " [", ob$district, "]"), 8), collapse = "; "))
     n_unlisted <- nrow(ob)
     # no placeholder where a reported booth matches by name after normalising (Mt/Mount, St/Saint, case, punctuation)
     pl <- pl[!paste(pl$seat, .norm_booth(pl$booth)) %in% paste(live$district, .norm_booth(live$booth)), ]
@@ -252,7 +252,7 @@ night_booth_table <- function(feed, lookup, places = NULL, include_late = FALSE)
   list(live = live[], counted = counted[], tcp = tcp[], unmapped = unmapped, n_placeholder_booths = n_placeholder_booths, n_unlisted_booths = n_unlisted)
 }
 
-#' Stop (NR7) unless the saved state's seats and the feed's districts are the same set
+#' Stop (NW7) unless the saved state's seats and the feed's districts are the same set
 #'
 #' A seat missing from the feed would silently keep its prior as if nothing had been counted there, and a feed
 #' district the state does not know would be ignored; either means the wrong state, a renamed district or a damaged
@@ -262,22 +262,22 @@ night_booth_table <- function(feed, lookup, places = NULL, include_late = FALSE)
 night_check_coverage <- function(seats, feed_districts, allow = FALSE) {
   miss <- setdiff(seats, feed_districts); extra <- setdiff(feed_districts, seats)
   if ((length(miss) || length(extra)) && !isTRUE(allow))
-    stop(sprintf("NR7! seats and feed districts differ: %d state seat(s) not in the feed (%s); %d feed district(s) not in the state (%s)",
+    stop(sprintf("NW7! seats and feed districts differ: %d state seat(s) not in the feed (%s); %d feed district(s) not in the state (%s)",
                  length(miss), paste(utils::head(miss, 6), collapse = ", "), length(extra), paste(utils::head(extra, 6), collapse = ", ")), call. = FALSE)
   invisible(list(missing = miss, extra = extra))
 }
 
-#' Refuse a snapshot that is older than the one the last published JSON came from (NR8)
+#' Refuse a snapshot that is older than the one the last published JSON came from (NW8)
 #' @return `"ok"`, or `"same"` when it is the snapshot already published.
 #' @export
 night_check_fresh <- function(stamp, out_file) {
   if (!file.exists(out_file)) return("ok")
   doc <- tryCatch(jsonlite::fromJSON(out_file, simplifyVector = FALSE), error = function(e) NULL)
-  if (is.null(doc)) stop("NR8! the published JSON ", out_file, " exists but cannot be read; not overwriting it blindly (inspect or move it)", call. = FALSE)
+  if (is.null(doc)) stop("NW8! the published JSON ", out_file, " exists but cannot be read; not overwriting it blindly (inspect or move it)", call. = FALSE)
   prev <- doc$night$snapshot_stamp
   if (is.null(prev) || is.na(stamp)) return("ok")
   if (identical(prev, stamp)) return("same")
-  if (stamp < prev) stop("NR8! snapshot ", stamp, " is older than the published JSON's (", prev, "): stale or reordered file, not published", call. = FALSE)
+  if (stamp < prev) stop("NW8! snapshot ", stamp, " is older than the published JSON's (", prev, "): stale or reordered file, not published", call. = FALSE)
   "ok"
 }
 
@@ -337,7 +337,7 @@ night_expected_votes <- function(enrolment, prev, basis = c("night", "final")) {
 night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "table", "expected"), expected = NULL, sims = NULL, use_tcp = TRUE) {
   total <- match.arg(total)
   if (is.null(sims)) sims <- st$n_sims
-  if (!is.null(st$swd) && nrow(st$swd) != sims) stop("NR2! the saved state has ", nrow(st$swd), " statewide draws; sims must equal that (dump the state at the sim count wanted)", call. = FALSE)
+  if (!is.null(st$swd) && nrow(st$swd) != sims) stop("NW2! the saved state has ", nrow(st$swd), " statewide draws; sims must equal that (dump the state at the sim count wanted)", call. = FALSE)
   seats <- rownames(st$shares)
   matched <- intersect(seats, unique(conv$live$district))
   shares <- st$shares; sdo <- st$sdo; swd <- st$swd
@@ -421,7 +421,7 @@ night_build_json <- function(st, res, snapshot, base = NULL, election = "vic2026
 }
 
 #' Write a JSON document atomically and validated: temp file, read it back, then rename over the target
-#' @return The target path. Stops (NR4) without touching the target if the document does not read back as expected.
+#' @return The target path. Stops (NW4) without touching the target if the document does not read back as expected.
 #' @export
 night_publish_json <- function(doc, out_file, min_seats = 1L) {
   dir.create(dirname(out_file), recursive = TRUE, showWarnings = FALSE)
@@ -430,8 +430,8 @@ night_publish_json <- function(doc, out_file, min_seats = 1L) {
   writeLines(jsonlite::toJSON(doc, auto_unbox = TRUE, null = "null", digits = 4), tmp)
   back <- tryCatch(jsonlite::fromJSON(tmp, simplifyVector = FALSE), error = function(e) NULL)
   if (is.null(back) || length(back$seats) < min_seats || is.null(back$chamber) || is.null(back$night))
-    stop("NR4! output did not read back as a full document; nothing published", call. = FALSE)
-  if (!isTRUE(file.rename(tmp, out_file))) stop("NR4! could not rename ", tmp, " to ", out_file, call. = FALSE)
+    stop("NW4! output did not read back as a full document; nothing published", call. = FALSE)
+  if (!isTRUE(file.rename(tmp, out_file))) stop("NW4! could not rename ", tmp, " to ", out_file, call. = FALSE)
   out_file
 }
 
@@ -440,8 +440,8 @@ night_publish_json <- function(doc, out_file, min_seats = 1L) {
 #' @param cfg List: `source`, `archive`, `setup`, `state` (RDS path or already-read list), `ref` (booth CSV path),
 #'   `out` (JSON path), optional `base_json`, `gap_k` (5), `sims`, `use_tcp` (TRUE), `allow_stub` (FALSE),
 #'   `turnout` (previous-election `council-district-stats-<year>.csv`, for its enrolment; turnout comes from the `ref` Assembly table; without it the cycle falls
-#'   back to the over-confident projected one and says so), `allow_unmatched` (NR7 and NR10 off; sample-vs-vic2022 test only), `allow_projected` (accept the over-confident
-#'   projected denominator when `turnout` is missing; otherwise NR9 stops the cycle),
+#'   back to the over-confident projected one and says so), `allow_unmatched` (NW7 and NW10 off; sample-vs-vic2022 test only), `allow_projected` (accept the over-confident
+#'   projected denominator when `turnout` is missing; otherwise NW9 stops the cycle),
 #'   `last_stamp` (skip when the newest snapshot has this stamp), `cache` (environment for the state and lookup).
 #' @return List: `status` ("ok", "no_new" or "failed"), `stamp`, `timings` (seconds per step), `message`, `summary`.
 #' @export
@@ -451,8 +451,8 @@ night_cycle <- function(cfg) {
   fail <- function(e, stamp = NA_character_) list(status = "failed", stamp = stamp, timings = tm, message = conditionMessage(e),
                                                    summary = sprintf("FAILED %s: %s", stamp, conditionMessage(e)))
   snap <- night_fetch_snapshot(cfg$source); stamp_t("fetch")
-  if (is.na(snap)) return(list(status = "failed", stamp = NA_character_, timings = tm, message = "NR5! no snapshot in source",
-                               summary = "FAILED: NR5! no snapshot in source"))
+  if (is.na(snap)) return(list(status = "failed", stamp = NA_character_, timings = tm, message = "NW5! no snapshot in source",
+                               summary = "FAILED: NW5! no snapshot in source"))
   stamp <- night_snapshot_stamp(snap)
   if (!is.null(cfg$last_stamp) && identical(stamp, cfg$last_stamp)) return(list(status = "no_new", stamp = stamp, timings = tm, message = "", summary = paste("no new snapshot after", stamp)))
   tryCatch({
@@ -464,8 +464,8 @@ night_cycle <- function(cfg) {
     if (!isTRUE(cache$places_done)) {
       pl <- night_polling_places(cfg$setup)
       if (is.null(pl)) {
-        if (!isTRUE(cfg$allow_stub)) stop("NR6! no *PollingLocations*.xml set-up file in ", cfg$setup, ": unreported booths cannot be known, so counted share would read 100%", call. = FALSE)
-        message("NR6  NO POLLING LOCATIONS FILE (stub allowed): unreported booths are unknown and counted share is overstated")
+        if (!isTRUE(cfg$allow_stub)) stop("NW6! no *PollingLocations*.xml set-up file in ", cfg$setup, ": unreported booths cannot be known, so counted share would read 100%", call. = FALSE)
+        message("NW6  NO POLLING LOCATIONS FILE (stub allowed): unreported booths are unknown and counted share is overstated")
         pl <- NULL
       }
       cache$places <- pl; cache$places_done <- TRUE
@@ -473,8 +473,8 @@ night_cycle <- function(cfg) {
     if (is.null(cache$lookup)) {
       lk <- night_party_lookup(cfg$setup)
       if (is.null(lk)) {
-        if (!isTRUE(cfg$allow_stub)) stop("NR3! no *Candidates*.xml set-up file in ", cfg$setup, " (party names unknown); pass allow_stub only to exercise the pipeline", call. = FALSE)
-        message("NR3  USING THE STUB AFFILIATION LOOKUP: every party is UNMAPPED; the update below is NOT meaningful")
+        if (!isTRUE(cfg$allow_stub)) stop("NW3! no *Candidates*.xml set-up file in ", cfg$setup, " (party names unknown); pass allow_stub only to exercise the pipeline", call. = FALSE)
+        message("NW3  USING THE STUB AFFILIATION LOOKUP: every party is UNMAPPED; the update below is NOT meaningful")
         lk <- night_affiliation_stub(feed$candidates$affiliation_id)
       }
       cache$lookup <- lk
@@ -486,19 +486,19 @@ night_cycle <- function(cfg) {
     conv <- night_booth_table(feed, cache$lookup, cache$places); stamp_t("convert")
     night_check_coverage(rownames(cache$st$shares), conv$live$district, cfg$allow_unmatched)
     if (!is.null(cache$places)) night_check_places(rownames(cache$st$shares), cache$places, cfg$allow_unmatched)
-    if (length(conv$unmapped)) message("NR3  affiliation ids with no name: ", paste(conv$unmapped, collapse = ", "))
+    if (length(conv$unmapped)) message("NW3  affiliation ids with no name: ", paste(conv$unmapped, collapse = ", "))
     expected <- NULL; denom <- "projected"
     if (!is.null(cfg$turnout)) {
       if (is.null(cache$turnout)) cache$turnout <- data.table::fread(cfg$turnout, showProgress = FALSE)
       enr <- stats::setNames(feed$contests$enrolment, sub(" District$", "", feed$contests$district))
       expected <- night_expected_votes(enr, night_turnout_table(cache$turnout, cache$ref), "night"); denom <- "expected"
     } else if (!isTRUE(cfg$allow_projected)) {
-      stop("NR9! no turnout file: the live counted share would fall back to previous-election booth sizes, which over-states it (vic2022 check: 56.5% vs 33.8%). Pass --turnout, or --allow-projected=1 to accept that", call. = FALSE)
-    } else message("NR9  --allow-projected: counted share projected from previous-election booth sizes, which over-states it")
+      stop("NW9! no turnout file: the live counted share would fall back to previous-election booth sizes, which over-states it (vic2022 check: 56.5% vs 33.8%). Pass --turnout, or --allow-projected=1 to accept that", call. = FALSE)
+    } else message("NW9  --allow-projected: counted share projected from previous-election booth sizes, which over-states it")
     res <- night_run_update(cache$st, conv, cache$ref, gap_k = if (is.null(cfg$gap_k)) 5 else cfg$gap_k, total = denom, expected = expected,
                             sims = cfg$sims, use_tcp = !isFALSE(cfg$use_tcp)); stamp_t("update_simulate")
     res$denominator <- denom; res$n_placeholder <- conv$n_placeholder_booths; res$n_unlisted <- conv$n_unlisted_booths
-    if (length(res$nu$fallback_projected)) message("NR12  ", length(res$nu$fallback_projected), " seat(s) fell back to the projected denominator (no usable expected votes): ", paste(res$nu$fallback_projected, collapse = ", "))
+    if (length(res$nu$fallback_projected)) message("NW12  ", length(res$nu$fallback_projected), " seat(s) fell back to the projected denominator (no usable expected votes): ", paste(res$nu$fallback_projected, collapse = ", "))
     doc <- night_build_json(cache$st, res, list(file = basename(snap), stamp = stamp, archived = arch$new), base = cache$base)
     night_publish_json(doc, cfg$out, min_seats = nrow(cache$st$shares)); stamp_t("publish")
     sm <- sprintf("OK %s | seats with feed data %d of %d, updated %d, 2CP %d | mean counted %.1f%% | chamber ALP %.1f LNP %.1f | %s",

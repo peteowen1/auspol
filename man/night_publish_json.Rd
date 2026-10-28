@@ -7,7 +7,7 @@
 night_publish_json(doc, out_file, min_seats = 1L)
 }
 \value{
-The target path. Stops (NR4) without touching the target if the document does not read back as expected.
+The target path. Stops (NW4) without touching the target if the document does not read back as expected.
 }
 \description{
 Write a JSON document atomically and validated: temp file, read it back, then rename over the target

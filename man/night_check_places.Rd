@@ -2,7 +2,7 @@
 % Please edit documentation in R/night_runner.R
 \name{night_check_places}
 \alias{night_check_places}
-\title{Stop (NR10) when a state seat has no voting centre in the polling list}
+\title{Stop (NW10) when a state seat has no voting centre in the polling list}
 \usage{
 night_check_places(seats, places, allow = FALSE)
 }

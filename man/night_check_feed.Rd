@@ -2,7 +2,7 @@
 % Please edit documentation in R/night_runner.R
 \name{night_check_feed}
 \alias{night_check_feed}
-\title{Sanity-check a parsed snapshot; stops (NR1) rather than let a damaged one reach the model}
+\title{Sanity-check a parsed snapshot; stops (NW1) rather than let a damaged one reach the model}
 \usage{
 night_check_feed(feed)
 }
@@ -10,5 +10,5 @@ night_check_feed(feed)
 \item{feed}{Output of \code{\link[=vec_feed_read_lh]{vec_feed_read_lh()}}.}
 }
 \description{
-Sanity-check a parsed snapshot; stops (NR1) rather than let a damaged one reach the model
+Sanity-check a parsed snapshot; stops (NW1) rather than let a damaged one reach the model
 }

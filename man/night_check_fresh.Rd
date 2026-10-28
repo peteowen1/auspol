@@ -2,7 +2,7 @@
 % Please edit documentation in R/night_runner.R
 \name{night_check_fresh}
 \alias{night_check_fresh}
-\title{Refuse a snapshot that is older than the one the last published JSON came from (NR8)}
+\title{Refuse a snapshot that is older than the one the last published JSON came from (NW8)}
 \usage{
 night_check_fresh(stamp, out_file)
 }
@@ -10,5 +10,5 @@ night_check_fresh(stamp, out_file)
 \code{"ok"}, or \code{"same"} when it is the snapshot already published.
 }
 \description{
-Refuse a snapshot that is older than the one the last published JSON came from (NR8)
+Refuse a snapshot that is older than the one the last published JSON came from (NW8)
 }

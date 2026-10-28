@@ -2,7 +2,7 @@
 % Please edit documentation in R/night_runner.R
 \name{night_check_coverage}
 \alias{night_check_coverage}
-\title{Stop (NR7) unless the saved state's seats and the feed's districts are the same set}
+\title{Stop (NW7) unless the saved state's seats and the feed's districts are the same set}
 \usage{
 night_check_coverage(seats, feed_districts, allow = FALSE)
 }

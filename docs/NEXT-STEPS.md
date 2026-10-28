@@ -37,8 +37,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   grid, plus a seat map, booth maps and NYT-style swing arrows; prototypes
   https://claude.ai/artifact/FsCAXFqbj3ciiaFDppydQm and https://claude.ai/artifact/REkUoQmPLWPkrUmj5SRRVy);
   upper-house design `docs/plans/upper-house-night-model.md`. MERGED 28 Oct: night runner (`R/night_runner.R`,
-  `scripts/night_runner.R`, `scripts/night_loop.R`; two review rounds; refuses to publish on seat/feed mismatch NR7,
-  damaged/stale snapshot NR1/NR8, no turnout file NR9, a seat with no listed voting centres NR10). Counted share =
+  `scripts/night_runner.R`, `scripts/night_loop.R`; two review rounds; refuses to publish on seat/feed mismatch NW7, 
+  damaged/stale snapshot NW1/NW8, no turnout file NW9, a seat with no listed voting centres NW10). Counted share =
   counted / (enrolment x the seat's previous Assembly night-vote rate); vic2022 at 50%: 35.9% vs true 33.8%, seat
   log loss 0.0838 (replay 0.0929; one election, one fraction). Late votes (absent/provisional) left out of the night
   projection. Not built: SharePoint fetch, R2 upload, Actions backup.
