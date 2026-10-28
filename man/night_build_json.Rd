@@ -30,6 +30,7 @@ night_build_json(
 Same top-level keys as \code{forecast-vic2026.json} (scripts/build_forecast_json.R) plus \code{counted_pct} per seat and
 a \code{night} block (built_at, the snapshot it came from, how many seats had feed data). Fields the night
 model does not recompute (\code{track_record}, \code{poll_source}, \code{region}) are copied from \code{base} when given, else NULL.
+Added for the booth maps and swing arrows (#163): per seat \code{booths}, one entry per ordinary booth (see \code{\link[=night_booth_rows]{night_booth_rows()}}).
 \code{primary_q} is not produced (the update gives a posterior sd, not draws); \code{primary_sd} is given instead.
 Added for the live page (#162), all additive: per party \code{chamber$parties[[p]]$hist} (draws giving k seats, k = 0..\code{chamber_seats}),
 per seat party \code{primary_prior} (the afternoon first preference, so the page can show movement) and per seat \code{vec_2cp}

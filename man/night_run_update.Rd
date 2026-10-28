@@ -35,7 +35,7 @@ night_run_update(
 }
 \value{
 List: \code{sim}, \code{nu} (the update), \code{shares}, \code{sd}, \code{matched} (seats in both state and feed),
-\code{n_updated}.
+\code{n_updated}, \code{booths} (\code{\link[=night_booth_rows]{night_booth_rows()}}).
 }
 \description{
 The same steps as \code{scripts/night_replay.R} (\code{run_one}), driven by a table of reported units instead of a

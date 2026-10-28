@@ -1,6 +1,7 @@
 # auspol 0.4.114
 
 - **Night JSON for the live page** (`night_build_json()`): each party's seat-count histogram, each candidate's afternoon first preference, and the VEC's raw two-candidate count per seat beside the flow projection and the model's estimate. `scripts/night_replay_json.R` writes a replayed vic2022 night as the runner would.
+- **Per-booth swing in the night JSON** (`night_booth_rows()`, per seat `booths`; #163): each ordinary booth's counted flag, votes, first-preference shares and share-point swing against the same booth at the previous election, for the live page's booth dots and swing arrows. Additive; `scripts/night_replay_json.R` writes it too.
 - **Night upload** (`scripts/night_publish_r2.sh`, `night_loop.R --upload-key`): each good cycle goes to R2 `auspol/night/<name>.json` with a 30-second cache; refuses damaged, afternoon or stale files and any key outside `auspol/night/`.
 
 # auspol 0.4.113

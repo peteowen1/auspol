@@ -196,6 +196,53 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
            n_seats = data.table::uniqueN(seat)), by = c("booth_type", "cls")]
 }
 
+#' Per-booth first preferences and swing, for the live page's booth maps and swing arrows (issue #163)
+#'
+#' One row per ORDINARY booth of every district in `live` (the units with a map location; early, postal and the like have
+#' none): whether it has reported, its votes, each class's share of its first preferences, and each class's share-point
+#' swing against the same booth at the previous election (`ref`, matched by [match_booth_units()]). An unreported booth,
+#' or one with no previous-election match, carries no swing; an unreported one carries no shares either.
+#' @param live Booth table of the count (`district, booth, booth_type, party, votes`), every unit listed, reported or not.
+#' @param ref Booth table of the previous election, same shape.
+#' @param units Named list: the counted units per seat ([night_booth_update()]'s `units`).
+#' @param min_share Classes below this share (points) in both the count and the reference booth are left out, to keep the document small.
+#' @return data.table `district, booth, counted, votes, cls, share, swing` (`share` and `swing` in points; `NA` where unknown).
+#'   Booths with no counted votes have a single row with `cls` `NA`.
+#' @export
+night_booth_rows <- function(live, ref, units, min_share = 0.5) {
+  prep <- function(X) {
+    X <- data.table::as.data.table(X)
+    X[is.na(votes), votes := 0]
+    X[, cls := classify_party(party)]
+    X[, unit := ifelse(booth_type == "ordinary", booth, booth_type)]
+    X[, list(v = sum(votes)), by = c("district", "unit", "booth_type", "cls")]
+  }
+  Lc <- prep(live); Rc <- prep(ref)
+  M <- match_booth_units(Lc, Rc)
+  Lo <- Lc[Lc$booth_type == "ordinary"]
+  tot_l <- Lo[, list(tl = sum(v)), by = c("district", "unit")]
+  Ro <- merge(Rc[Rc$booth_type == "ordinary"], M, by.x = c("district", "unit"), by.y = c("ref_district", "ref_unit"))
+  Ro <- Ro[, list(district = district.y, unit = unit.y, cls, rv = v)]
+  Ro <- Ro[, list(rv = sum(rv)), by = c("district", "unit", "cls")]
+  tot_r <- Ro[, list(tr = sum(rv)), by = c("district", "unit")]
+  # one row per class present in the count or the reference at that booth
+  grid <- unique(rbind(Lo[, list(district, unit, cls)], Ro[, list(district, unit, cls)]))
+  grid <- merge(grid, Lo[, list(district, unit, cls, v)], by = c("district", "unit", "cls"), all.x = TRUE)
+  grid <- merge(grid, Ro, by = c("district", "unit", "cls"), all.x = TRUE)
+  grid <- merge(merge(grid, tot_l, by = c("district", "unit")), tot_r, by = c("district", "unit"), all.x = TRUE)
+  grid[is.na(v), v := 0]
+  cdist <- rep(names(units), lengths(units)); cunit <- unlist(units, use.names = FALSE)
+  bkey <- function(d, u) paste(d, u, sep = "\r")
+  grid[, counted := bkey(district, unit) %in% bkey(cdist, cunit) & tl > 0]
+  grid[, share := ifelse(counted, 100 * v / tl, NA_real_)]
+  grid[, ref_share := ifelse(!is.na(tr) & tr > 0, 100 * ifelse(is.na(rv), 0, rv) / tr, NA_real_)]
+  grid[, swing := share - ref_share]
+  grid <- grid[!counted | share >= min_share | (!is.na(ref_share) & ref_share >= min_share)]
+  grid[!(counted), c("cls", "share", "swing") := list(NA_character_, NA_real_, NA_real_)]
+  grid <- unique(grid[, list(district, booth = unit, counted, votes = ifelse(counted, tl, 0), cls, share, swing)])
+  grid[order(district, booth, -share)]
+}
+
 #' The VEC's two-candidate count, turned into a projected final 2CP per seat
 #'
 #' The counted booths are not a random sample of the seat (small booths report first), so their

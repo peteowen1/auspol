@@ -391,3 +391,42 @@ test_that("the VEC's raw counted 2CP share is carried through night_tcp_obs and 
   rep <- attr(night_apply_tcp(sim, obs, pair_min = 0.2), "night_tcp")
   expect_equal(rep$raw_a, 0.6); expect_equal(rep$obs_a, obs$share_a)
 })
+
+test_that("per-booth rows carry the counted flag, shares and swing against the matched previous booth, by hand (#163)", {
+  ref  <- nu_booths(c(50, 60, 40), c(50, 40, 60), booths = c("B1", "B2", "B3"))
+  live <- nu_booths(c(60, 70, 0), c(40, 30, 0), booths = c("B1", "B2", "B3"))
+  live <- rbind(live, data.table::data.table(district = "Seat A", booth = "Mystery", booth_type = "ordinary",
+                                             party = c("Australian Labor Party", "Liberal"), votes = c(30, 10)))
+  br <- night_booth_rows(live, ref, list(`Seat A` = c("B1", "B2", "Mystery")))
+  b1 <- br[br$booth == "B1", ]
+  expect_equal(b1$counted, c(TRUE, TRUE)); expect_equal(b1$votes, c(100, 100))
+  expect_equal(b1$share[b1$cls == "ALP"], 60); expect_equal(b1$swing[b1$cls == "ALP"], 10)   # 60% against 50%
+  expect_equal(b1$swing[b1$cls == "LNP"], -10)
+  b3 <- br[br$booth == "B3", ]                                                              # in the table, not reported
+  expect_equal(nrow(b3), 1L); expect_false(b3$counted); expect_true(is.na(b3$share)); expect_true(is.na(b3$swing))
+  mm <- br[br$booth == "Mystery", ]                                                         # new booth: shares, no swing
+  expect_equal(mm$share[mm$cls == "ALP"], 75); expect_true(all(is.na(mm$swing)))
+  # a different seat's units are not counted by name alone
+  other <- night_booth_rows(live, ref, list(`Seat Z` = c("B1", "B2")))
+  expect_false(any(other$counted))
+  # the JSON shape
+  j <- night_booths_json(br, "Seat A")
+  expect_length(j, 4L); expect_equal(j[[1]]$booth, "B1"); expect_equal(j[[1]]$counted, 1L)
+  expect_equal(j[[1]]$swing$ALP, 10); expect_length(j[[3]]$shares, 0L)
+  expect_null(night_booths_json(NULL, "Seat A")); expect_length(night_booths_json(br, "No such seat"), 0L)
+})
+
+test_that("night_build_json puts each seat's booths in the document and the document round-trips (#163)", {
+  sh0 <- matrix(c(50, 45, 40, 55), 2, dimnames = list(c("S1", "S2"), c("ALP", "LNP")))
+  sim <- list(totals = cbind(ALP = c(2L, 1L, 1L, 0L), LNP = c(0L, 1L, 1L, 2L)),
+              win_prob = data.frame(seat = c("S1", "S2"), party = c("ALP", "LNP"), prob = c(0.75, 0.75)), tcp_winner = NULL, tcp_runnerup = NULL)
+  bo <- data.table::data.table(district = "S1", booth = "B1", counted = TRUE, votes = 100, cls = c("ALP", "LNP"), share = c(60, 40), swing = c(10, -10))
+  res <- list(sim = sim, shares = sh0, sd = matrix(3, 2, 2, dimnames = dimnames(sh0)), matched = c("S1", "S2"), n_updated = 1L, n_tcp = 0L,
+              nu = list(counted = c(S1 = 0.4, S2 = 0), fallback_projected = character()), denominator = "table", n_placeholder = 0L, n_unlisted = 0L, booths = bo)
+  doc <- night_build_json(list(shares = sh0, pair = "t"), res, list(file = "f", stamp = "s", archived = TRUE))
+  js <- jsonlite::fromJSON(jsonlite::toJSON(doc, auto_unbox = TRUE, null = "null", digits = 4), simplifyVector = FALSE)
+  expect_equal(js$seats[[1]]$booths[[1]]$swing$ALP, 10); expect_equal(js$seats[[1]]$booths[[1]]$shares$LNP, 40)
+  expect_length(js$seats[[2]]$booths, 0L)                       # a seat with no booth rows gets an empty list, not a missing key
+  res$booths <- NULL
+  expect_null(night_build_json(list(shares = sh0, pair = "t"), res, list(file = "f", stamp = "s", archived = TRUE))$seats[[1]]$booths)
+})

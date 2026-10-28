@@ -344,7 +344,7 @@ night_expected_votes <- function(enrolment, prev, basis = c("night", "final")) {
 #' @param sims Simulations (default the state's).
 #' @param use_tcp Condition on the VEC's 2CP flow where its pair is plausible.
 #' @return List: `sim`, `nu` (the update), `shares`, `sd`, `matched` (seats in both state and feed),
-#'   `n_updated`.
+#'   `n_updated`, `booths` ([night_booth_rows()]).
 #' @export
 night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "table", "expected"), expected = NULL, sims = NULL, use_tcp = TRUE) {
   total <- match.arg(total)
@@ -372,7 +372,24 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
     n_tcp <- nrow(obs)
     sim <- night_apply_tcp(sim, obs)
   }
-  list(sim = sim, nu = nu, shares = shares, sd = sdo, matched = matched, n_updated = nu$n_updated, n_tcp = n_tcp)
+  list(sim = sim, nu = nu, shares = shares, sd = sdo, matched = matched, n_updated = nu$n_updated, n_tcp = n_tcp,
+       booths = night_booth_rows(conv$live, ref, nu$units))
+}
+
+# One seat's booths for the page's maps (#163): per ordinary booth `{booth, counted (0/1), votes, shares, swing}`, shares and
+# swing as {class: points} (swing is against the same booth at the previous election; absent for an unmatched booth).
+# NULL when the update carried no booth rows.
+night_booths_json <- function(rows, seat) {
+  if (is.null(rows)) return(NULL)
+  r <- rows[rows$district == seat, ]
+  if (!nrow(r)) return(list())
+  out <- lapply(split(r, factor(r$booth, levels = unique(r$booth))), function(b) {
+    k <- !is.na(b$cls)
+    list(booth = b$booth[1], counted = as.integer(b$counted[1]), votes = b$votes[1],
+         shares = if (any(k)) as.list(stats::setNames(round(b$share[k], 1), b$cls[k])) else setNames(list(), character()),
+         swing = if (any(k & !is.na(b$swing))) as.list(stats::setNames(round(b$swing[k & !is.na(b$swing)], 1), b$cls[k & !is.na(b$swing)])) else setNames(list(), character()))
+  })
+  unname(out)
 }
 
 #' Build the published-shape JSON document from a night update
@@ -380,6 +397,7 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
 #' Same top-level keys as `forecast-vic2026.json` (scripts/build_forecast_json.R) plus `counted_pct` per seat and
 #' a `night` block (built_at, the snapshot it came from, how many seats had feed data). Fields the night
 #' model does not recompute (`track_record`, `poll_source`, `region`) are copied from `base` when given, else NULL.
+#' Added for the booth maps and swing arrows (#163): per seat `booths`, one entry per ordinary booth (see [night_booth_rows()]).
 #' `primary_q` is not produced (the update gives a posterior sd, not draws); `primary_sd` is given instead.
 #' Added for the live page (#162), all additive: per party `chamber$parties[[p]]$hist` (draws giving k seats, k = 0..`chamber_seats`),
 #' per seat party `primary_prior` (the afternoon first preference, so the page can show movement) and per seat `vec_2cp`
@@ -436,7 +454,8 @@ night_build_json <- function(st, res, snapshot, base = NULL, election = "vic2026
                  pair_share = round(r$pair_share, 4), wrong_pair = isTRUE(r$flag)) }
     list(seat = s, vec_2cp = v2, region = if (!is.null(region) && s %in% names(region) && !is.na(region[[s]])) region[[s]] else NULL,
          favourite = ps[[1]]$party, favourite_prob = ps[[1]]$win_prob, final_two = ft,
-         counted_pct = round(100 * unname(res$nu$counted[s]), 1), parties = ps)
+         counted_pct = round(100 * unname(res$nu$counted[s]), 1), parties = ps,
+         booths = night_booths_json(res$booths, s))
   })
   list(election = election, election_date = election_date, built_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z"),
        git_sha = tryCatch(trimws(system2("git", c("rev-parse", "--short", "HEAD"), stdout = TRUE, stderr = FALSE)), error = function(e) NA_character_),

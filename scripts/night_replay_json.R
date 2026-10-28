@@ -53,7 +53,8 @@ for (fr in fracs) {
   if (use_tcp && !is.null(nu)) { obs <- night_tcp_obs(Tc, L, nu$units, shares); n_tcp <- nrow(obs); sim <- night_apply_tcp(sim, obs) }
   if (is.null(nu)) nu <- list(counted = setNames(rep(0, nrow(st$shares)), rownames(st$shares)), fallback_projected = character())
   res <- list(sim = sim, nu = nu, shares = shares, sd = sdo, matched = rownames(shares), n_updated = if (is.null(nu$n_updated)) 0L else nu$n_updated,
-              n_tcp = n_tcp, denominator = "table", n_placeholder = 0L, n_unlisted = 0L)
+              n_tcp = n_tcp, denominator = "table", n_placeholder = 0L, n_unlisted = 0L,
+              booths = night_booth_rows(L, R, if (is.null(nu$units)) list() else nu$units))
   tag <- sprintf("f%03d", round(fr * 1000))
   doc <- night_build_json(st, res, list(file = paste0("replay-", tag), stamp = tag, archived = FALSE), base = base,
                           election = sprintf("vic%d-replay", st$to))
