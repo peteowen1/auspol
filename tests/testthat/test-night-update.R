@@ -123,3 +123,30 @@ test_that("two counted booths cannot pin the flow down (review of #161)", {
   expect_equal(night_tcp_obs(tcp, fp, list(`Seat A` = c("B1", "B2")), post)$flow_se, 0.25)
   expect_equal(night_tcp_obs(tcp, fp, list(`Seat A` = c("B1", "B2", "B3")), post)$flow_se, 0.02)  # equal flows: the floor
 })
+
+test_that("the vote-type gap is off by default and, on, moves an uncounted early unit by the pooled gap", {
+  live <- data.table::rbindlist(list(
+    data.table::data.table(district = "Seat A", booth = c("B1", "B2", "E"), booth_type = c("ordinary", "ordinary", "early"),
+                           party = "Australian Labor Party", votes = c(60, 60, 70)),
+    data.table::data.table(district = "Seat A", booth = c("B1", "B2", "E"), booth_type = c("ordinary", "ordinary", "early"),
+                           party = "Liberal", votes = c(40, 40, 30))))
+  ref <- data.table::copy(live); ref[party == "Australian Labor Party", votes := 50]; ref[party == "Liberal", votes := 50]
+  ld <- live[, list(v = sum(votes)), by = list(unit = booth, booth_type, cls = classify_party(party))]
+  rd <- ref[, list(v = sum(votes)), by = list(unit = booth, booth_type, cls = classify_party(party))]
+  p0 <- project_seat_from_booths(ld, rd, c("B1", "B2"))
+  pN <- project_seat_from_booths(ld, rd, c("B1", "B2"), type_gap = NULL)
+  expect_identical(p0, pN)
+  tg <- data.table::data.table(booth_type = "early", cls = c("ALP", "LNP"), gap = c(0.05, -0.05))
+  pg <- project_seat_from_booths(ld, rd, c("B1", "B2"), type_gap = tg)
+  expect_equal(pg$projected[pg$cls == "ALP"] - p0$projected[p0$cls == "ALP"], 0.05 * 100, tolerance = 1e-6)
+  expect_false(anyNA(pg$projected))
+})
+
+test_that("interleaved early order still covers every unit, and 'last' is the default", {
+  Lc <- data.table::data.table(district = "A", unit = c("B1", "B2", "early", "postal"),
+                               booth_type = c("ordinary", "ordinary", "early", "postal"), cls = "ALP", v = c(10, 20, 30, 5))
+  a <- auspol:::.night_order(Lc, 1L); b <- auspol:::.night_order(Lc, 1L, "interleaved")
+  expect_identical(a, auspol:::.night_order(Lc, 1L, "last"))
+  expect_setequal(b$unit, Lc$unit)
+  expect_true(b$pos[b$unit == "early"] < 1)
+})

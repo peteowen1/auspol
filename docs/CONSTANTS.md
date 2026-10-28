@@ -667,3 +667,19 @@ Existing rows for `AUSPOL_SEAT_POLL_PRIOR` (0.75), `_PRIOR_SD` (0.25), the half-
 | `k_shrink` (`onp_newseat_cv()`) | `R/onp_newseat.R:208` | 3 | **CHOSEN** shrinkage constant, weight `df/(df+3)`, same form as `AUSPOL_CONSERVE_SHRINK_K`. Inert at "0". |
 | `min_seats` (`onp_newseat_cv()`) | `R/onp_newseat.R:208` | 10 | **CHOSEN** fewest One-Nation-contested seats for an earlier election to enter the spread fit. Inert at "0". |
 | no-history seats needed / key coverage (`onp_newseat_apply()`) | `R/onp_newseat.R:314`, `:335` | 3 seats; at most 10% without a key | **CHOSEN**, the same applicability rule as `onp_senate_rank_apply()` / `onp_senate_alloc()`. Inert at "0". |
+
+## Election-night update (`R/night_update.R`, `R/booth_projection.R`; issues #153, #160, #161)
+
+Replay-only until the 2026 feed arrives; none is read by the published forecast. Each was set on the vic2022 replay
+(2018 booths as the reference), so none is held out.
+
+| constant | value | where | can it come from data? |
+|---|---|---|---|
+| projection sd by counted share | 3.5 / 2.63 / 1.93 / 1.77 / 0.26 at 0-5% / 8.6% / 22.4% / 34.6% / 95% | `booth_projection_sd()` | fitted on the 2018->2022 replay (rehearsal 1); refit on another state's booth pair |
+| report order | small ordinary booths first (log size + N(0, 0.5)), postals last, seed 2022 | `.night_order()` | the 2026 feed's real order replaces it |
+| early-vote report position | "last" (default) or "interleaved" U(0.3, 1.0) of the way through the booths | `.night_order(early =)` | the 2026 feed; each early centre is its own booth |
+| vote-type gap shrinkage `gap_k` | off by default; 5 chosen (k = 20 tried: 75% counted 0.0712 vs 0.0750) | `night_booth_update(gap_k =)` | more replays (other states) |
+| VEC pair minimum | 0.20 of draws | `night_apply_tcp(pair_min =)` | set by judgement; check on a replay with VEC first-pair errors |
+| flow SE below 3 counted booths | 0.25 | `night_tcp_obs()` | judgement (a flow share's plausible range) |
+| flow SE floor | 0.02 | `night_tcp_obs()` | judgement |
+| new-candidate sd multiplier | 1 (off): 1.5 and 2 were slightly worse on 2022 (few new candidates; One Nation 2026 untestable) | `night_booth_update(new_sd_mult =)` | a replay with a new party (SA 2026) |

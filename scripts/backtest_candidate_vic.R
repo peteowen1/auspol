@@ -1070,6 +1070,22 @@ for (K in PAIRS) {
     # ELECTION-NIGHT REPLAY (AUSPOL_NIGHT_REPLAY_FRAC, R/night_update.R, issue #153): the afternoon forecast above is
     # the prior; booths counted by that fraction of the night update each seat's primaries and spread, and the
     # statewide draws shrink by the share of uncertainty resolved. Unset: nothing here runs.
+    # NIGHT STATE DUMP (AUSPOL_NIGHT_DUMP=<file.rds>, issue #160): everything the final simulation takes, BEFORE
+    # any night update, so scripts/night_replay.R can sweep fractions and settings in seconds instead of
+    # refitting this whole harness (~80 s) per fraction. One file per pair (the pair label is in the name).
+    .dmp <- Sys.getenv("AUSPOL_NIGHT_DUMP", "")
+    if (nzchar(.dmp)) {
+      .dpath <- sub("[.]rds$", sprintf("-vic%d.rds", K$to), .dmp)
+      saveRDS(list(pair = sprintf("vic%d", K$to), from = K$from, to = K$to, shares = shares, level_sd = .level_sd,
+                   level_mult = .lm(shares), fm = fm, psd = psd, swd = .swd, sdo = .sdo,
+                   seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = N_SIMS, bo = .bo,
+                   coalition_split = coalition_split_args(.eb, rownames(shares)), error_q = error_dist_args(.eb, colnames(shares)),
+                   smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR, shrink = SHRINK, htv_ov = .htv_ov,
+                   fb_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD, surge_h = surge_arg,
+                   surge_party = surge_party_arg, surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"),
+                   surge_mu = surge_mu_arg, surge_sd = surge_sd_arg, truth = truth, keep = keep), .dpath)
+      cat(sprintf("NX8  night state for vic%d saved to %s\n", K$to, .dpath))
+    }
     .nf <- night_replay_frac()
     if (!is.na(.nf)) {
       .bl <- file.path("output", sprintf("booths-vic%d.csv", K$to)); .br <- file.path("output", sprintf("booths-vic%d.csv", K$from))

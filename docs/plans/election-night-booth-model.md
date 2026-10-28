@@ -225,3 +225,33 @@ flow SE, held at 0.25 under 3 counted booths; before it, 0.1146 / 0.0994 / 0.097
 50% counted: 90% range 1-6 -> 0-5 seats (actual 0). Two designs failed first and are recorded so they are not retried:
 the raw counted 2CP share (0.1661: early booths are not a random sample), and combining 2CP shares with the draws
 (0.1313: counts the first preferences twice and over-sharpens close seats, Mornington 0.69 -> 0.04).
+
+## Dress rehearsal 5: vote-type gaps, new candidates, and a fast replay (2026-10-28, issue #160)
+
+**Fast replay.** `AUSPOL_NIGHT_DUMP=<file.rds>` (run through `quick_arm.R`, so nothing lands in `output/`) saves the vic
+harness's pre-simulation state; `scripts/night_replay.R --state=...` sweeps fractions and settings from it: ~10 s a
+fraction instead of ~80 s. It reproduces quick_arm exactly (0.2643 at nothing counted, 0.0929 at 50% with 2CP).
+
+**Vote-type gap** (`night_booth_update(gap_k =)`): for each non-ordinary booth type and class, the gap between that type's
+counted swing and the same seat's ordinary swing, pooled over the seats where it is counted and shrunk by n/(n+k), is
+added to the all-types swing of a seat whose votes of that type are not yet in. With 2022's ordering (each district's
+early lump, ~half its night vote, after all booths) it can never act below 100%, so it was tested with early lumps
+interleaved among the booths (`early = "interleaved"`, U(0.3, 1.0)). Seat log loss, 88 seats, 2CP on:
+
+| counted | no gap | k = 5 | k = 20 |
+|---|---:|---:|---:|
+| 25% | 0.1079 | 0.1079 | 0.1079 |
+| 50% | 0.1074 | 0.1074 | 0.1074 |
+| 75% | 0.0833 | **0.0712** | 0.0750 |
+
+It acts only once early lumps are in (~65% counted in 2022); in 2026 each early centre is its own smaller booth, so
+earlier. Pooled early-vs-ordinary gap at 75% counted (44 districts): Labor +3.8, Greens -2.7, Coalition +0.2 points.
+k = 5 chosen (the first value tried; k = 20 worse); not tuned further on one election.
+
+**New candidates** (`new_sd_mult`): holding a no-history class's projection 1.5x or 2x looser was slightly WORSE at
+10-50% counted (0.1108 -> 0.1117 / 0.1123 at 10%) and flat at 75%. Left at 1. A weak test: 2022 had few candidates with
+no 2018 votes; the case it is for (One Nation 2026) cannot be replayed on Victoria.
+
+Bug found on the way, fixed: the gap was first added with `merge()`, which re-sorted the projection grid and
+misaligned a row-ordered vector (`has_ref`), returning NA projections in 28 of 88 seats; now an update join, with a
+test that a gapped projection has no NA.

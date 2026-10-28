@@ -38,10 +38,14 @@ match_booth_units <- function(live, ref) {
 #' @param ref data.table of the same seat's matched reference rows, keyed to
 #'   the LIVE unit names: `unit, booth_type, cls, v`.
 #' @param counted_units character vector of live units already reported.
+#' @param type_gap Optional data.table `booth_type, cls, gap`: for a booth type with NO counted
+#'   unit in this seat, its swing is the seat's all-types swing PLUS this gap (the type's swing
+#'   relative to ordinary booths, measured in other seats and shrunk; issue #160). `NULL` (the
+#'   default) is byte-identical to the previous behaviour.
 #' @return data.table `cls, projected, counted_share`, or `NULL` if no
 #'   counted unit has a reference (nothing to measure a swing on).
 #' @export
-project_seat_from_booths <- function(live, ref, counted_units) {
+project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL) {
   live <- data.table::as.data.table(live); ref <- data.table::as.data.table(ref)
   classes <- unique(live$cls)
   units <- unique(live[, .(unit, booth_type)])
@@ -61,6 +65,16 @@ project_seat_from_booths <- function(live, ref, counted_units) {
   grid <- merge(grid, ref[, .(unit, cls, rv = v)], by = c("unit", "cls"), all.x = TRUE)
   grid <- merge(grid, ref_tot, by = "unit", all.x = TRUE)
   grid <- merge(grid, sw_t, by = c("booth_type", "cls"), all.x = TRUE); grid <- merge(grid, sw_a, by = "cls", all.x = TRUE)
+  if (!is.null(type_gap) && nrow(type_gap)) {
+    # An update join, NOT merge(): merge() re-sorts the rows by its keys, and `has_ref` below is a
+    # vector aligned to grid's row order across the later merge by `cls` -- re-sorting by booth type
+    # here misaligned it and returned NA projections for 28 of 88 seats (found on the first replay).
+    tg <- data.table::as.data.table(type_gap)
+    grid[, gap := NA_real_]
+    grid[tg, on = c("booth_type", "cls"), gap := i.gap]
+    grid[is.na(sw) & !is.na(gap), sw := sw_all + gap]
+    grid[, gap := NULL]
+  }
   grid[is.na(sw), sw := sw_all]; grid[is.na(sw), sw := 0]; grid[is.na(rv), rv := 0]
   has_ref <- grid$unit %in% ref_tot$unit
   mean_unit <- mean(ref_tot$rt)

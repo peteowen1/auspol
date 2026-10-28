@@ -4,7 +4,7 @@
 \alias{project_seat_from_booths}
 \title{Project a seat's final first preferences from the booths counted so far}
 \usage{
-project_seat_from_booths(live, ref, counted_units)
+project_seat_from_booths(live, ref, counted_units, type_gap = NULL)
 }
 \arguments{
 \item{live}{data.table of ONE seat: \verb{unit, booth_type, cls, v} (votes so
@@ -14,6 +14,11 @@ far for counted units; the full result in a replay).}
 the LIVE unit names: \verb{unit, booth_type, cls, v}.}
 
 \item{counted_units}{character vector of live units already reported.}
+
+\item{type_gap}{Optional data.table \verb{booth_type, cls, gap}: for a booth type with NO counted
+unit in this seat, its swing is the seat's all-types swing PLUS this gap (the type's swing
+relative to ordinary booths, measured in other seats and shrunk; issue #160). \code{NULL} (the
+default) is byte-identical to the previous behaviour.}
 }
 \value{
 data.table \verb{cls, projected, counted_share}, or \code{NULL} if no

@@ -46,7 +46,12 @@ night_prior_sd <- function(shares, level_sd, level_mult = NULL, sd_override = NU
 # Simulated report order on the night (no order is recorded in the final booth files):
 # small ordinary booths first, early-vote centres after the ordinary booths, postals last.
 # The same order as dress rehearsals 1 and 2 (docs/plans/election-night-booth-model.md).
-.night_order <- function(Lc, seed) {
+# `early = "interleaved"` (issue #160) puts each district's early-vote unit at a random point among its
+# ordinary booths (uniform 0.3-1.0 of the way through), as early centres report during the evening rather
+# than after every booth; with "last" (the default, byte-identical) the 2022 early lump, about half the
+# night vote, is never counted below 100%, so no vote-type gap can ever be measured.
+.night_order <- function(Lc, seed, early = c("last", "interleaved")) {
+  early <- match.arg(early)
   old <- if (exists(".Random.seed", envir = globalenv())) get(".Random.seed", envir = globalenv()) else NULL
   on.exit(if (is.null(old)) rm(".Random.seed", envir = globalenv()) else assign(".Random.seed", old, envir = globalenv()))
   set.seed(seed)
@@ -54,8 +59,9 @@ night_prior_sd <- function(shares, level_sd, level_mult = NULL, sd_override = NU
   ord[, key := log(size + 1) + stats::rnorm(.N, 0, 0.5)]
   ord <- ord[order(district, key)]
   ord[, pos := seq_len(.N) / .N, by = "district"]
-  rbind(ord[, c("district", "unit", "pos")],
-        unique(Lc[Lc$booth_type == "early", list(district, unit, pos = 1.5)]),
+  ear <- unique(Lc[Lc$booth_type == "early", list(district, unit)])
+  ear[, pos := if (early == "last") 1.5 else stats::runif(.N, 0.3, 1.0)]
+  rbind(ord[, c("district", "unit", "pos")], ear[, c("district", "unit", "pos")],
         unique(Lc[Lc$booth_type == "postal", list(district, unit, pos = 2.0)]))
 }
 
@@ -67,11 +73,23 @@ night_prior_sd <- function(shares, level_sd, level_mult = NULL, sd_override = NU
 #' @param live,ref Booth tables for the election being replayed and the one before it
 #'   (`district, booth, booth_type, party, votes`), e.g. `output/booths-vic2022.csv`.
 #' @param seed Seed for the simulated report order (restored afterwards).
+#' @param gap_k Pooled vote-type gap (issue #160): `NULL` (default) is off and byte-identical to
+#'   before. A number `k >= 0` turns it on: for each non-ordinary booth type (early, postal, ...)
+#'   and class, the gap between that type's counted swing and the same seat's ordinary swing is
+#'   pooled over the seats where the type is counted (weighted by its counted votes) and shrunk by
+#'   `n / (n + k)`, `n` those seats; a seat whose own votes of that type are not yet in projects them
+#'   at its all-types swing plus the shrunk gap.
+#' @param new_sd_mult Multiplier on the projection's sd for a class with no previous-election votes in the
+#'   seat (a new candidate); 1 (default) treats it like every other class.
+#' @param early Report position of each district's early-vote unit: `"last"` (default) after every
+#'   ordinary booth, or `"interleaved"` among them (see `.night_order()`).
 #' @return List: `shares` (posterior means, rows renormalised to 100), `sd` (posterior sds),
 #'   `counted` (named per-seat share of the final night vote counted), `resolved` (mean over
-#'   updated cells of 1 - posterior sd / prior sd), `n_updated` (seats with booths).
+#'   updated cells of 1 - posterior sd / prior sd), `n_updated` (seats with booths), `units`
+#'   (counted units per seat), `type_gap` (the pooled gaps used, or `NULL`).
 #' @export
-night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L) {
+night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, gap_k = NULL, early = "last", new_sd_mult = 1) {
+  stopifnot(is.numeric(new_sd_mult), length(new_sd_mult) == 1L, new_sd_mult >= 1)
   stopifnot(identical(dim(shares), dim(prior_sd)), is.finite(frac), frac >= 0, frac <= 1)
   prep <- function(X) {
     X <- data.table::as.data.table(X)
@@ -84,41 +102,76 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L) 
   M <- match_booth_units(Lc, Rc)
   Rk <- merge(Rc, M, by.x = c("district", "unit"), by.y = c("ref_district", "ref_unit"), suffixes = c(".ref", ".live"))
   Rk <- Rk[, list(district = district.live, unit = unit.live, booth_type = booth_type.live, cls, v)]
-  seq_units <- .night_order(Lc, seed)
+  seq_units <- .night_order(Lc, seed, early)
   night_total <- Lc[Lc$booth_type %in% c("ordinary", "early", "postal"), list(nt = sum(v)), by = "district"]
 
   post <- as.matrix(shares); psd <- as.matrix(prior_sd)
   seats <- rownames(post); cls_all <- colnames(post)
   counted <- setNames(rep(0, length(seats)), seats)
   res <- numeric(0); n_up <- 0L; units_by_seat <- list()
-  for (s in intersect(seats, unique(Lc$district))) {
-    ld <- Lc[Lc$district == s]; rd <- Rk[Rk$district == s]
+  todo <- intersect(seats, unique(Lc$district))
+  for (s in todo) {
+    ld <- Lc[Lc$district == s]
     su <- seq_units[seq_units$district == s][order(pos)]
     su <- merge(su, ld[, list(uv = sum(v)), by = "unit"], by = "unit")[order(pos)]
     nt <- night_total$nt[night_total$district == s]
     su[, cum := cumsum(uv) / nt]
     units <- if (frac >= 1) su$unit else su$unit[su$cum <= frac + 1e-9]
-    if (!length(units)) next
-    units_by_seat[[s]] <- units
-    p <- project_seat_from_booths(ld, rd, units)
+    if (length(units)) units_by_seat[[s]] <- units
+  }
+  type_gap <- if (is.null(gap_k)) NULL else .night_type_gap(Lc, Rk, units_by_seat, gap_k)
+  for (s in names(units_by_seat)) {
+    ld <- Lc[Lc$district == s]; rd <- Rk[Rk$district == s]
+    units <- units_by_seat[[s]]
+    p <- project_seat_from_booths(ld, rd, units, type_gap = type_gap)
     if (is.null(p) || !nrow(p)) next
     cs <- p$counted_share[1]
     counted[s] <- cs
     proj <- 100 * p$projected / sum(p$projected)
     names(proj) <- p$cls
-    sdj <- booth_projection_sd(cs)
+    sdj <- rep(booth_projection_sd(cs), length(proj))
+    # NEW CANDIDATES (#160): a class with no votes at the previous election in this seat has no booth
+    # swing to measure -- the projection carries its counted share forward -- so its projection is held
+    # more loosely (new_sd_mult; 1 = as every other class).
+    if (new_sd_mult != 1) sdj[!names(proj) %in% unique(rd$cls)] <- sdj[!names(proj) %in% unique(rd$cls)] * new_sd_mult
     j <- match(names(proj), cls_all); ok <- !is.na(j)
     if (!any(ok)) next
     # A class standing now that the projection does not see (no booth votes) keeps its prior;
     # a class the projection sees that the forecast does not model is left out (rows renormalise).
-    cm <- combine_prior_projection(post[s, j[ok]], proj[ok], psd[s, j[ok]], sdj)
+    cm <- combine_prior_projection(post[s, j[ok]], proj[ok], psd[s, j[ok]], sdj[ok])
     res <- c(res, 1 - cm$sd / psd[s, j[ok]])
     post[s, j[ok]] <- cm$mean; psd[s, j[ok]] <- cm$sd
     post[s, ] <- 100 * post[s, ] / sum(post[s, ])
     n_up <- n_up + 1L
   }
   list(shares = post, sd = psd, counted = counted,
-       resolved = if (length(res)) mean(res) else 0, n_updated = n_up, units = units_by_seat)
+       resolved = if (length(res)) mean(res) else 0, n_updated = n_up, units = units_by_seat, type_gap = type_gap)
+}
+
+# Pooled swing gap of each non-ordinary booth type against ordinary booths, per class, over the
+# seats where both are counted, shrunk by n / (n + k). Swings are share-point changes on matched
+# units, the same arithmetic as project_seat_from_booths().
+.night_type_gap <- function(Lc, Rk, units_by_seat, k) {
+  stopifnot(is.numeric(k), length(k) == 1L, k >= 0)
+  rows <- list()
+  for (s in names(units_by_seat)) {
+    u <- units_by_seat[[s]]
+    ld <- Lc[Lc$district == s & Lc$unit %in% u]; rd <- Rk[Rk$district == s & Rk$unit %in% u]
+    if (!nrow(rd)) next
+    lt <- ld[, list(lt = sum(v)), by = "unit"]; rt <- rd[, list(rt = sum(v)), by = "unit"]
+    mc <- merge(ld, rd[, list(unit, cls, rv = v)], by = c("unit", "cls"))
+    mc <- merge(merge(mc, lt, by = "unit"), rt, by = "unit")
+    # SWT, not `sw`: a table named like its own column binds to the COLUMN inside `[` (CLAUDE.md's
+    # data.table trap; it failed exactly that way on its first run, 2026-10-28).
+    SWT <- mc[, list(sw = sum(v) / sum(lt) - sum(rv) / sum(rt), w = sum(v)), by = c("booth_type", "cls")]
+    o <- SWT[SWT$booth_type == "ordinary", list(cls, sw_o = sw)]
+    g <- merge(SWT[SWT$booth_type != "ordinary"], o, by = "cls")
+    if (nrow(g)) rows[[s]] <- g[, list(seat = s, booth_type, cls, gap = sw - sw_o, w)]
+  }
+  G <- data.table::rbindlist(rows)
+  if (!nrow(G)) return(NULL)
+  G[, list(gap = (data.table::uniqueN(seat) / (data.table::uniqueN(seat) + k)) * sum(gap * w) / sum(w),
+           n_seats = data.table::uniqueN(seat)), by = c("booth_type", "cls")]
 }
 
 #' The VEC's two-candidate count, turned into a projected final 2CP per seat

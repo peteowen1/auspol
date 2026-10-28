@@ -4,7 +4,17 @@
 \alias{night_booth_update}
 \title{Update a seat-by-class share matrix with the booths counted by a fraction of the night}
 \usage{
-night_booth_update(shares, prior_sd, frac, live, ref, seed = 2022L)
+night_booth_update(
+  shares,
+  prior_sd,
+  frac,
+  live,
+  ref,
+  seed = 2022L,
+  gap_k = NULL,
+  early = "last",
+  new_sd_mult = 1
+)
 }
 \arguments{
 \item{shares}{Afternoon prior: seat x class first-preference shares (percent).}
@@ -17,11 +27,25 @@ night_booth_update(shares, prior_sd, frac, live, ref, seed = 2022L)
 (\verb{district, booth, booth_type, party, votes}), e.g. \code{output/booths-vic2022.csv}.}
 
 \item{seed}{Seed for the simulated report order (restored afterwards).}
+
+\item{gap_k}{Pooled vote-type gap (issue #160): \code{NULL} (default) is off and byte-identical to
+before. A number \code{k >= 0} turns it on: for each non-ordinary booth type (early, postal, ...)
+and class, the gap between that type's counted swing and the same seat's ordinary swing is
+pooled over the seats where the type is counted (weighted by its counted votes) and shrunk by
+\code{n / (n + k)}, \code{n} those seats; a seat whose own votes of that type are not yet in projects them
+at its all-types swing plus the shrunk gap.}
+
+\item{early}{Report position of each district's early-vote unit: \code{"last"} (default) after every
+ordinary booth, or \code{"interleaved"} among them (see \code{.night_order()}).}
+
+\item{new_sd_mult}{Multiplier on the projection's sd for a class with no previous-election votes in the
+seat (a new candidate); 1 (default) treats it like every other class.}
 }
 \value{
 List: \code{shares} (posterior means, rows renormalised to 100), \code{sd} (posterior sds),
 \code{counted} (named per-seat share of the final night vote counted), \code{resolved} (mean over
-updated cells of 1 - posterior sd / prior sd), \code{n_updated} (seats with booths).
+updated cells of 1 - posterior sd / prior sd), \code{n_updated} (seats with booths), \code{units}
+(counted units per seat), \code{type_gap} (the pooled gaps used, or \code{NULL}).
 }
 \description{
 Update a seat-by-class share matrix with the booths counted by a fraction of the night
