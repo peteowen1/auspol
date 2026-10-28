@@ -4,7 +4,7 @@
 \alias{night_booth_table}
 \title{Convert a parsed Assembly snapshot into the booth table shape the night update expects}
 \usage{
-night_booth_table(feed, lookup, places = NULL)
+night_booth_table(feed, lookup, places = NULL, include_late = FALSE)
 }
 \arguments{
 \item{feed}{Output of \code{\link[=vec_feed_read_lh]{vec_feed_read_lh()}}.}
@@ -13,6 +13,9 @@ night_booth_table(feed, lookup, places = NULL)
 
 \item{places}{\code{\link[=night_polling_places]{night_polling_places()}} output. Ordinary booths listed there but absent from the snapshot get a
 zero-vote row (unreported units, so they can be projected); \code{NULL} adds none.}
+
+\item{include_late}{Keep absent, provisional and marked-as-voted rows (counted after election night). \code{FALSE} (default)
+drops them from the table, so they are neither counted nor projected: the night base is ordinary + early + postal.}
 }
 \value{
 List: \code{live} (\verb{district, booth, booth_type, party, votes}; every unit of every district, reported

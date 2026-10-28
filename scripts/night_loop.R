@@ -16,7 +16,7 @@ cfg <- list(source = need("source"), archive = need("archive"), setup = flag("se
             out = need("out"), base_json = flag("base-json"), gap_k = as.numeric(flag("gap_k", "5")),
             sims = if (!is.null(flag("sims"))) as.integer(flag("sims")) else NULL,
             use_tcp = identical(flag("tcp", "1"), "1"), allow_stub = identical(flag("allow-stub", "0"), "1"),
-            turnout = flag("turnout"), allow_unmatched = identical(flag("allow-unmatched", "0"), "1"), cache = new.env())
+            turnout = flag("turnout"), allow_unmatched = identical(flag("allow-unmatched", "0"), "1"), allow_projected = identical(flag("allow-projected", "0"), "1"), cache = new.env())
 every <- as.numeric(flag("every", "60")); max_cycles <- as.integer(flag("max-cycles", "0")); retries <- as.integer(flag("retries", "3"))
 log_f <- file.path(cfg$archive, "night-loop.log")
 dir.create(cfg$archive, recursive = TRUE, showWarnings = FALSE)

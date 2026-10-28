@@ -49,7 +49,16 @@ f("(c) expected-night vs the replay's NIGHT total", err(ex_night, tt$night))
 f("(old) upper-house base (rbvc_formal) vs the FINAL all-type total", err(ex_old, tt$final))
 rc_old <- night_run_update(st, conv_b, R, gap_k = 5, total = "expected", expected = ex_old)
 rc_fin <- night_run_update(st, conv_b, R, gap_k = 5, total = "expected", expected = ex_final)
-rc <- night_run_update(st, conv_b, R, gap_k = 5, total = "expected", expected = ex_night)
+rc_late <- night_run_update(st, conv_b, R, gap_k = 5, total = "expected", expected = ex_night)   # night base but late types still counted/projected (before the fix)
+late <- c("absent", "provisional", "marked_as_voted")
+conv_n <- list(live = zer[!zer$booth_type %in% late], counted = cnt[!cnt$unit %in% late], tcp = conv_a$tcp, unmapped = character())
+rc <- night_run_update(st, conv_n, R, gap_k = 5, total = "expected", expected = ex_night)       # night base, late types out of numerator and units
+pt <- rc$nu$proj_total; ee <- ex_night[names(pt)]
+cat(sprintf("NEQ1  C2 sum(counted + projected uncounted) vs expected-night, per updated seat: n=%d  mean error %+.2f%%  mean abs error %.2f%%\n",
+            length(pt), 100 * mean(pt / ee - 1, na.rm = TRUE), 100 * mean(abs(pt / ee - 1), na.rm = TRUE)))
+ptl <- rc_late$nu$proj_total; eel <- ex_night[names(ptl)]
+cat(sprintf("NEQ1  (before fix, late types in) same quantity: n=%d  mean error %+.2f%%  mean abs error %.2f%%\n",
+            length(ptl), 100 * mean(ptl / eel - 1, na.rm = TRUE), 100 * mean(abs(ptl / eel - 1), na.rm = TRUE)))
 
 csv <- flag("replay-csv")
 if (is.null(csv)) stop("NEQ1! --replay-csv= is required (run night_replay.R --fracs=<frac> --tcp=1 --gap_k=5 first)")
@@ -74,8 +83,9 @@ da <- cmp(ra, "A exact (full table + counted list, table denominator)")
 db <- cmp(rb, "B live-like (uncounted votes zeroed, projected denominator)")
 dc0 <- cmp(rc_old, "C0 expected, OLD base (upper-house rbvc_formal)")
 dc1 <- cmp(rc_fin, "C1 expected-FINAL (Assembly all-type total)")
-dc <- cmp(rc, "C2 expected-NIGHT (Assembly ordinary+early+postal)")
-cat(sprintf("NEQ2  seat log loss over %d seats (lower is better): replay/A %.4f, B projected %.4f, C0 old %.4f, C1 final %.4f, C2 night %.4f\n", length(st$keep), ll(ra), ll(rb), ll(rc_old), ll(rc_fin), ll(rc)))
+dcl <- cmp(rc_late, "C2-before expected-night, late types still in")
+dc <- cmp(rc, "C2 expected-NIGHT, late types out of numerator and units")
+cat(sprintf("NEQ2  seat log loss over %d seats (lower is better): replay/A %.4f, B projected %.4f, C0 old %.4f, C1 final %.4f, C2-before %.4f, C2 night %.4f\n", length(st$keep), ll(ra), ll(rb), ll(rc_old), ll(rc_fin), ll(rc_late), ll(rc)))
 cat(sprintf("NEQ2  replay mean counted %.3f\n", mean(nu0$counted)))
 cat(sprintf("NEQ2  VERDICT A: %s\n", if (da < 1e-9) "EQUAL to night_replay.R" else "DIFFERENT"))
 quit(status = if (da < 1e-9) 0L else 1L)

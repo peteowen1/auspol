@@ -48,7 +48,7 @@ nr_lookup <- function() data.table::data.table(affiliation_id = c("5", "8"), reg
 
 test_that("conversion gives the booth table shape: types, names, parties, no double counting", {
   # the district counts by type repeat the booths' votes for ordinary / EVC / mobile: only one of the two may be used
-  cv <- night_booth_table(nr_feed(), nr_lookup())
+  cv <- night_booth_table(nr_feed(), nr_lookup(), include_late = TRUE)
   L <- cv$live
   expect_named(L, c("district", "booth", "booth_type", "party", "votes"))
   expect_setequal(unique(L$district), "Alpha")                               # " District" suffix gone
@@ -62,7 +62,7 @@ test_that("conversion gives the booth table shape: types, names, parties, no dou
 })
 
 test_that("a unit with no votes is not counted, and every district-level type exists as a unit", {
-  cv <- night_booth_table(nr_feed(), nr_lookup())
+  cv <- night_booth_table(nr_feed(), nr_lookup(), include_late = TRUE)
   expect_false("Alpha South" %in% cv$counted$unit)                            # reported zero everywhere
   expect_true(all(c("Alpha North", "early", "postal") %in% cv$counted$unit))
   expect_false("absent" %in% cv$counted$unit)
@@ -275,4 +275,80 @@ test_that("the expected denominator sets counted share and rescales the uncounte
   ld <- data.table::as.data.table(live)[, list(unit = booth, booth_type, cls = classify_party(party), v = votes)]
   pr <- project_seat_from_booths(ld, rd, c("B1", "B2"), total = "expected", expected_total = 400)
   expect_equal(sum(pr$projected), 400)                                              # counted 200 + uncounted rescaled to the 200 left
+})
+
+# ---- round 2: late types, projected fallback, polling-list coverage, unreadable JSON ----
+
+test_that("the night base leaves absent, provisional and marked-as-voted out of the table (numerator and projected units)", {
+  f <- nr_feed(); f$by_type[f$by_type$vote_type == "Absent", votes := 4]
+  full <- night_booth_table(f, nr_lookup(), include_late = TRUE)
+  expect_equal(sum(full$live$votes[full$live$booth_type == "absent"]), 12)
+  night <- night_booth_table(f, nr_lookup())
+  expect_false(any(c("absent", "provisional", "marked_as_voted") %in% night$live$booth_type))
+  expect_false(any(c("absent", "provisional", "marked_as_voted") %in% night$counted$unit))
+  expect_equal(sum(night$live$votes), sum(full$live$votes) - 12)
+})
+
+test_that("no turnout file stops the cycle (NR9) unless the projected denominator is explicitly allowed", {
+  src <- withr::local_tempdir(); arch <- withr::local_tempdir(); outd <- withr::local_tempdir()
+  nr_setup_files(src)
+  out <- file.path(outd, "forecast-night.json"); writeLines('{"last":"good"}', out); before <- unname(tools::md5sum(out))
+  writeLines(nr_min_xml("Alpha District"), file.path(src, "SE26mediafileverboselhv2_20261128_190000.xml"))
+  st <- list(shares = matrix(c(50, 50), 1, dimnames = list("Alpha", c("ALP", "LNP"))))
+  cfg <- list(source = src, archive = arch, setup = src, state = st, ref = data.table::data.table(), out = out, cache = new.env())
+  r <- night_cycle(cfg)
+  expect_identical(r$status, "failed"); expect_match(r$message, "NR9!")
+  expect_equal(unname(tools::md5sum(out)), before); expect_equal(list.files(outd), "forecast-night.json")
+  cfg$cache <- new.env(); cfg$allow_projected <- TRUE
+  r2 <- night_cycle(cfg); expect_false(grepl("NR9!", r2$message))
+})
+
+test_that("a state seat with no voting centre in the polling list stops the cycle (NR10); its district Ordinary rows are kept", {
+  pl <- data.table::data.table(district_id = "100", district = "Alpha District", booth_id = "9", booth = "Alpha North", booth_class = "VotingCentre")
+  expect_error(night_check_places(c("Alpha", "Beta"), pl), "NR10!.*Beta")
+  expect_silent(night_check_places("Alpha", pl))
+  expect_silent(night_check_places(c("Alpha", "Beta"), pl, allow = TRUE))
+  # a polling file listing only another district: this district's Ordinary count must not be dropped
+  other <- data.table::data.table(district_id = "999", district = "Other District", booth_id = "1", booth = "Other", booth_class = "VotingCentre")
+  f <- nr_feed(); f$booths <- f$booths[0]
+  f$by_type[f$by_type$vote_type == "Ordinary", votes := c(20, 10, 2)]
+  kept <- night_booth_table(f, nr_lookup(), other)
+  expect_equal(sum(kept$live$votes[kept$live$booth_type == "ordinary"]), 32)
+  listed <- night_booth_table(f, nr_lookup(), pl)
+  expect_equal(sum(listed$live$votes[listed$live$booth_type == "ordinary"]), 0)       # listed: ordinary votes come from booths only
+})
+
+test_that("a booth the polling list spells differently is logged (NR11) and not duplicated by a placeholder", {
+  pl <- data.table::data.table(district_id = "100", district = "Alpha District", booth_id = c("9", "10"),
+                               booth = c("Mount Alpha", "Alpha South"), booth_class = "VotingCentre")
+  f <- nr_feed(); f$booths$booth[f$booths$booth == "Alpha North"] <- "Mt Alpha"      # reported as "Mt Alpha", listed as "Mount Alpha"
+  cv <- expect_silent(night_booth_table(f, nr_lookup(), pl))                         # normalised names match: no log, no duplicate
+  expect_equal(cv$n_placeholder_booths, 0L)                                         # South already has (zero) rows; Mount Alpha matches Mt Alpha
+  expect_false("Mount Alpha" %in% cv$live$booth)
+  f$booths$booth[f$booths$booth == "Mt Alpha"] <- "Alfa North"                       # a genuinely unknown name
+  expect_message(cv2 <- night_booth_table(f, nr_lookup(), pl), "NR11")
+  expect_equal(cv2$n_unlisted_booths, 1L)
+})
+
+test_that("the per-seat fallback to the projected denominator is recorded, and a non-positive expected total is not used", {
+  ref  <- nu_booths(c(50, 60, 40, 55), c(50, 40, 60, 45), booths = c("B1", "B2", "B3", "B4"))
+  live <- nu_booths(c(60, 70, 0, 0), c(40, 30, 0, 0), booths = c("B1", "B2", "B3", "B4"))
+  ru <- data.table::data.table(district = "Seat A", unit = c("B1", "B2"))
+  sh <- matrix(c(52, 48), 1, dimnames = list("Seat A", c("ALP", "LNP"))); psd <- matrix(4, 1, 2, dimnames = dimnames(sh))
+  for (ex in list(c(`Seat A` = NA_real_), c(`Seat A` = 0), c(`Seat A` = -5), c(Other = 100), NULL)) {
+    u <- night_booth_update(sh, psd, 0, live, ref, reported = ru, total = "expected", expected = ex)
+    expect_equal(u$fallback_projected, "Seat A")
+  }
+  good <- night_booth_update(sh, psd, 0, live, ref, reported = ru, total = "expected", expected = c(`Seat A` = 400))
+  expect_length(good$fallback_projected, 0L)
+  rd <- data.table::as.data.table(ref)[, list(unit = booth, booth_type, cls = classify_party(party), v = votes)]
+  ld <- data.table::as.data.table(live)[, list(unit = booth, booth_type, cls = classify_party(party), v = votes)]
+  p0 <- project_seat_from_booths(ld, rd, c("B1", "B2"), total = "expected", expected_total = 0)
+  pp <- project_seat_from_booths(ld, rd, c("B1", "B2"), total = "projected")
+  expect_equal(p0$counted_share[1], pp$counted_share[1])
+})
+
+test_that("a published JSON that exists but cannot be read stops the cycle instead of being overwritten", {
+  d <- withr::local_tempdir(); out <- file.path(d, "o.json"); writeLines('{"night": {"snapshot_stamp": ', out)
+  expect_error(night_check_fresh("20261128_190000", out), "NR8!.*cannot be read")
 })

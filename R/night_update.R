@@ -121,7 +121,7 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
   post <- as.matrix(shares); psd <- as.matrix(prior_sd)
   seats <- rownames(post); cls_all <- colnames(post)
   counted <- setNames(rep(0, length(seats)), seats)
-  res <- numeric(0); n_up <- 0L; units_by_seat <- list()
+  res <- numeric(0); n_up <- 0L; units_by_seat <- list(); fallback_projected <- character(0); proj_total <- numeric(0)
   todo <- intersect(seats, unique(Lc$district))
   cd <- if (!is.null(reported)) reported$district; cu <- if (!is.null(reported)) reported$unit
   for (s in todo) {
@@ -142,9 +142,11 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
   for (s in names(units_by_seat)) {
     ld <- Lc[Lc$district == s]; rd <- Rk[Rk$district == s]
     units <- units_by_seat[[s]]
+    if (total == "expected" && !(!is.null(expected) && is.finite(unname(expected[s])) && unname(expected[s]) > 0)) fallback_projected <- c(fallback_projected, s)
     p <- project_seat_from_booths(ld, rd, units, type_gap = type_gap, total = total, expected_total = if (is.null(expected)) NA_real_ else unname(expected[s]))
     if (is.null(p) || !nrow(p)) next
     cs <- p$counted_share[1]
+    proj_total[s] <- sum(p$projected)
     counted[s] <- cs
     proj <- 100 * p$projected / sum(p$projected)
     names(proj) <- p$cls
@@ -164,7 +166,8 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
     n_up <- n_up + 1L
   }
   list(shares = post, sd = psd, counted = counted,
-       resolved = if (length(res)) mean(res) else 0, n_updated = n_up, units = units_by_seat, type_gap = type_gap)
+       resolved = if (length(res)) mean(res) else 0, n_updated = n_up, units = units_by_seat, type_gap = type_gap,
+       fallback_projected = fallback_projected, proj_total = proj_total)
 }
 
 # Pooled swing gap of each non-ordinary booth type against ordinary booths, per class, over the

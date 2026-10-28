@@ -45,7 +45,7 @@ match_booth_units <- function(live, ref) {
 #' @param total `"table"` (default): counted share is counted votes over the votes in `live`. `"projected"`: over
 #'   counted votes plus the projected size of the uncounted units (a live feed has no final total). `"expected"`: over
 #'   `expected_total` (enrolment x turnout), and the uncounted units' projected sizes are rescaled to sum to what is
-#'   left of it (`expected_total` minus counted, floored at 0); with `expected_total` NA it behaves as `"projected"`.
+#'   left of it (`expected_total` minus counted, floored at 0); with `expected_total` NA or not positive it behaves as `"projected"`.
 #' @param expected_total Expected final votes of the seat, for `total = "expected"`.
 #' @return data.table `cls, projected, counted_share`, or `NULL` if no
 #'   counted unit has a reference (nothing to measure a swing on).
@@ -85,7 +85,8 @@ project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, 
   has_ref <- grid$unit %in% ref_tot$unit
   mean_unit <- mean(ref_tot$rt)
   grid[, size := data.table::fifelse(has_ref, rt * growth, mean_unit * growth)]
-  if (total == "expected" && is.finite(expected_total)) {
+  use_exp <- total == "expected" && is.finite(expected_total) && expected_total > 0
+  if (use_exp) {
     cv0 <- sum(live[unit %in% counted_units]$v)
     left <- max(expected_total - cv0, 0)
     tot_sz <- sum(unique(grid[, .(unit, size)])$size)
@@ -96,7 +97,7 @@ project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, 
   ref_cls <- unique(ref$cls)
   grid[, proj := data.table::fifelse(has_ref & cls %in% ref_cls, pmax(0, (rv / pmax(rt, 1) + sw) * size), sh * size)]
   out <- rbind(live[unit %in% counted_units, .(v), by = cls], grid[, .(v = proj), by = cls])[, .(projected = sum(v)), by = cls]
-  if (total == "expected" && is.finite(expected_total)) {
+  if (use_exp) {
     counted_share <- min(1, sum(live[unit %in% counted_units]$v) / expected_total)
   } else if (total != "table") {
     cv <- sum(live[unit %in% counted_units]$v)
