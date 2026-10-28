@@ -90,7 +90,7 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L) 
   post <- as.matrix(shares); psd <- as.matrix(prior_sd)
   seats <- rownames(post); cls_all <- colnames(post)
   counted <- setNames(rep(0, length(seats)), seats)
-  res <- numeric(0); n_up <- 0L
+  res <- numeric(0); n_up <- 0L; units_by_seat <- list()
   for (s in intersect(seats, unique(Lc$district))) {
     ld <- Lc[Lc$district == s]; rd <- Rk[Rk$district == s]
     su <- seq_units[seq_units$district == s][order(pos)]
@@ -99,6 +99,7 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L) 
     su[, cum := cumsum(uv) / nt]
     units <- if (frac >= 1) su$unit else su$unit[su$cum <= frac + 1e-9]
     if (!length(units)) next
+    units_by_seat[[s]] <- units
     p <- project_seat_from_booths(ld, rd, units)
     if (is.null(p) || !nrow(p)) next
     cs <- p$counted_share[1]
@@ -117,7 +118,148 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L) 
     n_up <- n_up + 1L
   }
   list(shares = post, sd = psd, counted = counted,
-       resolved = if (length(res)) mean(res) else 0, n_updated = n_up)
+       resolved = if (length(res)) mean(res) else 0, n_updated = n_up, units = units_by_seat)
+}
+
+#' The VEC's two-candidate count, turned into a projected final 2CP per seat
+#'
+#' The counted booths are not a random sample of the seat (small booths report first), so their
+#' raw 2CP share is biased; tried first on 2026-10-28 and it made the replay WORSE (vic2022 log loss
+#' 0.1112 -> 0.1661 at half counted). What the counted booths do measure well is the PREFERENCE FLOW:
+#' of the votes for neither of the pair, the share that went to `a`. That flow is applied to the seat's
+#' updated first preferences: `share_a = (fp_a + flow * (100 - fp_a - fp_b)) / 100`.
+#'
+#' @param tcp Booth 2CP rows (`district, booth, vote_type, party_raw, votes`), e.g.
+#'   `output/booths/vic2022-booth-tcp.csv`. A unit is the booth for ordinary votes, else the vote type.
+#' @param fp Booth first-preference rows for the same election (`district, booth, booth_type, party,
+#'   votes`), e.g. `output/booths-vic2022.csv`.
+#' @param units Named list: the counted units per seat ([night_booth_update()]'s `units`).
+#' @param post Seat x class matrix of updated first preferences (percent).
+#' @return data.table `seat, a, b, flow` (share of the others' votes reaching `a`, 0-1), `share_a`
+#'   (projected final 2CP share of `a`, 0-1), `votes` (2CP votes counted). Seats with no counted
+#'   2CP, not exactly two classes, a class missing from `post`, or no other votes, are absent.
+#' @export
+night_tcp_obs <- function(tcp, fp, units, post) {
+  T <- data.table::as.data.table(tcp)
+  T[is.na(votes), votes := 0]
+  T[, cls := classify_party(party_raw)]
+  T[, unit := ifelse(vote_type == "ordinary", booth, vote_type)]
+  F <- data.table::as.data.table(fp)
+  F[is.na(votes), votes := 0]
+  F[, cls := classify_party(party)]
+  F[, unit := ifelse(booth_type == "ordinary", booth, booth_type)]
+  out <- list()
+  for (s in intersect(names(units), rownames(post))) {
+    u <- units[[s]]
+    if (!length(u)) next
+    x <- T[T$district == s & T$unit %in% u, list(v = sum(votes)), by = "cls"]
+    if (nrow(x) != 2L || sum(x$v) <= 0) next
+    x <- x[order(cls)]
+    a <- x$cls[1]; b <- x$cls[2]
+    if (!all(c(a, b) %in% colnames(post))) next
+    # first preferences in the SAME counted units the 2CP covers
+    tu <- unique(T$unit[T$district == s & T$unit %in% u])
+    f <- F[F$district == s & F$unit %in% tu, list(v = sum(votes)), by = "cls"]
+    tot <- sum(f$v); fa <- sum(f$v[f$cls == a]); fb <- sum(f$v[f$cls == b])
+    rest <- tot - fa - fb
+    if (rest <= 0) next
+    flow <- min(1, max(0, (x$v[1] - fa) / rest))
+    # its standard error from the spread of the flow between counted booths (weighted by their
+    # other-party votes), with an effective count of booths: flows differ booth to booth far more
+    # than sampling alone implies, and that heterogeneity is what an early count does not pin down
+    pb_t <- T[T$district == s & T$unit %in% tu & T$cls == a, list(ta = sum(votes)), by = "unit"]
+    pb_f <- F[F$district == s & F$unit %in% tu, list(fa = sum(votes[cls == a]), fb = sum(votes[cls == b]), tot = sum(votes)), by = "unit"]
+    pbk <- merge(pb_t, pb_f, by = "unit"); pbk[, rst := tot - fa - fb]; pbk <- pbk[pbk$rst > 0]
+    se <- if (nrow(pbk) >= 2L) {
+      fj <- pmin(1, pmax(0, (pbk$ta - pbk$fa) / pbk$rst)); w <- pbk$rst / sum(pbk$rst)
+      sqrt(sum(w * (fj - sum(w * fj))^2) * sum(w^2))
+    } else 0.25
+    pa <- post[s, a]; pb <- post[s, b]
+    out[[s]] <- data.table::data.table(seat = s, a = a, b = b, flow = flow, flow_se = max(se, 0.01),
+                                       fp_a = pa, fp_b = pb,
+                                       share_a = (pa + flow * (100 - pa - pb)) / 100, votes = sum(x$v))
+  }
+  data.table::rbindlist(out)
+}
+
+#' Condition simulated draws on the VEC's two-candidate count
+#'
+#' For each seat with an observed pair: the draws whose final two are that pair are found;
+#' if the pair occurs in fewer than `pair_min` of draws the count is ignored and the seat is
+#' flagged (the VEC's pair is probably not the real contest). Otherwise only the PREFERENCE FLOW
+#' is updated: each draw's implied flow to `a` (its 2CP share minus `a`'s updated first preference,
+#' over the others' share) is combined, precision-weighted, with the flow counted in the booths
+#' (`flow`, `flow_se` from [night_tcp_obs()]), and every draw shifts by the change in mean flow
+#' times the others' share. The first preferences are not used a second time. Winners, `totals`
+#' and `win_prob` are updated for the draws whose winner changes.
+#' Replay, vic2022, 1,000 sims: seat log loss 0.1556 -> 0.1146 at 10% counted, 0.1112 -> 0.0970 at 50%
+#' (first-preference update alone -> plus this); an earlier version that combined 2CP SHARES made it
+#' worse (0.1661), by counting the first preferences twice.
+#'
+#' Approximation: the draw's credited winner is taken to be its count winner (`tcp_winner`); the
+#' per-draw calibration shrink toss (1% at the published setting) is not redone for a changed draw.
+#' @param sim Output of [simulate_seat_contests()].
+#' @param obs [night_tcp_obs()] output.
+#' @param counted Named per-seat counted share of all votes (0-1).
+#' @param pair_min Smallest share of draws with the VEC's pair for its count to be used.
+#' @return `sim`, updated, with attribute `night_tcp`: one row per observed seat (pair share
+#'   of draws, prior and posterior mean of a's share, draws changed, `flag`).
+#' @export
+night_apply_tcp <- function(sim, obs, counted, pair_min = 0.2) {
+  if (is.null(obs) || !nrow(obs)) return(sim)
+  seats <- colnames(sim$tcp_winner)
+  if (is.null(seats)) stop("NX5! sim$tcp_winner has no seat names: cannot match the VEC's 2CP to seats", call. = FALSE)
+  n <- nrow(sim$tcp_winner); parties <- colnames(sim$totals)
+  wp <- sim$win_prob; rep <- list()
+  for (k in seq_len(nrow(obs))) {
+    s <- obs$seat[k]; a <- obs$a[k]; b <- obs$b[k]
+    j <- match(s, seats); if (is.na(j)) next
+    W <- sim$tcp_winner[, j]; R <- sim$tcp_runnerup[, j]
+    hit <- which((W == a & R == b) | (W == b & R == a))
+    frac_pair <- length(hit) / n
+    if (frac_pair < pair_min || length(hit) < 2L) {
+      rep[[k]] <- data.table::data.table(seat = s, a = a, b = b, pair_share = frac_pair, prior_a = NA_real_,
+                                         post_a = NA_real_, obs_a = obs$share_a[k], changed = 0L, flag = TRUE)
+      next
+    }
+    sh <- sim$tcp_share[hit, j]
+    pa <- ifelse(W[hit] == a, sh, 1 - sh)                      # a's share of the pair, 0-1
+    pm <- mean(pa)
+    # FLOW ONLY. The draws already carry the updated first preferences, so the count's evidence on
+    # those must not be used twice: the 2CP updates the preference FLOW, and every draw shifts by
+    # the change in flow times the other parties' share. (Combining 2CP shares directly double-
+    # counted the first preferences and over-sharpened close seats: Mornington 0.69 -> 0.04.)
+    rest <- (100 - obs$fp_a[k] - obs$fp_b[k]) / 100
+    if (!is.finite(rest) || rest <= 0.005) rest <- 0.005
+    fi <- (pa - obs$fp_a[k] / 100) / rest                     # each draw's implied flow to a
+    fm <- mean(fi); fsd <- max(stats::sd(fi), 0.01)
+    cm <- combine_prior_projection(fm, obs$flow[k], fsd, obs$flow_se[k])
+    na <- pa + (cm$mean - fm) * rest
+    cm <- list(mean = mean(na))
+    newW <- ifelse(na > 0.5, a, b); oldW <- W[hit]
+    ch <- which(newW != oldW)
+    for (d in ch) {
+      i_old <- match(oldW[d], parties); i_new <- match(newW[d], parties); r <- hit[d]
+      if (sim$totals[r, i_old] > 0) sim$totals[r, i_old] <- sim$totals[r, i_old] - 1L
+      sim$totals[r, i_new] <- sim$totals[r, i_new] + 1L
+    }
+    if (length(ch)) {
+      delta <- table(factor(newW[ch], parties)) - table(factor(oldW[ch], parties))
+      for (p in parties[delta != 0]) {
+        row <- which(wp$seat == s & wp$party == p)
+        if (length(row)) wp$prob[row] <- max(0, wp$prob[row] + delta[[p]] / n)
+        else wp <- rbind(wp, data.frame(seat = s, party = p, prob = max(0, delta[[p]] / n), stringsAsFactors = FALSE))
+      }
+    }
+    sim$tcp_winner[hit, j] <- newW
+    sim$tcp_runnerup[hit, j] <- ifelse(newW == a, b, a)
+    sim$tcp_share[hit, j] <- ifelse(newW == a, na, 1 - na)
+    rep[[k]] <- data.table::data.table(seat = s, a = a, b = b, pair_share = frac_pair, prior_a = pm,
+                                       post_a = cm$mean, obs_a = obs$share_a[k], changed = length(ch), flag = FALSE)
+  }
+  sim$win_prob <- wp[wp$prob > 0, ]
+  attr(sim, "night_tcp") <- data.table::rbindlist(rep)
+  sim
 }
 
 #' Shrink statewide draws around their own centre

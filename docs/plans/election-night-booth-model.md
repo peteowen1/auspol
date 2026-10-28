@@ -208,3 +208,19 @@ same 2018 -> 2022 replay; (2) **not all knowable on the night**: "fraction of th
 final totals as the denominator; live, they need a turnout estimate; (3) the statewide shrink is a heuristic (mean of
 1 - posterior sd / prior sd); (4) breakout, surge and error-quantile components keep their afternoon strength after
 the update. Replay outputs carry `-nightNNN` in their names and `scripts/pool_backtests.R` skips them (PB0).
+
+## Dress rehearsal 4: the VEC's two-candidate count as evidence on the preference flow (2026-10-28, issue #161)
+
+`AUSPOL_NIGHT_TCP=1` with a replay fraction (`night_tcp_obs()`, `night_apply_tcp()`): in the counted booths, the flow
+of the other parties' votes to each of the VEC's pair is measured against the same booths' first preferences, with a
+standard error from the spread between booths; each simulated draw with that final two shifts by the change in flow;
+a pair in under 20% of draws is ignored and flagged. Replayed on the FINAL 2022 pairs (`output/booths/vic2022-booth-tcp.csv`),
+2CP assumed to arrive with each booth's first preferences: a best case (on the night the VEC's first pair can be
+wrong and 2CP lags).
+
+Seat-winner log loss, 88 seats, lower is better: first-preference update alone -> plus 2CP flow, same seed:
+10% counted 0.1556 -> **0.1146**; 25% 0.1395 -> **0.0994**; 50% 0.1112 -> **0.0970**. At 50%: Mildura (Nationals won)
+0.08 -> 0.78, Morwell 0.43 -> 0.95, Berwick 0.48 -> 0.92; worse: Northcote (Labor v Greens) 0.32 -> 0.05. Independents at
+50% counted: 90% range 1-6 -> 0-5 seats (actual 0). Two designs failed first and are recorded so they are not retried:
+the raw counted 2CP share (0.1661: early booths are not a random sample), and combining 2CP shares with the draws
+(0.1313: counts the first preferences twice and over-sharpens close seats, Mornington 0.69 -> 0.04).

@@ -60,3 +60,56 @@ test_that("statewide draws shrink around their own centre", {
   expect_identical(night_shrink_draws(d, 1), d)
   expect_null(night_shrink_draws(NULL, 0.5))
 })
+
+nu_tcp <- function(a_votes, b_votes, booths = c("B1", "B2", "B3"), district = "Seat A") {
+  data.table::rbindlist(lapply(seq_along(booths), function(i) data.table::data.table(
+    district = district, booth = booths[i], vote_type = "ordinary",
+    party_raw = c("Australian Labor Party", "Liberal"), votes = c(a_votes[i], b_votes[i]))))
+}
+
+test_that("the 2CP observation measures the preference flow, not the raw share of early booths", {
+  # first preferences: ALP 40, LNP 40, GRN 20 in every booth; 3/4 of the Greens' votes flow to Labor
+  fp <- data.table::rbindlist(lapply(c("B1", "B2", "B3"), function(b) data.table::data.table(
+    district = "Seat A", booth = b, booth_type = "ordinary",
+    party = c("Australian Labor Party", "Liberal", "Australian Greens"), votes = c(40, 40, 20))))
+  tcp <- nu_tcp(c(55, 55, 55), c(45, 45, 45))
+  post <- matrix(c(30, 50, 20), 1, dimnames = list("Seat A", c("ALP", "LNP", "GRN")))
+  o <- night_tcp_obs(tcp, fp, list(`Seat A` = c("B1", "B2")), post)
+  expect_equal(o$flow, 0.75)
+  expect_equal(o$share_a, (30 + 0.75 * 20) / 100)                 # flow applied to the UPDATED primaries
+  expect_equal(nrow(night_tcp_obs(tcp, fp, list(`Seat A` = character()), post)), 0L)
+})
+
+nu_sim <- function(winner, runner, share) {
+  n <- length(winner)
+  list(tcp_winner = matrix(winner, n, 1, dimnames = list(NULL, "Seat A")),
+       tcp_runnerup = matrix(runner, n, 1, dimnames = list(NULL, "Seat A")),
+       tcp_share = matrix(share, n, 1, dimnames = list(NULL, "Seat A")),
+       totals = matrix(c(as.integer(winner == "ALP"), as.integer(winner == "LNP"), integer(n)), n, 3,
+                       dimnames = list(NULL, c("ALP", "LNP", "GRN"))),
+       win_prob = data.frame(seat = "Seat A", party = c("ALP", "LNP"),
+                             prob = c(mean(winner == "ALP"), mean(winner == "LNP")), stringsAsFactors = FALSE))
+}
+
+test_that("a counted flow moves the draws, winners, totals and probabilities together", {
+  set.seed(1)
+  sh <- 0.5 + stats::rnorm(200, 0, 0.02)                           # ALP's share of ALP v LNP
+  sim <- nu_sim(ifelse(sh > 0.5, "ALP", "LNP"), ifelse(sh > 0.5, "LNP", "ALP"), pmax(sh, 1 - sh))
+  obs <- data.table::data.table(seat = "Seat A", a = "ALP", b = "LNP", flow = 0.9, flow_se = 0.01,
+                                fp_a = 40, fp_b = 40, share_a = 0.58, votes = 100)
+  out <- night_apply_tcp(sim, obs, c(`Seat A` = 0.5))
+  wp <- out$win_prob
+  expect_gt(wp$prob[wp$party == "ALP"], 0.95)                      # strong flow to Labor decides it
+  expect_equal(sum(out$totals[, "ALP"]) / 200, wp$prob[wp$party == "ALP"])
+  expect_true(all(rowSums(out$totals) == 1L))
+  expect_false(attr(out, "night_tcp")$flag)
+})
+
+test_that("a VEC pair the model rarely produces is ignored and flagged", {
+  sim <- nu_sim(rep("ALP", 100), rep("GRN", 100), rep(0.6, 100))
+  obs <- data.table::data.table(seat = "Seat A", a = "ALP", b = "LNP", flow = 0.9, flow_se = 0.01,
+                                fp_a = 40, fp_b = 40, share_a = 0.58, votes = 100)
+  out <- night_apply_tcp(sim, obs, c(`Seat A` = 0.5))
+  expect_true(attr(out, "night_tcp")$flag)
+  expect_identical(out$tcp_winner, sim$tcp_winner)
+})

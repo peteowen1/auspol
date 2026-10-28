@@ -1089,6 +1089,17 @@ for (K in PAIRS) {
                                   fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
                                 surge_h = surge_arg, surge_party = surge_party_arg,
                                 surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
+    # VEC TWO-CANDIDATE COUNT ON THE NIGHT (AUSPOL_NIGHT_TCP=1 with a replay fraction; issue #161).
+    if (!is.na(.nf) && identical(Sys.getenv("AUSPOL_NIGHT_TCP", "0"), "1")) {
+      .bt <- file.path("output", "booths", sprintf("vic%d-booth-tcp.csv", K$to))
+      if (!file.exists(.bt)) stop("NX6! AUSPOL_NIGHT_TCP=1 needs ", .bt)
+      .obs <- night_tcp_obs(data.table::fread(.bt, showProgress = FALSE), data.table::fread(.bl, showProgress = FALSE), .nu$units, shares)
+      sim <- night_apply_tcp(sim, .obs, .nu$counted)
+      .nt <- attr(sim, "night_tcp")
+      cat(sprintf("NX7  night 2CP: %d seat(s) with a counted pair, %d used (%d draw(s) changed winner), %d ignored and flagged: %s\n",
+                  nrow(.obs), sum(!.nt$flag), sum(.nt$changed), sum(.nt$flag),
+                  if (any(.nt$flag)) paste(sprintf("%s (%s v %s in %.0f%% of draws)", .nt$seat[.nt$flag], .nt$a[.nt$flag], .nt$b[.nt$flag], 100 * .nt$pair_share[.nt$flag]), collapse = ", ") else "none"))
+    }
 
 # OUR OWN final-two scenario frequencies -- see tcp_scenarios(). Pete asked
 # 2026-09-16 whether we track how often a seat lands on each possible
