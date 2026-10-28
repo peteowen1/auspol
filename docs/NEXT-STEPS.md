@@ -52,6 +52,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   2026 booth list (10 Nov; builder ready, ITG `politics/night-maps/build-booths-2026.py`: run
   `python -I build-booths-2026.py <State2026MediaFilePollingLocationsV2.xml>` in that folder, check it prints ~88 districts and
   few "new" centres, commit `booths-vic2026.json` and the page switches to it; refuses a file under 85 districts or half matched),
+  UPLOAD TESTED 29 Oct: a runner-shaped night JSON (vic2022 replay at 25%) uploaded with `night_publish_r2.sh` to R2
+  `auspol/night/test-vic2026.json` and read back by the live page via `?nightsrc=` (LIVE, 15% counted); `vic2026.json`
+  untouched (404). GAP FOUND: no afternoon state exists for 2026. `AUSPOL_NIGHT_DUMP` is written only by
+  `backtest_candidate_vic.R`, not by `fit_seats_full.R`, so on the night `night_runner.R --state=` has nothing to start from.
+  Needs a dump step in the published forecast run on polling day (and a dry run of it before 25 Nov),
   navbar link, the "called" rule (99% with 10% counted is a
   placeholder); fog: SharePoint fetch (after 4 Nov), 2026 centre matching (10 Nov files), R2
   upload + Actions backup, the upper-house model.
