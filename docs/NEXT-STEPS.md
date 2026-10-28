@@ -48,7 +48,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   basemaps fill/OSM street/Esri satellite, booth popups, swing arrows), being wired together. Upload step
   `scripts/night_publish_r2.sh` + `night_loop.R --upload-key`. Satellite on a keyed Esri public key (Pete's
   account, basemaps only, pay-as-you-go off, expires 27/10/2027). OPEN: chart text scales with width on wide
-  screens (fix in review), per-booth counted flags + live swing in the night JSON, 2026 booth list (10 Nov),
+  screens (fix in review), per-booth counted flags + live swing in the night JSON (DONE 29 Oct: auspol #168, ITG #1069),
+  2026 booth list (10 Nov; builder ready, ITG `politics/night-maps/build-booths-2026.py`: run
+  `python -I build-booths-2026.py <State2026MediaFilePollingLocationsV2.xml>` in that folder, check it prints ~88 districts and
+  few "new" centres, commit `booths-vic2026.json` and the page switches to it; refuses a file under 85 districts or half matched),
   navbar link, the "called" rule (99% with 10% counted is a
   placeholder); fog: SharePoint fetch (after 4 Nov), 2026 centre matching (10 Nov files), R2
   upload + Actions backup, the upper-house model.
