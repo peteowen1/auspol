@@ -8,10 +8,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
-- **28 Oct 10:26, IN FLIGHT: 3C SHIPPED in code (be44e2d5 on dev; deciding run passed, DECISIONS) and the stage-6
-  rebuild + publish is running** (log `scratchpad/rebuild-3c.log`). ORDER: the publish puts a port table with `lineup3c`
-  on shipped-models, which main's daily run (3C off) refuses, and main with 3C on refuses the old table: so open the
-  dev->main PR right after the publish and merge it before the 17:37 UTC cron, then read that run's conclusion.
+- **28 Oct: 3C SHIPPED, PUBLISHED AND MERGED.** Stage-6 rebuild published 11:09 (shipped-models port table carries
+  `lineup3c=2`; AEF-7 0.2639 vs AEF 0.2825), PR #159 merged 11:24 after CI passed. Forecast workflow run 40608663021
+  triggered by hand on main: READ ITS CONCLUSION and Bendigo West in `forecast-vic2026.json` (expect ALP ~0.36 / LNP
+  ~0.19 / ONP ~0.43). Snapshot to restore if needed: `output/snapshots/20261028-1109-14111624-from6`.
 - **28 Oct, earlier: port 3C ship (Pete: finish checks, then ship).** Mode 2 on 8 movable elections -0.0001 (SE
   0.0004), not passed; live walk moves Bendigo West to ALP 0.36 / LNP 0.19 / ONP 0.43 (market 0.44 / 0.12 / 0.41). Pete
   overrode clause 1 (prereg `plans/prereg-seat-swing-port-3c-2026-10-25.md`, RESULT + decision sections). Remaining:
