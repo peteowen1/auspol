@@ -24,10 +24,19 @@
 # Raw files go to external/reference/vec/<year>/council/ exactly as received,
 # one file per request, with manifest.csv (url, UTC time, HTTP status, bytes,
 # sha256, accepted). Re-running skips files already on disk that still pass.
+# The three extracts are NOT equally good. Votes Received and the Distribution
+# agree exactly (region formal papers; every group's count-1 total) in every
+# region of both years, and are treated as authoritative for region and
+# district totals. Results by Voting Centre is a different snapshot that
+# differs from both in every region; it is kept as the voting-centre detail.
+# See extract_gaps() for the tolerance and output/council-extract-gaps-<year>.csv.
 # Parsed tables:
 #   output/council-fp-<year>.csv       group x voting centre: atl, btl, total
 #   output/council-fp-cand-<year>.csv  candidate x voting centre, every column
 #   output/council-dist-<year>.csv     distribution of preferences, long
+#   output/council-district-stats-<year>.csv  per district: enrolment, formal, informal, total votes (voting-centre
+#                                      file), the same from Votes Received, and the distribution's regional figures
+#   output/council-extract-gaps-<year>.csv    every gap between the three extracts (region, group)
 #
 # Checks (any failure stops, code UH*): every voting-centre block sums to its
 # own total row; voting centres sum to the "<District> Total" block; group
@@ -362,10 +371,11 @@ parse_dist <- function(sheets, year, region, file = NA_character_) {
   fpc <- fp[fp$candidate != "TOTAL", ]
   if (sum(z(fpc$votes)) != formal) uh_stop("UH9", "count 1 sums to ", sum(z(fpc$votes)), " but the page says ", formal, " formal ballot papers")
   if (!identical(sum(z(fp$votes[fp$candidate == "TOTAL"])), formal)) uh_stop("UH9", "count 1 TOTAL column is not the formal ballot paper count")
-  # running total: PTotal(k) = PTotal(k-1) + Value(k), per candidate column
-  pt <- d[d$row_type == "PTotal", ]; va <- d[d$row_type == "Value", ]
-  pm <- tapply(z(pt$votes), list(pt$count_no, pt$candidate), sum); vm <- tapply(z(va$votes), list(va$count_no, va$candidate), sum)
-  vm <- vm[rownames(pm), colnames(pm), drop = FALSE]
+  # running total: PTotal(k) = PTotal(k-1) + Value(k), per candidate column; count 1's first preferences are its
+  # PTotal, so count 2 ties back to the first preferences
+  pt <- d[d$row_type %in% c("PTotal", "first_pref"), ]; va <- d[d$row_type == "Value", ]
+  pm <- tapply(z(pt$votes), list(pt$count_no, pt$candidate), sum)
+  vm <- pm * 0; vv <- tapply(z(va$votes), list(va$count_no, va$candidate), sum); vm[rownames(vv), colnames(vv)] <- z(vv)
   if (nrow(pm) > 1L) {
     cur <- pm[-1, , drop = FALSE]; prev <- pm[-nrow(pm), , drop = FALSE] + vm[-1, , drop = FALSE]
     if (any(abs(cur - prev) > 1e-6)) {
@@ -447,46 +457,82 @@ fetch_year <- function(year) {
   sp
 }
 
+# ---------------------------------------------------- the three extracts compared
+# Votes Received and the Distribution of Preferences agree EXACTLY (region
+# formal papers; every group's count-1 total; any difference stops the run).
+# Results by Voting Centre is a different snapshot: it differs from both in
+# every region (up to 252 votes per group; districts up to 1.1% of formal).
+# So Votes Received / Distribution are authoritative for region and district
+# totals, and Results by Voting Centre is kept as the voting-centre detail.
+# Its region-wide formal total may differ from the authoritative figure by up
+# to REGION_GAP_LIMIT (largest seen: 0.3%); beyond that the run stops. Every
+# gap is returned for output/council-extract-gaps-<year>.csv.
+REGION_GAP_LIMIT <- 0.005
+
+extract_gaps <- function(a, b, cc, year, rg, limit = REGION_GAP_LIMIT) {
+  bd <- b$data; ad <- a$data
+  vdt <- bd[bd$row_kind == "district_total", ]
+  isf <- vdt$column_kind == "total_formal"; isi <- vdt$column_kind == "total_informal"
+  vf <- tapply(vdt$votes[isf], vdt$district[isf], sum); vi <- tapply(vdt$votes[isi], vdt$district[isi], sum)
+  formal_vr <- sum(vf); informal_vr <- sum(vi)
+  if (formal_vr != cc$formal) uh_stop("UH12", rg, ": Votes Received formal ", formal_vr, " vs Distribution file ", cc$formal, " (these two should agree exactly)")
+  if (informal_vr != cc$informal) uh_stop("UH12", rg, ": Votes Received informal ", informal_vr, " vs Distribution file ", cc$informal)
+  gd <- ad[ad$block_kind == "district_total" & ad$row_kind == "group", ]
+  ga <- tapply(gd$total, gd$group, sum)
+  vg <- vdt[vdt$column_kind == "group_total", ]; gb <- tapply(vg$votes, vg$group, sum)
+  if (!setequal(names(ga), names(gb))) uh_stop("UH12", rg, ": group lists differ between Results by Voting Centre and Votes Received")
+  gname <- tapply(gd$group_name, gd$group, function(x) x[1])
+  fp <- cc$data[cc$data$count_no == 1L & cc$data$row_type == "first_pref" & cc$data$candidate != "TOTAL", ]
+  gmap <- unique(bd[bd$column_kind == "candidate" & !is.na(bd$candidate), c("group", "candidate")])
+  dcand <- trimws(fp$candidate)
+  if (!all(gmap$candidate %in% dcand)) uh_stop("UH12", rg, ": candidates in Votes Received missing from the distribution: ", paste(utils::head(setdiff(gmap$candidate, dcand), 3), collapse = " ; "))
+  inmap <- dcand %in% gmap$candidate
+  dg <- tapply(z(fp$votes[inmap]), gmap$group[match(dcand[inmap], gmap$candidate)], sum)
+  uc <- vdt[vdt$column_kind == "candidate" & vdt$group == "UNGROUPED", ]
+  vu <- tapply(z(uc$votes), uc$candidate, sum)
+  du <- tapply(z(fp$votes), dcand, sum)[names(vu)]
+  gall <- setdiff(names(gb), "UNGROUPED")
+  if (any(dg[gall] != gb[gall]) || any(z(vu) != z(du))) uh_stop("UH12", rg, ": Distribution count 1 differs from Votes Received (these two should agree exactly)")
+  gap <- ga[gall] - gb[gall]
+  formal_rbvc <- sum(a$stats$formal); informal_rbvc <- sum(a$stats$informal)
+  rel <- (formal_rbvc - formal_vr) / formal_vr
+  if (abs(rel) > limit) uh_stop("UH12", rg, ": Results by Voting Centre formal total ", formal_rbvc, " is ", round(100 * rel, 2), "% from the authoritative ", formal_vr, " (limit ", 100 * limit, "%)")
+  row <- function(level, measure, group, group_name, rbvc, vr, dist) data.frame(year = year, region = rg, level = level,
+    measure = measure, group = group, group_name = group_name, results_by_voting_centre = rbvc,
+    votes_received = vr, distribution = dist, gap_rbvc_minus_vr = rbvc - vr, gap_pct_of_vr = 100 * (rbvc - vr) / vr, stringsAsFactors = FALSE)
+  gaps <- rbind(
+    row("region", "formal", NA_character_, NA_character_, formal_rbvc, formal_vr, cc$formal),
+    row("region", "informal", NA_character_, NA_character_, informal_rbvc, informal_vr, cc$informal),
+    row("group", "formal", names(gap), unname(gname[names(gap)]), unname(ga[names(gap)]), unname(gb[names(gap)]), unname(dg[names(gap)])))
+  st <- a$stats
+  dis <- data.frame(year = year, region = rg, district = st$district, enrolment = st$enrolment,
+    rbvc_formal = st$formal, rbvc_informal = st$informal, rbvc_total_votes = st$total_votes,
+    votes_received_formal = unname(vf[sub(" District$", "", st$district)]), votes_received_informal = unname(vi[sub(" District$", "", st$district)]),
+    distribution_region_formal = cc$formal, distribution_region_informal = cc$informal, stringsAsFactors = FALSE)
+  dis$formal_gap_pct <- 100 * (dis$rbvc_formal - dis$votes_received_formal) / dis$votes_received_formal
+  list(gaps = gaps, district = dis, formal_vr = formal_vr, informal_vr = informal_vr, formal_rbvc = formal_rbvc,
+       max_group_gap = max(abs(gap)))
+}
+
 # ------------------------------------------------------------- whole-year parse
 parse_year <- function(year) {
   dir <- file.path("external", "reference", "vec", year, "council"); sp <- build_specs(year)
-  A <- list(); B <- list(); C <- list(); sumry <- list()
+  A <- list(); B <- list(); C <- list(); sumry <- list(); GAPS <- list(); DST <- list()
   for (rg in unique(sp$region)) {
     f <- function(k) file.path(dir, sp$file[sp$region == rg & sp$kind == k])
     a <- parse_rbvc(read_sheets(f("rbvc")), year, rg, f("rbvc"))
     b <- parse_votes(read_sheets(f("votes")), year, rg, f("votes"))
     cc <- parse_dist(read_sheets(f("dist")), year, rg, f("dist"))
-    # cross-file checks
-    # The distribution file is a separate VEC report and can be a different snapshot of the count than the
-    # voting-centre files (2022 Eastern Victoria: 473,318 vs 473,597). Recorded, not fatal, unless the gap passes 0.5%.
-    fdiff <- cc$formal - sum(a$stats$formal)
-    if (abs(fdiff) > 0.005 * cc$formal) uh_stop("UH12", rg, ": district formal totals ", sum(a$stats$formal), " vs distribution file ", cc$formal)
-    idiff <- cc$informal - sum(a$stats$informal)
-    gd <- a$data[a$data$block_kind == "district_total" & a$data$row_kind == "group", ]
-    vd <- b$data[b$data$row_kind == "district_total" & b$data$column_kind == "group_total", ]
-    ga <- tapply(gd$total, gd$group, sum); gb <- tapply(vd$votes, vd$group, sum)
-    if (!identical(names(ga), names(gb))) uh_stop("UH12", rg, ": group lists differ between Results by Voting Centre and Votes Received")
-    # the two reports are separate extracts and differ slightly (2022 Eastern Victoria: groups off by up to 0.2%); recorded, fatal above 1% of the region's formal vote
-    vgap <- max(abs(ga - gb[names(ga)]))
-    if (vgap > 0.01 * cc$formal) uh_stop("UH12", rg, ": group totals differ between Results by Voting Centre and Votes Received by up to ", vgap)
-    # distribution count 1 by candidate vs Votes Received (ATL goes to the first candidate; group totals still agree)
-    cand <- b$data[b$data$row_kind == "district_total" & b$data$column_kind == "candidate", ]
-    bt <- tapply(cand$votes, cand$candidate, sum)
-    fp <- cc$data[cc$data$count_no == 1L & cc$data$row_type == "first_pref" & cc$data$candidate != "TOTAL", ]
-    gmap <- unique(b$data[b$data$column_kind == "candidate" & !is.na(b$data$candidate), c("group", "candidate")])
-    dcand <- trimws(fp$candidate); okc <- dcand %in% gmap$candidate
-    if (!all(gmap$candidate %in% dcand)) uh_stop("UH12", rg, ": candidates in Votes Received missing from the distribution: ", paste(utils::head(setdiff(gmap$candidate, dcand), 3), collapse = " ; "))
-    dg <- tapply(z(fp$votes[okc]), gmap$group[match(dcand[okc], gmap$candidate)], sum)
-    if (any(dg[names(ga)[names(ga) != "UNGROUPED"]] != ga[names(ga) != "UNGROUPED"]))
-    { gap <- max(abs(dg[names(ga)[names(ga) != "UNGROUPED"]] - ga[names(ga) != "UNGROUPED"]))
-      if (gap > 0.01 * cc$formal) uh_stop("UH12", rg, ": count-1 group totals in the distribution differ from the voting-centre files by up to ", gap) }
+    g <- extract_gaps(a, b, cc, year, rg)
+    GAPS[[rg]] <- g$gaps; DST[[rg]] <- g$district
     A[[rg]] <- a$data; B[[rg]] <- b$data; C[[rg]] <- cc$data
     sumry[[rg]] <- data.frame(year = year, region = rg, districts = nrow(a$stats),
       voting_centre_blocks = length(unique(paste(a$data$district, a$data$voting_centre)[a$data$block_kind == "voting_centre"])),
-      groups = length(unique(a$data$group_name[a$data$row_kind == "group"])), formal = cc$formal, informal = cc$informal, dist_minus_vc_formal = fdiff, dist_minus_vc_informal = idiff, votes_received_max_group_gap = vgap, seats = cc$seats,
-      spacer_columns = b$spacer_columns, stringsAsFactors = FALSE)
+      groups = length(unique(a$data$group_name[a$data$row_kind == "group"])), formal = g$formal_vr, informal = g$informal_vr,
+      rbvc_minus_vr_formal = g$formal_rbvc - g$formal_vr, rbvc_minus_vr_formal_pct = round(100 * (g$formal_rbvc - g$formal_vr) / g$formal_vr, 3),
+      max_group_gap = g$max_group_gap, seats = cc$seats, spacer_columns = b$spacer_columns, stringsAsFactors = FALSE)
     cat(sprintf("UH13 %s %-28s districts %2d, voting-centre blocks %4d, groups %2d, formal %d: all sums agree\n", year, rg,
-                sumry[[rg]]$districts, sumry[[rg]]$voting_centre_blocks, sumry[[rg]]$groups, cc$formal))
+                sumry[[rg]]$districts, sumry[[rg]]$voting_centre_blocks, sumry[[rg]]$groups, sumry[[rg]]$formal))
   }
   A <- do.call(rbind, A); B <- do.call(rbind, B); C <- do.call(rbind, C)
   # coverage, not presence: the columns that must carry data
@@ -498,6 +544,8 @@ parse_year <- function(year) {
   utils::write.csv(A, sprintf("output/council-fp-%s.csv", year), row.names = FALSE, na = "")
   utils::write.csv(B, sprintf("output/council-fp-cand-%s.csv", year), row.names = FALSE, na = "")
   utils::write.csv(C, sprintf("output/council-dist-%s.csv", year), row.names = FALSE, na = "")
+  utils::write.csv(do.call(rbind, DST), sprintf("output/council-district-stats-%s.csv", year), row.names = FALSE, na = "")
+  utils::write.csv(do.call(rbind, GAPS), sprintf("output/council-extract-gaps-%s.csv", year), row.names = FALSE, na = "")
   cat(sprintf("UH15 %s: wrote council-fp %d rows, council-fp-cand %d rows, council-dist %d rows\n", year, nrow(A), nrow(B), nrow(C)))
   do.call(rbind, sumry)
 }

@@ -64,3 +64,34 @@ test_that("a non-numeric cell is a failure, not a zero", {
   expect_error(e$tonum(c("12", "1,234", "x9")), "UH1")
   expect_equal(e$tonum(c("12", "1,234", "---", NA)), c(12, 1234, NA, NA))
 })
+
+# ---- the three extracts compared (extract_gaps) ----
+gap_fixture <- function(rbvc_formal = 1000) {
+  a <- list(data = data.frame(block_kind = "district_total", row_kind = "group", group = c("A", "B"),
+                              group_name = c("Alpha", "Beta"), total = c(rbvc_formal - 400, 400), stringsAsFactors = FALSE),
+            stats = data.frame(district = "Alpha District", enrolment = 1500, formal = rbvc_formal, informal = 20, total_votes = rbvc_formal + 20))
+  vr <- function(kind, group, cand, v) data.frame(row_kind = "district_total", column_kind = kind, district = "Alpha",
+                                                   group = group, candidate = cand, votes = v, stringsAsFactors = FALSE)
+  b <- list(data = rbind(vr("group_total", "A", NA, 600), vr("group_total", "B", NA, 400),
+                         vr("candidate", "A", "ONE, A", 50), vr("candidate", "B", "TWO, B", 30),
+                         vr("total_formal", NA, NA, 1000), vr("total_informal", NA, NA, 20)))
+  cc <- list(formal = 1000, informal = 20, data = data.frame(count_no = 1L, row_type = "first_pref",
+              candidate = c("ONE, A", "TWO, B", "TOTAL"), votes = c(600, 400, 1000), stringsAsFactors = FALSE))
+  list(a = a, b = b, cc = cc)
+}
+
+test_that("extract_gaps records the voting-centre file's gap and returns it as tables", {
+  e <- load_council_lib(); f <- gap_fixture(rbvc_formal = 1003)
+  g <- e$extract_gaps(f$a, f$b, f$cc, "2022", "Test")
+  expect_equal(g$gaps$gap_rbvc_minus_vr[g$gaps$level == "region" & g$gaps$measure == "formal"], 3)
+  expect_equal(g$district$votes_received_formal, 1000)
+  expect_true(all(c("results_by_voting_centre", "votes_received", "distribution") %in% names(g$gaps)))
+})
+
+test_that("a region-wide gap above the limit stops, and a Votes Received / Distribution disagreement stops", {
+  e <- load_council_lib()
+  f <- gap_fixture(rbvc_formal = 1006)                                   # 0.6% against the 0.5% limit
+  expect_error(e$extract_gaps(f$a, f$b, f$cc, "2022", "Test"), "UH12")
+  f <- gap_fixture(); f$cc$data$votes[1] <- 599; f$cc$data$votes[2] <- 401   # same total, group A short by one vote
+  expect_error(e$extract_gaps(f$a, f$b, f$cc, "2022", "Test"), "UH12")
+})
