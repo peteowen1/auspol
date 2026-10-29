@@ -1961,15 +1961,15 @@ if (identical(.sw_net_live, "1"))
 # because this call passes none. It never changes the forecast: it reads, then saves, and draws no random number.
 {
   .dmp <- sprintf("output/night-state-%s%s.rds", TARGET$out_stem, OUT_SUFFIX)
-  .yr <- function(x) as.integer(sub("^[a-z]+", "", x))
-  saveRDS(list(pair = TGT, from = .yr(PREV), to = .yr(TGT), shares = shares, level_sd = .level_sd, level_mult = .lm(shares), fm = fm,
+  .yr_of <- function(x) as.integer(sub("^[a-z]+", "", x))
+  saveRDS(list(pair = TGT, from = .yr_of(PREV), to = .yr_of(TGT), shares = shares, level_sd = .level_sd, level_mult = .lm(shares), fm = fm,
                psd = psd, swd = sw_draws, sdo = .sd_ov, seat_sd = SEAT_SD, n_sims = N_SIMS, bo = .bo,
                coalition_split = coalition_split_args(TGT, rownames(shares)), error_q = error_dist_args(TGT, colnames(shares)),
                smooth = SMOOTH, seed = SEED, party_cor = NULL, shrink = SHRINK, htv_ov = .htv_ov,
                fb_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD, surge_h = surge_arg, surge_party = surge_party_arg,
                surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg,
                saved_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z")), .dmp)
-  cat(sprintf("NX8  night state for %s saved to %s (%d seats, %d sims)\n", TGT, .dmp, nrow(shares), N_SIMS))
+  cat(sprintf("NS1  night state for %s saved to %s (%d seats, %d sims)\n", TGT, .dmp, nrow(shares), N_SIMS))
 }
 sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = .sd_ov, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
                               breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(TGT, rownames(shares)), error_q = error_dist_args(TGT, colnames(shares)),
