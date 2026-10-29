@@ -221,3 +221,19 @@ changed cells +193 (SE 1,096): no gain. By election (log loss base -> arm; squar
 0.2643 -> 0.2953 (+649), nsw2023 0.2053 -> 0.2138 (+273), fed2025 0.3605 -> 0.3678 (+15), wa2025 0.1915 ->
 0.1927 (-700), fed2022 0.2194 -> 0.2192 (+184), qld2024 0.2876 -> 0.2864 (-42), sa2026 0.2504 -> 0.2455 (-186).
 Raking the base before the trees does not survive them; `final` (after the last nomination zero) is next.
+
+**`final` on AEF-7 (2026-10-29): NOT PASSED.** Seat log loss 0.2634 -> 0.2705 (+0.0070, SE 0.0202), within 1 SE
+but the wrong sign; share squared error on 3,747 changed cells +9,907 (+20%, SE 5,649). By election: fed2022
+0.2194 -> 0.2970, nsw2023 0.2053 -> 0.2134, wa2025 0.1915 -> 0.1951, qld2024 0.2876 -> 0.2871, sa2026 0.2504 ->
+0.2469, vic2022 0.2643 -> 0.2349, fed2025 0.3605 -> 0.3267.
+
+**`both` on AEF-7 (2026-10-29): NOT PASSED.** 0.2634 -> 0.2708 (+0.0074, SE 0.0200); share error +10,346
+(+21%, SE 5,579). Same pattern as `final` (fed2022 0.2968, vic2022 0.2400, fed2025 0.3267).
+
+**Why (traced, fed2022 under `final`).** The level puts IND at 2.72 while the seats imply 4.55, and teal
+independents won. Raking to the level cut the winners: Goldstein 0.476 -> 0.111, Kooyong 0.690 -> 0.172,
+Curtin 0.527 -> 0.139, North Sydney 0.190 -> 0.072, Warringah 0.731 -> 0.348. Eight teal seats carry +8.02 of
+fed2022's +11.71 summed log-loss change (151 seats). The rake imports the level's misses into the seats, and
+independents, whose vote is the candidate's, are where the level is weakest. None of the three arms is shipped;
+`AUSPOL_LEVEL_CONSERVE` stays "0". A variant holding IND cells (and any class without a polled level) out of
+the rake would be a NEW arm and needs its own amendment before it is run.
