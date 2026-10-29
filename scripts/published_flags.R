@@ -802,7 +802,40 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_MINOR_ADDITIVE_FED  = "0",          # backtest_candidate_fed.R's copy of AUSPOL_MINOR_ADDITIVE, kept OFF: measured neutral on the 7 federal pairs 2026-10-25 (same prereg), so the federal harness keeps multiplying. The one known gap: the live forecast and the federal harness now differ on this rule, deliberately.
   AUSPOL_OTHERS_SCALE        = "0",       # ARM, REFUSED 2026-09-28 (plans/prereg-others-bucket-size-2026-09-27.md): "1" shrinks the unpolled others bucket by its time-forward poll bias (R/others_bucket.R). Backtest path only; live fit_seats_full.R not wired because it did not pass. Needs output/others-bucket-history.csv.
   AUSPOL_ANCHOR_EXHAUST      = "0",          # ARM, not shipped (plans/prereg-anchor-exhaust-2026-09-27.md): "1" computes the anchoring's implied two-party NET OF EXHAUSTED BALLOTS (derive_tpp()'s basis), so NSW's OPV target is compared like with like. No effect where flows carry no exhaust (every non-NSW election, and live Victoria).
-  AUSPOL_ANCHOR_IMPLIED      = "0"        # ARM, not shipped (plans/prereg-anchor-implied-tpp-2026-09-20.md): "1" feeds the two-party mix the draws' OWN flow-implied two-party instead of the trend's published TPP series, so the anchoring applies only the fundamentals' pull; in the backtests it also zeroes unpolled classes (the phantom vote). Live Victoria gets the first half only -- its unpolled classes draw from their seat mean, not from 0 +/- 2.85.
+  AUSPOL_ANCHOR_IMPLIED      = "0",       # ARM, not shipped (plans/prereg-anchor-implied-tpp-2026-09-20.md): "1" feeds the two-party mix the draws' OWN flow-implied two-party instead of the trend's published TPP series, so the anchoring applies only the fundamentals' pull; in the backtests it also zeroes unpolled classes (the phantom vote). Live Victoria gets the first half only -- its unpolled classes draw from their seat mean, not from 0 +/- 2.85.
+
+  # ---- REGISTERED 2026-10-30 at their existing inline defaults (MR4; Pete 2026-10-29) ----------------------------------
+  # Model switches the code read with no row here (docs/reviews/unregistered-switches-2026-10-29.tsv). Each value is the
+  # default every reader already used, so registering them changes no number; it makes them visible and fixed in one place.
+  AUSPOL_BUCKET_SPLIT_SRC    = "minor-class-shares-v2.csv", # R/forecast_statewide.R: the file that splits the unpolled bucket (AUSPOL_BUCKET_SPLIT=cand_naive).
+  AUSPOL_BUCKET_TOTAL_SRC    = "minor-class-shares-v3.csv", # R/forecast_statewide.R: the bucket-total file; inert unless AUSPOL_BUCKET_TOTAL is cand/blend.
+  AUSPOL_ELASTIC_FALL        = "2",          # nsw/qld/sa/vic harnesses: minimum statewide fall for the elastic floor; inert at AUSPOL_ELASTIC_OVER=0.
+  AUSPOL_ELASTIC_OVER        = "0",          # nsw/qld/sa/vic harnesses: elastic-floor arm, off (fed reads it for the filename tag only).
+  AUSPOL_FALLBACK_FLOW_SD    = "0",          # qld harness: fallback flow sd in the simulation, off.
+  AUSPOL_FLOW_ON_PRIMARY     = "0",          # fed harness: flow step on the primary, off.
+  AUSPOL_FLOW_POOL_VOLATILE  = "0",          # fed harness: per-class flow pooling, off.
+  AUSPOL_FLOW_PRIORS         = "1",          # fed harness: number of prior elections the flows are built from.
+  AUSPOL_FLOW_SD_BY_SOURCE   = "0",          # fed harness: per-source flow uncertainty, off (its loop leak is dormant at 0; NEXT-STEPS hygiene).
+  AUSPOL_FLOW_TREND          = "0",          # fed harness: weight on trend-extrapolated flow cells, off.
+  AUSPOL_FLOW_TREND_CLASSES  = "",           # fed harness: classes for AUSPOL_FLOW_TREND; empty, inert at FLOW_TREND=0.
+  AUSPOL_FLOW_UNC            = "0",          # vic harness: 40-replicate flow uncertainty ensemble, off.
+  AUSPOL_FLOW_VOL_THRESHOLD  = "10",         # fed harness: volatility cut for flow pooling; inert at FLOW_POOL_VOLATILE=0.
+  AUSPOL_IND_TREND           = "0",          # fed harness: independent trend term, off.
+  AUSPOL_MAJOR_SLOPES        = "0",          # nsw harness: major-party slopes arm, off.
+  AUSPOL_MINOR_POLL_ADJ      = "0",          # fed harness: minor-party poll overstatement adjustment, off.
+  AUSPOL_MP_SLOPE_GRN        = "0",          # all seven harnesses: "1" keeps a Greens member slope; off drops it, as live does.
+  AUSPOL_NSW_EST_FLOOR       = "20",         # scripts/fit_nsw.R: NSW estimation floor (a min_n cliff; CONSTANTS).
+  AUSPOL_NSW_EXHAUST         = "0",          # nsw harness: optional-preferential exhaustion arm, off.
+  AUSPOL_NT_TRANSFER         = "",           # nt harness: forces candidate transfer on/off; empty keeps it coupled to the slope mode.
+  AUSPOL_PARTY_SD            = "1.5",        # every harness: flat party sd fed to the simulation (CONSTANTS, "flat statewide reference, harnesses").
+  AUSPOL_REENTRY_SD_K        = "0",          # every harness: re-entry sd widening, off.
+  AUSPOL_SA_FLOW_EST         = "1",          # sa harness: SA flow estimation, on.
+  AUSPOL_SALIENCE_SURGE      = "0",          # fed harness: hazard-based surge (not surge-v2), off.
+  AUSPOL_SMOOTH              = "0.15",       # fed/nt/wa harnesses: flow smoothing passed to the simulation.
+  AUSPOL_WA_TRANSFER         = "",           # wa harness: forces candidate transfer on/off; empty keeps it coupled to the slope mode.
+  AUSPOL_XGB_NOTIONAL        = "1",          # fit_xgb_primary_v6.R (rebuild stage 3): adds the x_notional_adj feature, on.
+  AUSPOL_XGB_RAW_LEVEL       = "0",          # fit_xgb_primary_v6.R: raw level features instead of the blended level_pred, off.
+  AUSPOL_XGB_RETIRING_MP     = "0"           # fit_xgb_primary_v6.R: adds the retiring_mp_tenure feature, off.
 )
 
 # Apply to whatever the caller left unset. Returns the names it set.

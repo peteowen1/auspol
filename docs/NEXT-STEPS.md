@@ -238,9 +238,6 @@ Verbatim in `backlog/journal-2026-10-07-to-10-08.md`. Still OPEN from them:
   labels: checked 23 Oct, NOT reaching the model. The blend takes the firm from `poll_methods.csv`'s `pollster_clean`
   (`R/seat_poll_blend.R:174`; "YouGo (MRP)" -> YouGov, "44%" -> uComms, sponsors -> unknown), and the "44%" duplicate of
   uComms Brisbane 20 Mar 2025 has no fieldwork date, so `:89` drops it. Raw `seat_polls.csv` labels are cosmetic.
-- OPEN, build (Pete chose 29 Oct, DECISIONS): 140 unregistered `AUSPOL_*` names re-classified
-  (`reviews/unregistered-switches-2026-10-29.tsv`: 30 model, 42 run, 20 diag, 48 dead). Register the 30, list the 62,
-  delete truly dead only, prove byte-identical on AEF-7. Wait until no screen is reading published_flags.R.
 - Not doing, by decision: the in-browser simulator (~40 h); the 2.5-point knots already feel live. Revisit if Pete wants two sliders at once.
 
 ## 2026-09-27 to 2026-10-05: archived sessions
