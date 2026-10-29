@@ -282,16 +282,29 @@ print(dcast(grid, target ~ party, value.var = "member"))
 # counted election before them; fit_seats_full.R looks its target up here. Written as its own file so
 # "0" reads exactly the tables it read before.
 pool_targets <- c(g_targets, .live_targets)
-pooled <- rbindlist(lapply(pool_targets, function(tg) {
-  D  <- panel[.train_mask(tg), ]
-  dm <- D[D$same_mp %in% TRUE, ]
-  mu <- shr(fit(dm), nrow(dm), PRIOR_MEMBER)
-  out <- mp_slope_pool(dm[, .(party, dev_prev, dev_now)], g_classes, mu)
-  out[, target := tg]
-  setcolorder(out, "target")
-  out[]
-}))
-stopifnot(nrow(pooled) == length(pool_targets) * length(g_classes), all(is.finite(pooled$member)))
+.build_pooled <- function() {
+  p <- rbindlist(lapply(pool_targets, function(tg) {
+    D  <- panel[.train_mask(tg), ]
+    dm <- D[D$same_mp %in% TRUE, ]
+    mu <- shr(fit(dm), nrow(dm), PRIOR_MEMBER)
+    out <- mp_slope_pool(dm[, .(party, dev_prev, dev_now)], g_classes, mu)
+    out[, target := tg]
+    setcolorder(out, "target")
+    out[]
+  }))
+  stopifnot(nrow(p) == length(pool_targets) * length(g_classes), all(is.finite(p$member)))
+  p
+}
+# Only a run that needs the pooled table (--pool-only, or the switch on) may stop on it: at the shipped "0" a
+# failure here must not abort rebuild stage 0, which runs this script for the three tables "0" reads (review,
+# 2026-10-29). It is then reported loudly and the pooled file is left as it was.
+.pool_needed <- "--pool-only" %in% commandArgs(trailingOnly = TRUE) || identical(Sys.getenv("AUSPOL_MP_SLOPE_POOL", "0"), "1")
+pooled <- if (.pool_needed) .build_pooled() else tryCatch(.build_pooled(), error = function(e) {
+  cat(sprintf("MP8! pooled member slopes FAILED (%s); output/mp-slope-pooled.csv not rewritten. Harmless at AUSPOL_MP_SLOPE_POOL=0.\n",
+              conditionMessage(e)))
+  NULL
+})
+if (!is.null(pooled)) {
 cat(sprintf("\nMP8  partially pooled member slopes (AUSPOL_MP_SLOPE_POOL=1), %d targets incl. live: %s\n",
             length(pool_targets), paste(.live_targets, collapse = ", ")))
 print(dcast(pooled, target ~ party, value.var = "member"))
@@ -304,6 +317,7 @@ print(pooled[pooled$target %in% tail(pool_targets, 6),
 # tables the shipped configuration reads.
 fwrite(pooled, "output/mp-slope-pooled.csv")
 cat("MP8  wrote output/mp-slope-pooled.csv\n")
+}
 if ("--pool-only" %in% commandArgs(trailingOnly = TRUE)) {
   cat("MP4  --pool-only: mp-slope-loo.csv, mp-slope-by-class.csv and mp-slope-by-target.csv NOT written\n")
   quit(save = "no", status = 0)
