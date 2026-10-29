@@ -1,0 +1,141 @@
+name	class	default	where	evidence
+AUSPOL_AEF_RUNDIR	RUN			build_aef_comparison.R:32 picks which run directory is read (stage 8)
+AUSPOL_AEF_WORST	DIAG			build_aef_comparison.R:237 N_WORST count of worst seats listed
+AUSPOL_ALLOW_INERT_ARM	RUN			pool_pf_arms.R:60 guard override only
+AUSPOL_ALLOW_PARTIAL_PROMOTE	RUN			promote_rebuild.R:220 promote guard override
+AUSPOL_ANCHOR_SHA	RUN			build_forecast_json.R:184 sha metadata in JSON
+AUSPOL_ASAT_FORCE	RUN			fit_xgb_flows_asat.R:50 / primary_asat.R:142 forces retrain, cache control
+AUSPOL_AUDIT_TAG	DEAD			audit_statewide_forecast.R:45 output suffix; script not called by pipeline
+AUSPOL_BOOTH_YEARS	DEAD			fetch_booths_vic2022.R:98; fetcher only mentioned in an error message in vic harness:1101, never run
+AUSPOL_BREAKOUT_CACHE_DIR	RUN			breakout_mix.R:51 cache dir
+AUSPOL_BT_BASE	DEAD			build_bucket_total_history.R:14 input path; script not called by pipeline
+AUSPOL_BT_LOG	DEAD			build_bucket_total_history.R:13 input path; script not called by pipeline
+AUSPOL_BT_OUT	RUN			build_bludgertrack_polls.R:21 output path (rebuild_forecasts.sh:216, forecast.yaml:306)
+AUSPOL_BT_RAW	RUN			build_bludgertrack_polls.R:20 raw folder path
+AUSPOL_BUCKET_SPLIT_SRC	MODEL	minor-class-shares-v2.csv	R/forecast_statewide.R:213	chooses the file that splits the unpolled bucket; BUCKET_SPLIT=cand_naive is published (published_flags.R:798)
+AUSPOL_BUCKET_TOTAL_SRC	MODEL	minor-class-shares-v3.csv	R/forecast_statewide.R:250	chooses file for bucket total; only active when AUSPOL_BUCKET_TOTAL is cand/blend (published: poll) so inert at published value
+AUSPOL_CAND_ALLOW_OTHER_CHANGE	DEAD			build_candidacies.R:1797 guard; script run only by one-off build_coverage_data_20261013.sh
+AUSPOL_CAND_OUT	DEAD			build_candidacies.R:75 output path; not in pipeline
+AUSPOL_CHAMBER_SEATS	RUN			build_forecast_json.R:72 chamber size for majority line in JSON, default from CFG
+AUSPOL_COUNCIL_LIB_ONLY	DEAD			fetch_council_results.R:553 not called by pipeline
+AUSPOL_COUNCIL_YEARS	DEAD			fetch_council_results.R:554 not called by pipeline
+AUSPOL_COV_JOIN	DEAD			check_poll_coverage.R:33 script has no callers
+AUSPOL_CROSS_SEAT_CACHE_DIR	RUN			cross_seat_vote.R:234 cache dir
+AUSPOL_CV_GRID	DEAD			score_class_variance.R:18 no callers (only run_class_variance_grid.ps1)
+AUSPOL_CV_V2	DEAD			score_class_variance.R:29 no callers
+AUSPOL_DATA_ROOT	DEAD			build_wa_swing_correspondences.R:26 / dry_run_seat_swing_port_wa.R / transpose_fed_swing.R; offline builders, not run by pipeline
+AUSPOL_DEPARTED_HOLD_DUMP	DIAG			fed harness:1521 and others write a CSV of held cells, nothing else
+AUSPOL_DIAG_PAIR	DIAG			diag_flow_one_seat.R:16 diagnostic script
+AUSPOL_DIAG_PREV	DIAG			diag_flow_one_seat.R:18 diagnostic script
+AUSPOL_DIAG_SEAT	DIAG			diag_flow_one_seat.R:17 diagnostic script
+AUSPOL_DUMP_SHARES	DIAG			backtest_candidate_fed.R:1607,1850 dumps shares CSV only
+AUSPOL_ELASTIC_FALL	MODEL	2	backtest_candidate_nsw.R:527 (also qld:482, sa:534, vic:460)	minimum statewide fall in elastic-floor logic, used at nsw:766
+AUSPOL_ELASTIC_OVER	MODEL	0	backtest_candidate_nsw.R:526 (also qld:481, sa:533, vic:459)	elastic switch, 0=off; fed harness reads it only for the filename tag (fed:347)
+AUSPOL_EMERGE_HIGH	DEAD			build_emergence_cases.R:109 offline builder, not run by pipeline
+AUSPOL_EMERGE_LOW	DEAD			build_emergence_cases.R:108 offline builder
+AUSPOL_EMERGE_RISE	DEAD			build_emergence_cases_v2.R:36 / fit_xgb_emergence_v5.R:42 offline fit, only named in comments of R/ files
+AUSPOL_FALLBACK_FLOW_SD	MODEL	0	backtest_candidate_qld.R:1029	fallback flow sd in qld simulation, 0=off
+AUSPOL_FED_PAIRS	RUN			backtest_candidate_fed.R:475 chooses which pairs run
+AUSPOL_FLOW_ON_PRIMARY	MODEL	0	backtest_candidate_fed.R:1401	applies a flow step on primary; off by default
+AUSPOL_FLOW_ORACLE_CONFIGS	DIAG			score_flows_oracle.R:42 scoring script
+AUSPOL_FLOW_POOL_VOLATILE	MODEL	0	backtest_candidate_fed.R:619	per-class flow pooling, off by default
+AUSPOL_FLOW_PRIORS	MODEL	1	backtest_candidate_fed.R:511	number of prior elections used to build flows
+AUSPOL_FLOW_SD_BY_SOURCE	MODEL	0	backtest_candidate_fed.R:598	per-source flow uncertainty, 0=off
+AUSPOL_FLOW_TREND	MODEL	0	backtest_candidate_fed.R:557	trend-extrapolated flow cells weight, 0=off
+AUSPOL_FLOW_TREND_CLASSES	MODEL		backtest_candidate_fed.R:570	class list for flow trend, default empty; only matters if FLOW_TREND>0
+AUSPOL_FLOW_UNC	MODEL	0	backtest_candidate_vic.R:1001	40-replicate flow uncertainty ensemble, off by default
+AUSPOL_FLOW_VOL_THRESHOLD	MODEL	10	backtest_candidate_fed.R:629	volatility cut for flow pooling; only matters if FLOW_POOL_VOLATILE=1
+AUSPOL_FLOW_WEIGHT	DEAD			fit_xgb_flows_loo.R:68 not called by pipeline (asat script only names it in a comment)
+AUSPOL_FLOW_W_NROUNDS	DEAD			fit_xgb_flows_weighted.R:60 only caller is fit_xgb_flows_loo.R, itself uncalled
+AUSPOL_FORECAST_ELECTION	RUN			build_forecast_json.R:52 picks which election
+AUSPOL_FUND_CACHE	RUN			fundamentals_tf.R:63 disk cache on/off
+AUSPOL_GATE_N	DEAD			gate_independent_salience.R:42 only caller is build_candidacies.R (not in pipeline)
+AUSPOL_GATE_SLEEP	DEAD			gate_independent_salience.R:43 same
+AUSPOL_HARNESS_RAW	MODEL	0	scripts/harness_defaults.R:22	=1 skips published defaults so unset switches are off; changes every harness number
+AUSPOL_IND_COR	DIAG			score_independent_federal.R:29 scoring script, no callers
+AUSPOL_IND_SHRINK	DIAG			score_independent_federal.R:27 scoring script, no callers
+AUSPOL_IND_TREND	MODEL	0	backtest_candidate_fed.R:1269 (also 1314)	independent trend term, off by default
+AUSPOL_LEADER_KEEP	RUN			build_leader_ratings.R:15 input path (forecast.yaml:320)
+AUSPOL_LEADER_OUT	RUN			build_leader_ratings.R:16 output path
+AUSPOL_LEADER_SRC	RUN			build_leader_ratings.R:14 input path
+AUSPOL_LIVE_PAGES	RUN			merge_live_poll_pages.R:12 page list for merge (forecast.yaml:292)
+AUSPOL_MAJOR_SLOPES	MODEL	0	backtest_candidate_nsw.R:736	major-party slopes arm, off by default
+AUSPOL_MAX_NEW	DEAD			fetch_emergence_trends.R:138 fetcher not called by pipeline
+AUSPOL_MC_ARM	DEAD			fit_minor_candidates.R:25 offline fitter; writes minor-class-shares files that forecast_statewide.R reads, but nothing runs it
+AUSPOL_MINOR_POLL_ADJ	MODEL	0	backtest_candidate_fed.R:1347	minor-party poll overstatement adjustment, off by default
+AUSPOL_MP_SLOPE_GRN	MODEL	0	backtest_candidate_fed.R:957 (also nsw:585, qld:543, sa:595, vic:515, wa:310, nt:345)	when not 1 the GRN slope is dropped; harness-only
+AUSPOL_NB_PRIOR	DEAD			build_notional_baselines.R:40 not run by pipeline (output only read)
+AUSPOL_NB_TARGET	DEAD			build_notional_baselines.R:41 not run by pipeline
+AUSPOL_NSW_EST_FLOOR	MODEL	20	scripts/fit_nsw.R:65	NSW estimation min-n floor; fit_nsw.R is in run_all.R:48
+AUSPOL_NSW_EXHAUST	MODEL	0	backtest_candidate_nsw.R:1155	optional-preferential exhaustion, off by default
+AUSPOL_NSW_PAIR	RUN			backtest_candidate_nsw.R:332 picks pair (default 2023)
+AUSPOL_NSW_THIN_WALK	DIAG			scripts/fit_nsw.R:104,233 changes NSW trend fit only; run_all.R stage but its outputs (trend-nsw, hyperpars-nsw, cycle-walks-nsw) are read by nothing in R/ or scripts/ (default "1")
+AUSPOL_NT_DUMP_SHARES	DIAG			scripts/backtest_candidate_nt.R:735 dumps shares only
+AUSPOL_NT_PAIR	RUN			scripts/backtest_candidate_nt.R:262 selects pair
+AUSPOL_NT_TRANSFER	MODEL	"" (unset: coupled to .cond slope mode)	scripts/backtest_candidate_nt.R:429	forces candidate-transfer on/off; unset keeps default behaviour
+AUSPOL_OUT_SUFFIX	RUN			scripts/fit_seats_full.R:164 output filename suffix
+AUSPOL_PARTY_SD	MODEL	1.5	scripts/backtest_candidate_fed.R:1700 (also nsw:1008, nt:163, qld, sa, vic, wa)	party sd fed into simulation psd; every harness reads it
+AUSPOL_PB_LLM_DIR	DEAD			build_pb_llm_polls/convert_pb_llm_wa/score_pb_llm_extraction are manual builders; no pipeline caller
+AUSPOL_PB_LLM_OUT	DEAD			scripts/build_pb_llm_polls.R only; not called by pipeline
+AUSPOL_POLL_ARCHIVE_FILE	RUN			R/poll_source.R:483 input file path override
+AUSPOL_POLL_BASE	RUN			scripts/fetch_statewide_poll_samples.R:35 cache dir; forecast.yaml:291 sets it
+AUSPOL_POLL_BT_FILE	RUN			R/poll_source.R:474 input file path override
+AUSPOL_POLL_MAX_AGE_H	RUN			scripts/fetch_statewide_poll_samples.R:123 refetch age for poll pages (default 20)
+AUSPOL_POLL_ONLY	RUN			scripts/fetch_statewide_poll_samples.R:117 restricts page keys fetched; forecast.yaml:291
+AUSPOL_POLL_PB_FILE	RUN			R/poll_source.R:582 input file path override
+AUSPOL_POLL_WIKI	RUN			R/poll_source.R:459 input file path override
+AUSPOL_POOL_ALLOW_CONTAMINATED	RUN			scripts/pool_sharedetail.R:148 guard override (default 0 = stop); rebuild_forecasts.sh calls it; at default no number changes
+AUSPOL_POOL_MIN_SIMS	RUN			scripts/pool_sharedetail.R:214 min sims floor guard (default 20000); also pool_backtests, build_forecasts_table
+AUSPOL_PROMOTE_RUNDIR	RUN			scripts/promote_arm.R:46 run directory path
+AUSPOL_QLD_PAIR	RUN			scripts/backtest_candidate_qld.R:343 selects pair
+AUSPOL_QUICK_DIR	RUN			scripts/quick_arm.R:90 scratch dir
+AUSPOL_QUICK_SRC_OUTPUT	RUN			scripts/quick_arm.R:88 source output file path
+AUSPOL_REENTRY_SD_K	MODEL	0	scripts/backtest_candidate_fed.R:1888 (also nsw:1102, nt:781, qld:1128, sa:1313, vic:990, wa:767)	re-entry sd widening, off at 0; k>0 changes sd matrix
+AUSPOL_RELEASE_FORCE	RUN			scripts/publish_shipped_release.R:41 release overwrite guard
+AUSPOL_RELEASE_TAG	RUN			scripts/publish_shipped_release.R:23 release tag
+AUSPOL_RETIRE_REWRITE	DEAD			scripts/fetch_retirements.R:513 manual fetch script, no caller
+AUSPOL_SALIENCE_ANCHOR	DEAD			build_vic2026_salience_jump / fetch_salience_vic2026_full: manual, no pipeline caller
+AUSPOL_SALIENCE_CALIBRATE	DEAD			scripts/fetch_seat_salience_v3.R:115 no caller
+AUSPOL_SALIENCE_CONTROLS	DEAD			scripts/fetch_salience.R only; manual fetch
+AUSPOL_SALIENCE_ELECTION	DEAD			fetch_salience_v4/v6/v6_vic2010, fetch_seat_salience(_v3), fit_salience_hazard_v4: manual, none called by pipeline
+AUSPOL_SALIENCE_MAJORS	DEAD			fetch_salience_v6*.R manual fetch
+AUSPOL_SALIENCE_MAX	DEAD			fetch_seat_salience*.R, victoria_salience_dryrun.R manual
+AUSPOL_SALIENCE_MAXBATCH	DEAD			fetch_salience_v4/v5/v6 manual fetch
+AUSPOL_SALIENCE_MIN_YEAR	DEAD			scripts/fetch_salience.R manual
+AUSPOL_SALIENCE_OUT	DEAD			scripts/fetch_salience_v6.R; only caller is fetch_salience_v6_remaining.sh (manual)
+AUSPOL_SALIENCE_SEATS	DEAD			scripts/fetch_seat_salience_v3.R no caller
+AUSPOL_SALIENCE_SLEEP	DEAD			all readers are manual fetch scripts
+AUSPOL_SALIENCE_SURGE	MODEL	0	scripts/backtest_candidate_fed.R:268	enables hazard-based surge in fed harness (off by default; distinct from SURGE_V2)
+AUSPOL_SALIENCE_TO	DEAD			build_vic2026_salience_jump / fetch_salience_vic2026_full manual
+AUSPOL_SAL_CURVE_NZ	DEAD			scripts/fit_xgb_primary_v7.R:518; v7 not called by pipeline (v6.R:854 says bypassed)
+AUSPOL_SA_FLOW_EST	MODEL	1	scripts/backtest_candidate_sa.R:456	SA flow estimation on/off (default on)
+AUSPOL_SA_PAIR	RUN			scripts/backtest_candidate_sa.R:137 selects pair
+AUSPOL_SCORE_SUFFIX	DIAG			scripts/score_wa_flows.R:27 scoring script filename tag
+AUSPOL_SEAT_SWING_WA_FILE	RUN			R/seat_predictions.R:105, R/seat_swing_port.R:183 input file path (default election_data_path)
+AUSPOL_SHAP_PAIR	DIAG			scripts/shap_from_cached_model.R
+AUSPOL_SHAP_PARTY	DIAG			scripts/shap_from_cached_model.R
+AUSPOL_SHAP_SEAT	DIAG			scripts/shap_from_cached_model.R
+AUSPOL_SKIP_PAIRS	RUN			scripts/pool_sharedetail.R:109, pool_backtests.R:114, build_forecasts_table.R:143 selects pairs scored; default none
+AUSPOL_SMOKE_SIMS	DIAG			scripts/smoke_diff.R:16 smoke test only (via smoke_pair.sh)
+AUSPOL_SMOOTH	MODEL	0.15	scripts/backtest_candidate_fed.R:299 (also nt:159, wa:140)	flow smoothing passed to simulation as smooth=
+AUSPOL_SPREAD_RERUN_TOL	DIAG			scripts/compare_spread_tables.R:15 comparison tolerance in rebuild; gate only, no forecast number
+AUSPOL_STAGE6_START	RUN			scripts/apply_upset_floor.R:23 file-mtime cutoff set by rebuild_forecasts.sh:275
+AUSPOL_STATE_POLL_NATL	DEAD			scripts/build_state_deviation_features.R:154 only fit_xgb_primary_v7 calls it; v7 not in pipeline
+AUSPOL_SUCCESSOR_FLAGS	DEAD			scripts/fit_departed_successor_rates.R:54 input path; script run manually (promote_rebuild.R:91 only tells you to run it)
+AUSPOL_TARGET	RUN			scripts/fit_seats_full.R:182 which election (default vic2026); also build_scenarios.R
+AUSPOL_TIDY_KEEP_DAYS	DEAD			scripts/tidy_output.R manual cleanup
+AUSPOL_V7_ARMS	DEAD			scripts/fit_xgb_primary_v7.R:736 not called by pipeline
+AUSPOL_V7_IND_FEAT	DEAD			scripts/fit_xgb_primary_v7.R:839
+AUSPOL_V7_ONP	DEAD			scripts/fit_xgb_primary_v7.R:805
+AUSPOL_V7_SHIP	DEAD			scripts/fit_xgb_primary_v7.R:977
+AUSPOL_V7_SPLIT_BASE	DEAD			scripts/fit_xgb_primary_v7.R:817
+AUSPOL_VIC_PAIR	RUN			scripts/backtest_candidate_vic.R:280 selects pair
+AUSPOL_WA_DUMP_SHARES	DIAG			scripts/backtest_candidate_wa.R:721 dumps shares only
+AUSPOL_WA_ELECTIONS	DEAD			scripts/fetch_preferences_wa.R:38; not run by forecast.yaml/run_all/rebuild
+AUSPOL_WA_PAIR	RUN			scripts/backtest_candidate_wa.R:242 selects pair
+AUSPOL_WA_TRANSFER	MODEL	"" (unset: coupled to .cond slope mode)	scripts/backtest_candidate_wa.R:396	forces candidate-transfer on/off; unset keeps default behaviour
+AUSPOL_XGB_NOTIONAL	MODEL	1	scripts/fit_xgb_primary_v6.R:204 (and :810)	adds x_notional_adj feature; v6 run by rebuild_forecasts.sh:256
+AUSPOL_XGB_RAW_LEVEL	MODEL	0	scripts/fit_xgb_primary_v6.R:366 (and :784)	raw level features instead of blended level_pred
+AUSPOL_XGB_RETIRING_MP	MODEL	0	scripts/fit_xgb_primary_v6.R:253 (and :811)	adds retiring_mp_tenure feature
+AUSPOL_XGB_SAVE_OOF_MODELS	DIAG			scripts/fit_xgb_primary_v6.R:930 caches per-pair models for SHAP only
+AUSPOL_XGB_SKIP_TRAIN	DIAG			scripts/fit_xgb_primary_v6.R:875 feature-only exit for shap_from_cached_model.R
