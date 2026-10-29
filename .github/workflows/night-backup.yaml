@@ -1,0 +1,133 @@
+# ELECTION-NIGHT BACKUP RUNNER (map #148): break-glass. Nothing starts it on its own. If the laptop running
+# scripts/night_loop.R dies on the night, press "Run workflow" (Actions > Election-night backup) with key
+# auspol/night/vic2026.json and source live; it takes over the same loop here, writing the live file after each new
+# snapshot, until it has run for `minutes` or the job's 6-hour limit. Only one writer at a time: stop the laptop's
+# loop before starting this, and stop this before restarting the laptop.
+#
+# Tests: source sample (the VEC's public 2026 sample feed, 6 districts, so --allow-unmatched=1) with the default
+# test key, which the live page never reads; view it with ?nightsrc=https://data.inthegame.blog/auspol/night/test-vic2026.json
+#
+# Inputs it downloads, since none is in git: the night state (forecast-latest release, written by fit_seats_full.R
+# every daily run; polling day's copy is the afternoon forecast), and the 2022 booth and turnout tables (night-inputs
+# release). Source live is NOT BUILT: the VEC feed comes from a SharePoint site with a token, details from 4 Nov.
+name: Election-night backup
+
+on:
+  workflow_dispatch:
+    inputs:
+      key:
+        description: "R2 file to write (the live page reads auspol/night/vic2026.json)"
+        type: choice
+        options: ["auspol/night/test-vic2026.json", "auspol/night/vic2026.json"]
+        default: "auspol/night/test-vic2026.json"
+      source:
+        description: "Snapshots: sample (VEC 2026 sample feed, for tests) or live (the VEC feed; not built until access details arrive)"
+        type: choice
+        options: ["sample", "live"]
+        default: "sample"
+      minutes:
+        description: "How long to keep polling, in minutes (the job stops at 350 regardless)"
+        default: "10"
+      every:
+        description: "Seconds between polls"
+        default: "60"
+
+concurrency:
+  group: night-backup
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  night:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Refuse the live key with the sample feed
+        # the sample is test data: it must never reach the file the public page reads
+        if: inputs.source == 'sample' && inputs.key == 'auspol/night/vic2026.json'
+        run: |
+          echo "::error::source sample may only write the test key, not auspol/night/vic2026.json"
+          exit 1
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::devtools, any::jsonlite, any::xml2
+          needs: check
+
+      - name: Download the night state and the 2022 inputs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          mkdir -p output
+          gh release download forecast-latest -p night-state-vic-2026.rds -D output --clobber
+          gh release download night-inputs -p booths-vic2022.csv -p council-district-stats-2022.csv -D output --clobber
+          ls -la output/night-state-vic-2026.rds output/booths-vic2022.csv output/council-district-stats-2022.csv
+          Rscript -e 'st <- readRDS("output/night-state-vic-2026.rds"); cat("night state:", st$pair, nrow(st$shares), "seats,", st$n_sims, "sims, saved", if (is.null(st$saved_at)) "(no date)" else st$saved_at, "\n")'
+
+      - name: Get the snapshot source
+        id: src
+        run: |
+          set -e
+          if [ "${{ inputs.source }}" = "sample" ]; then
+            # the VEC's public 2026 sample pack (feed research, issue #149)
+            curl -fsSL --retry 3 -o sample2026.zip "https://www.vec.vic.gov.au/-/media/04d4aa2108084aa98478adc06fa0a078.zip"
+            unzip -q sample2026.zip -d feed
+            dir="$(find feed -type d -name 'round 1 samples*' | head -n 1)"
+            [ -n "$dir" ] || { echo "::error::no 'round 1 samples' folder in the VEC sample pack"; exit 1; }
+            echo "dir=$dir" >> "$GITHUB_OUTPUT"; echo "allow=1" >> "$GITHUB_OUTPUT"
+            ls "$dir" | head -n 5
+          else
+            echo "::error::source live is not built yet: the VEC feed fetch needs the SharePoint access details (from 4 Nov)"
+            exit 1
+          fi
+
+      - name: Install wrangler
+        # pinned, as in forecast.yaml: an unpinned CLI holding an API token is a supply-chain hole
+        run: npm install -g wrangler@4.135.0 >/dev/null 2>&1 && wrangler --version
+
+      - name: Run the night loop
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_R2_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SRC: ${{ steps.src.outputs.dir }}
+          KEY: ${{ inputs.key }}
+          MINUTES: ${{ inputs.minutes }}
+          EVERY: ${{ inputs.every }}
+          ALLOW: ${{ steps.src.outputs.allow }}
+        run: |
+          set -u
+          case "$MINUTES" in ''|*[!0-9]*) echo "::error::minutes must be a whole number"; exit 1 ;; esac
+          case "$EVERY" in ''|*[!0-9]*) echo "::error::every must be a whole number"; exit 1 ;; esac
+          [ "$MINUTES" -le 350 ] || MINUTES=350
+          # timeout ends the loop after MINUTES; exit 124 is that planned stop, not a failure (`|| rc=$?`: run steps use bash -e)
+          rc=0
+          timeout "${MINUTES}m" Rscript scripts/night_loop.R --every="$EVERY" --source="$SRC" --archive=night-archive \
+            --state=output/night-state-vic-2026.rds --ref=output/booths-vic2022.csv \
+            --turnout=output/council-district-stats-2022.csv --out=night-out/vic2026.json \
+            --allow-unmatched="${ALLOW:-0}" --upload-key="$KEY" || rc=$?
+          [ "$rc" -eq 124 ] && { echo "loop stopped after ${MINUTES} minutes, as asked"; rc=0; }
+          grep -E "OK |FAILED|NWU|NWL" night-archive/night-loop.log | tail -n 20 || true
+          # the loop logs a failed upload and carries on; a run whose uploads all failed must not look green
+          if ! grep -q "NWU3  uploaded" night-archive/night-loop.log; then echo "::error::no cycle was uploaded"; exit 1; fi
+          exit $rc
+
+      - name: Keep the raw snapshots and the log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: night-archive-${{ github.run_id }}
+          path: |
+            night-archive/
+            night-out/
+          if-no-files-found: warn
+          retention-days: 30
