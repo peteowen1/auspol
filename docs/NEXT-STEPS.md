@@ -73,8 +73,6 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   - `fed-breakdowns-prereg-1026` `45e2bc4`: federal state breakdowns in the state trend. Reaches vic2022, nsw2023,
     qld2024, wa2025, sa2026 (qld2020/sa2022 trace). Pete added 90/180 days out as a second deciding metric:
     written as Amendment 1 (6a3d89c7, 27 Oct).
-  - `docs-public-tone-1025` `ccae7fd`: neutral wording in `plans/product-features.md` and the pollster page text
-    (`scripts/page-template.html`); ANCHOR-MODEL weak-spots list annotated and closed. Pete to glance at the tone.
 - OPEN, 26 Oct decisions not yet built: hunt the real primaries for two-candidate-only seat polls (Fowler 2022
   Laidlaw, Pittwater 2023 Freshwater, Cowper and New England 2016) into `hand_keyed_primaries.csv`; if none found,
   try inferring the primary from the two-candidate split (J4 30 Sep is the refused relative). Prereg a shrunk,
