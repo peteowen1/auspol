@@ -113,3 +113,15 @@ powershell.exe -Command 'Rscript scripts/quick_arm.R "AUSPOL_MP_SLOPE_POOL=1"'
 
 The first adds `output/mp-slope-pooled.csv`, which changes quick_arm's input signature, so the AEF-7 baseline is
 rebuilt once (about 7 minutes) before the arm runs.
+
+## Screen results (appended 2026-10-29; nothing above edited)
+
+**AEF-7 (1,000 sims, code ffeed87c, after `fit_mp_slope.R --pool-only`): PASSES clauses 1-4, goes to all 35.**
+Clause 4: MPP1 printed in all 7 elections; 110 changed cells in 6 (wa2025 none). Clause 1: seat log loss 0.2634 ->
+0.2636 (+0.0001, SE 0.0002): not worse by 1 SE. Clause 2: share squared error on the 110 changed cells 2,574.0 ->
+2,556.6 (-17.4, SE 38.9). Clause 3: no election worse by 2 SE of its own seats (worst vic2022 +0.0016, SE 0.0011);
+leave-one-election-out on the pooled change, computed from the per-election rows rounded to 4 dp: -0.00007 to
++0.00024 against SE about 0.0002 (dropping fed2022 is the borderline one; the all-35 run decides). Pooled weights:
+tau^2 = 0 for vic2022 and vic2026, so every non-GRN minor class takes the all-class slope (vic2026 0.960; live was
+IND 0.939 with n 84). Largest moves: losses in vic2022 Mildura 0.175 -> 0.162 and Shepparton 0.143 -> 0.134 (the
+returning independents), gains in nsw2023 Kiama 0.520 -> 0.534 and sa2026 Stuart 0.705 -> 0.722.
