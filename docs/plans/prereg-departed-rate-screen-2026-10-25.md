@@ -164,3 +164,11 @@ target in that list voids the run (10-03 refusal 5).
 ## Amendments
 
 (none yet; any change is added below this line with the text above left as is)
+
+### Amendment 1 (2026-10-29, before any run): Pete's answers to NEEDS PETE 1-3
+
+1. Fallback: **(a) 0.38, as built.**
+2. Fit rows: **only the departed cells the successor table does not name for that earlier election.** Needs a
+   code change before the screen; the "screened as built" line in item 2 no longer holds.
+3. Decision rule: **the 2026-10-18 standard rule decides; the 10-03 rule is reported beside it**, and any
+   disagreement goes to Pete (standard clause 9).
