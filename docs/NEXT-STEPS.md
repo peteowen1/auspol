@@ -57,7 +57,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   untouched (404). Night state FIXED 29 Oct (auspol #169, 0.4.116): `fit_seats_full.R` saves
   `output/night-state-vic-2026.rds` every run (reproduces the published forecast exactly) and the daily workflow uploads it
   to `forecast-latest`; on the night `gh release download forecast-latest -p night-state-vic-2026.rds -D output` then
-  `night_runner.R --state=output/night-state-vic-2026.rds`. First workflow upload: check after the 30 Oct 4:37am run,
+  `night_runner.R --state=output/night-state-vic-2026.rds`. First workflow upload: manual forecast run 29 Oct 3:56pm
+  (run 40820538632). BACKUP RUNNER MERGED 29 Oct (auspol #170): `.github/workflows/night-backup.yaml`, break-glass
+  (dispatch only; live key refuses sample data; source live NOT BUILT until the SharePoint fetch). Inputs on release
+  `night-inputs` (Pete created 29 Oct) + night state from `forecast-latest`. First test run 29 Oct failed only because
+  the night state was not yet uploaded; rerun with key test, source sample, minutes 10 once it is,
   navbar link, the "called" rule (99% with 10% counted is a
   placeholder); fog: SharePoint fetch (after 4 Nov), 2026 centre matching (10 Nov files), R2
   upload + Actions backup, the upper-house model.
