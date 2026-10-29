@@ -408,8 +408,8 @@ Still open:
   only after `build_candidacies.R` reruns and `candidacies.csv` is re-uploaded to `shipped-models`; fed2007 needs a
   screen (`quick_arm.R --pairs=fed2007`) after that rebuild.
 
-## Awaiting Pete (26 Oct; the earlier four were answered, DECISIONS 2026-10-26)
+## Awaiting Pete
 
-- Departed-rate refit: fallback, fit rows, decision rule (`plans/prereg-departed-rate-screen-2026-10-25.md` on
-  `prereg-offbranches-1025`).
-- Census: qld2017 from the 2021 reaggregation; previous-election rows for the 12 newer pairs.
+Nothing (departed-rate answered 29 Oct, census 27 Oct; DECISIONS).
+- OPEN, build: departed-rate fit restricted to cells the successor table does not name (Pete, 29 Oct; Amendment 1
+  of `plans/prereg-departed-rate-screen-2026-10-25.md` on `prereg-offbranches-1025`), then its screen.
