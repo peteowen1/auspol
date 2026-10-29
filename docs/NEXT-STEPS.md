@@ -249,11 +249,10 @@ Tools: misses via `scripts/biggest_misses.R` / skill `biggest-misses` (never `fo
 Verbatim in `backlog/journal-2026-10-07-to-10-08.md`. Still OPEN from them:
 - OPEN: NSW 2027 page, blog side: seat pages need an election switch in inthegame-blog's `politics/seat.qmd` (still
   Victoria-only 23 Oct; `politics/nsw.qmd:43` has `seatPage: false`; data on R2 since PR #107). Owned by the `inthegame-blog` session.
-- OPEN, Pete + CHECK 30 Oct: the forecast now starts from the inthegame-blog worker at 17:30 UTC (04:30 AEDT, daily=true;
-  auspol #171, ITG #1076, both merged and deployed 29 Oct). GitHub's 17:37 cron (3.8-4.3 h late) is the gated fallback.
-  Pete: add peteowen1/auspol to the fine-grained token "worker-workflow-dispatch" (Actions read and write); until then
-  the worker logs HTTP 403 and the fallback runs. Check next morning: a "Forecast refresh (daily)" run created ~17:30 UTC
-  and the scheduled one skipped at its gate.
+- OPEN, CHECK 30 Oct morning: the forecast now starts from the inthegame-blog worker at 17:30 UTC (04:30 AEDT, daily=true;
+  auspol #171, ITG #1076, merged and deployed 29 Oct; token covers auspol and ops, Pete 29 Oct). GitHub's 17:37 cron is
+  the gated fallback. Check: a "Forecast refresh (daily)" run created ~17:30 UTC, and the scheduled one skipped at its
+  gate. Same pattern for ops (ops #47, ITG #1078): health check 19:00 UTC, then sentinel, then briefing ~06:15 AEDT.
 - OPEN: fed2025 seat polls deserved weight ~0.13 and got 0.55; no pre-election signal found yet. Worst case McMahon,
   Camenzuli (IND) published 29.0, actual 9.8: ONE poll, Compass Polling 8 Apr 2025 (opt-in SMS link, n=1,003, IND 41);
   base_pred 6.0 and xgb 4.9 were both under, so the 29 is the seat-poll step (AUSPOL_SEAT_POLL_IND_MAP). ROOT: the
