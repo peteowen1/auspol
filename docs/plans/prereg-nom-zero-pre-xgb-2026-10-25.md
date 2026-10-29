@@ -119,3 +119,17 @@ trees were fitted on a zeroed base; `"1"` gives them one. So:
   this file.
 
 Nothing in this plan is a measured result. The size of the effect is unknown until Walk 1 runs.
+
+## Amendment 1 (2026-10-29, before any run; nothing above edited)
+
+1. **The padding rule cannot clear the floor.** The floor counts ROWS (`live_nominations()`, `R/nomination_zero.R`:
+   `nrow(now) / nrow(prv)`), and vic2022 has 731. The provisional list has 500; adding ALP/LNP/GRN where missing
+   gives 519; only 7 of 88 seats lack an OTH row, so the rule as written reaches 526 of the 622 needed. Change:
+   after the 7 seats, keep carrying vic2022 OTH rows forward into seats that ALREADY have an OTH row, until the
+   list clears. Zeroing keys on whether a class has any candidacy in a seat, so an extra OTH row where OTH already
+   stands zeroes nothing new: what S zeroes is unchanged by this padding. Final counts go in the result.
+2. **Where the list lives.** The live list is read from the fixed relative path `output/candidacies.csv`
+   (`R/nomination_zero.R:218`), and a full scratch copy of `output/` is 9.4 GB. Instead of copying it, a test-only
+   override `AUSPOL_NOM_LIVE_FILE` (default unset = that path, byte-identical) points the nomination reader alone at
+   the synthetic file in the scratchpad. Every other input is the real `output/`, which the A/B shares. Both arms
+   write with `AUSPOL_OUT_SUFFIX` and the walk files are moved out of `output/` afterwards, as the 28 Oct walk did.
