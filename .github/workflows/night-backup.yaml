@@ -73,7 +73,10 @@ jobs:
           mkdir -p output
           gh release download forecast-latest -p night-state-vic-2026.rds -D output --clobber
           gh release download night-inputs -p booths-vic2022.csv -p council-district-stats-2022.csv -D output --clobber
-          ls -la output/night-state-vic-2026.rds output/booths-vic2022.csv output/council-district-stats-2022.csv
+          # published_flags.R's startup check (validate_flow_arm) refuses to run without the shipped flow models' manifest;
+          # the night never uses the flow models themselves (the night state carries the flows), so the manifest alone is enough
+          gh release download shipped-models -p xgb-flows-tf2-asat-manifest.csv -D output --clobber
+          ls -la output/night-state-vic-2026.rds output/booths-vic2022.csv output/council-district-stats-2022.csv output/xgb-flows-tf2-asat-manifest.csv
           Rscript -e 'st <- readRDS("output/night-state-vic-2026.rds"); cat("night state:", st$pair, nrow(st$shares), "seats,", st$n_sims, "sims, saved", if (is.null(st$saved_at)) "(no date)" else st$saved_at, "\n")'
 
       - name: Get the snapshot source
