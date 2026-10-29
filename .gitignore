@@ -102,3 +102,6 @@ __pycache__/
 
 # Local deciding runs (scripts/deciding_run.ps1): logs and results, never committed
 deciding-runs/
+
+# wrangler (R2 uploads) local cache
+.wrangler/
