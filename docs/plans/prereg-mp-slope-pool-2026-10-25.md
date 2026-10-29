@@ -132,3 +132,7 @@ files over 2,921 matched seats: +0.00014, SE 0.00020). Clause 2: share squared e
 15,261.0 -> 15,179.0 (-82.0, SE 168.3). Clause 3: no election worse by 2 SE of its own seats (pass); leave-one-
 election-out on the pooled change, exact: dropping wa2008 gives +0.00022 (SE 0.00018) = 1.25 SE worse, over the
 1 SE limit; every other drop under 0.9 SE (nt2016, fed2010 +0.85). On the 106 targeted seats: +0.0038 (SE 0.0054).
+
+**Decision (2026-10-30, Pete, appended; nothing above edited): SHIP.** Clause 3's leave-one-out failure (dropping
+wa2008, 1.25 SE against the 1 SE limit) overridden: the change is flat on seat log loss and removes a min_n cliff,
+which is the standing rule. Published `"1"` in `scripts/published_flags.R`; DECISIONS 2026-10-30.

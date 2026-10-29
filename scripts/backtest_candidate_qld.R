@@ -527,7 +527,7 @@ if (.cond && !is.null(.returns))
     .mpf <- Sys.getenv("AUSPOL_MP_SLOPE_FILE", "output/mp-slope-by-target.csv")
     # AUSPOL_MP_SLOPE_POOL=1: the partially pooled table, the same rule fit_seats_full.R uses
     # (plans/prereg-mp-slope-pool-2026-10-25.md); it replaces AUSPOL_MP_SLOPE_FILE. "0" reads as before.
-    .mp_pool <- Sys.getenv("AUSPOL_MP_SLOPE_POOL", "0")
+    .mp_pool <- Sys.getenv("AUSPOL_MP_SLOPE_POOL", "1")
     if (!.mp_pool %in% c("0", "1")) stop('AUSPOL_MP_SLOPE_POOL must be "0" or "1", not "', .mp_pool, '"')
     if (identical(.mp_pool, "1")) {
       .mpf <- "output/mp-slope-pooled.csv"

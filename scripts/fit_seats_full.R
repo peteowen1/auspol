@@ -1001,8 +1001,8 @@ if (!identical(Sys.getenv("AUSPOL_MP_SLOPE", "1"), "0")) {
 # cliff the harnesses never had (they keep any class). "1" replaces the tier with the partially pooled table
 # scripts/fit_mp_slope.R writes, looked up under this target exactly as the harnesses look up theirs: every
 # class shrunk toward the all-class member slope by w = tau^2 / (tau^2 + se^2), no floor. GRN stays out, as
-# above. "0" (shipped) leaves .MP_SLOPE as the block above set it.
-.mp_pool <- Sys.getenv("AUSPOL_MP_SLOPE_POOL", "0")
+# above. "1" SHIPPED 2026-10-30; "0" leaves .MP_SLOPE as the block above set it.
+.mp_pool <- Sys.getenv("AUSPOL_MP_SLOPE_POOL", "1")
 if (!.mp_pool %in% c("0", "1")) stop('AUSPOL_MP_SLOPE_POOL must be "0" or "1", not "', .mp_pool, '"')
 if (identical(.mp_pool, "1") && !identical(Sys.getenv("AUSPOL_MP_SLOPE", "1"), "0")) {
   .mpf <- "output/mp-slope-pooled.csv"

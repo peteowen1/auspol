@@ -110,7 +110,7 @@ run_mp_block <- function(file, dir, target, env_pool) {
 
 ENTRY <- c(paste0("backtest_candidate_", c("fed", "nsw", "nt", "qld", "sa", "vic", "wa"), ".R"), "fit_seats_full.R")
 
-test_that("AUSPOL_MP_SLOPE_POOL=0 (and unset) is today's rule in every entry point; 1 reads the pooled table", {
+test_that("AUSPOL_MP_SLOPE_POOL=0 is the old rule in every entry point; 1 (and unset, shipped 2026-10-30) reads the pooled table", {
   sd <- testthat::test_path("..", "..", "scripts")
   skip_if_not(dir.exists(sd), "scripts/ not shipped in the check build")
   d <- mp_fixture_dir()
@@ -122,7 +122,7 @@ test_that("AUSPOL_MP_SLOPE_POOL=0 (and unset) is today's rule in every entry poi
     pooled <- if (live) c(IND = 0.942, ONP = 0.951, OTH_RIGHT = 0.957) else c(IND = 0.941, ONP = 0.952, OTH_RIGHT = 0.958)
     p <- file.path(sd, f)
     expect_equal(run_mp_block(p, d, tg, "0"), legacy, tolerance = 1e-12, label = paste(f, "POOL=0"))
-    expect_equal(run_mp_block(p, d, tg, NA), legacy, tolerance = 1e-12, label = paste(f, "POOL unset"))
+    expect_equal(run_mp_block(p, d, tg, NA), pooled, tolerance = 1e-12, label = paste(f, "POOL unset"))
     expect_equal(run_mp_block(p, d, tg, "1"), pooled, tolerance = 1e-12, label = paste(f, "POOL=1"))
     expect_error(run_mp_block(p, d, tg, "yes"), "must be \"0\" or \"1\"", label = paste(f, "bad value"))
   }

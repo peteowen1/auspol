@@ -298,7 +298,7 @@ pool_targets <- c(g_targets, .live_targets)
 # Only a run that needs the pooled table (--pool-only, or the switch on) may stop on it: at the shipped "0" a
 # failure here must not abort rebuild stage 0, which runs this script for the three tables "0" reads (review,
 # 2026-10-29). It is then reported loudly and the pooled file is left as it was.
-.pool_needed <- "--pool-only" %in% commandArgs(trailingOnly = TRUE) || identical(Sys.getenv("AUSPOL_MP_SLOPE_POOL", "0"), "1")
+.pool_needed <- "--pool-only" %in% commandArgs(trailingOnly = TRUE) || identical(Sys.getenv("AUSPOL_MP_SLOPE_POOL", "1"), "1")
 pooled <- if (.pool_needed) .build_pooled() else tryCatch(.build_pooled(), error = function(e) {
   cat(sprintf("MP8! pooled member slopes FAILED (%s); output/mp-slope-pooled.csv not rewritten. Harmless at AUSPOL_MP_SLOPE_POOL=0.\n",
               conditionMessage(e)))

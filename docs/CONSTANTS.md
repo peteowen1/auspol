@@ -669,11 +669,11 @@ Existing rows for `AUSPOL_SEAT_POLL_PRIOR` (0.75), `_PRIOR_SD` (0.25), the half-
 | `min_seats` (`onp_newseat_cv()`) | `R/onp_newseat.R:208` | 10 | **CHOSEN** fewest One-Nation-contested seats for an earlier election to enter the spread fit. Inert at "0". |
 | no-history seats needed / key coverage (`onp_newseat_apply()`) | `R/onp_newseat.R:314`, `:335` | 3 seats; at most 10% without a key | **CHOSEN**, the same applicability rule as `onp_senate_rank_apply()` / `onp_senate_alloc()`. Inert at "0". |
 
-## Partially pooled sitting-member slopes (`AUSPOL_MP_SLOPE_POOL`, built 2026-10-25, OFF; `plans/prereg-mp-slope-pool-2026-10-25.md`; `R/mp_slope_pool.R`)
+## Partially pooled sitting-member slopes (`AUSPOL_MP_SLOPE_POOL`, built 2026-10-25, SHIPPED 2026-10-30; `plans/prereg-mp-slope-pool-2026-10-25.md`; `R/mp_slope_pool.R`)
 
 | constant | where | value | status |
 |---|---|---|---|
-| `n_member >= 8` (live MP tier floor) | `scripts/fit_seats_full.R:973` | 8 | **CHOSEN, a min_n cliff**; the harnesses never had it. Bypassed when `AUSPOL_MP_SLOPE_POOL=1`, which keeps every class and shrinks it instead. |
+| `n_member >= 8` (live MP tier floor) | `scripts/fit_seats_full.R` (`.keep`, MP tier block) | 8 | **CHOSEN, a min_n cliff**; the harnesses never had it. Reached only at `AUSPOL_MP_SLOPE_POOL=0` since 2026-10-30; the shipped `1` keeps every class and shrinks it instead. |
 | `tau^2`, `se_i` (pooling weight `w = tau^2/(tau^2+se_i^2)`) | `R/mp_slope_pool.R` | per target | **ESTIMATED**: `tau^2` by DerSimonian-Laird over the classes with member rows (floored at 0; 0 with fewer than two classes), `se_i` from one within-class residual variance pooled over classes. No new hand-set number. |
 | pooled-toward slope `mu` | `scripts/fit_mp_slope.R` (`shr()`, `K = 10`, `PRIOR_MEMBER = 1.0`) | per target | **REUSED**, not new: the time-forward grid's own all-class member slope, shrunk toward 1.0 by `n/(n+10)`, so a target with no earlier member rows gets 1.0 as the grid does. |
 
