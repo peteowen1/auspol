@@ -96,7 +96,7 @@ level_conserve_weights <- function(seats, target, corpus = NULL) {
   v <- suppressWarnings(as.numeric(corpus$votes[sel]))
   tot <- tapply(v, sk, sum)
   tot <- tot[is.finite(tot) & tot > 0]
-  w <- unname(tot[normalise_seat(seats)])
+  w <- as.vector(tot[normalise_seat(seats)])   # tapply gives a 1-d array; its dim breaks `weights * M`
   hit <- is.finite(w) & !is.na(w)
   if (!any(hit)) return(equal(sprintf("no seat matched %s%d", region, py)))
   w[!hit] <- stats::median(w[hit])
@@ -172,6 +172,7 @@ level_conserve_rake <- function(shares, level, weights, adjust = NULL,
   A <- if (is.null(adjust)) matrix(TRUE, nrow(X), ncol(X)) else (adjust & !is.na(adjust))
   if (!identical(dim(A), dim(X))) stop("LCV1!! level_conserve_rake(): adjust must have the shape of shares", call. = FALSE)
   A <- A & X > 0
+  weights <- as.vector(weights)
   W <- sum(weights)
   wmean <- function(v) sum(weights * v) / W
   implied <- function(M) colSums(weights * M) / W
