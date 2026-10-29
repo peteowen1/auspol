@@ -54,9 +54,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   few "new" centres, commit `booths-vic2026.json` and the page switches to it; refuses a file under 85 districts or half matched),
   UPLOAD TESTED 29 Oct: a runner-shaped night JSON (vic2022 replay at 25%) uploaded with `night_publish_r2.sh` to R2
   `auspol/night/test-vic2026.json` and read back by the live page via `?nightsrc=` (LIVE, 15% counted); `vic2026.json`
-  untouched (404). GAP FOUND: no afternoon state exists for 2026. `AUSPOL_NIGHT_DUMP` is written only by
-  `backtest_candidate_vic.R`, not by `fit_seats_full.R`, so on the night `night_runner.R --state=` has nothing to start from.
-  Needs a dump step in the published forecast run on polling day (and a dry run of it before 25 Nov),
+  untouched (404). Night state FIXED 29 Oct (auspol #169, 0.4.116): `fit_seats_full.R` saves
+  `output/night-state-vic-2026.rds` every run (reproduces the published forecast exactly) and the daily workflow uploads it
+  to `forecast-latest`; on the night `gh release download forecast-latest -p night-state-vic-2026.rds -D output` then
+  `night_runner.R --state=output/night-state-vic-2026.rds`. First workflow upload: check after the 30 Oct 4:37am run,
   navbar link, the "called" rule (99% with 10% counted is a
   placeholder); fog: SharePoint fetch (after 4 Nov), 2026 centre matching (10 Nov files), R2
   upload + Actions backup, the upper-house model.
