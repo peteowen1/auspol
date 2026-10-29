@@ -323,7 +323,7 @@ footer{padding:2.5rem 0 0;border-top:1px solid var(--rule);font-size:.8rem;
 <section>
   <div class="col">
     <span class="eyebrow">Pollsters</span>
-    <h2 style="margin-top:.5rem">Who leans which way</h2>
+    <h2 style="margin-top:.5rem">Pollster lean and variability</h2>
     <p class="lede" style="margin-top:.9rem">Every firm here has a nonzero lean by
     construction &mdash; the model's house effects are estimated relative to each
     other and sum to zero across pollsters each period, so a lean in either
@@ -331,7 +331,7 @@ footer{padding:2.5rem 0 0;border-top:1px solid var(--rule);font-size:.8rem;
     a firm's accuracy or methodology. <em>Lean</em> is how far a firm sits
     from the average pollster of its day, in Labor primary points. <em>Variability</em>
     is its poll-to-poll scatter <em>relative to the other pollsters</em>, where 1.00 is
-    the average firm &mdash; above 1 is noisier than its peers, below 1 quieter.
+    the average firm &mdash; above 1 is more variable than its peers, below 1 less variable.
     <em>Final error</em> is how far its last poll of a campaign sat from the actual
     result &mdash; no model involved.</p>
   </div>
@@ -342,10 +342,10 @@ footer{padding:2.5rem 0 0;border-top:1px solid var(--rule);font-size:.8rem;
   across several elections, so they are comparable between firms rather than being
   the exact values inside today's Victorian numbers. <strong>Variability is measured
   and then not used to weight the forecast:</strong> the projection that produces the
-  headline above gives every poll equal weight, whoever ran it. Down-weighting the
-  noisier firms is an obvious idea, and this project&rsquo;s own validation fits do it
-  &mdash; but the published forecast does not, and whether it would help has not been
-  tested. An untested idea is not in the number.</p>
+  headline above gives every poll equal weight, whoever ran it. Giving less weight
+  to the more variable firms is one option, and this project&rsquo;s own validation fits
+  do it &mdash; but the published forecast does not, and whether it would help has not
+  been tested. Untested ideas are not in the number.</p>
   <p class="note col">Lean is a relative position within a polling period, not a
   prediction of who will be right on the day. Whether it predicts final-poll
   error is suggestive but unproven on this data (r = 0.35, p = 0.14, 19 firms).</p>

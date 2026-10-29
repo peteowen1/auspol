@@ -137,14 +137,51 @@ Strengths: rigorous leave-one-out discipline everywhere; relative pollster calib
 (right call for Australia's thin pollster history); asymmetric fat-tailed error
 distributions; federal-state swing correlation (novel); iterative FP/TPP reconciliation.
 
-Weak spots / improvement candidates (for the quiz):
+Weak spots / improvement candidates (closed 2026-10-25, outcome per bullet):
 - Seat demographics essentially unused (one 3-level seat-type factor).
+  - **Outcome: built for the seat vote, in part.** A census-based demographic correction
+    on Labor and Greens shipped 2026-09-29 (`AUSPOL_DEMO_RESID = "2"` in
+    `scripts/published_flags.R`; `docs/plans/prereg-demographic-labor-greens-2026-09-29.md`).
+    The full-strength version (F7) goes to a 20,000-simulation deciding run on 26 Oct
+    (`docs/DECISIONS.md`, 2026-10-25). Still open: tracking how demographics vote over
+    time (`docs/PETE-ASKED-FOR.md`). The preference-flow models do not use census data
+    (searched `R/flow_model.R`, `R/flow_estimate.R`, `R/xgb_flow_override.R`: no hits).
 - No MRP / no raw crosstab usage — polls enter as topline numbers only.
+  - **Outcome: not done.** MRP needs respondent-level data and we have toplines
+    (`docs/plans/plan-mrp-scoping.md`, 2026-08-25). Poll crosstabs were tested and not
+    shipped (PR #87; still open in `docs/PETE-ASKED-FOR.md`). DemosAU's published MRP seat
+    estimates do enter as seat polls (`docs/DECISIONS.md`, 2026-10-09 and 2026-10-13).
 - Preference flows modelled at national level with noise, not by seat demographics.
+  - **Outcome: flows are now fitted per election and applied per seat, but not from seat
+    demographics.** An xgb flow override, then the how-to-vote card order into a per-seat
+    `conditional_override` (`ARCHITECTURE.md`, simulator row 10;
+    `docs/plans/prereg-xgb-flows-v1-2026-09-10.md`, `docs/plans/prereg-htv-flow-2026-09-18.md`).
+    The count draws each flow's noise per seat (`docs/NEXT-STEPS.md`). Flows by seat
+    demographics: **UNVERIFIED**, no such model found.
 - Betting odds enter in an ad-hoc "nudge" way.
+  - **Outcome: odds are not a model input here; they are an outside benchmark.** Our seat
+    probabilities were scored against bookmaker odds for four past elections
+    (`docs/reviews/backtest-vs-bookmakers-2026-10-24.md`), and the `oddsdata` package
+    holds the odds (`docs/PETE-ASKED-FOR.md`, 24 Oct). Using odds or seat polls as an input
+    for new independents is an open question for Pete (`docs/NEXT-STEPS.md`).
 - Upper houses not modelled at all.
+  - **Outcome: still not modelled, deferred on purpose** ("Deliberately deferred" in
+    `docs/plans/product-features.md`, 2026-08-14). Senate results are used only as a
+    feature for ranking One Nation's chances in seats with no history (`docs/DECISIONS.md`,
+    2026-10-25). I found no later decision to build an upper-house forecast, so whether it
+    was formally ruled out is **UNVERIFIED**.
 - Poll CSVs hand-maintained — labour-intensive, no pipeline from Wikipedia poll tables.
+  - **Outcome: partly fixed.** Our own poll source (Wikipedia, then Poll Bludger) shipped as
+    step 1 on 2026-10-11 and was layered over AE Forecasts' file on 2026-10-13
+    (`docs/DECISIONS.md`). Wikipedia alone cannot replace that file: fed2007, wa2001 and
+    nsw2019 have no usable tables (`docs/reviews/own-poll-source-step1-2026-10-11.md`).
+    Moving off AE Forecasts' file entirely is still open (`docs/NEXT-STEPS.md`).
 - C++/Python/Stan split makes the whole thing hard to reproduce (multi-day regeneration).
+  - **Outcome: avoided by design.** One language (R) and an exact Gaussian trend with no
+    MCMC (see "Decisions made since" below). `scripts/run_all.R` runs the chain in one
+    command (`ARCHITECTURE.md`) and `.github/workflows/forecast.yaml` refreshes it daily.
+    Caveat: the commission preference-distribution fetchers write to gitignored `output/`,
+    so that path runs locally and not in CI (`ARCHITECTURE.md`).
 
 ## Decisions made since (were "pending Pete" as of 2026-08-14)
 
