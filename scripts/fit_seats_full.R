@@ -997,6 +997,25 @@ if (!identical(Sys.getenv("AUSPOL_MP_SLOPE", "1"), "0")) {
                   .mpc$party != "GRN", ]
   if (nrow(.keep)) .MP_SLOPE <- stats::setNames(as.numeric(.keep$member), .keep$party)
 }
+# AUSPOL_MP_SLOPE_POOL=1 (plans/prereg-mp-slope-pool-2026-10-25.md): the n_member >= 8 floor above is a min_n
+# cliff the harnesses never had (they keep any class). "1" replaces the tier with the partially pooled table
+# scripts/fit_mp_slope.R writes, looked up under this target exactly as the harnesses look up theirs: every
+# class shrunk toward the all-class member slope by w = tau^2 / (tau^2 + se^2), no floor. GRN stays out, as
+# above. "0" (shipped) leaves .MP_SLOPE as the block above set it.
+.mp_pool <- Sys.getenv("AUSPOL_MP_SLOPE_POOL", "0")
+if (!.mp_pool %in% c("0", "1")) stop('AUSPOL_MP_SLOPE_POOL must be "0" or "1", not "', .mp_pool, '"')
+if (identical(.mp_pool, "1") && !identical(Sys.getenv("AUSPOL_MP_SLOPE", "1"), "0")) {
+  .mpf <- "output/mp-slope-pooled.csv"
+  if (!file.exists(.mpf))
+    stop("AUSPOL_MP_SLOPE_POOL=1 needs ", .mpf, " -- run scripts/fit_mp_slope.R (--pool-only writes just that file)")
+  .mpp <- data.table::fread(.mpf, showProgress = FALSE)
+  .tgt_mp <- TGT                     # never a bare `target` inside `[`: it would bind to the column
+  .keep <- .mpp[.mpp$target == .tgt_mp & is.finite(.mpp$member) & .mpp$party != "GRN", ]
+  if (!nrow(.keep)) stop("no pooled MP slopes for ", .tgt_mp, " in ", .mpf, " -- refit scripts/fit_mp_slope.R")
+  .MP_SLOPE <- stats::setNames(as.numeric(.keep$member), .keep$party)
+  cat("MPP1  MP tier read from", .mpf, "(AUSPOL_MP_SLOPE_POOL=1, partially pooled):",
+      paste(sprintf("%s=%.4f (n=%d, w=%.3f)", .keep$party, .keep$member, .keep$n_member, .keep$w), collapse = " "), "\n")
+}
 # FITTED, as every harness does (backtest_candidate_vic.R:500-514, fit_defector_discount() on elections before the
 # target), not the 0.282 frozen here when the fit replaced it (R/candidate_returns.R). The audit's F3
 # (reviews/pipeline-overwrite-audit-2026-10-18.md); AUSPOL_LIVE_DEFECT_FIT=0 restores the constant for a diff.
