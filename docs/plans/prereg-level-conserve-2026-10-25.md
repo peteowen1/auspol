@@ -211,3 +211,13 @@ an actual 48.9: conservation is expected to make nt2024's CLP seats WORSE. That 
 dead party's share carried forward), not a reason to refuse this arm and not a gain it can claim. Report every
 arm three ways: all elections, NT excluded (`--pairs=` naming every pair but nt2016, nt2020, nt2024), and
 nt2024 alone; the "gain concentrated in nt2024" clause above is judged on the NT-excluded run.
+
+## Screen results (appended; nothing above edited)
+
+**`base` on AEF-7 (2026-10-29, 1,000 sims, code 7f3aa024): WORSE, stopped here (not run on all 35).** Seat log
+loss 0.2634 -> 0.2697 (+0.0063, SE 0.0041, clustered on election; 681 seats, 7 elections). Exact at the rake
+(max |implied - level| 0.53-2.01 -> 0.000 in all 7), so the mechanism ran. Share squared error on the 3,325
+changed cells +193 (SE 1,096): no gain. By election (log loss base -> arm; squared-error change): vic2022
+0.2643 -> 0.2953 (+649), nsw2023 0.2053 -> 0.2138 (+273), fed2025 0.3605 -> 0.3678 (+15), wa2025 0.1915 ->
+0.1927 (-700), fed2022 0.2194 -> 0.2192 (+184), qld2024 0.2876 -> 0.2864 (-42), sa2026 0.2504 -> 0.2455 (-186).
+Raking the base before the trees does not survive them; `final` (after the last nomination zero) is next.
