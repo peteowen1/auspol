@@ -14,7 +14,11 @@ f="${1:-}"; key="${2:-auspol/night/vic2026.json}"
 # only ever writes under auspol/night/, so a mistyped key can never overwrite the afternoon forecast
 case "$key" in auspol/night/*.json) ;; *) echo "NWU1! refusing key '$key': must be auspol/night/<name>.json" >&2; exit 2 ;; esac
 if [ -z "$f" ] || [ ! -s "$f" ]; then echo "NWU1! no such file or empty: '$f'" >&2; exit 2; fi
-python -I -c 'import json,sys; d=json.load(open(sys.argv[1],encoding="utf-8")); n=d.get("night"); sys.exit(0 if isinstance(n,dict) and n.get("snapshot_stamp") and d.get("seats") else 3)' "$f" 2>/dev/null \
+# python3 first: GitHub's Ubuntu runners have no `python` (the Actions backup, night-backup.yaml); stderr kept, so a missing
+# interpreter or a parse error shows its real cause instead of reading as "not a night JSON"
+py="$(command -v python3 || command -v python || true)"
+if [ -z "$py" ]; then echo "NWU1! no python3 or python on PATH: cannot check $f, nothing uploaded" >&2; exit 2; fi
+"$py" -I -c 'import json,sys; d=json.load(open(sys.argv[1],encoding="utf-8")); n=d.get("night"); sys.exit(0 if isinstance(n,dict) and n.get("snapshot_stamp") and d.get("seats") else 3)' "$f" \
   || { echo "NWU1! $f is not a night JSON (needs valid JSON with a night block carrying snapshot_stamp, and seats)" >&2; exit 2; }
 cmd=(wrangler r2 object put "inthegame-data/$key" --file "$f" --content-type application/json --cache-control "public, max-age=30" --remote)
 if [ "${NIGHT_R2_DRY:-0}" = "1" ]; then echo "NWU3  dry run, would run: ${cmd[*]}"; exit 0; fi

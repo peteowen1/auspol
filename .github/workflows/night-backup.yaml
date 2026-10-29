@@ -26,14 +26,16 @@ on:
         options: ["sample", "live"]
         default: "sample"
       minutes:
-        description: "How long to keep polling, in minutes (the job stops at 350 regardless)"
+        description: "How long to keep polling, in minutes, 1 to 330 (a larger value is cut to 330)"
         default: "10"
       every:
-        description: "Seconds between polls"
+        description: "Seconds between polls (at least 10)"
         default: "60"
 
+# One group per key: a test run never queues ahead of a break-glass run on the live key, and two runs on the same key never
+# write at once (a newer dispatch replaces an older one still queued).
 concurrency:
-  group: night-backup
+  group: night-backup-${{ inputs.key }}
   cancel-in-progress: false
 
 permissions:
@@ -108,7 +110,11 @@ jobs:
           set -u
           case "$MINUTES" in ''|*[!0-9]*) echo "::error::minutes must be a whole number"; exit 1 ;; esac
           case "$EVERY" in ''|*[!0-9]*) echo "::error::every must be a whole number"; exit 1 ;; esac
-          [ "$MINUTES" -le 350 ] || MINUTES=350
+          # 0 would mean no limit to timeout (the job would hit its cap and end red); every under 10 s just hammers the source
+          [ "$MINUTES" -ge 1 ] || { echo "::error::minutes must be at least 1"; exit 1; }
+          [ "$EVERY" -ge 10 ] || { echo "::error::every must be at least 10 seconds"; exit 1; }
+          # 330 leaves 30 of the job's 360 minutes for R setup, downloads and saving the archive
+          [ "$MINUTES" -le 330 ] || MINUTES=330
           # timeout ends the loop after MINUTES; exit 124 is that planned stop, not a failure (`|| rc=$?`: run steps use bash -e)
           rc=0
           timeout "${MINUTES}m" Rscript scripts/night_loop.R --every="$EVERY" --source="$SRC" --archive=night-archive \
