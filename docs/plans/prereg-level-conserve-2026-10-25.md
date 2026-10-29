@@ -237,3 +237,22 @@ fed2022's +11.71 summed log-loss change (151 seats). The rake imports the level'
 independents, whose vote is the candidate's, are where the level is weakest. None of the three arms is shipped;
 `AUSPOL_LEVEL_CONSERVE` stays "0". A variant holding IND cells (and any class without a polled level) out of
 the rake would be a NEW arm and needs its own amendment before it is run.
+
+## Amendment 1 (2026-10-29, Pete chose it after the three arms above; written before any run of it)
+
+A visible addition; nothing above is edited. It answers the one failure the trace found.
+
+- **Change.** New switch `AUSPOL_LEVEL_CONSERVE_HOLD` (default `""` = byte-identical): a comma list of
+  classes removed from the rake's targets. Their cells are held at their value (the rake already holds a
+  class with no level), and the other targeted classes fill the rest of each election's vote in proportion
+  to their levels. The arm is `AUSPOL_LEVEL_CONSERVE=final AUSPOL_LEVEL_CONSERVE_HOLD=IND`. IND only, fixed
+  now: no other class is tried under this amendment. Why IND: its vote is the candidate's, the level model
+  cannot see candidates, and fed2022's teal seats are where all three arms lost.
+- **Screen.** AEF-7 first (`quick_arm.R`, 1,000 sims), then `--pairs=all` if not worse, under the
+  Decision section above unchanged (pooled seat log loss better by more than 1 SE; the guards as written).
+- **Known answers, checked before reading the pooled number.** fed2022 must come back near the baseline
+  (0.2194; under plain `final` it was 0.2970); Kooyong, Goldstein and Curtin must keep their baseline
+  probabilities to within 0.05, since IND is held. If they do not, the hold did not apply and the run is void.
+- **What would make a win unacceptable.** The gain sitting entirely in vic2022 (plain `final` already moved
+  it 0.2643 -> 0.2349 for reasons not traced): report the pooled change with vic2022 left out, and if it is
+  then worse than 0, show Pete the split rather than calling it a pass.
