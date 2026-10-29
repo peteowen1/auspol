@@ -59,6 +59,9 @@ Arms (each must be measured; CLAUDE.md "test base_pred AND the xgb layer"):
    conservation does not reverse that, the mechanism is not what this prereg says and it stops here.
 3. Print per pair: dropped level mass, implied minus level before and after, for ALP and Coalition.
 
+**Dry run 1 RESULT (2026-10-29, quick_arm 1,000 sims, all 35 elections, code t6fd672d): PASS.** 0 of 19,616
+cells changed in 0 of 35 elections; seat log loss 0.3062 -> 0.3062 (2,931 seats), AEF-7 0.2634 -> 0.2634.
+
 ## Decision (all on `quick_arm.R --pairs=all`, 20,000-sim deciding run before shipping)
 
 SE clustered on election throughout.
