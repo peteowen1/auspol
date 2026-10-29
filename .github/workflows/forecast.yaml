@@ -1,4 +1,6 @@
 name: Forecast refresh
+# "(daily)" marks the day's run (the schedule or the worker's daily=true); the gate counts only those.
+run-name: ${{ (github.event_name == 'schedule' || inputs.daily) && 'Forecast refresh (daily)' || 'Forecast refresh' }}
 
 # Runs the whole pipeline against fresh poll data and PUBLISHES the result to
 # the forecast-latest release (and, once the secrets exist, the inthegame-data
@@ -49,9 +51,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # One daily run. Only GitHub's late schedule can skip: when an EARLIER run started in the last
-  # 12 hours is still going or succeeded (and its refresh job did not skip), it already covers
-  # today. A failed earlier run does not count, so the fallback retries it. Manual runs always run.
+  # One daily run. A daily run (the schedule, or the worker's daily=true) skips when an EARLIER daily
+  # run started in the last 12 hours is still going or succeeded (and its refresh job did not skip):
+  # that covers the late fallback and a duplicated worker fire. A failed earlier run does not count,
+  # so the fallback retries it; a manual or quick run is not "(daily)" and never counts. Manual runs
+  # (daily unset) always run.
   gate:
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -62,18 +66,22 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           EVENT: ${{ github.event_name }}
+          DAILY: ${{ inputs.daily }}
         run: |
           go() { echo "run=$1" >> "$GITHUB_OUTPUT"; }
-          if [ "$EVENT" != "schedule" ]; then echo "not the schedule ($EVENT): run"; go true; exit 0; fi
+          if [ "$EVENT" != "schedule" ] && [ "$DAILY" != "true" ]; then echo "not a daily run ($EVENT): run"; go true; exit 0; fi
           since=$(( $(date -u +%s) - 12 * 3600 ))
           q="[.[] | select(.databaseId < $GITHUB_RUN_ID) | select((.createdAt | fromdateiso8601) > $since)"
+          q="$q | select(.displayTitle == \"Forecast refresh (daily)\")"
           q="$q | select(.status != \"completed\" or .conclusion == \"success\") | .databaseId] | .[]"
           # A gh error must not cost a day: run anyway and say so.
-          if ! ids=$(gh run list -R "$GITHUB_REPOSITORY" --workflow forecast.yaml --limit 10 --json databaseId,createdAt,status,conclusion --jq "$q"); then
+          if ! ids=$(gh run list -R "$GITHUB_REPOSITORY" --workflow forecast.yaml --limit 10 --json databaseId,createdAt,status,conclusion,displayTitle --jq "$q"); then
             echo "::warning::could not list earlier forecast runs; running anyway"; go true; exit 0
           fi
           for id in $ids; do
-            job=$(gh run view "$id" -R "$GITHUB_REPOSITORY" --json jobs --jq '[.jobs[] | select(.name == "refresh") | (if (.conclusion // "") == "" then .status else .conclusion end)] | first // "queued"')
+            if ! job=$(gh run view "$id" -R "$GITHUB_REPOSITORY" --json jobs --jq '[.jobs[] | select(.name == "refresh") | (if (.conclusion // "") == "" then .status else .conclusion end)] | first // "queued"'); then
+              echo "::warning::could not read run $id; running anyway"; go true; exit 0
+            fi
             if [ "$job" != "skipped" ]; then
               echo "Skipped: run $id already covers today (its refresh job: $job)" | tee -a "$GITHUB_STEP_SUMMARY"
               go false; exit 0
