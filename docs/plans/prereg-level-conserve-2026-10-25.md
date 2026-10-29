@@ -265,3 +265,16 @@ election: fed2022 0.2194 -> 0.2356, nsw2023 0.2053 -> 0.2174, wa2025 0.1915 -> 0
 0.2897, vic2022 0.2643 -> 0.2595, sa2026 0.2504 -> 0.2436, fed2025 0.3605 -> 0.3323. vic2022 out (seat-weighted
 from those rows, recomputed): -0.0010 over 593 seats (-0.0014 over all 681 from the same rounded rows), so the gain is not vic2022's; it is mostly fed2025. fed2022 is still +0.016,
 now from Coalition seats (Bass 0.291 -> 0.170, Longman 0.461 -> 0.270): the level had ALP 34.9 -> 37.2 there.
+
+**Amendment 1 arm on all 35 (2026-10-29, 1,000 sims, code 1829af06): REFUSED.** Seat log loss 0.3062 -> 0.3209
+(+0.0147, SE 0.0058, clustered on election; 2,931 seats), worse in 23 of 35 elections; NT excluded +0.0124
+(2,857 seats). Share squared error on 12,377 changed cells +44,110 (+18%, SE 21,310): worse by more than 2 SE.
+Largest losses: nt2020 0.6176 -> 0.8293, qld2017 0.5752 -> 0.6784, qld2015 0.3275 -> 0.4137, nsw2011 0.2459 ->
+0.3003, fed2019 0.2102 -> 0.2637, wa2017 0.3766 -> 0.4403. The AEF-7 tie (-0.0015) did not hold outside those
+seven elections.
+
+**Verdict for the whole prereg: level conservation is closed, not shipped.** `AUSPOL_LEVEL_CONSERVE` stays "0"
+and `AUSPOL_LEVEL_CONSERVE_HOLD` "". With the exact (oracle) level it helps seat primaries (dry run 2: -9.3%);
+with the forecast level it imports that level's misses into the seats, and the seat layer's own departures from
+the level are, on balance, information rather than error. The majors' +0.6-0.8 tree overshoot this prereg was
+written for is therefore not fixed by forcing the seats onto the level; it would need a better level.

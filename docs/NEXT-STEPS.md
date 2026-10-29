@@ -54,10 +54,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `AUSPOL_LEVEL_DEAD_PARTY` (337f4cd) PARKED: its screen says not worth it; do not merge.
 - OPEN, screens not yet run (one at a time, >= 6.5 GB free, so after the reboot that clears the kernel pool leak):
   level-conserve FIRST (`prereg-level-conserve-2026-10-25.md`; the majors' +0.6-0.8 tree overshoot over ~30
-  elections is this seat-layer effect). 29 Oct: dry runs 1-2 PASS, all three arms NOT PASSED on AEF-7 (base
-  +0.0063 SE 0.0041; final +0.0070 SE 0.0202; both +0.0074 SE 0.0200); fed2022's teal seats crushed by the IND
-  level (2.72 vs 4.55 implied), while vic2022 improves 0.2643 -> 0.2349 under final. Open: an IND-held variant
-  (Pete to decide). Width A0/A1; departed arm B. F8 RN is dead
+  elections is this seat-layer effect): REFUSED and closed 29 Oct, all four arms (DECISIONS). Width A0/A1;
+  departed arm B. F8 RN is dead
   (arm N worse). F8 arm N's netting costs 579 s per harness run: cache it to disk before any rerun.
 - FOUND 25 Oct, LIVE in backtests: nsw2019, sa2022 and vic2022 predict One Nation 0 in every seat it contested
   (party list from the previous election); fixed only under `AUSPOL_ONP_NEWSEAT_RULE=1`.
