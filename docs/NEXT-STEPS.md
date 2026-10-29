@@ -28,6 +28,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   2. SharePoint live-feed fetch (VEC access details from 4 Nov); the backup's source live waits on it.
   3. 10 Nov: in ITG `politics/night-maps/`, `python -I build-booths-2026.py <State2026MediaFilePollingLocationsV2.xml>`
      (expect ~88 districts, few "new" centres; refuses under 85 districts or half matched), commit `booths-vic2026.json`.
+  3b. OPEN: booth and seat swing in the night JSON. The live map reads `sn` per booth and `swing` per seat (points
+     of Labor minus Coalition first preferences; ITG `politics/night-maps/night-maps.js:10-18,251-268`) and dev
+     writes neither, so live swing arrows cannot draw. Agent PR #167 had a per-class `swing` list instead, and
+     conflicts with #168; closed 29 Oct.
   4. Navbar link; the "called" rule (99% with 10% counted is a placeholder); find my seat (#166).
   5. Trial 25 Nov (no 2CP); the upper-house model.
   Dated: the satellite basemap's Esri key (Pete's account, basemaps only, pay-as-you-go off) expires 27/10/2027.
