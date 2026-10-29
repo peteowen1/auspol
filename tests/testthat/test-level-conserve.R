@@ -137,3 +137,18 @@ test_that("corpus weights are a plain vector the rake can use (tapply's 1-d arra
   R <- level_conserve_rake(sh, c(ALP = 40, LNP = 40, GRN = 20), w)
   expect_equal(unname(rowSums(R)), c(100, 100, 100), tolerance = 1e-6)
 })
+
+test_that("AUSPOL_LEVEL_CONSERVE_HOLD keeps a class's cells and the others fill the rest by their levels", {
+  f <- lc_fixture()
+  withr::local_envvar(AUSPOL_LEVEL_CONSERVE = "final", AUSPOL_LEVEL_CONSERVE_HOLD = "ONP")
+  out <- lc_quiet(level_conserve_apply(f$shares, f$level, "x2020", stage = "final", weights = f$w))
+  expect_identical(out[, "ONP"], f$shares[, "ONP"])
+  avail <- 100 - lc_implied(f$shares, f$w)[["ONP"]]
+  want <- f$level[c("ALP", "LNP", "GRN")] / sum(f$level[c("ALP", "LNP", "GRN")]) * avail
+  expect_lt(max(abs(lc_implied(out, f$w)[names(want)] - want)), 1e-6)
+  expect_lt(max(abs(rowSums(out) - 100)), 1e-9)
+  # not vacuous: without the hold ONP is moved
+  withr::local_envvar(AUSPOL_LEVEL_CONSERVE_HOLD = "")
+  out0 <- lc_quiet(level_conserve_apply(f$shares, f$level, "x2020", stage = "final", weights = f$w))
+  expect_gt(max(abs(out0[, "ONP"] - f$shares[, "ONP"])), 0.1)
+})
