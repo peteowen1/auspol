@@ -153,3 +153,7 @@ ONP 78/4, OTH 88/87, OTH_RIGHT 21/87. Both logs print the NZL! override line and
 
 Walk files moved to the session scratchpad; output/S7-BREACH.txt restored to its pre-walk copy. Walk 2 waits for the
 VEC final list (from 10 November).
+
+**Pete, 2026-10-29, on the Morwell walk:** F18's version is the more plausible (OTH 1.2, not 12.1; One Nation's
+vote goes mostly to LNP, Labor and the Greens). So F18 goes to walk 2 on the VEC final list as the likely default;
+it is NOT switched on yet. Walk 2's predictions 1-4 still have to hold on the real list.
