@@ -143,9 +143,9 @@ party-cor off) and the phantom-votes arm REFUSED: all in the journal and DECISIO
 
 ## Still open from 14-15 Oct (collapsed 15 Oct evening; history in DECISIONS and `plans/overnight-2026-10-14.md`)
 
-- OPEN `seat_sd` is read only under `AUSPOL_LEVEL_SD="off"` (`R/seat_sim.R:1451`, `src/seat_sim_core.cpp:188`;
-  published "1.10,8.67"), so it is inert in the shipped config but is the flat-variance fallback. Pete (26 Oct):
-  prove it first. NEXT: broken-input screen (absurd `SEAT_SD` on one pair, expect 0 changed cells), then ask again.
+- PROVEN 29 Oct: `seat_sd` is inert under the shipped `AUSPOL_LEVEL_SD` ("1.10,8.67"): same seed, seat_sd 3.5 vs 50,
+  identical win probabilities; with level_sd off it moves (test-level_sd.R, 76a1008d). It stays as the flat-variance
+  fallback. NB `AUSPOL_SEAT_SD_MULT` is NOT a seat_sd knob: it also scales level_sd (vic2022 at 50x: 0.2643 -> 1.3561).
 - OPEN same one-run lag, older: the seat-poll weight is fitted on the PREVIOUS rebuild's output/forecasts.csv
   (R/seat_poll_blend.R:67; DECISIONS 2026-09-29), so stage 6 uses last run's predictions to weight seat polls. The
   spread fix's compare-and-rerun pattern (scripts/compare_spread_tables.R) could cover it too.
