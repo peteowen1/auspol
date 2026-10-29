@@ -5,10 +5,12 @@
 \title{\code{\link[=night_booth_results]{night_booth_results()}} that never stops a cycle: on any error the map's booth block is left out (\code{NULL}, logged NW13)
 and the seats still publish.}
 \usage{
-night_booth_results_safe(conv)
+night_booth_results_safe(conv, ref = NULL)
 }
 \arguments{
 \item{conv}{\code{\link[=night_booth_table]{night_booth_table()}} output.}
+
+\item{ref}{See \code{\link[=night_booth_results]{night_booth_results()}}.}
 }
 \description{
 \code{\link[=night_booth_results]{night_booth_results()}} that never stops a cycle: on any error the map's booth block is left out (\code{NULL}, logged NW13)

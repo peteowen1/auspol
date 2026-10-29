@@ -11,7 +11,8 @@ night_build_json(
   base = NULL,
   election = "vic2026",
   election_date = "2026-11-28",
-  booths = NULL
+  booths = NULL,
+  swing = NULL
 )
 }
 \arguments{
@@ -28,6 +29,9 @@ night_build_json(
 \item{election_date}{Polling day, \code{YYYY-MM-DD}.}
 
 \item{booths}{\code{\link[=night_booth_results]{night_booth_results()}} output, written as top-level \code{booths} (by district: the booths reported so far); \code{NULL} writes \code{"booths": null}, which the page reads as none reported.}
+
+\item{swing}{\code{\link[=night_seat_swing]{night_seat_swing()}} output, written as \code{swing} on each seat it names (points toward Labor); a seat it
+does not name, or \code{NULL}, writes \code{"swing": null}, which the page draws without an arrow.}
 }
 \description{
 Same top-level keys as \code{forecast-vic2026.json} (scripts/build_forecast_json.R) plus \code{counted_pct} per seat and

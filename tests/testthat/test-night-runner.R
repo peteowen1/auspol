@@ -371,6 +371,9 @@ test_that("the night JSON carries seat-count histograms, the afternoon primary a
   expect_equal(s1$vec_2cp$vec_share_a, 0.6); expect_equal(s1$vec_2cp$flow_share_a, 0.55);   # raw counted share, not the projection
    expect_false(s1$vec_2cp$wrong_pair)
   expect_null(doc$seats[[2]]$vec_2cp)
+  expect_null(s1$swing)                                        # no swing passed: null, the page draws no arrow
+  doc_sw <- night_build_json(list(shares = sh0, pair = "t"), res, list(file = "f", stamp = "s", archived = TRUE), swing = c(S2 = -3.5))
+  expect_null(doc_sw$seats[[1]]$swing); expect_equal(doc_sw$seats[[2]]$swing, -3.5)
   expect_true(all(c("chamber", "night", "majority", "seats", "n_sims", "built_at") %in% names(doc)))
   js <- jsonlite::fromJSON(jsonlite::toJSON(doc, auto_unbox = TRUE, null = "null"), simplifyVector = FALSE)
   expect_equal(unlist(js$chamber$parties$ALP$hist), c(1, 2, 1))
@@ -412,6 +415,26 @@ test_that("per-booth results for the map: reported ordinary booths only, four fi
   expect_identical(a$tn, list(list("IND", 340), list("LNP", 330)))               # larger first, class kept, postal 2CP not mixed in
   js <- jsonlite::fromJSON(jsonlite::toJSON(b, auto_unbox = TRUE, null = "null"), simplifyVector = FALSE)
   expect_identical(js$Hawthorn[[1]]$tn[[1]], list("IND", 340L))
+
+  expect_false("sn" %in% names(a))                             # no reference table: no swing field at all
+
+  # swing toward Labor against last time's booths, matched on letters and digits; the page's replay measure
+  ref <- dt(district = c("Hawthorn", "Hawthorn", "Hawthorn", "Hawthorn", "Bass"),
+            booth = c("AUBURN", "AUBURN", "AUBURN", "Auburn", "Bass Hill"), booth_type = c(rep("ordinary", 3), "postal", "ordinary"),
+            party = c("Australian Labor Party - Victorian Branch", "Liberal", "Independent", "Liberal", "Liberal"),
+            votes = c(200, 200, 100, 999, 50))
+  conv$live <- rbind(conv$live, dt(district = "Hawthorn", booth = "Glenferrie", booth_type = "ordinary", party = "Liberal", votes = 10))
+  bs <- night_booth_results(conv, ref)
+  au <- bs$Hawthorn[[which(vapply(bs$Hawthorn, `[[`, "", "n") == "Auburn")]]
+  expect_equal(au$sn, round((100 - 300) / 670 * 100 - 0, 2))  # gap -29.85 tonight, 0 last time (the postal 999 is not a booth)
+  gl <- bs$Hawthorn[[which(vapply(bs$Hawthorn, `[[`, "", "n") == "Glenferrie")]]
+  expect_true("sn" %in% names(gl)); expect_null(gl$sn)         # new booth: no swing, and the field still serialises as null
+  expect_identical(night_seat_swing(bs, ref), c(Hawthorn = -29.85))   # like for like: Glenferrie has no match, so it is left out
+  expect_null(night_seat_swing_safe(NULL, ref)); expect_null(night_seat_swing_safe(bs, NULL))
+  expect_message(expect_null(night_seat_swing_safe(bs, ref[, !"votes"])), "NW14")
+  expect_message(bb <- night_booth_results(conv, ref[, !"votes"]), "NW14")   # a damaged reference costs the swing, not the booths
+  expect_length(bb$Hawthorn, 2L); expect_false("sn" %in% names(bb$Hawthorn[[1]]))
+  conv$live <- conv$live[conv$live$booth != "Glenferrie", ]
 
   conv$tcp <- conv$tcp[0, ]                                    # 2CP not posted yet: first preferences only
   expect_null(night_booth_results(conv)$Hawthorn[[1]]$tn)

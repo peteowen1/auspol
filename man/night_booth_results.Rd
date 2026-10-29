@@ -4,15 +4,19 @@
 \alias{night_booth_results}
 \title{Per-booth results for the live page's map: every ordinary booth that has reported}
 \usage{
-night_booth_results(conv)
+night_booth_results(conv, ref = NULL)
 }
 \arguments{
 \item{conv}{\code{\link[=night_booth_table]{night_booth_table()}} output.}
+
+\item{ref}{Booth table of the previous election (\verb{district, booth, booth_type, party, votes}), for \code{sn}; \code{NULL} leaves
+\code{sn} out.}
 }
 \value{
-Named list by district of lists \verb{\{n, counted = TRUE, now = \{ALP, LNP, GRN, OTH\}, tn = [[party, votes], [party, votes]] | NULL\}}
+Named list by district of lists \verb{\{n, counted = TRUE, now = \{ALP, LNP, GRN, OTH\}, tn = [[party, votes], [party, votes]] | NULL, sn\}}
 (\code{tn} classes are \code{\link[=classify_party]{classify_party()}}'s, so \code{ONP} and \code{OTH_RIGHT} can appear there, unlike \code{now}),
 \code{tn} larger first and \code{NULL} until the VEC posts that booth's two-candidate count (or when two candidates share a class).
+\code{sn} is the booth's swing toward Labor (\code{\link[=night_seat_swing]{night_seat_swing()}} has the measure), \code{NULL} when the booth has no match last time.
 }
 \description{
 Only booths with counted votes appear; an unreported booth is absent (the page draws it from last time's file). First

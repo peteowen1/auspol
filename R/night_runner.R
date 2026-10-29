@@ -266,13 +266,18 @@ night_booth_table <- function(feed, lookup, places = NULL, include_late = FALSE)
 #' `OTH`, as in the page's `booths-vic2022.json`). The two-candidate count keeps [classify_party()]'s class, so an independent
 #' in the final two reads as `IND`.
 #' @param conv [night_booth_table()] output.
-#' @return Named list by district of lists `{n, counted = TRUE, now = {ALP, LNP, GRN, OTH}, tn = [[party, votes], [party, votes]] | NULL}`
+#' @param ref Booth table of the previous election (`district, booth, booth_type, party, votes`), for `sn`; `NULL` leaves
+#'   `sn` out.
+#' @return Named list by district of lists `{n, counted = TRUE, now = {ALP, LNP, GRN, OTH}, tn = [[party, votes], [party, votes]] | NULL, sn}`
 #'   (`tn` classes are [classify_party()]'s, so `ONP` and `OTH_RIGHT` can appear there, unlike `now`),
 #'   `tn` larger first and `NULL` until the VEC posts that booth's two-candidate count (or when two candidates share a class).
+#'   `sn` is the booth's swing toward Labor ([night_seat_swing()] has the measure), `NULL` when the booth has no match last time.
 #' @export
-night_booth_results <- function(conv) {
+night_booth_results <- function(conv, ref = NULL) {
   lv <- conv$live[conv$live$booth_type == "ordinary", ]
   if (!nrow(lv)) return(stats::setNames(list(), character()))
+  # a damaged reference table costs the swing (NW14), never the booths themselves
+  prev <- if (is.null(ref)) NULL else tryCatch(.night_ref_four(ref), error = function(e) { message("NW14  booth swing skipped: ", conditionMessage(e)); NULL })
   cls4 <- classify_party(lv$party); cls4[!cls4 %in% c("ALP", "LNP", "GRN")] <- "OTH"
   fp <- data.table::data.table(district = lv$district, booth = lv$booth, cls = cls4, votes = lv$votes)[, list(votes = sum(votes)), by = c("district", "booth", "cls")]
   tot <- fp[, list(tv = sum(votes)), by = c("district", "booth")]
@@ -291,17 +296,74 @@ night_booth_results <- function(conv) {
       v <- tapply(tc$votes[hit], tcls[hit], sum)
       if (length(v) == 2L && sum(v) > 0) { v <- sort(v, decreasing = TRUE); tn <- lapply(seq_along(v), function(j) list(names(v)[j], unname(v[[j]]))) }
     }
-    list(n = tot$booth[i], counted = TRUE, now = now, tn = tn)
+    out <- list(n = tot$booth[i], counted = TRUE, now = now, tn = tn)
+    if (!is.null(prev)) {
+      j <- match(paste(.night_norm(tot$district[i]), .night_norm(tot$booth[i]), sep = "\r"), prev$key4)
+      out["sn"] <- list(if (is.na(j)) NULL else round(.night_gap(now$ALP, now$LNP, tot$tv[i]) - .night_gap(prev$alp[j], prev$lnp[j], prev$tot[j]), 2))
+    }
+    out
   })
   split(rows, tot$district)
+}
+
+# Letters and digits only, lower case: the booth-name match the page's builder uses (ITG politics/night-maps/build-booths.py).
+.night_norm <- function(x) gsub("[^a-z0-9]", "", tolower(x))
+# Labor minus Coalition, in points of every first preference (other candidates stay in the denominator).
+.night_gap <- function(alp, lnp, total) (alp - lnp) / total * 100
+# The previous election's ordinary booths as Labor, Coalition and all votes, keyed by normalised district and booth; booths
+# with no votes are dropped so a match always has a denominator.
+.night_ref_four <- function(ref) {
+  miss <- setdiff(c("district", "booth", "booth_type", "party", "votes"), names(ref))
+  if (length(miss)) stop("previous-election booth table lacks ", paste(miss, collapse = ", "), call. = FALSE)
+  r <- ref[ref$booth_type == "ordinary", ]
+  cls <- classify_party(r$party)
+  d <- data.table::data.table(key4 = paste(.night_norm(r$district), .night_norm(r$booth), sep = "\r"),
+                              is_alp = cls == "ALP", is_lnp = cls == "LNP", v = as.numeric(r$votes))
+  d <- d[, list(alp = sum(v[is_alp]), lnp = sum(v[is_lnp]), tot = sum(v)), by = "key4"]
+  d[d$tot > 0, ]
+}
+
+#' Each seat's swing toward Labor so far, for the live map's district arrows
+#'
+#' The measure the page's replay file carries (`s` per booth, `dswing` per district; ITG
+#' `politics/night-maps/build-booths.py`): the change in Labor's share minus the Coalition's share of ordinary first
+#' preferences, in points, positive toward Labor, every other candidate kept in the denominator. Like for like: only the
+#' seat's reported booths that match a booth last time (by district and booth name, letters and digits, case ignored),
+#' summed tonight against the same booths last time, so a partial count is never set against a whole-district total.
+#' @param booths [night_booth_results()] output.
+#' @param ref Booth table of the previous election (`district, booth, booth_type, party, votes`).
+#' @return Named numeric by district, rounded to 2 dp; a seat with no matched booth is absent.
+#' @export
+night_seat_swing <- function(booths, ref) {
+  prev <- .night_ref_four(ref)
+  sw <- vapply(names(booths), function(d) {
+    a <- c(0, 0, 0); o <- c(0, 0, 0)
+    for (b in booths[[d]]) {
+      j <- match(paste(.night_norm(d), .night_norm(b$n), sep = "\r"), prev$key4)
+      if (is.na(j)) next
+      a <- a + c(b$now$ALP, b$now$LNP, sum(unlist(b$now))); o <- o + c(prev$alp[j], prev$lnp[j], prev$tot[j])
+    }
+    if (a[3] > 0 && o[3] > 0) round(.night_gap(a[1], a[2], a[3]) - .night_gap(o[1], o[2], o[3]), 2) else NA_real_
+  }, numeric(1))
+  sw[!is.na(sw)]
 }
 
 #' [night_booth_results()] that never stops a cycle: on any error the map's booth block is left out (`NULL`, logged NW13)
 #' and the seats still publish.
 #' @param conv [night_booth_table()] output.
+#' @param ref See [night_booth_results()].
 #' @export
-night_booth_results_safe <- function(conv) {
-  tryCatch(night_booth_results(conv), error = function(e) { message("NW13  booth block skipped: ", conditionMessage(e)); NULL })
+night_booth_results_safe <- function(conv, ref = NULL) {
+  tryCatch(night_booth_results(conv, ref), error = function(e) { message("NW13  booth block skipped: ", conditionMessage(e)); NULL })
+}
+
+#' [night_seat_swing()] that never stops a cycle: no booths, no reference table or any error gives `NULL` (an error is
+#' logged NW14), and the seats publish without `swing`.
+#' @inheritParams night_seat_swing
+#' @export
+night_seat_swing_safe <- function(booths, ref) {
+  if (is.null(booths) || is.null(ref) || !length(booths)) return(NULL)
+  tryCatch(night_seat_swing(booths, ref), error = function(e) { message("NW14  seat swing skipped: ", conditionMessage(e)); NULL })
 }
 
 #' Stop (NW7) unless the saved state's seats and the feed's districts are the same set
@@ -438,8 +500,11 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
 #' @param election Election label.
 #' @param election_date Polling day, `YYYY-MM-DD`.
 #' @param booths [night_booth_results()] output, written as top-level `booths` (by district: the booths reported so far); `NULL` writes `"booths": null`, which the page reads as none reported.
+#' @param swing [night_seat_swing()] output, written as `swing` on each seat it names (points toward Labor); a seat it
+#'   does not name, or `NULL`, writes `"swing": null`, which the page draws without an arrow.
 #' @export
-night_build_json <- function(st, res, snapshot, base = NULL, election = "vic2026", election_date = "2026-11-28", booths = NULL) {
+night_build_json <- function(st, res, snapshot, base = NULL, election = "vic2026", election_date = "2026-11-28", booths = NULL,
+                             swing = NULL) {
   sim <- res$sim; tot <- as.data.frame(sim$totals); parties <- colnames(sim$totals)
   seats <- rownames(res$shares); n_seats <- length(seats)
   majority <- if (!is.null(base$majority)) base$majority else floor(n_seats / 2) + 1L
@@ -482,7 +547,8 @@ night_build_json <- function(st, res, snapshot, base = NULL, election = "vic2026
                  pair_share = round(r$pair_share, 4), wrong_pair = isTRUE(r$flag)) }
     list(seat = s, vec_2cp = v2, region = if (!is.null(region) && s %in% names(region) && !is.na(region[[s]])) region[[s]] else NULL,
          favourite = ps[[1]]$party, favourite_prob = ps[[1]]$win_prob, final_two = ft,
-         counted_pct = round(100 * unname(res$nu$counted[s]), 1), parties = ps)
+         counted_pct = round(100 * unname(res$nu$counted[s]), 1), parties = ps,
+         swing = if (!is.null(swing) && s %in% names(swing)) unname(swing[s]) else NULL)
   })
   list(election = election, election_date = election_date, built_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z"),
        git_sha = tryCatch(trimws(system2("git", c("rev-parse", "--short", "HEAD"), stdout = TRUE, stderr = FALSE)), error = function(e) NA_character_),
@@ -579,7 +645,9 @@ night_cycle <- function(cfg) {
                             sims = cfg$sims, use_tcp = !isFALSE(cfg$use_tcp)); stamp_t("update_simulate")
     res$denominator <- denom; res$n_placeholder <- conv$n_placeholder_booths; res$n_unlisted <- conv$n_unlisted_booths
     if (length(res$nu$fallback_projected)) message("NW12  ", length(res$nu$fallback_projected), " seat(s) fell back to the projected denominator (no usable expected votes): ", paste(res$nu$fallback_projected, collapse = ", "))
-    doc <- night_build_json(cache$st, res, list(file = basename(snap), stamp = stamp, archived = arch$new), base = cache$base, booths = night_booth_results_safe(conv))
+    bk <- night_booth_results_safe(conv, cache$ref)
+    doc <- night_build_json(cache$st, res, list(file = basename(snap), stamp = stamp, archived = arch$new), base = cache$base, booths = bk,
+                            swing = night_seat_swing_safe(bk, cache$ref))
     night_publish_json(doc, cfg$out, min_seats = nrow(cache$st$shares)); stamp_t("publish")
     sm <- sprintf("OK %s | seats with feed data %d of %d, updated %d, 2CP %d | mean counted %.1f%% | chamber ALP %.1f LNP %.1f | %s",
                   stamp, length(res$matched), nrow(cache$st$shares), res$n_updated, res$n_tcp, 100 * mean(res$nu$counted),
