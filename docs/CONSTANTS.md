@@ -606,7 +606,7 @@ Found by reading the diffs of `R/` and `scripts/` since 2026-10-09 against this 
 |---|---|---|---|
 | net-out floor | `R/forecast_statewide.R:506` (`floor2 <- (0.5 * cur)^2`) | a cell's seat sd never falls below 0.5 x its un-netted sd | **CHOSEN** (prereg amendment 1). A guard so a draw wider than the seat spread cannot drive the variance negative. Not fitted; the log line `SWN1`/`SWLN1` counts cells at the floor. |
 | flat statewide reference, live | `scripts/fit_seats_full.R` (`1.5` passed as `party_sd` to `harness_sw_net_sd()` in the `AUSPOL_SW_NET_LIVE` block) | 1.5 points | **INHERITED**: the flat statewide piece removed from the seat residual when `level_sd` was fitted (section "`level_sd`" above). Not re-fitted. The live draws' own sd (`psd`) is deliberately NOT the reference, or nothing would be netted out (comment above the `AUSPOL_SW_NET_LIVE` block). |
-| flat statewide reference, harnesses | `AUSPOL_PARTY_SD` default, e.g. `scripts/backtest_candidate_nsw.R:1000` (`PARTY_SD`; the `psd` vector is built at `:1001`), passed as `party_sd = psd` at `:1195` | 1.5 points | **INHERITED**, same number as above. |
+| flat statewide reference, harnesses | `AUSPOL_PARTY_SD` default, e.g. `PARTY_SD` in `scripts/backtest_candidate_nsw.R` (the `psd` vector is built from it on the next line), passed as `party_sd = psd` to `simulate_seat_contests()` in the same script | 1.5 points | **INHERITED**, same number as above. |
 | `AUSPOL_FP_EXTRA_SD` | `R/forecast_statewide.R:466`; `scripts/fit_seats_full.R:163` | 2.419 | **ESTIMATED 2026-08-19** (row in section 1). Became a switch 2026-10-19 so the width arms of the F4 prereg could vary it; the shipped value did not move. |
 
 ### Seat-poll blend, arm H (shipped 2026-10-18; `R/seat_poll_blend.R`)
