@@ -62,6 +62,16 @@ Arms (each must be measured; CLAUDE.md "test base_pred AND the xgb layer"):
 **Dry run 1 RESULT (2026-10-29, quick_arm 1,000 sims, all 35 elections, code t6fd672d): PASS.** 0 of 19,616
 cells changed in 0 of 35 elections; seat log loss 0.3062 -> 0.3062 (2,931 seats), AEF-7 0.2634 -> 0.2634.
 
+**Dry run 2 RESULT (2026-10-29, `final` at `AUSPOL_FORECAST_MODE=0`, 1,000 sims, all 35, code 7c279fc4): PASS.**
+The first attempt crashed on every election (`weights * M`: non-conformable arrays; the corpus weights were
+tapply's 1-d array), fixed in 7c279fc4 before any number was read. Exactness: max |implied - level| after the
+rake is 0.000 in all 35 (before 0.32-4.21; qld2017 drops 0.27 points of level). Primary MSE on the 13,974
+changed cells: 241,856 -> 219,350, change -22,506 (-9.3%), SE 6,169 clustered on election, so better by 3.6
+SE (quick_arm's own Q2 label says "FAIL / not clear" only because its generic bar also asks for -10%; this
+clause asks for an improvement). Worse in 6 of 35 (nsw2011 +533, wa2005 +138, vic2014 +103, fed2010 +80,
+sa2014 +71, fed2019 +8). The WA/NT reversal holds: NT better in 3 of 3, WA in 6 of 7. Seat log loss here is
+LEAKED (oracle level) and is not a result: 0.2890 -> 0.2810 pooled, worse in 19 of 35.
+
 ## Decision (all on `quick_arm.R --pairs=all`, 20,000-sim deciding run before shipping)
 
 SE clustered on election throughout.
