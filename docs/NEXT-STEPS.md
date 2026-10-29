@@ -12,59 +12,25 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `lineup3c=2`; AEF-7 0.2639 vs AEF 0.2825), PR #159 merged 11:24 after CI passed. Forecast workflow run 40608663021
   triggered by hand on main: **success**, published 11:33 (66fede0): Bendigo West ONP 0.435 / ALP 0.364 / LNP 0.188,
   Bendigo East ONP 0.641, exactly the live walk; chamber LNP 36.0 / ALP 31.4 / ONP 14.3, hung 78%. Snapshot to restore if needed: `output/snapshots/20261028-1109-14111624-from6`.
-- **28 Oct, earlier: port 3C ship (Pete: finish checks, then ship).** Mode 2 on 8 movable elections -0.0001 (SE
-  0.0004), not passed; live walk moves Bendigo West to ALP 0.36 / LNP 0.19 / ONP 0.43 (market 0.44 / 0.12 / 0.41). Pete
-  overrode clause 1 (prereg `plans/prereg-seat-swing-port-3c-2026-10-25.md`, RESULT + decision sections). Remaining:
-  `--pairs=all` control screen (launched 28 Oct, log `scratchpad/port3c-all.log`), then the 20k deciding run
-  (`deciding_run.ps1 -Arm "AUSPOL_SEAT_SWING_PORT_3C=2" -Label port-3c`); ship (published_flags + stage-1 rebuild) if
-  no election worse by 2 SE and the 27 controls are byte-identical.
-  - **Prepared ship steps (not applied):** if the deciding run's DONE shows no election worse by 2 SE and pooled not
-    worse by 1 SE: (1) `published_flags.R:738` `AUSPOL_SEAT_SWING_PORT_3C = "2"`; (2) the inline default in
-    `R/seat_swing_port_3c.R:37` to "2" in the same commit; (3) add `AUSPOL_SEAT_SWING_PORT_3C` to `post_xgb_switches()`
-    (`R/new_ind_shrink.R:40`) so stage 1 runs it at "0" (the port acts after the xgb override, `published_flags.R:730`;
-    the screen measured it that way); (4) `check_like_ci.R` (full: R/ changed); (5) rebuild from stage 6 with
-    `AUSPOL_PUBLISH=1` (promote must run with 3C set: the vic2026 port table carries `lineup3c`/`w3c` and is refused
-    under another setting); (6) live walk: Bendigo West ALP ~0.36 / LNP ~0.19 / ONP ~0.43 in the published JSON. If it
-    shows harm: record the refusal in the prereg and tell Pete, leave "0".
-- 28 Oct: **election-night live model, wayfinder map https://github.com/peteowen1/auspol/issues/148** (Pete: plan AND
-  build; Assembly first, upper house second; laptop runner with an Actions backup). 10 of 12 tickets closed. BUILT and
-  replayed on vic2022 (`docs/plans/election-night-booth-model.md`, rehearsals 3-5): booth update through the shipped
-  simulator, VEC 2CP as evidence on the preference flow, pooled vote-type gap; seat log loss vs afternoon 0.2643:
-  0.1133 at 10% counted, 0.0968 at 25%, 0.0929 at 50%, 0.0712 at 75% (early votes interleaved). Feed reader
-  (`R/vec_feed.R`), upper-house 2022/2018 results (`output/council-*`), fast replay (`scripts/night_replay.R`).
-  DONE 28 Oct: VEC sign-up (#150; Pete sent the form and signed terms; access details by email from 4 Nov, set-up
-  files 10 Nov, trial 25 Nov with no 2CP); live page decided (#154: all three layouts, needle / race to 45 / seat
-  grid, plus a seat map, booth maps and NYT-style swing arrows; prototypes
-  https://claude.ai/artifact/FsCAXFqbj3ciiaFDppydQm and https://claude.ai/artifact/REkUoQmPLWPkrUmj5SRRVy);
-  upper-house design `docs/plans/upper-house-night-model.md`. MERGED 28 Oct: night runner (`R/night_runner.R`,
-  `scripts/night_runner.R`, `scripts/night_loop.R`; two review rounds; refuses to publish on seat/feed mismatch NW7, 
-  damaged/stale snapshot NW1/NW8, no turnout file NW9, a seat with no listed voting centres NW10). Counted share =
-  counted / (enrolment x the seat's previous Assembly night-vote rate); vic2022 at 50%: 35.9% vs true 33.8%, seat
-  log loss 0.0838 (replay 0.0929; one election, one fraction). Late votes (absent/provisional) left out of the night
-  projection. Not built: SharePoint fetch, R2 upload, Actions backup.
-  PUBLISHED 28 Oct 7:07pm (unlisted, https://inthegame.blog/politics/live; ITG PR #1057, page files only): live page `politics/live.qmd` (ITG branch `election-night-live`; reads R2
-  `auspol/night/vic2026.json`, 60 s poll, never goes backwards, keeps the last good count on a bad/missing file;
-  reviewed) and zoomable maps (ITG branch `election-night-maps`, Leaflet 1.9.4 self-hosted, ABS 2022 boundaries,
-  basemaps fill/OSM street/Esri satellite, booth popups, swing arrows), being wired together. Upload step
-  `scripts/night_publish_r2.sh` + `night_loop.R --upload-key`. Satellite on a keyed Esri public key (Pete's
-  account, basemaps only, pay-as-you-go off, expires 27/10/2027). OPEN: chart text scales with width on wide
-  screens (fix in review), per-booth counted flags + live swing in the night JSON (DONE 29 Oct: auspol #168, ITG #1069),
-  2026 booth list (10 Nov; builder ready, ITG `politics/night-maps/build-booths-2026.py`: run
-  `python -I build-booths-2026.py <State2026MediaFilePollingLocationsV2.xml>` in that folder, check it prints ~88 districts and
-  few "new" centres, commit `booths-vic2026.json` and the page switches to it; refuses a file under 85 districts or half matched),
-  UPLOAD TESTED 29 Oct: a runner-shaped night JSON (vic2022 replay at 25%) uploaded with `night_publish_r2.sh` to R2
-  `auspol/night/test-vic2026.json` and read back by the live page via `?nightsrc=` (LIVE, 15% counted); `vic2026.json`
-  untouched (404). Night state FIXED 29 Oct (auspol #169, 0.4.116): `fit_seats_full.R` saves
-  `output/night-state-vic-2026.rds` every run (reproduces the published forecast exactly) and the daily workflow uploads it
-  to `forecast-latest`; on the night `gh release download forecast-latest -p night-state-vic-2026.rds -D output` then
-  `night_runner.R --state=output/night-state-vic-2026.rds`. First workflow upload: manual forecast run 29 Oct 3:56pm
-  (run 40820538632). BACKUP RUNNER MERGED 29 Oct (auspol #170): `.github/workflows/night-backup.yaml`, break-glass
-  (dispatch only; live key refuses sample data; source live NOT BUILT until the SharePoint fetch). Inputs on release
-  `night-inputs` (Pete created 29 Oct) + night state from `forecast-latest`. First test run 29 Oct failed only because
-  the night state was not yet uploaded; rerun with key test, source sample, minutes 10 once it is,
-  navbar link, the "called" rule (99% with 10% counted is a
-  placeholder); fog: SharePoint fetch (after 4 Nov), 2026 centre matching (10 Nov files), R2
-  upload + Actions backup, the upper-house model.
+- **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** Plan and replays:
+  `docs/plans/election-night-booth-model.md` (vic2022 seat log loss vs afternoon 0.2643: 0.1133 at 10% counted,
+  0.0929 at 50%). Upper house designed, NOT built (`plans/upper-house-night-model.md`). DONE: VEC sign-up (#150),
+  night runner (`R/night_runner.R`, `scripts/night_loop.R`), page PUBLISHED unlisted https://inthegame.blog/politics/live
+  (ITG #1057, maps, TCP booth colours #1068, live booths #1069, 2026 booth builder #1070), per-booth results (#168),
+  R2 upload tested to `auspol/night/test-vic2026.json` (`scripts/night_publish_r2.sh`), night state saved every forecast
+  run and uploaded to `forecast-latest` (#169), break-glass Actions backup `.github/workflows/night-backup.yaml` (#170;
+  inputs on release `night-inputs`). Night runbook: `gh release download forecast-latest -p night-state-vic-2026.rds -D
+  output`, then `night_runner.R --state=output/night-state-vic-2026.rds`.
+  OPEN, in order:
+  1. Backup test: the first night state upload is the manual forecast run 29 Oct 3:56pm (run 40820538632); then
+     dispatch night-backup (key test, source sample, minutes 10) and check `?nightsrc=` on the live page. The first try
+     29 Oct failed only on the missing night state.
+  2. SharePoint live-feed fetch (VEC access details from 4 Nov); the backup's source live waits on it.
+  3. 10 Nov: in ITG `politics/night-maps/`, `python -I build-booths-2026.py <State2026MediaFilePollingLocationsV2.xml>`
+     (expect ~88 districts, few "new" centres; refuses under 85 districts or half matched), commit `booths-vic2026.json`.
+  4. Navbar link; the "called" rule (99% with 10% counted is a placeholder); find my seat (#166).
+  5. Trial 25 Nov (no 2CP); the upper-house model.
+  Dated: the satellite basemap's Esri key (Pete's account, basemaps only, pay-as-you-go off) expires 27/10/2027.
 - 28 Oct: value-odds page https://claude.ai/artifact/GdrpxSB7zkY1xEvJvU3TKx (readiness, seat click-through, our
   probabilities against Sportsbet/TAB/Betfair). Built from scratchpad scripts, not the repo: it does not refresh.
   Contested-seat research, all committed: `reviews/contested-seats-vic2026-2026-10-28.md` (hub),
