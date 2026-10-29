@@ -1,0 +1,308 @@
+<title>Victoria 2026 Readiness</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column; a ballot-paper header band, then status, chamber, value table, track record. */
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --fg:#1b2230; --muted:#5d6676; --rule:#d9dde5;
+  --accent:#4b2a8c; /* VEC-ish purple */
+  --ok:#1f7a4d; --warn:#a76a00; --bad:#b3261e;
+  --alp:#d6202b; --lnp:#1c4fa1; --grn:#2e8b3a; --onp:#e07a00; --ind:#7a7f8a;
+  --display:"Source Serif 4",Georgia,serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12151c; --panel:#1a1f29; --fg:#e6e9ef; --muted:#9aa3b3; --rule:#2d3442; --accent:#b49cf0;
+  --ok:#5cc58f; --warn:#e3a83a; --bad:#f07a72; --alp:#ff6b6b; --lnp:#6f9cf0; --grn:#6cc77a; --onp:#ffa646; --ind:#a5abb7; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12151c; --panel:#1a1f29; --fg:#e6e9ef; --muted:#9aa3b3; --rule:#2d3442; --accent:#b49cf0;
+  --ok:#5cc58f; --warn:#e3a83a; --bad:#f07a72; --alp:#ff6b6b; --lnp:#6f9cf0; --grn:#6cc77a; --onp:#ffa646; --ind:#a5abb7; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.55}
+.seatbtn{font:inherit;color:var(--accent);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--accent) 40%,transparent);text-underline-offset:3px;text-align:left}
+.seatbtn:hover{text-decoration-color:var(--accent)}
+dialog{border:1px solid var(--rule);border-radius:6px;background:var(--panel);color:var(--fg);padding:0;width:min(860px,calc(100vw - 24px));max-height:calc(100vh - 40px)}
+dialog::backdrop{background:rgba(10,12,20,.45)}
+.dlg{padding:20px 22px 24px;display:flex;flex-direction:column;gap:18px}
+.dlg-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.dlg-head h2{margin:0}
+.close{font:600 .85rem var(--body);background:var(--bg);color:var(--fg);border:1px solid var(--rule);border-radius:4px;padding:6px 10px;cursor:pointer}
+.dlg h4{margin:0 0 6px;font:600 .78rem var(--body);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.dlg table{font-size:.84rem}
+.range{position:relative;height:8px;background:var(--rule);border-radius:4px;min-width:120px}
+.range i{position:absolute;top:0;bottom:0;border-radius:4px;opacity:.85}
+.range b{position:absolute;top:-3px;width:2px;height:14px;background:var(--fg)}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.fact{border:1px solid var(--rule);border-radius:4px;padding:8px 10px}
+.fact .v{font:600 1.05rem var(--mono)}
+.fact .l{font-size:.76rem;color:var(--muted)}
+.review{border-left:4px solid var(--warn);padding:8px 12px;background:var(--bg);border-radius:0 4px 4px 0;font-size:.9rem}
+.review ol{margin:6px 0 0;padding-left:20px}
+.wrap{max-width:1400px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px;display:flex;flex-direction:column;gap:36px}
+h1,h2{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-size:2.1rem;line-height:1.15}
+h2{font-size:1.4rem;margin-bottom:10px}
+p{margin:0 0 10px;max-width:68ch}
+.eyebrow{font:600 .72rem/1 var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.sub{color:var(--muted);font-size:.9rem}
+header{display:flex;flex-direction:column;gap:8px;border-bottom:3px solid var(--accent);padding-bottom:16px}
+.verdict{background:var(--panel);border:1px solid var(--rule);border-left:5px solid var(--warn);padding:16px 18px;border-radius:4px}
+.verdict strong{font-family:var(--display);font-size:1.15rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:4px;padding:14px 16px;min-width:0}
+.card h3{margin:0 0 8px;font:600 .95rem var(--body);display:flex;align-items:center;gap:8px}
+.card ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px;font-size:.9rem}
+.pill{font:600 .68rem/1 var(--body);letter-spacing:.06em;text-transform:uppercase;padding:4px 7px;border-radius:99px;border:1px solid currentColor}
+.ok{color:var(--ok)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+code,.mono{font-family:var(--mono);font-size:.85em}
+.scroll{overflow-x:auto;border:1px solid var(--rule);border-radius:4px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:.86rem}
+th,td{padding:7px 10px;border-bottom:1px solid var(--rule);text-align:left;white-space:nowrap}
+th{font-weight:600;color:var(--muted);font-size:.74rem;text-transform:uppercase;letter-spacing:.05em;background:var(--panel);position:sticky;top:0}
+td.n,th.n{text-align:right}
+tr:last-child td{border-bottom:0}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.bar{display:flex;height:30px;border-radius:3px;overflow:hidden;margin:10px 0 6px;border:1px solid var(--rule)}
+.bar span{display:flex;align-items:center;justify-content:center;color:#fff;font:600 .78rem var(--mono);min-width:0}
+.maj{position:relative;height:0}
+.controls{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin:8px 0 12px;font-size:.88rem}
+.controls label{display:flex;gap:6px;align-items:center}
+select,input[type=range]{font:inherit;accent-color:var(--accent)}
+select{background:var(--panel);color:var(--fg);border:1px solid var(--rule);border-radius:3px;padding:3px 6px}
+.grade{font:600 .7rem/1 var(--body);padding:3px 6px;border-radius:3px;border:1px solid currentColor;white-space:nowrap}
+.why{white-space:normal;min-width:340px;max-width:520px;color:var(--muted);font-size:.8rem}
+section > p, .verdict p{max-width:80ch}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.84rem;color:var(--muted)}
+.foot{font-size:.8rem;color:var(--muted)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Victorian state election · Saturday 28 November 2026 · <span id="daysout"></span> days out at capture</div>
+  <h1>Is the Victoria model ready, and where are the bookies wrong?</h1>
+  <div class="sub" id="provenance"></div>
+</header>
+
+<section class="verdict">
+  <strong>Usable now, not finished.</strong>
+  <p style="margin-top:6px">The forecast publishes daily, CI is green and it beats AE Forecasts on the seven-election track record. But candidate nominations do not close until <b>9 November</b>, several screens are queued but not run, and three known defects sit exactly in the seats where we disagree most with the bookies. Treat the value list below as a shortlist to check, not a list to bet.</p>
+</section>
+
+<section>
+  <h2>Readiness checklist</h2>
+  <p class="sub">Written by hand on 28 Oct; not regenerated with the data.</p>
+  <div class="grid">
+    <div class="card"><h3><span class="pill ok">Ready</span> Model and publishing</h3><ul>
+      <li>Daily forecast run succeeded 27 Oct 05:45 UTC (the two runs before it failed).</li>
+      <li>R CMD check green on <code>dev</code> and <code>main</code>, 27 Oct.</li>
+      <li>All 88 districts simulated, none dropped.</li>
+      <li>One Nation now ranked on the 2025 Senate vote (shipped 26 Oct), which fixed the Niddrie and Essendon over-calls.</li>
+    </ul></div>
+    <div class="card"><h3><span class="pill warn">Partly</span> Data scraped</h3><ul>
+      <li>Polls: live from the anchor clone each run.</li>
+      <li>Odds and rival forecasts captured 22, 24, 27 Oct. Next dated captures 3, 10, 17, 27 Nov. TAB and GES need a Chrome step each time.</li>
+      <li>Candidates: pre-nomination list only. <b>Nominations close 9 Nov, 12 noon</b>; the final list changes the forecast.</li>
+      <li>Search-interest (salience) data: 0 of 101 batches usable yet (campaign has not started). Final snapshot 25–27 Nov. CI publish has no salience corpus yet.</li>
+    </ul></div>
+    <div class="card"><h3><span class="pill bad">Not done</span> Features tested</h3><ul>
+      <li>Not every feature is tested. Queued, not run: level-conserve, seat-swing port 3C, width arms A0/A1, departed arm B.</li>
+      <li>Two built branches still need <code>check_like_ci.R</code>: <code>ind-overcall-1025</code>, <code>mp-slope-shrink-1025</code>.</li>
+      <li>Returning independents: Ali Cupper (Mildura) still gets 2.7%; fix not shipped.</li>
+      <li>The results file the benchmark scorer needs on election night is not built.</li>
+    </ul></div>
+  </div>
+</section>
+
+<section>
+  <h2>How it looks</h2>
+  <p>Expected seats out of 88, mean of 20,000 simulations. 45 is a majority.</p>
+  <div class="bar" role="img" id="seatbar"></div>
+  <p class="sub">Probabilities from the same simulations; each row is one outcome. Higher is more likely.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Outcome</th><th class="n">Probability</th><th>Seats, 5th to 95th percentile</th></tr></thead>
+    <tbody id="chamber"></tbody></table></div>
+  <p class="sub" style="margin-top:8px" id="favs"></p>
+</section>
+
+<section>
+  <h2>Against the bookies</h2>
+  <p id="pricedline"></p>
+  <p class="sub">Past record, the reason a value list is worth having at all. Seat log loss: how surprised each forecast was by the actual winner; <b>lower is better</b>. Bookmaker odds Pete saved at the time, margin removed.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Election</th><th class="n">Seats</th><th class="n">Our log loss</th><th class="n">Bookies' log loss</th><th class="n">50/50 blend</th></tr></thead>
+    <tbody>
+      <tr><td>Federal 2022</td><td class="n">151</td><td class="n">0.216</td><td class="n">0.429</td><td class="n">0.302</td></tr>
+      <tr><td>Federal 2025</td><td class="n">150</td><td class="n">0.368</td><td class="n">0.396</td><td class="n">0.361</td></tr>
+      <tr><td>Queensland 2020</td><td class="n">93</td><td class="n">0.217</td><td class="n">0.318</td><td class="n">0.256</td></tr>
+      <tr><td>South Australia 2022</td><td class="n">47</td><td class="n">0.218</td><td class="n">0.265</td><td class="n">0.227</td></tr>
+      <tr><td><b>All four</b></td><td class="n"><b>441</b></td><td class="n"><b>0.268</b></td><td class="n"><b>0.377</b></td><td class="n"><b>0.304</b></td></tr>
+    </tbody></table></div>
+  <p class="sub" style="margin-top:8px">Caution: these are backtests, and the model was tuned with these elections in view, so the gap is flattering. Federal 2025, the most recent, is nearly a tie. None had a One Nation vote near the 21.8% we forecast here, and that is where most of our disagreements are.</p>
+</section>
+
+<section>
+  <h2>Which odds look like value</h2>
+  <p>Click a seat to see both sides' numbers for every candidate, every book's price, the 2022 result, and for the contested seats what would settle who is right. The review behind those notes is <code>docs/reviews/contested-seats-vic2026-2026-10-28.md</code>.</p>
+  <p>Edge is what $1 returns on average if our probability is right: our probability × best price − 1. +0.50 means 50c profit per dollar. Every price is the best available across the three books for that wording of the outcome (books word some outcomes differently, such as "Other" and "Any Other", so those appear as separate rows). The grade says whether we know of a reason our number is wrong there.</p>
+  <div class="legend">
+    <span><span class="grade ok">Clean</span> no known problem</span>
+    <span><span class="grade warn">Contested</span> plausible reason the bookies are closer</span>
+    <span><span class="grade bad">Known defect</span> our number is suspect; skip</span>
+  </div>
+  <div class="controls">
+    <label for="minedge">Minimum edge <input id="minedge" type="range" min="0" max="1" step="0.05" value="0.1"> <span id="minedgeval" class="mono">+0.10</span></label>
+    <label for="minp">Our probability at least <select id="minp"><option value="0">any</option><option value="0.1" selected>10%</option><option value="0.3">30%</option><option value="0.5">50%</option></select></label>
+    <label for="grade">Grade <select id="grade"><option value="all">all</option><option value="Clean" selected>Clean only</option><option value="noDefect">Clean + Contested</option></select></label>
+    <span id="count" class="sub"></span>
+  </div>
+  <div class="scroll" style="max-height:620px"><table>
+    <thead><tr><th>Seat</th><th>Back</th><th class="n">Best price</th><th>Book</th><th class="n">Bookies' prob</th><th class="n">Our prob</th><th class="n">Edge</th><th class="n">¼ Kelly stake</th><th>Grade</th><th>Why</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table></div>
+  <p class="foot" style="margin-top:8px">Bookies' prob is the margin-removed probability (power method), averaged over the books pricing that seat. ¼ Kelly stake is the share of a betting bank, a quarter of the full Kelly amount, which is still aggressive for a model that has not seen a 20% One Nation vote. Ripon is left out: Sportsbet and TAB price Liberal and Nationals separately there and we forecast them as one Coalition class. A named independent is matched to our whole independent class.</p>
+</section>
+
+<section class="foot">
+  <p>Sources: <code>forecast-latest</code> release assets <code>forecast-vic2026.json</code>, <code>seat-probs-vic-2026.csv</code>; odds via <code>oddsdata</code> (Sportsbet competition 9519, Betfair search 2378961), TAB raw from <code>external/reference/benchmarks/vic2026/2026-10-27/tab/</code>; history from <code>output/backtest-vs-market-seats.csv</code>; known defects from <code>docs/reviews/market-disagreement-vic2026-2026-10-25.md</code> and <code>docs/NEXT-STEPS.md</code>. Not betting advice; a model check.</p>
+</section>
+</div>
+
+<dialog id="dlg" aria-labelledby="dlg-title"><div class="dlg" id="dlg-body"></div></dialog>
+
+<script>
+const ROWS = __ROWS__;
+const SEATS = __SEATS__;
+const META = __META__;
+const REVIEW = {
+  "BOX HILL":{v:"Leaning our way",t:"These booths swung to Labor at the 2025 federal election (+2.96 points) and we under-called Labor here by 4.9 points in 2022. The bookies price a uniform statewide swing; the record says otherwise. In SA 2026, Qld 2017, Qld 2024 and SA 2018 each major lost votes in proportion to the new party's seat share (pooled slope -0.81 for Labor, where -1 is proportional and 0 uniform), and proportional fit better in all 8 election-by-major cells (tested 28 Oct).",w:["Measured 28 Oct: switching off xgb takes Labor to 0.79 (cut to the Liberal 1.2 points, not 3); switching off the port takes it to 0.86; seat polls do nothing here. No single stage explains the gap; the rest is the base swing and the One Nation fill, which the record supports.","Our seat results sum to Labor two-party 47.96 statewide against the model's 47.90: consistent."]},
+  "GLEN WAVERLEY":{v:"Unknown",t:"Same group as Box Hill. Federal 2025 swing in its booths +4.53 to Labor; 2022 Labor under-called by 2.6. We have it as a coin toss (0.50); the bookies 0.12.",w:["Same three steps as Box Hill."]},
+  "ASHWOOD":{v:"Unknown",t:"Same group as Box Hill. Federal 2025 swing +2.54 to Labor; 2022 Labor under-called by 5.1.",w:["Same three steps as Box Hill."]},
+  "BAYSWATER":{v:"Unknown, bookies probably closer",t:"Labor's member is departing and we already favour the Liberal (0.70). The value is Labor at $12: we say 0.22, the bookies 0.05. Federal 2025 swing +5.63 to Labor, the largest of the group.",w:["Same three steps as Box Hill, plus check the departing-member slope (0.62) on this seat."]},
+  "HASTINGS":{v:"Wait for nominations",t:"No One Nation candidate is named yet; we simulate a generic one at 29.8%. The bookies may be pricing a weak or absent candidate. In SA 2026 our One Nation win probabilities were calibrated and we under-called its vote, the opposite of the bookies' view here (one election, five winners).",w:["Recheck the day nominations close (9 Nov, 12 noon)."]},
+  "NARRACAN":{v:"Not a baseline defect (corrected 28 Oct)",t:"Labor and Greens only match to two decimals (10.1148 and 10.1145). Labor's 10.1 comes from its 2018 share (35.5) carried forward, and is plausible: Labor took 17.3% in these booths at the 2025 federal election. The Greens' 10.1 is probably 4 to 5 points high, because their 2023 base was inflated by Labor's absence (6.0 in 2018, 4.4 federally in 2025), but that barely moves One Nation against the Liberal. The real driver: One Nation's Senate vote here ranks 3rd of 88.",w:["Same spread sensitivity run as Eureka.","Later: measure the inflated-base effect on backtest seats where a major re-entered."]},
+  "EUREKA":{v:"Probably too confident; not from the spread setting",w2:"Measured 28 Oct: One Nation stays 0.77 to 0.93 across the concentration setting 0.30 to 0.43.",t:"Both sides favour One Nation (us 0.87, bookies 0.46). Our number comes from Eureka sitting near the top of the Senate ranking, mapped onto the top of SA 2026's spread of One Nation shares. Measured 28 Oct: One Nation stays at 0.77 to 0.93 across the concentration setting 0.30 to 0.43, so the setting does not explain the gap.",w:["Pooling Qld 2017 into the spread needs code: the spread is fixed to SA 2026's seat shares (fit_seats_full.R:781). Not built."]},
+  "CRANBOURNE":{v:"Unknown; a small push toward the bookies",t:"The bookies favour One Nation (0.45); we give it 0.22 and Labor 0.76. The 2022 other-right vote here was 14.9%, and our model does not use it: One Nation's share comes only from the 2025 Senate ranking. In SA 2026, One Nation beat our forecast by about 0.45 points per point of previous other-right vote. Across all 20 elections the effect is much smaller: 0.04 points per point (SE 0.015), worth about 0.4 points of One Nation here. Not enough to explain the gap. No One Nation candidate named yet.",w:["Recheck after nominations close (9 Nov).","Optional: a shrunk other-right term, worth about 0.4 points here."]}
+};
+// seat|class -> [grade, reason]
+const NOTES = {
+  "Bendigo West|ONP":["Contested","Fixed 28 Oct (port 3C): the 2025 federal Nationals campaign no longer counts as a swing. Now a three-way race: One Nation 0.44, Labor 0.36, Nationals 0.19; the bookies favour Labor (0.44)."],
+  "Bendigo West|ALP":["Contested","Fixed 28 Oct (port 3C). Three-way race: we have One Nation 0.44, Labor 0.36; the bookies have Labor 0.44, One Nation 0.41."],
+  "Bendigo East|ONP":["Contested","Fixed 28 Oct (port 3C): the Coalition no longer gets the federal Nationals swing, so One Nation leads (0.64). One Nation's seat allocation is the least-tested part of the model."],
+  "Melbourne|GRN":["Known defect","Our trees over-call the Greens in high-Greens seats (Melbourne named). 99% is too sure."],
+  "Richmond|GRN":["Known defect","Same high-Greens over-call; 99% is too sure."],
+  "Prahran|GRN":["Contested","High-Greens seat; the trees over-call the Greens here as a class."],
+  "Brunswick|GRN":["Known defect","Same high-Greens over-call; 99% is too sure."],
+  "Northcote|GRN":["Known defect","Same high-Greens over-call (Northcote named)."],
+  "Pascoe Vale|GRN":["Contested","Pascoe Vale is one of the independent re-stand targets still open (ind-overcall-1025)."],
+  "Narracan|ONP":["Contested","One Nation's 2025 Senate vote here ranks 3rd of 88, so it lands near the top of SA 2026's spread: the same question as Eureka. Click the seat."],
+  "Hastings|ONP":["Contested","No One Nation candidate named yet; we simulate a generic one. Recheck after nominations close 9 Nov."],
+  "Cranbourne|ALP":["Contested","Bookies favour One Nation (45%), we give it 22%. No One Nation candidate named yet; 2022 other-right vote was 14.9%. Click the seat."],
+  "Mildura|LNP":["Known defect","Returning independent Ali Cupper gets 2.7%; the fix is not shipped."],
+  "Shepparton|LNP":["Contested","Bookies give One Nation 41%, we give 10%. Not yet traced; independents in this seat are an open item."],
+  "Box Hill|ALP":["Contested","Bookies price a uniform swing off Labor. Our One Nation fill hands Labor back most of its loss in low-One-Nation seats. In 2022 we under-called Labor here."],
+  "Ashwood|ALP":["Contested","Same eastern-suburbs mechanism as Box Hill."],
+  "Glen Waverley|ALP":["Contested","Same eastern-suburbs mechanism as Box Hill."],
+  "Bentleigh|ALP":["Contested","Same eastern-suburbs mechanism as Box Hill."],
+  "Bayswater|ALP":["Contested","Labor member departing; the 25 Oct review judged the bookies closer."],
+  "Eureka|ONP":["Contested","Both sides favour One Nation; the review judged our 87% too confident (top of SA 2026's spread)."]
+};
+const ONP_NOTE = ["Contested","One Nation at 21.8% statewide has no Victorian history; its seat allocation is the least-tested part of the model."];
+const MKT_ONP = {}, OUR_ONP = {};
+for (const r of ROWS) if (r[2]==="ONP") { MKT_ONP[r[0]]=r[6]; OUR_ONP[r[0]]=r[7]; }
+function note(r){ const k=r[0]+"|"+r[2]; if(NOTES[k]) return NOTES[k]; if(r[2]==="ONP") return ONP_NOTE;
+  const m=MKT_ONP[r[0]]||0, o=OUR_ONP[r[0]]||0;
+  if (m>=0.25 && m-o>=0.15) return ["Contested",`Bookies give One Nation ${Math.round(100*m)}%, we give ${Math.round(100*o)}%. The value depends on our One Nation allocation, the least-tested part of the model.`];
+  return ["Clean",""]; }
+const col = {ALP:"--alp",LNP:"--lnp",GRN:"--grn",ONP:"--onp",IND:"--ind",OTHER:"--ind"};
+const cls = {"Clean":"ok","Contested":"warn","Known defect":"bad"};
+const $ = id => document.getElementById(id);
+const pct = x => (100*x).toFixed(0)+"%";
+function render(){
+  const me=+$("minedge").value, mp=+$("minp").value, g=$("grade").value;
+  $("minedgeval").textContent="+"+me.toFixed(2);
+  const out=[];
+  for(const r of ROWS){
+    const [seat,sel,c,price,book,nb,mkt,ours,edge]=r;
+    if(edge<me||ours<mp) continue;
+    const [gr,why]=note(r);
+    if(g==="Clean"&&gr!=="Clean") continue;
+    if(g==="noDefect"&&gr==="Known defect") continue;
+    const kelly=Math.max(0,(ours*price-1)/(price-1))/4;
+    out.push(`<tr><td>${seatBtn(seat)}</td><td><span class="dot" style="background:var(${col[c]||"--ind"})"></span>${esc(sel)}</td><td class="n">${price.toFixed(2)}</td><td>${esc({sportsbet:"Sportsbet",tab:"TAB",betfair:"Betfair"}[book]||book)}${nb>1?"":" (only book)"}</td><td class="n">${pct(mkt)}</td><td class="n">${pct(ours)}</td><td class="n">+${edge.toFixed(2)}</td><td class="n">${(100*kelly).toFixed(1)}%</td><td><span class="grade ${cls[gr]}">${gr}</span></td><td class="why">${esc(why)}</td></tr>`);
+  }
+  $("rows").innerHTML = out.join("") || `<tr><td colspan="10" class="sub">No selections pass these filters. Lower the minimum edge or widen the grade.</td></tr>`;
+  $("count").textContent = out.length+" selections";
+}
+function esc(s){ return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function seatBtn(name){ return `<button type="button" class="seatbtn" data-seat="${esc(name.toUpperCase())}">${esc(name)}</button>`; }
+const PNAME = {ALP:"Labor",LNP:"Coalition",GRN:"Greens",ONP:"One Nation",IND:"Independent",OTH:"Other",OTH_RIGHT:"Other right",OTHER:"Other"};
+const BOOK = {sportsbet:"Sportsbet",tab:"TAB",betfair:"Betfair"};
+function colOf(p){ return col[p] || (p==="OTH_RIGHT"?"--ind":"--ind"); }
+function showSeat(key){
+  const s = SEATS[key]; if(!s) return;
+  const f = s.f2;
+  // our probability per class, for the price table
+  const ourCls = {}; for (const p of s.p) { const c = ["ALP","LNP","GRN","ONP","IND"].includes(p[0]) ? p[0] : "OTHER"; ourCls[c]=(ourCls[c]||0)+p[6]; }
+  const parties = s.p.filter(p => p[3] >= 0.5 || p[6] > 0.001).map(p => {
+    const [party,cand,sit,prim,lo,hi,win] = p;
+    const sc = x => Math.min(100, x/60*100);
+    return `<tr><td><span class="dot" style="background:var(${colOf(party)})"></span>${PNAME[party]||party}</td><td>${cand?esc(cand):'<span class="sub">not named yet</span>'}${sit?' <span class="sub">(sitting)</span>':''}</td><td class="n">${prim.toFixed(1)}%</td><td><div class="range" title="${lo.toFixed(1)} to ${hi.toFixed(1)}"><i style="left:${sc(lo)}%;width:${sc(hi)-sc(lo)}%;background:var(${colOf(party)})"></i><b style="left:${sc(prim)}%"></b></div></td><td class="n">${pct(win)}</td></tr>`;
+  }).join("");
+  const v22 = s.v22.filter(x => x[1] >= 1).map(x => `<tr><td><span class="dot" style="background:var(${colOf(x[0])})"></span>${PNAME[x[0]]||x[0]}</td><td>${esc(x[2])}</td><td class="n">${x[1].toFixed(1)}%</td></tr>`).join("");
+  let px = "";
+  if (s.px.length) {
+    const sels = {}; for (const [src,sel,c,price,prob,op] of s.px) { (sels[sel] ||= {c, b:{}}).b[src] = [price,prob,op]; }
+    const order = Object.entries(sels).sort((a,b) => Math.min(...Object.values(a[1].b).map(v=>v[0])) - Math.min(...Object.values(b[1].b).map(v=>v[0])));
+    px = order.map(([sel,o]) => {
+      const cell = src => o.b[src] ? o.b[src][0].toFixed(2) : "–";
+      const mk = Object.values(o.b).reduce((a,v)=>a+v[1],0)/Object.values(o.b).length;
+      const best = Math.max(...Object.values(o.b).map(v=>v[0]));
+      // our probability for this selection as the builder matched it, taken from the book with the best price
+      const ours = Object.values(o.b).reduce((a,v) => v[0] > a[0] ? v : a)[2] ?? 0;
+      const e = ours*best-1;
+      return `<tr><td><span class="dot" style="background:var(${colOf(o.c)})"></span>${esc(sel)}</td><td class="n">${cell("sportsbet")}</td><td class="n">${cell("tab")}</td><td class="n">${cell("betfair")}</td><td class="n">${pct(mk)}</td><td class="n">${pct(ours)}</td><td class="n" style="color:var(${e>0?"--ok":"--muted"})">${e>0?"+":""}${e.toFixed(2)}</td></tr>`;
+    }).join("");
+    px = `<div><h4>Bookmaker prices</h4><div class="scroll"><table><thead><tr><th>Outcome</th><th class="n">Sportsbet</th><th class="n">TAB</th><th class="n">Betfair</th><th class="n">Bookies' prob</th><th class="n">Our prob</th><th class="n">Edge at best</th></tr></thead><tbody>${px}</tbody></table></div><p class="sub" style="margin-top:6px">Bookies' prob is margin removed, averaged over the books that list the outcome. Edge = our prob × best price − 1.</p></div>`;
+  } else px = `<p class="sub">No bookmaker prices this seat yet.</p>`;
+  const rv = REVIEW[key];
+  const review = rv ? `<div class="review"><h4>Contested: ${esc(rv.v)}</h4><p style="margin:0">${esc(rv.t)}</p><ol>${rv.w.map(x=>`<li>${esc(x)}</li>`).join("")}</ol></div>` : "";
+  $("dlg-body").innerHTML = `
+    <div class="dlg-head"><div><div class="eyebrow">${esc(s.r)}</div><h2 id="dlg-title">${esc(s.n)}</h2></div><button type="button" class="close" id="dlg-close">Close</button></div>
+    ${review}
+    <div class="facts">
+      <div class="fact"><div class="v">${PNAME[f[0]]} v ${PNAME[f[1]]}</div><div class="l">most likely final two (${pct(f[2])} of simulations)</div></div>
+      <div class="fact"><div class="v">${pct(f[3])}</div><div class="l">${PNAME[f[0]]} wins that pairing</div></div>
+      <div class="fact"><div class="v">${f[5].toFixed(1)}%</div><div class="l">${PNAME[f[0]]} two-candidate vote, 5th to 95th: ${f[4].toFixed(1)} to ${f[6].toFixed(1)}</div></div>
+      <div class="fact"><div class="v">${s.port>0?"+":""}${s.port.toFixed(2)}</div><div class="l">2025 federal swing in its booths, points to Labor</div></div>
+      <div class="fact"><div class="v">${s.onp.toFixed(2)}%</div><div class="l">2025 Senate One Nation vote in its booths (orders One Nation's seat share)</div></div>
+    </div>
+    <div><h4>Our forecast, 2026 first preferences</h4><div class="scroll"><table><thead><tr><th>Party</th><th>Candidate</th><th class="n">Primary</th><th>5th to 95th percentile (0–60%)</th><th class="n">Wins</th></tr></thead><tbody>${parties}</tbody></table></div></div>
+    ${px}
+    <div><h4>2022 result (first preferences)</h4><div class="scroll"><table><thead><tr><th>Party</th><th>Candidate</th><th class="n">Primary</th></tr></thead><tbody>${v22}</tbody></table></div></div>`;
+  $("dlg-close").addEventListener("click", () => $("dlg").close());
+  if (!$("dlg").open) $("dlg").showModal();
+  $("dlg").scrollTop = 0;
+}
+document.addEventListener("click", e => { const b = e.target.closest(".seatbtn"); if (b) showSeat(b.dataset.seat); });
+$("dlg").addEventListener("click", e => { if (e.target === $("dlg")) $("dlg").close(); });
+const BK = {sportsbet:"Sportsbet",tab:"TAB",betfair:"Betfair"};
+const days = Math.round((Date.parse("2026-11-28") - Date.parse(META.day)) / 864e5);
+$("daysout").textContent = days;
+const fetchedTxt = Object.entries(META.books).map(([b,v]) => `${BK[b]} ${v.seats} seats, fetched ${v.fetched_utc ? v.fetched_utc.replace("T"," ").slice(0,16)+" UTC" : "time not recorded"}`).join("; ");
+$("provenance").innerHTML = `Capture of ${esc(META.day)}. Forecast built ${esc(META.built_at.slice(0,16).replace("T"," "))} UTC (git <code>${esc(META.git_sha)}</code>, ${META.n_sims.toLocaleString()} simulations). ${esc(fetchedTxt)}.`;
+const P = META.parties, ORDER = ["LNP","ALP","ONP","GRN"];
+$("seatbar").setAttribute("aria-label", "Expected seats: " + ORDER.map(k => `${PNAME[k]} ${P[k].expected.toFixed(1)}`).join(", "));
+$("seatbar").innerHTML = ORDER.map(k => `<span style="flex:${P[k].expected};background:var(${col[k]})">${k} ${P[k].expected.toFixed(1)}</span>`).join("") + `<span style="flex:${Math.max(0, 88 - ORDER.reduce((a,k)=>a+P[k].expected,0))};background:var(--ind)"></span>`;
+const pc1 = x => (100*x).toFixed(1) + "%";
+$("chamber").innerHTML = [
+  ["Hung parliament (nobody reaches 45)", META.p_hung, ""],
+  ["One Nation holds the balance of power", META.p_onp_bop, `ONP ${P.ONP.q05} to ${P.ONP.q95}`],
+  [`<span class="dot" style="background:var(--lnp)"></span>Coalition wins most seats`, P.LNP.p_most, `${P.LNP.q05} to ${P.LNP.q95}`],
+  [`<span class="dot" style="background:var(--alp)"></span>Labor wins most seats`, P.ALP.p_most, `${P.ALP.q05} to ${P.ALP.q95}`],
+  [`<span class="dot" style="background:var(--lnp)"></span>Coalition majority`, P.LNP.p_majority, ""],
+  [`<span class="dot" style="background:var(--alp)"></span>Labor majority`, P.ALP.p_majority, ""]
+].map(r => `<tr><td>${r[0]}</td><td class="n">${pc1(r[1])}</td><td>${r[2]}</td></tr>`).join("");
+$("favs").textContent = "Seat favourites: " + Object.entries(META.favs).sort((a,b)=>b[1]-a[1]).map(([k,v]) => `${PNAME[k]||k} ${v}`).join(", ") + ".";
+$("pricedline").innerHTML = `${Object.entries(META.books).map(([b,v]) => `${v.seats} of 88 seats are priced by ${BK[b]}`).join(", ")}. We pick the same favourite as the bookies in <b>${META.n_same} of ${META.n_priced}</b>. The ${META.differ.length} where we differ: ${META.differ.map(seatBtn).join(", ")}. Click any seat name for its detail.` + (META.skipped.length ? ` Left out of the value table: ${META.skipped.map(s=>esc(s)).join(", ")} (Liberal and Nationals priced separately).` : "");
+["minedge","minp","grade"].forEach(id=>$(id).addEventListener("input",render));
+render();
+</script>

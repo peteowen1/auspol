@@ -99,3 +99,26 @@ walks did), once at the published config and once with `AUSPOL_ROW_SHIFT_EXACT=1
 salience cells and 1 seat-poll cell today), the per-cell diff of `seat-shares-vic-2026-*.csv` on those 44 cells and on
 every other cell of their rows, and every seat whose winner probability moves by more than 0.01. Shown to Pete before
 anything publishes.
+
+## Screen results (appended 2026-10-29; nothing above edited)
+
+**AEF-7 (1,000 sims, code 27f29801, `score_quick_targets.R`): primary within 1 SE.** Targets 390 seats in 6
+elections (wa2025 untouched). Clause 1 target-seat log loss -0.0032 (SE 0.0038; same at the 1e-4 floor); clause 2
+all seats -0.0018 (SE 0.0024) PASS; clause 3 leave-one-election-out better by more than 1 SE in 1 of 6 drops: FAIL;
+clause 4 no election worse by 2 SE: PASS (vic2022 +0.0054, SE 0.0040, the worst); clause 5 sign kept without
+Berowra and Cowper (-0.0016): PASS. fed2025 carries 132% of the gain (Berowra 0.489 -> 0.697, Cowper 0.234 ->
+0.305); vic2022 loses Northcote 0.137 -> 0.101, Hawthorn 0.268 -> 0.237, Kew 0.512 -> 0.472. Share squared error
+on the 1,835 moved cells +602 (SE 1,436).
+
+**Clause (c) fired: 38 fallbacks in about 1,066 moved rows (3.6%, limit 1%).** Looked at before going on: fed2022
+seat-poll 14 of 151 rows, fed2025 seat-poll 9 of 150, nsw2023 seat-poll 1 of 1, qld2024 salience 14 of 93;
+every other blend 0. The seat-poll ones are rows where the blend moved every class, so nothing was left to scale,
+and the fallback is the old rescale, which is the sensible answer there; the 1% limit did not foresee whole-row
+moves. Reported, not amended: the clause stands as written and is part of the verdict. All 35 launched next to
+settle the rule.
+
+**All 35 (1,000 sims): NOT PASSED; stays off.** Targets 981 seats in 19 elections. Clause 1 target-seat log loss
+-0.0014 (SE 0.0017): within 1 SE. Clause 2 all seats -0.0005 (SE 0.0006): PASS. Clause 3 leave-one-election-out
+better by more than 1 SE in 1 of 19 drops: FAIL. Clause 4: nsw2019 worse by more than 2 SE of its own seats: FAIL.
+Clause 5 sign kept without Berowra and Cowper (-0.0008): PASS. Share squared error on 3,628 moved cells +729
+(+1%, SE 1,367). `AUSPOL_ROW_SHIFT_EXACT` stays "0"; no deciding run, no live walk.

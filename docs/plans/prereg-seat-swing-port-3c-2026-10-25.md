@@ -226,3 +226,56 @@ touched by this arm; that is the review's fix 1 (`AUSPOL_ONP_ORDER=senate_rank`)
 **Prerequisite before shipping:** the daily CI run reads `output/seat-swing-port-vic2026.csv`, written by
 `scripts/promote_rebuild.R`. Under the arm that table carries `lineup3c`/`w3c` and is refused under any other setting,
 so promote must run with the shipped value set.
+
+## RESULT, mode 2 screen on the 8 movable elections (2026-10-28, quick_arm 1,000 sims, run from `dev` 7299d304)
+
+`quick_arm.R "AUSPOL_SEAT_SWING_PORT_3C=2" --pairs=vic2022,nsw2023,qld2020,qld2024,sa2022,sa2026,wa2021,wa2025`; HD1 confirmed the
+switch applied in all 16 runs. Clause 5: `S3C2` printed for all 8 targets with exactly the dry-run weights (vic2022 0.790,
+nsw2023 0.763, qld2020 0.468, qld2024 0.019, sa2022 0.460, sa2026 0.020, wa2021 0.785, wa2025 0.312).
+
+Seat-winner log loss, lower is better (SE clustered on election):
+
+| scope | seats | baseline | arm | change (SE) |
+|---|---:|---:|---:|---|
+| clause 1, the 8 movable elections | 579 | 0.2186 | 0.2185 | −0.0001 (0.0004): within 1 SE, NOT PASSED |
+| AEF-7 subset of those | 380 | 0.2423 | 0.2426 | +0.0003 (0.0006) |
+| clause 2, affected seats (frac ≥ 0.5) | 31 of 34 | | | mean +0.0077 per seat (worse); ALP+LNP squared share error −73.1 (better) |
+
+Per election (log loss change): sa2026 +0.0024, wa2025 +0.0012, vic2022 +0.0004, nsw2023 +0.0002, sa2022 −0.0002, wa2021
+−0.0008, qld2020 −0.0009, qld2024 −0.0013. Share squared error on the 442 changed cells −83.5 (SE 62.7), not clear.
+
+Clause 2 seats come from each `S3C1` line's "largest" list, which prints the top six, so 3 of the 34 are missing (wa2025's
+7th-8th and one other); scored from the quick_arm cache (`%TEMP%/auspol-quickarm/cache/91cbf27330cf` arm, `c5e66bdf0fca`
+baseline). The targeted log loss is driven by Monaro +0.136, Mildura +0.103, Albany +0.067, Flinders +0.057; South Coast
+−0.127 the other way. Shares improve while winner probabilities slightly worsen.
+
+Not yet run: clause 4 controls (`--pairs=all`), mode 1 and `W=0.5` arms, the live walk (queued 28 Oct as a `port3c` run in
+the live-walk agent's experiment 1). Per the MDE paragraph this is "no measurable effect at this size, not a refusal";
+the decision goes to Pete with the live walk.
+
+### Live walk and Pete's decision (2026-10-28)
+
+Live walk (`reviews/live-walk-contested-seats-2026-10-28.md`, run `port3c`): `S3C2 vic2026 ... w 0.006` as dry-run. Bendigo West
+ALP 0.08 -> 0.36, LNP 0.54 -> 0.19, ONP 0.36 -> 0.43 (market 0.44 / 0.12 / 0.41); Bendigo East favourite LNP 0.60 -> ONP 0.64;
+no other seat moved more than 0.05 except Carrum ALP -0.05 (untouched; likely noise).
+
+**Pete, 28 Oct: finish the checks, then ship** (clause 1 not passed; his call under the MDE paragraph, recorded here as an
+override of clause 1's 1 SE bar). Remaining before shipping: clause 4 controls on `--pairs=all` (27 untouched elections
+byte-identical), then the 20k deciding run (`deciding_run.ps1 -Arm "AUSPOL_SEAT_SWING_PORT_3C=2" -Label port-3c`); ship only if
+neither shows harm (no election worse by more than 2 SE, clause 7).
+
+### Controls and clause 7, all 35 elections (2026-10-28)
+
+`quick_arm.R "AUSPOL_SEAT_SWING_PORT_3C=2" --pairs=all` (1,000 sims, 1,778 s): **clause 4 PASSES**, 27 of 35 elections
+byte-identical and the 8 that moved are exactly the 8 named movable. Pooled over 2,931 seats: −0.0000 (SE 0.0001); AEF-7 681
+seats +0.0002 (SE 0.0003). **Clause 7 holds**: paired seat-difference SE per movable election, worst sa2026 +0.0024 (SE
+0.0016, +1.5 SE), then wa2025 +1.0 SE; best qld2024 −1.7 SE. Next: the 20k deciding run, then ship per Pete's decision.
+
+### Deciding run and SHIP (2026-10-28)
+
+`deciding-runs/20261028-0822-port-3c/` (DONE 09:53, 20,000 sims, all 35, code 1ab03e1f): pooled seat log loss 0.3153 -> 0.3153
+(-0.0000, SE 0.0001) over 2,931 seats; AEF-7 0.2638 -> 0.2639 (+0.0001, SE 0.0003); 27 of 35 elections byte-identical (clause 4
+passes). Clause 7 from the run's cache, paired seat SE per movable election: sa2026 +0.0022 (SE 0.0017, +1.3 SE), wa2025 +0.9 SE,
+vic2022 +0.3, sa2022 +0.3, nsw2023 -0.1, qld2020 -0.4, wa2021 -1.1, qld2024 -1.9: none worse by 2 SE. **SHIPPED** on Pete's
+decision (clause 1 overridden, recorded above): `published_flags.R` and the inline default to "2", added to
+`post_xgb_switches()` and pinned "0" in stage 1 of `rebuild_forecasts.sh`.

@@ -38,10 +38,20 @@ match_booth_units <- function(live, ref) {
 #' @param ref data.table of the same seat's matched reference rows, keyed to
 #'   the LIVE unit names: `unit, booth_type, cls, v`.
 #' @param counted_units character vector of live units already reported.
+#' @param type_gap Optional data.table `booth_type, cls, gap`: for a booth type with NO counted
+#'   unit in this seat, its swing is the seat's all-types swing PLUS this gap (the type's swing
+#'   relative to ordinary booths, measured in other seats and shrunk; issue #160). `NULL` (the
+#'   default) is byte-identical to the previous behaviour.
+#' @param total `"table"` (default): counted share is counted votes over the votes in `live`. `"projected"`: over
+#'   counted votes plus the projected size of the uncounted units (a live feed has no final total). `"expected"`: over
+#'   `expected_total` (enrolment x turnout), and the uncounted units' projected sizes are rescaled to sum to what is
+#'   left of it (`expected_total` minus counted, floored at 0); with `expected_total` NA or not positive it behaves as `"projected"`.
+#' @param expected_total Expected final votes of the seat, for `total = "expected"`.
 #' @return data.table `cls, projected, counted_share`, or `NULL` if no
 #'   counted unit has a reference (nothing to measure a swing on).
 #' @export
-project_seat_from_booths <- function(live, ref, counted_units) {
+project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, total = c("table", "projected", "expected"), expected_total = NA_real_) {
+  total <- match.arg(total)
   live <- data.table::as.data.table(live); ref <- data.table::as.data.table(ref)
   classes <- unique(live$cls)
   units <- unique(live[, .(unit, booth_type)])
@@ -61,15 +71,38 @@ project_seat_from_booths <- function(live, ref, counted_units) {
   grid <- merge(grid, ref[, .(unit, cls, rv = v)], by = c("unit", "cls"), all.x = TRUE)
   grid <- merge(grid, ref_tot, by = "unit", all.x = TRUE)
   grid <- merge(grid, sw_t, by = c("booth_type", "cls"), all.x = TRUE); grid <- merge(grid, sw_a, by = "cls", all.x = TRUE)
+  if (!is.null(type_gap) && nrow(type_gap)) {
+    # An update join, NOT merge(): merge() re-sorts the rows by its keys, and `has_ref` below is a
+    # vector aligned to grid's row order across the later merge by `cls` -- re-sorting by booth type
+    # here misaligned it and returned NA projections for 28 of 88 seats (found on the first replay).
+    tg <- data.table::as.data.table(type_gap)
+    grid[, gap := NA_real_]
+    grid[tg, on = c("booth_type", "cls"), gap := i.gap]
+    grid[is.na(sw) & !is.na(gap), sw := sw_all + gap]
+    grid[, gap := NULL]
+  }
   grid[is.na(sw), sw := sw_all]; grid[is.na(sw), sw := 0]; grid[is.na(rv), rv := 0]
   has_ref <- grid$unit %in% ref_tot$unit
   mean_unit <- mean(ref_tot$rt)
   grid[, size := data.table::fifelse(has_ref, rt * growth, mean_unit * growth)]
+  use_exp <- total == "expected" && is.finite(expected_total) && expected_total > 0
+  if (use_exp) {
+    cv0 <- sum(live[unit %in% counted_units]$v)
+    left <- max(expected_total - cv0, 0)
+    tot_sz <- sum(unique(grid[, .(unit, size)])$size)
+    if (tot_sz > 0) grid[, size := size * left / tot_sz]
+  }
   cs_seat <- live[unit %in% counted_units, .(sh = sum(v)), by = cls][, sh := sh / sum(sh)]
   grid <- merge(grid, cs_seat, by = "cls", all.x = TRUE); grid[is.na(sh), sh := 0]
   ref_cls <- unique(ref$cls)
   grid[, proj := data.table::fifelse(has_ref & cls %in% ref_cls, pmax(0, (rv / pmax(rt, 1) + sw) * size), sh * size)]
   out <- rbind(live[unit %in% counted_units, .(v), by = cls], grid[, .(v = proj), by = cls])[, .(projected = sum(v)), by = cls]
+  if (use_exp) {
+    counted_share <- min(1, sum(live[unit %in% counted_units]$v) / expected_total)
+  } else if (total != "table") {
+    cv <- sum(live[unit %in% counted_units]$v)
+    counted_share <- cv / (cv + sum(unique(grid[, .(unit, size)])$size))
+  }
   out[, counted_share := counted_share][]
 }
 

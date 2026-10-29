@@ -343,6 +343,13 @@ CLASSIFY <- list(
   AUSPOL_LEVEL_CONSERVE_LAMBDA = paste(
     "Sub-setting of AUSPOL_LEVEL_CONSERVE (strength, default 1), read only inside R/level_conserve.R, so every entry point",
     "that calls level_conserve_apply() honours it; 'NO' in the harness columns is the grep, not a gap."),
+  AUSPOL_NOM_LIVE_FILE = paste(
+    "TEST ONLY (\"\"), 2026-10-29: the file live_nominations() (R/nomination_zero.R) reads instead of output/candidacies.csv,",
+    "for the F18 walk on a synthetic list. Read inside R/, so 'NO' in the entry-point columns is the grep, not a gap."),
+  AUSPOL_LEVEL_CONSERVE_HOLD = paste(
+    "Sub-setting of AUSPOL_LEVEL_CONSERVE (classes held out of the rake, default \"\"; arm \"IND\", Amendment 1, 2026-10-29),",
+    "read only inside R/level_conserve.R (level_conserve_hold()), so every entry point that calls level_conserve_apply()",
+    "honours it; 'NO' in the harness columns is the grep, not a gap."),
   AUSPOL_ERROR_DIST = paste(
     "SHIPPED (1) 2026-10-17 on Pete's override (with AUSPOL_COMPOSITION_SD), UNIVERSAL via R/: error_dist_args() (R/error_dist.R) is called at every simulate_seat_contests() site",
     "(six harnesses, NT, fit_seats_full.R) and reads the switch inside R/. plans/prereg-error-distribution-2026-10-17.md"),

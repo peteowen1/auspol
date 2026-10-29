@@ -1,3 +1,32 @@
+# auspol 0.4.116
+
+- **Night state from the published forecast** (`scripts/fit_seats_full.R`): every run saves `output/night-state-<stem>.rds`, everything its final simulation takes, so the election-night runner starts from exactly that forecast (`night_runner.R --state=`). Simulating from the saved state alone reproduces the published seat probabilities and seat totals exactly. The daily workflow uploads it to the `forecast-latest` release; polling day's copy is the one used on the night. Until now only the backtest harness could save one, so 2026 had none.
+
+# auspol 0.4.115
+
+- **Per-booth results in the night JSON** (`night_booth_results()`, `night_booth_results_safe()`, `night_build_json(booths =)`): each reported ordinary booth's first preferences (Labor, Coalition, Greens, other) and the VEC's two-candidate count once posted, by district, for the live page's map. Any error in it drops the block (NW13) and the seats still publish.
+
+# auspol 0.4.114
+
+- **Night JSON for the live page** (`night_build_json()`): each party's seat-count histogram, each candidate's afternoon first preference, and the VEC's raw two-candidate count per seat beside the flow projection and the model's estimate. `scripts/night_replay_json.R` writes a replayed vic2022 night as the runner would.
+- **Night upload** (`scripts/night_publish_r2.sh`, `night_loop.R --upload-key`): each good cycle goes to R2 `auspol/night/<name>.json` with a 30-second cache; refuses damaged, afternoon or stale files and any key outside `auspol/night/`.
+
+# auspol 0.4.113
+
+- **Election-night update** (`night_booth_update()`, `night_tcp_obs()`, `night_apply_tcp()`): the afternoon forecast updated from counted booths through the shipped simulator, with the VEC's 2CP count as evidence on the preference flow and pooled vote-type gaps. vic2022 replay seat log loss 0.2643 (afternoon) -> 0.1133 at 10% counted, 0.0929 at 50%. Switches default off; the published forecast is unchanged.
+- **Election-night runner** (`night_cycle()`, `scripts/night_runner.R`, `scripts/night_loop.R`): VEC feed snapshot -> raw archive -> booth tables -> update + simulate -> atomic JSON. Refuses to publish on a seat/feed mismatch, a damaged or stale snapshot, no turnout file, or a seat with no listed voting centres (NW1-NW12). Counted share from enrolment x the seat's previous night-vote rate.
+- **Upper-house results** 2022 and 2018 (`scripts/fetch_council_results.R`, `output/council-*`).
+
+# auspol 0.4.112
+
+- **Port 3C shipped** (`AUSPOL_SEAT_SWING_PORT_3C="2"`): the seat-swing port no longer treats a federal Coalition line-up change as a swing the state seat shares. Null on the 20k deciding run over 2,931 seats; Bendigo West Nationals 0.54 -> 0.19. Post-xgb (stage 1 pins it to 0). Republished from stage 6.
+- **VEC election-night feed reader** (`vec_feed_latest()`, `vec_feed_read_lh()`): newest snapshot and the verbose Assembly XML into tidy tables, for the live model (#148). Adds `xml2` to Imports.
+
+# auspol 0.4.111
+
+- **Value-odds page** (`scripts/value_odds_vic2026.R`, template `scripts/value-page-template.html`): our published Victoria 2026 seat probabilities against every Sportsbet, TAB and Betfair price on a capture date, with edge, a value table and a click-through per seat. `snapshot_benchmarks.R` runs it after each capture (VB19). Scraped names are escaped.
+- **Port 3C screened** (`AUSPOL_SEAT_SWING_PORT_3C`, still off): no measurable effect over all 35 elections, controls byte-identical; Pete chose to ship after the 20k deciding run. Contested-seat research in `docs/reviews/*-2026-10-28.md`.
+
 # auspol 0.4.110
 
 - **`AUSPOL_ROW_SHIFT_EXACT`** (audit F16, off): the salience and seat-poll blends can keep the cells they moved exact and scale only the others, instead of rescaling the whole row. Rows where the moved cells reach ~100 beside unmoved cells, or that have an NA cell, fall back to the rescale (RSX1).

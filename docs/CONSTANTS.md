@@ -54,6 +54,7 @@ number without anything failing.
 | `SEAT_POLL_N_FALLBACK` | `seat_poll_blend.R` (`SEAT_POLL_N_FALLBACK`) | 600: seat sample size for a direct poll with none recorded, only when no earlier direct poll records one (otherwise the earlier median, ~750-800). | **CHOSEN**; overridden by data from fed2019 on. |
 | `SEAT_POLL_MODEL_VAR_PRIOR` | `seat_poll_blend.R` (`SEAT_POLL_MODEL_VAR_PRIOR`) | 25 points^2 (sd 5): our seat primary error before any polled election, for `AUSPOL_SEAT_POLL_PRECISION_BLEND`. | **CHOSEN** from the AEF-7 ledger's primary RMSE (5.13); per-class values are **ESTIMATED** time-forward and shrunk toward it (`seat_poll_model_var()`). |
 | `AUSPOL_LEVEL_CONSERVE_LAMBDA` | `level_conserve.R` | 1: strength of `AUSPOL_LEVEL_CONSERVE` (shares = (1 - lambda) current + lambda raked). | **CHOSEN** by the pre-registration (plans/prereg-level-conserve-2026-10-25.md): 1 primary, 0.5 sensitivity. ESTIMABLE time-forward as the least-squares coefficient of actual-minus-current implied share on raked-minus-current, over earlier elections (the prereg's fitted sensitivity, computed from the `LCV1` log lines; not built as a switch). |
+| `AUSPOL_LEVEL_CONSERVE_HOLD` | `level_conserve.R` | `""`: classes held out of `AUSPOL_LEVEL_CONSERVE`'s rake (arm: `IND`). | **CHOSEN** by Amendment 1 of the prereg (2026-10-29, Pete), from one traced failure (fed2022 teal seats). A class list, not a number; which classes the level model cannot see is ESTIMABLE time-forward as each class's level miss against its seats' implied share over earlier elections, not built. |
 | rake tolerances | `level_conserve.R` (`level_conserve_rake()`) | converge at worst class gap < 1e-8 points, at most 10,000 sweeps; REFUSE (stop) if the gap is still > 0.01 points. | **NUMERICAL**, not a model constant: a feasible problem converges far inside 1e-8; 0.01 is the prereg's own stopping tolerance, kept as the refusal bar. |
 | level-conserve seat weights | `level_conserve.R` (`level_conserve_weights()`) | formal votes per seat at the previous election (`output/candidacies.csv`); an unmatched seat gets the median. | **CHOSEN** by the pre-registration (knowable before polling day). |
 | `POLL_RECORD_HALFLIFE` | `poll_record.R` | 30 days: a past poll's weight in its firm's track record halves every 30 days before that election's polling day (statewide arm `weights = "record"`). | **CHOSEN** (2026-10-09) so final-month polls dominate a firm's record without a hard cut-off. ESTIMABLE by the same held-out score. |
@@ -675,3 +676,19 @@ Existing rows for `AUSPOL_SEAT_POLL_PRIOR` (0.75), `_PRIOR_SD` (0.25), the half-
 | `n_member >= 8` (live MP tier floor) | `scripts/fit_seats_full.R:973` | 8 | **CHOSEN, a min_n cliff**; the harnesses never had it. Bypassed when `AUSPOL_MP_SLOPE_POOL=1`, which keeps every class and shrinks it instead. |
 | `tau^2`, `se_i` (pooling weight `w = tau^2/(tau^2+se_i^2)`) | `R/mp_slope_pool.R` | per target | **ESTIMATED**: `tau^2` by DerSimonian-Laird over the classes with member rows (floored at 0; 0 with fewer than two classes), `se_i` from one within-class residual variance pooled over classes. No new hand-set number. |
 | pooled-toward slope `mu` | `scripts/fit_mp_slope.R` (`shr()`, `K = 10`, `PRIOR_MEMBER = 1.0`) | per target | **REUSED**, not new: the time-forward grid's own all-class member slope, shrunk toward 1.0 by `n/(n+10)`, so a target with no earlier member rows gets 1.0 as the grid does. |
+
+## Election-night update (`R/night_update.R`, `R/booth_projection.R`; issues #153, #160, #161)
+
+Replay-only until the 2026 feed arrives; none is read by the published forecast. Each was set on the vic2022 replay
+(2018 booths as the reference), so none is held out.
+
+| constant | value | where | can it come from data? |
+|---|---|---|---|
+| projection sd by counted share | 3.5 / 2.63 / 1.93 / 1.77 / 0.26 at 0-5% / 8.6% / 22.4% / 34.6% / 95% | `booth_projection_sd()` | fitted on the 2018->2022 replay (rehearsal 1); refit on another state's booth pair |
+| report order | small ordinary booths first (log size + N(0, 0.5)), postals last, seed 2022 | `.night_order()` | the 2026 feed's real order replaces it |
+| early-vote report position | "last" (default) or "interleaved" U(0.3, 1.0) of the way through the booths | `.night_order(early =)` | the 2026 feed; each early centre is its own booth |
+| vote-type gap shrinkage `gap_k` | off by default; 5 chosen (k = 20 tried: 75% counted 0.0712 vs 0.0750) | `night_booth_update(gap_k =)` | more replays (other states) |
+| VEC pair minimum | 0.20 of draws | `night_apply_tcp(pair_min =)` | set by judgement; check on a replay with VEC first-pair errors |
+| flow SE below 3 counted booths | 0.25 | `night_tcp_obs()` | judgement (a flow share's plausible range) |
+| flow SE floor | 0.02 | `night_tcp_obs()` | judgement |
+| new-candidate sd multiplier | 1 (off): 1.5 and 2 were slightly worse on 2022 (few new candidates; One Nation 2026 untestable) | `night_booth_update(new_sd_mult =)` | a replay with a new party (SA 2026) |

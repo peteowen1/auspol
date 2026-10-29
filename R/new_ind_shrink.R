@@ -45,7 +45,9 @@ post_xgb_switches <- function() {
            AUSPOL_LEVEL_CONSERVE = level_conserve_mode(), AUSPOL_IND_RETURN = ind_return_mode(),
            AUSPOL_ONP_NEWSEAT_RULE = if (onp_newseat_rule()) "1" else "0",
            # "federal" is the order the as-at trees were trained under.
-           AUSPOL_ONP_ORDER = { o <- Sys.getenv("AUSPOL_ONP_ORDER", "senate_rank"); if (identical(o, "federal")) "0" else o })
+           AUSPOL_ONP_ORDER = { o <- Sys.getenv("AUSPOL_ONP_ORDER", "senate_rank"); if (identical(o, "federal")) "0" else o },
+           # the port (and so its 3C cleaning) acts after the xgb override; the as-at trees trained without it
+           AUSPOL_SEAT_SWING_PORT_3C = seat_swing_port_3c_mode())
   cur[cur != "0"]
 }
 

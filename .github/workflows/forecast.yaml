@@ -1,4 +1,6 @@
 name: Forecast refresh
+# "(daily)" marks the day's run (the schedule or the worker's daily=true); the gate counts only those.
+run-name: ${{ (github.event_name == 'schedule' || inputs.daily) && 'Forecast refresh (daily)' || 'Forecast refresh' }}
 
 # Runs the whole pipeline against fresh poll data and PUBLISHES the result to
 # the forecast-latest release (and, once the secrets exist, the inthegame-data
@@ -8,13 +10,20 @@ name: Forecast refresh
 # THIS run, and a validation breach elsewhere is a warning, not a publish.
 
 on:
+  # The on-time trigger is the inthegame-blog API worker: its */30 cron dispatches this workflow
+  # at 17:30 UTC (04:30 Melbourne in daylight time) with daily=true
+  # (inthegame-blog worker/src/auspol-forecast-dispatch.js). GitHub's own schedule stays as the
+  # FALLBACK: off the hour did not help, "37 17" started 3.8-4.3 h late (28-29 Oct 2026) and "0 20"
+  # 2-6.8 h late (59 of 60, 28 Aug - 26 Oct). The gate job below skips the fallback when the
+  # daily run already went.
   schedule:
-    # 17:37 UTC = 04:37 Melbourne in daylight time (03:37 in standard time). Off the hour on
-    # purpose: at "0 20" GitHub started 59 of 60 runs (28 Aug - 26 Oct 2026) over 2 h late
-    # (median 2.9 h, max 6.8 h), so the forecast landed ~10:00. Expect ~07:30 now.
     - cron: "37 17 * * *"
   workflow_dispatch:
     inputs:
+      daily:
+        description: "This is the day's scheduled forecast (set by the worker): the alarm treats a failure as a scheduled one"
+        type: boolean
+        default: false
       quick:
         description: "Skip the slow stages: federal and NSW cycles, and the candidate-level seat model with its S5 check"
         type: boolean
@@ -34,13 +43,55 @@ permissions:
   # Needed only by the "Raise an alarm" step below, which opens or updates one
   # tracking issue when a SCHEDULED run fails.
   issues: write
+  # The gate job lists earlier runs of this workflow.
+  actions: read
 
 concurrency:
   group: forecast-refresh
   cancel-in-progress: false
 
 jobs:
+  # One daily run. A daily run (the schedule, or the worker's daily=true) skips when an EARLIER daily
+  # run started in the last 12 hours is still going or succeeded (and its refresh job did not skip):
+  # that covers the late fallback and a duplicated worker fire. A failed earlier run does not count,
+  # so the fallback retries it; a manual or quick run is not "(daily)" and never counts. Manual runs
+  # (daily unset) always run.
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          DAILY: ${{ inputs.daily }}
+        run: |
+          go() { echo "run=$1" >> "$GITHUB_OUTPUT"; }
+          if [ "$EVENT" != "schedule" ] && [ "$DAILY" != "true" ]; then echo "not a daily run ($EVENT): run"; go true; exit 0; fi
+          since=$(( $(date -u +%s) - 12 * 3600 ))
+          q="[.[] | select(.databaseId < $GITHUB_RUN_ID) | select((.createdAt | fromdateiso8601) > $since)"
+          q="$q | select(.displayTitle == \"Forecast refresh (daily)\")"
+          q="$q | select(.status != \"completed\" or .conclusion == \"success\") | .databaseId] | .[]"
+          # A gh error must not cost a day: run anyway and say so.
+          if ! ids=$(gh run list -R "$GITHUB_REPOSITORY" --workflow forecast.yaml --limit 10 --json databaseId,createdAt,status,conclusion,displayTitle --jq "$q"); then
+            echo "::warning::could not list earlier forecast runs; running anyway"; go true; exit 0
+          fi
+          for id in $ids; do
+            if ! job=$(gh run view "$id" -R "$GITHUB_REPOSITORY" --json jobs --jq '[.jobs[] | select(.name == "refresh") | (if (.conclusion // "") == "" then .status else .conclusion end)] | first // "queued"'); then
+              echo "::warning::could not read run $id; running anyway"; go true; exit 0
+            fi
+            if [ "$job" != "skipped" ]; then
+              echo "Skipped: run $id already covers today (its refresh job: $job)" | tee -a "$GITHUB_STEP_SUMMARY"
+              go false; exit 0
+            fi
+          done
+          go true
+
   refresh:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
@@ -457,6 +508,10 @@ jobs:
           # this run read it, plus the anchor commit it came from.
           cp external/aus-polling-analyser/analysis/Data/poll-data-vic.csv output/polls-vic-snapshot.csv
           gh release upload forecast-latest output/forecast-vic2026.json output/forecast-history.csv output/seat-probs-vic-2026.csv output/seat-shares-vic-2026.csv output/victoria-2026.html output/polls-vic-snapshot.csv --clobber
+          # The election-night runner's starting state (scripts/night_runner.R --state=; map #148): fit_seats_full.R writes it
+          # every run. Polling day's copy is the one used on the night. Tolerant: a missing file or a failed upload must not stop
+          # the publish (set -e is on, and the R2 step after this one would be skipped).
+          if [ -s output/night-state-vic-2026.rds ]; then gh release upload forecast-latest output/night-state-vic-2026.rds --clobber || echo "::warning::night-state upload failed -- the night runner has no state from this run"; else echo "::warning::no output/night-state-vic-2026.rds -- the night runner has no state from this run"; fi
       - name: Publish the forecast to R2 for the ITG page
         # The blog (inthegame-blog) fetches every dataset client-side from the
         # inthegame-data R2 bucket; its CSP does not allow github.com, so the
@@ -639,7 +694,7 @@ jobs:
       # otherwise a week of failures buries the repo in duplicates and the
       # alarm becomes the thing people learn to ignore.
       - name: Raise an alarm
-        if: failure() && (github.event_name == 'schedule' || inputs.alarm_test)
+        if: failure() && (github.event_name == 'schedule' || inputs.daily || inputs.alarm_test)
         env:
           GH_TOKEN: ${{ github.token }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -883,7 +938,7 @@ jobs:
     # NOT failure(): at job level that is true when ANY ancestor failed, so a
     # failed refresh would raise this alarm too, saying the forecast published
     # (review, 2026-10-08). Only the scenario jobs' own results count.
-    if: always() && (needs.scenarios.result == 'failure' || needs.publish-scenarios.result == 'failure') && (github.event_name == 'schedule' || inputs.alarm_test)
+    if: always() && (needs.scenarios.result == 'failure' || needs.publish-scenarios.result == 'failure') && (github.event_name == 'schedule' || inputs.daily || inputs.alarm_test)
     runs-on: ubuntu-latest
     steps:
       - name: Raise an alarm

@@ -126,3 +126,29 @@ test_that("weights come from the previous election's formal votes, median for un
   expect_equal(as.numeric(w0), c(1, 1))
   expect_match(attr(w0, "source"), "EQUAL")
 })
+
+test_that("corpus weights are a plain vector the rake can use (tapply's 1-d array crashed every arm run)", {
+  corpus <- data.frame(election = c("wa2013", "wa2013", "wa2013"), region = "wa", year = 2013,
+                       seat = c("Alpha", "Alpha", "Beta"), votes = c(600, 400, 3000))
+  w <- level_conserve_weights(c("Alpha", "Beta", "New Seat"), "wa2017", corpus = corpus)
+  expect_null(dim(w))
+  sh <- matrix(c(50, 30, 20, 40, 40, 20, 30, 50, 20), nrow = 3, byrow = TRUE,
+               dimnames = list(c("Alpha", "Beta", "New Seat"), c("ALP", "LNP", "GRN")))
+  R <- level_conserve_rake(sh, c(ALP = 40, LNP = 40, GRN = 20), w)
+  expect_equal(unname(rowSums(R)), c(100, 100, 100), tolerance = 1e-6)
+})
+
+test_that("AUSPOL_LEVEL_CONSERVE_HOLD keeps a class's cells and the others fill the rest by their levels", {
+  f <- lc_fixture()
+  withr::local_envvar(AUSPOL_LEVEL_CONSERVE = "final", AUSPOL_LEVEL_CONSERVE_HOLD = "ONP")
+  out <- lc_quiet(level_conserve_apply(f$shares, f$level, "x2020", stage = "final", weights = f$w))
+  expect_identical(out[, "ONP"], f$shares[, "ONP"])
+  avail <- 100 - lc_implied(f$shares, f$w)[["ONP"]]
+  want <- f$level[c("ALP", "LNP", "GRN")] / sum(f$level[c("ALP", "LNP", "GRN")]) * avail
+  expect_lt(max(abs(lc_implied(out, f$w)[names(want)] - want)), 1e-6)
+  expect_lt(max(abs(rowSums(out) - 100)), 1e-9)
+  # not vacuous: without the hold ONP is moved
+  withr::local_envvar(AUSPOL_LEVEL_CONSERVE_HOLD = "")
+  out0 <- lc_quiet(level_conserve_apply(f$shares, f$level, "x2020", stage = "final", weights = f$w))
+  expect_gt(max(abs(out0[, "ONP"] - f$shares[, "ONP"])), 0.1)
+})

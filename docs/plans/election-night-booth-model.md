@@ -180,3 +180,78 @@ will be published, and whether there is anything I need to register for?
 
 Thanks,
 Pete Owen
+
+## Dress rehearsal 3: win probabilities and chamber totals through the shipped simulator (2026-10-28, issue #153)
+
+`AUSPOL_NIGHT_REPLAY_FRAC` (`R/night_update.R`, hooked into `scripts/backtest_candidate_vic.R` before the final
+`simulate_seat_contests()`): the harness's own afternoon vic2022 forecast is the prior; booths counted by that
+fraction of the night update each seat's primaries cell by cell (rehearsal 2's projection and precision weighting),
+the posterior sds replace the per-cell spread, and the statewide draws shrink around their centre by the mean share
+of spread resolved. The shipped flows, Coalition split and simulator then give win probabilities and chamber totals.
+Scored with `quick_arm.R --pairs=vic2022` (1,000 sims; baseline = the afternoon forecast, same seed).
+
+Seat-winner log loss over 88 seats, lower is better (afternoon forecast 0.2643):
+
+| night vote counted | 0 | 10% | 25% | 50% | 75% | 100% |
+|---|---:|---:|---:|---:|---:|---:|
+| log loss | 0.2643 (byte-identical) | 0.1556 | 0.1395 | 0.1112 | 0.1112 | 0.0897 |
+
+50% and 75% are identical because 2022 early votes are one unit per district (rehearsal 1); in 2026 every early
+voting centre is its own booth row, which will smooth the curve. Chamber at 50% counted, 90% range (median), against
+the 2022 result: Labor 51-57 (55), actual 56; Coalition 22-29 (26), actual 28; Greens 4-5 (5), actual 4: all covered.
+**Independents 1-6 (3), actual 0: not covered.** The seats are close independent contests decided on preferences
+(Mildura IND 0.92 at 50% counted, lost on preferences; Mornington 0.31, Hawthorn 0.24), plus South-West Coast, which
+is missing from the 2022 booth file and so never updates. That is the preference model, not the count update.
+
+Caveats (review of #153): (1) **not held out**: `booth_projection_sd()` and the report-order seed were fitted on this
+same 2018 -> 2022 replay; (2) **not all knowable on the night**: "fraction of the night vote" and `counted_share` use
+final totals as the denominator; live, they need a turnout estimate; (3) the statewide shrink is a heuristic (mean of
+1 - posterior sd / prior sd); (4) breakout, surge and error-quantile components keep their afternoon strength after
+the update. Replay outputs carry `-nightNNN` in their names and `scripts/pool_backtests.R` skips them (PB0).
+
+## Dress rehearsal 4: the VEC's two-candidate count as evidence on the preference flow (2026-10-28, issue #161)
+
+`AUSPOL_NIGHT_TCP=1` with a replay fraction (`night_tcp_obs()`, `night_apply_tcp()`): in the counted booths, the flow
+of the other parties' votes to each of the VEC's pair is measured against the same booths' first preferences, with a
+standard error from the spread between booths; each simulated draw with that final two shifts by the change in flow;
+a pair in under 20% of draws is ignored and flagged. Replayed on the FINAL 2022 pairs (`output/booths/vic2022-booth-tcp.csv`),
+2CP assumed to arrive with each booth's first preferences: a best case (on the night the VEC's first pair can be
+wrong and 2CP lags).
+
+Seat-winner log loss, 88 seats, lower is better: first-preference update alone -> plus 2CP flow, same seed:
+10% counted 0.1556 -> **0.1133**; 25% 0.1395 -> **0.0968**; 50% 0.1112 -> **0.0929** (after the review fix: unbiased between-booth
+flow SE, held at 0.25 under 3 counted booths; before it, 0.1146 / 0.0994 / 0.0970 with the flow over-trusted). At 50%: Mildura (Nationals won)
+0.08 -> 0.78, Morwell 0.43 -> 0.95, Berwick 0.48 -> 0.92; worse: Northcote (Labor v Greens) 0.32 -> 0.05. Independents at
+50% counted: 90% range 1-6 -> 0-5 seats (actual 0). Two designs failed first and are recorded so they are not retried:
+the raw counted 2CP share (0.1661: early booths are not a random sample), and combining 2CP shares with the draws
+(0.1313: counts the first preferences twice and over-sharpens close seats, Mornington 0.69 -> 0.04).
+
+## Dress rehearsal 5: vote-type gaps, new candidates, and a fast replay (2026-10-28, issue #160)
+
+**Fast replay.** `AUSPOL_NIGHT_DUMP=<file.rds>` (run through `quick_arm.R`, so nothing lands in `output/`) saves the vic
+harness's pre-simulation state; `scripts/night_replay.R --state=...` sweeps fractions and settings from it: ~10 s a
+fraction instead of ~80 s. It reproduces quick_arm exactly (0.2643 at nothing counted, 0.0929 at 50% with 2CP).
+
+**Vote-type gap** (`night_booth_update(gap_k =)`): for each non-ordinary booth type and class, the gap between that type's
+counted swing and the same seat's ordinary swing, pooled over the seats where it is counted and shrunk by n/(n+k), is
+added to the all-types swing of a seat whose votes of that type are not yet in. With 2022's ordering (each district's
+early lump, ~half its night vote, after all booths) it can never act below 100%, so it was tested with early lumps
+interleaved among the booths (`early = "interleaved"`, U(0.3, 1.0)). Seat log loss, 88 seats, 2CP on:
+
+| counted | no gap | k = 5 | k = 20 |
+|---|---:|---:|---:|
+| 25% | 0.1079 | 0.1079 | 0.1079 |
+| 50% | 0.1074 | 0.1074 | 0.1074 |
+| 75% | 0.0833 | **0.0712** | 0.0750 |
+
+It acts only once early lumps are in (~65% counted in 2022); in 2026 each early centre is its own smaller booth, so
+earlier. Pooled early-vs-ordinary gap at 75% counted (44 districts): Labor +3.8, Greens -2.7, Coalition +0.2 points.
+k = 5 chosen (the first value tried; k = 20 worse); not tuned further on one election.
+
+**New candidates** (`new_sd_mult`): holding a no-history class's projection 1.5x or 2x looser was slightly WORSE at
+10-50% counted (0.1108 -> 0.1117 / 0.1123 at 10%) and flat at 75%. Left at 1. A weak test: 2022 had few candidates with
+no 2018 votes; the case it is for (One Nation 2026) cannot be replayed on Victoria.
+
+Bug found on the way, fixed: the gap was first added with `merge()`, which re-sorted the projection grid and
+misaligned a row-ordered vector (`has_ref`), returning NA projections in 28 of 88 seats; now an update join, with a
+test that a gapped projection has no NA.

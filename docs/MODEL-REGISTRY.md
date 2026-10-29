@@ -1,6 +1,6 @@
 # Model registry
 
-**Generated 2026-10-26 by `scripts/build_model_registry.R`. Do not hand-edit** --
+**Generated 2026-10-29 by `scripts/build_model_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate whenever a switch is added to
 `published_flags.R` or a harness's wiring changes.
 
@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (253 switches from `published_flags.R`, 7 entry points)
+## Switch parity (259 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -122,6 +122,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_LEADER_SEAT` | yes | NO | NO | NO | NO | NO | NO | leader_seat.R |
 | `AUSPOL_LEADERS_SUPPLEMENT` | NO | NO | NO | NO | NO | NO | NO | leader_seat.R |
 | `AUSPOL_LEVEL_CONSERVE` | NO | NO | NO | NO | NO | NO | NO | level_conserve.R, new_ind_shrink.R |
+| `AUSPOL_LEVEL_CONSERVE_HOLD` | NO | NO | NO | NO | NO | NO | NO | level_conserve.R |
 | `AUSPOL_LEVEL_CONSERVE_LAMBDA` | NO | NO | NO | NO | NO | NO | NO | level_conserve.R |
 | `AUSPOL_LEVEL_FED_GAP_HL` | NO | NO | NO | NO | NO | NO | NO | level_recent.R |
 | `AUSPOL_LEVEL_FED_R` | NO | NO | NO | NO | NO | NO | NO | level_recent.R |
@@ -153,7 +154,11 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_NB_TARGET` | NO | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_NEW_IND_SHRINK` | NO | NO | NO | NO | NO | NO | NO | ind_mixture.R, ind_typical.R, new_ind_shrink.R |
 | `AUSPOL_NEW_IND_SHRINK_CAP` | NO | NO | NO | NO | NO | NO | NO | new_ind_shrink.R |
+| `AUSPOL_NIGHT_DUMP` | NO | NO | NO | NO | NO | yes | NO |  |
+| `AUSPOL_NIGHT_REPLAY_FRAC` | NO | NO | NO | NO | NO | yes | NO | night_update.R |
+| `AUSPOL_NIGHT_TCP` | NO | NO | NO | NO | NO | yes | NO |  |
 | `AUSPOL_NOM_LIVE` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R, xgb_primary_override.R |
+| `AUSPOL_NOM_LIVE_FILE` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R |
 | `AUSPOL_NOM_ZERO` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R |
 | `AUSPOL_NOM_ZERO_ORDER` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R |
 | `AUSPOL_NOM_ZERO_PRE_XGB` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R |
@@ -227,7 +232,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_SEAT_SD_MULT` | yes | yes | yes | yes | yes | yes | yes |  |
 | `AUSPOL_SEAT_SPREAD_SRC` | NO | NO | NO | NO | NO | NO | NO | prev_seat_swing.R |
 | `AUSPOL_SEAT_SWING_PORT` | yes | yes | yes | yes | yes | yes | NO | seat_swing_port.R |
-| `AUSPOL_SEAT_SWING_PORT_3C` | NO | NO | NO | NO | NO | NO | NO | seat_swing_port.R, seat_swing_port_3c.R |
+| `AUSPOL_SEAT_SWING_PORT_3C` | NO | NO | NO | NO | NO | NO | NO | new_ind_shrink.R, seat_swing_port.R, seat_swing_port_3c.R |
 | `AUSPOL_SEAT_SWING_PORT_3C_W` | NO | NO | NO | NO | NO | NO | NO | seat_swing_port.R, seat_swing_port_3c.R |
 | `AUSPOL_SEAT_SWING_PORT_NOCLIFF` | NO | NO | NO | NO | NO | NO | yes | seat_swing_port.R |
 | `AUSPOL_SEAT_SWING_PORT_RESID` | NO | NO | NO | NO | NO | NO | NO | seat_swing_port.R |
@@ -364,6 +369,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_LEADER_SEAT`** (**adopted, shared-function wiring**): SHIPPED (1), UNIVERSAL via R/: read inside leader_seat_apply() (R/leader_seat.R); fit_seats_full.R also reads it directly. The harness 'yes' cells were comments.
 - **`AUSPOL_LEADERS_SUPPLEMENT`** (intentional / dead experiment): DIAGNOSTIC 2026-10-13: 0 drops leaders-supplement.csv in read_leaders() (R/leader_seat.R) -- universal in practice; published 1.
 - **`AUSPOL_LEVEL_CONSERVE`** (intentional / dead experiment): ARM (0), built 2026-10-25, not run. Wired at the same two points in all seven harnesses (fed, vic, nsw, sa, wa, qld, nt) and fit_seats_full.R through ONE function, level_conserve_apply() (R/level_conserve.R): 'base' just before the xgb override (xgb_primary_predict_live() live), 'final' after the last nomination zero. Post-xgb (post_xgb_switches()). The switch is read inside R/ (level_conserve_mode()), so 'NO' in the entry-point columns is the grep, not a gap. plans/prereg-level-conserve-2026-10-25.md
+- **`AUSPOL_LEVEL_CONSERVE_HOLD`** (intentional / dead experiment): Sub-setting of AUSPOL_LEVEL_CONSERVE (classes held out of the rake, default ""; arm "IND", Amendment 1, 2026-10-29), read only inside R/level_conserve.R (level_conserve_hold()), so every entry point that calls level_conserve_apply() honours it; 'NO' in the harness columns is the grep, not a gap.
 - **`AUSPOL_LEVEL_CONSERVE_LAMBDA`** (intentional / dead experiment): Sub-setting of AUSPOL_LEVEL_CONSERVE (strength, default 1), read only inside R/level_conserve.R, so every entry point that calls level_conserve_apply() honours it; 'NO' in the harness columns is the grep, not a gap.
 - **`AUSPOL_LEVEL_FED_GAP_HL`** (intentional / dead experiment): Same prereg; only read when AUSPOL_LEVEL_FED_R > 0. Read inside R/level_recent.R -- universal in practice.
 - **`AUSPOL_LEVEL_FED_R`** (**adopted, shared-function wiring**): SHIPPED 0.15 2026-10-12 (Pete; plans/prereg-federal-breakdowns-in-blend-2026-10-12.md). Read inside R/level_recent.R, which every harness and fit_seats_full.R reach through the level blend -- universal in practice.
@@ -386,7 +392,11 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_NB_TARGET`** (intentional / dead experiment): NOT A MODEL SWITCH: an argument to scripts/build_notional_baselines.R (which federal election year to build notional post-redistribution baselines for). Reads NO everywhere by construction; listed in published_flags.R only as documentation of how to rebuild the notional table.
 - **`AUSPOL_NEW_IND_SHRINK`** (**adopted, shared-function wiring**): SHIPPED (1) 2026-10-06, UNIVERSAL via R/: read by new_ind_mode() (R/new_ind_shrink.R, also ind_mixture.R/ind_typical.R), which all seven entry points reach. The old 'yes' cells were comments.
 - **`AUSPOL_NEW_IND_SHRINK_CAP`** (**adopted, shared-function wiring**): SHIPPED (default 1 = cap the new-independent factor at 1); the '0' arm is pending. Read inside R/new_ind_shrink.R, which all six harnesses and fit_seats_full.R call, so the harness grep cannot see it.
+- **`AUSPOL_NIGHT_DUMP`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
+- **`AUSPOL_NIGHT_REPLAY_FRAC`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
+- **`AUSPOL_NIGHT_TCP`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_NOM_LIVE`** (**adopted, shared-function wiring**): SHIPPED v61, LIVE-ONLY by design: the published Victorian forecast zeroes non-standing parties only when set to '1' by hand once the VEC final list is loaded (R/nomination_zero.R, fit_seats_full.R). The six harnesses use AUSPOL_NOM_ZERO instead.
+- **`AUSPOL_NOM_LIVE_FILE`** (intentional / dead experiment): TEST ONLY (""), 2026-10-29: the file live_nominations() (R/nomination_zero.R) reads instead of output/candidacies.csv, for the F18 walk on a synthetic list. Read inside R/, so 'NO' in the entry-point columns is the grep, not a gap.
 - **`AUSPOL_NOM_ZERO`** (**adopted, shared-function wiring**): SHIPPED v61 2026-10-03 (mode 2). All six harnesses read it. fit_seats_full.R does not name it, by design: the published run uses AUSPOL_NOM_LIVE for the same zeroing (R/nomination_zero.R) once the real nomination list exists.
 - **`AUSPOL_NOM_ZERO_ORDER`** (**adopted, shared-function wiring**): SHIPPED 2026-10-04 ('late', Pete overriding the R2 refusal). Read in R/nomination_zero.R and named by all six harnesses; per published_flags.R, fit_seats_full.R already zeroes after the last step that can write a share back, so the switch does not apply to it.
 - **`AUSPOL_NOM_ZERO_PRE_XGB`** (intentional / dead experiment): ARM (audit F18, plans/prereg-nom-zero-pre-xgb-2026-10-25.md), LIVE-ONLY by design: fit_seats_full.R zeroes non-standing classes before xgb_primary_predict_live() as well as after it. The harnesses need no switch: their stage-1 base (what the trees train on) already carries the zero, and their backtest override substitutes cached predictions. A no-op until AUSPOL_NOM_LIVE=1.
@@ -559,4 +569,4 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR2  every non-universal switch (223 of 253) has a recorded classification.
+**MR2! 3 switch(es) have a non-universal row with NO recorded classification: AUSPOL_NIGHT_DUMP, AUSPOL_NIGHT_REPLAY_FRAC, AUSPOL_NIGHT_TCP.** Add them to CLASSIFY in scripts/build_model_registry.R before trusting this table.

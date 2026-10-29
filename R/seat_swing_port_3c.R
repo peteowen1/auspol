@@ -34,7 +34,7 @@
 #' @return `"0"`, `"1"` or `"2"`; an error for anything else.
 #' @keywords internal
 seat_swing_port_3c_mode <- function() {
-  v <- Sys.getenv("AUSPOL_SEAT_SWING_PORT_3C", "0")
+  v <- Sys.getenv("AUSPOL_SEAT_SWING_PORT_3C", "2")
   if (!v %in% c("0", "1", "2")) stop("AUSPOL_SEAT_SWING_PORT_3C must be \"0\", \"1\" or \"2\", not \"", v, "\"")
   v
 }

@@ -123,6 +123,35 @@ if (length(bf)) {
          sprintf("| %s | %d | %d | %d | %d | %d |", B$file, B$districts, B$booths, B$rows, B$votes, B$with_coords), "")
 } else L <- c(L, "_not built yet -- run the three `scripts/parse_booths_*.py`_\n")
 
+# ---- Victorian upper-house (Legislative Council) results ----------------------
+# Added 2026-10-28: the files existed and the registry did not name them, so a research
+# agent reported "the repo holds no upper-house data" the same morning they were fetched.
+L <- c(L, "## Victorian upper-house results (`output/council-*`)\n",
+       "Legislative Council, by region, group and voting centre, from the VEC's per-region Excel downloads",
+       "(`scripts/fetch_council_results.R`, raw files and manifests under `external/reference/vec/<year>/council/`).",
+       "Votes Received and the Distribution of preferences are authoritative for totals; Results by Voting",
+       "Centre is the voting-centre detail from a slightly different snapshot (gaps in `council-extract-gaps-*`).",
+       "Not to be confused with `council-results-*.csv`, which are LOCAL-GOVERNMENT council results.",
+       "2010 exists only as the raw `external/reference/vec/state2010*RegionFPVbyVC.xls` files.\n")
+uf <- sort(list.files("output", pattern = "^council-(fp|fp-cand|dist|district-stats|extract-gaps)-[0-9]{4}[.]csv$",
+                      full.names = TRUE))
+if (length(uf)) {
+  U <- rbindlist(lapply(uf, function(f) {
+    x <- fread(f, showProgress = FALSE)
+    nm <- names(x)
+    data.table(file = basename(f), rows = nrow(x),
+               regions = if ("region" %in% nm) uniqueN(x[["region"]]) else NA_integer_,
+               districts = if ("district" %in% nm) uniqueN(x[["district"]][!is.na(x[["district"]]) & nzchar(x[["district"]])]) else NA_integer_,
+               voting_centres = if ("voting_centre" %in% nm) uniqueN(x[["voting_centre"]][!is.na(x[["voting_centre"]]) & nzchar(x[["voting_centre"]])]) else NA_integer_,
+               bytes = file.size(f))
+  }))
+  if (any(U$rows == 0L)) stop("DR10! upper-house file(s) with zero rows: ", paste(U$file[U$rows == 0L], collapse = ", "))
+  fmt <- function(v) ifelse(is.na(v), "-", format(v, big.mark = ","))
+  L <- c(L, "| file | rows | regions | districts | voting centres | size |", "|---|---:|---:|---:|---:|---:|",
+         sprintf("| `%s` | %s | %s | %s | %s | %s |", U$file, fmt(U$rows), fmt(U$regions), fmt(U$districts),
+                 fmt(U$voting_centres), vapply(U$bytes, human, character(1))), "")
+} else L <- c(L, "_not built yet -- run `scripts/fetch_council_results.R`_\n")
+
 # ---- known gaps, stated rather than implied ---------------------------------
 L <- c(L, "## Known gaps\n",
        "Listed so a gap is a recorded fact rather than something rediscovered:\n",

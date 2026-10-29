@@ -1973,6 +1973,23 @@ if (!.sw_net_live %in% c("0", "1")) stop("AUSPOL_SW_NET_LIVE must be \"0\" or \"
 .sd_ov <- size_sd_apply(NULL, shares, TGT, .level_sd, .lm(shares), prev = PREV)
 if (identical(.sw_net_live, "1"))
   .sd_ov <- harness_sw_net_sd(.sd_ov, sw_draws, shares, .level_sd, .lm(shares), 1.5, TGT, "SWL", force = TRUE)
+# NIGHT STATE (map #148): everything the simulation below takes, saved BEFORE it runs, so the election-night runner
+# (scripts/night_runner.R --state=) starts from exactly this forecast. Written on every run, next to the other outputs and
+# under the same suffix rule, so the daily workflow publishes polling day's copy with the forecast it belongs to. Same fields
+# as the vic harness's AUSPOL_NIGHT_DUMP (scripts/backtest_candidate_vic.R), under this script's names; party_cor is NULL
+# because this call passes none. It never changes the forecast: it reads, then saves, and draws no random number.
+{
+  .dmp <- sprintf("output/night-state-%s%s.rds", TARGET$out_stem, OUT_SUFFIX)
+  .yr_of <- function(x) as.integer(sub("^[a-z]+", "", x))
+  saveRDS(list(pair = TGT, from = .yr_of(PREV), to = .yr_of(TGT), shares = shares, level_sd = .level_sd, level_mult = .lm(shares), fm = fm,
+               psd = psd, swd = sw_draws, sdo = .sd_ov, seat_sd = SEAT_SD, n_sims = N_SIMS, bo = .bo,
+               coalition_split = coalition_split_args(TGT, rownames(shares)), error_q = error_dist_args(TGT, colnames(shares)),
+               smooth = SMOOTH, seed = SEED, party_cor = NULL, shrink = SHRINK, htv_ov = .htv_ov,
+               fb_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD, surge_h = surge_arg, surge_party = surge_party_arg,
+               surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg,
+               saved_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z")), .dmp)
+  cat(sprintf("NS1  night state for %s saved to %s (%d seats, %d sims)\n", TGT, .dmp, nrow(shares), N_SIMS))
+}
 sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = .sd_ov, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
                               breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(TGT, rownames(shares)), error_q = error_dist_args(TGT, colnames(shares)),
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
