@@ -125,3 +125,10 @@ leave-one-election-out on the pooled change, computed from the per-election rows
 tau^2 = 0 for vic2022 and vic2026, so every non-GRN minor class takes the all-class slope (vic2026 0.960; live was
 IND 0.939 with n 84). Largest moves: losses in vic2022 Mildura 0.175 -> 0.162 and Shepparton 0.143 -> 0.134 (the
 returning independents), gains in nsw2023 Kiama 0.520 -> 0.534 and sa2026 Stuart 0.705 -> 0.722.
+
+**All 35 (1,000 sims): clauses 1, 2 and 4 pass; clause 3 fails by a hair, to Pete (decision rule).** Clause 4: MPP1 in
+all 35, 356 changed cells in 30. Clause 1: seat log loss 0.3062 -> 0.3064 (+0.0001, SE 0.0002; exact from the seat
+files over 2,921 matched seats: +0.00014, SE 0.00020). Clause 2: share squared error on the 356 changed cells
+15,261.0 -> 15,179.0 (-82.0, SE 168.3). Clause 3: no election worse by 2 SE of its own seats (pass); leave-one-
+election-out on the pooled change, exact: dropping wa2008 gives +0.00022 (SE 0.00018) = 1.25 SE worse, over the
+1 SE limit; every other drop under 0.9 SE (nt2016, fed2010 +0.85). On the 106 targeted seats: +0.0038 (SE 0.0054).
