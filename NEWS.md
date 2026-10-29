@@ -1,3 +1,7 @@
+# auspol 0.4.116
+
+- **Night state from the published forecast** (`scripts/fit_seats_full.R`): every run saves `output/night-state-<stem>.rds`, everything its final simulation takes, so the election-night runner starts from exactly that forecast (`night_runner.R --state=`). Simulating from the saved state alone reproduces the published seat probabilities and seat totals exactly. The daily workflow uploads it to the `forecast-latest` release; polling day's copy is the one used on the night. Until now only the backtest harness could save one, so 2026 had none.
+
 # auspol 0.4.115
 
 - **Per-booth results in the night JSON** (`night_booth_results()`, `night_booth_results_safe()`, `night_build_json(booths =)`): each reported ordinary booth's first preferences (Labor, Coalition, Greens, other) and the VEC's two-candidate count once posted, by district, for the live page's map. Any error in it drops the block (NW13) and the seats still publish.

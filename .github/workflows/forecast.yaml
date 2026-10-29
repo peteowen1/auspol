@@ -457,6 +457,10 @@ jobs:
           # this run read it, plus the anchor commit it came from.
           cp external/aus-polling-analyser/analysis/Data/poll-data-vic.csv output/polls-vic-snapshot.csv
           gh release upload forecast-latest output/forecast-vic2026.json output/forecast-history.csv output/seat-probs-vic-2026.csv output/seat-shares-vic-2026.csv output/victoria-2026.html output/polls-vic-snapshot.csv --clobber
+          # The election-night runner's starting state (scripts/night_runner.R --state=; map #148): fit_seats_full.R writes it
+          # every run. Polling day's copy is the one used on the night. Tolerant: a missing file or a failed upload must not stop
+          # the publish (set -e is on, and the R2 step after this one would be skipped).
+          if [ -s output/night-state-vic-2026.rds ]; then gh release upload forecast-latest output/night-state-vic-2026.rds --clobber || echo "::warning::night-state upload failed -- the night runner has no state from this run"; else echo "::warning::no output/night-state-vic-2026.rds -- the night runner has no state from this run"; fi
       - name: Publish the forecast to R2 for the ITG page
         # The blog (inthegame-blog) fetches every dataset client-side from the
         # inthegame-data R2 bucket; its CSP does not allow github.com, so the
