@@ -49,8 +49,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - Status 27 Oct evening (detail in DECISIONS.md): census v2 published, local = published (13.9 One Nation) after the
   43 bad vic2026 salience rows were removed (backup `%TEMP%/salience-v6.before-vic2026-removal.csv`; their builder
   now stops with BVS0!), PRs #141/#143 merged, departed-origin closed. Rebooted 26 Oct 12:49, so R work is unblocked.
-- OPEN, screen: F16 `AUSPOL_ROW_SHIFT_EXACT` and F18 `AUSPOL_NOM_ZERO_PRE_XGB` MERGED 27 Oct (PR #144, both off,
-  guard added at merge); each needs its prereg screen. Dead-party
+- F16 `AUSPOL_ROW_SHIFT_EXACT` NOT PASSED 29 Oct (DECISIONS). OPEN: F18 `AUSPOL_NOM_ZERO_PRE_XGB` (off) walk 1
+  on the synthetic list, 29 Oct (prereg Amendment 1). Dead-party
   `AUSPOL_LEVEL_DEAD_PARTY` (337f4cd) PARKED: its screen says not worth it; do not merge.
 - OPEN, screens not yet run (one at a time, >= 6.5 GB free, so after the reboot that clears the kernel pool leak):
   level-conserve FIRST (`prereg-level-conserve-2026-10-25.md`; the majors' +0.6-0.8 tree overshoot over ~30

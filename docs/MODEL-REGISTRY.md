@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (258 switches from `published_flags.R`, 7 entry points)
+## Switch parity (259 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -158,6 +158,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_NIGHT_REPLAY_FRAC` | NO | NO | NO | NO | NO | yes | NO | night_update.R |
 | `AUSPOL_NIGHT_TCP` | NO | NO | NO | NO | NO | yes | NO |  |
 | `AUSPOL_NOM_LIVE` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R, xgb_primary_override.R |
+| `AUSPOL_NOM_LIVE_FILE` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R |
 | `AUSPOL_NOM_ZERO` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R |
 | `AUSPOL_NOM_ZERO_ORDER` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R |
 | `AUSPOL_NOM_ZERO_PRE_XGB` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R |
@@ -395,6 +396,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_NIGHT_REPLAY_FRAC`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_NIGHT_TCP`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_NOM_LIVE`** (**adopted, shared-function wiring**): SHIPPED v61, LIVE-ONLY by design: the published Victorian forecast zeroes non-standing parties only when set to '1' by hand once the VEC final list is loaded (R/nomination_zero.R, fit_seats_full.R). The six harnesses use AUSPOL_NOM_ZERO instead.
+- **`AUSPOL_NOM_LIVE_FILE`** (intentional / dead experiment): TEST ONLY (""), 2026-10-29: the file live_nominations() (R/nomination_zero.R) reads instead of output/candidacies.csv, for the F18 walk on a synthetic list. Read inside R/, so 'NO' in the entry-point columns is the grep, not a gap.
 - **`AUSPOL_NOM_ZERO`** (**adopted, shared-function wiring**): SHIPPED v61 2026-10-03 (mode 2). All six harnesses read it. fit_seats_full.R does not name it, by design: the published run uses AUSPOL_NOM_LIVE for the same zeroing (R/nomination_zero.R) once the real nomination list exists.
 - **`AUSPOL_NOM_ZERO_ORDER`** (**adopted, shared-function wiring**): SHIPPED 2026-10-04 ('late', Pete overriding the R2 refusal). Read in R/nomination_zero.R and named by all six harnesses; per published_flags.R, fit_seats_full.R already zeroes after the last step that can write a share back, so the switch does not apply to it.
 - **`AUSPOL_NOM_ZERO_PRE_XGB`** (intentional / dead experiment): ARM (audit F18, plans/prereg-nom-zero-pre-xgb-2026-10-25.md), LIVE-ONLY by design: fit_seats_full.R zeroes non-standing classes before xgb_primary_predict_live() as well as after it. The harnesses need no switch: their stage-1 base (what the trees train on) already carries the zero, and their backtest override substitutes cached predictions. A no-op until AUSPOL_NOM_LIVE=1.

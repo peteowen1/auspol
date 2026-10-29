@@ -215,8 +215,11 @@ live_nominations <- function(seats, election = "vic2026", prior = "vic2022", cor
     .nz_stop(sprintf("AUSPOL_NOM_LIVE='%s' is not recognised (use 0, auto or 1); refusing to run without the zeroing that was asked for", mode))
   C <- corpus
   if (is.null(C)) {
-    f <- file.path("output", "candidacies.csv")
-    if (!file.exists(f)) .nz_stop("AUSPOL_NOM_LIVE=1 but output/candidacies.csv is missing")
+    # AUSPOL_NOM_LIVE_FILE: test-only, points this reader alone at another list (F18 walk, prereg Amendment 1).
+    f <- Sys.getenv("AUSPOL_NOM_LIVE_FILE", "")
+    if (nzchar(f)) cat(sprintf("NZL! nomination list read from AUSPOL_NOM_LIVE_FILE=%s, not output/candidacies.csv\n", f))
+    else f <- file.path("output", "candidacies.csv")
+    if (!file.exists(f)) .nz_stop(sprintf("AUSPOL_NOM_LIVE=1 but %s is missing", f))
     C <- data.table::fread(f, showProgress = FALSE, select = c("election", "seat", "party"))
   }
   C <- data.table::as.data.table(C)

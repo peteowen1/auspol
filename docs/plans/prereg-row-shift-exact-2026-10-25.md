@@ -116,3 +116,9 @@ every other blend 0. The seat-poll ones are rows where the blend moved every cla
 and the fallback is the old rescale, which is the sensible answer there; the 1% limit did not foresee whole-row
 moves. Reported, not amended: the clause stands as written and is part of the verdict. All 35 launched next to
 settle the rule.
+
+**All 35 (1,000 sims): NOT PASSED; stays off.** Targets 981 seats in 19 elections. Clause 1 target-seat log loss
+-0.0014 (SE 0.0017): within 1 SE. Clause 2 all seats -0.0005 (SE 0.0006): PASS. Clause 3 leave-one-election-out
+better by more than 1 SE in 1 of 19 drops: FAIL. Clause 4: nsw2019 worse by more than 2 SE of its own seats: FAIL.
+Clause 5 sign kept without Berowra and Cowper (-0.0008): PASS. Share squared error on 3,628 moved cells +729
+(+1%, SE 1,367). `AUSPOL_ROW_SHIFT_EXACT` stays "0"; no deciding run, no live walk.
