@@ -256,3 +256,12 @@ A visible addition; nothing above is edited. It answers the one failure the trac
 - **What would make a win unacceptable.** The gain sitting entirely in vic2022 (plain `final` already moved
   it 0.2643 -> 0.2349 for reasons not traced): report the pooled change with vic2022 left out, and if it is
   then worse than 0, show Pete the split rather than calling it a pass.
+
+**Amendment 1 arm (`final`, HOLD=IND) on AEF-7 (2026-10-29, 1,000 sims, code 1829af06): NOT WORSE, goes to all 35.**
+Validity checks first: "holding IND" printed in all 7 elections; the teal seats kept their baseline probabilities
+(Kooyong 0.690 -> 0.716, Goldstein 0.476 -> 0.501, Curtin 0.527 -> 0.540; all within 0.03). Seat log loss
+0.2634 -> 0.2619 (-0.0015, SE 0.0079); share squared error on 3,444 changed cells +1,068 (+3%, SE 2,432). By
+election: fed2022 0.2194 -> 0.2356, nsw2023 0.2053 -> 0.2174, wa2025 0.1915 -> 0.1952, qld2024 0.2876 ->
+0.2897, vic2022 0.2643 -> 0.2595, sa2026 0.2504 -> 0.2436, fed2025 0.3605 -> 0.3323. vic2022 out (seat-weighted
+from those rows): about -0.0009, so the gain is not vic2022's; it is mostly fed2025. fed2022 is still +0.016,
+now from Coalition seats (Bass 0.291 -> 0.170, Longman 0.461 -> 0.270): the level had ALP 34.9 -> 37.2 there.
