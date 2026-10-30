@@ -136,10 +136,26 @@ because the vic2026 list in `output/candidacies.csv` is provisional (Wikipedia,
 379 candidacies against vic2022's 731) until nominations close at noon on
 9 November 2026. Once the VEC publishes the final list:
 
-1. Load the VEC final list into `output/candidacies.csv` (vic2026 rows, party
-   classes from `classify_party()`, same `SURNAME, Given` names as the rest of
-   the file). Check the log's per-class line afterwards: `NZL ... candidacies per
-   class, seats now/vic2022`.
+1. Load the VEC final list into `output/candidacies.csv`. The list arrives in the
+   media feed's set-up files from **Tue 10 Nov** (`State2026MediaFileCandidatesV2.xml`;
+   the VEC may publish revised versions, so rerun on each). Two commands:
+
+   ```
+   powershell.exe -Command 'Rscript scripts/fetch_vec_candidates.R "--file=<path to State2026MediaFileCandidatesV2.xml>" --year=2026'
+   powershell.exe -Command 'Rscript scripts/build_candidacies.R'
+   ```
+
+   The fetcher keeps the XML as received (`external/reference/vec/2026/raw/`), writes
+   `external/reference/vec/2026/vec-candidates-2026.csv` with every field, and refuses a
+   file with no closing tag, under 85 districts, unnamed candidates or broken ballot
+   positions (`VC1!`-`VC9`). The builder then takes vic2026 from that file instead of the
+   Wikipedia/ABC union and prints `BC10v` (names on one list and not the other, class
+   changes). Proven on the VEC's 2022 file: all 731 vic2022 candidacies matched with the
+   same class (`scripts/check_vec_candidates_vic2022.R`; the 9 extra were Narracan's,
+   deferred). Check the log's per-class line afterwards: `NZL ... candidacies per
+   class, seats now/vic2022`. Dry run of steps 1 and 4 on a stand-in list: 30 Oct
+   (`AUSPOL_VEC_CANDIDATES`, `AUSPOL_CAND_OUT`, `AUSPOL_NOM_LIVE_FILE` point each at a
+   scratch copy).
 2. Upload that `candidacies.csv` to the `shipped-models` release. The CI
    forecast job does not read your working copy: it downloads `candidacies.csv`
    from that release (`.github/workflows/forecast.yaml`, "Fetch the trained

@@ -676,6 +676,27 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
     cat(sprintf("XG4c  live xgb: %d-model seed ensemble averaged
 ", 1 + length(.extra)))
   }
+  # AUSPOL_TRACE_SEAT (diagnostic; unset does nothing): each class's tree contributions in that seat, averaged over
+  # the ensemble members as the prediction is, printed as TRS2 with the check that they add up to the prediction.
+  .ts <- Sys.getenv("AUSPOL_TRACE_SEAT", "")
+  # Its own tryCatch: this function runs inside fit_seats_full.R's .try(), so an error here would otherwise drop the
+  # whole xgb layer from the run (XG4!!) because of a printout. The trace only reads `pred`, `X` and `rows`.
+  if (nzchar(.ts) && any(rows$seat == .ts)) tryCatch({
+    .ti <- which(rows$seat == .ts)
+    .dt <- xgboost::xgb.DMatrix(data = X[.ti, , drop = FALSE], missing = NA)
+    xgboost::setinfo(.dt, "base_margin", .margin[.ti])
+    .ms <- c(list(model), unname(.extra))
+    .sh <- Reduce(`+`, lapply(.ms, function(m) predict(m, .dt, predcontrib = TRUE))) / length(.ms)
+    .sh <- as.matrix(.sh); .nb <- ncol(.sh)   # the last column is the bias (BIAS); the rest follow X's columns
+    .fn <- colnames(.sh)[-.nb]; if (is.null(.fn) || length(.fn) != ncol(X)) .fn <- colnames(X)
+    for (k in seq_along(.ti)) {
+      feat <- .sh[k, -.nb]; o <- order(-abs(feat))[seq_len(min(10L, length(feat)))]
+      xv <- X[.ti[k], match(.fn[o], colnames(X))]
+      cat(sprintf("TRS2 %s %-9s base_pred %.2f -> trees %.2f (bias %.2f, contributions sum %+.2f, check %.4f) | top: %s\n",
+                  .ts, rows$party[.ti[k]], .margin[.ti[k]], pred[.ti[k]], .sh[k, .nb], sum(feat), sum(.sh[k, ]) - pred[.ti[k]],
+                  paste(sprintf("%s=%s %+.2f", .fn[o], format(signif(xv, 4)), feat[o]), collapse = "; ")))
+    }
+  }, error = function(e) cat(sprintf("TRS2!! tree-contribution trace failed (%s); the prediction is unaffected\n", conditionMessage(e))))
   rows[, xgb_pred := pmax(0, pred)]
   # The finished pre-election feature rows, kept for the breakout classifier
   # (AUSPOL_BREAKOUT_MIX, R/breakout_mix.R). Changes nothing returned here.

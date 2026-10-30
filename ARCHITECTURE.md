@@ -521,7 +521,7 @@ was caught only against a number someone already knew.
   (One Nation Senate rank and fill), `ONN` (One Nation new-seat rule), `OH`
   (`build_onp_house.R`), `LCV` (`AUSPOL_LEVEL_CONSERVE`), `LLP`/`LPR` (F12 live and
   training level_pred), `S3C` (port line-up change), `RMF` (returning-member rule),
-  `MPP` (`AUSPOL_MP_SLOPE_POOL`; `MP8` is its table in `fit_mp_slope.R`).
+  `MPP` (`AUSPOL_MP_SLOPE_POOL`; `MP8` is its table in `fit_mp_slope.R`), `IGR` (`AUSPOL_IND_GAP_RESTAND`).
   The scan also reads `code = "XX1"` arguments and
   `.py`/`.sh` scripts, which the grep below misses.
 

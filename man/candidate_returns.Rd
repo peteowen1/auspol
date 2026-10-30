@@ -26,6 +26,11 @@ England fed2022: Natasha Ledger's personal return made \code{same = TRUE} for
 the whole IND class even though Matt Sharpham, the actual class leader,
 was new). \code{screened_slopes()}/\code{conditional_slopes()} key their same/new
 slope choice on \code{leader_same}, not \code{same}.
+\code{class_gap_restand} (added 2026-10-25) is FALSE only when the class had
+general-election candidates in this seat at \code{election_from}, none of them
+stands here again for the class, and the current leader has no record in
+the seat under any label: the class's earlier vote has nobody to carry it.
+Read by \code{\link[=screened_slopes]{screened_slopes()}} under \code{AUSPOL_IND_GAP_RESTAND}.
 }
 \description{
 The seat model is party-class based, so a returning independent and a

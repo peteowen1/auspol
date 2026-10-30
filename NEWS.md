@@ -1,3 +1,11 @@
+# auspol 0.4.121
+
+- **VEC final candidate list** (`scripts/fetch_vec_candidates.R`, `build_candidacies.R` BC10v): parses the VEC's Candidates set-up file (from 10 Nov) and makes it vic2026's list, replacing the Wikipedia/ABC union. Proven on the VEC's 2022 file: all 731 vic2022 candidacies matched with the same class (`scripts/check_vec_candidates_vic2022.R`). Refuses a truncated file, anything but 88 districts, and two same-key candidates in one district. Dry run of the build and of `AUSPOL_NOM_LIVE=1` passed on a stand-in list.
+- **Seat trace** (`AUSPOL_TRACE_SEAT=<seat>`, diagnostic): `fit_seats_full.R` prints one seat's row after every stage (TRS0/TRS1) and the tree contributions per class (TRS2, in its own error handler). Mildura traced: Cupper 33.9 -> 21.3.
+- **Arms built and left off:** `AUSPOL_IND_GAP_RESTAND` (merged from its branch; yes/no form refused on AEF-7), `AUSPOL_SWING_FORM=hybrid` (logit move for a falling class in `dev_slope()`; refused on AEF-7, +0.0036, SE 0.0028).
+- **Three Mildura questions measured** (`docs/reviews/`): the trees' cut on returning independents, One Nation's proportional fill, the small-share floor. All kept as shipped.
+- vic2026 benchmark capture 30 Oct (all eight sources).
+
 # auspol 0.4.120
 
 Covers 0.4.117-0.4.119 too, which were version bumps with no entry.

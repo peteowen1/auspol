@@ -40,16 +40,41 @@
 #'   is a property of the seat, not of the class. Measured, that distinction is
 #'   worth more than the class: IND carries 0.907 when the person returns and
 #'   0.326 when they do not.
+#' @param form `"points"` (today's form) or `"hybrid"`; defaults to `AUSPOL_SWING_FORM` ([swing_form_mode()]). Hybrid
+#'   keeps the slope's shrink toward the level, `x' = level_prev + slope x (x - level_prev)`, then moves `x'` by the
+#'   statewide change in points when the class level rises or holds, and on the log-odds scale when it falls, so a
+#'   small seat of a falling class shrinks in proportion instead of being floored at 0
+#'   (`docs/plans/prereg-swing-form-hybrid-2026-10-30.md`). Equal to `"points"` wherever the level does not fall.
 #' @return Numeric vector of projected shares, floored at zero.
 #' @export
-dev_slope <- function(x, level_prev, level_now, slope = 1) {
+dev_slope <- function(x, level_prev, level_now, slope = 1, form = swing_form_mode()) {
   if (!length(slope) %in% c(1L, length(x)) || !all(is.finite(slope))) {
     stop("slope must be one finite number, or one per seat matching x (",
          length(x), "); got ", length(slope), call. = FALSE)
   }
   if (!is.finite(level_prev) || !is.finite(level_now))
     stop("level_prev and level_now must both be finite")
+  if (identical(form, "hybrid") && level_now < level_prev) {
+    xp <- level_prev + slope * (x - level_prev)
+    cl <- function(v) pmin(pmax(v, 0.01), 99.99) / 100   # numerical guard for the logit (CONSTANTS)
+    lg <- function(p) log(p / (1 - p))
+    out <- 100 * stats::plogis(lg(cl(xp)) + lg(cl(level_now)) - lg(cl(level_prev)))
+    out[!is.na(xp) & xp <= 0] <- 0   # nothing to shrink from: stays 0 exactly, as in the points form
+    return(out)
+  }
   pmax(0, level_now + slope * (x - level_prev))
+}
+
+#' The value of `AUSPOL_SWING_FORM`, validated
+#'
+#' @return `"points"` (default, today's base) or `"hybrid"` (logit when the class level falls; see [dev_slope()]).
+#'   Anything else is an error, so a typo cannot silently run the published form.
+#' @export
+swing_form_mode <- function() {
+  v <- Sys.getenv("AUSPOL_SWING_FORM", "points")
+  if (!v %in% c("points", "hybrid"))
+    stop("AUSPOL_SWING_FORM must be \"points\" or \"hybrid\", not \"", v, "\"", call. = FALSE)
+  v
 }
 
 #' Per-class deviation slopes, defaulting to uniform swing
@@ -137,6 +162,9 @@ dev_slopes_for <- function(parties, default = 1) {
 #'   IND average every cycle, which is where most of this model's fed2025 seat
 #'   log-loss gap to AE Forecasts sits. Requires `returns` to carry a
 #'   `same_mp` column, which [candidate_returns()] now supplies.
+#' @param gap_restand Logical, default `FALSE` (byte-identical). `TRUE` gives
+#'   the IND class slope 0 where no earlier IND candidate re-stands
+#'   (`ind_gap_drop()`, R/ind_gap_restand.R).
 #' @return Numeric vector the length of `seats`.
 #' @export
 conditional_slopes <- function(cls, seats, returns,
@@ -146,7 +174,7 @@ conditional_slopes <- function(cls, seats, returns,
                                         GRN = 0.880, ONP = 0.545),
                                default = 1,
                                same_mp = NULL, major_departed = NULL,
-                               major_present = NULL) {
+                               major_present = NULL, gap_restand = FALSE) {
   # MAJOR-PARTY DEPARTURE TIER. ALP/LNP have no same/new table and always
   # took `default` (1.0): a seat whose sitting member retired projected its
   # full personal-vote-inflated base. Measured 2026-09-18: -2.8 points on
@@ -205,6 +233,11 @@ conditional_slopes <- function(cls, seats, returns,
     is_mp <- !is.na(idx) & hit$same_mp[idx]
     is_mp[is.na(is_mp)] <- FALSE
     out[is_mp] <- as.numeric(same_mp[[cls]])
+  }
+  if (isTRUE(gap_restand)) {
+    drop <- ind_gap_drop(cls, seats, returns)
+    out[drop] <- 0
+    .igr_report(cls, seats, drop, "conditional")
   }
   out
 }
@@ -287,6 +320,10 @@ conditional_slopes <- function(cls, seats, returns,
 #'   to emerge?
 #' @return Numeric vector the length of `seats`.
 #' @param same_mp Passed through to [conditional_slopes()]; see there.
+#' @param gap_restand Logical, default `FALSE` (byte-identical). `TRUE`
+#'   (`AUSPOL_IND_GAP_RESTAND=1`) gives the IND class slope 0 in a seat where
+#'   no earlier IND candidate re-stands (`ind_gap_drop()`, R/ind_gap_restand.R), unless the screen
+#'   permits the newcomer or the seat is named in `successor_rate`.
 #' @export
 screened_slopes <- function(cls, seats, returns, permit, honour_departed = FALSE,
                             same = c(IND = 0.907, OTH_RIGHT = 0.891,
@@ -296,7 +333,7 @@ screened_slopes <- function(cls, seats, returns, permit, honour_departed = FALSE
                             default = 1, same_mp = NULL,
                             departed_rate = c(IND = 0.38), major_departed = NULL,
                             major_present = NULL, with_flags = FALSE,
-                            successor_rate = NULL) {
+                            successor_rate = NULL, gap_restand = FALSE) {
   if (length(permit) != length(seats)) {
     stop("permit must be the same length as seats: ", length(permit),
          " vs ", length(seats), call. = FALSE)
@@ -371,6 +408,17 @@ screened_slopes <- function(cls, seats, returns, permit, honour_departed = FALSE
   }
   out <- ifelse(!is_same & permitted, 1.0,
                 ifelse(departed, dep_seat, base))
+  # AUSPOL_IND_GAP_RESTAND: no earlier IND candidate of this seat stands for the
+  # class again, so the class's old gap above the statewide level has nobody to
+  # carry it and the slope on it is 0 (the cell starts from the statewide level).
+  # A screen-permitted newcomer keeps the 1.0 path and a hand-coded successor
+  # (`successor_rate`) keeps its fitted rate: both are out of scope
+  # (docs/plans/prereg-ind-gap-restand-2026-10-25.md).
+  if (isTRUE(gap_restand)) {
+    drop <- ind_gap_drop(cls, seats, returns) & !permitted & !succ_hit
+    out[drop] <- 0
+    .igr_report(cls, seats, drop, "screened")
+  }
   # Which seats the departed-leader decay fired in, for AUSPOL_DEPARTED_HOLD:
   # the harnesses hold those cells fixed through renormalisation
   # (`renorm_hold()`). `departed` already excludes `permitted` seats, so a seat

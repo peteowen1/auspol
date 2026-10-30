@@ -13,7 +13,8 @@ conditional_slopes(
   default = 1,
   same_mp = NULL,
   major_departed = NULL,
-  major_present = NULL
+  major_present = NULL,
+  gap_restand = FALSE
 )
 }
 \arguments{
@@ -47,6 +48,10 @@ party keeps on its deviation where \code{returns$mp_departed} is TRUE, from
 
 \item{major_present}{Optional named numeric (ALP, LNP): the slope every
 other ALP/LNP cell keeps on its deviation. \code{NULL} keeps \code{default}.}
+
+\item{gap_restand}{Logical, default \code{FALSE} (byte-identical). \code{TRUE} gives
+the IND class slope 0 where no earlier IND candidate re-stands
+(\code{ind_gap_drop()}, R/ind_gap_restand.R).}
 }
 \value{
 Numeric vector the length of \code{seats}.

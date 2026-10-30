@@ -60,9 +60,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - Builds waiting for R (26 Oct, each on a LOCAL branch, not pushed). `mp-slope-shrink-1025` is in dev and SHIPPED
   30 Oct (DECISIONS). `ind-overcall-1025` passes `check_like_ci.R` (28 Oct), 3 commits not in dev. One quick_arm
   screen at a time:
-  - `ind-overcall-1025` `7252acb`: `AUSPOL_IND_GAP_RESTAND` (off). As built (yes/no: gap kept if any earlier
-    candidate of the class re-stands) it reaches only Pascoe Vale of the 5 targets. Pete chose the SHARE version
-    (carry only the re-standers' share of the old class vote; Geelong ~2% of Lyons's gap): NOT built yet.
+  - `ind-overcall-1025` `7252acb`, merged into dev 30 Oct (`016ed0c3`): `AUSPOL_IND_GAP_RESTAND` (off). The SHARE
+    version is NOT built, on Pete's call 30 Oct: it changes nothing, since the base already holds a re-stander's own
+    vote (DECISIONS 2026-10-30). The yes/no arm REFUSED on AEF-7 30 Oct (moved seats +0.0014, SE 0.0007; prereg
+    RESULT). Fitted-rate follow-up CLOSED 30 Oct (Pete): measured carry 0.357 on 513 seat-elections vs 0.33-0.38
+    shipped (`reviews/ind-gap-carry-walk-2026-10-30.md`). Idea only: below-level seats carry ~0 (moves < 1 pt). OPEN: trace the 52 seat-elections where
+    the leader re-stands but no own vote showed in the base (first Corio fed2007, Kiama nsw2023), with the harness discounts.
     Shepparton is a true re-stand (Sheed 29.4 in 2022, VEC). Prereg `plans/prereg-ind-gap-restand-2026-10-25.md` (on that branch).
   - `prereg-offbranches-1025` `ee80497`: preregs for XGB_CLASS_JUR_CAL (merges clean), OTHERS_SCALE_JUR
     (identical to the refused pooled arm at every AEF-7 target on cached history), SALIENCE_STATE (needs two as-at
@@ -81,8 +84,27 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   slope of -23.1 (n 1, se ~11) enters the DerSimonian-Laird sum: qld2015, sa2014, vic2014 get tau^2 ~0.57 (0 at most
   targets), so IND there keeps w 0.99 instead of pooling (`output/mp-slope-pooled.csv`; `R/mp_slope_pool.R:79-83`).
   The all-35 screen ran on this table. A fix (drop near-zero-variance classes from the tau^2 sum) needs its own screen.
-- OPEN, morning pages for Pete: (a) Mildura vic2026 trace, one row (Cupper) through base_pred, xgb and the minor
-  additive step; (b) wa2017 and fed2019 day-before statewide walk-throughs, example rows.
+- OPEN, morning pages for Pete: (b) wa2017 and fed2019 day-before statewide walk-throughs, example rows. (a) Mildura
+  DONE 30 Oct, https://claude.ai/artifact/JTt68EkaupnKVaoC3VRYib (`AUSPOL_TRACE_SEAT=<seat>` on `fit_seats_full.R`
+  prints any seat's row after every stage, TRS0/TRS1). Raised, OPEN: the xgb trees cut Cupper 25.1 -> 21.0 unexplained
+  (contributions done 30 Oct: base size -2.08, party_IND -1.45, own_prev +1.36). CHECKED 30 Oct, the cut is not an
+  over-cut (`reviews/ind-tree-cut-returning-2026-10-30.md`): returning IND who lost last time with >= 20, n 14 in 11
+  elections, trees RAISE them +1.6 on average and actual still falls below xgb in 10 of 14 (bias xgb -4.5, SE 2.6);
+  where the trees cut a big returning IND by 2+ (n 12) error goes -3.0 -> +0.6. No offset supported. Cupper herself
+  has been under-called every time (vic2018 ours 30.4 vs 39.6): one person, untested idea of a per-person trend.
+  Labor's base floors at 0.00 in Mildura (6.5 in 2022, level -12.2 at slope 0.92), trees restore 4.3. CHECKED 30 Oct
+  (`reviews/small-share-swing-floor-2026-10-30.md`, counts recomputed): the floor bites 179 of 13,286 stood cells
+  (1.3%; 152 OTH; 165 had no share last time), trees repair part (RMSE 4.31 -> 3.27, mean actual 3.18 vs xgb 1.04).
+  Oracle on true levels: a direction-aware base (points when a class rises, logit when it falls) beats points-only in
+  30 of 35 elections (pooled RMSE 5.27 -> 5.08), shrinking at the real slopes. Pete: build and screen (30 Oct).
+  BUILT 30 Oct, off: `AUSPOL_SWING_FORM=hybrid` (`dev_slope()`, post-xgb; prereg `plans/prereg-swing-form-hybrid-2026-10-30.md`).
+  Screen: `Rscript scripts/quick_arm.R "AUSPOL_SWING_FORM=hybrid"` (AEF-7), then `--pairs=all`; dry-run check first:
+  `AUSPOL_TRACE_SEAT=Mildura AUSPOL_SWING_FORM=hybrid AUSPOL_OUT_SUFFIX=-sw` on fit_seats_full.R, TRS0 ALP base 5.16.
+  REFUSED on AEF-7 30 Oct (pooled +0.0036, SE 0.0028; worse in every share band; prereg RESULT). Stays off.
+  The Mildura Labor 0.00 floor remains, and the trees repair it to 4.3; no further work planned.
+  One Nation fill pro rata vs personal votes: CHECKED 30 Oct, keep proportional (`reviews/onp-fill-personal-vote-2026-10-30.md`:
+  returning IND ratio 0.68 vs majors 0.76 in 7 surge seats, 3 elections, diff -0.13 SE 0.23; calm seats +0.06 SE 0.06).
+  Thin (sa2026 is 5 of 7); recheck after vic2026 counts.
 
 - OPEN, Pete: returning independents. Both arms REFUSED 25 Oct (`plans/prereg-ind-return-2026-10-25.md`); the
   x0.61 multiplicative minor-field scale (a live-only train/serve split) was fixed by `AUSPOL_MINOR_ADDITIVE=1`,
@@ -251,8 +273,11 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
 
 ## Dated, cannot move
 
-- **9 November 2026, 12 noon: nominations close.** Same day: fetch the VEC
-  candidate list; `build_candidacies.R` writes vic2026 rows so
+- **9 November 2026, 12 noon: nominations close; the VEC's Candidates set-up file lands Tue 10 Nov.** PREPPED
+  30 Oct: `scripts/fetch_vec_candidates.R --file=<State2026MediaFileCandidatesV2.xml> --year=2026` then
+  `build_candidacies.R` (`docs/PIPELINE.md` section E; proven on the 2022 file, 731 of 731 matched with the same
+  class; dry run of the build and of `AUSPOL_NOM_LIVE=1` passed on a stand-in list; Daily Eight item on 10 Nov).
+  Then `build_candidacies.R` writes vic2026 rows so
   `candidate_returns(vic2022, vic2026)` and the flow model's `dest_same`
   features go live; rerun the three salience scripts named in
   `published_flags.R` (`victoria_salience_dryrun.R` proves the path on
