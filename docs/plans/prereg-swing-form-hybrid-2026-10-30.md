@@ -94,3 +94,7 @@ The oracle's gain (true levels, slope 1) does not survive the real slopes and th
 pulls small seats toward the level, and the logit then over-shrinks the large shares of a falling minor class (IND,
 ONP), where personal votes sit. Not run, by the rule above: the retrained-trees version. The delta screen is not
 promising (worse in every band), so it is not owed; it would cost a stage 1-3 rebuild.
+
+Review note (2026-10-30): `split_dev_slope()` (R/split_slope.R) does its own deviation arithmetic and ignores
+`AUSPOL_SWING_FORM`, but it runs only under `AUSPOL_SPLIT_SLOPE=1` (published "0"), so the screen above used
+`dev_slope()` in every harness and measured the full change.
