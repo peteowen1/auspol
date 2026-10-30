@@ -459,6 +459,9 @@ test_that("per-booth results for the map: reported ordinary booths only, four fi
 test_that("the live runner ships the three night fixes on by default (real-night replays, 2026-10-31)", {
   f <- formals(night_run_update)
   expect_true(f$surge_fade); expect_identical(f$tcp_center, "median"); expect_identical(f$tcp_flow_floor, 0.065)
+  # a mistyped --tcp-flow-floor parses to NA; it must stop, not poison the 2CP step
+  expect_error(night_run_update(list(), list(), NULL, tcp_flow_floor = NA_real_), "NW17")
+  expect_error(night_run_update(list(), list(), NULL, tcp_flow_floor = -1), "NW17")
 })
 
 test_that("night_surge_fade scales each seat's surge hazard by its uncounted share (Wentworth fed2022, review 2026-10-30)", {

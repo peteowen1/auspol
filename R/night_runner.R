@@ -476,6 +476,8 @@ night_expected_votes <- function(enrolment, prev, basis = c("night", "final")) {
 night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "table", "expected"), expected = NULL, sims = NULL, use_tcp = TRUE,
                              lean = NULL, early_frac = NULL, surge_fade = TRUE, tcp_center = "median", tcp_flow_floor = 0.065) {
   total <- match.arg(total)
+  if (!is.numeric(tcp_flow_floor) || length(tcp_flow_floor) != 1L || !is.finite(tcp_flow_floor) || tcp_flow_floor < 0)
+    stop("NW17! tcp_flow_floor must be one finite number >= 0 (got ", paste(format(tcp_flow_floor), collapse = ", "), ")", call. = FALSE)
   if (is.null(sims)) sims <- st$n_sims
   if (!is.null(st$swd) && nrow(st$swd) != sims) stop("NW2! the saved state has ", nrow(st$swd), " statewide draws; sims must equal that (dump the state at the sim count wanted)", call. = FALSE)
   seats <- rownames(st$shares)
@@ -487,7 +489,8 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
   if (nu$n_updated > 0L) {
     shares <- nu$shares; sdo <- nu$sd; swd <- night_shrink_draws(swd, 1 - nu$resolved)
   }
-  sh <- if (surge_fade && nu$n_updated > 0L) night_surge_fade(st$surge_h, nu$counted, seats) else st$surge_h
+  # a state with no surge (surge_h NULL) has nothing to fade; night_surge_fade() would stop on it
+  sh <- if (surge_fade && nu$n_updated > 0L && length(st$surge_h)) night_surge_fade(st$surge_h, nu$counted, seats) else st$surge_h
   sim <- simulate_seat_contests(level_sd = st$level_sd, sd_override = sdo, level_mult = st$level_mult, shares, st$fm,
                                 party_sd = st$psd, statewide_draws = swd, seat_sd = st$seat_sd, n_sims = sims,
                                 breakout_p = st$bo$p, breakout_q = st$bo$q, coalition_split = st$coalition_split, error_q = st$error_q,
