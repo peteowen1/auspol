@@ -72,3 +72,25 @@ result goes to Pete with the split shown. Amendments below, this text unedited.
 The trees already repair part of the floor, and the oracle's gain shrank as the slope fell below 1; at the shipped
 slopes (0.3-0.99) the base change is smaller than the oracle's. A null here is a plausible outcome and, per the rule
 above, is final only after the retrained-trees version if the delta screen is promising.
+
+## Screen result (appended 2026-10-30; nothing above edited)
+
+**AEF-7, 1,000 sims (code at 46bd2fb6): REFUSED, stays "points".**
+
+- Dry run passed first: Mildura vic2026 Labor base 0.00 -> 5.16 (`AUSPOL_TRACE_SEAT`), as written above. It also showed
+  the side effect the screen then measured: IND is a falling class too (5.55 -> 3.28), so Cupper's base fell
+  28.96 -> 20.78 and her point forecast 21.34 -> 15.97.
+- Clause 2 guard FAILS: pooled seat log loss 0.2636 -> 0.2672 (+0.0036, SE 0.0028), worse by more than 1 SE.
+- Clause 1 primary fails: the 393 target seats +0.0015 per seat (SE 0.0014); vic2022 +0.0052, wa2025 +0.0032, fed2022
+  +0.0003, fed2025 -0.0008. Clause 3: every leave-one-out drop stays worse (+0.0004 to +0.0025). Clause 5: +0.0021
+  without Monash and Morwell.
+- Clause 6: 1,920 cells moved (838 raised, 1,082 lowered); squared share error 28,604 -> 29,019 (+414, SE 408).
+- Clause 8 and the target band: worse in EVERY band of last-time share, including the small shares the change was
+  built for (under 10: 3,800 -> 3,900; 10-40: 12,210 -> 12,363; over 40: 9,930 -> 10,165). By class only ALP, GRN and
+  OTH_RIGHT improve, slightly. Largest moves: Noosa qld2024 IND 42.4 -> 36.1 (actual 43.2); the sa2026 Liberal seats
+  rise 4-5 points, about half of them toward the actual.
+
+The oracle's gain (true levels, slope 1) does not survive the real slopes and the trees: the slope's shrink already
+pulls small seats toward the level, and the logit then over-shrinks the large shares of a falling minor class (IND,
+ONP), where personal votes sit. Not run, by the rule above: the retrained-trees version. The delta screen is not
+promising (worse in every band), so it is not owed; it would cost a stage 1-3 rebuild.

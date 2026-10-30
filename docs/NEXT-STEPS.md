@@ -100,7 +100,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   BUILT 30 Oct, off: `AUSPOL_SWING_FORM=hybrid` (`dev_slope()`, post-xgb; prereg `plans/prereg-swing-form-hybrid-2026-10-30.md`).
   Screen: `Rscript scripts/quick_arm.R "AUSPOL_SWING_FORM=hybrid"` (AEF-7), then `--pairs=all`; dry-run check first:
   `AUSPOL_TRACE_SEAT=Mildura AUSPOL_SWING_FORM=hybrid AUSPOL_OUT_SUFFIX=-sw` on fit_seats_full.R, TRS0 ALP base 5.16.
-  If the delta screen is promising but small, the retrained-trees version runs before any refusal is final.
+  REFUSED on AEF-7 30 Oct (pooled +0.0036, SE 0.0028; worse in every share band; prereg RESULT). Stays off.
+  The Mildura Labor 0.00 floor remains, and the trees repair it to 4.3; no further work planned.
   One Nation fill pro rata vs personal votes: CHECKED 30 Oct, keep proportional (`reviews/onp-fill-personal-vote-2026-10-30.md`:
   returning IND ratio 0.68 vs majors 0.76 in 7 surge seats, 3 elections, diff -0.13 SE 0.23; calm seats +0.06 SE 0.06).
   Thin (sa2026 is 5 of 7); recheck after vic2026 counts.
