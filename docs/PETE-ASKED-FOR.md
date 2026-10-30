@@ -54,7 +54,6 @@ waiting for R"; Claude in the auspol session did not see these requests firsthan
 
 | Request | Status |
 |---|---|
-| Independent seat gap kept on a re-stand: the SHARE version (carry only the re-standers' share of the old class vote; Geelong ~2% of Lyons's gap) | **NOT BUILT.** Branch `ind-overcall-1025` (7252acb, local) has only the yes/no version `AUSPOL_IND_GAP_RESTAND` (reaches Pascoe Vale of 5 targets). Prereg `plans/prereg-ind-gap-restand-2026-10-25.md` on that branch. |
 | Seat-poll primaries where a poll reports only two candidates: hunt for the full primaries first, infer only when none exist | **NOT DONE.** Recorded by the NEXT-STEPS session; no branch named. |
 | A shrunk new-independent seat-poll bias term | **NOT DONE.** Recorded by the NEXT-STEPS session; no branch named. |
 | Morning pages: the Mildura trace and the wa2017 / fed2019 walks | **NOT DONE.** Recorded by the NEXT-STEPS session. |

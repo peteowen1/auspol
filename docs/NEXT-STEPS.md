@@ -60,9 +60,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - Builds waiting for R (26 Oct, each on a LOCAL branch, not pushed). `mp-slope-shrink-1025` is in dev and SHIPPED
   30 Oct (DECISIONS). `ind-overcall-1025` passes `check_like_ci.R` (28 Oct), 3 commits not in dev. One quick_arm
   screen at a time:
-  - `ind-overcall-1025` `7252acb`: `AUSPOL_IND_GAP_RESTAND` (off). As built (yes/no: gap kept if any earlier
-    candidate of the class re-stands) it reaches only Pascoe Vale of the 5 targets. Pete chose the SHARE version
-    (carry only the re-standers' share of the old class vote; Geelong ~2% of Lyons's gap): NOT built yet.
+  - `ind-overcall-1025` `7252acb`, merged into dev 30 Oct (`016ed0c3`): `AUSPOL_IND_GAP_RESTAND` (off). The SHARE
+    version is NOT built, on Pete's call 30 Oct: it changes nothing, since the base already holds a re-stander's own
+    vote (DECISIONS 2026-10-30). The yes/no arm REFUSED on AEF-7 30 Oct (moved seats +0.0014, SE 0.0007; prereg
+    RESULT). OPEN: fit the no-re-stander subset's own retention rate (time-forward, shrunk) in place of 0. OPEN: trace the 52 seat-elections where
+    the leader re-stands but no own vote showed in the base (first Corio fed2007, Kiama nsw2023), with the harness discounts.
     Shepparton is a true re-stand (Sheed 29.4 in 2022, VEC). Prereg `plans/prereg-ind-gap-restand-2026-10-25.md` (on that branch).
   - `prereg-offbranches-1025` `ee80497`: preregs for XGB_CLASS_JUR_CAL (merges clean), OTHERS_SCALE_JUR
     (identical to the refused pooled arm at every AEF-7 target on cached history), SALIENCE_STATE (needs two as-at

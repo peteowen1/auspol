@@ -93,3 +93,22 @@ goes to Pete with the split shown. Amendments are added below, this text unedite
 (n=305). Most of those seats are this rule's seats, so slope 0 is below the measured average; the rule wins only if
 the no-re-stander subset retains far less than the departed set as a whole (Pascoe Vale kept about 0.13 of its
 32.9). The screen decides that; a WORSE result is a reason to fit the subset's own rate, not to argue.
+
+## Screen result (appended 2026-10-30; nothing above edited)
+
+**AEF-7, 1,000 sims, code tce319e1 (dev after merging this branch): REFUSED.**
+
+- Clause 1 PASSES: Pascoe Vale vic2022 IND 13.87 -> 7.49 (actual 4.19), winner (ALP) 0.959 -> 0.969. Geelong,
+  Sandringham and Shepparton byte-identical. Kavel sa2026 not printed by name (UNVERIFIED; sa2026 moved 13 cells).
+- Clause 2 FAILS, wrong direction: the 66 seats whose IND cell moved > 0.05 pts are WORSE, seat log loss +0.0014 per
+  seat (SE 0.0007, clustered on election; fed2022 +0.0002, fed2025 +0.0011, vic2022 +0.0030, wa2025 +0.0014).
+- Clause 3 guard: pooled 0.2636 -> 0.2631 (-0.0004, SE 0.0006), but the gain is nsw2023 (-0.0038), whose IND cells
+  moved too little to enter clause 2; not this rule's mechanism.
+- Clause 5: every leave-one-out drop stays worse (+0.0008 to +0.0020). Clause 6: +0.0022 without Grey and Mallee.
+- Clause 7: 44 IND cells lowered, 45 RAISED (seats whose old gap sat below the statewide level, which slope 0 lifts);
+  IND squared error 2,607.9 -> 2,920.9. Changed-cell share error, all classes: +523.7 (SE 371.3).
+- Clause 8 does not fire (largest drop for a winning independent 0.022, Kooyong fed2022).
+
+This is the failure named under "Known reason it may fail": slope 0 sits below the 0.38 a departed leader's class keeps
+on average. Per this prereg, the follow-up is to FIT the no-re-stander subset's own retention rate (time-forward,
+shrunk) rather than 0, and to apply it to the gap in both directions.
