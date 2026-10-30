@@ -1,12 +1,17 @@
 # Per-seat detail of an election-night replay, for the explainer page (https://claude.ai/artifact/WtspQifwBERFokMxrkAsn9):
 # at each update, the counted primaries, the model's new primaries and sd, the VEC two-candidate count so far and the forecast
 # two-candidate share, against the afternoon forecast and the declared result. Same steps as scripts/night_replay_json.R.
-#   Rscript scripts/night_replay_detail.R <state-vic2022.rds from AUSPOL_NIGHT_DUMP> <out.json>
-a <- commandArgs(trailingOnly = TRUE); if (length(a) < 2) stop("usage: night_replay_detail.R <state.rds> <out.json>")
+#   Rscript scripts/night_replay_detail.R <state.rds from AUSPOL_NIGHT_DUMP> <out.json> [live booths] [previous booths] [booth 2CP]
+# Booth paths default to output/booths-<region><to>.csv, output/booths-<region><from>.csv and
+# output/booths/<region><to>-booth-tcp.csv, the region taken from the state's pair label ("nsw2023" -> "nsw").
+a <- commandArgs(trailingOnly = TRUE); if (length(a) < 2) stop("usage: night_replay_detail.R <state.rds> <out.json> [live] [prev] [tcp]")
 devtools::load_all(".", quiet = TRUE)
 suppressPackageStartupMessages(library(data.table))
 st <- readRDS(a[1]); sims <- as.integer(st$n_sims)
-L <- fread("output/booths-vic2022.csv"); R <- fread("output/booths-vic2018.csv"); Tc <- fread("output/booths/vic2022-booth-tcp.csv")
+region <- sub("[0-9]+$", "", if (is.null(st$pair)) "vic" else st$pair); pair <- sprintf("%s%d", region, st$to)
+pth <- function(i, d) if (length(a) >= i && nzchar(a[i])) a[i] else d
+L <- fread(pth(3, sprintf("output/booths-%s%d.csv", region, st$to))); R <- fread(pth(4, sprintf("output/booths-%s%d.csv", region, st$from)))
+Tc <- fread(pth(5, sprintf("output/booths/%s%d-booth-tcp.csv", region, st$to)))
 fracs <- c(0, 0.05, 0.1, 0.25, 0.5, 0.75, 1)
 clock <- function(f) { m <- round(18 * 60 + 240 * f); sprintf("%d:%02dpm", (m %/% 60) - 12, m %% 60) }
 # counted primaries by unit, same unit rule as night_booth_update()
@@ -15,7 +20,7 @@ Lc <- Lc[, .(v = sum(votes)), by = .(district, unit, cls)]
 Tk <- copy(Tc)[is.na(votes), votes := 0][, cls := ifelse(nzchar(trimws(party_raw)), classify_party(party_raw), "IND")]
 Tk[, unit := ifelse(vote_type == "ordinary", booth, vote_type)]
 Tk <- Tk[, .(v = sum(votes)), by = .(district, unit, cls)]
-P <- fread("output/published-predictions.csv")[pair == "vic2022"]
+P <- fread("output/published-predictions.csv"); keep_pair <- P$pair == pair; P <- P[keep_pair]   # mask built OUTSIDE the brackets: inside P[...] `pair` is the column (NSE trap)
 final_fp <- P[, .(seat, party, actual)]
 final_tcp <- Tk[, .(v = sum(v)), by = .(district, cls)]
 seats <- rownames(st$shares); cls_all <- colnames(st$shares)
