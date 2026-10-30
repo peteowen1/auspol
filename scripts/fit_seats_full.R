@@ -936,6 +936,7 @@ if (all(SLOPE == 1)) cat("DS1  all 1.000 -- uniform swing, output must be unchan
 .succ_on <- departed_successor_mode() != "0"   # docs/plans/prereg-departed-successor-flag-2026-10-07.md
 if (.succ_on && .departed_hold) stop("AUSPOL_DEPARTED_SUCCESSOR holds its own cells; do not combine it with AUSPOL_DEPARTED_HOLD", call. = FALSE)
 .SUCC_RATE <- departed_successor_rates(TGT)   # NULL when off: byte-identical
+.GAP_RESTAND <- identical(ind_gap_restand_mode(), "1")   # AUSPOL_IND_GAP_RESTAND (off): IND gap carried only when an earlier IND candidate re-stands (IGR1 lines); prereg-ind-gap-restand-2026-10-25.md
 if (.succ_on) { cat(sprintf("DSR1 departed successor rates (%s): %d seat(s) for %s, held through renormalisation
 ", departed_successor_mode(), length(.SUCC_RATE), TGT)); .departed_hold <- TRUE }
 .hold_min <- as.numeric(Sys.getenv("AUSPOL_DEPARTED_HOLD_MIN_PRIOR", "0"))   # arm B (amendment 2026-10-05)
@@ -1271,12 +1272,12 @@ if (!is.null(.fitsl)) {
     lut <- .permit_lut(pv)
     pm <- unname(lut[seats]); # a missing permit row is NOT a permit (NA = silent; 2026-09-20)
     return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES,
-                            honour_departed = .honour_departed, with_flags = .departed_hold, successor_rate = .SUCC_RATE,
+                            honour_departed = .honour_departed, with_flags = .departed_hold, successor_rate = .SUCC_RATE, gap_restand = .GAP_RESTAND,
                             same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same,
                             new  = if (is.null(.fitsl)) formals(screened_slopes)$new  else .fitsl$new))
   }
   if (.cond && !is.null(.returns))
-    return(conditional_slopes(p, seats, .returns, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES,
+    return(conditional_slopes(p, seats, .returns, gap_restand = .GAP_RESTAND, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES,
                                same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same,
                                new  = if (is.null(.fitsl)) formals(conditional_slopes)$new  else .fitsl$new))
   SLOPE[[p]]

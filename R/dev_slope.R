@@ -137,6 +137,9 @@ dev_slopes_for <- function(parties, default = 1) {
 #'   IND average every cycle, which is where most of this model's fed2025 seat
 #'   log-loss gap to AE Forecasts sits. Requires `returns` to carry a
 #'   `same_mp` column, which [candidate_returns()] now supplies.
+#' @param gap_restand Logical, default `FALSE` (byte-identical). `TRUE` gives
+#'   the IND class slope 0 where no earlier IND candidate re-stands
+#'   (`ind_gap_drop()`, R/ind_gap_restand.R).
 #' @return Numeric vector the length of `seats`.
 #' @export
 conditional_slopes <- function(cls, seats, returns,
@@ -146,7 +149,7 @@ conditional_slopes <- function(cls, seats, returns,
                                         GRN = 0.880, ONP = 0.545),
                                default = 1,
                                same_mp = NULL, major_departed = NULL,
-                               major_present = NULL) {
+                               major_present = NULL, gap_restand = FALSE) {
   # MAJOR-PARTY DEPARTURE TIER. ALP/LNP have no same/new table and always
   # took `default` (1.0): a seat whose sitting member retired projected its
   # full personal-vote-inflated base. Measured 2026-09-18: -2.8 points on
@@ -205,6 +208,11 @@ conditional_slopes <- function(cls, seats, returns,
     is_mp <- !is.na(idx) & hit$same_mp[idx]
     is_mp[is.na(is_mp)] <- FALSE
     out[is_mp] <- as.numeric(same_mp[[cls]])
+  }
+  if (isTRUE(gap_restand)) {
+    drop <- ind_gap_drop(cls, seats, returns)
+    out[drop] <- 0
+    .igr_report(cls, seats, drop, "conditional")
   }
   out
 }
@@ -287,6 +295,10 @@ conditional_slopes <- function(cls, seats, returns,
 #'   to emerge?
 #' @return Numeric vector the length of `seats`.
 #' @param same_mp Passed through to [conditional_slopes()]; see there.
+#' @param gap_restand Logical, default `FALSE` (byte-identical). `TRUE`
+#'   (`AUSPOL_IND_GAP_RESTAND=1`) gives the IND class slope 0 in a seat where
+#'   no earlier IND candidate re-stands (`ind_gap_drop()`, R/ind_gap_restand.R), unless the screen
+#'   permits the newcomer or the seat is named in `successor_rate`.
 #' @export
 screened_slopes <- function(cls, seats, returns, permit, honour_departed = FALSE,
                             same = c(IND = 0.907, OTH_RIGHT = 0.891,
@@ -296,7 +308,7 @@ screened_slopes <- function(cls, seats, returns, permit, honour_departed = FALSE
                             default = 1, same_mp = NULL,
                             departed_rate = c(IND = 0.38), major_departed = NULL,
                             major_present = NULL, with_flags = FALSE,
-                            successor_rate = NULL) {
+                            successor_rate = NULL, gap_restand = FALSE) {
   if (length(permit) != length(seats)) {
     stop("permit must be the same length as seats: ", length(permit),
          " vs ", length(seats), call. = FALSE)
@@ -371,6 +383,17 @@ screened_slopes <- function(cls, seats, returns, permit, honour_departed = FALSE
   }
   out <- ifelse(!is_same & permitted, 1.0,
                 ifelse(departed, dep_seat, base))
+  # AUSPOL_IND_GAP_RESTAND: no earlier IND candidate of this seat stands for the
+  # class again, so the class's old gap above the statewide level has nobody to
+  # carry it and the slope on it is 0 (the cell starts from the statewide level).
+  # A screen-permitted newcomer keeps the 1.0 path and a hand-coded successor
+  # (`successor_rate`) keeps its fitted rate: both are out of scope
+  # (docs/plans/prereg-ind-gap-restand-2026-10-25.md).
+  if (isTRUE(gap_restand)) {
+    drop <- ind_gap_drop(cls, seats, returns) & !permitted & !succ_hit
+    out[drop] <- 0
+    .igr_report(cls, seats, drop, "screened")
+  }
   # Which seats the departed-leader decay fired in, for AUSPOL_DEPARTED_HOLD:
   # the harnesses hold those cells fixed through renormalisation
   # (`renorm_hold()`). `departed` already excludes `permitted` seats, so a seat
