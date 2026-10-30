@@ -91,7 +91,7 @@ where a minor-to-minor relabelling (Donato's case) does not behave that way.
 
 The major-party case is now a fitted carry, not an exclusion. A sitting member who leaves a
 major party keeps a fraction of their previous personal vote, `discount_mp` from
-`fit_defector_discount()` (`R/candidate_returns.R:1162`), fitted on elections before the target
+`fit_defector_discount()` in `R/candidate_returns.R`, fitted on elections before the target
 (federal targets get their own shrunk rate, `AUSPOL_DEFECT_BY_LEVEL = "2"`, `:1268`). The live
 forecast fits it every run (the `AUSPOL_LIVE_DEFECT_FIT` block calling `fit_defector_discount()` in `scripts/fit_seats_full.R`); it read
 a frozen 0.282 until 2026-10-18, and the fitted value then was 0.313 (the frozen number is
@@ -114,7 +114,9 @@ swing, no penalty) when the salience screen (`salience_permit_for()`,
 `screened_slopes()`) judges a fresh face as a plausible emergence rather than
 a no-hoper. Sitting members take their own slope tier (`AUSPOL_MP_SLOPE`,
 the `.MP_SLOPE` block in `scripts/fit_seats_full.R`), and since 2026-10-14 that table and the minor-defector
-carry are fitted on earlier elections only, shrunk toward a structural prior
+carry are fitted on earlier elections only, shrunk toward a structural prior until 2026-10-30. Since then
+(`AUSPOL_MP_SLOPE_POOL = "1"`, shipped) the sitting-member table is read from `output/mp-slope-pooled.csv`: each
+class partially pooled toward the all-class member slope, not toward a structural prior. The minor-defector carry is unchanged
 (`AUSPOL_MP_SLOPE_TF`, `AUSPOL_CONSERVE_TF`, `AUSPOL_CONSERVE_SHRINK_K = "3"`, which replaced an
 8-case cliff).
 
