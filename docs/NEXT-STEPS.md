@@ -102,6 +102,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   per seat; (2) each draw's flow from its own primaries; (3) flow sd from measured between-seat flow error, not 0.01.
   Also from review: draws with a different final pair are never corrected (Monash 2025); statewide draws shrink by
   the national mean counted, not the seat's; projection sd floors at 0.26. Reviews: `docs/reviews/night-replay-fed-2026-10-30.md`.
+- OPEN, FLOWS (30 Oct): `output/flows-estimated.csv` has Greens -> Labor HIGH against the AEC's official two-party
+  flow every time: fed2019 86.16 vs 82.21, fed2022 89.07 vs 85.66, fed2025 95.06 vs 88.19 (+3.95/+3.41/+6.87;
+  `external/reference/aec/tallyroom/<event>/HouseTppFlowByPartyDownload-<event>.csv`; the 2025 file puts the ALP
+  columns FIRST, the earlier ones the Coalition's).
+  A preference-data agent measured 80.2 / 82.2 from distribution-of-preference rows (different scope, unreconciled).
+  Check what flows-estimated estimates (n_seats 124/115) and whether the 2025 value is real; then the AEC by-party
+  and by-state flow files for all eight elections as the anchor. Review: `docs/reviews/aec-preference-data-2026-10-30.md`.
 - OPEN, REPLAY METHOD (30 Oct review): every call time quoted from the replays is on a SIMULATED count (one early
   block per seat, all seats in step, clock = 6pm + 4h x step, "counted" over the final total not the live projection;
   qld2024 counted 11.6% -> 11.7% -> 17.2% -> 54.2% over steps 0.3-0.75). vic2022 tuned the night settings, so it is not

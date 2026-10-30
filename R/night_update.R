@@ -301,10 +301,13 @@ night_tcp_obs <- function(tcp, fp, units, post) {
 #' @param pair_min Smallest share of draws with the VEC's pair for its count to be used.
 #' @param center `"mean"` (default, unchanged) or `"median"`: which draw the counted flow is lined up
 #'   against. `"median"` stops a minority of outlying draws (an unfaded surge) moving every other draw.
+#' @param flow_sd_floor Floor on the prior flow sd (the draws' own flow spread is near zero with `flow_sd = 0`).
+#'   0.01 (default) is unchanged; 0.065 is the measured between-seat flow error, 2010-2025
+#'   (docs/reviews/aec-preference-data-2026-10-30.md), which gives the count most of the weight.
 #' @return `sim`, updated, with attribute `night_tcp`: one row per observed seat (pair share
 #'   of draws, prior and posterior mean of a's share, draws changed, `flag`).
 #' @export
-night_apply_tcp <- function(sim, obs, pair_min = 0.2, center = c("mean", "median")) {
+night_apply_tcp <- function(sim, obs, pair_min = 0.2, center = c("mean", "median"), flow_sd_floor = 0.01) {
   center <- match.arg(center)
   if (is.null(obs) || !nrow(obs)) return(sim)
   seats <- colnames(sim$tcp_winner)
@@ -336,7 +339,7 @@ night_apply_tcp <- function(sim, obs, pair_min = 0.2, center = c("mean", "median
     # center = "median": the shift targets the TYPICAL draw. With "mean" (default, byte-identical) a minority
     # of outlying draws (Wentworth fed2022: 305 surge draws, implied flow 1.05 against 0.70) moves the mean flow
     # and the shift then drags every other draw across 50% (Spender 0.996 -> 0.302 at 97% counted).
-    fm <- if (center == "median") stats::median(fi) else mean(fi); fsd <- max(stats::sd(fi), 0.01)
+    fm <- if (center == "median") stats::median(fi) else mean(fi); fsd <- max(stats::sd(fi), flow_sd_floor)
     cm <- combine_prior_projection(fm, obs$flow[k], fsd, obs$flow_se[k])
     na <- pmin(1, pmax(0, pa + (cm$mean - fm) * rest))
     cm <- list(mean = mean(na))

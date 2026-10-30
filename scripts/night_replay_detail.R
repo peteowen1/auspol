@@ -13,8 +13,8 @@ pth <- function(i, d) if (length(a) >= i && nzchar(a[i])) a[i] else d
 L <- fread(pth(3, sprintf("output/booths-%s%d.csv", region, st$to))); R <- fread(pth(4, sprintf("output/booths-%s%d.csv", region, st$from)))
 Tc <- fread(pth(5, sprintf("output/booths/%s%d-booth-tcp.csv", region, st$to)))
 fracs <- c(0, 0.05, 0.1, 0.25, 0.5, 0.75, 1)
-surge_fade <- identical(Sys.getenv("AUSPOL_NIGHT_SURGE_FADE", "0"), "1"); tcp_center <- Sys.getenv("AUSPOL_NIGHT_TCP_CENTER", "mean")
-cat(sprintf("night fixes: surge-fade=%s tcp-center=%s\n", surge_fade, tcp_center))
+surge_fade <- identical(Sys.getenv("AUSPOL_NIGHT_SURGE_FADE", "0"), "1"); tcp_center <- Sys.getenv("AUSPOL_NIGHT_TCP_CENTER", "mean"); tcp_floor <- as.numeric(Sys.getenv("AUSPOL_NIGHT_TCP_FLOW_FLOOR", "0.01"))
+cat(sprintf("night fixes: surge-fade=%s tcp-center=%s tcp-flow-floor=%s\n", surge_fade, tcp_center, tcp_floor))
 clock <- function(f) { m <- round(18 * 60 + 240 * f); sprintf("%d:%02dpm", (m %/% 60) - 12, m %% 60) }
 # counted primaries by unit, same unit rule as night_booth_update()
 Lc <- copy(L)[is.na(votes), votes := 0][, cls := classify_party(party)][, unit := ifelse(booth_type == "ordinary", booth, booth_type)]
@@ -42,7 +42,7 @@ for (fr in fracs) {
                                 fallback_smooth = st$fb_smooth, shrink_k = st$shrink_k, flow_sd = st$flow_sd,
                                 surge_h = sh, surge_party = st$surge_party, surge_from_zero = st$surge_from_zero,
                                 surge_mu = st$surge_mu, surge_sd = st$surge_sd)
-  if (!is.null(nu)) { obs <- night_tcp_obs(Tc, L, nu$units, shares); sim <- night_apply_tcp(sim, obs, center = tcp_center) }
+  if (!is.null(nu)) { obs <- night_tcp_obs(Tc, L, nu$units, shares); sim <- night_apply_tcp(sim, obs, center = tcp_center, flow_sd_floor = tcp_floor) }
   wp <- as.data.table(sim$win_prob)
   tw <- sim$tcp_winner; tr <- sim$tcp_runnerup; ts <- sim$tcp_share
   if (max(ts, na.rm = TRUE) > 1.5) ts <- ts / 100

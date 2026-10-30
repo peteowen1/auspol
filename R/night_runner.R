@@ -466,11 +466,12 @@ night_expected_votes <- function(enrolment, prev, basis = c("night", "final")) {
 #' @param surge_fade `TRUE` fades each seat's surge hazard by its counted share ([night_surge_fade()]).
 #'   `FALSE` (default) is unchanged.
 #' @param tcp_center Passed to [night_apply_tcp()] as `center`: `"mean"` (default, unchanged) or `"median"`.
+#' @param tcp_flow_floor Passed to [night_apply_tcp()] as `flow_sd_floor`; 0.01 (default) is unchanged.
 #' @return List: `sim`, `nu` (the update), `shares`, `sd`, `matched` (seats in both state and feed),
 #'   `n_updated`.
 #' @export
 night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "table", "expected"), expected = NULL, sims = NULL, use_tcp = TRUE,
-                             lean = NULL, early_frac = NULL, surge_fade = FALSE, tcp_center = "mean") {
+                             lean = NULL, early_frac = NULL, surge_fade = FALSE, tcp_center = "mean", tcp_flow_floor = 0.01) {
   total <- match.arg(total)
   if (is.null(sims)) sims <- st$n_sims
   if (!is.null(st$swd) && nrow(st$swd) != sims) stop("NW2! the saved state has ", nrow(st$swd), " statewide draws; sims must equal that (dump the state at the sim count wanted)", call. = FALSE)
@@ -496,7 +497,7 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
   if (use_tcp && nu$n_updated > 0L && nrow(conv$tcp)) {
     obs <- night_tcp_obs(conv$tcp, conv$live, nu$units, shares)
     n_tcp <- nrow(obs)
-    sim <- night_apply_tcp(sim, obs, center = tcp_center)
+    sim <- night_apply_tcp(sim, obs, center = tcp_center, flow_sd_floor = tcp_flow_floor)
   }
   list(sim = sim, nu = nu, shares = shares, sd = sdo, matched = matched, n_updated = nu$n_updated, n_tcp = n_tcp)
 }

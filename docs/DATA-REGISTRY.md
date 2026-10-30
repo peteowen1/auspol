@@ -122,7 +122,7 @@ cannot pass as a working one.
 
 ## Raw commission downloads (`external/reference/`)
 
-- **aec/** -- 1214 files, 893.5 MB
+- **aec/** -- 2459 files, 2085.8 MB
   - e.g. booths/fed2016-NSW.csv, booths/fed2016-QLD.csv, booths/fed2016-VIC.csv, booths/fed2019-QLD.csv
 - **vec/** -- 3453 files, 436.3 MB
   - e.g. 2006/vc/fpv-albertpark.html, 2006/vc/fpv-altona.html, 2006/vc/fpv-ballarateast.html, 2006/vc/fpv-ballaratwest.html
@@ -212,6 +212,8 @@ parser checks booth sums against the district results above.
 
 | file | districts | polling places | rows | votes | places with coordinates |
 |---|---:|---:|---:|---:|---:|
+| fed2022-booth-tcp.csv | 151 | 8479 | 18166 | 14659042 | 0 |
+| fed2025-booth-tcp.csv | 150 | 8940 | 19080 | 15490236 | 0 |
 | nsw2011-booth-fp.csv | 93 | 2718 | 16983 | 4153335 | 0 |
 | nsw2015-booth-fp.csv | 93 | 2900 | 22118 | 4404334 | 0 |
 | nsw2019-booth-fp.csv | 93 | 2516 | 20520 | 4551886 | 0 |

@@ -24,7 +24,7 @@ fracs <- as.numeric(strsplit(flag("fracs", "0,0.05,0.1,0.25,0.5,0.75,1"), ",")[[
 out_dir <- flag("out", "output/night-replay"); dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 use_tcp <- !identical(flag("tcp", "1"), "0")
 early <- flag("early", "interleaved"); gap_k <- as.numeric(flag("gap_k", "5"))
-surge_fade <- identical(flag("surge-fade", "0"), "1"); tcp_center <- flag("tcp-center", "mean")   # night fixes, review 2026-10-30
+surge_fade <- identical(flag("surge-fade", "0"), "1"); tcp_center <- flag("tcp-center", "mean"); tcp_floor <- as.numeric(flag("tcp-flow-floor", "0.01"))   # night fixes, review 2026-10-30
 base <- if (!is.null(flag("base"))) jsonlite::fromJSON(flag("base"), simplifyVector = FALSE) else NULL
 st <- readRDS(state_f); sims <- as.integer(flag("sims", st$n_sims))
 # Any election: the region comes from the state's pair label ("nsw2023" -> "nsw"); --live, --prev and --tcp-file
@@ -35,8 +35,8 @@ br <- flag("prev", file.path("output", sprintf("booths-%s%d.csv", region, st$fro
 bt <- flag("tcp-file", file.path("output", "booths", sprintf("%s%d-booth-tcp.csv", region, st$to)))
 for (f in c(bl, br, if (use_tcp) bt)) if (!file.exists(f)) stop("NJ1! missing ", f)
 L <- fread(bl, showProgress = FALSE); R <- fread(br, showProgress = FALSE); Tc <- if (use_tcp) fread(bt, showProgress = FALSE) else NULL
-cat(sprintf("NJ1  %s: %d seats, %d sims, 2CP %s, early=%s, gap_k=%s, surge-fade=%s, tcp-center=%s, fractions %s\n", st$pair, nrow(st$shares), sims,
-            if (use_tcp) "ON" else "off", early, gap_k, surge_fade, tcp_center, paste(fracs, collapse = ",")))
+cat(sprintf("NJ1  %s: %d seats, %d sims, 2CP %s, early=%s, gap_k=%s, surge-fade=%s, tcp-center=%s, tcp-flow-floor=%s, fractions %s\n", st$pair, nrow(st$shares), sims,
+            if (use_tcp) "ON" else "off", early, gap_k, surge_fade, tcp_center, tcp_floor, paste(fracs, collapse = ",")))
 
 index <- list()
 for (fr in fracs) {
@@ -56,7 +56,7 @@ for (fr in fracs) {
                                 surge_h = sh, surge_party = st$surge_party, surge_from_zero = st$surge_from_zero,
                                 surge_mu = st$surge_mu, surge_sd = st$surge_sd)
   n_tcp <- 0L
-  if (use_tcp && !is.null(nu)) { obs <- night_tcp_obs(Tc, L, nu$units, shares); n_tcp <- nrow(obs); sim <- night_apply_tcp(sim, obs, center = tcp_center) }
+  if (use_tcp && !is.null(nu)) { obs <- night_tcp_obs(Tc, L, nu$units, shares); n_tcp <- nrow(obs); sim <- night_apply_tcp(sim, obs, center = tcp_center, flow_sd_floor = tcp_floor) }
   if (is.null(nu)) nu <- list(counted = setNames(rep(0, nrow(st$shares)), rownames(st$shares)), fallback_projected = character())
   res <- list(sim = sim, nu = nu, shares = shares, sd = sdo, matched = rownames(shares), n_updated = if (is.null(nu$n_updated)) 0L else nu$n_updated,
               n_tcp = n_tcp, denominator = "table", n_placeholder = 0L, n_unlisted = 0L)

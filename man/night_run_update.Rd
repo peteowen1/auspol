@@ -16,7 +16,8 @@ night_run_update(
   lean = NULL,
   early_frac = NULL,
   surge_fade = FALSE,
-  tcp_center = "mean"
+  tcp_center = "mean",
+  tcp_flow_floor = 0.01
 )
 }
 \arguments{
@@ -47,6 +48,8 @@ night_run_update(
 \code{FALSE} (default) is unchanged.}
 
 \item{tcp_center}{Passed to \code{\link[=night_apply_tcp]{night_apply_tcp()}} as \code{center}: \code{"mean"} (default, unchanged) or \code{"median"}.}
+
+\item{tcp_flow_floor}{Passed to \code{\link[=night_apply_tcp]{night_apply_tcp()}} as \code{flow_sd_floor}; 0.01 (default) is unchanged.}
 }
 \value{
 List: \code{sim}, \code{nu} (the update), \code{shares}, \code{sd}, \code{matched} (seats in both state and feed),

@@ -477,3 +477,16 @@ test_that("night_apply_tcp(center = 'median') stops a minority of outlying draws
   expect_lt(sum(p_mean$prob[p_mean$party == "IND"]), 0.5)      # the defect: the mean shift flips the 7 typical draws
   expect_equal(sum(p_med$prob[p_med$party == "IND"]), 1)        # median: the typical draws stay IND-winning
 })
+
+test_that("night_apply_tcp(flow_sd_floor) gives the counted flow its weight when the draws' flows are near-identical", {
+  # 10 draws, implied flow to a all ~0.60 (sd ~0); counted flow 0.80 with se 0.023.
+  n <- 10L; pa <- 0.36 + 0.24 * (0.60 + seq(-1, 1, length.out = n) * 1e-4)
+  sim <- list(totals = cbind(IND = rep(0L, n), LNP = rep(1L, n)), win_prob = data.frame(seat = "W", party = "LNP", prob = 1),
+              tcp_winner = matrix("LNP", n, 1, dimnames = list(NULL, "W")), tcp_runnerup = matrix("IND", n, 1, dimnames = list(NULL, "W")),
+              tcp_share = matrix(1 - pa, n, 1, dimnames = list(NULL, "W")))
+  obs <- data.frame(seat = "W", a = "IND", b = "LNP", fp_a = 36, fp_b = 40, flow = 0.80, flow_se = 0.023, share_a = 0.552)
+  lo <- attr(night_apply_tcp(sim, obs), "night_tcp"); hi <- attr(night_apply_tcp(sim, obs, flow_sd_floor = 0.065), "night_tcp")
+  expect_lt(lo$post_a, 0.52)                       # floor 0.01: the count gets ~16% weight, a stays below 50%
+  expect_gt(hi$post_a, 0.52)                       # floor 0.065: the count dominates (prior 0.504, count 0.552)
+  expect_equal(hi$changed, n)
+})
