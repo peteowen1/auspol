@@ -1373,6 +1373,44 @@ if (file.exists(.wiki)) {
     cat("BC10a! NO ABC candidate file found (external/reference/abc-vic2026/abc-candidates-*.csv): vic2026 is Wikipedia-only. Run scripts/fetch_abc_vic2026_candidates.R\n")
     U <- W[, .(seat, name, party, party_raw, party_ab, source, .key)][, `:=`(party_conflict = FALSE, class_rule = "single_source", party_alt = NA_character_)]
   }
+  # ---- BC10v: the VEC's FINAL list replaces the provisional union once it exists -----------------------------------
+  # scripts/fetch_vec_candidates.R --year=2026 writes it from the VEC's Candidates set-up file after nominations close
+  # (9 Nov 2026; docs/PIPELINE.md section E). Proven on 2022: the same parser on the VEC's 2022 file matched all 731
+  # vic2022 candidacies here with the same class on every one (scripts/check_vec_candidates_vic2022.R; the 9 extra
+  # were Narracan's, a deferred election). The official list is the answer, so it is not unioned with Wikipedia/ABC:
+  # they are only compared with it, and every name either side lacks is printed.
+  .vecf <- Sys.getenv("AUSPOL_VEC_CANDIDATES", file.path("external", "reference", "vec", "2026", "vec-candidates-2026.csv"))   # override: dry runs only
+  vec_final <- file.exists(.vecf)
+  if (vec_final) {
+    VE <- fread(.vecf, showProgress = FALSE)
+    stopifnot(all(c("district", "name", "independent", "registered_name", "ballot_position", "candidate_id") %in% names(VE)),
+              nrow(VE) > 0L)
+    .s22 <- unique(C$seat[C$election == "vic2022"]); .s22 <- c(.s22, "Narracan")
+    .sm <- stats::setNames(.s22, normalise_seat(.s22))
+    .dk <- normalise_seat(VE$district)
+    if (!all(.dk %in% names(.sm)))
+      stop("BC10v! VEC districts not in vic2022's seat list (a redistribution or a typo; map them here): ",
+           paste(unique(VE$district[!.dk %in% names(.sm)]), collapse = ", "))
+    VE[, seat := unname(.sm[.dk])]
+    VE[, party_raw := ifelse(independent == "yes", "Independent", registered_name)]   # BC11 needs party_raw on every vic2026 row
+    VE[, party := classify_party(ifelse(independent == "yes", "Independent", registered_name))]
+    if (anyNA(VE$party)) stop("BC10v! classify_party() returned NA for: ", paste(unique(VE$registered_name[is.na(VE$party)]), collapse = ", "))
+    .vk <- function(seat, name) paste(normalise_seat(seat), gsub("[^a-z]", "", tolower(sub(",.*$", "", name))),
+                                      substr(gsub("[^a-z]", "", tolower(sub("^[^,]*,", "", name))), 1, 1))
+    .pk <- .vk(U$seat, U$name); .ek <- .vk(VE$seat, VE$name)
+    cat(sprintf("BC10v VEC FINAL list %s: %d candidacies in %d districts (md5 %s); replaces the provisional %d (Wikipedia/ABC)\n",
+                basename(.vecf), nrow(VE), uniqueN(VE$seat), substr(VE$source_md5[1], 1, 8), nrow(U)))
+    cat(sprintf("BC10v   provisional names NOT on the VEC list (withdrew, or never nominated): %d%s\n", sum(!.pk %in% .ek),
+                if (any(!.pk %in% .ek)) paste0(": ", paste(sprintf("%s/%s", U$seat, U$name)[!.pk %in% .ek], collapse = "; ")) else ""))
+    cat(sprintf("BC10v   VEC names the provisional list lacked: %d\n", sum(!.ek %in% .pk)))
+    .pc <- merge(data.table(.k = .pk, prov = U$party), data.table(.k = .ek, vec = VE$party), by = ".k")
+    cat(sprintf("BC10v   class agrees with the provisional list on %d of %d matched%s\n", sum(.pc$prov == .pc$vec), nrow(.pc),
+                if (any(.pc$prov != .pc$vec)) paste0(" (differ: ", paste(sprintf("%s %s->%s", .pc$.k, .pc$prov, .pc$vec)[.pc$prov != .pc$vec], collapse = "; "), ")") else ""))
+    U <- VE[, list(seat, name, party, party_raw, party_ab = NA_character_, source = "vec", party_conflict = FALSE,
+                   class_rule = "vec_official", party_alt = NA_character_, ballot_position = as.integer(ballot_position))]
+    U[, .key := .ek]   # a column, so the provisional-merge code below never reaches the builder's .key() function instead
+    disagree <- NULL   # the Wikipedia/ABC disagreement table describes rows the official list has replaced
+  }
   V <- U[, list(election = "vic2026", region = "vic", year = 2026L,
                 seat = seat, name = name, party = party, party_raw = party_raw,
                 party_ab = party_ab, source = source, party_conflict = party_conflict,
@@ -1380,7 +1418,7 @@ if (file.exists(.wiki)) {
                 votes = NA_real_, pcv = NA_real_,
                 elected = NA, historic_elected = NA,
                 breakout = NA, swing = NA_real_,
-                ballot_position = NA_integer_, tot = NA_real_)]
+                ballot_position = if (vec_final) ballot_position else NA_integer_, tot = NA_real_)]
   cat(sprintf("BC10 vic2026: %d candidacies across %d seats = Wikipedia %d + ABC %d - %d people in both (%d wiki, %d abc, %d both; %d with conflicting class resolved to ONE row each)\n",
               nrow(V), uniqueN(V$seat), nrow(W), V_abc_n, n_both,
               sum(V$source == "wiki"), sum(V$source == "abc"), sum(V$source == "both"), n_conf))
@@ -1401,6 +1439,8 @@ if (file.exists(.wiki)) {
   # Coverage, stated rather than assumed. vic2022 ran 731 candidacies over the
   # same chamber; anything near that means nominations have closed and this
   # comment needs revisiting.
+  if (vec_final) cat(sprintf("     coverage: %d candidacies, %.0f%% of vic2022's 731 -- the VEC's FINAL list: absence IS a decision not to contest\n",
+                             nrow(V), 100 * nrow(V) / 731)) else
   cat(sprintf("     coverage: %.0f%% of vic2022's 731 candidacies -- nominations are NOT closed, absence is NOT a decision not to contest\n",
               100 * nrow(V) / 731))
   C <- rbindlist(list(C, V), fill = TRUE)

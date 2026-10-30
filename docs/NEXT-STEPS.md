@@ -254,8 +254,11 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
 
 ## Dated, cannot move
 
-- **9 November 2026, 12 noon: nominations close.** Same day: fetch the VEC
-  candidate list; `build_candidacies.R` writes vic2026 rows so
+- **9 November 2026, 12 noon: nominations close; the VEC's Candidates set-up file lands Tue 10 Nov.** PREPPED
+  30 Oct: `scripts/fetch_vec_candidates.R --file=<State2026MediaFileCandidatesV2.xml> --year=2026` then
+  `build_candidacies.R` (`docs/PIPELINE.md` section E; proven on the 2022 file, 731 of 731 matched with the same
+  class; dry run of the build and of `AUSPOL_NOM_LIVE=1` passed on a stand-in list; Daily Eight item on 10 Nov).
+  Then `build_candidacies.R` writes vic2026 rows so
   `candidate_returns(vic2022, vic2026)` and the flow model's `dest_same`
   features go live; rerun the three salience scripts named in
   `published_flags.R` (`victoria_salience_dryrun.R` proves the path on

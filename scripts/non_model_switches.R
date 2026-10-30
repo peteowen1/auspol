@@ -25,6 +25,7 @@ NON_MODEL_SWITCHES <- c(
   AUSPOL_BT_RAW                  = "RUN",  # build_bludgertrack_polls.R
   AUSPOL_CAND_ALLOW_OTHER_CHANGE = "BUILDER",  # build_candidacies.R
   AUSPOL_CAND_OUT                = "BUILDER",  # build_candidacies.R
+  AUSPOL_VEC_CANDIDATES          = "BUILDER",  # build_candidacies.R: path of the VEC final list, for dry runs
   AUSPOL_CHAMBER_SEATS           = "RUN",  # build_forecast_json.R
   AUSPOL_COUNCIL_LIB_ONLY        = "BUILDER",  # fetch_council_results.R
   AUSPOL_COUNCIL_YEARS           = "BUILDER",  # fetch_council_results.R
