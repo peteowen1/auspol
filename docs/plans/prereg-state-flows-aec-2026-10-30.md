@@ -47,3 +47,19 @@ forecast. Harness effect smaller, because as_of is the cycle start (Victoria 202
 
 What would make an apparent win unacceptable: any federal or NSW pair moving; a gain that comes only from wa or
 sa pairs where the AEC state figure is from a federal election years before (stale in a different way).
+
+## RESULT (2026-10-31): no effect on any seat, by construction. Not shipped; the premise was wrong.
+
+Both arms screened on AEF-7 at 1,000 sims (30 Oct 11:03pm and 11:14pm, code `tce061a3x18f751d3`, HD1 confirmed
+the switches applied): **byte-identical to baseline in 7 of 7 elections**, 0 of 4,767 cells moved, log loss
+0.2636 -> 0.2636.
+
+The switch DOES change the flows (probe, `flows_for()` at each cycle start): vic2022 GRN 81.33 -> 83.34 and OTH
+48.79 -> 61.30; wa2025 GRN 83.28 -> 79.74; sa2026 OTH 47.74 -> 62.21; qld2024 ONP 40.60 -> 32.78. They reach no
+seat because the statewide flows only feed the anchoring of the statewide DRAWS (`fit_seats_full.R:1799-1830`,
+`R/forecast_mode.R:113`), whose mean the seat simulation subtracts, and the state harnesses do not call
+`statewide_draws_as_at()` at all (only `_fed.R` and `_nt.R` do). This is the `AUSPOL_FLOW_SHIFT` finding in
+CLAUDE.md again; I should have checked it before writing the prereg. Step 4 (live Victorian forecast with and
+without) is therefore expected to be identical in seats too and was not run.
+
+The seats' flows come from `build_flow_matrix()`. If the AEC state figures are worth testing, that is the arm.
