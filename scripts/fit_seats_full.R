@@ -1322,12 +1322,27 @@ if (!identical(reentry_mode(), "0")) {   # "1" general prior (refused) | "majors
 
 parties <- colnames(mat22)
 shares <- mat22
+# AUSPOL_TRACE_SEAT (diagnostic, unset = prints nothing and changes nothing): one seat's row of `shares` after every
+# stage that can move it (TRS1), and each class's base inputs (TRS0: last time's share, the own-vote substitute, the
+# class level then and now, the slope). For walking one seat's forecast end to end.
+.TRACE_SEAT <- Sys.getenv("AUSPOL_TRACE_SEAT", "")
+if (nzchar(.TRACE_SEAT) && !.TRACE_SEAT %in% rownames(mat22)) stop("AUSPOL_TRACE_SEAT=", .TRACE_SEAT, " is not a seat of ", TGT)
+.trace <- function(stage, m = shares) if (nzchar(.TRACE_SEAT))
+  cat(sprintf("TRS1 %-26s %s | %s | sum %.2f\n", stage, .TRACE_SEAT,
+              paste(sprintf("%s %.2f", colnames(m), m[.TRACE_SEAT, ]), collapse = "  "), sum(m[.TRACE_SEAT, ])))
+.trace_base <- function(p, x_own, lvl_prev, lvl_now, sl) if (nzchar(.TRACE_SEAT)) {
+  i <- match(.TRACE_SEAT, rownames(mat22))
+  cat(sprintf("TRS0 %-9s last time %.2f | own-vote substitute %.2f | level %.2f -> %.2f | slope %.3f -> base %.2f\n",
+              p, mat22[i, p], x_own[i], lvl_prev, lvl_now, sl[i], dev_slope(x_own[i], lvl_prev, lvl_now, sl[i])))
+}
+.trace("last time (vic2022)")
 HELD <- matrix(FALSE, nrow(mat22), ncol(mat22), dimnames = dimnames(mat22))
 modelled <- intersect(parties, names(state_mean))
 for (p in setdiff(modelled, "ONP")) {
   # At SLOPE 1 (the fallback) this is mat22 + (state_mean - a22), unchanged.
   .sl <- .vic_slope(p, rownames(mat22)); .hd <- attr(.sl, "departed"); if (.departed_hold && !is.null(.hd)) HELD[, p] <- ((.hd %in% TRUE) & (mat22[, p] >= .hold_min)) %in% TRUE
   shares[, p] <- dev_slope(.own_x(p, rownames(mat22), mat22[, p]), a22[[p]], state_mean[[p]], .sl)
+  .trace_base(p, .own_x(p, rownames(mat22), mat22[, p]), a22[[p]], state_mean[[p]], .sl)
 }
 # The trend models five classes; the seat data carries seven, splitting OTH
 # into OTH, OTH_RIGHT and IND. Those three must be SCALED to the forecast OTH
@@ -1360,6 +1375,7 @@ if (length(unmodelled) && !is.na(state_mean["OTH"])) {
     .sl <- .vic_slope(p, rownames(mat22)); .hd <- attr(.sl, "departed"); if (.departed_hold && !is.null(.hd)) HELD[, p] <- ((.hd %in% TRUE) & (mat22[, p] >= .hold_min)) %in% TRUE
     shares[, p] <- if (.minor_add) dev_slope(.own_x(p, rownames(mat22), mat22[, p]), a22[[p]], tgt, .sl)
                    else dev_slope(.own_x(p, rownames(mat22), mat22[, p]) * scale_to, tgt, tgt, .sl)
+    if (.minor_add) .trace_base(p, .own_x(p, rownames(mat22), mat22[, p]), a22[[p]], tgt, .sl)
   }
   cat(sprintf("minor field scaled x%.2f (%s): %s at 2022 %.1f%% -> forecast %.1f%%
 ",
@@ -1371,6 +1387,7 @@ if (length(unmodelled) && !is.na(state_mean["OTH"])) {
 # prediction is a target-election share, so it must not be swung a second time.
 # protect_personal_vote_cells() keeps .own_prev's identity-matched defector floor.
 # An ONP cell is overwritten by the ONP allocation below, so it is counted but moot.
+.trace("base (swing + slopes)")
 if (!is.null(.re_cells) && nrow(.re_cells)) {
   .rc <- protect_personal_vote_cells(.re_cells, .own_prev)
   .ri <- cbind(match(.rc$seat, rownames(shares)), match(.rc$party, colnames(shares)))
@@ -1439,6 +1456,7 @@ if (.departed_hold) {
   attr(shares, "skipped") <- NULL
   if (nzchar(Sys.getenv("AUSPOL_DEPARTED_HOLD_DUMP"))) { .w <- which(HELD, arr.ind = TRUE); utils::write.csv(data.frame(seat = rownames(HELD)[.w[, 1]], party = colnames(HELD)[.w[, 2]]), Sys.getenv("AUSPOL_DEPARTED_HOLD_DUMP"), row.names = FALSE) }   # which cells were held, for the scoring script
 } else shares <- 100 * shares / rowSums(shares)
+.trace("One Nation allocated + fill")
 # XGBOOST PRIMARY CHALLENGER, v6 (AUSPOL_XGB_PRIMARY_LIVE). Best pooled seat
 # log loss of v1-v6, leave-one-pair-out: 0.3403 -> ~0.3071
 # (R/xgb_primary_override.R's own docstring carries the full detail and the
@@ -1560,12 +1578,14 @@ shares <- level_conserve_apply(shares, .lc_level, TGT, stage = "base", target = 
 .nzp_before <- shares
 shares <- zero_unnominated_live_pre_xgb(shares, fm, TGT, prior = PREV)
 .nzp_cells <- nomination_zeroed_cells(.nzp_before, shares)
+.trace("before the trees (base_pred)")
 shares_x <- .try("xgb_live", xgb_primary_predict_live(shares, .mat22_xgb, a22, .xgb_level, .returns,
                                                         level_split = .level_split_xgb,
                                                         own_prev = .own_prev_xgb, region = REGION,
                                                         year = YEAR, prev_year = as.integer(sub("^[a-z]+", "", PREV))))
 if (!is.null(shares_x)) {
   shares <- shares_x
+  .trace("after the xgb trees")
 } else if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY_LIVE", "1"), "1")) {
   cat(sprintf("XG4!! xgb_primary_predict_live() FAILED%s -- shares UNCHANGED, shipped-only model used\n",
               .reason("xgb_live")))
@@ -1577,6 +1597,7 @@ if (!is.null(shares_x)) {
 if (!is.null(.ipr)) shares <- .ipr else if (!identical(ind_person_mode(), "0"))
   cat(sprintf("FSIP!! ind_person_apply() FAILED%s -- the person-not-seat rule is NOT applied to this forecast\n",
               .reason("ind_person")))
+.trace("independent person rule")
 # (v61 nomination zeroing runs after blend_salience_shares() below, the last step
 # that can add share to a cell -- see the NZL block there.)
 # Time-forward seat-swing port (AUSPOL_SEAT_SWING_PORT=2), AFTER the override,
@@ -1584,6 +1605,7 @@ if (!is.null(.ipr)) shares <- .ipr else if (!identical(ind_person_mode(), "0"))
 .shares_p <- .try("seat_swing_port", seat_swing_port_apply(shares, TGT))
 if (!is.null(.shares_p)) {
   shares <- .shares_p
+  .trace("seat-swing port")
 } else if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "2"), "2")) {
   cat(sprintf("SP2!! seat-swing port FAILED%s -- shares UNPORTED, the published forecast is not v48
 ",
@@ -1592,6 +1614,7 @@ if (!is.null(.shares_p)) {
 .shares_b <- .try("seat_poll_blend", seat_poll_blend_apply(shares, TGT))
 if (!is.null(.shares_b)) {
   shares <- .shares_b
+  .trace("seat-poll blend")
 } else if (Sys.getenv("AUSPOL_SEAT_POLL_BLEND", "1") %in% c("1", "2", "3")) {
   cat(sprintf("SPB!! seat-poll blend FAILED%s -- shares UNBLENDED
 ", .reason("seat_poll_blend")))
@@ -1602,6 +1625,7 @@ if (!is.null(.shares_b)) {
   demographic_residual_apply(shares, TGT) else shares)
 if (!is.null(.shares_d)) {
   shares <- .shares_d
+  .trace("demographic correction")
 } else {
   cat(sprintf("DR1!! demographic correction FAILED%s -- shares WITHOUT it\n", .reason("demo_resid")))
 }
@@ -1612,12 +1636,14 @@ if (!is.null(.shares_d)) {
 .shares_l <- .try("leader_seat", leader_seat_apply(shares, TGT))
 if (!is.null(.shares_l)) {
   shares <- .shares_l
+  .trace("leader-seat bonus")
 } else if (identical(Sys.getenv("AUSPOL_LEADER_SEAT", "1"), "1")) {
   cat(sprintf("LS1!! leader-seat bonus FAILED%s -- shares WITHOUT it\n", .reason("leader_seat")))
 }
 .shares_f <- .try("departed_fed", departed_fed_apply(shares, TGT))
 if (!is.null(.shares_f)) {
   shares <- .shares_f
+  .trace("departed-member blend")
 } else if (!identical(Sys.getenv("AUSPOL_DEPARTED_FED", "0"), "0")) {
   cat(sprintf("DF1!! departed-member blend FAILED%s -- shares WITHOUT it
 ", .reason("departed_fed")))
@@ -1655,10 +1681,12 @@ shares <- tryCatch(zero_unnominated_live(shares, fm, TGT, prior = PREV), error =
 .nz_cells <- nomination_zeroed_cells(.nz_before, shares)
 # Cells zeroed before the trees must be 0 at the final write too (empty when AUSPOL_NOM_ZERO_PRE_XGB=0).
 .nz_cells <- unique(rbind(.nz_cells, .nzp_cells))
+.trace("salience + nomination zero")
 # AUSPOL_LEVEL_CONSERVE "final"/"both": after the nomination zero (a 0 stays 0). See the base call above.
 # Not wrapped either: with the switch on, a failure stops the run.
 shares <- level_conserve_apply(shares, .lc_level, TGT, stage = "final", target = .lc_target,
                                held = if (.departed_hold) HELD else NULL)
+.trace("final point forecast")
 cvf <- function(x) stats::sd(x) / mean(x)
 cat(sprintf("ONP allocation: target CV %.3f, delivered %.3f (previously compressed to 0.283)
 ",

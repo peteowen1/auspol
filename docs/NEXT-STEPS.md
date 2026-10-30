@@ -84,8 +84,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   slope of -23.1 (n 1, se ~11) enters the DerSimonian-Laird sum: qld2015, sa2014, vic2014 get tau^2 ~0.57 (0 at most
   targets), so IND there keeps w 0.99 instead of pooling (`output/mp-slope-pooled.csv`; `R/mp_slope_pool.R:79-83`).
   The all-35 screen ran on this table. A fix (drop near-zero-variance classes from the tau^2 sum) needs its own screen.
-- OPEN, morning pages for Pete: (a) Mildura vic2026 trace, one row (Cupper) through base_pred, xgb and the minor
-  additive step; (b) wa2017 and fed2019 day-before statewide walk-throughs, example rows.
+- OPEN, morning pages for Pete: (b) wa2017 and fed2019 day-before statewide walk-throughs, example rows. (a) Mildura
+  DONE 30 Oct, https://claude.ai/artifact/JTt68EkaupnKVaoC3VRYib (`AUSPOL_TRACE_SEAT=<seat>` on `fit_seats_full.R`
+  prints any seat's row after every stage, TRS0/TRS1). Raised, OPEN: the xgb trees cut Cupper 25.1 -> 21.0 unexplained
+  (SHAP for that row next); One Nation's 33.8 is set first and every class, a personal vote included, fills the rest
+  pro rata; Labor's base floors at 0.00 in Mildura (6.5 in 2022, level -12.2 at slope 0.92), trees restore 4.3.
 
 - OPEN, Pete: returning independents. Both arms REFUSED 25 Oct (`plans/prereg-ind-return-2026-10-25.md`); the
   x0.61 multiplicative minor-field scale (a live-only train/serve split) was fixed by `AUSPOL_MINOR_ADDITIVE=1`,

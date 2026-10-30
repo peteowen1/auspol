@@ -56,7 +56,7 @@ waiting for R"; Claude in the auspol session did not see these requests firsthan
 |---|---|
 | Seat-poll primaries where a poll reports only two candidates: hunt for the full primaries first, infer only when none exist | **NOT DONE.** Recorded by the NEXT-STEPS session; no branch named. |
 | A shrunk new-independent seat-poll bias term | **NOT DONE.** Recorded by the NEXT-STEPS session; no branch named. |
-| Morning pages: the Mildura trace and the wa2017 / fed2019 walks | **NOT DONE.** Recorded by the NEXT-STEPS session. |
+| Morning pages: the Mildura trace and the wa2017 / fed2019 walks | **PART DONE.** Mildura trace DONE 30 Oct: page https://claude.ai/artifact/JTt68EkaupnKVaoC3VRYib (Cupper 33.9 -> 21.3: swing -4.9, One Nation fill -3.8, xgb trees -4.2, demographic +0.4), built with `AUSPOL_TRACE_SEAT` in `fit_seats_full.R`. wa2017 / fed2019 walks NOT DONE. |
 | Federal state breakdowns in the state trend, with 90/180 days out as a second deciding metric | **PREREG ONLY.** Branch `fed-breakdowns-prereg-1026` (45e2bc4, local); the 90/180-day amendment written 27 Oct (6a3d89c7, Amendment 1). |
 
 ---
