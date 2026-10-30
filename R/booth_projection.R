@@ -53,11 +53,16 @@ match_booth_units <- function(live, ref) {
 #'   lean (counted share minus lean share, weighted by this year's unit totals), and each uncounted unit with a lean
 #'   is projected at its lean share plus that swing, instead of the seat's counted share. `NULL` (the default) is
 #'   byte-identical to the previous behaviour.
+#' @param early_frac Optional share (0-1) of the seat's early vote counted so far ([night_early_frac()]). The early
+#'   unit is ONE unit per district and counts as reported once any early voting centre has reported; with
+#'   `early_frac` below 1 the unreported remainder (counted early votes x (1 - f) / f) is projected from the
+#'   reference early block's shares plus the early swing, instead of being left out. `NA` (the default) is
+#'   byte-identical to the previous behaviour.
 #' @return data.table `cls, projected, counted_share`, or `NULL` if no
 #'   counted unit has a reference (nothing to measure a swing on).
 #' @export
 project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, total = c("table", "projected", "expected"), expected_total = NA_real_,
-                                     lean = NULL) {
+                                     lean = NULL, early_frac = NA_real_) {
   total <- match.arg(total)
   live <- data.table::as.data.table(live); ref <- data.table::as.data.table(ref)
   classes <- unique(live$cls)
@@ -71,9 +76,35 @@ project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, 
   sw_t <- mc[, .(sw = sum(v) / sum(lt) - sum(rv) / sum(rt)), by = .(booth_type, cls)]
   sw_a <- mc[, .(sw_all = sum(v) / sum(lt) - sum(rv) / sum(rt)), by = cls]
   growth <- sum(mc[, .(lt = lt[1]), by = unit]$lt) / sum(mc[, .(rt = rt[1]), by = unit]$rt)
+  # PARTLY COUNTED EARLY UNIT (early_frac < 1): the early voting centres still to report, projected from the reference
+  # early block plus the early swing; and the growth rate counts the early unit at its full expected size, so a
+  # half-reported early unit does not shrink every uncounted booth.
+  er <- NULL
+  f_e <- suppressWarnings(as.numeric(early_frac)[1])
+  if (isTRUE(is.finite(f_e) && f_e > 0 && f_e < 1) && "early" %in% counted_units && "early" %in% ref$unit) {
+    ce <- live[live$unit == "early"]; cev <- sum(ce$v)
+    re <- ref[ref$unit == "early"]; ret <- sum(re$v)
+    rest <- cev * (1 - f_e) / f_e
+    if (rest > 0 && ret > 0 && cev > 0) {
+      base_e <- stats::setNames(re$v / ret, re$cls)
+      swe_t <- sw_t[sw_t$booth_type == "early"]; swe <- stats::setNames(swe_t$sw, swe_t$cls)
+      ce_sh <- stats::setNames(ce$v / cev, ce$cls)
+      sh_e <- vapply(classes, function(c0) {
+        if (c0 %in% names(base_e)) max(0, base_e[[c0]] + (if (c0 %in% names(swe)) swe[[c0]] else 0))
+        else if (c0 %in% names(ce_sh)) ce_sh[[c0]] else 0
+      }, numeric(1))
+      if (sum(sh_e) > 0) er <- data.table::data.table(cls = classes, v = rest * sh_e / sum(sh_e))
+      ut <- mc[, .(lt = lt[1], rt = rt[1]), by = unit]
+      growth <- (sum(ut$lt) + rest * ("early" %in% ut$unit)) / sum(ut$rt)
+    }
+  }
   counted_share <- sum(live[unit %in% counted_units]$v) / sum(live$v)
   unc <- units[counted == FALSE]
-  if (!nrow(unc)) return(live[, .(projected = sum(v)), by = cls][, counted_share := 1][])
+  if (!nrow(unc)) {
+    out0 <- live[, .(projected = sum(v)), by = cls]
+    if (!is.null(er)) out0 <- rbind(out0[, .(cls, v = projected)], er)[, .(projected = sum(v)), by = cls]
+    return(out0[, counted_share := 1][])
+  }
   grid <- data.table::CJ(unit = unc$unit, cls = classes); grid <- merge(grid, unc, by = "unit")
   grid <- merge(grid, ref[, .(unit, cls, rv = v)], by = c("unit", "cls"), all.x = TRUE)
   grid <- merge(grid, ref_tot, by = "unit", all.x = TRUE)
@@ -124,12 +155,12 @@ project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, 
       grid[hit, proj := pmax(0, (lean_g + sw_c) * size)]
     }
   }
-  out <- rbind(live[unit %in% counted_units, .(v), by = cls], grid[, .(v = proj), by = cls])[, .(projected = sum(v)), by = cls]
+  out <- rbind(live[unit %in% counted_units, .(v), by = cls], grid[, .(v = proj), by = cls], er)[, .(projected = sum(v)), by = cls]
   if (use_exp) {
     counted_share <- min(1, sum(live[unit %in% counted_units]$v) / expected_total)
   } else if (total != "table") {
     cv <- sum(live[unit %in% counted_units]$v)
-    counted_share <- cv / (cv + sum(unique(grid[, .(unit, size)])$size))
+    counted_share <- cv / (cv + sum(unique(grid[, .(unit, size)])$size) + (if (is.null(er)) 0 else sum(er$v)))
   }
   out[, counted_share := counted_share][]
 }

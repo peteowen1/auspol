@@ -24,7 +24,14 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   Booth lean for parties new to a seat (One Nation), added 30 Oct: `night_council_lean()` from the 2022 upper house by
   voting centre; on the vic2022 replay with each class made "new", projection RMSE 3.03 -> 2.41 pts (real history
   2.45); named parties only (pooled OTH_RIGHT got worse). Without the flag the runner warns NW15! and runs as before.
-  OPEN: the 2026 early voting centres need matching to 2022's one early block per district (new-booth rule otherwise).
+  Early voting centres (30 Oct): NOT a new-booth problem (my earlier claim was wrong): night_booth_table() merges
+  every centre in a district into one "early" unit matched to 2022's block. The real gap: that unit counts as
+  complete once ANY centre reports (largest centre held a median 54% of a district's early vote in 2022, range
+  32-93%). Projecting the remainder (`night_early_frac()`, `project_seat_from_booths(early_frac =)`) made the
+  approximated replay WORSE (RMSE 0.95 -> 1.15; `scripts/test_early_partial_replay.R`) because the early swing is
+  measured on whichever centre reported first. OFF (opt-in `--early-partial=1`). OPEN, for the 25 Nov trial: with
+  real 2026 centre names, compare each counted centre with its own 2022 upper-house lean, then re-test; and source
+  the expected early total from the VEC's published early-voting attendance, not last election's early share.
   OPEN, in order:
   2. SharePoint live-feed fetch (VEC access details from 4 Nov); the backup's source live waits on it.
   3. 10 Nov: in ITG `politics/night-maps/`, `python -I build-booths-2026.py <State2026MediaFilePollingLocationsV2.xml>`

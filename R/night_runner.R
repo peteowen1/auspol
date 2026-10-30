@@ -461,11 +461,13 @@ night_expected_votes <- function(enrolment, prev, basis = c("night", "final")) {
 #' @param use_tcp Condition on the VEC's 2CP flow where its pair is plausible.
 #' @param lean Upper-house booth lean ([night_council_lean()]) for parties new to a seat; passed to
 #'   [night_booth_update()]. `NULL` (default) leaves the update as before.
+#' @param early_frac Share of each seat's early vote counted so far ([night_early_frac()]); passed to
+#'   [night_booth_update()]. `NULL` (default) treats a reported early unit as complete, as before.
 #' @return List: `sim`, `nu` (the update), `shares`, `sd`, `matched` (seats in both state and feed),
 #'   `n_updated`.
 #' @export
 night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "table", "expected"), expected = NULL, sims = NULL, use_tcp = TRUE,
-                             lean = NULL) {
+                             lean = NULL, early_frac = NULL) {
   total <- match.arg(total)
   if (is.null(sims)) sims <- st$n_sims
   if (!is.null(st$swd) && nrow(st$swd) != sims) stop("NW2! the saved state has ", nrow(st$swd), " statewide draws; sims must equal that (dump the state at the sim count wanted)", call. = FALSE)
@@ -473,7 +475,8 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
   matched <- intersect(seats, unique(conv$live$district))
   shares <- st$shares; sdo <- st$sdo; swd <- st$swd
   nu <- night_booth_update(shares, night_prior_sd(shares, st$level_sd, st$level_mult, sdo), 1, conv$live, ref,
-                           gap_k = gap_k, reported = conv$counted, total = total, expected = expected, lean = lean)
+                           gap_k = gap_k, reported = conv$counted, total = total, expected = expected, lean = lean,
+                           early_frac = early_frac)
   if (nu$n_updated > 0L) {
     shares <- nu$shares; sdo <- nu$sd; swd <- night_shrink_draws(swd, 1 - nu$resolved)
   }
@@ -663,8 +666,15 @@ night_cycle <- function(cfg) {
       message("NW15! no --council-lean: a party new to a seat (One Nation) takes its counted share unadjusted for booth lean")
       cache$lean_warned <- TRUE
     }
+    # A partly reported early unit: OFF unless --early-partial=1. Tested 2026-10-30 on an approximated vic2022 replay
+    # (scripts/test_early_partial_replay.R): projecting the remainder made the night share WORSE (RMSE 0.95 -> 1.15),
+    # because the early swing is measured on whichever centre reported first and the remainder inherits that skew.
+    # Kept for a re-test on the VEC's 25 Nov trial, where 2026 centre names allow a per-centre lean correction.
+    ef <- if (isTRUE(cfg$early_partial) && identical(denom, "expected")) night_early_frac(conv$live, expected, cache$ref) else NULL
+    if (length(ef) && any(ef < 1))
+      message(sprintf("NW16  early vote part-counted in %d seat(s); remainder projected (median %.0f%% of early counted)", sum(ef < 1), 100 * stats::median(ef[ef < 1])))
     res <- night_run_update(cache$st, conv, cache$ref, gap_k = if (is.null(cfg$gap_k)) 5 else cfg$gap_k, total = denom, expected = expected,
-                            sims = cfg$sims, use_tcp = !isFALSE(cfg$use_tcp), lean = cache$lean); stamp_t("update_simulate")
+                            sims = cfg$sims, use_tcp = !isFALSE(cfg$use_tcp), lean = cache$lean, early_frac = ef); stamp_t("update_simulate")
     res$denominator <- denom; res$n_placeholder <- conv$n_placeholder_booths; res$n_unlisted <- conv$n_unlisted_booths
     if (length(res$nu$fallback_projected)) message("NW12  ", length(res$nu$fallback_projected), " seat(s) fell back to the projected denominator (no usable expected votes): ", paste(res$nu$fallback_projected, collapse = ", "))
     bk <- night_booth_results_safe(conv, cache$ref)

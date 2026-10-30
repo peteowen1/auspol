@@ -11,7 +11,8 @@ project_seat_from_booths(
   type_gap = NULL,
   total = c("table", "projected", "expected"),
   expected_total = NA_real_,
-  lean = NULL
+  lean = NULL,
+  early_frac = NA_real_
 )
 }
 \arguments{
@@ -40,6 +41,12 @@ left of it (\code{expected_total} minus counted, floored at 0); with \code{expec
 only for a class with NO reference votes in the seat: its swing is measured on the counted units that have a
 lean (counted share minus lean share, weighted by this year's unit totals), and each uncounted unit with a lean
 is projected at its lean share plus that swing, instead of the seat's counted share. \code{NULL} (the default) is
+byte-identical to the previous behaviour.}
+
+\item{early_frac}{Optional share (0-1) of the seat's early vote counted so far (\code{\link[=night_early_frac]{night_early_frac()}}). The early
+unit is ONE unit per district and counts as reported once any early voting centre has reported; with
+\code{early_frac} below 1 the unreported remainder (counted early votes x (1 - f) / f) is projected from the
+reference early block's shares plus the early swing, instead of being left out. \code{NA} (the default) is
 byte-identical to the previous behaviour.}
 }
 \value{

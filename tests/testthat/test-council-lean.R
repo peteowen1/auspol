@@ -17,6 +17,24 @@ test_that("night_council_lean: shares per voting centre over all parties, named 
   expect_error(night_council_lean(cf[, !"total"]), "lacks")
 })
 
+test_that("a partly counted early unit: remainder projected from the early block plus its swing; NA changes nothing", {
+  ref  <- dt(unit = c("A", "A", "early", "early"), booth_type = c("ordinary", "ordinary", "early", "early"),
+             cls = c("ALP", "LNP", "ALP", "LNP"), v = c(500, 500, 600, 400))
+  # tonight: booth A in full, and half the early vote in (500 of an expected 1,000), early ALP 50% vs 60% last time
+  live <- dt(unit = c("A", "A", "early", "early"), booth_type = c("ordinary", "ordinary", "early", "early"),
+             cls = c("ALP", "LNP", "ALP", "LNP"), v = c(450, 550, 250, 250))
+  p0 <- project_seat_from_booths(live, ref, c("A", "early"))
+  expect_identical(project_seat_from_booths(live, ref, c("A", "early"), early_frac = NA), p0)
+  expect_identical(project_seat_from_booths(live, ref, c("A", "early"), early_frac = 1), p0)
+  p <- project_seat_from_booths(live, ref, c("A", "early"), early_frac = 0.5)
+  # remainder 500 votes at the 2022 early mix (60/40) plus the early swing (-10 ALP, +10 LNP) = 50/50
+  expect_equal(sum(p$projected), sum(p0$projected) + 500)
+  expect_equal(p[cls == "ALP"]$projected, 450 + 250 + 250)
+  expect_equal(night_early_frac(dt(district = "S", booth_type = c("early", "ordinary"), votes = c(300, 700)),
+                                c(S = 2000), dt(district = "S", booth_type = c("early", "ordinary", "postal"), votes = c(600, 300, 100))),
+               c(S = 300 / (2000 * 0.6)))
+})
+
 test_that("a party new to the seat is projected from booth lean plus its counted swing; NULL changes nothing", {
   # last time: ALP and LNP only, two booths of 1,000. Tonight One Nation stands; Moe (an ONP-leaning booth) is counted.
   ref  <- dt(unit = c("Moe", "Moe", "Traralgon", "Traralgon"), booth_type = "ordinary", cls = c("ALP", "LNP", "ALP", "LNP"), v = c(600, 400, 500, 500))

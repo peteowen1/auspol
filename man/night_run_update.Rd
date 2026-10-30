@@ -13,7 +13,8 @@ night_run_update(
   expected = NULL,
   sims = NULL,
   use_tcp = TRUE,
-  lean = NULL
+  lean = NULL,
+  early_frac = NULL
 )
 }
 \arguments{
@@ -36,6 +37,9 @@ night_run_update(
 
 \item{lean}{Upper-house booth lean (\code{\link[=night_council_lean]{night_council_lean()}}) for parties new to a seat; passed to
 \code{\link[=night_booth_update]{night_booth_update()}}. \code{NULL} (default) leaves the update as before.}
+
+\item{early_frac}{Share of each seat's early vote counted so far (\code{\link[=night_early_frac]{night_early_frac()}}); passed to
+\code{\link[=night_booth_update]{night_booth_update()}}. \code{NULL} (default) treats a reported early unit as complete, as before.}
 }
 \value{
 List: \code{sim}, \code{nu} (the update), \code{shares}, \code{sd}, \code{matched} (seats in both state and feed),
