@@ -84,7 +84,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   slope of -23.1 (n 1, se ~11) enters the DerSimonian-Laird sum: qld2015, sa2014, vic2014 get tau^2 ~0.57 (0 at most
   targets), so IND there keeps w 0.99 instead of pooling (`output/mp-slope-pooled.csv`; `R/mp_slope_pool.R:79-83`).
   The all-35 screen ran on this table. A fix (drop near-zero-variance classes from the tau^2 sum) needs its own screen.
-- OPEN, morning pages for Pete: (b) wa2017 and fed2019 day-before statewide walk-throughs, example rows. (a) Mildura
+- Morning pages DONE 30 Oct. (b) wa2017 / fed2019 walks: https://claude.ai/artifact/USv8sffhF1zbYagBGwjdQ3
+  (`reviews/walks-wa2017-fed2019-2026-10-30.md`). OPEN from them: WA seat layer sits ~5 pts above the statewide Labor
+  level (36.4 -> 41.2) yet 5-15 short in the swing seats, untraced; fed2019 shared miss (38% of margin error) asks
+  whether the correlated statewide draw is wide enough. Night-model explainer (vic2022 replay, 79 -> 87 of 88 right):
+  https://claude.ai/artifact/WtspQifwBERFokMxrkAsn9 (`scripts/score_night_replay.R`). (a) Mildura
   DONE 30 Oct, https://claude.ai/artifact/JTt68EkaupnKVaoC3VRYib (`AUSPOL_TRACE_SEAT=<seat>` on `fit_seats_full.R`
   prints any seat's row after every stage, TRS0/TRS1). Raised, OPEN: the xgb trees cut Cupper 25.1 -> 21.0 unexplained
   (contributions done 30 Oct: base size -2.08, party_IND -1.45, own_prev +1.36). CHECKED 30 Oct, the cut is not an
