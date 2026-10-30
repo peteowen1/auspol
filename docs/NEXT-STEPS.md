@@ -20,7 +20,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   R2 upload tested to `auspol/night/test-vic2026.json` (`scripts/night_publish_r2.sh`), night state saved every forecast
   run and uploaded to `forecast-latest` (#169), break-glass Actions backup `.github/workflows/night-backup.yaml` (#170;
   inputs on release `night-inputs`). Night runbook: `gh release download forecast-latest -p night-state-vic-2026.rds -D
-  output`, then `night_runner.R --state=output/night-state-vic-2026.rds`.
+  output`, then `night_runner.R --state=output/night-state-vic-2026.rds --council-lean=output/council-fp-2022.csv`.
+  Booth lean for parties new to a seat (One Nation), added 30 Oct: `night_council_lean()` from the 2022 upper house by
+  voting centre; on the vic2022 replay with each class made "new", projection RMSE 3.03 -> 2.41 pts (real history
+  2.45); named parties only (pooled OTH_RIGHT got worse). Without the flag the runner warns NW15! and runs as before.
+  OPEN: the 2026 early voting centres need matching to 2022's one early block per district (new-booth rule otherwise).
   OPEN, in order:
   2. SharePoint live-feed fetch (VEC access details from 4 Nov); the backup's source live waits on it.
   3. 10 Nov: in ITG `politics/night-maps/`, `python -I build-booths-2026.py <State2026MediaFilePollingLocationsV2.xml>`

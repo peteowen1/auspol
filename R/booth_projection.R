@@ -47,10 +47,17 @@ match_booth_units <- function(live, ref) {
 #'   `expected_total` (enrolment x turnout), and the uncounted units' projected sizes are rescaled to sum to what is
 #'   left of it (`expected_total` minus counted, floored at 0); with `expected_total` NA or not positive it behaves as `"projected"`.
 #' @param expected_total Expected final votes of the seat, for `total = "expected"`.
+#' @param lean Optional data.table `unit, cls, share` for ONE seat, keyed to the live unit names: each class's share
+#'   (0-1) at each unit in another count of the reference election ([night_council_lean()], the upper house). Used
+#'   only for a class with NO reference votes in the seat: its swing is measured on the counted units that have a
+#'   lean (counted share minus lean share, weighted by this year's unit totals), and each uncounted unit with a lean
+#'   is projected at its lean share plus that swing, instead of the seat's counted share. `NULL` (the default) is
+#'   byte-identical to the previous behaviour.
 #' @return data.table `cls, projected, counted_share`, or `NULL` if no
 #'   counted unit has a reference (nothing to measure a swing on).
 #' @export
-project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, total = c("table", "projected", "expected"), expected_total = NA_real_) {
+project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, total = c("table", "projected", "expected"), expected_total = NA_real_,
+                                     lean = NULL) {
   total <- match.arg(total)
   live <- data.table::as.data.table(live); ref <- data.table::as.data.table(ref)
   classes <- unique(live$cls)
@@ -96,6 +103,27 @@ project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, 
   grid <- merge(grid, cs_seat, by = "cls", all.x = TRUE); grid[is.na(sh), sh := 0]
   ref_cls <- unique(ref$cls)
   grid[, proj := data.table::fifelse(has_ref & cls %in% ref_cls, pmax(0, (rv / pmax(rt, 1) + sw) * size), sh * size)]
+  # A class new to the seat, with a lean from another count of the reference election (night_council_lean()):
+  # swing on the counted units that have a lean, applied to each uncounted unit's own lean share.
+  if (!is.null(lean) && nrow(lean)) {
+    ln <- data.table::as.data.table(lean)
+    lean_units <- unique(ln$unit)
+    lt_of <- stats::setNames(live_tot$lt, live_tot$unit)
+    for (c0 in intersect(setdiff(classes, ref_cls), unique(ln$cls))) {
+      cu <- intersect(counted_units, lean_units); cu <- cu[cu %in% names(lt_of)]
+      if (!length(cu)) next
+      lc <- ln[ln$cls == c0]
+      sh_u <- stats::setNames(lc$share, lc$unit)
+      lean_cu <- unname(sh_u[cu]); lean_cu[is.na(lean_cu)] <- 0
+      lt_cu <- unname(lt_of[cu])
+      live_c <- live[live$cls == c0 & live$unit %in% cu]
+      sw_c <- sum(live_c$v) / sum(lt_cu) - sum(lean_cu * lt_cu) / sum(lt_cu)
+      hit <- grid$cls == c0 & grid$unit %in% lean_units
+      if (!any(hit)) next
+      lean_g <- unname(sh_u[grid$unit[hit]]); lean_g[is.na(lean_g)] <- 0
+      grid[hit, proj := pmax(0, (lean_g + sw_c) * size)]
+    }
+  }
   out <- rbind(live[unit %in% counted_units, .(v), by = cls], grid[, .(v = proj), by = cls])[, .(projected = sum(v)), by = cls]
   if (use_exp) {
     counted_share <- min(1, sum(live[unit %in% counted_units]$v) / expected_total)

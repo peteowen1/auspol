@@ -459,10 +459,13 @@ night_expected_votes <- function(enrolment, prev, basis = c("night", "final")) {
 #' @param expected Named numeric of expected final votes per seat, for `total = "expected"`.
 #' @param sims Simulations (default the state's).
 #' @param use_tcp Condition on the VEC's 2CP flow where its pair is plausible.
+#' @param lean Upper-house booth lean ([night_council_lean()]) for parties new to a seat; passed to
+#'   [night_booth_update()]. `NULL` (default) leaves the update as before.
 #' @return List: `sim`, `nu` (the update), `shares`, `sd`, `matched` (seats in both state and feed),
 #'   `n_updated`.
 #' @export
-night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "table", "expected"), expected = NULL, sims = NULL, use_tcp = TRUE) {
+night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "table", "expected"), expected = NULL, sims = NULL, use_tcp = TRUE,
+                             lean = NULL) {
   total <- match.arg(total)
   if (is.null(sims)) sims <- st$n_sims
   if (!is.null(st$swd) && nrow(st$swd) != sims) stop("NW2! the saved state has ", nrow(st$swd), " statewide draws; sims must equal that (dump the state at the sim count wanted)", call. = FALSE)
@@ -470,7 +473,7 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
   matched <- intersect(seats, unique(conv$live$district))
   shares <- st$shares; sdo <- st$sdo; swd <- st$swd
   nu <- night_booth_update(shares, night_prior_sd(shares, st$level_sd, st$level_mult, sdo), 1, conv$live, ref,
-                           gap_k = gap_k, reported = conv$counted, total = total, expected = expected)
+                           gap_k = gap_k, reported = conv$counted, total = total, expected = expected, lean = lean)
   if (nu$n_updated > 0L) {
     shares <- nu$shares; sdo <- nu$sd; swd <- night_shrink_draws(swd, 1 - nu$resolved)
   }
@@ -650,8 +653,18 @@ night_cycle <- function(cfg) {
     } else if (!isTRUE(cfg$allow_projected)) {
       stop("NW9! no turnout file: the live counted share would fall back to previous-election booth sizes, which over-states it (vic2022 check: 56.5% vs 33.8%). Pass --turnout, or --allow-projected=1 to accept that", call. = FALSE)
     } else message("NW9  --allow-projected: counted share projected from previous-election booth sizes, which over-states it")
+    # Upper-house booth lean for parties new to a seat (One Nation in 2026): read once. Without --council-lean the
+    # update is exactly as before, and it says so once.
+    if (is.null(cache$lean) && !is.null(cfg$council_lean)) {
+      cache$lean <- night_council_lean(data.table::fread(cfg$council_lean, showProgress = FALSE))
+      message(sprintf("NW15  upper-house booth lean loaded from %s: %d units, classes %s", basename(cfg$council_lean),
+                      data.table::uniqueN(paste(cache$lean$district, cache$lean$unit)), paste(sort(unique(cache$lean$cls)), collapse = " ")))
+    } else if (is.null(cfg$council_lean) && is.null(cache$lean_warned)) {
+      message("NW15! no --council-lean: a party new to a seat (One Nation) takes its counted share unadjusted for booth lean")
+      cache$lean_warned <- TRUE
+    }
     res <- night_run_update(cache$st, conv, cache$ref, gap_k = if (is.null(cfg$gap_k)) 5 else cfg$gap_k, total = denom, expected = expected,
-                            sims = cfg$sims, use_tcp = !isFALSE(cfg$use_tcp)); stamp_t("update_simulate")
+                            sims = cfg$sims, use_tcp = !isFALSE(cfg$use_tcp), lean = cache$lean); stamp_t("update_simulate")
     res$denominator <- denom; res$n_placeholder <- conv$n_placeholder_booths; res$n_unlisted <- conv$n_unlisted_booths
     if (length(res$nu$fallback_projected)) message("NW12  ", length(res$nu$fallback_projected), " seat(s) fell back to the projected denominator (no usable expected votes): ", paste(res$nu$fallback_projected, collapse = ", "))
     bk <- night_booth_results_safe(conv, cache$ref)

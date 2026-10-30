@@ -91,6 +91,10 @@ night_prior_sd <- function(shares, level_sd, level_mult = NULL, sd_override = NU
 #'   where `live` is the final result); `"projected"` is counted / (counted + the projected size of the uncounted units),
 #'   which is all a live feed can know; `"expected"` is `expected[seat]` (enrolment x turnout), with the uncounted units
 #'   rescaled to the remainder (see [project_seat_from_booths()]).
+#' @param lean Optional upper-house booth lean of the reference election ([night_council_lean()]: `district, unit,
+#'   cls, share`, reference-year names). A class with no lower-house votes in a seat last time is then projected from
+#'   each booth's lean plus its counted swing, not its unadjusted counted share ([project_seat_from_booths()]).
+#'   `NULL` (default) is byte-identical to the previous behaviour.
 #' @param expected For `total = "expected"`: named numeric, expected final votes per seat (a seat missing or NA falls
 #'   back to `"projected"`).
 #' @return List: `shares` (posterior means, rows renormalised to 100), `sd` (posterior sds),
@@ -99,7 +103,7 @@ night_prior_sd <- function(shares, level_sd, level_mult = NULL, sd_override = NU
 #'   (counted units per seat), `type_gap` (the pooled gaps used, or `NULL`).
 #' @export
 night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, gap_k = NULL, early = "last", new_sd_mult = 1,
-                               reported = NULL, total = c("table", "projected", "expected"), expected = NULL) {
+                               reported = NULL, total = c("table", "projected", "expected"), expected = NULL, lean = NULL) {
   total <- match.arg(total)
   stopifnot(is.numeric(new_sd_mult), length(new_sd_mult) == 1L, new_sd_mult >= 1)
   stopifnot(identical(dim(shares), dim(prior_sd)), is.finite(frac), frac >= 0, frac <= 1)
@@ -115,6 +119,15 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
   M <- match_booth_units(Lc, Rc)
   Rk <- merge(Rc, M, by.x = c("district", "unit"), by.y = c("ref_district", "ref_unit"), suffixes = c(".ref", ".live"))
   Rk <- Rk[, list(district = district.live, unit = unit.live, booth_type = booth_type.live, cls, v)]
+  # Upper-house booth lean (night_council_lean()), keyed to the reference election's names: moved onto this year's
+  # units through the same match as the lower-house reference, so it lines up with Rk.
+  Lk <- NULL
+  if (!is.null(lean)) {
+    ln <- data.table::as.data.table(lean)
+    stopifnot(all(c("district", "unit", "cls", "share") %in% names(ln)))
+    Lk <- merge(ln, M, by.x = c("district", "unit"), by.y = c("ref_district", "ref_unit"), suffixes = c(".ref", ".live"))
+    Lk <- Lk[, list(district = district.live, unit = unit.live, cls, share)]
+  }
   seq_units <- if (is.null(reported)) .night_order(Lc, seed, early)
   night_total <- Lc[Lc$booth_type %in% c("ordinary", "early", "postal"), list(nt = sum(v)), by = "district"]
 
@@ -143,7 +156,8 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
     ld <- Lc[Lc$district == s]; rd <- Rk[Rk$district == s]
     units <- units_by_seat[[s]]
     if (total == "expected" && !(!is.null(expected) && is.finite(unname(expected[s])) && unname(expected[s]) > 0)) fallback_projected <- c(fallback_projected, s)
-    p <- project_seat_from_booths(ld, rd, units, type_gap = type_gap, total = total, expected_total = if (is.null(expected)) NA_real_ else unname(expected[s]))
+    p <- project_seat_from_booths(ld, rd, units, type_gap = type_gap, total = total, expected_total = if (is.null(expected)) NA_real_ else unname(expected[s]),
+                                  lean = if (is.null(Lk)) NULL else Lk[Lk$district == s])
     if (is.null(p) || !nrow(p)) next
     cs <- p$counted_share[1]
     proj_total[s] <- sum(p$projected)

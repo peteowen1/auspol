@@ -10,7 +10,8 @@ project_seat_from_booths(
   counted_units,
   type_gap = NULL,
   total = c("table", "projected", "expected"),
-  expected_total = NA_real_
+  expected_total = NA_real_,
+  lean = NULL
 )
 }
 \arguments{
@@ -33,6 +34,13 @@ counted votes plus the projected size of the uncounted units (a live feed has no
 left of it (\code{expected_total} minus counted, floored at 0); with \code{expected_total} NA or not positive it behaves as \code{"projected"}.}
 
 \item{expected_total}{Expected final votes of the seat, for \code{total = "expected"}.}
+
+\item{lean}{Optional data.table \verb{unit, cls, share} for ONE seat, keyed to the live unit names: each class's share
+(0-1) at each unit in another count of the reference election (\code{\link[=night_council_lean]{night_council_lean()}}, the upper house). Used
+only for a class with NO reference votes in the seat: its swing is measured on the counted units that have a
+lean (counted share minus lean share, weighted by this year's unit totals), and each uncounted unit with a lean
+is projected at its lean share plus that swing, instead of the seat's counted share. \code{NULL} (the default) is
+byte-identical to the previous behaviour.}
 }
 \value{
 data.table \verb{cls, projected, counted_share}, or \code{NULL} if no

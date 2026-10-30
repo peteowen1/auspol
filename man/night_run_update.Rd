@@ -12,7 +12,8 @@ night_run_update(
   total = c("projected", "table", "expected"),
   expected = NULL,
   sims = NULL,
-  use_tcp = TRUE
+  use_tcp = TRUE,
+  lean = NULL
 )
 }
 \arguments{
@@ -32,6 +33,9 @@ night_run_update(
 \item{sims}{Simulations (default the state's).}
 
 \item{use_tcp}{Condition on the VEC's 2CP flow where its pair is plausible.}
+
+\item{lean}{Upper-house booth lean (\code{\link[=night_council_lean]{night_council_lean()}}) for parties new to a seat; passed to
+\code{\link[=night_booth_update]{night_booth_update()}}. \code{NULL} (default) leaves the update as before.}
 }
 \value{
 List: \code{sim}, \code{nu} (the update), \code{shares}, \code{sd}, \code{matched} (seats in both state and feed),
