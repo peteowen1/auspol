@@ -658,10 +658,14 @@ night_cycle <- function(cfg) {
     } else message("NW9  --allow-projected: counted share projected from previous-election booth sizes, which over-states it")
     # Upper-house booth lean for parties new to a seat (One Nation in 2026): read once. Without --council-lean the
     # update is exactly as before, and it says so once.
-    if (is.null(cache$lean) && !is.null(cfg$council_lean)) {
-      cache$lean <- night_council_lean(data.table::fread(cfg$council_lean, showProgress = FALSE))
-      message(sprintf("NW15  upper-house booth lean loaded from %s: %d units, classes %s", basename(cfg$council_lean),
-                      data.table::uniqueN(paste(cache$lean$district, cache$lean$unit)), paste(sort(unique(cache$lean$cls)), collapse = " ")))
+    if (is.null(cache$lean) && !is.null(cfg$council_lean) && is.null(cache$lean_failed)) {
+      # An optional improvement must not take the night down: a missing or damaged file is reported (NW15!) once and
+      # the cycle runs without it, exactly as before the lean existed.
+      cache$lean <- tryCatch(night_council_lean(data.table::fread(cfg$council_lean, showProgress = FALSE)), error = function(e) {
+        message("NW15! --council-lean could not be read (", conditionMessage(e), "): running WITHOUT the booth lean"); NULL })
+      if (is.null(cache$lean)) cache$lean_failed <- TRUE else
+        message(sprintf("NW15  upper-house booth lean loaded from %s: %d units, classes %s", basename(cfg$council_lean),
+                        data.table::uniqueN(paste(cache$lean$district, cache$lean$unit)), paste(sort(unique(cache$lean$cls)), collapse = " ")))
     } else if (is.null(cfg$council_lean) && is.null(cache$lean_warned)) {
       message("NW15! no --council-lean: a party new to a seat (One Nation) takes its counted share unadjusted for booth lean")
       cache$lean_warned <- TRUE

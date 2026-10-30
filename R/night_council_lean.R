@@ -27,7 +27,7 @@ night_council_lean <- function(council_fp, classes = c("ALP", "LNP", "GRN", "ONP
   need <- c("district", "vc_name", "vote_type", "block_kind", "row_kind", "group_name", "total")
   miss <- setdiff(need, names(C))
   if (length(miss)) stop("night_council_lean(): council table lacks ", paste(miss, collapse = ", "), call. = FALSE)
-  C <- C[C$block_kind == "voting_centre" & C$row_kind %in% c("group", "ungrouped")]
+  C <- C[C$block_kind == "voting_centre" & C$row_kind %in% c("group", "ungrouped") & !is.na(C$vote_type) & nzchar(C$vote_type)]
   if (!nrow(C)) stop("night_council_lean(): no voting-centre party rows", call. = FALSE)
   cls <- ifelse(C$row_kind == "ungrouped", "IND", classify_party(C$group_name))
   out <- data.table::data.table(district = sub("\\s+District$", "", C$district),

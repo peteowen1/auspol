@@ -35,6 +35,32 @@ test_that("a partly counted early unit: remainder projected from the early block
                c(S = 300 / (2000 * 0.6)))
 })
 
+test_that("partial early in expected mode sums to the expected total, and an all-counted seat reports what is outstanding", {
+  ref  <- dt(unit = c("A", "A", "B", "B", "early", "early"), booth_type = c("ordinary", "ordinary", "ordinary", "ordinary", "early", "early"),
+             cls = c("ALP", "LNP", "ALP", "LNP", "ALP", "LNP"), v = c(500, 500, 500, 500, 600, 400))
+  live <- dt(unit = c("A", "A", "B", "B", "early", "early"), booth_type = c("ordinary", "ordinary", "ordinary", "ordinary", "early", "early"),
+             cls = c("ALP", "LNP", "ALP", "LNP", "ALP", "LNP"), v = c(450, 550, 0, 0, 250, 250))
+  p <- project_seat_from_booths(live, ref, c("A", "early"), total = "expected", expected_total = 3000, early_frac = 0.5)
+  expect_equal(sum(p$projected), 3000)                               # review 2026-10-30: was 3,500 (remainder counted twice)
+  expect_equal(p$counted_share[1], 1500 / 3000)
+  q <- project_seat_from_booths(live[unit != "B"], ref, c("A", "early"), early_frac = 0.5)   # every unit reported, early half in
+  expect_equal(q$counted_share[1], 1500 / 2000)                      # not 1: half the early vote is outstanding
+})
+
+test_that("night_booth_update() carries the lean onto this year's units (the merge with the booth match)", {
+  ref  <- dt(district = "S", booth = c("Moe", "Moe", "Trar", "Trar"), booth_type = "ordinary", party = c("Australian Labor Party", "Liberal"), votes = c(600, 400, 500, 500))
+  live <- dt(district = "S", booth = rep(c("Moe", "Trar"), each = 3), booth_type = "ordinary",
+             party = rep(c("Australian Labor Party", "Liberal", "Pauline Hanson's One Nation"), 2), votes = c(300, 260, 440, 450, 450, 100))
+  sh <- matrix(c(40, 40, 20), 1, dimnames = list("S", c("ALP", "LNP", "ONP"))); sd <- sh * 0 + 50
+  rep_units <- dt(district = "S", unit = "Moe")
+  u0 <- night_booth_update(sh, sd, 1, live, ref, reported = rep_units)
+  lean <- dt(district = "S", unit = c("Moe", "Trar"), cls = "ONP", share = c(0.40, 0.10))
+  u1 <- night_booth_update(sh, sd, 1, live, ref, reported = rep_units, lean = lean)
+  expect_lt(u1$shares["S", "ONP"], u0$shares["S", "ONP"])             # Trar projected at 10% + swing, not Moe's 44%
+  wrong <- data.table::copy(lean)[, district := "Elsewhere"]
+  expect_identical(night_booth_update(sh, sd, 1, live, ref, reported = rep_units, lean = wrong)$shares, u0$shares)
+})
+
 test_that("a party new to the seat is projected from booth lean plus its counted swing; NULL changes nothing", {
   # last time: ALP and LNP only, two booths of 1,000. Tonight One Nation stands; Moe (an ONP-leaning booth) is counted.
   ref  <- dt(unit = c("Moe", "Moe", "Traralgon", "Traralgon"), booth_type = "ordinary", cls = c("ALP", "LNP", "ALP", "LNP"), v = c(600, 400, 500, 500))

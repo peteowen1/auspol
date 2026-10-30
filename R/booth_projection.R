@@ -103,7 +103,9 @@ project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, 
   if (!nrow(unc)) {
     out0 <- live[, .(projected = sum(v)), by = cls]
     if (!is.null(er)) out0 <- rbind(out0[, .(cls, v = projected)], er)[, .(projected = sum(v)), by = cls]
-    return(out0[, counted_share := 1][])
+    cs_all <- if (is.null(er)) 1 else { cv_all <- sum(live[unit %in% counted_units]$v)
+      if (total == "expected" && is.finite(expected_total) && expected_total > 0) min(1, cv_all / expected_total) else cv_all / (cv_all + sum(er$v)) }
+    return(out0[, counted_share := cs_all][])
   }
   grid <- data.table::CJ(unit = unc$unit, cls = classes); grid <- merge(grid, unc, by = "unit")
   grid <- merge(grid, ref[, .(unit, cls, rv = v)], by = c("unit", "cls"), all.x = TRUE)
@@ -126,7 +128,7 @@ project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, 
   use_exp <- total == "expected" && is.finite(expected_total) && expected_total > 0
   if (use_exp) {
     cv0 <- sum(live[unit %in% counted_units]$v)
-    left <- max(expected_total - cv0, 0)
+    left <- max(expected_total - cv0 - (if (is.null(er)) 0 else sum(er$v)), 0)   # the early remainder is already inside expected_total
     tot_sz <- sum(unique(grid[, .(unit, size)])$size)
     if (tot_sz > 0) grid[, size := size * left / tot_sz]
   }
