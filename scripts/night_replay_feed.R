@@ -9,7 +9,9 @@
 # Simplifications (say them in every result): a reported place carries its FINAL count, not its first-night figure;
 # declaration votes (postal, absent, provisional, declaration pre-poll) are never counted on the night here (the AEC
 # counted some postals on the night); the 11 fed2022 seats whose pair was withdrawn get no two-candidate count until
-# the replacement appears. Times are Canberra time (AEST), the feed's own clock.
+# the replacement appears; a two-candidate count is used only when the pair on screen equals the night's LAST pair
+# (known only at the end of the night: it can withhold a count, never supply one, because the booth 2CP file holds
+# the final pair's counts only -- review 2026-10-30). Times are Canberra time (AEST), the feed's own clock.
 # Writes <out>/<label>-summary.csv (one row per time) and <out>/<label>-seats.csv (seat x time x party probability).
 # Check codes NRF1-NRF4.
 options(auspol.root = normalizePath("."))
