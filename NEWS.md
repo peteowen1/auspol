@@ -1,3 +1,14 @@
+# auspol 0.4.120
+
+Covers 0.4.117-0.4.119 too, which were version bumps with no entry.
+
+- **MP-slope pool SHIPPED** (`AUSPOL_MP_SLOPE_POOL=1`, `R/mp_slope_pool.R`, `scripts/fit_mp_slope.R`): each class's sitting-member slope is shrunk toward the all-class slope, w = tau^2/(tau^2+se^2), time-forward, one rule in `fit_seats_full.R` and all seven harnesses. Removes live's `n_member >= 8` cutoff. All 35: seat log loss +0.00014 (SE 0.00020); the live Victorian forecast is byte-identical (no sitting minor or independent member). `output/mp-slope-pooled.csv` is git-tracked for CI.
+- **Night JSON swing** (`night_booth_results(conv, ref)`, `night_seat_swing()`, `night_seat_swing_safe()`, `night_build_json(swing =)`): `sn` per booth and `swing` per seat, Labor minus Coalition first preferences in points, so the live map's arrows draw. Equal to the page builder's booth swing on all 1,325 vic2022 booths; a damaged reference table drops the swing only (NW14).
+- **Switch registry enforced** (`scripts/non_model_switches.R`, `mr4_scan()`, `tests/testthat/test-switch-registry.R`): every `AUSPOL_*` switch read in code is registered in `published_flags.R` (29 added at their existing defaults, AEF-7 byte-identical) or listed as run, diagnostic, builder or retired; CI fails otherwise.
+- **Daily forecast on time** (`.github/workflows/forecast.yaml`): started by the inthegame-blog worker with `daily=true`; the late GitHub schedule is a gated fallback that skips when the day's run exists.
+- **Night backup** (`.github/workflows/night-backup.yaml`): fetches the time-forward flow manifest and reads the flow tag from `published_flags.R`.
+- Arms built and left off: level conservation (`R/level_conserve.R`, refused; its weights fix), F16 row-shift-exact (not passed), F18 pre-tree nomination zero (`AUSPOL_NOM_LIVE_FILE` test override). Test: `seat_sd` inert under the shipped `level_sd`.
+
 # auspol 0.4.116
 
 - **Night state from the published forecast** (`scripts/fit_seats_full.R`): every run saves `output/night-state-<stem>.rds`, everything its final simulation takes, so the election-night runner starts from exactly that forecast (`night_runner.R --state=`). Simulating from the saved state alone reproduces the published seat probabilities and seat totals exactly. The daily workflow uploads it to the `forecast-latest` release; polling day's copy is the one used on the night. Until now only the backtest harness could save one, so 2026 had none.
