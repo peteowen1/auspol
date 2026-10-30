@@ -4,7 +4,7 @@
 \alias{night_apply_tcp}
 \title{Condition simulated draws on the VEC's two-candidate count}
 \usage{
-night_apply_tcp(sim, obs, pair_min = 0.2)
+night_apply_tcp(sim, obs, pair_min = 0.2, center = c("mean", "median"))
 }
 \arguments{
 \item{sim}{Output of \code{\link[=simulate_seat_contests]{simulate_seat_contests()}}.}
@@ -12,6 +12,9 @@ night_apply_tcp(sim, obs, pair_min = 0.2)
 \item{obs}{\code{\link[=night_tcp_obs]{night_tcp_obs()}} output.}
 
 \item{pair_min}{Smallest share of draws with the VEC's pair for its count to be used.}
+
+\item{center}{\code{"mean"} (default, unchanged) or \code{"median"}: which draw the counted flow is lined up
+against. \code{"median"} stops a minority of outlying draws (an unfaded surge) moving every other draw.}
 }
 \value{
 \code{sim}, updated, with attribute \code{night_tcp}: one row per observed seat (pair share

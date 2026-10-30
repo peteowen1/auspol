@@ -13,6 +13,8 @@ pth <- function(i, d) if (length(a) >= i && nzchar(a[i])) a[i] else d
 L <- fread(pth(3, sprintf("output/booths-%s%d.csv", region, st$to))); R <- fread(pth(4, sprintf("output/booths-%s%d.csv", region, st$from)))
 Tc <- fread(pth(5, sprintf("output/booths/%s%d-booth-tcp.csv", region, st$to)))
 fracs <- c(0, 0.05, 0.1, 0.25, 0.5, 0.75, 1)
+surge_fade <- identical(Sys.getenv("AUSPOL_NIGHT_SURGE_FADE", "0"), "1"); tcp_center <- Sys.getenv("AUSPOL_NIGHT_TCP_CENTER", "mean")
+cat(sprintf("night fixes: surge-fade=%s tcp-center=%s\n", surge_fade, tcp_center))
 clock <- function(f) { m <- round(18 * 60 + 240 * f); sprintf("%d:%02dpm", (m %/% 60) - 12, m %% 60) }
 # counted primaries by unit, same unit rule as night_booth_update()
 Lc <- copy(L)[is.na(votes), votes := 0][, cls := classify_party(party)][, unit := ifelse(booth_type == "ordinary", booth, booth_type)]
@@ -31,15 +33,16 @@ for (fr in fracs) {
     nu <- night_booth_update(shares, night_prior_sd(shares, st$level_sd, st$level_mult, sdo), fr, L, R, gap_k = 5, early = "interleaved")
     shares <- nu$shares; sdo <- nu$sd; swd <- night_shrink_draws(swd, 1 - nu$resolved)
   }
+  sh <- if (surge_fade && !is.null(nu)) night_surge_fade(st$surge_h, nu$counted, seats) else st$surge_h
   sim <- simulate_seat_contests(level_sd = st$level_sd, sd_override = sdo, level_mult = st$level_mult, shares, st$fm,
                                 party_sd = st$psd, statewide_draws = swd, seat_sd = st$seat_sd, n_sims = sims,
                                 breakout_p = st$bo$p, breakout_q = st$bo$q, coalition_split = st$coalition_split, error_q = st$error_q,
                                 smooth = st$smooth, seed = st$seed, party_cor = st$party_cor, shrink = st$shrink,
                                 conditional_override = st$htv_ov, conditional_override_sd = attr(st$htv_ov, "sd"),
                                 fallback_smooth = st$fb_smooth, shrink_k = st$shrink_k, flow_sd = st$flow_sd,
-                                surge_h = st$surge_h, surge_party = st$surge_party, surge_from_zero = st$surge_from_zero,
+                                surge_h = sh, surge_party = st$surge_party, surge_from_zero = st$surge_from_zero,
                                 surge_mu = st$surge_mu, surge_sd = st$surge_sd)
-  if (!is.null(nu)) { obs <- night_tcp_obs(Tc, L, nu$units, shares); sim <- night_apply_tcp(sim, obs) }
+  if (!is.null(nu)) { obs <- night_tcp_obs(Tc, L, nu$units, shares); sim <- night_apply_tcp(sim, obs, center = tcp_center) }
   wp <- as.data.table(sim$win_prob)
   tw <- sim$tcp_winner; tr <- sim$tcp_runnerup; ts <- sim$tcp_share
   if (max(ts, na.rm = TRUE) > 1.5) ts <- ts / 100

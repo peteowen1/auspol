@@ -455,3 +455,25 @@ test_that("per-booth results for the map: reported ordinary booths only, four fi
   expect_message(bk <- night_booth_results_safe(conv), "NW13")
   expect_null(bk)
 })
+
+test_that("night_surge_fade scales each seat's surge hazard by its uncounted share (Wentworth fed2022, review 2026-10-30)", {
+  h <- night_surge_fade(c(S1 = 0.3, S2 = 0.2, S3 = 0.1), c(S1 = 0.97, S2 = 0.5), c("S1", "S2", "S3"))
+  expect_equal(unname(h), c(0.3 * 0.03, 0.2 * 0.5, 0.1))      # S3 not reported: unchanged
+  expect_equal(names(h), c("S1", "S2", "S3"))
+  expect_equal(unname(night_surge_fade(0.4, c(S2 = 1), c("S1", "S2"))), c(0.4, 0))   # length 1 broadcasts; fully counted -> 0
+  expect_error(night_surge_fade(c(S1 = 0.3), c(S1 = 0.5), c("S1", "S2")), "NX10")
+})
+
+test_that("night_apply_tcp(center = 'median') stops a minority of outlying draws dragging the rest across 50%", {
+  # 7 draws at a = 52.6% two-candidate, 3 surge draws at 80%; counted primaries a 36, b 40, counted flow 0.776.
+  n <- 10L; pa <- c(rep(0.526, 7), rep(0.80, 3))
+  sim <- list(totals = cbind(IND = rep(1L, n), LNP = rep(0L, n)),
+              win_prob = data.frame(seat = "W", party = "IND", prob = 1),
+              tcp_winner = matrix("IND", n, 1, dimnames = list(NULL, "W")),
+              tcp_runnerup = matrix("LNP", n, 1, dimnames = list(NULL, "W")),
+              tcp_share = matrix(pa, n, 1, dimnames = list(NULL, "W")))
+  obs <- data.frame(seat = "W", a = "IND", b = "LNP", fp_a = 36, fp_b = 40, flow = 0.776, flow_se = 0.001, share_a = 0.54)
+  p_mean <- night_apply_tcp(sim, obs)$win_prob; p_med <- night_apply_tcp(sim, obs, center = "median")$win_prob
+  expect_lt(sum(p_mean$prob[p_mean$party == "IND"]), 0.5)      # the defect: the mean shift flips the 7 typical draws
+  expect_equal(sum(p_med$prob[p_med$party == "IND"]), 1)        # median: the typical draws stay IND-winning
+})

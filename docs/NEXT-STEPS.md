@@ -95,6 +95,20 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   slope of -23.1 (n 1, se ~11) enters the DerSimonian-Laird sum: qld2015, sa2014, vic2014 get tau^2 ~0.57 (0 at most
   targets), so IND there keeps w 0.99 instead of pooling (`output/mp-slope-pooled.csv`; `R/mp_slope_pool.R:79-83`).
   The all-35 screen ran on this table. A fix (drop near-zero-variance classes from the tau^2 sum) needs its own screen.
+- OPEN, NIGHT MODEL (30 Oct, before 28 Nov): Wentworth fed2022 ends at 0.30 for Spender with 97% counted (count
+  54.0%). Traced (scratchpad trace, numbers reproduced): the pre-election surge (surge_h 0.327, +36 pts) still fires
+  after the count, in the runner too (`R/night_runner.R:489`); its 305 draws drag the mean flow in `night_apply_tcp()`
+  (`R/night_update.R:332-335`), which then shifts all 1,000 draws down 6.5 pts. Fixes: (1) surge_h x (1 - counted)
+  per seat; (2) each draw's flow from its own primaries; (3) flow sd from measured between-seat flow error, not 0.01.
+  Also from review: draws with a different final pair are never corrected (Monash 2025); statewide draws shrink by
+  the national mean counted, not the seat's; projection sd floors at 0.26. Reviews: `docs/reviews/night-replay-fed-2026-10-30.md`.
+- OPEN, REPLAY METHOD (30 Oct review): every call time quoted from the replays is on a SIMULATED count (one early
+  block per seat, all seats in step, clock = 6pm + 4h x step, "counted" over the final total not the live projection;
+  qld2024 counted 11.6% -> 11.7% -> 17.2% -> 54.2% over steps 0.3-0.75). vic2022 tuned the night settings, so it is not
+  a holdout. Calls at 0.99 need 20,000 sims (at 1,000 a true 0.990 clears only 59% of the time). Fix: replay from the
+  AEC's archived night feed (`external/reference/aec/mediafeed/`, 2022 and 2025, per-minute snapshots; parser in
+  progress, `scripts/parse_aec_mediafeed.R`). The Tally Room per-booth "returned" times are the post-recheck times,
+  not night times.
 - OPEN, DATA (found 30 Oct by the night replay): `output/candidacies.csv` has sa2026 at 980,713 votes against
   1,116,641 in the ECSA booth file (`output/booths/sa2026-booth-fp.csv`); every seat but one is 4-29% short
   (Hurtle Vale 19,389 vs 24,971). Looks like a count taken before declaration votes. sa2026 is an AEF-7 pair, so its

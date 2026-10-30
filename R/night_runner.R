@@ -463,11 +463,14 @@ night_expected_votes <- function(enrolment, prev, basis = c("night", "final")) {
 #'   [night_booth_update()]. `NULL` (default) leaves the update as before.
 #' @param early_frac Share of each seat's early vote counted so far ([night_early_frac()]); passed to
 #'   [night_booth_update()]. `NULL` (default) treats a reported early unit as complete, as before.
+#' @param surge_fade `TRUE` fades each seat's surge hazard by its counted share ([night_surge_fade()]).
+#'   `FALSE` (default) is unchanged.
+#' @param tcp_center Passed to [night_apply_tcp()] as `center`: `"mean"` (default, unchanged) or `"median"`.
 #' @return List: `sim`, `nu` (the update), `shares`, `sd`, `matched` (seats in both state and feed),
 #'   `n_updated`.
 #' @export
 night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "table", "expected"), expected = NULL, sims = NULL, use_tcp = TRUE,
-                             lean = NULL, early_frac = NULL) {
+                             lean = NULL, early_frac = NULL, surge_fade = FALSE, tcp_center = "mean") {
   total <- match.arg(total)
   if (is.null(sims)) sims <- st$n_sims
   if (!is.null(st$swd) && nrow(st$swd) != sims) stop("NW2! the saved state has ", nrow(st$swd), " statewide draws; sims must equal that (dump the state at the sim count wanted)", call. = FALSE)
@@ -480,19 +483,20 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
   if (nu$n_updated > 0L) {
     shares <- nu$shares; sdo <- nu$sd; swd <- night_shrink_draws(swd, 1 - nu$resolved)
   }
+  sh <- if (surge_fade && nu$n_updated > 0L) night_surge_fade(st$surge_h, nu$counted, seats) else st$surge_h
   sim <- simulate_seat_contests(level_sd = st$level_sd, sd_override = sdo, level_mult = st$level_mult, shares, st$fm,
                                 party_sd = st$psd, statewide_draws = swd, seat_sd = st$seat_sd, n_sims = sims,
                                 breakout_p = st$bo$p, breakout_q = st$bo$q, coalition_split = st$coalition_split, error_q = st$error_q,
                                 smooth = st$smooth, seed = st$seed, party_cor = st$party_cor, shrink = st$shrink,
                                 conditional_override = st$htv_ov, conditional_override_sd = attr(st$htv_ov, "sd"),
                                 fallback_smooth = st$fb_smooth, shrink_k = st$shrink_k, flow_sd = st$flow_sd,
-                                surge_h = st$surge_h, surge_party = st$surge_party, surge_from_zero = st$surge_from_zero,
+                                surge_h = sh, surge_party = st$surge_party, surge_from_zero = st$surge_from_zero,
                                 surge_mu = st$surge_mu, surge_sd = st$surge_sd)
   n_tcp <- 0L
   if (use_tcp && nu$n_updated > 0L && nrow(conv$tcp)) {
     obs <- night_tcp_obs(conv$tcp, conv$live, nu$units, shares)
     n_tcp <- nrow(obs)
-    sim <- night_apply_tcp(sim, obs)
+    sim <- night_apply_tcp(sim, obs, center = tcp_center)
   }
   list(sim = sim, nu = nu, shares = shares, sd = sdo, matched = matched, n_updated = nu$n_updated, n_tcp = n_tcp)
 }

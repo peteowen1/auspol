@@ -14,7 +14,9 @@ night_run_update(
   sims = NULL,
   use_tcp = TRUE,
   lean = NULL,
-  early_frac = NULL
+  early_frac = NULL,
+  surge_fade = FALSE,
+  tcp_center = "mean"
 )
 }
 \arguments{
@@ -40,6 +42,11 @@ night_run_update(
 
 \item{early_frac}{Share of each seat's early vote counted so far (\code{\link[=night_early_frac]{night_early_frac()}}); passed to
 \code{\link[=night_booth_update]{night_booth_update()}}. \code{NULL} (default) treats a reported early unit as complete, as before.}
+
+\item{surge_fade}{\code{TRUE} fades each seat's surge hazard by its counted share (\code{\link[=night_surge_fade]{night_surge_fade()}}).
+\code{FALSE} (default) is unchanged.}
+
+\item{tcp_center}{Passed to \code{\link[=night_apply_tcp]{night_apply_tcp()}} as \code{center}: \code{"mean"} (default, unchanged) or \code{"median"}.}
 }
 \value{
 List: \code{sim}, \code{nu} (the update), \code{shares}, \code{sd}, \code{matched} (seats in both state and feed),
