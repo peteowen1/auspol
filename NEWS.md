@@ -1,3 +1,9 @@
+# auspol 0.4.123
+
+- **Election-night fixes ON by default** (`night_run_update()`, `night_cycle()`; flags `--surge-fade`, `--tcp-center`, `--tcp-flow-floor`): the pre-election surge fades as each seat is counted, the two-candidate update centres on the median draw, and the flow sd floor is 0.065 (measured; was 0.01). Real-night replays of fed2022 and fed2025 from the AEC's archived feed: seats wrong at 3am 4 -> 1 and 7 -> 4; Wentworth 2022 never called -> called 7:45pm (`docs/reviews/night-replay-real-feed-2026-10-31.md`). NW17 stops on a non-finite floor.
+- **Real-night replay** `scripts/night_replay_feed.R` (AEC feed parser `scripts/parse_aec_mediafeed.py`); win probabilities can no longer sum above 1 after the 2CP update.
+- **`AUSPOL_STATE_FLOWS_AEC`** (OFF): AEC same-state federal flows for state statewide flows; no effect on any seat (statewide flows reach only the draws' anchoring), so not shipped.
+
 # auspol 0.4.122
 
 - **Booth lean for a party new to a seat on election night** (`night_council_lean()`, `project_seat_from_booths(lean =)`, runner `--council-lean=output/council-fp-2022.csv`): a party with no lower-house booth history in a seat (One Nation in 2026) is projected from each booth's previous upper-house vote plus its counted swing, not its raw counted share. vic2022 replay with each class made "new": projection RMSE 3.03 -> 2.41 points (real history 2.45). Named parties only.
