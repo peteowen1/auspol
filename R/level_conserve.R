@@ -55,6 +55,20 @@ level_conserve_lambda <- function() {
   v
 }
 
+#' Classes held out of the conservation, `AUSPOL_LEVEL_CONSERVE_HOLD`
+#'
+#' A comma list of classes whose level is dropped from the rake's targets, so
+#' their cells keep their value and the other classes fill the rest in
+#' proportion to their levels. Default `""` holds none (byte-identical).
+#' Amendment 1 of `plans/prereg-level-conserve-2026-10-25.md` (IND: the level
+#' cannot see candidates).
+#' @return character vector of class names (possibly empty).
+#' @export
+level_conserve_hold <- function() {
+  v <- trimws(strsplit(Sys.getenv("AUSPOL_LEVEL_CONSERVE_HOLD", ""), ",", fixed = TRUE)[[1]])
+  v[nzchar(v)]
+}
+
 .lc_cache <- new.env(parent = emptyenv())
 
 #' Seat weights for the implied statewide share: formal votes at the PREVIOUS election
@@ -96,7 +110,7 @@ level_conserve_weights <- function(seats, target, corpus = NULL) {
   v <- suppressWarnings(as.numeric(corpus$votes[sel]))
   tot <- tapply(v, sk, sum)
   tot <- tot[is.finite(tot) & tot > 0]
-  w <- unname(tot[normalise_seat(seats)])
+  w <- as.vector(tot[normalise_seat(seats)])   # tapply gives a 1-d array; its dim breaks `weights * M`
   hit <- is.finite(w) & !is.na(w)
   if (!any(hit)) return(equal(sprintf("no seat matched %s%d", region, py)))
   w[!hit] <- stats::median(w[hit])
@@ -172,6 +186,7 @@ level_conserve_rake <- function(shares, level, weights, adjust = NULL,
   A <- if (is.null(adjust)) matrix(TRUE, nrow(X), ncol(X)) else (adjust & !is.na(adjust))
   if (!identical(dim(A), dim(X))) stop("LCV1!! level_conserve_rake(): adjust must have the shape of shares", call. = FALSE)
   A <- A & X > 0
+  weights <- as.vector(weights)
   W <- sum(weights)
   wmean <- function(v) sum(weights * v) / W
   implied <- function(M) colSums(weights * M) / W
@@ -264,6 +279,14 @@ level_conserve_apply <- function(shares, level, label, stage = c("base", "final"
   lam <- level_conserve_lambda()
   level <- unlist(level)
   level <- level[is.finite(level)]
+  hold_cls <- level_conserve_hold()
+  if (length(hold_cls)) {
+    absent <- setdiff(hold_cls, colnames(shares))
+    if (length(absent)) cat(sprintf("%s! AUSPOL_LEVEL_CONSERVE_HOLD names class(es) not in the shares: %s\n",
+                                    code, paste(absent, collapse = ", ")))
+    level <- level[!names(level) %in% hold_cls]
+    cat(sprintf("%s  holding %s out of the rake (AUSPOL_LEVEL_CONSERVE_HOLD)\n", code, paste(hold_cls, collapse = ", ")))
+  }
   if (is.null(weights)) weights <- level_conserve_weights(rownames(shares), label)
   H <- matrix(FALSE, nrow(shares), ncol(shares), dimnames = dimnames(shares))
   if (!is.null(held)) {

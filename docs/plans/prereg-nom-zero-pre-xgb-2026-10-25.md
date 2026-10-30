@@ -119,3 +119,41 @@ trees were fitted on a zeroed base; `"1"` gives them one. So:
   this file.
 
 Nothing in this plan is a measured result. The size of the effect is unknown until Walk 1 runs.
+
+## Amendment 1 (2026-10-29, before any run; nothing above edited)
+
+1. **The padding rule cannot clear the floor.** The floor counts ROWS (`live_nominations()`, `R/nomination_zero.R`:
+   `nrow(now) / nrow(prv)`), and vic2022 has 731. The provisional list has 500; adding ALP/LNP/GRN where missing
+   gives 519; only 7 of 88 seats lack an OTH row, so the rule as written reaches 526 of the 622 needed. Change:
+   after the 7 seats, keep carrying vic2022 OTH rows forward into seats that ALREADY have an OTH row, until the
+   list clears. Zeroing keys on whether a class has any candidacy in a seat, so an extra OTH row where OTH already
+   stands zeroes nothing new: what S zeroes is unchanged by this padding. Final counts go in the result.
+2. **Where the list lives.** The live list is read from the fixed relative path `output/candidacies.csv`
+   (`R/nomination_zero.R:218`), and a full scratch copy of `output/` is 9.4 GB. Instead of copying it, a test-only
+   override `AUSPOL_NOM_LIVE_FILE` (default unset = that path, byte-identical) points the nomination reader alone at
+   the synthetic file in the scratchpad. Every other input is the real `output/`, which the A/B shares. Both arms
+   write with `AUSPOL_OUT_SUFFIX` and the walk files are moved out of `output/` afterwards, as the 28 Oct walk did.
+
+## Walk 1 RESULT (2026-10-29, synthetic list, seed 42, code bf4b31d3; both arms exit 0, 8:31-8:38pm)
+
+The list as built under Amendment 1: 500 provisional + 19 ALP/LNP/GRN + 7 OTH in new seats + 96 extra OTH where
+OTH stands = 622 rows (85% of 731). Seats per class now/vic2022: ALP 88/87, GRN 88/87, IND 30/69, LNP 88/87,
+ONP 78/4, OTH 88/87, OTH_RIGHT 21/87. Both logs print the NZL! override line and S6 "NOT A DEFAULT PUBLISH RUN".
+
+1. **PASS.** The 4 seats with nothing zeroed: max |A - B| 0 over every cell.
+2. **PASS.** A's post-xgb zero: 135 cells (IND 58, ONP 10, OTH_RIGHT 67). B's pre-xgb zero (NZP2): the same 135
+   cells. B's post-xgb guard then zeroed 101 cells the trees revived on a zero base (49.3 points); no stop.
+3. **FINDING, one seat.** 80 of 84 affected seats (95%) moved under 1 point on every standing cell; every seat but
+   one stayed under 1.65. Morwell moved 10.9: the synthetic list has no One Nation there, so the published
+   favourite's 36.6 is freed. A (zero after the trees, freed share by flows) gives OTH 12.1; B (trees see the zero)
+   gives OTH 1.2, GRN 15.8 against 11.0, LNP 57.4 against 53.4. LNP wins in both (0.99). This is the mismatch the
+   switch exists for, at its largest: flows send a big freed share to OTH, the trees do not. To walk with Pete.
+4. **PASS.** No favourite changed. Largest win-probability moves: Mildura LNP 0.730 -> 0.783, Ringwood LNP
+   0.360 -> 0.402, Gippsland East ONP 0.162 -> 0.194.
+
+Walk files moved to the session scratchpad; output/S7-BREACH.txt restored to its pre-walk copy. Walk 2 waits for the
+VEC final list (from 10 November).
+
+**Pete, 2026-10-29, on the Morwell walk:** F18's version is the more plausible (OTH 1.2, not 12.1; One Nation's
+vote goes mostly to LNP, Labor and the Greens). So F18 goes to walk 2 on the VEC final list as the likely default;
+it is NOT switched on yet. Walk 2's predictions 1-4 still have to hold on the real list.

@@ -45,6 +45,17 @@ test_that("a non-zero slope actually changes the answer", {
   expect_false(isTRUE(all.equal(a$win, b$win)))
 })
 
+test_that("with level_sd on (the shipped config), seat_sd cannot move the answer", {
+  # Pete, 2026-10-26: prove seat_sd inert before anything is built on it. Note the
+  # harness knob AUSPOL_SEAT_SD_MULT is NOT this test: it scales level_sd as well.
+  m <- mk()
+  run <- function(sd, lsd) simulate_seat_contests(m$shares, m$fm, m$psd, seat_sd = sd, level_sd = lsd,
+                                                  n_sims = 400, seed = 42)$win
+  expect_equal(run(3.5, c(1.10, 8.67)), run(50, c(1.10, 8.67)))
+  # not vacuous: with level_sd off, the same change does move it
+  expect_false(isTRUE(all.equal(run(3.5, NULL), run(50, NULL))))
+})
+
 test_that("level_sd is validated rather than silently coerced", {
   m <- mk()
   expect_error(simulate_seat_contests(m$shares, m$fm, m$psd, level_sd = 3.5,

@@ -42,6 +42,9 @@ CAND[, yr := as.integer(sub("^[a-z]+", "", election))]
 .counted <- CAND[, .(v = sum(votes, na.rm = TRUE)), by = election][v > 0, election]
 cat(sprintf("MP0e elections without counted votes, left out: %s\n",
             paste(setdiff(unique(CAND$election), .counted), collapse = ", ")))
+# Kept for the pooled table only (AUSPOL_MP_SLOPE_POOL): a live election is a target the published forecast
+# looks its slopes up under, fitted on every counted election before it. It never contributes rows.
+.live_targets <- sort(setdiff(unique(CAND$election), .counted))
 CAND <- CAND[election %in% .counted]
 pairs <- rbindlist(lapply(split(unique(CAND[, .(juris, yr, election)]), by = "juris"), function(d) {
   d <- d[order(yr)]
@@ -237,6 +240,8 @@ g_classes <- sort(unique(panel[same_mp %in% TRUE]$party))
 .train_mask <- function(tg) if (.mp_tf) elections_before(panel$target, tg) else panel$target != tg
 cat(sprintf("MP6t training rows per target: %s
 ", if (.mp_tf) "elections dated BEFORE the target (time-forward)" else "every other election (leave-one-out)"))
+K <- 10; PRIOR_MEMBER <- 1.0; PRIOR_ALSO <- 0.5
+shr <- function(est, n, toward) if (is.finite(est) && n > 0) toward + n / (n + K) * (est - toward) else toward
 grid <- rbindlist(lapply(g_targets, function(tg) rbindlist(lapply(g_classes, function(cl) {
   d  <- panel[.train_mask(tg) & panel$party == cl, ]
   dm <- d[d$same_mp %in% TRUE, ]
@@ -246,8 +251,7 @@ grid <- rbindlist(lapply(g_targets, function(tg) rbindlist(lapply(g_classes, fun
     # slope is shrunk toward the all-class slope on the same earlier rows, which is shrunk toward a
     # structural prior (member 1.0: a sitting member keeps their relative standing; also-ran 0.5), each
     # step with weight n / (n + K). Zero earlier rows = the prior exactly. Constants: docs/CONSTANTS.md.
-    K <- 10; PRIOR_MEMBER <- 1.0; PRIOR_ALSO <- 0.5
-    shr <- function(est, n, toward) if (is.finite(est) && n > 0) toward + n / (n + K) * (est - toward) else toward
+    # K, PRIOR_MEMBER, PRIOR_ALSO and shr() are defined once above the grid (the pooled table uses them too).
     D_all <- panel[.train_mask(tg), ]
     all_m <- D_all[D_all$same_mp %in% TRUE, ]; all_a <- D_all[!(D_all$same_mp %in% TRUE), ]
     top_m <- shr(fit(all_m), nrow(all_m), PRIOR_MEMBER); top_a <- shr(fit(all_a), nrow(all_a), PRIOR_ALSO)
@@ -267,6 +271,57 @@ MP7  leak-free lookup table (min n=%d for a member slope)
 ", MIN_N))
 print(dcast(grid, target ~ party, value.var = "member"))
 
+# ---- the PARTIALLY POOLED table (AUSPOL_MP_SLOPE_POOL=1) ---------------------
+# docs/plans/prereg-mp-slope-pool-2026-10-25.md. One rule for the live forecast AND every harness (Pete,
+# 2026-10-25): for each target, on the same training rows as the grid above (time-forward unless
+# AUSPOL_MP_SLOPE_TF=0), every class's member slope is partially pooled toward the all-class member slope,
+# w = tau^2 / (tau^2 + se^2) (R/mp_slope_pool.R). No n floor: a thin class degrades toward the pooled
+# slope instead of being dropped (live, n_member < 8) or shrunk by a fixed n / (n + K) (harness table).
+# The all-class slope itself is the grid's top-level value, shr() toward PRIOR_MEMBER, so a target with no
+# earlier member rows gets 1.0 exactly as the grid does. Live targets (no counted votes) are fitted on every
+# counted election before them; fit_seats_full.R looks its target up here. Written as its own file so
+# "0" reads exactly the tables it read before.
+pool_targets <- c(g_targets, .live_targets)
+.build_pooled <- function() {
+  p <- rbindlist(lapply(pool_targets, function(tg) {
+    D  <- panel[.train_mask(tg), ]
+    dm <- D[D$same_mp %in% TRUE, ]
+    mu <- shr(fit(dm), nrow(dm), PRIOR_MEMBER)
+    out <- mp_slope_pool(dm[, .(party, dev_prev, dev_now)], g_classes, mu)
+    out[, target := tg]
+    setcolorder(out, "target")
+    out[]
+  }))
+  stopifnot(nrow(p) == length(pool_targets) * length(g_classes), all(is.finite(p$member)))
+  p
+}
+# Only a run that needs the pooled table (--pool-only, or the switch on) may stop on it: at the shipped "0" a
+# failure here must not abort rebuild stage 0, which runs this script for the three tables "0" reads (review,
+# 2026-10-29). It is then reported loudly and the pooled file is left as it was.
+.pool_needed <- "--pool-only" %in% commandArgs(trailingOnly = TRUE) || identical(Sys.getenv("AUSPOL_MP_SLOPE_POOL", "1"), "1")
+pooled <- if (.pool_needed) .build_pooled() else tryCatch(.build_pooled(), error = function(e) {
+  cat(sprintf("MP8! pooled member slopes FAILED (%s); output/mp-slope-pooled.csv not rewritten. Harmless at AUSPOL_MP_SLOPE_POOL=0.\n",
+              conditionMessage(e)))
+  NULL
+})
+if (!is.null(pooled)) {
+cat(sprintf("\nMP8  partially pooled member slopes (AUSPOL_MP_SLOPE_POOL=1), %d targets incl. live: %s\n",
+            length(pool_targets), paste(.live_targets, collapse = ", ")))
+print(dcast(pooled, target ~ party, value.var = "member"))
+cat("MP8  tau^2 (between-class variance) and weight per class, last 6 targets:\n")
+print(pooled[pooled$target %in% tail(pool_targets, 6),
+             .(target, party, n_member, est = round(est, 4), se = round(se, 4), tau2 = signif(tau2, 3),
+               w = round(w, 3), mu = round(mu, 4), member = round(member, 4))])
+
+# --pool-only writes ONLY the pooled table, so it can be produced for a screen without rewriting the three
+# tables the shipped configuration reads.
+fwrite(pooled, "output/mp-slope-pooled.csv")
+cat("MP8  wrote output/mp-slope-pooled.csv\n")
+}
+if ("--pool-only" %in% commandArgs(trailingOnly = TRUE)) {
+  cat("MP4  --pool-only: mp-slope-loo.csv, mp-slope-by-class.csv and mp-slope-by-target.csv NOT written\n")
+  quit(save = "no", status = 0)
+}
 fwrite(loo, "output/mp-slope-loo.csv")
 fwrite(byc, "output/mp-slope-by-class.csv")
 fwrite(grid, "output/mp-slope-by-target.csv")   # the canonical table the harnesses read; time-forward unless AUSPOL_MP_SLOPE_TF=0

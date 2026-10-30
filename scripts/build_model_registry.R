@@ -228,6 +228,9 @@ CLASSIFY <- list(
   AUSPOL_MP_SLOPE_TF = paste(
     "SHIPPED (1) 2026-10-14, FIT-TIME: read by scripts/fit_mp_slope.R, which writes output/mp-slope-by-target.csv",
     "(rebuild stage 0); harnesses and live read the table, not the switch."),
+  AUSPOL_MP_SLOPE_POOL = paste(
+    "SHIPPED (1) 2026-10-30 (plans/prereg-mp-slope-pool-2026-10-25.md): read in fit_seats_full.R and all seven harnesses,",
+    "each switching the MP tier to output/mp-slope-pooled.csv (written by scripts/fit_mp_slope.R). NT reads it too."),
   AUSPOL_PB_COALITION_COMBINED = paste(
     "OFF (0), UNIVERSAL via R/: read inside R/poll_source.R's WA Poll Bludger merge; off is today's behaviour exactly.",
     "Only WA polls carry combined-only Coalition rows."),
@@ -340,6 +343,13 @@ CLASSIFY <- list(
   AUSPOL_LEVEL_CONSERVE_LAMBDA = paste(
     "Sub-setting of AUSPOL_LEVEL_CONSERVE (strength, default 1), read only inside R/level_conserve.R, so every entry point",
     "that calls level_conserve_apply() honours it; 'NO' in the harness columns is the grep, not a gap."),
+  AUSPOL_NOM_LIVE_FILE = paste(
+    "TEST ONLY (\"\"), 2026-10-29: the file live_nominations() (R/nomination_zero.R) reads instead of output/candidacies.csv,",
+    "for the F18 walk on a synthetic list. Read inside R/, so 'NO' in the entry-point columns is the grep, not a gap."),
+  AUSPOL_LEVEL_CONSERVE_HOLD = paste(
+    "Sub-setting of AUSPOL_LEVEL_CONSERVE (classes held out of the rake, default \"\"; arm \"IND\", Amendment 1, 2026-10-29),",
+    "read only inside R/level_conserve.R (level_conserve_hold()), so every entry point that calls level_conserve_apply()",
+    "honours it; 'NO' in the harness columns is the grep, not a gap."),
   AUSPOL_ERROR_DIST = paste(
     "SHIPPED (1) 2026-10-17 on Pete's override (with AUSPOL_COMPOSITION_SD), UNIVERSAL via R/: error_dist_args() (R/error_dist.R) is called at every simulate_seat_contests() site",
     "(six harnesses, NT, fit_seats_full.R) and reads the switch inside R/. plans/prereg-error-distribution-2026-10-17.md"),
@@ -919,7 +929,62 @@ CLASSIFY <- list(
     "(training only), so no harness or live read exists."),
   AUSPOL_XGB_SEED = paste(
     "FITTING-TIME: the xgb training seed (fit_xgb_primary_*, fit_xgb_flows_asat.R). Varied only to measure how much an equally valid refit",
-    "moves the metrics (plans/noise-floor-2026-10-02.md); no harness or live read.")
+    "moves the metrics (plans/noise-floor-2026-10-02.md); no harness or live read."),
+
+  # ---- Added 2026-10-30: the 29 switches registered at their inline defaults (MR4), plus the three night-replay rows.
+  # Every value is the default each reader already had, so each gap below is the switch's existing reach, not new.
+  AUSPOL_BUCKET_SPLIT_SRC = paste(
+    "FILE CHOICE for AUSPOL_BUCKET_SPLIT: read inside candidate_bucket_ratio() (R/forecast_statewide.R), so it has",
+    "AUSPOL_BUCKET_SPLIT's reach (its row above); the entry-point columns cannot see a read two calls down."),
+  AUSPOL_BUCKET_TOTAL_SRC = paste(
+    "FILE CHOICE for AUSPOL_BUCKET_TOTAL: read inside candidate_bucket_total() (R/forecast_statewide.R, called from",
+    "R/forecast_mode.R); inert at the published AUSPOL_BUCKET_TOTAL=poll."),
+  AUSPOL_ELASTIC_FALL = "HARNESS-ONLY ARM PARAMETER (nsw/qld/sa/vic): inert at AUSPOL_ELASTIC_OVER=0; live has no elastic floor.",
+  AUSPOL_ELASTIC_OVER = paste(
+    "HARNESS-ONLY ARM, off (nsw/qld/sa/vic; fed reads it for the filename tag only). WA and live have no elastic",
+    "floor, never built there because the arm never shipped."),
+  AUSPOL_FALLBACK_FLOW_SD = "HARNESS-ONLY ARM, off: Queensland's simulation only; never shipped, so not ported.",
+  AUSPOL_FLOW_ON_PRIMARY = "HARNESS-ONLY ARM, off: federal harness only; never shipped, so not ported.",
+  AUSPOL_FLOW_POOL_VOLATILE = "HARNESS-ONLY ARM, off: federal harness only; never shipped, so not ported.",
+  AUSPOL_FLOW_PRIORS = paste(
+    "HARNESS-ONLY, federal: how many prior elections build the federal flow table. The state harnesses and live",
+    "build their flows from their own sources and have no such count."),
+  AUSPOL_FLOW_SD_BY_SOURCE = paste(
+    "HARNESS-ONLY ARM, off: federal harness only. Carries a dormant loop leak like PARTY_COR's",
+    "(NEXT-STEPS, harness hygiene); fix it before any arm switches it on."),
+  AUSPOL_FLOW_TREND = "HARNESS-ONLY ARM, off: federal harness only; never shipped, so not ported.",
+  AUSPOL_FLOW_TREND_CLASSES = "HARNESS-ONLY ARM PARAMETER: federal harness, inert at AUSPOL_FLOW_TREND=0.",
+  AUSPOL_FLOW_UNC = "HARNESS-ONLY ARM, off: Victorian harness only (40-replicate flow ensemble); never shipped.",
+  AUSPOL_FLOW_VOL_THRESHOLD = "HARNESS-ONLY ARM PARAMETER: federal harness, inert at AUSPOL_FLOW_POOL_VOLATILE=0.",
+  AUSPOL_IND_TREND = "HARNESS-ONLY ARM, off: federal harness only; never shipped, so not ported.",
+  AUSPOL_MAJOR_SLOPES = "HARNESS-ONLY ARM, off: NSW harness only; never shipped, so not ported.",
+  AUSPOL_MINOR_POLL_ADJ = "HARNESS-ONLY ARM, off: federal harness only; never shipped, so not ported.",
+  AUSPOL_MP_SLOPE_GRN = paste(
+    "HARNESS-ONLY, off (all seven harnesses): '1' keeps a Greens member slope. Live drops the Greens row with no",
+    "switch (fit_seats_full.R MP tier), which is the same behaviour as the published 0."),
+  AUSPOL_NIGHT_DUMP = "REPLAY TOOLING (issue #160): read by the Victorian harness only, to save state for scripts/night_replay.R; no number changes.",
+  AUSPOL_NIGHT_REPLAY_FRAC = paste(
+    "REPLAY ONLY (issue #153): read in R/night_update.R from the Victorian harness's replay path; election night itself",
+    "runs R/night_runner.R, not the harness, so no other entry point reads it."),
+  AUSPOL_NIGHT_TCP = "REPLAY ONLY (issue #161): Victorian harness, with AUSPOL_NIGHT_REPLAY_FRAC set; inert otherwise.",
+  AUSPOL_NSW_EST_FLOOR = paste(
+    "FITTING-TIME: read by scripts/fit_nsw.R (run_all.R), a min_n floor in the NSW estimation (CONSTANTS);",
+    "no harness or live read."),
+  AUSPOL_NSW_EXHAUST = "HARNESS-ONLY ARM, off: NSW harness only (optional-preferential exhaustion); never shipped.",
+  AUSPOL_NT_TRANSFER = "HARNESS-ONLY, NT: forces candidate transfer on/off; empty (published) keeps it tied to the slope mode.",
+  AUSPOL_PARTY_SD = paste(
+    "HARNESSES (all): the flat 1.5-point party sd. Live passes the same 1.5 as a literal (CONSTANTS, 'flat statewide",
+    "reference, live'), so the gap is the literal, not a different value."),
+  AUSPOL_REENTRY_SD_K = "HARNESS-ONLY ARM, off (every harness): re-entry sd widening; never shipped, so not in live.",
+  AUSPOL_SA_FLOW_EST = "HARNESS-ONLY, SA: SA flow estimation, on; the SA harness's own flow source, nothing to port.",
+  AUSPOL_SALIENCE_SURGE = "HARNESS-ONLY ARM, off: federal harness's hazard surge, superseded by surge-v2 (AUSPOL_SURGE_V2).",
+  AUSPOL_SMOOTH = paste(
+    "HARNESSES fed/nt/wa: flow smoothing passed to the simulation. nsw/qld/sa/vic and fit_seats_full.R hardcode the",
+    "same SMOOTH <- 0.15 (checked 2026-10-30), so the gap is a literal, not a different value."),
+  AUSPOL_WA_TRANSFER = "HARNESS-ONLY, WA: forces candidate transfer on/off; empty (published) keeps it tied to the slope mode.",
+  AUSPOL_XGB_NOTIONAL = "FITTING-TIME, on: x_notional_adj feature in scripts/fit_xgb_primary_v6.R; baked into the trained model.",
+  AUSPOL_XGB_RAW_LEVEL = "FITTING-TIME ARM, off: raw level features in scripts/fit_xgb_primary_v6.R; never shipped.",
+  AUSPOL_XGB_RETIRING_MP = "FITTING-TIME ARM, off: retiring_mp_tenure feature in scripts/fit_xgb_primary_v6.R; never shipped."
 )
 
 fmt_row <- function(sw) {
@@ -1004,6 +1069,14 @@ for (sw in switches) {
 }
 
 unexplained <- Filter(function(sw) is.null(CLASSIFY[[sw]]) && !fmt_row(sw)$universal, switches)
+
+# MR4: every AUSPOL_* name the code reads with Sys.getenv("...") must be registered in published_flags.R or listed in
+# scripts/non_model_switches.R (Pete, 2026-10-29: 140 had drifted in unlisted). Reads on comment lines don't count.
+# The scan lives in scripts/non_model_switches.R (mr4_scan()) so tests/testthat/test-switch-registry.R can fail CI on it.
+source("scripts/non_model_switches.R")
+.mr4 <- mr4_scan(".")
+.registered <- .mr4$registered; .read_names <- .mr4$read
+unlisted <- .mr4$unlisted; stale_listed <- .mr4$stale_listed; both <- .mr4$both
 L <- c(L,
        "\n## Gaps the switch-presence matrix cannot see\n",
        "A grep for a switch's name proves the name is mentioned, not that the",
@@ -1047,6 +1120,14 @@ L <- c(L,
                 "`AUSPOL_SALIENCE_EXP_SD` to 1 on purpose, commit `01c8e1c`; that was removed, ",
                 "see `docs/reviews/fed-nsw-snapshot-gap-2026-10-03.md`.)\n")),
        "## Coverage check\n",
+       if (length(unlisted))
+         sprintf("**MR4! %d AUSPOL_* switch(es) read in code are neither in published_flags.R nor in scripts/non_model_switches.R: %s.** Register a model switch at its current default, or list a run/diagnostic/builder one.\n",
+                 length(unlisted), paste(unlisted, collapse = ", "))
+       else
+         sprintf("MR4  every AUSPOL_* switch read in code (%d) is registered (%d) or listed as not a model switch (%d).\n",
+                 length(.read_names), length(intersect(.read_names, .registered)), length(intersect(.read_names, names(NON_MODEL_SWITCHES)))),
+       if (length(stale_listed)) sprintf("MR4! listed in non_model_switches.R but no longer read: %s.\n", paste(stale_listed, collapse = ", ")) else "",
+       if (length(both)) sprintf("MR4! both registered and listed as not a model switch: %s.\n", paste(both, collapse = ", ")) else "",
        if (length(unexplained))
          sprintf("**MR2! %d switch(es) have a non-universal row with NO recorded classification: %s.** Add them to CLASSIFY in scripts/build_model_registry.R before trusting this table.",
                  length(unexplained), paste(unexplained, collapse = ", "))
@@ -1059,3 +1140,7 @@ cat(sprintf("MR1  wrote docs/MODEL-REGISTRY.md: %d switches, %d entry points, %d
             length(switches), length(cols),
             sum(!vapply(switches, function(sw) fmt_row(sw)$universal, logical(1)))))
 if (length(unexplained)) cat(sprintf("MR2! %d unclassified: %s\n", length(unexplained), paste(unexplained, collapse = ", ")))
+if (length(unlisted)) cat(sprintf("MR4! %d read but neither registered nor listed: %s\n", length(unlisted), paste(unlisted, collapse = ", "))) else
+  cat(sprintf("MR4  all %d AUSPOL_* reads registered or listed\n", length(.read_names)))
+if (length(stale_listed)) cat(sprintf("MR4! listed but no longer read: %s\n", paste(stale_listed, collapse = ", ")))
+if (length(both)) cat(sprintf("MR4! registered AND listed: %s\n", paste(both, collapse = ", ")))

@@ -25,17 +25,17 @@ methodology pages for the others (fetched 2026-08-14).
 | Voter-facing tool | No | Swing explorer | No | **Yes, the whole product** |
 | Live product | Yes | Yes | No — one news article | Yes |
 
-Bold marks where a site is notably ahead or notably behind the field.
+Bold marks where a site differs most from the others.
 
 ### What each is really for
 
 - **AE Forecasts** is the only complete probabilistic forecast. It is the
-  thing we are trying to match and then beat. Its weakest flank is seat-level
-  demographics.
+  reference we measure ourselves against. Its seat model uses little
+  demographic information (a 3-level seat type).
 - **theswingison** is a *swing explorer*, not a forecast: it answers "what if
   the vote moved like this?" rather than "what will happen?". Its preference
-  simulator is the best-designed piece of machinery any of these have. Its
-  four tools are catalogued below — it is a much bigger product than the
+  simulator is the most detailed of the four, and we found it useful to study.
+  Its four tools are catalogued below — it is a much bigger product than the
   methodology page suggests.
 - **DemosAU** is a pollster publishing an occasional MRP as content. They are
   also one of the firms in our own polling data — their house effect, like
@@ -86,14 +86,14 @@ AEC booth-level results, and the AES as *our* opportunities, on the grounds
 that AE Forecasts uses none of them. theswingison already uses **all three**,
 and does it well. That differentiator is largely taken.
 
-What is still unclaimed, and it is the important part: **nobody combines
-demographics with a real forecast.** theswingison is explicit that its
-projections assume uniform swing and are "an illustrative guide rather than
-a seat-by-seat forecast", and it publishes no probabilities anywhere — the
-strongest uncertainty statement on the whole site is a small-sample warning
-and a three-level confidence tier. AE Forecasts has the probabilities and
-barely any demographics. The empty niche is the intersection, which is
-harder than either but is genuinely open.
+What we have not seen elsewhere, and it is the important part: **no site
+combines demographics with a full probabilistic forecast.** theswingison
+states that its projections assume uniform swing and are "an illustrative
+guide rather than a seat-by-seat forecast", and it does not publish
+probabilities; its uncertainty statements are a small-sample warning and a
+three-level confidence tier. AE Forecasts publishes probabilities and uses
+demographics only through a 3-level seat type. The gap is the intersection,
+which is a harder build than either and, as far as we found, open.
 
 Their aggregate on 2026-08-14 was Labor 28.6, One Nation 26.6, Coalition
 21.2, Greens 13.0, Other 10.6, against our 28.0 / 26.4 / 21.4 / 12.7 / 10.3.
@@ -105,36 +105,38 @@ house effects matter, and exactly what to check rather than today's number.
 
 ## Where auspol actually stands
 
-**Strong, arguably best of the four:** the poll trend itself. Specifically —
+**Most developed:** the poll trend itself. Specifically —
 house effects estimated explicitly and per-pollster; hyperparameters chosen
 by marginal likelihood rather than by hand; per-pollster noise weighting;
 per-cycle volatility; model scale selected by evidence; optional-preferential
-exhaust handling that theswingison explicitly cannot do; an exact posterior
+exhaust handling (theswingison counts CPV only); an exact posterior
 that runs in seconds where the anchor's Stan version takes 1–4 hours.
 
 **Absent:** literally everything downstream. No fundamentals, no projection
-to election day, no seat model, no simulation, no site. We have the best
-engine and no car around it.
+to election day, no seat model, no simulation, no site. We have the trend
+engine and nothing built around it yet.
 
 ## What we should build, and why
 
-AE Forecasts is the strongest of the four on the metrics that matter most, so
-matching it feature-for-feature would mean competing on its own strongest
-ground rather than building where we can differentiate. Having now browsed
-theswingison properly, two things are genuinely ours:
+AE Forecasts is the most complete of the four, so matching it feature-for-feature
+would mean building on its strongest ground rather than where our approach
+differs. Having now browsed theswingison properly, two things look like good
+places to focus:
 
-1. **Transparency as a product, not a methodology page.** Nobody in Australia
-   publishes pollster house effects as a live feature — theswingison
-   deliberately does not even estimate them. We compute them for free as a
-   byproduct, along with per-pollster noise factors and a binomial-floor
-   herding check. A standing "pollster scorecard" — who leans which way, who
-   is quieter than their own sample size permits — is publishable content no
-   one else offers, and it costs us almost nothing.
+1. **Transparency as a product, not a methodology page.** As far as we found,
+   no other Australian site publishes pollster house effects as a live
+   feature; theswingison chooses not to estimate them. We compute them for
+   free as a byproduct, along with per-pollster noise factors and a
+   binomial-floor check on how closely polls agree. A standing "pollster
+   scorecard" (each firm's lean, and its poll-to-poll variability against its
+   own sample size) is publishable content we have not seen elsewhere, and it
+   costs us almost nothing.
 2. **Probability, applied to demographics.** Not demographics alone: that is
-   taken, and done well. The gap is that the site with the demographics has
-   no forecast and no uncertainty, while the site with the forecast has no
-   demographics. Doing both means a seat model that is demographic AND
-   probabilistic — genuinely harder, and genuinely unoccupied.
+   already covered, and done well, by theswingison. The site with the
+   demographics has no forecast and no uncertainty, while the site with the
+   forecast uses few demographics. Doing both means a seat model that is
+   demographic AND probabilistic, which is a harder build and one we have not
+   seen elsewhere.
 
 ### Build order
 
@@ -153,11 +155,11 @@ theswingison properly, two things are genuinely ours:
 Deliberately deferred: a voter-facing ballot tool (buildaballot already does
 it well, different audience), upper houses, and betting-odds ingestion.
 
-### Worth stealing
+### Worth learning from
 
 - The **preference simulator**: a rule hierarchy keyed on who has been
   eliminated and who remains, with a confidence tier per rule. Our current
-  single flow-rate-to-ALP is much cruder. Take the design, not the code.
+  single flow rate to ALP is simpler. Use the design ideas, not the code.
 - **Exposing the engine as an explainer.** Run a Race shows round-by-round
   elimination with the rule that fired and the flow at each step. The same
   move for us is showing how a house effect is estimated, or what a poll did
@@ -169,12 +171,12 @@ it well, different audience), upper houses, and betting-odds ingestion.
   missing One Nation candidates" toggle. Directly relevant to us, since ONP
   is now the second-largest primary vote federally.
 
-### Worth avoiding
+### A design choice we decided against
 
-theswingison's **outlier down-weighting** — penalising a poll for disagreeing
-with the local consensus is herding by construction, the same mechanism widely
-blamed for every Australian pollster converging on the same wrong number in
-2019.
+**Outlier down-weighting**, which theswingison uses. Penalising a poll for
+disagreeing with the local consensus can encourage herding, the mechanism
+commonly discussed in connection with Australian pollsters converging on the
+same number in 2019.
 
 Since writing that we built the principled version — fat-tailed observation
 noise, which discounts by residual size through the likelihood rather than by
@@ -184,6 +186,6 @@ pairs. It down-weights plenty (10% of polls below weight 0.5), so the effect
 is real; discounting those polls just does not improve the forecast, meaning
 they carry signal rather than error. In a field where poll noise often sits
 BELOW the binomial sampling floor, the poll that disagrees is the informative
-one. So the criticism is stronger than first argued: outlier penalties do not
-merely encode herding, they discard the most useful observations. Details in
+one. So our test points further than the original concern: outlier penalties
+can do more than encode herding, they can discard useful observations. Details in
 [NEXT-STEPS.md](../NEXT-STEPS.md).

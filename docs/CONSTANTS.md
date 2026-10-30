@@ -54,6 +54,7 @@ number without anything failing.
 | `SEAT_POLL_N_FALLBACK` | `seat_poll_blend.R` (`SEAT_POLL_N_FALLBACK`) | 600: seat sample size for a direct poll with none recorded, only when no earlier direct poll records one (otherwise the earlier median, ~750-800). | **CHOSEN**; overridden by data from fed2019 on. |
 | `SEAT_POLL_MODEL_VAR_PRIOR` | `seat_poll_blend.R` (`SEAT_POLL_MODEL_VAR_PRIOR`) | 25 points^2 (sd 5): our seat primary error before any polled election, for `AUSPOL_SEAT_POLL_PRECISION_BLEND`. | **CHOSEN** from the AEF-7 ledger's primary RMSE (5.13); per-class values are **ESTIMATED** time-forward and shrunk toward it (`seat_poll_model_var()`). |
 | `AUSPOL_LEVEL_CONSERVE_LAMBDA` | `level_conserve.R` | 1: strength of `AUSPOL_LEVEL_CONSERVE` (shares = (1 - lambda) current + lambda raked). | **CHOSEN** by the pre-registration (plans/prereg-level-conserve-2026-10-25.md): 1 primary, 0.5 sensitivity. ESTIMABLE time-forward as the least-squares coefficient of actual-minus-current implied share on raked-minus-current, over earlier elections (the prereg's fitted sensitivity, computed from the `LCV1` log lines; not built as a switch). |
+| `AUSPOL_LEVEL_CONSERVE_HOLD` | `level_conserve.R` | `""`: classes held out of `AUSPOL_LEVEL_CONSERVE`'s rake (arm: `IND`). | **CHOSEN** by Amendment 1 of the prereg (2026-10-29, Pete), from one traced failure (fed2022 teal seats). A class list, not a number; which classes the level model cannot see is ESTIMABLE time-forward as each class's level miss against its seats' implied share over earlier elections, not built. |
 | rake tolerances | `level_conserve.R` (`level_conserve_rake()`) | converge at worst class gap < 1e-8 points, at most 10,000 sweeps; REFUSE (stop) if the gap is still > 0.01 points. | **NUMERICAL**, not a model constant: a feasible problem converges far inside 1e-8; 0.01 is the prereg's own stopping tolerance, kept as the refusal bar. |
 | level-conserve seat weights | `level_conserve.R` (`level_conserve_weights()`) | formal votes per seat at the previous election (`output/candidacies.csv`); an unmatched seat gets the median. | **CHOSEN** by the pre-registration (knowable before polling day). |
 | `POLL_RECORD_HALFLIFE` | `poll_record.R` | 30 days: a past poll's weight in its firm's track record halves every 30 days before that election's polling day (statewide arm `weights = "record"`). | **CHOSEN** (2026-10-09) so final-month polls dominate a firm's record without a hard cut-off. ESTIMABLE by the same held-out score. |
@@ -605,7 +606,7 @@ Found by reading the diffs of `R/` and `scripts/` since 2026-10-09 against this 
 |---|---|---|---|
 | net-out floor | `R/forecast_statewide.R:506` (`floor2 <- (0.5 * cur)^2`) | a cell's seat sd never falls below 0.5 x its un-netted sd | **CHOSEN** (prereg amendment 1). A guard so a draw wider than the seat spread cannot drive the variance negative. Not fitted; the log line `SWN1`/`SWLN1` counts cells at the floor. |
 | flat statewide reference, live | `scripts/fit_seats_full.R` (`1.5` passed as `party_sd` to `harness_sw_net_sd()` in the `AUSPOL_SW_NET_LIVE` block) | 1.5 points | **INHERITED**: the flat statewide piece removed from the seat residual when `level_sd` was fitted (section "`level_sd`" above). Not re-fitted. The live draws' own sd (`psd`) is deliberately NOT the reference, or nothing would be netted out (comment above the `AUSPOL_SW_NET_LIVE` block). |
-| flat statewide reference, harnesses | `AUSPOL_PARTY_SD` default, e.g. `scripts/backtest_candidate_nsw.R:1000` (`PARTY_SD`; the `psd` vector is built at `:1001`), passed as `party_sd = psd` at `:1195` | 1.5 points | **INHERITED**, same number as above. |
+| flat statewide reference, harnesses | `AUSPOL_PARTY_SD` default, e.g. `PARTY_SD` in `scripts/backtest_candidate_nsw.R` (the `psd` vector is built from it on the next line), passed as `party_sd = psd` to `simulate_seat_contests()` in the same script | 1.5 points | **INHERITED**, same number as above. |
 | `AUSPOL_FP_EXTRA_SD` | `R/forecast_statewide.R:466`; `scripts/fit_seats_full.R:163` | 2.419 | **ESTIMATED 2026-08-19** (row in section 1). Became a switch 2026-10-19 so the width arms of the F4 prereg could vary it; the shipped value did not move. |
 
 ### Seat-poll blend, arm H (shipped 2026-10-18; `R/seat_poll_blend.R`)
@@ -667,6 +668,14 @@ Existing rows for `AUSPOL_SEAT_POLL_PRIOR` (0.75), `_PRIOR_SD` (0.25), the half-
 | `k_shrink` (`onp_newseat_cv()`) | `R/onp_newseat.R:208` | 3 | **CHOSEN** shrinkage constant, weight `df/(df+3)`, same form as `AUSPOL_CONSERVE_SHRINK_K`. Inert at "0". |
 | `min_seats` (`onp_newseat_cv()`) | `R/onp_newseat.R:208` | 10 | **CHOSEN** fewest One-Nation-contested seats for an earlier election to enter the spread fit. Inert at "0". |
 | no-history seats needed / key coverage (`onp_newseat_apply()`) | `R/onp_newseat.R:314`, `:335` | 3 seats; at most 10% without a key | **CHOSEN**, the same applicability rule as `onp_senate_rank_apply()` / `onp_senate_alloc()`. Inert at "0". |
+
+## Partially pooled sitting-member slopes (`AUSPOL_MP_SLOPE_POOL`, built 2026-10-25, SHIPPED 2026-10-30; `plans/prereg-mp-slope-pool-2026-10-25.md`; `R/mp_slope_pool.R`)
+
+| constant | where | value | status |
+|---|---|---|---|
+| `n_member >= 8` (live MP tier floor) | `scripts/fit_seats_full.R` (`.keep`, MP tier block) | 8 | **CHOSEN, a min_n cliff**; the harnesses never had it. Reached only at `AUSPOL_MP_SLOPE_POOL=0` since 2026-10-30; the shipped `1` keeps every class and shrinks it instead. |
+| `tau^2`, `se_i` (pooling weight `w = tau^2/(tau^2+se_i^2)`) | `R/mp_slope_pool.R` | per target | **ESTIMATED**: `tau^2` by DerSimonian-Laird over the classes with member rows (floored at 0; 0 with fewer than two classes), `se_i` from one within-class residual variance pooled over classes. No new hand-set number. |
+| pooled-toward slope `mu` | `scripts/fit_mp_slope.R` (`shr()`, `K = 10`, `PRIOR_MEMBER = 1.0`) | per target | **REUSED**, not new: the time-forward grid's own all-class member slope, shrunk toward 1.0 by `n/(n+10)`, so a target with no earlier member rows gets 1.0 as the grid does. |
 
 ## Election-night update (`R/night_update.R`, `R/booth_projection.R`; issues #153, #160, #161)
 
