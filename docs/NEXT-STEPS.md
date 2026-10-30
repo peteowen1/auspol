@@ -87,8 +87,19 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - OPEN, morning pages for Pete: (b) wa2017 and fed2019 day-before statewide walk-throughs, example rows. (a) Mildura
   DONE 30 Oct, https://claude.ai/artifact/JTt68EkaupnKVaoC3VRYib (`AUSPOL_TRACE_SEAT=<seat>` on `fit_seats_full.R`
   prints any seat's row after every stage, TRS0/TRS1). Raised, OPEN: the xgb trees cut Cupper 25.1 -> 21.0 unexplained
-  (SHAP for that row next); One Nation's 33.8 is set first and every class, a personal vote included, fills the rest
-  pro rata; Labor's base floors at 0.00 in Mildura (6.5 in 2022, level -12.2 at slope 0.92), trees restore 4.3.
+  (contributions done 30 Oct: base size -2.08, party_IND -1.45, own_prev +1.36). CHECKED 30 Oct, the cut is not an
+  over-cut (`reviews/ind-tree-cut-returning-2026-10-30.md`): returning IND who lost last time with >= 20, n 14 in 11
+  elections, trees RAISE them +1.6 on average and actual still falls below xgb in 10 of 14 (bias xgb -4.5, SE 2.6);
+  where the trees cut a big returning IND by 2+ (n 12) error goes -3.0 -> +0.6. No offset supported. Cupper herself
+  has been under-called every time (vic2018 ours 30.4 vs 39.6): one person, untested idea of a per-person trend.
+  Labor's base floors at 0.00 in Mildura (6.5 in 2022, level -12.2 at slope 0.92), trees restore 4.3. CHECKED 30 Oct
+  (`reviews/small-share-swing-floor-2026-10-30.md`, counts recomputed): the floor bites 179 of 13,286 stood cells
+  (1.3%; 152 OTH; 165 had no share last time), trees repair part (RMSE 4.31 -> 3.27, mean actual 3.18 vs xgb 1.04).
+  Oracle on true levels: a direction-aware base (points when a class rises, logit when it falls) beats points-only in
+  30 of 35 elections (pooled RMSE 5.27 -> 5.08), shrinking at the real slopes. OPEN, a candidate arm for both layers.
+  One Nation fill pro rata vs personal votes: CHECKED 30 Oct, keep proportional (`reviews/onp-fill-personal-vote-2026-10-30.md`:
+  returning IND ratio 0.68 vs majors 0.76 in 7 surge seats, 3 elections, diff -0.13 SE 0.23; calm seats +0.06 SE 0.06).
+  Thin (sa2026 is 5 of 7); recheck after vic2026 counts.
 
 - OPEN, Pete: returning independents. Both arms REFUSED 25 Oct (`plans/prereg-ind-return-2026-10-25.md`); the
   x0.61 multiplicative minor-field scale (a live-only train/serve split) was fixed by `AUSPOL_MINOR_ADDITIVE=1`,

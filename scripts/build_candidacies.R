@@ -1198,6 +1198,9 @@ if (length(WV)) {
 # So this supplies NAMES ONLY. No votes, no pcv, no elected flag: those are
 # facts about an election that has not happened.
 .wiki <- file.path("external", "reference", "wikipedia", "vic2026-candidates.csv")
+# BC10v below sits inside this block, so a VEC final list with no Wikipedia file would be skipped without a word
+if (!file.exists(.wiki) && file.exists(Sys.getenv("AUSPOL_VEC_CANDIDATES", file.path("external", "reference", "vec", "2026", "vec-candidates-2026.csv"))))
+  stop("BC10v! the VEC final list exists but ", .wiki, " does not, and the vic2026 block needs it to run; restore it (any version)")
 if (file.exists(.wiki)) {
   W <- fread(.wiki, showProgress = FALSE)
   stopifnot(all(c("seat", "name", "party_raw", "sitting") %in% names(W)))
@@ -1419,7 +1422,9 @@ if (file.exists(.wiki)) {
                 elected = NA, historic_elected = NA,
                 breakout = NA, swing = NA_real_,
                 ballot_position = if (vec_final) ballot_position else NA_integer_, tot = NA_real_)]
-  cat(sprintf("BC10 vic2026: %d candidacies across %d seats = Wikipedia %d + ABC %d - %d people in both (%d wiki, %d abc, %d both; %d with conflicting class resolved to ONE row each)\n",
+  if (vec_final) cat(sprintf("BC10 vic2026: %d candidacies across %d seats from the VEC FINAL list (the provisional union below was compared, not used)\n",
+                             nrow(V), uniqueN(V$seat)))
+  else cat(sprintf("BC10 vic2026: %d candidacies across %d seats = Wikipedia %d + ABC %d - %d people in both (%d wiki, %d abc, %d both; %d with conflicting class resolved to ONE row each)\n",
               nrow(V), uniqueN(V$seat), nrow(W), V_abc_n, n_both,
               sum(V$source == "wiki"), sum(V$source == "abc"), sum(V$source == "both"), n_conf))
   if (!is.null(disagree) && nrow(disagree)) {

@@ -64,13 +64,20 @@ nd <- uniqueN(rows$district)
 cat(sprintf("VC4  %s: %d Lower House candidates in %d districts\n", event, sum(!is.na(rows$candidate_id)), nd))
 empty <- rows[is.na(candidate_id), district]
 if (length(empty)) stop("VC4! districts with no candidate: ", paste(empty, collapse = ", "))
-if (nd < 85) stop("VC4! only ", nd, " districts (Victoria has 88): a partial file")
+if (nd != 88) stop("VC4! ", nd, " districts, Victoria has 88: a partial or wrong file")
 if (anyNA(rows$name) || any(!nzchar(rows$name))) stop("VC5! candidates with no name")
 if (!all(grepl(",", rows$name))) stop("VC5! names not in 'SURNAME, Given' form: ", paste(head(rows$name[!grepl(",", rows$name)], 5), collapse = "; "))
 if (!all(rows$independent %in% c("yes", "no"))) stop("VC6! Independent attribute not yes/no: ", paste(unique(rows$independent), collapse = ", "))
 bad_aff <- rows[independent == "no" & (is.na(registered_name) | !nzchar(registered_name))]
 if (nrow(bad_aff)) stop("VC6! ", nrow(bad_aff), " party candidate(s) with no registered party name")
 if (anyDuplicated(rows$candidate_id)) stop("VC7! duplicate candidate ids")
+# build_candidacies.R keys a person on seat + surname + first initial (BC11 stops on a duplicate), so say it here, on
+# fetch day, rather than at the build
+.pk <- paste(tolower(rows$district), gsub("[^a-z]", "", tolower(sub(",.*$", "", rows$name))),
+             substr(gsub("[^a-z]", "", tolower(sub("^[^,]*,", "", rows$name))), 1, 1))
+if (anyDuplicated(.pk)) stop("VC7! two candidates in one district share surname and first initial: ",
+                             paste(rows$district[duplicated(.pk) | duplicated(.pk, fromLast = TRUE)], rows$name[duplicated(.pk) | duplicated(.pk, fromLast = TRUE)], collapse = "; "),
+                             " -- build_candidacies.R's person key needs a second given-name letter for them")
 pos <- rows[, list(ok = identical(sort(ballot_position), seq_len(.N))), by = district]
 if (!all(pos$ok)) stop("VC7! ballot positions not 1..n in: ", paste(pos[ok == FALSE, district], collapse = ", "))
 cat(sprintf("VC8  %d independents; parties: %s\n", sum(rows$independent == "yes"),
