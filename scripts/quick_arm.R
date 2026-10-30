@@ -18,7 +18,7 @@
 # HOW IT WORKS (and why it is built this way: R/quick_arm.R header has the profile).
 #  1. One harness run per ELECTION (the harnesses already take a pair selector), so an
 #     arm that touches one pair pays for one pair. Runs happen in scratch roots with
-#     junctions to this checkout's R/, src/, scripts/ and external/ and a COPY of the
+#     junctions to this checkout's R/, src/, scripts/, inst/ and external/ and a COPY of the
 #     inputs from output/; nothing is ever written to output/ itself.
 #  2. Baseline and arm use the identical seed and simulation count (common random
 #     numbers): a pair the arm does not touch is byte-identical and scores exactly 0,
@@ -107,7 +107,7 @@ unlink_link <- function(link) {  # removes the junction only, never what it poin
     stop("quick_arm: could not remove link ", link, " (", paste(r, collapse = " "), "); not deleting anything under it")
   invisible()
 }
-LINKS <- c("R", "src", "scripts")
+LINKS <- c("R", "src", "scripts", "inst")   # inst: inst/extdata tables read through system.file() (aec-state-class-flows.csv, 2026-10-30)
 ALL_LINKS <- c(LINKS, "external")
 clean_root <- function(root) {
   for (l in ALL_LINKS) unlink_link(file.path(root, l))
@@ -145,7 +145,7 @@ input_sig <- quick_md5(paste(top_sig, sub_sig, sep = "##"))
 # CONTENT, not the commit: the committed part is the blob hashes of those paths at HEAD
 # (`git ls-tree`), so a commit that touches only docs/ or other non-code files no longer
 # throws away every cached baseline (2026-10-07: several 7-minute rebuilds for doc notes).
-CODE_PATHS <- c("R", "scripts", "src", "DESCRIPTION", "NAMESPACE")
+CODE_PATHS <- c("R", "scripts", "src", "inst", "DESCRIPTION", "NAMESPACE")
 excl <- c(":(exclude)R/quick_arm.R", ":(exclude)scripts/quick_arm.R")
 sh_checked <- function(...) {   # a git call that failed is an unreadable input, never an empty one
   r <- suppressWarnings(system2("git", c(...), stdout = TRUE, stderr = FALSE))
