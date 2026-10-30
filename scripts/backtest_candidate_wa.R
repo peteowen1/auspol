@@ -830,6 +830,24 @@ for (K in PAIRS) {
   .imx <- ind_mixture_surge(el_to, rownames(shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BW1N")
   surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
   .swd <- harness_sw_draws(SWD, colnames(shares), N_SIMS, el_to, "BWW")
+  # NIGHT STATE DUMP (AUSPOL_NIGHT_DUMP=<file.rds>): copied from backtest_candidate_vic.R. Everything the final
+  # simulation takes, BEFORE any night update, so scripts/night_replay_json.R can replay the night. One file per
+  # pair (the pair label is inserted before .rds). WA passes no party_cor, so none is saved. Does nothing when unset.
+  .dmp <- Sys.getenv("AUSPOL_NIGHT_DUMP", "")
+  if (nzchar(.dmp)) {
+    if (!grepl("[.]rds$", .dmp)) stop("NX9! AUSPOL_NIGHT_DUMP must end in .rds (the pair label is inserted before it), not ", .dmp)
+    .dpath <- sub("[.]rds$", sprintf("-wa%d.rds", K$to), .dmp)
+    .sdo <- harness_sw_net_sd(size_sd_apply(SD_OVR, shares, el_to, .level_sd, .lm(shares)), .swd, shares, .level_sd, .lm(shares), psd, el_to, "BWW")
+    saveRDS(list(pair = sprintf("wa%d", K$to), from = K$from, to = K$to, shares = shares, level_sd = .level_sd,
+                 level_mult = .lm(shares), fm = fm, psd = psd, swd = .swd, sdo = .sdo,
+                 seat_sd = sd_used * SEAT_SD_MULT, n_sims = N_SIMS, bo = .bo,
+                 coalition_split = coalition_split_args(el_to, rownames(shares)), error_q = error_dist_args(el_to, colnames(shares)),
+                 smooth = SMOOTH, seed = SEED, party_cor = NULL, shrink = SHRINK, htv_ov = .htv_ov,
+                 fb_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD, surge_h = surge_arg,
+                 surge_party = surge_party_arg, surge_from_zero = FALSE,
+                 surge_mu = surge_mu_arg, surge_sd = surge_sd_arg, truth = truth, keep = keep), .dpath)
+    cat(sprintf("NX8  night state for wa%d saved to %s\n", K$to, .dpath))
+  }
   sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = harness_sw_net_sd(size_sd_apply(SD_OVR, shares, el_to, .level_sd, .lm(shares)), .swd, shares, .level_sd, .lm(shares), psd, el_to, "BWW"), level_mult = .lm(shares), shares, fm, party_sd = psd, statewide_draws = .swd,
                                 seat_sd = sd_used * SEAT_SD_MULT,
                                 breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(el_to, rownames(shares)), error_q = error_dist_args(el_to, colnames(shares)),

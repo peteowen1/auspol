@@ -393,6 +393,13 @@ test_that("the VEC's raw counted 2CP share is carried through night_tcp_obs and 
               tcp_share = matrix(c(.6, .55, .52, .58), 4, 1, dimnames = list(NULL, "S1")))
   rep <- attr(night_apply_tcp(sim, obs, pair_min = 0.2), "night_tcp")
   expect_equal(rep$raw_a, 0.6); expect_equal(rep$obs_a, obs$share_a)
+  # credited winner (win_prob) and count winner (tcp_winner) disagree after the shrink toss: the credited ALP is
+  # already 1 while one count draw is LNP. A flip of that draw to ALP must not push ALP above 1 (Finniss sa2026: 1.003).
+  sim2 <- sim; sim2$win_prob <- data.frame(seat = "S1", party = "ALP", prob = 1)
+  out2 <- night_apply_tcp(sim2, obs, pair_min = 0.2)
+  expect_gte(attr(out2, "night_tcp")$changed, 1L)                    # the flip happened, so the check is not vacuous
+  expect_true(all(out2$win_prob$prob <= 1))
+  expect_equal(sum(out2$win_prob$prob[out2$win_prob$seat == "S1"]), 1)
 })
 
 test_that("per-booth results for the map: reported ordinary booths only, four first-preference classes, final two when posted", {

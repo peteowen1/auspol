@@ -347,11 +347,17 @@ night_apply_tcp <- function(sim, obs, pair_min = 0.2) {
     }
     if (length(ch)) {
       delta <- table(factor(newW[ch], parties)) - table(factor(oldW[ch], parties))
+      tot_before <- sum(wp$prob[wp$seat == s])
       for (p in parties[delta != 0]) {
         row <- which(wp$seat == s & wp$party == p)
         if (length(row)) wp$prob[row] <- max(0, wp$prob[row] + delta[[p]] / n)
         else wp <- rbind(wp, data.frame(seat = s, party = p, prob = max(0, delta[[p]] / n), stringsAsFactors = FALSE))
       }
+      # The deltas move COUNT winners, but win_prob counts the CREDITED winner, which the shrink toss can make differ;
+      # a flip into a party already credited in that draw (or out of one that was not) left the seat summing above 1
+      # (Finniss sa2026 replay, 1.003; review 2026-10-30). Keep the seat's total where it was.
+      rows_s <- which(wp$seat == s); tot_after <- sum(wp$prob[rows_s])
+      if (tot_after > 0) wp$prob[rows_s] <- wp$prob[rows_s] * tot_before / tot_after
     }
     sim$tcp_winner[hit, j] <- newW
     sim$tcp_runnerup[hit, j] <- ifelse(newW == a, b, a)

@@ -1932,6 +1932,25 @@ for (X in out_all) {
   .bo <- breakout_mix_args(sprintf("fed%d", K$to), X$shares)
   .imx <- ind_mixture_surge(sprintf("fed%d", K$to), rownames(X$shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BF1N")
   surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
+  # NIGHT STATE DUMP (AUSPOL_NIGHT_DUMP=<file.rds>, issue #160; ported from backtest_candidate_vic.R 2026-10-30):
+  # everything the final simulation below takes, so scripts/night_replay_json.R can replay election night from booth
+  # tables without refitting this harness. One file per pair (the pair label is in the name). The sd override is the
+  # same expression as the simulate_seat_contests() call's own (no RNG in it). Unset: nothing here runs.
+  .dmp <- Sys.getenv("AUSPOL_NIGHT_DUMP", "")
+  if (nzchar(.dmp)) {
+    if (!grepl("[.]rds$", .dmp)) stop("NX9! AUSPOL_NIGHT_DUMP must end in .rds (the pair label is inserted before it), not ", .dmp)
+    .dpath <- sub("[.]rds$", sprintf("-fed%d.rds", K$to), .dmp)
+    .sdo_d <- harness_sw_net_sd(size_sd_apply(SD_OVR, X$shares, sprintf("fed%d", K$to), .level_sd, .lm(X$shares)), X$sw_draws, X$shares, .level_sd, .lm(X$shares), psd, sprintf("fed%d", K$to), "BFW", quiet = TRUE)
+    saveRDS(list(pair = sprintf("fed%d", K$to), from = K$from, to = K$to, shares = X$shares, level_sd = .level_sd,
+                 level_mult = .lm(X$shares), fm = X$fm, psd = psd, swd = X$sw_draws, sdo = .sdo_d,
+                 seat_sd = sd_w * SEAT_SD_MULT, n_sims = N_SIMS, bo = .bo,
+                 coalition_split = coalition_split_args(sprintf("fed%d", K$to), rownames(X$shares)), error_q = error_dist_args(sprintf("fed%d", K$to), colnames(X$shares)),
+                 smooth = SMOOTH, seed = SEED, party_cor = X$PARTY_COR, shrink = shrink_arg, htv_ov = .htv_ov,
+                 fb_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD, surge_h = surge_arg,
+                 surge_party = surge_party_arg, surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"),
+                 surge_mu = surge_mu_arg, surge_sd = surge_sd_arg, truth = X$truth, keep = X$keep), .dpath)
+    cat(sprintf("NX8  night state for fed%d saved to %s\n", K$to, .dpath))
+  }
   sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = harness_sw_net_sd(size_sd_apply(SD_OVR, X$shares, sprintf("fed%d", K$to), .level_sd, .lm(X$shares)), X$sw_draws, X$shares, .level_sd, .lm(X$shares), psd, sprintf("fed%d", K$to), "BFW"), level_mult = .lm(X$shares), X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                                 shrink = shrink_arg, surge_h = surge_arg, surge_party = surge_party_arg,

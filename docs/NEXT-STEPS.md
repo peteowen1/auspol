@@ -95,6 +95,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   slope of -23.1 (n 1, se ~11) enters the DerSimonian-Laird sum: qld2015, sa2014, vic2014 get tau^2 ~0.57 (0 at most
   targets), so IND there keeps w 0.99 instead of pooling (`output/mp-slope-pooled.csv`; `R/mp_slope_pool.R:79-83`).
   The all-35 screen ran on this table. A fix (drop near-zero-variance classes from the tau^2 sum) needs its own screen.
+- OPEN, DATA (found 30 Oct by the night replay): `output/candidacies.csv` has sa2026 at 980,713 votes against
+  1,116,641 in the ECSA booth file (`output/booths/sa2026-booth-fp.csv`); every seat but one is 4-29% short
+  (Hurtle Vale 19,389 vs 24,971). Looks like a count taken before declaration votes. sa2026 is an AEF-7 pair, so its
+  actual shares in every backtest come from the short count. Check the source, rebuild from the final count, rescore.
+- FIXED 30 Oct: `night_apply_tcp()` let a seat's win probabilities sum above 1 (Finniss sa2026 replay 1.003; a
+  4-draw test case 1.25) when the 2CP update flipped a count winner whose credited winner differed after the shrink
+  toss. The seat total is now kept; test added (fails on the old code). The vic2022 explainer used the old code.
 - Morning pages DONE 30 Oct. (b) wa2017 / fed2019 walks: https://claude.ai/artifact/USv8sffhF1zbYagBGwjdQ3
   (`reviews/walks-wa2017-fed2019-2026-10-30.md`). OPEN from them: WA seat layer sits ~5 pts above the statewide Labor
   level (36.4 -> 41.2) yet 5-15 short in the swing seats, untraced; fed2019 shared miss (38% of margin error) asks
