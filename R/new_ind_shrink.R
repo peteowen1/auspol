@@ -48,7 +48,9 @@ post_xgb_switches <- function() {
            AUSPOL_ONP_ORDER = { o <- Sys.getenv("AUSPOL_ONP_ORDER", "senate_rank"); if (identical(o, "federal")) "0" else o },
            # the port (and so its 3C cleaning) acts after the xgb override; the as-at trees trained without it
            AUSPOL_SEAT_SWING_PORT_3C = seat_swing_port_3c_mode(),
-           AUSPOL_IND_GAP_RESTAND = ind_gap_restand_mode())
+           AUSPOL_IND_GAP_RESTAND = ind_gap_restand_mode(),
+           # the as-at trees were trained on the points-form base
+           AUSPOL_SWING_FORM = if (identical(swing_form_mode(), "points")) "0" else swing_form_mode())
   cur[cur != "0"]
 }
 

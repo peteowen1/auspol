@@ -4,7 +4,7 @@
 \alias{dev_slope}
 \title{Project a seat's class share, shrinking its deviation from the statewide mean}
 \usage{
-dev_slope(x, level_prev, level_now, slope = 1)
+dev_slope(x, level_prev, level_now, slope = 1, form = swing_form_mode())
 }
 \arguments{
 \item{x}{Numeric vector of the class's seat-level shares at the PREVIOUS
@@ -23,6 +23,12 @@ conditional slope needs, since whether the same candidate is standing again
 is a property of the seat, not of the class. Measured, that distinction is
 worth more than the class: IND carries 0.907 when the person returns and
 0.326 when they do not.}
+
+\item{form}{\code{"points"} (today's form) or \code{"hybrid"}; defaults to \code{AUSPOL_SWING_FORM} (\code{\link[=swing_form_mode]{swing_form_mode()}}). Hybrid
+keeps the slope's shrink toward the level, \verb{x' = level_prev + slope x (x - level_prev)}, then moves \verb{x'} by the
+statewide change in points when the class level rises or holds, and on the log-odds scale when it falls, so a
+small seat of a falling class shrinks in proportion instead of being floored at 0
+(\verb{docs/plans/prereg-swing-form-hybrid-2026-10-30.md}). Equal to \code{"points"} wherever the level does not fall.}
 }
 \value{
 Numeric vector of projected shares, floored at zero.

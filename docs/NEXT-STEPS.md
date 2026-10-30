@@ -96,7 +96,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (`reviews/small-share-swing-floor-2026-10-30.md`, counts recomputed): the floor bites 179 of 13,286 stood cells
   (1.3%; 152 OTH; 165 had no share last time), trees repair part (RMSE 4.31 -> 3.27, mean actual 3.18 vs xgb 1.04).
   Oracle on true levels: a direction-aware base (points when a class rises, logit when it falls) beats points-only in
-  30 of 35 elections (pooled RMSE 5.27 -> 5.08), shrinking at the real slopes. OPEN, a candidate arm for both layers.
+  30 of 35 elections (pooled RMSE 5.27 -> 5.08), shrinking at the real slopes. Pete: build and screen (30 Oct).
+  BUILT 30 Oct, off: `AUSPOL_SWING_FORM=hybrid` (`dev_slope()`, post-xgb; prereg `plans/prereg-swing-form-hybrid-2026-10-30.md`).
+  Screen: `Rscript scripts/quick_arm.R "AUSPOL_SWING_FORM=hybrid"` (AEF-7), then `--pairs=all`; dry-run check first:
+  `AUSPOL_TRACE_SEAT=Mildura AUSPOL_SWING_FORM=hybrid AUSPOL_OUT_SUFFIX=-sw` on fit_seats_full.R, TRS0 ALP base 5.16.
+  If the delta screen is promising but small, the retrained-trees version runs before any refusal is final.
   One Nation fill pro rata vs personal votes: CHECKED 30 Oct, keep proportional (`reviews/onp-fill-personal-vote-2026-10-30.md`:
   returning IND ratio 0.68 vs majors 0.76 in 7 surge seats, 3 elections, diff -0.13 SE 0.23; calm seats +0.06 SE 0.06).
   Thin (sa2026 is 5 of 7); recheck after vic2026 counts.

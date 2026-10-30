@@ -40,16 +40,41 @@
 #'   is a property of the seat, not of the class. Measured, that distinction is
 #'   worth more than the class: IND carries 0.907 when the person returns and
 #'   0.326 when they do not.
+#' @param form `"points"` (today's form) or `"hybrid"`; defaults to `AUSPOL_SWING_FORM` ([swing_form_mode()]). Hybrid
+#'   keeps the slope's shrink toward the level, `x' = level_prev + slope x (x - level_prev)`, then moves `x'` by the
+#'   statewide change in points when the class level rises or holds, and on the log-odds scale when it falls, so a
+#'   small seat of a falling class shrinks in proportion instead of being floored at 0
+#'   (`docs/plans/prereg-swing-form-hybrid-2026-10-30.md`). Equal to `"points"` wherever the level does not fall.
 #' @return Numeric vector of projected shares, floored at zero.
 #' @export
-dev_slope <- function(x, level_prev, level_now, slope = 1) {
+dev_slope <- function(x, level_prev, level_now, slope = 1, form = swing_form_mode()) {
   if (!length(slope) %in% c(1L, length(x)) || !all(is.finite(slope))) {
     stop("slope must be one finite number, or one per seat matching x (",
          length(x), "); got ", length(slope), call. = FALSE)
   }
   if (!is.finite(level_prev) || !is.finite(level_now))
     stop("level_prev and level_now must both be finite")
+  if (identical(form, "hybrid") && level_now < level_prev) {
+    xp <- level_prev + slope * (x - level_prev)
+    cl <- function(v) pmin(pmax(v, 0.01), 99.99) / 100   # numerical guard for the logit (CONSTANTS)
+    lg <- function(p) log(p / (1 - p))
+    out <- 100 * stats::plogis(lg(cl(xp)) + lg(cl(level_now)) - lg(cl(level_prev)))
+    out[!is.na(xp) & xp <= 0] <- 0   # nothing to shrink from: stays 0 exactly, as in the points form
+    return(out)
+  }
   pmax(0, level_now + slope * (x - level_prev))
+}
+
+#' The value of `AUSPOL_SWING_FORM`, validated
+#'
+#' @return `"points"` (default, today's base) or `"hybrid"` (logit when the class level falls; see [dev_slope()]).
+#'   Anything else is an error, so a typo cannot silently run the published form.
+#' @export
+swing_form_mode <- function() {
+  v <- Sys.getenv("AUSPOL_SWING_FORM", "points")
+  if (!v %in% c("points", "hybrid"))
+    stop("AUSPOL_SWING_FORM must be \"points\" or \"hybrid\", not \"", v, "\"", call. = FALSE)
+  v
 }
 
 #' Per-class deviation slopes, defaulting to uniform swing
