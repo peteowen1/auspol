@@ -1363,6 +1363,24 @@ if (identical(Sys.getenv("AUSPOL_XGB_SURGE", "0"), "1")) {
 .imx <- ind_mixture_surge(TGT, rownames(shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BS1N")
 surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
 .swd <- harness_sw_draws(SWD, colnames(shares), N_SIMS, TGT, "BSW")
+# NIGHT STATE DUMP (AUSPOL_NIGHT_DUMP=<file.rds>): everything the final simulation takes, as in scripts/backtest_candidate_vic.R.
+# One file per pair (the pair label is inserted before .rds). Unset: nothing here runs. Used by scripts/night_replay_json.R.
+.dmp <- Sys.getenv("AUSPOL_NIGHT_DUMP", "")
+if (nzchar(.dmp)) {
+  if (!grepl("[.]rds$", .dmp)) stop("NX9! AUSPOL_NIGHT_DUMP must end in .rds (the pair label is inserted before it), not ", .dmp)
+  .dpath <- sub("[.]rds$", sprintf("-sa%d.rds", TO), .dmp)
+  .sdo <- harness_sw_net_sd(size_sd_apply(SD_OVR, shares, TGT, .level_sd, .lm(shares)), .swd, shares, .level_sd, .lm(shares), psd, TGT, "BSW")
+  saveRDS(list(pair = sprintf("sa%d", TO), from = FROM, to = TO, shares = shares, level_sd = .level_sd,
+               level_mult = .lm(shares), fm = fm, psd = psd, swd = .swd, sdo = .sdo,
+               seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = N_SIMS, bo = .bo,
+               coalition_split = coalition_split_args(TGT, rownames(shares)), error_q = error_dist_args(TGT, colnames(shares)),
+               smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR, shrink = SHRINK, htv_ov = .htv_ov,
+               fb_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD, surge_h = surge_arg,
+               surge_party = surge_party_arg, surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"),
+               surge_mu = surge_mu_arg, surge_sd = surge_sd_arg, truth = truth, keep = keep), .dpath)
+  cat(sprintf("NX8  night state for sa%d saved to %s
+", TO, .dpath))
+}
 sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = harness_sw_net_sd(size_sd_apply(SD_OVR, shares, TGT, .level_sd, .lm(shares)), .swd, shares, .level_sd, .lm(shares), psd, TGT, "BSW"), level_mult = .lm(shares), shares, fm, party_sd = psd, statewide_draws = .swd, seat_sd = sp$sd_within * SEAT_SD_MULT,
                               breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(TGT, rownames(shares)), error_q = error_dist_args(TGT, colnames(shares)),
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,

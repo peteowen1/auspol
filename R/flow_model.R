@@ -217,5 +217,60 @@ estimate_flows_for <- function(used, flows, year, cycles = NULL,
                       est$model, est$n, est$se))
     }
   }
+  if (identical(Sys.getenv("AUSPOL_STATE_FLOWS_AEC", "0"), "1")) used <- state_flows_aec(used, cycles, as_of, quiet)
   used[]
+}
+
+#' Replace a state election's assumed flows with the AEC's flow for that state at the latest federal election
+#'
+#' AUSPOL_STATE_FLOWS_AEC=1 (docs/plans/prereg-state-flows-aec-2026-10-30.md). The anchor's state rows are
+#' hand-copied NATIONAL federal figures (Victoria 2018, 2022 and 2026 all 81.94, the 2016 national Greens flow);
+#' the AEC publishes each class's flow by state (Victorian Greens 87.83 in 2022, 89.70 in 2025). Each class takes
+#' its state's figure from the latest federal election held strictly before `as_of`. Only compulsory-preferential
+#' elections change (Victoria, South Australia, Western Australia, Queensland from 2017), and only rows with
+#' `exhaust == 0`: federal flows have no exhaust, so they cannot stand in for an optional-preferential count.
+#' Federal and NSW targets are left alone.
+#' @param used Flow rows for one region and year (`region`, `party`, `flow_alp`, `exhaust`, `flow_source`).
+#' @param cycles From [load_election_cycles()].
+#' @param as_of Date; only federal elections held before it are used.
+#' @param quiet Suppress the report.
+#' @param table The AEC table; defaults to `inst/extdata/aec-state-class-flows.csv`.
+#' @return `used` with replaced `flow_alp` and `flow_source` where a figure exists.
+#' @export
+state_flows_aec <- function(used, cycles, as_of, quiet = FALSE, table = NULL) {
+  rg <- as.character(used$region[1])
+  # Compulsory-preferential lower houses only: NSW is optional-preferential throughout (some of its rows carry
+  # exhaust 0 only because the exhaust was not recorded), Queensland until 2016.
+  yr <- suppressWarnings(as.integer(used$year[1]))
+  if (!rg %in% c("vic", "sa", "wa", "qld") || (rg == "qld" && isTRUE(yr < 2017L))) return(used)
+  if (is.null(table)) {
+    f <- system.file("extdata", "aec-state-class-flows.csv", package = "auspol")
+    if (!nzchar(f)) f <- file.path(getOption("auspol.root", "."), "inst", "extdata", "aec-state-class-flows.csv")
+    if (!file.exists(f)) stop("AUSPOL_STATE_FLOWS_AEC=1: no aec-state-class-flows.csv; run scripts/build_aec_state_class_flows.R", call. = FALSE)
+    table <- data.table::fread(f, showProgress = FALSE)
+  }
+  fed_end <- cycles$end[cycles$region == "fed"]; fed_yr <- cycles$year[cycles$region == "fed"]
+  held <- fed_yr[fed_end < as.Date(as_of)]
+  tst <- as.character(table$state)
+  yrs <- sort(intersect(held, unique(table$fed_year[tst == rg])), decreasing = TRUE)
+  if (!length(yrs)) return(used)
+  fy <- yrs[1]
+  tt <- table[which(tst == rg & table$fed_year == fy), ]
+  ex <- if ("exhaust" %in% names(used)) used$exhaust else rep(0, nrow(used))
+  done <- character()
+  # AUSPOL_STATE_FLOWS_AEC_CLASSES (default all): which classes to replace. "GRN,ONP" is arm B: named parties only,
+  # because a class like OTH holds different parties on a federal and a state ballot (Victoria 2026: OTH 48.87 -> 71.52).
+  cl <- trimws(strsplit(Sys.getenv("AUSPOL_STATE_FLOWS_AEC_CLASSES", "all"), ",")[[1]])
+  for (i in seq_len(nrow(used))) {
+    k <- match(as.character(used$party[i]), as.character(tt$party))
+    if (is.na(k) || !isTRUE(ex[i] == 0)) next
+    if (!identical(cl, "all") && !as.character(used$party[i]) %in% cl) next
+    old <- used$flow_alp[i]
+    used$flow_alp[i] <- tt$flow_alp[k]
+    used$flow_source[i] <- sprintf("AEC %s federal %d", toupper(rg), fy)
+    done <- c(done, sprintf("%s %.2f->%.2f", used$party[i], old, tt$flow_alp[k]))
+  }
+  if (!quiet) message(sprintf("SFA1 AUSPOL_STATE_FLOWS_AEC=1: %s %s from AEC federal %d: %s", rg, used$year[1], fy,
+                              if (length(done)) paste(done, collapse = ", ") else "none replaced"))
+  used
 }

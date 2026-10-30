@@ -299,10 +299,16 @@ night_tcp_obs <- function(tcp, fp, units, post) {
 #' @param sim Output of [simulate_seat_contests()].
 #' @param obs [night_tcp_obs()] output.
 #' @param pair_min Smallest share of draws with the VEC's pair for its count to be used.
+#' @param center `"mean"` (default, unchanged) or `"median"`: which draw the counted flow is lined up
+#'   against. `"median"` stops a minority of outlying draws (an unfaded surge) moving every other draw.
+#' @param flow_sd_floor Floor on the prior flow sd (the draws' own flow spread is near zero with `flow_sd = 0`).
+#'   0.01 (default) is unchanged; 0.065 is the measured between-seat flow error, 2010-2025
+#'   (docs/reviews/aec-preference-data-2026-10-30.md), which gives the count most of the weight.
 #' @return `sim`, updated, with attribute `night_tcp`: one row per observed seat (pair share
 #'   of draws, prior and posterior mean of a's share, draws changed, `flag`).
 #' @export
-night_apply_tcp <- function(sim, obs, pair_min = 0.2) {
+night_apply_tcp <- function(sim, obs, pair_min = 0.2, center = c("mean", "median"), flow_sd_floor = 0.01) {
+  center <- match.arg(center)
   if (is.null(obs) || !nrow(obs)) return(sim)
   seats <- colnames(sim$tcp_winner)
   if (is.null(seats)) stop("NX5! sim$tcp_winner has no seat names: cannot match the VEC's 2CP to seats", call. = FALSE)
@@ -330,7 +336,10 @@ night_apply_tcp <- function(sim, obs, pair_min = 0.2) {
     rest <- (100 - obs$fp_a[k] - obs$fp_b[k]) / 100
     if (!is.finite(rest) || rest <= 0.005) rest <- 0.005
     fi <- (pa - obs$fp_a[k] / 100) / rest                     # each draw's implied flow to a
-    fm <- mean(fi); fsd <- max(stats::sd(fi), 0.01)
+    # center = "median": the shift targets the TYPICAL draw. With "mean" (default, byte-identical) a minority
+    # of outlying draws (Wentworth fed2022: 305 surge draws, implied flow 1.05 against 0.70) moves the mean flow
+    # and the shift then drags every other draw across 50% (Spender 0.996 -> 0.302 at 97% counted).
+    fm <- if (center == "median") stats::median(fi) else mean(fi); fsd <- max(stats::sd(fi), flow_sd_floor)
     cm <- combine_prior_projection(fm, obs$flow[k], fsd, obs$flow_se[k])
     na <- pmin(1, pmax(0, pa + (cm$mean - fm) * rest))
     cm <- list(mean = mean(na))
@@ -347,11 +356,17 @@ night_apply_tcp <- function(sim, obs, pair_min = 0.2) {
     }
     if (length(ch)) {
       delta <- table(factor(newW[ch], parties)) - table(factor(oldW[ch], parties))
+      tot_before <- sum(wp$prob[wp$seat == s])
       for (p in parties[delta != 0]) {
         row <- which(wp$seat == s & wp$party == p)
         if (length(row)) wp$prob[row] <- max(0, wp$prob[row] + delta[[p]] / n)
         else wp <- rbind(wp, data.frame(seat = s, party = p, prob = max(0, delta[[p]] / n), stringsAsFactors = FALSE))
       }
+      # The deltas move COUNT winners, but win_prob counts the CREDITED winner, which the shrink toss can make differ;
+      # a flip into a party already credited in that draw (or out of one that was not) left the seat summing above 1
+      # (Finniss sa2026 replay, 1.003; review 2026-10-30). Keep the seat's total where it was.
+      rows_s <- which(wp$seat == s); tot_after <- sum(wp$prob[rows_s])
+      if (tot_after > 0) wp$prob[rows_s] <- wp$prob[rows_s] * tot_before / tot_after
     }
     sim$tcp_winner[hit, j] <- newW
     sim$tcp_runnerup[hit, j] <- ifelse(newW == a, b, a)
@@ -362,6 +377,26 @@ night_apply_tcp <- function(sim, obs, pair_min = 0.2) {
   sim$win_prob <- wp[wp$prob > 0, ]
   attr(sim, "night_tcp") <- data.table::rbindlist(rep)
   sim
+}
+
+#' Fade each seat's pre-election surge hazard by the share of its vote counted
+#'
+#' The surge is a pre-election chance of an insurgent jump; once a seat's vote is counted the jump is
+#' either in the count or it did not happen, so the hazard is multiplied by `1 - counted`. Unfaded, it
+#' fired at 97% counted in Wentworth fed2022 (305 of 1,000 draws +36 points; review 2026-10-30).
+#' @param surge_h Surge hazard: length 1, one per seat in `seats` order, or named by seat.
+#' @param counted Named numeric, share of each seat's vote counted (0-1); seats absent count as 0.
+#' @param seats Seat names in the order the simulation uses.
+#' @return A named numeric hazard per seat.
+#' @export
+night_surge_fade <- function(surge_h, counted, seats) {
+  h <- if (!is.null(names(surge_h))) unname(surge_h[seats])
+       else if (length(surge_h) == 1L) rep(unname(surge_h), length(seats))
+       else if (length(surge_h) == length(seats)) unname(surge_h)
+       else stop("NX10! surge_h must be length 1, one per seat, or named by seat", call. = FALSE)
+  if (anyNA(h)) stop("NX10! surge_h has no value for ", sum(is.na(h)), " seat(s)", call. = FALSE)
+  cs <- unname(counted[seats]); cs[is.na(cs)] <- 0
+  stats::setNames(h * (1 - pmin(1, pmax(0, cs))), seats)
 }
 
 #' Shrink statewide draws around their own centre

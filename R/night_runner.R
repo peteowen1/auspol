@@ -463,12 +463,21 @@ night_expected_votes <- function(enrolment, prev, basis = c("night", "final")) {
 #'   [night_booth_update()]. `NULL` (default) leaves the update as before.
 #' @param early_frac Share of each seat's early vote counted so far ([night_early_frac()]); passed to
 #'   [night_booth_update()]. `NULL` (default) treats a reported early unit as complete, as before.
+#' @param surge_fade `TRUE` (default since 2026-10-31) fades each seat's surge hazard by its counted share
+#'   ([night_surge_fade()]); `FALSE` lets the pre-election surge keep firing after the count.
+#' @param tcp_center Passed to [night_apply_tcp()] as `center`: `"median"` (default since 2026-10-31) or `"mean"`.
+#' @param tcp_flow_floor Passed to [night_apply_tcp()] as `flow_sd_floor`: 0.065 (default since 2026-10-31, the
+#'   measured between-seat flow error) or the old 0.01. The three defaults were set together on the real-night
+#'   replays of fed2022 and fed2025 (`docs/reviews/night-replay-real-feed-2026-10-31.md`): seats wrong at 3am
+#'   4 -> 1 and 7 -> 4, Wentworth 2022 never called -> called 7:45pm.
 #' @return List: `sim`, `nu` (the update), `shares`, `sd`, `matched` (seats in both state and feed),
 #'   `n_updated`.
 #' @export
 night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "table", "expected"), expected = NULL, sims = NULL, use_tcp = TRUE,
-                             lean = NULL, early_frac = NULL) {
+                             lean = NULL, early_frac = NULL, surge_fade = TRUE, tcp_center = "median", tcp_flow_floor = 0.065) {
   total <- match.arg(total)
+  if (!is.numeric(tcp_flow_floor) || length(tcp_flow_floor) != 1L || !is.finite(tcp_flow_floor) || tcp_flow_floor < 0)
+    stop("NW17! tcp_flow_floor must be one finite number >= 0 (got ", paste(format(tcp_flow_floor), collapse = ", "), ")", call. = FALSE)
   if (is.null(sims)) sims <- st$n_sims
   if (!is.null(st$swd) && nrow(st$swd) != sims) stop("NW2! the saved state has ", nrow(st$swd), " statewide draws; sims must equal that (dump the state at the sim count wanted)", call. = FALSE)
   seats <- rownames(st$shares)
@@ -480,19 +489,21 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
   if (nu$n_updated > 0L) {
     shares <- nu$shares; sdo <- nu$sd; swd <- night_shrink_draws(swd, 1 - nu$resolved)
   }
+  # a state with no surge (surge_h NULL) has nothing to fade; night_surge_fade() would stop on it
+  sh <- if (surge_fade && nu$n_updated > 0L && length(st$surge_h)) night_surge_fade(st$surge_h, nu$counted, seats) else st$surge_h
   sim <- simulate_seat_contests(level_sd = st$level_sd, sd_override = sdo, level_mult = st$level_mult, shares, st$fm,
                                 party_sd = st$psd, statewide_draws = swd, seat_sd = st$seat_sd, n_sims = sims,
                                 breakout_p = st$bo$p, breakout_q = st$bo$q, coalition_split = st$coalition_split, error_q = st$error_q,
                                 smooth = st$smooth, seed = st$seed, party_cor = st$party_cor, shrink = st$shrink,
                                 conditional_override = st$htv_ov, conditional_override_sd = attr(st$htv_ov, "sd"),
                                 fallback_smooth = st$fb_smooth, shrink_k = st$shrink_k, flow_sd = st$flow_sd,
-                                surge_h = st$surge_h, surge_party = st$surge_party, surge_from_zero = st$surge_from_zero,
+                                surge_h = sh, surge_party = st$surge_party, surge_from_zero = st$surge_from_zero,
                                 surge_mu = st$surge_mu, surge_sd = st$surge_sd)
   n_tcp <- 0L
   if (use_tcp && nu$n_updated > 0L && nrow(conv$tcp)) {
     obs <- night_tcp_obs(conv$tcp, conv$live, nu$units, shares)
     n_tcp <- nrow(obs)
-    sim <- night_apply_tcp(sim, obs)
+    sim <- night_apply_tcp(sim, obs, center = tcp_center, flow_sd_floor = tcp_flow_floor)
   }
   list(sim = sim, nu = nu, shares = shares, sd = sdo, matched = matched, n_updated = nu$n_updated, n_tcp = n_tcp)
 }
@@ -678,7 +689,9 @@ night_cycle <- function(cfg) {
     if (length(ef) && any(ef < 1))
       message(sprintf("NW16  early vote part-counted in %d seat(s); remainder projected (median %.0f%% of early counted)", sum(ef < 1), 100 * stats::median(ef[ef < 1])))
     res <- night_run_update(cache$st, conv, cache$ref, gap_k = if (is.null(cfg$gap_k)) 5 else cfg$gap_k, total = denom, expected = expected,
-                            sims = cfg$sims, use_tcp = !isFALSE(cfg$use_tcp), lean = cache$lean, early_frac = ef); stamp_t("update_simulate")
+                            sims = cfg$sims, use_tcp = !isFALSE(cfg$use_tcp), lean = cache$lean, early_frac = ef,
+                            surge_fade = !isFALSE(cfg$surge_fade), tcp_center = if (is.null(cfg$tcp_center)) "median" else cfg$tcp_center,
+                            tcp_flow_floor = if (is.null(cfg$tcp_flow_floor)) 0.065 else cfg$tcp_flow_floor); stamp_t("update_simulate")
     res$denominator <- denom; res$n_placeholder <- conv$n_placeholder_booths; res$n_unlisted <- conv$n_unlisted_booths
     if (length(res$nu$fallback_projected)) message("NW12  ", length(res$nu$fallback_projected), " seat(s) fell back to the projected denominator (no usable expected votes): ", paste(res$nu$fallback_projected, collapse = ", "))
     bk <- night_booth_results_safe(conv, cache$ref)

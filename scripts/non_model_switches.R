@@ -62,6 +62,9 @@ NON_MODEL_SWITCHES <- c(
   AUSPOL_MC_ARM                  = "BUILDER",  # fit_minor_candidates.R
   AUSPOL_NB_PRIOR                = "BUILDER",  # build_notional_baselines.R
   AUSPOL_NB_TARGET               = "BUILDER",  # build_notional_baselines.R
+  AUSPOL_NIGHT_SURGE_FADE        = "DIAG",  # night_replay_detail.R (night fixes, review 2026-10-30)
+  AUSPOL_NIGHT_TCP_CENTER        = "DIAG",  # night_replay_detail.R
+  AUSPOL_NIGHT_TCP_FLOW_FLOOR    = "DIAG",  # night_replay_detail.R
   AUSPOL_NSW_PAIR                = "RUN",  # backtest_candidate_nsw.R
   AUSPOL_NSW_THIN_WALK           = "DIAG",  # fit_nsw.R
   AUSPOL_NT_DUMP_SHARES          = "DIAG",  # backtest_candidate_nt.R

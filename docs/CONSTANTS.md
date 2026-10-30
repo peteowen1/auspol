@@ -694,3 +694,9 @@ Replay-only until the 2026 feed arrives; none is read by the published forecast.
 | flow SE below 3 counted booths | 0.25 | `night_tcp_obs()` | judgement (a flow share's plausible range) |
 | flow SE floor | 0.02 | `night_tcp_obs()` | judgement |
 | new-candidate sd multiplier | 1 (off): 1.5 and 2 were slightly worse on 2022 (few new candidates; One Nation 2026 untestable) | `night_booth_update(new_sd_mult =)` | a replay with a new party (SA 2026) |
+
+## Election-night 2CP update (added 2026-10-31)
+
+| Constant | Where | Value | Status |
+|---|---|---|---|
+| Flow sd floor | `night_run_update(tcp_flow_floor =)` -> `night_apply_tcp(flow_sd_floor =)`, `R/night_runner.R` | 0.065 (was 0.01) | **MEASURED**: between-seat error of the night's booth-implied two-candidate flow, fed2022/fed2025 (`docs/reviews/aec-preference-data-2026-10-30.md`). Set with `surge_fade = TRUE` and `tcp_center = "median"` on the real-night replays (`docs/reviews/night-replay-real-feed-2026-10-31.md`). `night_apply_tcp()`'s own default stays 0.01. |

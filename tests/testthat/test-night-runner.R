@@ -393,6 +393,13 @@ test_that("the VEC's raw counted 2CP share is carried through night_tcp_obs and 
               tcp_share = matrix(c(.6, .55, .52, .58), 4, 1, dimnames = list(NULL, "S1")))
   rep <- attr(night_apply_tcp(sim, obs, pair_min = 0.2), "night_tcp")
   expect_equal(rep$raw_a, 0.6); expect_equal(rep$obs_a, obs$share_a)
+  # credited winner (win_prob) and count winner (tcp_winner) disagree after the shrink toss: the credited ALP is
+  # already 1 while one count draw is LNP. A flip of that draw to ALP must not push ALP above 1 (Finniss sa2026: 1.003).
+  sim2 <- sim; sim2$win_prob <- data.frame(seat = "S1", party = "ALP", prob = 1)
+  out2 <- night_apply_tcp(sim2, obs, pair_min = 0.2)
+  expect_gte(attr(out2, "night_tcp")$changed, 1L)                    # the flip happened, so the check is not vacuous
+  expect_true(all(out2$win_prob$prob <= 1))
+  expect_equal(sum(out2$win_prob$prob[out2$win_prob$seat == "S1"]), 1)
 })
 
 test_that("per-booth results for the map: reported ordinary booths only, four first-preference classes, final two when posted", {
@@ -447,4 +454,47 @@ test_that("per-booth results for the map: reported ordinary booths only, four fi
   expect_error(night_booth_results(conv))
   expect_message(bk <- night_booth_results_safe(conv), "NW13")
   expect_null(bk)
+})
+
+test_that("the live runner ships the three night fixes on by default (real-night replays, 2026-10-31)", {
+  f <- formals(night_run_update)
+  expect_true(f$surge_fade); expect_identical(f$tcp_center, "median"); expect_identical(f$tcp_flow_floor, 0.065)
+  # a mistyped --tcp-flow-floor parses to NA; it must stop, not poison the 2CP step
+  expect_error(night_run_update(list(), list(), NULL, tcp_flow_floor = NA_real_), "NW17")
+  expect_error(night_run_update(list(), list(), NULL, tcp_flow_floor = -1), "NW17")
+})
+
+test_that("night_surge_fade scales each seat's surge hazard by its uncounted share (Wentworth fed2022, review 2026-10-30)", {
+  h <- night_surge_fade(c(S1 = 0.3, S2 = 0.2, S3 = 0.1), c(S1 = 0.97, S2 = 0.5), c("S1", "S2", "S3"))
+  expect_equal(unname(h), c(0.3 * 0.03, 0.2 * 0.5, 0.1))      # S3 not reported: unchanged
+  expect_equal(names(h), c("S1", "S2", "S3"))
+  expect_equal(unname(night_surge_fade(0.4, c(S2 = 1), c("S1", "S2"))), c(0.4, 0))   # length 1 broadcasts; fully counted -> 0
+  expect_error(night_surge_fade(c(S1 = 0.3), c(S1 = 0.5), c("S1", "S2")), "NX10")
+})
+
+test_that("night_apply_tcp(center = 'median') stops a minority of outlying draws dragging the rest across 50%", {
+  # 7 draws at a = 52.6% two-candidate, 3 surge draws at 80%; counted primaries a 36, b 40, counted flow 0.776.
+  n <- 10L; pa <- c(rep(0.526, 7), rep(0.80, 3))
+  sim <- list(totals = cbind(IND = rep(1L, n), LNP = rep(0L, n)),
+              win_prob = data.frame(seat = "W", party = "IND", prob = 1),
+              tcp_winner = matrix("IND", n, 1, dimnames = list(NULL, "W")),
+              tcp_runnerup = matrix("LNP", n, 1, dimnames = list(NULL, "W")),
+              tcp_share = matrix(pa, n, 1, dimnames = list(NULL, "W")))
+  obs <- data.frame(seat = "W", a = "IND", b = "LNP", fp_a = 36, fp_b = 40, flow = 0.776, flow_se = 0.001, share_a = 0.54)
+  p_mean <- night_apply_tcp(sim, obs)$win_prob; p_med <- night_apply_tcp(sim, obs, center = "median")$win_prob
+  expect_lt(sum(p_mean$prob[p_mean$party == "IND"]), 0.5)      # the defect: the mean shift flips the 7 typical draws
+  expect_equal(sum(p_med$prob[p_med$party == "IND"]), 1)        # median: the typical draws stay IND-winning
+})
+
+test_that("night_apply_tcp(flow_sd_floor) gives the counted flow its weight when the draws' flows are near-identical", {
+  # 10 draws, implied flow to a all ~0.60 (sd ~0); counted flow 0.80 with se 0.023.
+  n <- 10L; pa <- 0.36 + 0.24 * (0.60 + seq(-1, 1, length.out = n) * 1e-4)
+  sim <- list(totals = cbind(IND = rep(0L, n), LNP = rep(1L, n)), win_prob = data.frame(seat = "W", party = "LNP", prob = 1),
+              tcp_winner = matrix("LNP", n, 1, dimnames = list(NULL, "W")), tcp_runnerup = matrix("IND", n, 1, dimnames = list(NULL, "W")),
+              tcp_share = matrix(1 - pa, n, 1, dimnames = list(NULL, "W")))
+  obs <- data.frame(seat = "W", a = "IND", b = "LNP", fp_a = 36, fp_b = 40, flow = 0.80, flow_se = 0.023, share_a = 0.552)
+  lo <- attr(night_apply_tcp(sim, obs), "night_tcp"); hi <- attr(night_apply_tcp(sim, obs, flow_sd_floor = 0.065), "night_tcp")
+  expect_lt(lo$post_a, 0.52)                       # floor 0.01: the count gets ~16% weight, a stays below 50%
+  expect_gt(hi$post_a, 0.52)                       # floor 0.065: the count dominates (prior 0.504, count 0.552)
+  expect_equal(hi$changed, n)
 })

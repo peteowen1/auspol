@@ -344,6 +344,8 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_REENTRY_LINK        = "log",        # R/reentry_prior.R:149
   AUSPOL_REENTRY_WINSOR      = "0",          # R/reentry_prior.R:409
   AUSPOL_FLOW_SHIFT          = "0",
+  AUSPOL_STATE_FLOWS_AEC     = "0",          # state statewide flows from the AEC's same-state figure at the latest federal election (R/flow_model.R state_flows_aec); SCREENING, docs/plans/prereg-state-flows-aec-2026-10-30.md
+  AUSPOL_STATE_FLOWS_AEC_CLASSES = "all",      # which classes AUSPOL_STATE_FLOWS_AEC replaces; "GRN,ONP" = arm B (named parties only)
   AUSPOL_FORCE_FP            = "",
   AUSPOL_FORCE_FP_RULE       = "draws",      # Only read when AUSPOL_FORCE_FP is set (the what-if slider, Pete 2026-10-04): others give way by the published run's statewide-draw regression and the forced party is held exactly at X; "draws-polled" = same regression, usual spread kept around X; "sa" = the older SA 2026 response with spread kept.
   AUSPOL_ONP_CONC_SD         = "auto",      # BACKTEST-side One Nation seat concentration, SHIPPED 2026-09-14 on

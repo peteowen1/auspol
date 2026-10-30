@@ -17,7 +17,8 @@ cfg <- list(source = need("source"), archive = need("archive"), setup = flag("se
             out = need("out"), base_json = flag("base-json"), gap_k = as.numeric(flag("gap_k", "5")),
             sims = if (!is.null(flag("sims"))) as.integer(flag("sims")) else NULL,
             use_tcp = identical(flag("tcp", "1"), "1"), allow_stub = identical(flag("allow-stub", "0"), "1"),
-            turnout = flag("turnout"), council_lean = flag("council-lean"), early_partial = identical(flag("early-partial", "0"), "1"), allow_unmatched = identical(flag("allow-unmatched", "0"), "1"), allow_projected = identical(flag("allow-projected", "0"), "1"))
+            turnout = flag("turnout"), council_lean = flag("council-lean"), early_partial = identical(flag("early-partial", "0"), "1"), allow_unmatched = identical(flag("allow-unmatched", "0"), "1"), allow_projected = identical(flag("allow-projected", "0"), "1"),
+            surge_fade = !identical(flag("surge-fade", "1"), "0"), tcp_center = flag("tcp-center", "median"), tcp_flow_floor = as.numeric(flag("tcp-flow-floor", "0.065")))
 r <- night_cycle(cfg)
 cat(r$summary, "\n")
 quit(status = if (r$status == "failed") 1L else 0L)
