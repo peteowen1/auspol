@@ -456,6 +456,11 @@ test_that("per-booth results for the map: reported ordinary booths only, four fi
   expect_null(bk)
 })
 
+test_that("the live runner ships the three night fixes on by default (real-night replays, 2026-10-31)", {
+  f <- formals(night_run_update)
+  expect_true(f$surge_fade); expect_identical(f$tcp_center, "median"); expect_identical(f$tcp_flow_floor, 0.065)
+})
+
 test_that("night_surge_fade scales each seat's surge hazard by its uncounted share (Wentworth fed2022, review 2026-10-30)", {
   h <- night_surge_fade(c(S1 = 0.3, S2 = 0.2, S3 = 0.1), c(S1 = 0.97, S2 = 0.5), c("S1", "S2", "S3"))
   expect_equal(unname(h), c(0.3 * 0.03, 0.2 * 0.5, 0.1))      # S3 not reported: unchanged

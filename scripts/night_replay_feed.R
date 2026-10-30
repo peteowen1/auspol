@@ -21,8 +21,9 @@ flag <- function(name, default = NULL) { h <- grep(paste0("^--", name, "="), a, 
 st <- readRDS(flag("state")); yr <- st$to; pair_lbl <- sprintf("fed%d", yr)
 out_dir <- flag("out", file.path("output", "night-feed", "replay")); dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 label <- flag("label", "base")
-surge_fade <- identical(flag("surge-fade", "0"), "1"); tcp_center <- flag("tcp-center", "mean")
-tcp_floor <- as.numeric(flag("tcp-flow-floor", "0.01"))
+# defaults = the live runner's since 2026-10-31; the as-shipped-before arm is --surge-fade=0 --tcp-center=mean --tcp-flow-floor=0.01
+surge_fade <- !identical(flag("surge-fade", "1"), "0"); tcp_center <- flag("tcp-center", "median")
+tcp_floor <- as.numeric(flag("tcp-flow-floor", "0.065"))
 day <- as.Date(c(`2022` = "2022-05-21", `2025` = "2025-05-03")[[as.character(yr)]])
 tm <- strsplit(flag("times", paste(c(sprintf("%02d:%02d", rep(18:23, each = 4), c(0, 15, 30, 45)), "24:00", "25:00", "26:00", "27:00"), collapse = ",")), ",")[[1]]
 at <- vapply(tm, function(x) { p <- as.integer(strsplit(x, ":")[[1]]); as.numeric(as.POSIXct(day, tz = "UTC") + p[1] * 3600 + p[2] * 60) }, numeric(1))
