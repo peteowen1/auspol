@@ -10,7 +10,9 @@ project_seat_from_booths(
   counted_units,
   type_gap = NULL,
   total = c("table", "projected", "expected"),
-  expected_total = NA_real_
+  expected_total = NA_real_,
+  lean = NULL,
+  early_frac = NA_real_
 )
 }
 \arguments{
@@ -33,6 +35,19 @@ counted votes plus the projected size of the uncounted units (a live feed has no
 left of it (\code{expected_total} minus counted, floored at 0); with \code{expected_total} NA or not positive it behaves as \code{"projected"}.}
 
 \item{expected_total}{Expected final votes of the seat, for \code{total = "expected"}.}
+
+\item{lean}{Optional data.table \verb{unit, cls, share} for ONE seat, keyed to the live unit names: each class's share
+(0-1) at each unit in another count of the reference election (\code{\link[=night_council_lean]{night_council_lean()}}, the upper house). Used
+only for a class with NO reference votes in the seat: its swing is measured on the counted units that have a
+lean (counted share minus lean share, weighted by this year's unit totals), and each uncounted unit with a lean
+is projected at its lean share plus that swing, instead of the seat's counted share. \code{NULL} (the default) is
+byte-identical to the previous behaviour.}
+
+\item{early_frac}{Optional share (0-1) of the seat's early vote counted so far (\code{\link[=night_early_frac]{night_early_frac()}}). The early
+unit is ONE unit per district and counts as reported once any early voting centre has reported; with
+\code{early_frac} below 1 the unreported remainder (counted early votes x (1 - f) / f) is projected from the
+reference early block's shares plus the early swing, instead of being left out. \code{NA} (the default) is
+byte-identical to the previous behaviour.}
 }
 \value{
 data.table \verb{cls, projected, counted_share}, or \code{NULL} if no

@@ -16,7 +16,9 @@ night_booth_update(
   new_sd_mult = 1,
   reported = NULL,
   total = c("table", "projected", "expected"),
-  expected = NULL
+  expected = NULL,
+  lean = NULL,
+  early_frac = NULL
 )
 }
 \arguments{
@@ -56,6 +58,13 @@ rescaled to the remainder (see \code{\link[=project_seat_from_booths]{project_se
 
 \item{expected}{For \code{total = "expected"}: named numeric, expected final votes per seat (a seat missing or NA falls
 back to \code{"projected"}).}
+
+\item{lean}{Optional upper-house booth lean of the reference election (\code{\link[=night_council_lean]{night_council_lean()}}: \verb{district, unit, cls, share}, reference-year names). A class with no lower-house votes in a seat last time is then projected from
+each booth's lean plus its counted swing, not its unadjusted counted share (\code{\link[=project_seat_from_booths]{project_seat_from_booths()}}).
+\code{NULL} (default) is byte-identical to the previous behaviour.}
+
+\item{early_frac}{Optional named numeric by seat: the share of each seat's early vote counted so far
+(\code{\link[=night_early_frac]{night_early_frac()}}); passed to \code{\link[=project_seat_from_booths]{project_seat_from_booths()}}. \code{NULL} (default) is byte-identical.}
 }
 \value{
 List: \code{shares} (posterior means, rows renormalised to 100), \code{sd} (posterior sds),

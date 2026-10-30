@@ -20,7 +20,18 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   R2 upload tested to `auspol/night/test-vic2026.json` (`scripts/night_publish_r2.sh`), night state saved every forecast
   run and uploaded to `forecast-latest` (#169), break-glass Actions backup `.github/workflows/night-backup.yaml` (#170;
   inputs on release `night-inputs`). Night runbook: `gh release download forecast-latest -p night-state-vic-2026.rds -D
-  output`, then `night_runner.R --state=output/night-state-vic-2026.rds`.
+  output`, then `night_runner.R --state=output/night-state-vic-2026.rds --council-lean=output/council-fp-2022.csv`.
+  Booth lean for parties new to a seat (One Nation), added 30 Oct: `night_council_lean()` from the 2022 upper house by
+  voting centre; on the vic2022 replay with each class made "new", projection RMSE 3.03 -> 2.41 pts (real history
+  2.45); named parties only (pooled OTH_RIGHT got worse). Without the flag the runner warns NW15! and runs as before.
+  Early voting centres (30 Oct): NOT a new-booth problem (my earlier claim was wrong): night_booth_table() merges
+  every centre in a district into one "early" unit matched to 2022's block. The real gap: that unit counts as
+  complete once ANY centre reports (largest centre held a median 54% of a district's early vote in 2022, range
+  32-93%). Projecting the remainder (`night_early_frac()`, `project_seat_from_booths(early_frac =)`) made the
+  approximated replay WORSE (RMSE 0.95 -> 1.15; `scripts/test_early_partial_replay.R`) because the early swing is
+  measured on whichever centre reported first. OFF (opt-in `--early-partial=1`). OPEN, for the 25 Nov trial: with
+  real 2026 centre names, compare each counted centre with its own 2022 upper-house lean, then re-test; and source
+  the expected early total from the VEC's published early-voting attendance, not last election's early share.
   OPEN, in order:
   2. SharePoint live-feed fetch (VEC access details from 4 Nov); the backup's source live waits on it.
   3. 10 Nov: in ITG `politics/night-maps/`, `python -I build-booths-2026.py <State2026MediaFilePollingLocationsV2.xml>`
@@ -84,7 +95,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   slope of -23.1 (n 1, se ~11) enters the DerSimonian-Laird sum: qld2015, sa2014, vic2014 get tau^2 ~0.57 (0 at most
   targets), so IND there keeps w 0.99 instead of pooling (`output/mp-slope-pooled.csv`; `R/mp_slope_pool.R:79-83`).
   The all-35 screen ran on this table. A fix (drop near-zero-variance classes from the tau^2 sum) needs its own screen.
-- OPEN, morning pages for Pete: (b) wa2017 and fed2019 day-before statewide walk-throughs, example rows. (a) Mildura
+- Morning pages DONE 30 Oct. (b) wa2017 / fed2019 walks: https://claude.ai/artifact/USv8sffhF1zbYagBGwjdQ3
+  (`reviews/walks-wa2017-fed2019-2026-10-30.md`). OPEN from them: WA seat layer sits ~5 pts above the statewide Labor
+  level (36.4 -> 41.2) yet 5-15 short in the swing seats, untraced; fed2019 shared miss (38% of margin error) asks
+  whether the correlated statewide draw is wide enough. Night-model explainer (vic2022 replay, 79 -> 87 of 88 right):
+  https://claude.ai/artifact/WtspQifwBERFokMxrkAsn9 (`scripts/score_night_replay.R`). (a) Mildura
   DONE 30 Oct, https://claude.ai/artifact/JTt68EkaupnKVaoC3VRYib (`AUSPOL_TRACE_SEAT=<seat>` on `fit_seats_full.R`
   prints any seat's row after every stage, TRS0/TRS1). Raised, OPEN: the xgb trees cut Cupper 25.1 -> 21.0 unexplained
   (contributions done 30 Oct: base size -2.08, party_IND -1.45, own_prev +1.36). CHECKED 30 Oct, the cut is not an

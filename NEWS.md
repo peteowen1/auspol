@@ -1,3 +1,10 @@
+# auspol 0.4.122
+
+- **Booth lean for a party new to a seat on election night** (`night_council_lean()`, `project_seat_from_booths(lean =)`, runner `--council-lean=output/council-fp-2022.csv`): a party with no lower-house booth history in a seat (One Nation in 2026) is projected from each booth's previous upper-house vote plus its counted swing, not its raw counted share. vic2022 replay with each class made "new": projection RMSE 3.03 -> 2.41 points (real history 2.45). Named parties only.
+- **Partly counted early vote** (`night_early_frac()`, `project_seat_from_booths(early_frac =)`): built and tested, worse on an approximated replay (RMSE 0.95 -> 1.15), so OFF (`--early-partial=1`); re-test on the 25 Nov trial.
+- **Night replay explainer tooling**: `scripts/night_replay_detail.R` (per-seat, per-update detail), `scripts/score_night_replay.R`.
+- Docs: wa2017 / fed2019 walk-throughs; independent-gap carry walk (line closed).
+
 # auspol 0.4.121
 
 - **VEC final candidate list** (`scripts/fetch_vec_candidates.R`, `build_candidacies.R` BC10v): parses the VEC's Candidates set-up file (from 10 Nov) and makes it vic2026's list, replacing the Wikipedia/ABC union. Proven on the VEC's 2022 file: all 731 vic2022 candidacies matched with the same class (`scripts/check_vec_candidates_vic2022.R`). Refuses a truncated file, anything but 88 districts, and two same-key candidates in one district. Dry run of the build and of `AUSPOL_NOM_LIVE=1` passed on a stand-in list.
