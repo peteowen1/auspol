@@ -1072,19 +1072,11 @@ unexplained <- Filter(function(sw) is.null(CLASSIFY[[sw]]) && !fmt_row(sw)$unive
 
 # MR4: every AUSPOL_* name the code reads with Sys.getenv("...") must be registered in published_flags.R or listed in
 # scripts/non_model_switches.R (Pete, 2026-10-29: 140 had drifted in unlisted). Reads on comment lines don't count.
+# The scan lives in scripts/non_model_switches.R (mr4_scan()) so tests/testthat/test-switch-registry.R can fail CI on it.
 source("scripts/non_model_switches.R")
-.registered <- sub("^\\s*(AUSPOL_[A-Z0-9_]+)\\s*=.*$", "\\1", grep("^\\s*AUSPOL_[A-Z0-9_]+\\s*=", pf, value = TRUE))
-.read_names <- unique(unlist(lapply(c(list.files("R", "\\.R$", full.names = TRUE),
-                                      setdiff(list.files("scripts", "\\.R$", full.names = TRUE), "scripts/build_model_registry.R")),
-  function(f) {
-    x <- readLines(f, warn = FALSE)
-    x <- x[!grepl("^\\s*#", x)]
-    m <- regmatches(x, gregexpr("Sys\\.getenv\\(\\s*\"AUSPOL_[A-Z0-9_]+\"", x))
-    sub("^.*\"(AUSPOL_[A-Z0-9_]+)\"$", "\\1", unlist(m))
-  })))
-unlisted <- sort(setdiff(.read_names, c(.registered, names(NON_MODEL_SWITCHES))))
-stale_listed <- sort(setdiff(names(NON_MODEL_SWITCHES), .read_names))
-both <- sort(intersect(.registered, names(NON_MODEL_SWITCHES)))
+.mr4 <- mr4_scan(".")
+.registered <- .mr4$registered; .read_names <- .mr4$read
+unlisted <- .mr4$unlisted; stale_listed <- .mr4$stale_listed; both <- .mr4$both
 L <- c(L,
        "\n## Gaps the switch-presence matrix cannot see\n",
        "A grep for a switch's name proves the name is mentioned, not that the",

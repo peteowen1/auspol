@@ -435,6 +435,8 @@ test_that("per-booth results for the map: reported ordinary booths only, four fi
   expect_message(bb <- night_booth_results(conv, ref[, !"votes"]), "NW14")   # a damaged reference costs the swing, not the booths
   expect_length(bb$Hawthorn, 2L); expect_false("sn" %in% names(bb$Hawthorn[[1]]))
   conv$live <- conv$live[conv$live$booth != "Glenferrie", ]
+  expect_identical(auspol:::.night_norm(c("St Kilda", "Saint Kilda", "Mt. Eliza", "Mount Eliza", "Stanhope")),
+                   c("saintkilda", "saintkilda", "mounteliza", "mounteliza", "stanhope"))   # the page's Mt/St rule; whole words only
 
   conv$tcp <- conv$tcp[0, ]                                    # 2CP not posted yet: first preferences only
   expect_null(night_booth_results(conv)$Hawthorn[[1]]$tn)

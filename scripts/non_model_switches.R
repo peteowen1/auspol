@@ -4,8 +4,11 @@
 #   DIAG    read only by a diagnostic or analysis script, or only prints or dumps detail
 #   BUILDER read only by a by-hand builder or fetcher whose output files the pipeline reads
 #   RETIRED read only by a script the pipeline no longer runs, kept because diagnostics read its old output
-# scripts/build_model_registry.R (MR4) flags any AUSPOL_* name in R/ or scripts/ that is in neither list, so a new
-# switch has to be registered or listed here. Classification: docs/reviews/unregistered-switches-2026-10-29.tsv.
+# mr4_scan() below finds every AUSPOL_* name read in R/ or scripts/; tests/testthat/test-switch-registry.R FAILS CI on
+# any name in neither list (and scripts/build_model_registry.R prints it as MR4!), so a new switch has to be registered
+# or listed here. It sees only a literal Sys.getenv("AUSPOL_NAME" on one line: names built with sprintf (the
+# AUSPOL_{QLD,WA,SA}_FLOWS / _CUTOFF reads in R/external_flows.R) and loop reads are registered by hand.
+# Classification: docs/reviews/unregistered-switches-2026-10-29.tsv.
 NON_MODEL_SWITCHES <- c(
   AUSPOL_AEF_RUNDIR              = "RUN",  # build_aef_comparison.R
   AUSPOL_AEF_WORST               = "DIAG",  # build_aef_comparison.R
@@ -123,3 +126,24 @@ NON_MODEL_SWITCHES <- c(
   AUSPOL_V7_SHIP                 = "RETIRED",  # fit_xgb_primary_v7.R
   AUSPOL_V7_SPLIT_BASE           = "RETIRED"   # fit_xgb_primary_v7.R
 )
+
+# MR4: every AUSPOL_* name read with Sys.getenv("...") in R/ or scripts/ (comment lines skipped) against the names
+# registered in published_flags.R and the names listed above. `root` is the repository root.
+mr4_scan <- function(root = ".") {
+  pf <- readLines(file.path(root, "scripts", "published_flags.R"), warn = FALSE)
+  registered <- sub("^\\s*(AUSPOL_[A-Z0-9_]+)\\s*=.*$", "\\1", grep("^\\s*AUSPOL_[A-Z0-9_]+\\s*=", pf, value = TRUE))
+  files <- c(list.files(file.path(root, "R"), "\\.R$", full.names = TRUE),
+             list.files(file.path(root, "scripts"), "\\.R$", full.names = TRUE))
+  files <- files[!basename(files) %in% c("build_model_registry.R", "non_model_switches.R")]
+  read <- unique(unlist(lapply(files, function(f) {
+    x <- readLines(f, warn = FALSE)
+    x <- x[!grepl("^\\s*#", x)]
+    m <- regmatches(x, gregexpr("Sys\\.getenv\\(\\s*\"AUSPOL_[A-Z0-9_]+\"", x))
+    sub("^.*\"(AUSPOL_[A-Z0-9_]+)\"$", "\\1", unlist(m))
+  })))
+  listed <- names(NON_MODEL_SWITCHES)
+  list(read = read, registered = registered, n_files = length(files),
+       unlisted = sort(setdiff(read, c(registered, listed))),
+       stale_listed = sort(setdiff(listed, read)),
+       both = sort(intersect(registered, listed)))
+}

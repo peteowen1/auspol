@@ -298,7 +298,7 @@ night_booth_results <- function(conv, ref = NULL) {
     }
     out <- list(n = tot$booth[i], counted = TRUE, now = now, tn = tn)
     if (!is.null(prev)) {
-      j <- match(paste(.night_norm(tot$district[i]), .night_norm(tot$booth[i]), sep = "\r"), prev$key4)
+      j <- match(paste(.night_dkey(tot$district[i]), .night_norm(tot$booth[i]), sep = "\r"), prev$key4)
       out["sn"] <- list(if (is.na(j)) NULL else round(.night_gap(now$ALP, now$LNP, tot$tv[i]) - .night_gap(prev$alp[j], prev$lnp[j], prev$tot[j]), 2))
     }
     out
@@ -306,8 +306,17 @@ night_booth_results <- function(conv, ref = NULL) {
   split(rows, tot$district)
 }
 
-# Letters and digits only, lower case: the booth-name match the page's builder uses (ITG politics/night-maps/build-booths.py).
-.night_norm <- function(x) gsub("[^a-z0-9]", "", tolower(x))
+# Booth-name key: the live page's normB() (ITG politics/night-maps/night-maps.js, mergeNight: case, punctuation, Mt -> Mount,
+# St -> Saint), then spaces dropped as the page's builder does (build-booths.py: letters and digits only).
+.night_norm <- function(x) {
+  x <- gsub("[^a-z0-9 ]", " ", tolower(x))
+  x <- gsub("\\bmt\\b", "mount", x, perl = TRUE)
+  x <- gsub("\\bst\\b", "saint", x, perl = TRUE)
+  gsub(" ", "", x, fixed = TRUE)
+}
+# District key: letters and digits only, no Mt/St rule (the page looks districts up by name, and the 2018 booth file
+# spells St Albans "Stalbans", which the St rule would split from 2022's "St Albans").
+.night_dkey <- function(x) gsub("[^a-z0-9]", "", tolower(x))
 # Labor minus Coalition, in points of every first preference (other candidates stay in the denominator).
 .night_gap <- function(alp, lnp, total) (alp - lnp) / total * 100
 # The previous election's ordinary booths as Labor, Coalition and all votes, keyed by normalised district and booth; booths
@@ -317,7 +326,7 @@ night_booth_results <- function(conv, ref = NULL) {
   if (length(miss)) stop("previous-election booth table lacks ", paste(miss, collapse = ", "), call. = FALSE)
   r <- ref[ref$booth_type == "ordinary", ]
   cls <- classify_party(r$party)
-  d <- data.table::data.table(key4 = paste(.night_norm(r$district), .night_norm(r$booth), sep = "\r"),
+  d <- data.table::data.table(key4 = paste(.night_dkey(r$district), .night_norm(r$booth), sep = "\r"),
                               is_alp = cls == "ALP", is_lnp = cls == "LNP", v = as.numeric(r$votes))
   d <- d[, list(alp = sum(v[is_alp]), lnp = sum(v[is_lnp]), tot = sum(v)), by = "key4"]
   d[d$tot > 0, ]
@@ -339,7 +348,7 @@ night_seat_swing <- function(booths, ref) {
   sw <- vapply(names(booths), function(d) {
     a <- c(0, 0, 0); o <- c(0, 0, 0)
     for (b in booths[[d]]) {
-      j <- match(paste(.night_norm(d), .night_norm(b$n), sep = "\r"), prev$key4)
+      j <- match(paste(.night_dkey(d), .night_norm(b$n), sep = "\r"), prev$key4)
       if (is.na(j)) next
       a <- a + c(b$now$ALP, b$now$LNP, sum(unlist(b$now))); o <- o + c(prev$alp[j], prev$lnp[j], prev$tot[j])
     }
