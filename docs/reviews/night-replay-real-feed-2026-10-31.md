@@ -60,3 +60,15 @@ Night-average seat log loss over every replay time with something counted (lower
 - Wentworth 2022, surge off, mean centre: 0.37 in the afternoon, 0.90 at 7:15pm, 0.99 at 7:45pm, and it holds.
 - vic2022 surge off: afternoon 0.2643 -> 0.2423; at 8pm 0.1257 against 0.1038 for surge-on fade-only; 87 of 88 right
   from 9pm (Bass the miss). Fix 2 (each draw's flow from its own primaries) is no longer needed for Wentworth.
+
+## Addendum 2, 31 Oct evening: fix 2 (each draw's flow from its own primaries) and why it needs flow uncertainty
+
+Built as `night_apply_tcp(own_fp = TRUE)` / `night_run_update(tcp_own_fp = TRUE)` (off by default). Surge off,
+fade + median, floor 0.01: fed2025 0.1420 -> 0.1447 night average (end 0.1126 -> 0.1223), worse. Cowper fed2025 at
+3am, Nationals' win (they held): 0.706 -> 0.274. Traced: the draws' own primaries average the count exactly (IND 31.9,
+LNP 37.3) and so do their implied flows (0.66), but with `AUSPOL_FLOW_SD = 0` every draw's OWN implied flow is
+identical, so the prior flow sd is the 0.01 floor and a counted flow of 0.54 (se 0.02) moves the prior only to
+~0.64: posterior IND share 0.506, IND win 0.73. With the counted primaries, the draws' implied flows scatter (their
+primaries differ from the count), which the update reads as flow uncertainty, so the count dominates: 0.495, IND
+0.29. Right answer for the wrong reason. Fix 2 is correct only with an honest flow uncertainty: the measured 0.065
+floor (arm running) or flow noise in the seat simulation (`plans/prereg-flow-sd-2026-10-31.md`).
