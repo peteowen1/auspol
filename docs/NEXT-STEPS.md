@@ -114,8 +114,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   Footscray ALP 0.72 -> 0.64, Pascoe Vale 0.56 -> 0.50); recency-weighted card rows `AUSPOL_HTV_RECENCY_HL` screening
   (`plans/prereg-htv-recency-2026-10-31.md`). OPEN, DATED: the day the Victorian Liberals publish their card, add a
   `vic2026,ALL,<greens_above_labor>,<source>` row to `external/reference/htv/liberal-alp-grn-order.csv` (the mix then stops).
-  Review nits: duplicate region refused and the night `htv_card` test added (1 Nov). OPEN: while the card is unknown
-  each night update simulates twice; time one before polling day.
+  Review nits: duplicate region refused and the night `htv_card` test added (1 Nov). Timed 1 Nov: a night update with the
+  card mix takes 23.9 s vs 11.4 s (20k sims): fine at a minutes cadence, and gone once the card row is added. CLOSED.
   Box Hill (our ALP 0.86 vs Sportsbet 0.25) traced to the proportional One Nation fill: `reviews/boxhill-trace-2026-11-01.md`,
   to walk with Pete (Box Hill, Ashwood, Glen Waverley).
   Evidence: `reviews/night-replay-real-feed-2026-10-31.md`, `reviews/night-replay-fed-2026-10-30.md`.
