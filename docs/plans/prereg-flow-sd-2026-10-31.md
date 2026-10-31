@@ -44,3 +44,11 @@ barely move. B helps the tails more and costs more in calibration of close class
 
 What would make an apparent win unacceptable: a gain that comes only from widening every close classic seat
 toward 50% (check: classic-pair seats' log loss must not get worse by more than 1 SE).
+
+## Screen (2026-10-31 7:29pm, AEF-7, 1,000 sims, surge-off code 010e5741)
+
+- A (3.65): +0.0022 (SE 0.0022), worse by 1 SE; not stopped (the stop is 2 SE).
+- B (6.5): -0.0001 (SE 0.0025), within 1 SE; vic2022 0.2430 -> 0.2402, fed2025 0.3451 -> 0.3381, sa2026 0.2383 -> 0.2538.
+- Flow noise changes the random stream, so arm and baseline do not share draws here: the screen is noisier than
+  usual. Per step 2 both go to the deciding run, one at a time: B `deciding-runs/20261031-1929-flowsd-6p5` (started
+  7:29pm), A `deciding-runs/20261031-1929-flowsd-3p65` (scheduled 10:30pm).
