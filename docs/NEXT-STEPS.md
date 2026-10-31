@@ -137,6 +137,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   output/retiring-mp-cases.csv regenerated (was 13 Sep: 343 rows, missing 12 elections; now 507). Stage-3 rebuild running
   (`...-rebuild-s3`); its stage 4 reused all 31 models (5 s vs 1,709 s). TODO after: add build_retiring_mp_cases.R to
   rebuild stage 0; publish on Pete's yes. Audit: 19 of 22 state elections match booth totals exactly; federal within 0.1%.
+  Audit 1 Nov of forecast inputs built OUTSIDE the rebuild vs their builders' last commit: 7 flagged, all false alarms (6 a
+  check-code rename on 9 Oct, 1 a first commit after its first run); only the two files above were really stale.
 - OPEN from the 30 Oct walks (https://claude.ai/artifact/USv8sffhF1zbYagBGwjdQ3, `reviews/walks-wa2017-fed2019-2026-10-30.md`):
   WA seat layer ~5 pts above the statewide Labor level (36.4 -> 41.2) yet 5-15 short in the swing seats, untraced;
   fed2019 shared miss (38% of margin error): is the correlated statewide draw wide enough? Idea only: a per-person
