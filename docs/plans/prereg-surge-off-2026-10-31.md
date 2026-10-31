@@ -38,3 +38,19 @@ independent fell short or won narrowly (the second hump puts mass where nothing 
 What would make an apparent pass unacceptable: any WA pair moving; seats that did fall to a far-back outsider
 (called above 0.99 for a major and lost) going to a floor probability they did not have before. Those get listed,
 and Pete decides.
+
+## RESULT (2026-10-31, deciding run `deciding-runs/20261031-1346-surge-off`, code 8702ae31, 20k sims, 35 elections)
+
+Amendment, visible: step 1 (the AEF-7 screen) was skipped after Pete said he wanted the surge off; it could only
+have stopped the run early, not changed the rule. "All 22" in step 2 is now 35 elections (2,931 seats).
+
+- Pooled seat-winner log loss +0.0002 (SE 0.0028): within 1 SE. PASS.
+- Acted seats (1,587): +0.0003 (SE 0.0053): within 1 SE. PASS.
+- No election worse by more than 2 SE (worst qld2017 +0.032, SE 0.024; nsw2019 +0.048, SE 0.055). PASS.
+- Every WA pair byte-identical. PASS.
+- AEF-7 ledger -0.0076 (SE 0.0073); vic2022 -0.0221 (SE 0.0050); fed2025 -0.0270 (SE 0.0052); fed2022 +0.0139 (SE 0.0153).
+- Unacceptable-pass clause, for Pete: winners pushed below 0.01 by surge-off: Murray nsw2019 0.0163 -> 0.0001,
+  Shepparton vic2014 0.0360 -> 0.0009, Noosa qld2017 0.0423 -> 0.0100, Mirani qld2017 0.0102 -> 0.0063.
+- Named fed2022 seats, IND win: Wentworth 0.649 -> 0.370, Warringah 0.736 -> 0.945, Kooyong 0.695 -> 0.588,
+  Curtin 0.516 -> 0.374, Mackellar 0.276 -> 0.116.
+Scorer: `python scripts/score_surge_off.py deciding-runs/20261031-1346-surge-off`. Decision: Pete (below).
