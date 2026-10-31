@@ -1,3 +1,10 @@
+# auspol 0.4.125
+
+- **Liberal how-to-vote card probability** (`AUSPOL_HTV_CARD_P = "vic=0.67"`, live only): with no published 2026 card, the forecast simulates both cards and mixes the draws (HTV2; `htv_card_p()`, `htv_mix_sims()`); the night state and `night_run_update()` mix the same way. Footscray ALP 0.72 -> 0.64, Pascoe Vale 0.56 -> 0.50. Add the vic2026 card row when published.
+- `AUSPOL_HTV_RECENCY_HL` (off, prereg `plans/prereg-htv-recency-2026-10-31.md`): recency weights on the card flow rows.
+- Night 2CP: optional per-draw flow from each draw's own primaries (`night_apply_tcp(own_fp =)`, `--tcp-own-fp`, off).
+- `AUSPOL_FLOW_SD` refused (no seat moves more than 0.021 over 35 elections).
+
 # auspol 0.4.124
 
 - **Surge mixture OFF** (`AUSPOL_SALIENCE_SURGE_V2 = "0"`): it added ~+36 points to a third of draws in high-salience seats, sitting MPs included (Spender 2025 34.2 -> 69.3 in 19% of draws). 35 elections at 20k: +0.0002 (SE 0.0028), every clause passed (`docs/plans/prereg-surge-off-2026-10-31.md`). Independents keep the 17 Oct spread.
