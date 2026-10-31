@@ -8,7 +8,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
-- **Status 31 Oct.** PR #179 and #180 merged to main 31 Oct (night fixes; surge mixture OFF). Published config is the 28 Oct stage-6 rebuild (3C shipped, PR #159; AEF-7 0.2639 vs AEF
+- **Status 1 Nov (overnight).** main has PR #179-#181 (night fixes; surge OFF; Liberal card probability vic=0.67). On dev, not
+  merged: recency-weighted card rows ON (`AUSPOL_HTV_RECENCY_HL=8`, prereg passed), stale-clone print (ANC1), poll-table
+  precedence + `scripts/refresh_local_poll_inputs.sh` (run it before ANY local forecast run: a 5-day-old clone and a
+  13 Oct scrape gave One Nation 14.2 seats vs the site's 16.6 on 31 Oct), true poll snapshot on the release.
   0.2825; snapshot `output/snapshots/20261028-1109-14111624-from6`). 30 Oct: MP-slope pool SHIPPED on `dev`
   (`AUSPOL_MP_SLOPE_POOL=1`, Pete over clause 3; DECISIONS); it reaches the published forecast when dev merges to
   main. The worker-started forecast and ops ran on time 30 Oct (04:30 run success, 08:58 cron skipped at its gate).
