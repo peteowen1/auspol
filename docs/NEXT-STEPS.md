@@ -95,11 +95,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   slope of -23.1 (n 1, se ~11) enters the DerSimonian-Laird sum: qld2015, sa2014, vic2014 get tau^2 ~0.57 (0 at most
   targets), so IND there keeps w 0.99 instead of pooling (`output/mp-slope-pooled.csv`; `R/mp_slope_pool.R:79-83`).
   The all-35 screen ran on this table. A fix (drop near-zero-variance classes from the tau^2 sum) needs its own screen.
-- OPEN, NIGHT MODEL (before 28 Nov). Shipped: surge fade ON, flow floor 0.01, median centre ON pending (PR #179,
-  #180). The surge mixture is now OFF (DECISIONS 31 Oct), which removes the Wentworth root cause; replays of fed2022,
-  fed2025 and vic2022 with it off are running to re-decide the median, then fix 2 (each draw's flow from its own
-  primaries) only if still needed. Still wrong: draws with a different final pair are never corrected (Melbourne and
-  Monash 2025); statewide draws shrink by the national mean counted, not the seat's; projection sd floors at 0.26.
+- OPEN, NIGHT MODEL (before 28 Nov). DONE 31 Oct: surge fade ON, flow floor 0.01, median ON, surge mixture OFF;
+  surge-off replays settle it (Wentworth 2022 called 7:45pm with no patch; median within 0.001 on all three nights).
+  Still wrong: draws with a different final pair are never corrected (Melbourne and Monash 2025); statewide draws
+  shrink by the national mean counted, not the seat's; projection sd floors at 0.26.
   Evidence: `reviews/night-replay-real-feed-2026-10-31.md`, `reviews/night-replay-fed-2026-10-30.md`.
 - OPEN, REPLAY METHOD: federal and vic2022 replay on real nights (`scripts/night_replay_feed.R`,
   `scripts/night_replay_vec.R`); the other state replays are still simulated (one block per seat, clock = 6pm + 4h x
