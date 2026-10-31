@@ -4,7 +4,7 @@
 # two-candidate counts of those places only where the pair on screen at T was the final pair and not withdrawn.
 #
 #   Rscript scripts/night_replay_feed.R --state=<state-fed2022.rds> [--out=<dir>] [--times=18:00,...] [--surge-fade=1]
-#       [--tcp-center=median] [--tcp-flow-floor=0.065] [--label=base]
+#       [--tcp-center=median] [--tcp-flow-floor=0.01] [--label=base]
 #
 # Simplifications (say them in every result): a reported place carries its FINAL count, not its first-night figure;
 # declaration votes (postal, absent, provisional, declaration pre-poll) are never counted on the night here (the AEC

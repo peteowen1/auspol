@@ -1,6 +1,8 @@
 """Clause scorer for docs/plans/prereg-surge-off-2026-10-31.md, from a deciding run's per-seat cache.
 
-Usage: python scripts/score_surge_off.py deciding-runs/<stamp>-surge-off
+Usage: python scripts/score_surge_off.py deciding-runs/<stamp>-surge-off [expected election count, default 35]
+Stops (SSO2!) unless both caches hold the same elections, the expected count, the same seats and the same winners.
+NB its log-loss floor is 1e-6; quick_arm's results.txt floors at 0.5/N, so the two differ for seats near zero.
 Reads cache/<key>/<election>/allprobs.csv for the two keys (baseline = the one whose params match the shipped config;
 told apart here by the run's log line naming each cache key). Prints: acted-seat log loss (seats whose win
 probabilities move by more than 0.001) with an election-clustered SE, per-election change in SEs, the ten largest
@@ -29,10 +31,19 @@ def load(key):
     return out
 
 B, A = load(keys["base"]), load(keys["arm"])
-elections = sorted(set(B) & set(A))
-print(f"SSO2 {len(elections)} elections in both (baseline {keys['base']}, arm {keys['arm']})")
-if not elections:
-    sys.exit("SSO2! no election in both caches")
+expect = int(sys.argv[2]) if len(sys.argv) > 2 else 35
+if set(B) != set(A):
+    sys.exit(f"SSO2! elections differ: baseline only {sorted(set(B) - set(A))}, arm only {sorted(set(A) - set(B))}")
+elections = sorted(B)
+print(f"SSO2 {len(elections)} elections in both (baseline {keys['base']}, arm {keys['arm']}; expected {expect})")
+if len(elections) != expect:
+    sys.exit(f"SSO2! scored {len(elections)} elections, expected {expect}")
+for e in elections:
+    if set(B[e][0]) != set(A[e][0]):
+        sys.exit(f"SSO2! {e}: seat sets differ (baseline only {sorted(set(B[e][0]) - set(A[e][0]))[:5]}, arm only {sorted(set(A[e][0]) - set(B[e][0]))[:5]})")
+    bad = [s for s in B[e][1] if B[e][1][s] != A[e][1].get(s)]
+    if bad:
+        sys.exit(f"SSO2! {e}: actual winner differs between baseline and arm in {bad[:5]}")
 
 ll = lambda p: -math.log(max(p, 1e-6))
 rows = []   # (election, seat, actual, p_base, p_arm, acted)
@@ -67,8 +78,12 @@ for e in elections:
     d = [ll(r[4]) - ll(r[3]) for r in rows if r[0] == e]
     mu = sum(d) / len(d); sd = math.sqrt(sum((x - mu) ** 2 for x in d) / max(1, len(d) - 1)); se = sd / math.sqrt(len(d))
     acted = sum(1 for r in rows if r[0] == e and r[5])
+    sb, sa = B[e][0], A[e][0]
+    maxd = max(abs(sb[s].get(p, 0.0) - sa[s].get(p, 0.0)) for s in sb for p in set(sb[s]) | set(sa[s]))
     flag = "  <-- WORSE > 2 SE" if se > 0 and mu > 2 * se else ""
-    print(f"  {e:8s} seats {len(d):3d} acted {acted:3d} change {mu:+.4f} (SE {se:.4f}){flag}")
+    if e.startswith("wa") and maxd > 0:
+        flag += "  <-- WA MOVED: the prereg makes a pass unacceptable"
+    print(f"  {e:8s} seats {len(d):3d} acted {acted:3d} max prob diff {maxd:.4f} change {mu:+.4f} (SE {se:.4f}){flag}")
 
 mv = sorted(rows, key=lambda r: ll(r[4]) - ll(r[3]))
 print("SSO5 ten seats most improved by surge-off (winner prob base -> arm):")

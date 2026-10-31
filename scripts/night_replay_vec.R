@@ -5,7 +5,7 @@
 #
 #   Rscript scripts/night_replay_vec.R --state=<night-state-vic2022.rds> --setup=<folder holding the 2022
 #       Candidates and PollingLocations XML, flat> [--feed=external/reference/vec/2026/feed-docs/inner22]
-#       [--out=<dir>] [--label=fixes] [--surge-fade=1] [--tcp-center=median] [--tcp-flow-floor=0.065] [--last-day=20221127]
+#       [--out=<dir>] [--label=fixes] [--surge-fade=1] [--tcp-center=median] [--tcp-flow-floor=0.01] [--last-day=20221127]
 #       [--stamps=<comma list of snapshot stamps to run, default all>]
 #
 # Defaults are the live runner's (since 2026-10-31); the before-fixes arm is
