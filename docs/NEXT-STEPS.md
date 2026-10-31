@@ -106,7 +106,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - OPEN, FLOW MEANS in non-classic contests (31 Oct, Melbourne/Monash fed2025): Liberal -> Labor-over-Greens is 60.4 in
   EVERY seat checked (Melbourne, Monash, Wills, Cooper); in 2025 the Liberal how-to-vote put the Greens last and Labor
   won Melbourne on it. Melbourne also: afternoon GRN 47.5 vs actual 39.5 (ALP 21.7 vs 31.3). Idea: seat-level
-  how-to-vote cards as a flow input (public, per party per seat). Walk with Pete before building.
+  how-to-vote cards as a flow input. FOUND 31 Oct: the card mechanism already exists (`AUSPOL_HTV_FLOW`, R/htv_flow.R).
+  BUILT 31 Oct (Pete): `AUSPOL_HTV_CARD_P=0.67` mixes both Liberal cards for vic2026 until it is published (live walk:
+  Footscray ALP 0.72 -> 0.64, Pascoe Vale 0.56 -> 0.50); recency-weighted card rows `AUSPOL_HTV_RECENCY_HL` screening
+  (`plans/prereg-htv-recency-2026-10-31.md`). OPEN, DATED: the day the Victorian Liberals publish their card, add a
+  `vic2026,ALL,<greens_above_labor>,<source>` row to `external/reference/htv/liberal-alp-grn-order.csv` (the mix then stops).
   Evidence: `reviews/night-replay-real-feed-2026-10-31.md`, `reviews/night-replay-fed-2026-10-30.md`.
 - OPEN, REPLAY METHOD: federal and vic2022 replay on real nights (`scripts/night_replay_feed.R`,
   `scripts/night_replay_vec.R`); the other state replays are still simulated (one block per seat, clock = 6pm + 4h x
