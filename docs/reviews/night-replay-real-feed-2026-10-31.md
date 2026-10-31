@@ -72,3 +72,8 @@ identical, so the prior flow sd is the 0.01 floor and a counted flow of 0.54 (se
 primaries differ from the count), which the update reads as flow uncertainty, so the count dominates: 0.495, IND
 0.29. Right answer for the wrong reason. Fix 2 is correct only with an honest flow uncertainty: the measured 0.065
 floor (arm running) or flow noise in the seat simulation (`plans/prereg-flow-sd-2026-10-31.md`).
+
+Fix 2 on the three nights (night-average seat log loss; surge off, fade + median): shipped 0.0745 / 0.1420 / 0.0631
+(fed2022 / fed2025 / vic2022); + own primaries 0.0734 / 0.1447 / 0.0575; + own primaries + 0.065 floor
+0.0751 / 0.1448 / 0.0700. No clear win: fix 2 stays built and OFF. Re-test it after flow noise reaches the seat
+simulation (`plans/prereg-flow-sd-2026-10-31.md`), which gives each draw a real flow of its own to learn from.

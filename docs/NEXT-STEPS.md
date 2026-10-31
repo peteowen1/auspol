@@ -99,6 +99,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   surge-off replays settle it (Wentworth 2022 called 7:45pm with no patch; median within 0.001 on all three nights).
   Still wrong: draws with a different final pair are never corrected (Melbourne and Monash 2025); statewide draws
   shrink by the national mean counted, not the seat's; projection sd floors at 0.26.
+  Fix 2 (each draw's flow from its own primaries) built, OFF (`--tcp-own-fp`): mixed on the three nights; needs flow
+  uncertainty in the draws first. Melbourne and Monash 2025 are not night defects: the AEC withdrew its wrong-pair
+  count, and from primaries alone the model is certain because flows are fixed (`AUSPOL_FLOW_SD=0`):
+  `plans/prereg-flow-sd-2026-10-31.md`, screening.
   Evidence: `reviews/night-replay-real-feed-2026-10-31.md`, `reviews/night-replay-fed-2026-10-30.md`.
 - OPEN, REPLAY METHOD: federal and vic2022 replay on real nights (`scripts/night_replay_feed.R`,
   `scripts/night_replay_vec.R`); the other state replays are still simulated (one block per seat, clock = 6pm + 4h x
