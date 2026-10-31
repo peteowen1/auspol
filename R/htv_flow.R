@@ -100,7 +100,7 @@ fit_htv_flow_rows <- function(target_election, dir = file.path("external", "elec
 #' @export
 htv_card_p <- function(target_election, table = NULL) {
   raw <- Sys.getenv("AUSPOL_HTV_CARD_P", "")
-  if (!nzchar(raw)) return(NA_real_)
+  if (!nzchar(raw) || identical(tolower(raw), "off")) return(NA_real_)   # "off": an empty value cannot be set from PowerShell
   p <- suppressWarnings(as.numeric(raw))
   if (!is.finite(p) || p < 0 || p > 1) stop("HTV10! AUSPOL_HTV_CARD_P must be in [0, 1]; got '", raw, "'", call. = FALSE)
   tab <- if (is.null(table)) htv_order_table() else data.table::as.data.table(table)
