@@ -98,7 +98,18 @@ check_poll_freshness <- function(regions, warn_days = 21, stale_days = 60,
     stop(sprintf("No parseable poll dates for %s - the source file is corrupt, not merely old.",
                  paste(broken$region, collapse = ", ")))
   }
+  # STOP ONLY WHEN THE COPY IS OLD. A region whose pollsters have simply gone quiet ("no new polls published") is the
+  # state of the world, not a pipeline fault, and the forecast from its latest polls is still the best available:
+  # on 2026-11-01 NSW reached 60 days without a poll (newest 1 Sep) and the strict gate halted the Victorian forecast
+  # too, twice, leaving the site on the previous day's numbers. That case now warns loudly (PFQ1!) and carries on.
   bad <- info[which(info$status == "STALE"), ]
+  quiet <- bad[which(bad$cause == " - no new polls published"), ]
+  bad <- bad[which(bad$cause != " - no new polls published"), ]
+  if (nrow(quiet)) {
+    qmsg <- sprintf("PFQ1! no new polls published for %s (%s days since the newest); forecasting from the latest polls.",
+                    paste(quiet$region, collapse = ", "), paste(quiet$age_days, collapse = ", "))
+    message(qmsg); warning(qmsg)
+  }
   if (nrow(bad)) {
     msg <- sprintf("Poll data is stale for %s (%s days old)%s.",
                    paste(bad$region, collapse = ", "),

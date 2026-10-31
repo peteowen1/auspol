@@ -226,6 +226,16 @@ test_that("check_poll_freshness stops on stale data and passes on fresh", {
   expect_equal(ok$age_days, 0L)
 })
 
+test_that("quiet pollsters warn and carry on; only an old copy of the data stops the run (NSW, 1 Nov 2026)", {
+  age <- function(file_age) function(region, as_of = Sys.Date())
+    list(region = region, latest = as_of - 60, age_days = 60L, file_age_days = file_age, n_recent = 1L)
+  local_mocked_bindings(poll_data_age = age(0L))                     # fresh copy, nobody has polled for 60 days
+  expect_warning(info <- suppressMessages(check_poll_freshness("nsw")), "PFQ1")
+  expect_equal(info$status, "STALE")                                  # still reported as stale
+  local_mocked_bindings(poll_data_age = age(30L))                    # our copy is a month old: a real fault
+  expect_error(suppressMessages(check_poll_freshness("nsw")), "our copy is old")
+})
+
 test_that("a region whose dates all fail to parse is BROKEN, not silently ok", {
   # which() DROPS NA rather than matching it, so an NA status vanished from the
   # stale gate — meaning the one region whose data was corrupt was the one
