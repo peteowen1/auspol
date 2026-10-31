@@ -4,7 +4,7 @@
 # two-candidate counts of those places only where the pair on screen at T was the final pair and not withdrawn.
 #
 #   Rscript scripts/night_replay_feed.R --state=<state-fed2022.rds> [--out=<dir>] [--times=18:00,...] [--surge-fade=1]
-#       [--tcp-center=median] [--tcp-flow-floor=0.065] [--label=base]
+#       [--tcp-center=median] [--tcp-flow-floor=0.01] [--label=base]
 #
 # Simplifications (say them in every result): a reported place carries its FINAL count, not its first-night figure;
 # declaration votes (postal, absent, provisional, declaration pre-poll) are never counted on the night here (the AEC
@@ -23,7 +23,7 @@ out_dir <- flag("out", file.path("output", "night-feed", "replay")); dir.create(
 label <- flag("label", "base")
 # defaults = the live runner's since 2026-10-31; the as-shipped-before arm is --surge-fade=0 --tcp-center=mean --tcp-flow-floor=0.01
 surge_fade <- !identical(flag("surge-fade", "1"), "0"); tcp_center <- flag("tcp-center", "median")
-tcp_floor <- as.numeric(flag("tcp-flow-floor", "0.065"))
+tcp_floor <- as.numeric(flag("tcp-flow-floor", "0.01"))
 day <- as.Date(c(`2022` = "2022-05-21", `2025` = "2025-05-03")[[as.character(yr)]])
 tm <- strsplit(flag("times", paste(c(sprintf("%02d:%02d", rep(18:23, each = 4), c(0, 15, 30, 45)), "24:00", "25:00", "26:00", "27:00"), collapse = ",")), ",")[[1]]
 at <- vapply(tm, function(x) { p <- as.integer(strsplit(x, ":")[[1]]); as.numeric(as.POSIXct(day, tz = "UTC") + p[1] * 3600 + p[2] * 60) }, numeric(1))

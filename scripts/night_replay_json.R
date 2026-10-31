@@ -24,7 +24,7 @@ fracs <- as.numeric(strsplit(flag("fracs", "0,0.05,0.1,0.25,0.5,0.75,1"), ",")[[
 out_dir <- flag("out", "output/night-replay"); dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 use_tcp <- !identical(flag("tcp", "1"), "0")
 early <- flag("early", "interleaved"); gap_k <- as.numeric(flag("gap_k", "5"))
-surge_fade <- !identical(flag("surge-fade", "1"), "0"); tcp_center <- flag("tcp-center", "median"); tcp_floor <- as.numeric(flag("tcp-flow-floor", "0.065"))   # night fixes, on by default since 2026-10-31 (the live runner's defaults)
+surge_fade <- !identical(flag("surge-fade", "1"), "0"); tcp_center <- flag("tcp-center", "median"); tcp_floor <- as.numeric(flag("tcp-flow-floor", "0.01"))   # night fixes, on by default since 2026-10-31 (the live runner's defaults)
 base <- if (!is.null(flag("base"))) jsonlite::fromJSON(flag("base"), simplifyVector = FALSE) else NULL
 st <- readRDS(state_f); sims <- as.integer(flag("sims", st$n_sims))
 # Any election: the region comes from the state's pair label ("nsw2023" -> "nsw"); --live, --prev and --tcp-file

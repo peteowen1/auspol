@@ -1,3 +1,9 @@
+# auspol 0.4.124
+
+- **Surge mixture OFF** (`AUSPOL_SALIENCE_SURGE_V2 = "0"`): it added ~+36 points to a third of draws in high-salience seats, sitting MPs included (Spender 2025 34.2 -> 69.3 in 19% of draws). 35 elections at 20k: +0.0002 (SE 0.0028), every clause passed (`docs/plans/prereg-surge-off-2026-10-31.md`). Independents keep the 17 Oct spread.
+- **Night 2CP flow floor back to 0.01** (0.065 never helped on the real-night replays); **`scripts/night_replay_vec.R`** replays Victoria 2022 from the VEC's hourly snapshots through the live conversion.
+- `scripts/score_surge_off.py` (prereg clause scorer), `scripts/fetch_state_commissions.py` (raw fetcher).
+
 # auspol 0.4.123
 
 - **Election-night fixes ON by default** (`night_run_update()`, `night_cycle()`; flags `--surge-fade`, `--tcp-center`, `--tcp-flow-floor`): the pre-election surge fades as each seat is counted, the two-candidate update centres on the median draw, and the flow sd floor is 0.065 (measured; was 0.01). Real-night replays of fed2022 and fed2025 from the AEC's archived feed: seats wrong at 3am 4 -> 1 and 7 -> 4; Wentworth 2022 never called -> called 7:45pm (`docs/reviews/night-replay-real-feed-2026-10-31.md`). NW17 stops on a non-finite floor.

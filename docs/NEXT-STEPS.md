@@ -106,6 +106,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `docs/reviews/night-replay-real-feed-2026-10-31.md`): seats wrong at 3am fed2022 4 -> 1, fed2025 7 -> 4; Wentworth
   2022 never -> called 7:45pm. Needs Pete's yes to turn on in the live runner (and wiring through `night_cycle` flags).
   Melbourne and Monash 2025 stay wrong: the different-final-pair defect.
+  31 Oct pm: shipped (PR #179), then split per fix on fed2022/fed2025/vic2022 (vic from the VEC's own hourly
+  snapshots, `scripts/night_replay_vec.R`). Floor never helped: back to 0.01. Median helps federal, hurts vic
+  (Mildura, Mornington, Hawthorn 7-10pm). Root cause is the surge mixture still firing after the count (Wentworth:
+  a third of draws at IND 65.8); surge-off deciding run in flight (`plans/prereg-surge-off-2026-10-31.md`). After it:
+  re-decide the median, and fix 2 (each draw's flow from its own primaries) only if still needed.
 - OPEN, FLOWS (30 Oct): `output/flows-estimated.csv` has Greens -> Labor HIGH against the AEC's official two-party
   flow every time: fed2019 86.16 vs 82.21, fed2022 89.07 vs 85.66, fed2025 95.06 vs 88.19 (+3.95/+3.41/+6.87;
   `external/reference/aec/tallyroom/<event>/HouseTppFlowByPartyDownload-<event>.csv`; the 2025 file puts the ALP

@@ -13,7 +13,7 @@ pth <- function(i, d) if (length(a) >= i && nzchar(a[i])) a[i] else d
 L <- fread(pth(3, sprintf("output/booths-%s%d.csv", region, st$to))); R <- fread(pth(4, sprintf("output/booths-%s%d.csv", region, st$from)))
 Tc <- fread(pth(5, sprintf("output/booths/%s%d-booth-tcp.csv", region, st$to)))
 fracs <- c(0, 0.05, 0.1, 0.25, 0.5, 0.75, 1)
-surge_fade <- !identical(Sys.getenv("AUSPOL_NIGHT_SURGE_FADE", "1"), "0"); tcp_center <- Sys.getenv("AUSPOL_NIGHT_TCP_CENTER", "median"); tcp_floor <- as.numeric(Sys.getenv("AUSPOL_NIGHT_TCP_FLOW_FLOOR", "0.065"))
+surge_fade <- !identical(Sys.getenv("AUSPOL_NIGHT_SURGE_FADE", "1"), "0"); tcp_center <- Sys.getenv("AUSPOL_NIGHT_TCP_CENTER", "median"); tcp_floor <- as.numeric(Sys.getenv("AUSPOL_NIGHT_TCP_FLOW_FLOOR", "0.01"))
 cat(sprintf("night fixes: surge-fade=%s tcp-center=%s tcp-flow-floor=%s\n", surge_fade, tcp_center, tcp_floor))
 clock <- function(f) { m <- round(18 * 60 + 240 * f); sprintf("%d:%02dpm", (m %/% 60) - 12, m %% 60) }
 # counted primaries by unit, same unit rule as night_booth_update()

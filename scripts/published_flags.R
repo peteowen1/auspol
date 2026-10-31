@@ -58,7 +58,7 @@ PUBLISHED_FLAGS <- c(
                                              # HOW FAR THIS ACTUALLY REACHES (2026-09-14, found by the review gate): the FEDERAL BACKTEST only. fit_seats_full.R -- the live Victorian forecast -- has no notional path at all, and build_notional_baselines.R reads the federal AEC polling-place download, so it cannot produce Victorian data. Nor does fit_xgb_primary_v6_final.R, which builds the model artifact xgb_primary_predict_live() serves, so output/xgb-primary-v6-final-cols.json carries no x_notional_adj either. Setting this flag does not change the published Victoria 2026 numbers; it changes what the federal backtest measures.
   AUSPOL_MP_SLOPE            = "1",          # sitting-member slope tier from output/mp-slope-by-*.csv
   AUSPOL_DEFECT_DISCOUNT     = "1",          # major-party defector carries a fitted fraction of their vote
-  AUSPOL_SALIENCE_SURGE_V2   = "1",          # per-seat emergence hazard from the salience corpus
+  AUSPOL_SALIENCE_SURGE_V2   = "0",          # TURNED OFF 2026-10-31 (Pete: "turn off in its current state for sure"; plans/prereg-surge-off-2026-10-31.md, 35 elections +0.0002 SE 0.0028, every clause passed, 4 floor-pushed upsets listed and accepted). It added N(~36, ~12) points to a third of draws in high-salience seats, SITTING MPs included (Spender 2025: 34.2 -> 69.3 in 19% of draws), giving two-humped forecasts and the election-night Wentworth defect. Independents keep the 17 Oct spread (AUSPOL_COMPOSITION_SD + AUSPOL_ERROR_DIST). Was "1": per-seat emergence hazard from the salience corpus
   AUSPOL_SURGE_SCALE         = "1",          # multiplier on that hazard, capped at 1; docs/plans/prereg-surge-hazard-scale-2026-09-06.md
   AUSPOL_SURGE_RECIPIENT     = "1",          # the surge goes to the class the hazard was fitted for; shipped 2026-09-07 (prereg-surge-recipient-2026-09-06.md, stage 2)
   AUSPOL_SURGE_SOURCE        = "none",       # which swing makes a class "surging" in the salience screen (and the xgb permit/governed features). "none" = no class is ever surging; chosen 2026-10-16 by plans/prereg-surge-flag-time-forward-2026-10-15.md (reviews/surge-flag-arms-2026-10-16.md: T within 1 SE on the targeted 15 and refused by the one-election clause, qld2017 102% of its gain). "actual" LEAKS (abs() of the target's own result, reviews/surge-flag-leak-2026-10-15.md); "forecast" rises in the time-forward statewide forecast.
@@ -482,7 +482,7 @@ PUBLISHED_FLAGS <- c(
                                              # measure the suspected double count: both are driven by the same hazard
                                              # fit, so the lift may be ~1.7x intended wherever a corpus exists.
                                              # Added 2026-09-11; docs/ARCHITECTURE.md "What the simulator actually does".
-  AUSPOL_SURGE_H             = "0",          # flat fallback hazard, used only when surge-v2 has no corpus
+  AUSPOL_SURGE_H             = "0",          # flat hazard: the live value whenever surge-v2 is off (since 2026-10-31) or has no corpus
   # switches the harnesses know and the forecast does not: listed so a harness
   # run at "published defaults" has them OFF explicitly, not by accident
   AUSPOL_IND_SALIENCE        = "0",          # v1 national salience ratio -- NOT shipped
