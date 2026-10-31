@@ -134,7 +134,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   rows change (980,713 -> 1,119,262 votes; shares move up to 2.2 pts, Schubert). NOT swapped into output/candidacies.csv:
   the swap needs the xgb/MP-slope refits and a 35-election rescore (sa2026 is an AEF-7 pair). Audit 1 Nov of every
   election with a booth file: 19 of 22 match exactly; sa2026 +0.23% (2,621 votes, untraced), vic2018 +0.10%, vic2006 +1.25%
-  (candidacies higher: the booth file is the short one). Federal not compared (no booth-fp files in output/booths).
+  (candidacies higher: the booth file is the short one). Federal vs the AEC formal totals: all 7 within 0.1%.
 - OPEN from the 30 Oct walks (https://claude.ai/artifact/USv8sffhF1zbYagBGwjdQ3, `reviews/walks-wa2017-fed2019-2026-10-30.md`):
   WA seat layer ~5 pts above the statewide Labor level (36.4 -> 41.2) yet 5-15 short in the swing seats, untraced;
   fed2019 shared miss (38% of margin error): is the correlated statewide draw wide enough? Idea only: a per-person
