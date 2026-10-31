@@ -22,7 +22,7 @@ feed_dir <- flag("feed", "external/reference/vec/2026/feed-docs/inner22")
 out_dir <- flag("out", file.path("output", "night-feed", "replay")); dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 label <- flag("label", "fixes"); last_day <- flag("last-day", "20221127")
 surge_fade <- !identical(flag("surge-fade", "1"), "0"); tcp_center <- flag("tcp-center", "median")
-tcp_floor <- as.numeric(flag("tcp-flow-floor", "0.01"))
+tcp_floor <- as.numeric(flag("tcp-flow-floor", "0.01")); own_fp <- identical(flag("tcp-own-fp", "0"), "1")
 pair_lbl <- sprintf("vic%d", st$to)
 ref <- fread(sprintf("output/booths-vic%d.csv", st$from), showProgress = FALSE)
 turn <- fread(sprintf("output/council-district-stats-%d.csv", st$from), showProgress = FALSE)
@@ -39,7 +39,7 @@ P <- fread("output/published-predictions.csv"); keep_p <- P$pair == pair_lbl; P 
 win <- P[P$won == TRUE, list(seat, party)]
 seats <- rownames(st$shares)
 cat(sprintf("NRV1 %s: %d seats in state, %d snapshots %s to %s, %d sims; label %s (surge-fade %s, tcp-center %s, tcp-flow-floor %s); %d winners to score\n",
-            pair_lbl, length(seats), length(files), stamp[1], stamp[length(stamp)], nrow(st$swd), label, surge_fade, tcp_center, tcp_floor, nrow(win)))
+            pair_lbl, length(seats), length(files), stamp[1], stamp[length(stamp)], nrow(st$swd), label, surge_fade, tcp_center, tcp_floor, nrow(win))); cat(sprintf("NRV1 tcp-own-fp %s\n", own_fp))
 
 summ <- list(); seat_rows <- list()
 for (k in seq_along(files)) {
@@ -48,7 +48,7 @@ for (k in seq_along(files)) {
   enr <- stats::setNames(feed$contests$enrolment, sub(" District$", "", feed$contests$district))
   expected <- night_expected_votes(enr, night_turnout_table(turn, ref), "night")
   r <- night_run_update(st, conv, ref, gap_k = 5, total = "expected", expected = expected, use_tcp = TRUE,
-                        surge_fade = surge_fade, tcp_center = tcp_center, tcp_flow_floor = tcp_floor)
+                        surge_fade = surge_fade, tcp_center = tcp_center, tcp_flow_floor = tcp_floor, tcp_own_fp = own_fp)
   tot <- r$sim$totals; alp <- tot[, "ALP"]; oth <- tot[, setdiff(colnames(tot), "ALP"), drop = FALSE]
   wp <- as.data.table(r$sim$win_prob)
   sc <- merge(win, wp, by = c("seat", "party"), all.x = TRUE); sc[is.na(prob), prob := 0]

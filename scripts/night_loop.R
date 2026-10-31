@@ -17,7 +17,7 @@ cfg <- list(source = need("source"), archive = need("archive"), setup = flag("se
             sims = if (!is.null(flag("sims"))) as.integer(flag("sims")) else NULL,
             use_tcp = identical(flag("tcp", "1"), "1"), allow_stub = identical(flag("allow-stub", "0"), "1"),
             turnout = flag("turnout"), council_lean = flag("council-lean"), early_partial = identical(flag("early-partial", "0"), "1"), allow_unmatched = identical(flag("allow-unmatched", "0"), "1"), allow_projected = identical(flag("allow-projected", "0"), "1"),
-            surge_fade = !identical(flag("surge-fade", "1"), "0"), tcp_center = flag("tcp-center", "median"), tcp_flow_floor = as.numeric(flag("tcp-flow-floor", "0.01")), cache = new.env())
+            surge_fade = !identical(flag("surge-fade", "1"), "0"), tcp_center = flag("tcp-center", "median"), tcp_flow_floor = as.numeric(flag("tcp-flow-floor", "0.01")), tcp_own_fp = identical(flag("tcp-own-fp", "0"), "1"), cache = new.env())
 upload_key <- flag("upload-key")   # e.g. auspol/night/vic2026.json: after each good cycle, scripts/night_publish_r2.sh uploads --out there
 every <- as.numeric(flag("every", "60")); max_cycles <- as.integer(flag("max-cycles", "0")); retries <- as.integer(flag("retries", "3"))
 log_f <- file.path(cfg$archive, "night-loop.log")

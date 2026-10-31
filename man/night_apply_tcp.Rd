@@ -9,7 +9,8 @@ night_apply_tcp(
   obs,
   pair_min = 0.2,
   center = c("mean", "median"),
-  flow_sd_floor = 0.01
+  flow_sd_floor = 0.01,
+  own_fp = FALSE
 )
 }
 \arguments{
@@ -25,6 +26,12 @@ against. \code{"median"} stops a minority of outlying draws (an unfaded surge) m
 \item{flow_sd_floor}{Floor on the prior flow sd (the draws' own flow spread is near zero with \code{flow_sd = 0}).
 0.01 (default) is unchanged; 0.065 is the measured between-seat flow error, 2010-2025
 (docs/reviews/aec-preference-data-2026-10-30.md), which gives the count most of the weight.}
+
+\item{own_fp}{\code{TRUE} reads each draw's implied flow from that draw's OWN first preferences
+(\code{sim$fp_draws}, from \code{simulate_seat_contests(keep_fp = TRUE)}) instead of the counted ones, and
+shifts each draw by its own remainder. With the counted primaries, a draw whose primaries sit far
+from the count reads as an impossible flow (Wentworth fed2022 surge draws: 1.05) and skews the
+centre. \code{FALSE} (default) is unchanged. Stops (NX11) if \code{TRUE} and \code{sim$fp_draws} is missing.}
 }
 \value{
 \code{sim}, updated, with attribute \code{night_tcp}: one row per observed seat (pair share
