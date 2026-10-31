@@ -71,6 +71,8 @@ test_that("htv_card_p applies only when the card is not in the table", {
   expect_error(htv_card_p("vic2026", table = tab), "HTV10")                    # a bare number is refused
   withr::local_envvar(AUSPOL_HTV_CARD_P = "vic=1.5")
   expect_error(htv_card_p("vic2026", table = tab), "HTV10")
+  withr::local_envvar(AUSPOL_HTV_CARD_P = "vic=0.5,VIC=0.6")
+  expect_error(htv_card_p("vic2026", table = tab), "twice")                    # a duplicated region is refused, not first-wins
 })
 
 test_that("htv_mix_sims takes the first p*n draws from the Labor-above run and weights win_prob alike", {

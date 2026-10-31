@@ -10,5 +10,5 @@ htv_recency_hl()
 Numeric scalar.
 }
 \description{
-\code{AUSPOL_HTV_RECENCY_HL}, validated: a finite number >= 0 ("0", the default, is the plain mean).
+\code{AUSPOL_HTV_RECENCY_HL}, validated: a finite number >= 0 ("0" is the plain mean; "8", published since 2026-11-01).
 }

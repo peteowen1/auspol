@@ -8,7 +8,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
-- **Status 31 Oct.** PR #179 and #180 merged to main 31 Oct (night fixes; surge mixture OFF). Published config is the 28 Oct stage-6 rebuild (3C shipped, PR #159; AEF-7 0.2639 vs AEF
+- **Status 1 Nov (overnight).** main has PR #179-#181 (night fixes; surge OFF; Liberal card probability vic=0.67). On dev, not
+  merged: recency-weighted card rows ON (`AUSPOL_HTV_RECENCY_HL=8`, prereg passed), stale-clone print (ANC1), poll-table
+  precedence + `scripts/refresh_local_poll_inputs.sh` (run it before ANY local forecast run: a 5-day-old clone and a
+  13 Oct scrape gave One Nation 14.2 seats vs the site's 16.6 on 31 Oct), true poll snapshot on the release.
   0.2825; snapshot `output/snapshots/20261028-1109-14111624-from6`). 30 Oct: MP-slope pool SHIPPED on `dev`
   (`AUSPOL_MP_SLOPE_POOL=1`, Pete over clause 3; DECISIONS); it reaches the published forecast when dev merges to
   main. The worker-started forecast and ops ran on time 30 Oct (04:30 run success, 08:58 cron skipped at its gate).
@@ -111,9 +114,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   Footscray ALP 0.72 -> 0.64, Pascoe Vale 0.56 -> 0.50); recency-weighted card rows `AUSPOL_HTV_RECENCY_HL` screening
   (`plans/prereg-htv-recency-2026-10-31.md`). OPEN, DATED: the day the Victorian Liberals publish their card, add a
   `vic2026,ALL,<greens_above_labor>,<source>` row to `external/reference/htv/liberal-alp-grn-order.csv` (the mix then stops).
-  Review nits (31 Oct, not blocking): `htv_card_p()` takes the first of a duplicated region; while the card is unknown each
-  night update simulates twice (time one before polling day); add a suite test for the night `htv_card` branch (the
-  by-hand check: nothing counted reproduces the forecast exactly, 0.081 off without the card).
+  Review nits: duplicate region refused and the night `htv_card` test added (1 Nov). Timed 1 Nov: a night update with the
+  card mix takes 23.9 s vs 11.4 s (20k sims): fine at a minutes cadence, and gone once the card row is added. CLOSED.
+  Box Hill (our ALP 0.86 vs Sportsbet 0.25) traced to the proportional One Nation fill: `reviews/boxhill-trace-2026-11-01.md`,
+  to walk with Pete (Box Hill, Ashwood, Glen Waverley).
   Evidence: `reviews/night-replay-real-feed-2026-10-31.md`, `reviews/night-replay-fed-2026-10-30.md`.
 - OPEN, REPLAY METHOD: federal and vic2022 replay on real nights (`scripts/night_replay_feed.R`,
   `scripts/night_replay_vec.R`); the other state replays are still simulated (one block per seat, clock = 6pm + 4h x
@@ -125,10 +129,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   A preference-data agent measured 80.2 / 82.2 from distribution-of-preference rows (different scope, unreconciled).
   Check what flows-estimated estimates (n_seats 124/115) and whether the 2025 value is real; then the AEC by-party
   and by-state flow files for all eight elections as the anchor. Review: `docs/reviews/aec-preference-data-2026-10-30.md`.
-- OPEN, DATA (found 30 Oct by the night replay): `output/candidacies.csv` has sa2026 at 980,713 votes against
-  1,116,641 in the ECSA booth file (`output/booths/sa2026-booth-fp.csv`); every seat but one is 4-29% short
-  (Hurtle Vale 19,389 vs 24,971). Looks like a count taken before declaration votes. sa2026 is an AEF-7 pair, so its
-  actual shares in every backtest come from the short count. Check the source, rebuild from the final count, rescore.
+- OPEN, DATA, NEEDS PETE'S GO: sa2026 shares missed 138,549 absent votes (12%): ECSA's 2026 file keeps them in a district
+  `absentOrdinary` list. FIXED in `scripts/build_candidacies.R` (73e7d07b, dev); rebuilt to the scratchpad, only sa2026
+  rows change (980,713 -> 1,119,262 votes; shares move up to 2.2 pts, Schubert). NOT swapped into output/candidacies.csv:
+  the swap needs the xgb/MP-slope refits and a 35-election rescore (sa2026 is an AEF-7 pair). Audit 1 Nov of every
+  election with a booth file: 19 of 22 match exactly; sa2026 +0.23% (2,621 votes, untraced), vic2018 +0.10%, vic2006 +1.25%
+  (candidacies higher: the booth file is the short one). Federal vs the AEC formal totals: all 7 within 0.1%.
 - OPEN from the 30 Oct walks (https://claude.ai/artifact/USv8sffhF1zbYagBGwjdQ3, `reviews/walks-wa2017-fed2019-2026-10-30.md`):
   WA seat layer ~5 pts above the statewide Labor level (36.4 -> 41.2) yet 5-15 short in the swing seats, untraced;
   fed2019 shared miss (38% of margin error): is the correlated statewide draw wide enough? Idea only: a per-person

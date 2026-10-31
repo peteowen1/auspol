@@ -179,7 +179,7 @@ doc <- list(
   # (AEF-7 ledger), so the page's numbers move with every publish instead of being typed in.
   track_record = if (!is.null(man) && !is.null(man$aef7)) c(man$aef7, list(pairs = man$pairs, seat_elections = man$seat_elections)) else NULL,
   # which commit of d-j-hirst/aus-polling-analyser the polls came from (set by
-  # the workflow; NULL locally). The poll file itself is polls-vic-snapshot.csv on the release.
+  # the workflow; NULL locally). The polls the run read are polls-<region>-snapshot.csv on the release (scripts/build_poll_snapshot.R).
   poll_source = list(repo = "d-j-hirst/aus-polling-analyser",
                      sha = if (nzchar(Sys.getenv("AUSPOL_ANCHOR_SHA"))) Sys.getenv("AUSPOL_ANCHOR_SHA") else NULL),
   chamber_seats = CHAMBER, seats_simulated = n_seats, seats_not_simulated = I(excluded),   # I(): always a JSON array, even for one seat
