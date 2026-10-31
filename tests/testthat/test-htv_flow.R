@@ -57,8 +57,10 @@ test_that("AUSPOL_HTV_RECENCY_HL weights recent elections (prereg-htv-recency-20
 
 test_that("htv_card_p applies only when the card is not in the table", {
   tab <- data.table::data.table(election = "vic2022", seat = "ALL", greens_above_labor = TRUE)
-  withr::local_envvar(AUSPOL_HTV_CARD_P = "")
+  withr::local_envvar(AUSPOL_HTV_CARD_P = "off")                               # "" unsets on Windows, reading the default
   expect_true(is.na(htv_card_p("vic2026", table = tab)))
+  withr::local_envvar(AUSPOL_HTV_CARD_P = NA)                                  # unset: the published default applies
+  expect_equal(htv_card_p("vic2026", table = tab), 0.67)
   withr::local_envvar(AUSPOL_HTV_CARD_P = "vic=0.67")
   expect_equal(htv_card_p("vic2026", table = tab), 0.67)
   expect_true(is.na(htv_card_p("vic2022", table = tab)))                       # known card: no mixing
