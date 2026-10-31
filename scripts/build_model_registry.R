@@ -331,6 +331,14 @@ CLASSIFY <- list(
   AUSPOL_ZERO_ABSENT = paste(
     "ARM (0), UNIVERSAL via R/: the default of simulate_seat_contests(zero_absent = zero_absent_on()), so every",
     "harness, NT and fit_seats_full.R honour it with no call-site argument. plans/prereg-zero-absent-2026-10-17.md"),
+  AUSPOL_STATE_FLOWS_AEC = paste(
+    "ARM (0), UNIVERSAL via R/: read inside estimate_flows_for() (R/flow_model.R), so every flows_for() caller honours it.",
+    "No seat effect by construction (statewide flows reach only the draws' anchoring); closed 2026-10-31,",
+    "plans/prereg-state-flows-aec-2026-10-30.md RESULT."),
+  AUSPOL_STATE_FLOWS_AEC_CLASSES = paste(
+    "ARM companion of AUSPOL_STATE_FLOWS_AEC (class filter, read in state_flows_aec(), R/flow_model.R); same reach, same result."),
+  AUSPOL_SWING_FORM = paste(
+    "ARM, refused 2026-10-30 on AEF-7 (plans/prereg-swing-form-hybrid-2026-10-30.md RESULT); stays at its default."),
   AUSPOL_SURGE_LEVEL = paste(
     "ARM (0), UNIVERSAL via R/: the default of simulate_seat_contests(surge_level = surge_level_on()) (R/surge_level.R),",
     "so every harness, NT and fit_seats_full.R honour it with no call-site argument; the C++ core takes it as an",
