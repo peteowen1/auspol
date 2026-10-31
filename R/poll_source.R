@@ -459,8 +459,13 @@ poll_layer <- function(ae, region, path = NULL, window = 4L) {
     cands <- c(Sys.getenv("AUSPOL_POLL_WIKI", ""),
                file.path(pkg_root(), "external", "reference", "polls", "statewide-samples", "statewide_polls_wiki.csv"),
                out_path(file.path("polls-wiki", "statewide_polls_wiki.csv")))
+    explicit <- cands[1]
     cands <- cands[nzchar(cands) & file.exists(cands)]
+    # Without AUSPOL_POLL_WIKI, the NEWER of the local scrape folder and output/polls-wiki/ wins: the scrape folder used
+    # to win always, and a 13 Oct scrape beat a fresh CI-style table (2026-10-31; scripts/refresh_local_poll_inputs.sh).
+    if (length(cands) > 1L && !(nzchar(explicit) && identical(cands[1], explicit))) cands <- cands[order(-as.numeric(file.mtime(cands)))]
     path <- if (length(cands)) cands[1] else "statewide_polls_wiki.csv (not found)"
+    if (file.exists(path)) message(sprintf("PZ0 poll table [%s]: %s, written %s", region, path, format(file.mtime(path), "%Y-%m-%d %H:%M")))
   }
   if (!file.exists(path)) stop("AUSPOL_POLL_SOURCE=layered needs statewide_polls_wiki.csv: set AUSPOL_POLL_WIKI, run scripts/fetch_statewide_poll_samples.R, or put it in output/polls-wiki/ (forecast.yaml does)")
   alias_f <- file.path(dirname(path), "firm_alias.csv")

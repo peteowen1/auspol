@@ -29,6 +29,25 @@ anchor_data_path <- function(subpath = "", must_exist = TRUE) {
   path
 }
 
+#' How old the local anchor (poll) clone is
+#'
+#' The clone is a plain git checkout that nothing updates, and a stale one reads exactly as healthy as a fresh one.
+#' On 2026-10-31 a local forecast on a 5-day-old clone gave One Nation 14.2 seats against the live site's 16.6, and
+#' an artifact was built from it. CI clones fresh every run, so this only bites local runs.
+#' @param max_age_days Age, in days, past which the clone is reported as stale.
+#' @return List: `commit`, `committed` (POSIXct or NA), `age_days` (NA when git cannot read it), `stale` (logical).
+#' @export
+anchor_clone_age <- function(max_age_days = 2) {
+  root <- getOption("auspol.anchor_dir", file.path(pkg_root(), "external", "aus-polling-analyser"))
+  out <- tryCatch(suppressWarnings(system2("git", c("-C", root, "log", "-1", "--format=%h|%cI"), stdout = TRUE, stderr = FALSE)),   # no space: system2 does not quote
+                  error = function(e) character(0))
+  if (!length(out) || !nzchar(out[1])) return(list(commit = NA_character_, committed = as.POSIXct(NA), age_days = NA_real_, stale = NA))
+  parts <- strsplit(out[1], "|", fixed = TRUE)[[1]]
+  when <- as.POSIXct(sub("([+-][0-9]{2}):([0-9]{2})$", "\\1\\2", parts[2]), format = "%Y-%m-%dT%H:%M:%S%z", tz = "UTC")
+  age <- as.numeric(difftime(Sys.time(), when, units = "days"))
+  list(commit = parts[1], committed = when, age_days = age, stale = is.finite(age) && age > max_age_days)
+}
+
 #' Repository root (works from package load or scripts run at repo root)
 #' @keywords internal
 pkg_root <- function() {

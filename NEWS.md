@@ -1,3 +1,9 @@
+# auspol 0.4.126
+
+- **Recency-weighted how-to-vote card rows ON** (`AUSPOL_HTV_RECENCY_HL = "8"`): 35 elections -0.0001 (SE 0.0000), moved seats -0.0053.
+- **Stale local poll guards**: `anchor_clone_age()` and an `ANC1` line every run (`ANC1!` past 2 days); `poll_layer()` takes the newer poll table and prints it (`PZ0`); `scripts/refresh_local_poll_inputs.sh`.
+- **True poll snapshot** on the release (`scripts/build_poll_snapshot.R`): the polls the run read, with Source/Origin.
+
 # auspol 0.4.125
 
 - **Liberal how-to-vote card probability** (`AUSPOL_HTV_CARD_P = "vic=0.67"`, live only): with no published 2026 card, the forecast simulates both cards and mixes the draws (HTV2; `htv_card_p()`, `htv_mix_sims()`); the night state and `night_run_update()` mix the same way. Footscray ALP 0.72 -> 0.64, Pascoe Vale 0.56 -> 0.50. Add the vic2026 card row when published.

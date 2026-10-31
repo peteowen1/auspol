@@ -486,6 +486,32 @@ test_that("night_apply_tcp(center = 'median') stops a minority of outlying draws
   expect_equal(sum(p_med$prob[p_med$party == "IND"]), 1)        # median: the typical draws stay IND-winning
 })
 
+test_that("night_run_update mixes the two Liberal-card runs when the state carries htv_card, and runs once without it", {
+  # Stand-ins for the booth update and the simulation: each fake run returns totals that say which card it was given.
+  fake_sim <- function(..., conditional_override) {
+    lab <- identical(conditional_override, "labor")
+    list(totals = cbind(ALP = rep(if (lab) 1L else 0L, 4L), GRN = rep(if (lab) 0L else 1L, 4L)),
+         tcp_winner = matrix(if (lab) "ALP" else "GRN", 4, 1, dimnames = list(NULL, "S")),
+         tcp_runnerup = matrix(if (lab) "GRN" else "ALP", 4, 1, dimnames = list(NULL, "S")),
+         tcp_share = matrix(0.55, 4, 1, dimnames = list(NULL, "S")),
+         win_prob = data.frame(seat = "S", party = if (lab) "ALP" else "GRN", prob = 1))
+  }
+  local_mocked_bindings(
+    night_prior_sd = function(...) NULL,
+    night_booth_update = function(...) list(n_updated = 0L, counted = c(S = 0), shares = NULL, sd = NULL, resolved = 0),
+    simulate_seat_contests = fake_sim)
+  st <- list(shares = matrix(50, 1, 2, dimnames = list("S", c("ALP", "GRN"))), n_sims = 4L, swd = NULL, htv_ov = "none",
+             htv_card = list(p = 0.75, labor_above = "labor", greens_above = "greens"))
+  conv <- list(live = data.frame(district = "S"), counted = data.frame(), tcp = data.frame())
+  r <- night_run_update(st, conv, NULL, use_tcp = FALSE)
+  expect_equal(unname(r$sim$totals[, "ALP"]), c(1L, 1L, 1L, 0L))               # 3 of 4 draws from the Labor-above run
+  expect_equal(attr(r$sim, "htv_card")$p, 0.75)
+  st$htv_card <- NULL
+  r0 <- night_run_update(st, conv, NULL, use_tcp = FALSE)
+  expect_equal(unname(r0$sim$totals[, "ALP"]), rep(0L, 4L))                    # no card: the single run with htv_ov
+  expect_null(attr(r0$sim, "htv_card"))
+})
+
 test_that("night_apply_tcp(own_fp = TRUE) reads each draw's flow from its own primaries, so outlying draws cannot skew the centre", {
   # 7 typical draws (IND 36, LNP 40, a = 52.6%) and 3 far-off draws (IND 66, LNP 22, a = 74.3%): every draw's OWN
   # implied flow to IND is 0.69. Counted primaries IND 36 / LNP 40 and a counted flow of 0.776, i.e. good news for IND.

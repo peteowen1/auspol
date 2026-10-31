@@ -235,12 +235,26 @@ for (E in sa_files) {
   # carry only 9 distinct ids. Joining on it alone produced a 9,580-row
   # cartesian blow-up. The results file's `districtId` is the district NAME, so
   # (seat, candidateId) is a real key and no ordering assumption is needed.
-  vt <- rbindlist(lapply(res$districts, function(d)
+  # ABSENT VOTES ARE A SEPARATE LIST in the 2026 file (district `absentOrdinary`: polling-day and early-voting absent
+  # declarations), NOT inside a candidate's `declarationVotes`; 2022 has no such list (its absent votes are in
+  # declarationVotes). Leaving it out dropped 138,549 votes (12%) from every sa2026 share, total 980,713 against the
+  # booth file's 1,116,641, and moved seat shares by up to 2.2 points (Schubert). Found 2026-11-01.
+  absent_of <- function(d) {
+    a <- unlist(lapply(d$absentOrdinary %||% list(), function(t) lapply(t$candidateVotes %||% list(), function(cv)
+      stats::setNames(as.numeric(cv$votes %||% 0), as.character(cv$candidateId)))))
+    if (!length(a)) return(numeric(0))
+    tapply(a, names(a), sum)
+  }
+  vt <- rbindlist(lapply(res$districts, function(d) {
+    ab <- absent_of(d)
     rbindlist(lapply(d$candidates, function(c) data.table(
       seat = d$districtId %||% NA_character_,
       cand_id = c$candidateId %||% NA_integer_,
-      votes = (c$ordinaryVotes %||% 0) + (c$declarationVotes %||% 0))), fill = TRUE)),
-    fill = TRUE)
+      votes = (c$ordinaryVotes %||% 0) + (c$declarationVotes %||% 0) +
+        (if (as.character(c$candidateId) %in% names(ab)) ab[[as.character(c$candidateId)]] else 0))), fill = TRUE)
+  }), fill = TRUE)
+  cat(sprintf("BC2a sa%d: absent-vote list adds %s votes (total now %s)\n", E$year,
+              format(sum(unlist(lapply(res$districts, absent_of))), big.mark = ","), format(sum(vt$votes), big.mark = ",")))
   if (anyDuplicated(vt[, .(seat, cand_id)]))
     stop(sprintf("sa%d: (seat, candidateId) is not unique in the results file", E$year))
   m <- merge(cand, vt, by = c("seat", "cand_id"), all.x = TRUE)

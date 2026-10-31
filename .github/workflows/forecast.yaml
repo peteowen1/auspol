@@ -504,9 +504,10 @@ jobs:
         run: |
           set -e
           gh release view forecast-latest >/dev/null 2>&1 || gh release create forecast-latest -t "Latest forecast (auto-updated)" -n "Assets are replaced by the daily forecast workflow; the release date is the tag's, not the data's. Read built_at inside forecast-vic2026.json."
-          # Poll-source snapshot: the anchor's Victorian poll file exactly as
-          # this run read it, plus the anchor commit it came from.
-          cp external/aus-polling-analyser/analysis/Data/poll-data-vic.csv output/polls-vic-snapshot.csv
+          # Poll-source snapshot: the polls this run's forecast read (load_polls(): the anchor's file with our
+          # Wikipedia/BludgerTrack layer), with Source/Origin columns; the anchor commit is in the JSON. It was a copy
+          # of the anchor's file alone until 2026-11-01, which left out polls only our layer has.
+          Rscript scripts/build_poll_snapshot.R vic output/polls-vic-snapshot.csv || { echo "::warning::poll snapshot failed; publishing the anchor's poll file instead"; cp external/aus-polling-analyser/analysis/Data/poll-data-vic.csv output/polls-vic-snapshot.csv; }
           gh release upload forecast-latest output/forecast-vic2026.json output/forecast-history.csv output/seat-probs-vic-2026.csv output/seat-shares-vic-2026.csv output/victoria-2026.html output/polls-vic-snapshot.csv --clobber
           # The election-night runner's starting state (scripts/night_runner.R --state=; map #148): fit_seats_full.R writes it
           # every run. Polling day's copy is the one used on the night. Tolerant: a missing file or a failed upload must not stop
@@ -597,7 +598,7 @@ jobs:
           AUSPOL_FORECAST_ELECTION=nsw2027 Rscript scripts/build_forecast_json.R
           # The poll-trend chart is optional on the page: a failure here must not hold back the seat forecast.
           AUSPOL_FORECAST_ELECTION=nsw2027 Rscript scripts/build_trend_page_data.R || { echo "::error::NSW poll-trend page data failed; publishing the forecast without it (the R2 step fails the run afterwards)"; rm -f output/nsw2027-page-data.json; touch output/.nsw-trend-failed; }
-          cp external/aus-polling-analyser/analysis/Data/poll-data-nsw.csv output/polls-nsw-snapshot.csv
+          Rscript scripts/build_poll_snapshot.R nsw output/polls-nsw-snapshot.csv || { echo "::warning::NSW poll snapshot failed; publishing the anchor's poll file instead"; cp external/aus-polling-analyser/analysis/Data/poll-data-nsw.csv output/polls-nsw-snapshot.csv; }
           gh release upload forecast-latest output/forecast-nsw2027.json output/forecast-history-nsw2027.csv output/seat-probs-nsw-2027.csv output/seat-shares-nsw-2027.csv output/polls-nsw-snapshot.csv $( [ -f output/nsw2027-page-data.json ] && echo output/nsw2027-page-data.json ) --clobber
       - name: Publish the NSW 2027 forecast to R2 for the ITG page
         # The ITG page reads R2 only (its CSP blocks github.com), so the release
