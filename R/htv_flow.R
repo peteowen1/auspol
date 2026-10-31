@@ -108,6 +108,7 @@ htv_card_p <- function(target_election, table = NULL) {
     stop("HTV10! AUSPOL_HTV_CARD_P must be region=probability pairs, e.g. 'vic=0.67'; got '", raw, "'", call. = FALSE)
   ps <- suppressWarnings(as.numeric(vapply(parts, `[`, "", 2L)))
   names(ps) <- tolower(trimws(vapply(parts, `[`, "", 1L)))
+  if (anyDuplicated(names(ps))) stop("HTV10! AUSPOL_HTV_CARD_P names a region twice; got '", raw, "'", call. = FALSE)
   if (any(!is.finite(ps) | ps < 0 | ps > 1)) stop("HTV10! AUSPOL_HTV_CARD_P probabilities must be in [0, 1]; got '", raw, "'", call. = FALSE)
   region <- tolower(sub("[0-9]+$", "", target_election))
   if (!region %in% names(ps)) return(NA_real_)
