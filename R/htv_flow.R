@@ -101,7 +101,7 @@ fit_htv_flow_rows <- function(target_election, dir = file.path("external", "elec
 #' @return The probability in `[0, 1]`, or `NA` when off, the region has no entry, or the card is known.
 #' @export
 htv_card_p <- function(target_election, table = NULL) {
-  raw <- trimws(Sys.getenv("AUSPOL_HTV_CARD_P", ""))
+  raw <- trimws(Sys.getenv("AUSPOL_HTV_CARD_P", "vic=0.67"))   # the published value (scripts/published_flags.R)
   if (!nzchar(raw) || identical(tolower(raw), "off")) return(NA_real_)   # "off": an empty value cannot be set from PowerShell
   parts <- strsplit(strsplit(raw, ",", fixed = TRUE)[[1]], "=", fixed = TRUE)
   if (!all(lengths(parts) == 2L))
