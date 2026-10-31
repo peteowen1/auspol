@@ -17,7 +17,8 @@ night_run_update(
   early_frac = NULL,
   surge_fade = TRUE,
   tcp_center = "median",
-  tcp_flow_floor = 0.01
+  tcp_flow_floor = 0.01,
+  tcp_own_fp = FALSE
 )
 }
 \arguments{
@@ -53,6 +54,9 @@ night_run_update(
 between-seat flow error, 0.065, was ON for a day (31 Oct) and taken off: alone it never helped on the real-night
 replays (fed2022, fed2025, vic2022) and it made vic2022 worse at 10pm (Northcote). Replays and the per-fix split:
 \verb{docs/reviews/night-replay-real-feed-2026-10-31.md}.}
+
+\item{tcp_own_fp}{Passed to \code{\link[=night_apply_tcp]{night_apply_tcp()}} as \code{own_fp}: \code{TRUE} reads each draw's implied flow from its own
+primaries (simulated with \code{keep_fp = TRUE}). \code{FALSE} (default) until measured on the real-night replays.}
 }
 \value{
 List: \code{sim}, \code{nu} (the update), \code{shares}, \code{sd}, \code{matched} (seats in both state and feed),

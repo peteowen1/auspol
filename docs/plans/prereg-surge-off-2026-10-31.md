@@ -54,3 +54,9 @@ have stopped the run early, not changed the rule. "All 22" in step 2 is now 35 e
 - Named fed2022 seats, IND win: Wentworth 0.649 -> 0.370, Warringah 0.736 -> 0.945, Kooyong 0.695 -> 0.588,
   Curtin 0.516 -> 0.374, Mackellar 0.276 -> 0.116.
 Scorer: `python scripts/score_surge_off.py deciding-runs/20261031-1346-surge-off`. Decision: Pete (below).
+
+Post-hoc split (NOT preregistered; found 31 Oct 7:40pm with the flow-sd scorer, `score_surge_off.py` SSO8): seats
+whose top two actual primaries are ALP and LNP with one of them winning (stand-in for the final pair) 2,501 seats
+-0.0057 (SE 0.0013); all other seats 430, +0.0344 (SE 0.0187). The pooled "no change" is a trade: surge-off helps
+classic seats and costs independent and minor contests. That gap is the target of Pete's new-independents surge
+idea (PETE-ASKED-FOR, 31 Oct). The decision stands (Pete: off "in its current state").

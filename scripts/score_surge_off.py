@@ -85,6 +85,24 @@ for e in elections:
         flag += "  <-- WA MOVED: the prereg makes a pass unacceptable"
     print(f"  {e:8s} seats {len(d):3d} acted {acted:3d} max prob diff {maxd:.4f} change {mu:+.4f} (SE {se:.4f}){flag}")
 
+# Split by contest type (prereg-flow-sd clause 4). Stand-in for the actual final pair, which exists for AEF-7 only:
+# "classic" = the two largest ACTUAL primaries are ALP and LNP and one of them won (output/published-predictions.csv).
+pp = collections.defaultdict(list)
+for r in csv.DictReader(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "output", "published-predictions.csv"), encoding="utf-8")):
+    pp[(r["pair"], r["seat"])].append((float(r["actual"] or 0), r["party"], r["won"] == "TRUE"))
+def classic(e, s):
+    v = sorted(pp.get((e, s), []), reverse=True)
+    if len(v) < 2:
+        return None
+    top = {v[0][1], v[1][1]}; w = [p for _, p, won in v if won]
+    return top == {"ALP", "LNP"} and bool(w) and w[0] in ("ALP", "LNP")
+lab = [classic(r[0], r[1]) for r in rows]
+nolab = sum(1 for x in lab if x is None)
+for name, want in [("classic ALP v LNP", True), ("not ALP v LNP", False)]:
+    n, d, se = clustered([r for r, x in zip(rows, lab) if x is want])
+    print(f"SSO8 {name} (top two actual primaries, stand-in for the final pair): n={n}, change {d:+.4f} (SE {se:.4f})")
+print(f"SSO8 seats with no contest label (not in published-predictions.csv): {nolab}")
+
 mv = sorted(rows, key=lambda r: ll(r[4]) - ll(r[3]))
 print("SSO5 ten seats most improved by surge-off (winner prob base -> arm):")
 for r in mv[:10]:
@@ -94,8 +112,10 @@ for r in mv[::-1][:10]:
     print(f"  {r[0]} {r[1]} ({r[2]}): {r[3]:.3f} -> {r[4]:.3f}")
 floor = [r for r in rows if r[4] < 0.01 and r[3] >= 0.01]
 print(f"SSO6 winners pushed below 0.01 by surge-off: {len(floor)}" + "".join(f"\n  {r[0]} {r[1]} ({r[2]}): {r[3]:.4f} -> {r[4]:.4f}" for r in floor))
-print("SSO7 named fed2022 seats (independent win probability base -> arm):")
-if "fed2022" in elections:
-    for s in ["Wentworth", "Warringah", "Kooyong", "Curtin", "Mackellar"]:
-        pb = B["fed2022"][0].get(s, {}); pa = A["fed2022"][0].get(s, {})
-        print(f"  {s}: IND {pb.get('IND', 0):.3f} -> {pa.get('IND', 0):.3f} (actual {B['fed2022'][1].get(s)})")
+named = [x.split(":") for x in (sys.argv[3].split(",") if len(sys.argv) > 3 else
+         ["fed2022:Wentworth", "fed2022:Warringah", "fed2022:Kooyong", "fed2022:Curtin", "fed2022:Mackellar"])]
+print("SSO7 named seats (actual winner's probability base -> arm):")
+for e, s in named:
+    if e in B and s in B[e][0]:
+        w = B[e][1][s]
+        print(f"  {e} {s} ({w}): {B[e][0][s].get(w, 0):.3f} -> {A[e][0][s].get(w, 0):.3f}")

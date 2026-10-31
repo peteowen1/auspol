@@ -486,6 +486,25 @@ test_that("night_apply_tcp(center = 'median') stops a minority of outlying draws
   expect_equal(sum(p_med$prob[p_med$party == "IND"]), 1)        # median: the typical draws stay IND-winning
 })
 
+test_that("night_apply_tcp(own_fp = TRUE) reads each draw's flow from its own primaries, so outlying draws cannot skew the centre", {
+  # 7 typical draws (IND 36, LNP 40, a = 52.6%) and 3 far-off draws (IND 66, LNP 22, a = 74.3%): every draw's OWN
+  # implied flow to IND is 0.69. Counted primaries IND 36 / LNP 40 and a counted flow of 0.776, i.e. good news for IND.
+  n <- 10L; pa <- c(rep(0.526, 7), rep(0.743, 3))
+  fp <- array(0, c(n, 1, 2), dimnames = list(NULL, "W", c("IND", "LNP")))
+  fp[, 1, "IND"] <- c(rep(36, 7), rep(66, 3)); fp[, 1, "LNP"] <- c(rep(40, 7), rep(22, 3))
+  sim <- list(totals = cbind(IND = rep(1L, n), LNP = rep(0L, n)),
+              win_prob = data.frame(seat = "W", party = "IND", prob = 1),
+              tcp_winner = matrix("IND", n, 1, dimnames = list(NULL, "W")),
+              tcp_runnerup = matrix("LNP", n, 1, dimnames = list(NULL, "W")),
+              tcp_share = matrix(pa, n, 1, dimnames = list(NULL, "W")), fp_draws = fp)
+  obs <- data.frame(seat = "W", a = "IND", b = "LNP", fp_a = 36, fp_b = 40, flow = 0.776, flow_se = 0.001, share_a = 0.54)
+  p_old <- night_apply_tcp(sim, obs)$win_prob; p_own <- night_apply_tcp(sim, obs, own_fp = TRUE)$win_prob
+  expect_lt(sum(p_old$prob[p_old$party == "IND"]), 0.5)        # counted primaries: the far draws read as flow 1.6 and drag
+  expect_equal(sum(p_own$prob[p_own$party == "IND"]), 1)        # own primaries: every draw moves toward IND, as the count says
+  sim$fp_draws <- NULL
+  expect_error(night_apply_tcp(sim, obs, own_fp = TRUE), "NX11")
+})
+
 test_that("night_apply_tcp(flow_sd_floor) gives the counted flow its weight when the draws' flows are near-identical", {
   # 10 draws, implied flow to a all ~0.60 (sd ~0); counted flow 0.80 with se 0.023.
   n <- 10L; pa <- 0.36 + 0.24 * (0.60 + seq(-1, 1, length.out = n) * 1e-4)

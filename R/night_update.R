@@ -304,11 +304,18 @@ night_tcp_obs <- function(tcp, fp, units, post) {
 #' @param flow_sd_floor Floor on the prior flow sd (the draws' own flow spread is near zero with `flow_sd = 0`).
 #'   0.01 (default) is unchanged; 0.065 is the measured between-seat flow error, 2010-2025
 #'   (docs/reviews/aec-preference-data-2026-10-30.md), which gives the count most of the weight.
+#' @param own_fp `TRUE` reads each draw's implied flow from that draw's OWN first preferences
+#'   (`sim$fp_draws`, from `simulate_seat_contests(keep_fp = TRUE)`) instead of the counted ones, and
+#'   shifts each draw by its own remainder. With the counted primaries, a draw whose primaries sit far
+#'   from the count reads as an impossible flow (Wentworth fed2022 surge draws: 1.05) and skews the
+#'   centre. `FALSE` (default) is unchanged. Stops (NX11) if `TRUE` and `sim$fp_draws` is missing.
 #' @return `sim`, updated, with attribute `night_tcp`: one row per observed seat (pair share
 #'   of draws, prior and posterior mean of a's share, draws changed, `flag`).
 #' @export
-night_apply_tcp <- function(sim, obs, pair_min = 0.2, center = c("mean", "median"), flow_sd_floor = 0.01) {
+night_apply_tcp <- function(sim, obs, pair_min = 0.2, center = c("mean", "median"), flow_sd_floor = 0.01, own_fp = FALSE) {
   center <- match.arg(center)
+  if (isTRUE(own_fp) && is.null(sim$fp_draws))
+    stop("NX11! own_fp = TRUE needs sim$fp_draws: simulate with keep_fp = TRUE", call. = FALSE)
   if (is.null(obs) || !nrow(obs)) return(sim)
   seats <- colnames(sim$tcp_winner)
   if (is.null(seats)) stop("NX5! sim$tcp_winner has no seat names: cannot match the VEC's 2CP to seats", call. = FALSE)
@@ -333,9 +340,16 @@ night_apply_tcp <- function(sim, obs, pair_min = 0.2, center = c("mean", "median
     # those must not be used twice: the 2CP updates the preference FLOW, and every draw shifts by
     # the change in flow times the other parties' share. (Combining 2CP shares directly double-
     # counted the first preferences and over-sharpened close seats: Mornington 0.69 -> 0.04.)
-    rest <- (100 - obs$fp_a[k] - obs$fp_b[k]) / 100
-    if (!is.finite(rest) || rest <= 0.005) rest <- 0.005
-    fi <- (pa - obs$fp_a[k] / 100) / rest                     # each draw's implied flow to a
+    if (isTRUE(own_fp)) {
+      # each draw's own primaries: its implied flow and its own remainder (not the count's)
+      fa <- sim$fp_draws[hit, j, a] / 100; fb <- sim$fp_draws[hit, j, b] / 100
+      rest <- pmax(0.005, 1 - fa - fb); rest[!is.finite(rest)] <- 0.005
+      fi <- (pa - fa) / rest
+    } else {
+      rest <- (100 - obs$fp_a[k] - obs$fp_b[k]) / 100
+      if (!is.finite(rest) || rest <= 0.005) rest <- 0.005
+      fi <- (pa - obs$fp_a[k] / 100) / rest                   # each draw's implied flow to a
+    }
     # center = "median": the shift targets the TYPICAL draw. With "mean" (default, byte-identical) a minority
     # of outlying draws (Wentworth fed2022: 305 surge draws, implied flow 1.05 against 0.70) moves the mean flow
     # and the shift then drags every other draw across 50% (Spender 0.996 -> 0.302 at 97% counted).

@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (293 switches from `published_flags.R`, 7 entry points)
+## Switch parity (295 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -121,8 +121,10 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_HC_DEFECTOR` | NO | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_HISTORIC_ELECTED_BACKFILL` | NO | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_HONOUR_DEPARTED` | yes | yes | yes | yes | yes | yes | yes |  |
+| `AUSPOL_HTV_CARD_P` | NO | NO | NO | NO | NO | NO | NO | htv_flow.R |
 | `AUSPOL_HTV_EXCLUDE` | NO | NO | NO | NO | NO | NO | NO | htv_flow.R |
 | `AUSPOL_HTV_FLOW` | yes | yes | yes | yes | yes | yes | yes | htv_flow.R |
+| `AUSPOL_HTV_RECENCY_HL` | NO | NO | NO | NO | NO | NO | NO | htv_flow.R |
 | `AUSPOL_IND_GAP_RESTAND` | NO | NO | NO | NO | NO | NO | NO | ind_gap_restand.R, new_ind_shrink.R |
 | `AUSPOL_IND_MIXTURE` | NO | NO | NO | NO | NO | NO | NO | ind_mixture.R, new_ind_shrink.R, surge_level.R |
 | `AUSPOL_IND_PERSON` | NO | NO | NO | NO | NO | NO | NO | ind_person.R, new_ind_shrink.R |
@@ -403,7 +405,9 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_HARNESS_SW_DRAWS`** (**adopted, shared-function wiring**): SHIPPED 2026-10-19 as net (Pete override). HARNESS-ONLY by design: the six state harnesses read it via harness_sw_draws() in R/forecast_statewide.R. fit_seats_full.R and the federal harness already pass statewide draws. plans/prereg-harness-sw-draws-2026-10-19.md
 - **`AUSPOL_HC_DEFECTOR`** (**adopted, shared-function wiring**): SHIPPED (1) 2026-10-14, Hare-Clark ONLY: read in scripts/backtest_hare_clark.R (Tasmania, ACT). The six single-member harnesses and Victoria's live forecast are not Hare-Clark, so the gaps are intentional.
 - **`AUSPOL_HISTORIC_ELECTED_BACKFILL`** (**adopted, shared-function wiring**): SHIPPED 2026-09-15 on judgement (costs 0.0141 pooled RMSE in the backtest, but vic2026 is never a training pair so the 62 returning members can only move the live forecast, which the backtest cannot see). Read ONCE at build time by scripts/build_candidacies.R and baked into output/candidacies.csv, so no harness reads it at runtime; reversible by rebuilding candidacies with the flag off.
+- **`AUSPOL_HTV_CARD_P`** (intentional / dead experiment): LIVE ONLY by design: fit_seats_full.R mixes the two card runs when the target has no how-to-vote row (htv_card_p(), htv_mix_sims(), R/htv_flow.R) and the target's REGION has an entry ('vic=0.67': nsw2027 gets none). The night runner mixes the same way from the saved state's htv_card. Backtest targets all have known cards, so no harness reads it.
 - **`AUSPOL_HTV_EXCLUDE`** (intentional / dead experiment): DIAGNOSTIC 2026-10-13: leaves named transfer files out of the how-to-vote fit (R/htv_flow.R) to attribute a new file's effect; published empty. Read inside R/ via htv_flow_override() -- universal in practice.
+- **`AUSPOL_HTV_RECENCY_HL`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: read in fit_htv_flow_rows() (R/htv_flow.R), which every harness and fit_seats_full.R reach through htv_flow_override(). plans/prereg-htv-recency-2026-10-31.md
 - **`AUSPOL_IND_GAP_RESTAND`** (intentional / dead experiment): ARM (off) 2026-10-25, UNIVERSAL via R/: read by ind_gap_restand_mode() (R/ind_gap_restand.R) into .GAP_RESTAND in all seven harnesses and fit_seats_full.R, passed to screened_slopes()/conditional_slopes() (the base_pred slope call). plans/prereg-ind-gap-restand-2026-10-25.md.
 - **`AUSPOL_IND_MIXTURE`** (intentional / dead experiment): ARM, REFUSED 2026-10-09 (seat log loss +0.0332 over 22 pairs), off. In all six harnesses; NOT in fit_seats_full.R by design: a refused arm is not wired into the published forecast.
 - **`AUSPOL_IND_PERSON`** (**adopted, shared-function wiring**): SHIPPED (final), UNIVERSAL via R/: read by ind_person_mode() (R/ind_person.R); every entry point calls ind_person_apply(). The old 'yes' cells were trailing comments on those calls.
@@ -636,8 +640,8 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR4  every AUSPOL_* switch read in code (392) is registered (276) or listed as not a model switch (116).
+MR4  every AUSPOL_* switch read in code (394) is registered (278) or listed as not a model switch (116).
 
 
 
-MR2  every non-universal switch (262 of 293) has a recorded classification.
+MR2  every non-universal switch (264 of 295) has a recorded classification.

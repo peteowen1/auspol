@@ -1990,6 +1990,17 @@ if (identical(Sys.getenv("AUSPOL_XGB_FLOWS", "1"), "1")) {
 # card order for this election (R/htv_flow.R, external/reference/htv/liberal-alp-grn-order.csv).
 .htv_ov <- if (identical(Sys.getenv("AUSPOL_HTV_FLOW", "1"), "1")) tryCatch(htv_flow_override(.cond_ov, fm, TGT, rownames(shares)),
   error = function(e) { cat(sprintf("HTV9! how-to-vote override FAILED, flow rows unchanged: %s\n", conditionMessage(e))); .cond_ov }) else .cond_ov
+# CARD NOT YET PUBLISHED (AUSPOL_HTV_CARD_P, R/htv_flow.R htv_card_p()): with no table row for this election, simulate
+# each card on its own run and mix the draws by the probability Labor is above the Greens (HTV2). Add the row the day
+# the card is published and this stops applying.
+.card_p <- if (identical(Sys.getenv("AUSPOL_HTV_FLOW", "1"), "1")) htv_card_p(TGT) else NA_real_
+if (is.finite(.card_p)) {
+  .card_tab <- function(above) data.table::data.table(election = TGT, seat = "ALL", greens_above_labor = above)
+  .htv_lab <- htv_flow_override(.cond_ov, fm, TGT, rownames(shares), table = .card_tab(FALSE))
+  .htv_grn <- htv_flow_override(.cond_ov, fm, TGT, rownames(shares), table = .card_tab(TRUE))
+  cat(sprintf("HTV2 %s: Liberal card not yet known; P(Labor above Greens) = %.2f, so %d of %d draws use the Labor-above card\n",
+              TGT, .card_p, as.integer(round(.card_p * N_SIMS)), N_SIMS))
+}
 # BREAKOUT MIXTURE (AUSPOL_BREAKOUT_MIX, R/breakout_mix.R): NULLs when off.
 # Live, the classifier reads the feature rows xgb_primary_predict_live() built.
 .bo <- breakout_mix_args(TGT, shares)
@@ -2015,20 +2026,22 @@ if (identical(.sw_net_live, "1"))
                psd = psd, swd = sw_draws, sdo = .sd_ov, seat_sd = SEAT_SD, n_sims = N_SIMS, bo = .bo,
                coalition_split = coalition_split_args(TGT, rownames(shares)), error_q = error_dist_args(TGT, colnames(shares)),
                smooth = SMOOTH, seed = SEED, party_cor = NULL, shrink = SHRINK, htv_ov = .htv_ov,
+               htv_card = if (is.finite(.card_p)) list(p = .card_p, labor_above = .htv_lab, greens_above = .htv_grn) else NULL,
                fb_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD, surge_h = surge_arg, surge_party = surge_party_arg,
                surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg,
                saved_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z")), .dmp)
   cat(sprintf("NS1  night state for %s saved to %s (%d seats, %d sims)\n", TGT, .dmp, nrow(shares), N_SIMS))
 }
-sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = .sd_ov, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
+.run_sim <- function(.ov) simulate_seat_contests(level_sd = .level_sd, sd_override = .sd_ov, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
                               breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(TGT, rownames(shares)), error_q = error_dist_args(TGT, colnames(shares)),
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
-                              conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),
+                              conditional_override = .ov, conditional_override_sd = attr(.ov, "sd"),
                               statewide_draws = sw_draws,
                               fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
                               surge_h = surge_arg, surge_party = surge_party_arg,
                               surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg,
                               keep_fp = TRUE)   # per-seat ranges for the page; draws no random number
+sim <- if (is.finite(.card_p)) htv_mix_sims(.run_sim(.htv_lab), .run_sim(.htv_grn), .card_p) else .run_sim(.htv_ov)
 cat(sprintf("S6e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))
 cat(sprintf("\nsimulated %d seats x %d runs in %.0fs | pooled fallback %.1f%%\n",
             nrow(shares), N_SIMS,
