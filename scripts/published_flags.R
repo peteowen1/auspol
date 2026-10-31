@@ -482,7 +482,7 @@ PUBLISHED_FLAGS <- c(
                                              # measure the suspected double count: both are driven by the same hazard
                                              # fit, so the lift may be ~1.7x intended wherever a corpus exists.
                                              # Added 2026-09-11; docs/ARCHITECTURE.md "What the simulator actually does".
-  AUSPOL_SURGE_H             = "0",          # flat fallback hazard, used only when surge-v2 has no corpus
+  AUSPOL_SURGE_H             = "0",          # flat hazard: the live value whenever surge-v2 is off (since 2026-10-31) or has no corpus
   # switches the harnesses know and the forecast does not: listed so a harness
   # run at "published defaults" has them OFF explicitly, not by accident
   AUSPOL_IND_SALIENCE        = "0",          # v1 national salience ratio -- NOT shipped

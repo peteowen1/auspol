@@ -1175,6 +1175,7 @@ if (.cond && !is.null(.returns)) {
 # printed rather than silent -- so this flip is a no-op on the published
 # Victoria forecast today and activates automatically once vic2026 candidate
 # salience is fetched (nominations close 12 noon, 9 Nov 2026).
+# TURNED OFF 2026-10-31, so it no longer activates on 9 Nov: prereg-surge-off-2026-10-31.md.
 .surge_v2_on <- identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")   # OFF since 2026-10-31 (prereg-surge-off-2026-10-31.md)
 surge_arg <- as.numeric(Sys.getenv("AUSPOL_SURGE_H", "0"))
 surge_party_arg <- NULL

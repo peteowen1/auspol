@@ -236,10 +236,12 @@ One statewide shift per draw (`:150-165`; the draws from step 4 are passed in as
 
 ### The naming trap that caused the confusion
 
-`published_flags.R` reads `AUSPOL_SURGE_H = "0"`, which looks like the surge is
-off. It is not. That is only the FLAT FALLBACK hazard. The real per-seat hazard
-comes from `AUSPOL_SALIENCE_SURGE_V2 = "1"` and **overwrites `surge_arg` in
-`fit_seats_full.R`** (`surge_arg <- unname(v)`, inside the `if (.surge_v2_on)` block). What is genuinely off is `AUSPOL_IND_SALIENCE`,
+**Since 2026-10-31 the surge IS off**: `AUSPOL_SALIENCE_SURGE_V2 = "0"`
+(`plans/prereg-surge-off-2026-10-31.md`), so the flat `AUSPOL_SURGE_H = "0"` is the
+live value and no draw surges. Before that, `AUSPOL_SURGE_H = "0"` looked off but was
+only the FLAT FALLBACK: the per-seat hazard came from `AUSPOL_SALIENCE_SURGE_V2` and
+**overwrote `surge_arg` in `fit_seats_full.R`** (`surge_arg <- unname(v)`, inside the
+`if (.surge_v2_on)` block). Also off: `AUSPOL_IND_SALIENCE`,
 `AUSPOL_INSURGENCY_SHRINK`, `AUSPOL_SALIENCE_EXPECTED`, `AUSPOL_SALIENCE_EXP_SD`
 and the retired two-party `simulate_seats()`.
 

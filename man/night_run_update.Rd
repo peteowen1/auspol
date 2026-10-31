@@ -17,7 +17,7 @@ night_run_update(
   early_frac = NULL,
   surge_fade = TRUE,
   tcp_center = "median",
-  tcp_flow_floor = 0.065
+  tcp_flow_floor = 0.01
 )
 }
 \arguments{
@@ -49,10 +49,10 @@ night_run_update(
 
 \item{tcp_center}{Passed to \code{\link[=night_apply_tcp]{night_apply_tcp()}} as \code{center}: \code{"median"} (default since 2026-10-31) or \code{"mean"}.}
 
-\item{tcp_flow_floor}{Passed to \code{\link[=night_apply_tcp]{night_apply_tcp()}} as \code{flow_sd_floor}: 0.065 (default since 2026-10-31, the
-measured between-seat flow error) or the old 0.01. The three defaults were set together on the real-night
-replays of fed2022 and fed2025 (\verb{docs/reviews/night-replay-real-feed-2026-10-31.md}): seats wrong at 3am
-4 -> 1 and 7 -> 4, Wentworth 2022 never called -> called 7:45pm.}
+\item{tcp_flow_floor}{Passed to \code{\link[=night_apply_tcp]{night_apply_tcp()}} as \code{flow_sd_floor}: 0.01 (default). The measured
+between-seat flow error, 0.065, was ON for a day (31 Oct) and taken off: alone it never helped on the real-night
+replays (fed2022, fed2025, vic2022) and it made vic2022 worse at 10pm (Northcote). Replays and the per-fix split:
+\verb{docs/reviews/night-replay-real-feed-2026-10-31.md}.}
 }
 \value{
 List: \code{sim}, \code{nu} (the update), \code{shares}, \code{sd}, \code{matched} (seats in both state and feed),
