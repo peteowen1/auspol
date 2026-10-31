@@ -493,14 +493,18 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
   }
   # a state with no surge (surge_h NULL) has nothing to fade; night_surge_fade() would stop on it
   sh <- if (surge_fade && nu$n_updated > 0L && length(st$surge_h)) night_surge_fade(st$surge_h, nu$counted, seats) else st$surge_h
-  sim <- simulate_seat_contests(level_sd = st$level_sd, sd_override = sdo, level_mult = st$level_mult, shares, st$fm,
+  run <- function(ov) simulate_seat_contests(level_sd = st$level_sd, sd_override = sdo, level_mult = st$level_mult, shares, st$fm,
                                 party_sd = st$psd, statewide_draws = swd, seat_sd = st$seat_sd, n_sims = sims,
                                 breakout_p = st$bo$p, breakout_q = st$bo$q, coalition_split = st$coalition_split, error_q = st$error_q,
                                 smooth = st$smooth, seed = st$seed, party_cor = st$party_cor, shrink = st$shrink,
-                                conditional_override = st$htv_ov, conditional_override_sd = attr(st$htv_ov, "sd"),
+                                conditional_override = ov, conditional_override_sd = attr(ov, "sd"),
                                 fallback_smooth = st$fb_smooth, shrink_k = st$shrink_k, flow_sd = st$flow_sd,
                                 surge_h = sh, surge_party = st$surge_party, surge_from_zero = st$surge_from_zero,
                                 surge_mu = st$surge_mu, surge_sd = st$surge_sd, keep_fp = use_tcp && isTRUE(tcp_own_fp))
+  # Liberal card still unknown when the state was saved (fit_seats_full.R HTV2): mix the two card runs exactly as the
+  # afternoon forecast did, so the night starts from the published forecast (review 31 Oct).
+  hc <- st$htv_card
+  sim <- if (!is.null(hc) && is.finite(hc$p)) htv_mix_sims(run(hc$labor_above), run(hc$greens_above), hc$p) else run(st$htv_ov)
   n_tcp <- 0L
   if (use_tcp && nu$n_updated > 0L && nrow(conv$tcp)) {
     obs <- night_tcp_obs(conv$tcp, conv$live, nu$units, shares)

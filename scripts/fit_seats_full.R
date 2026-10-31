@@ -2026,6 +2026,7 @@ if (identical(.sw_net_live, "1"))
                psd = psd, swd = sw_draws, sdo = .sd_ov, seat_sd = SEAT_SD, n_sims = N_SIMS, bo = .bo,
                coalition_split = coalition_split_args(TGT, rownames(shares)), error_q = error_dist_args(TGT, colnames(shares)),
                smooth = SMOOTH, seed = SEED, party_cor = NULL, shrink = SHRINK, htv_ov = .htv_ov,
+               htv_card = if (is.finite(.card_p)) list(p = .card_p, labor_above = .htv_lab, greens_above = .htv_grn) else NULL,
                fb_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD, surge_h = surge_arg, surge_party = surge_party_arg,
                surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg,
                saved_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z")), .dmp)

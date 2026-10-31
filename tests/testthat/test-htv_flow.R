@@ -59,10 +59,15 @@ test_that("htv_card_p applies only when the card is not in the table", {
   tab <- data.table::data.table(election = "vic2022", seat = "ALL", greens_above_labor = TRUE)
   withr::local_envvar(AUSPOL_HTV_CARD_P = "")
   expect_true(is.na(htv_card_p("vic2026", table = tab)))
-  withr::local_envvar(AUSPOL_HTV_CARD_P = "0.67")
+  withr::local_envvar(AUSPOL_HTV_CARD_P = "vic=0.67")
   expect_equal(htv_card_p("vic2026", table = tab), 0.67)
   expect_true(is.na(htv_card_p("vic2022", table = tab)))                       # known card: no mixing
-  withr::local_envvar(AUSPOL_HTV_CARD_P = "1.5")
+  expect_true(is.na(htv_card_p("nsw2027", table = tab)))                       # no NSW entry: Victoria's estimate never leaks
+  withr::local_envvar(AUSPOL_HTV_CARD_P = "vic=0.67, nsw=0.8")
+  expect_equal(htv_card_p("nsw2027", table = tab), 0.8)
+  withr::local_envvar(AUSPOL_HTV_CARD_P = "0.67")
+  expect_error(htv_card_p("vic2026", table = tab), "HTV10")                    # a bare number is refused
+  withr::local_envvar(AUSPOL_HTV_CARD_P = "vic=1.5")
   expect_error(htv_card_p("vic2026", table = tab), "HTV10")
 })
 

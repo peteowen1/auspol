@@ -90,22 +90,30 @@ fit_htv_flow_rows <- function(target_election, dir = file.path("external", "elec
 
 #' Probability the Liberal card puts Labor above the Greens, for an election whose card is not yet known
 #'
-#' `AUSPOL_HTV_CARD_P` ("" = off). Used ONLY when the how-to-vote table has no row for `target_election`; once the
-#' card is published, add its row and this stops applying (Pete, 31 Oct: "put a probability on it ... turn to 100%
-#' once you have the new info"). A card is statewide, so the forecast simulates each card on its own draws and mixes
-#' them (`fit_seats_full.R`, HTV2).
-#' @param target_election Election label.
+#' `AUSPOL_HTV_CARD_P`, per region: `"vic=0.67"` or `"vic=0.67,nsw=0.8"` (`""` or `"off"` = off). A region with no
+#' entry gets no mix, so one state's estimate never reaches another's forecast (review 31 Oct: nsw2027 would have
+#' taken Victoria's 0.67). Used ONLY when the how-to-vote table has no row for `target_election`; once the card is
+#' published, add its row and this stops applying (Pete, 31 Oct: "put a probability on it ... turn to 100% once you
+#' have the new info"). A card is statewide, so the forecast simulates each card on its own draws and mixes them
+#' (`fit_seats_full.R`, HTV2).
+#' @param target_election Election label, e.g. `"vic2026"`; its region is the letters before the year.
 #' @param table Injectable how-to-vote table; default [htv_order_table()].
-#' @return The probability in `[0, 1]`, or `NA` when off or the card is known.
+#' @return The probability in `[0, 1]`, or `NA` when off, the region has no entry, or the card is known.
 #' @export
 htv_card_p <- function(target_election, table = NULL) {
-  raw <- Sys.getenv("AUSPOL_HTV_CARD_P", "")
+  raw <- trimws(Sys.getenv("AUSPOL_HTV_CARD_P", ""))
   if (!nzchar(raw) || identical(tolower(raw), "off")) return(NA_real_)   # "off": an empty value cannot be set from PowerShell
-  p <- suppressWarnings(as.numeric(raw))
-  if (!is.finite(p) || p < 0 || p > 1) stop("HTV10! AUSPOL_HTV_CARD_P must be in [0, 1]; got '", raw, "'", call. = FALSE)
+  parts <- strsplit(strsplit(raw, ",", fixed = TRUE)[[1]], "=", fixed = TRUE)
+  if (!all(lengths(parts) == 2L))
+    stop("HTV10! AUSPOL_HTV_CARD_P must be region=probability pairs, e.g. 'vic=0.67'; got '", raw, "'", call. = FALSE)
+  ps <- suppressWarnings(as.numeric(vapply(parts, `[`, "", 2L)))
+  names(ps) <- tolower(trimws(vapply(parts, `[`, "", 1L)))
+  if (any(!is.finite(ps) | ps < 0 | ps > 1)) stop("HTV10! AUSPOL_HTV_CARD_P probabilities must be in [0, 1]; got '", raw, "'", call. = FALSE)
+  region <- tolower(sub("[0-9]+$", "", target_election))
+  if (!region %in% names(ps)) return(NA_real_)
   tab <- if (is.null(table)) htv_order_table() else data.table::as.data.table(table)
   if (!is.null(tab) && any(tab$election == target_election)) return(NA_real_)   # the card is known: use it
-  p
+  unname(ps[region])
 }
 
 #' Half-life, in years, of the recency weight on the how-to-vote flow rows
