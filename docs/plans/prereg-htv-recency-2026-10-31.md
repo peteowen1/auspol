@@ -36,3 +36,10 @@ Also reported, not decided on: half-lives 4 and 16 on the screen, to show sensit
 seeing the results would be tuning on the test, so 8 is the arm.
 
 What would make an apparent win unacceptable: any election without a card row moving.
+
+## Screen (2026-10-31 9:41pm, all 35, 1,000 sims, code ae34ef46)
+
+HL 8: pooled -0.0001 (SE 0.0001), AEF-7 -0.0003 (SE 0.0002), both BETTER by more than 1 SE. 8 of 35 elections moved,
+every one with a card row (nsw2019, qld2020, nsw2023, vic2018, fed2025, fed2019, qld2024, vic2022); the rest
+byte-identical, so the arm does not leak. Largest: vic2022 0.2430 -> 0.2413 (16 seats). 50 seats moved in all.
+Deciding run (all 35, 20k) chained to start after the HL 4 / 16 sensitivity screens: `deciding-runs/*-htv-recency-8`.
