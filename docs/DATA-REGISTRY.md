@@ -124,15 +124,15 @@ cannot pass as a working one.
 
 - **aec/** -- 2459 files, 2085.8 MB
   - e.g. booths/fed2016-NSW.csv, booths/fed2016-QLD.csv, booths/fed2016-VIC.csv, booths/fed2019-QLD.csv
-- **vec/** -- 3453 files, 436.3 MB
+- **vec/** -- 3711 files, 443.6 MB
   - e.g. 2006/vc/fpv-albertpark.html, 2006/vc/fpv-altona.html, 2006/vc/fpv-ballarateast.html, 2006/vc/fpv-ballaratwest.html
 - **nsw/** -- 5889 files, 81.0 MB
   - e.g. byelections/SB1602-orange-fp.html, byelections/SB1801-wagga-wagga-fp.html, council/2008/lgeindex.html, council/2008/pages/result.Albury.html
-- **ecsa/** -- 482 files, 73.4 MB. **1 ZERO-BYTE: ha-2018-03-17.json**
+- **ecsa/** -- 492 files, 76.6 MB. **1 ZERO-BYTE: ha-2018-03-17.json**
   - e.g. 2018/Adelaide.html, 2018/Adelaide2.html, 2018/Badcoe.html, 2018/Badcoe2.html
-- **ecq/** -- 1653 files, 137.8 MB
+- **ecq/** -- 1660 files, 141.2 MB
   - e.g. council/2008/aurukunshire/councillor_summary.html, council/2008/aurukunshire/mayoral_summary.html, council/2008/balonneshire/councillor_summary.html, council/2008/balonneshire/mayoral_summary.html
-- **waec/** -- 1916 files, 49.0 MB
+- **waec/** -- 2307 files, 63.7 MB
   - e.g. app.html, app.min.js, config-loader.js, config.json
 - **trends/** -- 5394 files, 3.5 MB
   - e.g. 2019_anch2_Adrian_Wone_Susie_Beveridge_Will_Landers_Ammar_Khan.rds, 2019_anch2_Bill_Chandler_Susan_Moylan_Dave_Blake_Tim_Bohm.rds, 2019_anch2_Robert_Oakeshott_Helen_Haines_Zali_Steggall_Kerryn_Phelps.rds, 2019_anch2_Trevor_Jones_Colin_Butland_David_Norman_Thor_Prohaska.rds
