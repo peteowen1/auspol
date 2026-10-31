@@ -52,3 +52,14 @@ toward 50% (check: classic-pair seats' log loss must not get worse by more than 
 - Flow noise changes the random stream, so arm and baseline do not share draws here: the screen is noisier than
   usual. Per step 2 both go to the deciding run, one at a time: B `deciding-runs/20261031-1929-flowsd-6p5` (started
   7:29pm), A `deciding-runs/20261031-1929-flowsd-3p65` (scheduled 10:30pm).
+
+## RESULT (2026-10-31 8:45pm): B refused as having no effect; A cancelled before it started (visible amendment)
+
+B (`deciding-runs/20261031-1929-flowsd-6p5`, 35 elections, 20k): pooled -0.0007 (SE 0.0010, results.txt Q3); no
+seat in any election moved by more than 0.021 in win probability; classic seats +0.0002 (SE 0.0005), others +0.0012
+(SE 0.0113) (scorer floor 1e-6, `score_surge_off.py` SSO8). Six elections "worse > 2 SE" at +0.0015 to +0.0066,
+each tiny. Named: Melbourne fed2025 ALP 0.006 -> 0.008, Monash LNP 0.233 -> 0.237, Cowper LNP 0.270 -> 0.272.
+Why it cannot help: the noise is drawn per destination per transfer and mostly averages out, and where a
+how-to-vote override cell exists its own sd replaces it (`src/seat_sim_core.cpp:154-157`). Melbourne and Monash were
+missed on the expected flows (Liberal -> Labor over Greens; right -> Liberal over the independent), not their spread.
+Amendment: A (3.65) was cancelled before it started; a smaller sd cannot move more than B. Not shipped.
