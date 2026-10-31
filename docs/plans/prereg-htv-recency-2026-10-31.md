@@ -43,3 +43,12 @@ HL 8: pooled -0.0001 (SE 0.0001), AEF-7 -0.0003 (SE 0.0002), both BETTER by more
 every one with a card row (nsw2019, qld2020, nsw2023, vic2018, fed2025, fed2019, qld2024, vic2022); the rest
 byte-identical, so the arm does not leak. Largest: vic2022 0.2430 -> 0.2413 (16 seats). 50 seats moved in all.
 Deciding run (all 35, 20k) chained to start after the HL 4 / 16 sensitivity screens: `deciding-runs/*-htv-recency-8`.
+
+## RESULT (2026-11-01 12:00am, deciding run `deciding-runs/20261031-2232-htv-recency-8`, 35 elections, 20k, code 35cfea40)
+
+Pooled seat-winner log loss -0.0001 (SE 0.0000, results.txt Q3); AEF-7 -0.0002 (SE 0.0002); the 28 moved seats
+-0.0053 (SE 0.0042, `score_surge_off.py` SSO3). Elections moved: fed2019, nsw2019, nsw2023, qld2020, qld2024, vic2018,
+vic2022 (and two more below 0.001), all with card rows; largest vic2022 -0.0015 (SE 0.0015); none worse by more than
+2 SE (worst qld2020 +0.0002, SE 0.0005). Sensitivity screens (1k): HL 4 -0.0001 (SE 0.0001), HL 16 -0.0000.
+**SHIPPED on dev** (`published_flags.R` "8", inline default "8"); small but clean, per rule 3. Live: the vic2026
+card mix now uses recency-weighted card rows.

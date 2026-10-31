@@ -118,11 +118,11 @@ htv_card_p <- function(target_election, table = NULL) {
 
 #' Half-life, in years, of the recency weight on the how-to-vote flow rows
 #'
-#' `AUSPOL_HTV_RECENCY_HL`, validated: a finite number >= 0 ("0", the default, is the plain mean).
+#' `AUSPOL_HTV_RECENCY_HL`, validated: a finite number >= 0 ("0" is the plain mean; "8", published since 2026-11-01).
 #' @return Numeric scalar.
 #' @export
 htv_recency_hl <- function() {
-  v <- suppressWarnings(as.numeric(Sys.getenv("AUSPOL_HTV_RECENCY_HL", "0")))
+  v <- suppressWarnings(as.numeric(Sys.getenv("AUSPOL_HTV_RECENCY_HL", "8")))   # the published value
   if (length(v) != 1L || !is.finite(v) || v < 0)
     stop("HTV11! AUSPOL_HTV_RECENCY_HL must be a number >= 0 (years); got '", Sys.getenv("AUSPOL_HTV_RECENCY_HL"), "'", call. = FALSE)
   v
