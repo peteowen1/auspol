@@ -156,6 +156,8 @@ PUBLISHED_FLAGS <- c(
                                              # elections only (scripts/fit_xgb_flows_asat.R, output/xgb-flows-v1-asat-<election>.model),
                                              # not the leave-one-election-out model that sees later elections. Same leak, same fix as
                                              # AUSPOL_XGB_PRIMARY_OOF. Not a scored change: an honest number replacing a leaked one.
+  AUSPOL_HTV_RECENCY_HL      = "0",          # ARM (plans/prereg-htv-recency-2026-10-31.md): half-life in years for the how-to-vote flow rows' recency weight; "0" = the plain seat-weighted mean.
+  AUSPOL_HTV_CARD_P          = "0.67",       # LIVE ONLY, Pete 31 Oct ("put a probability on it"): P(Liberal card puts Labor above the Greens) for an election with no row in external/reference/htv/liberal-alp-grn-order.csv; fit_seats_full.R mixes the two card runs (HTV2). 0.67 = (3 + 1) / (4 + 2): Victorian Liberal cards were Labor-above in 2010, 2014, 2018 and Greens-above in 2022 (flat prior). Claude's estimate. Add the vic2026 row when the card is published. "" = off.
   AUSPOL_HTV_FLOW            = "1",          # SHIPPED 2026-09-18 (docs/plans/prereg-htv-flow-2026-09-18.md): the Liberal how-to-vote card
                                              # order for ALP-v-GRN seats (external/reference/htv/liberal-alp-grn-order.csv) selects the
                                              # Liberal-excluded, ALP+GRN-alive flow row -- 35% to ALP when the card puts Greens above Labor,

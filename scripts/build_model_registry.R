@@ -331,6 +331,12 @@ CLASSIFY <- list(
   AUSPOL_ZERO_ABSENT = paste(
     "ARM (0), UNIVERSAL via R/: the default of simulate_seat_contests(zero_absent = zero_absent_on()), so every",
     "harness, NT and fit_seats_full.R honour it with no call-site argument. plans/prereg-zero-absent-2026-10-17.md"),
+  AUSPOL_HTV_RECENCY_HL = paste(
+    "ARM (0), UNIVERSAL via R/: read in fit_htv_flow_rows() (R/htv_flow.R), which every harness and fit_seats_full.R reach",
+    "through htv_flow_override(). plans/prereg-htv-recency-2026-10-31.md"),
+  AUSPOL_HTV_CARD_P = paste(
+    "LIVE ONLY by design: fit_seats_full.R mixes the two card runs when the target has no how-to-vote row (htv_card_p(),",
+    "htv_mix_sims(), R/htv_flow.R). Backtest targets all have known cards, so no harness reads it."),
   AUSPOL_STATE_FLOWS_AEC = paste(
     "ARM (0), UNIVERSAL via R/: read inside estimate_flows_for() (R/flow_model.R), so every flows_for() caller honours it.",
     "No seat effect by construction (statewide flows reach only the draws' anchoring); closed 2026-10-31,",

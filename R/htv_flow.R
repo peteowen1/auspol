@@ -75,8 +75,49 @@ fit_htv_flow_rows <- function(target_election, dir = file.path("external", "elec
   obs <- htv_observed_splits(dir)
   if (is.null(obs)) return(NULL)
   obs <- obs[elections_before(obs$election, target_election) & obs$n_seats >= min_seats]   # time-forward
-  f <- function(lab) { s <- obs[obs$label == lab]; if (!nrow(s)) NA_real_ else sum(s$alp_share * s$n_seats) / sum(s$n_seats) }
+  # AUSPOL_HTV_RECENCY_HL (years; "0" = the plain seat-weighted mean): each election also weighted 0.5^(age / hl),
+  # so a rising share (Greens-last: 58, 59, 65, 73) is not averaged back to its past. With one election per label the
+  # weights cancel and it is the plain mean. docs/plans/prereg-htv-recency-2026-10-31.md.
+  hl <- htv_recency_hl()
+  yr <- function(x) suppressWarnings(as.numeric(sub("^.*?([0-9]{4})$", "\\1", x)))
+  age <- yr(target_election) - yr(obs$election)
+  rw <- if (hl > 0) 0.5^(pmax(0, age) / hl) else rep(1, length(age))
+  rw[!is.finite(rw)] <- 1   # a label with no 4-digit year (test fixtures) keeps the plain weight
+  obs$w <- obs$n_seats * rw
+  f <- function(lab) { s <- obs[obs$label == lab]; if (!nrow(s)) NA_real_ else sum(s$alp_share * s$w) / sum(s$w) }
   list(greens_above = f("greens_above"), labor_above = f("labor_above"), n = obs)
+}
+
+#' Probability the Liberal card puts Labor above the Greens, for an election whose card is not yet known
+#'
+#' `AUSPOL_HTV_CARD_P` ("" = off). Used ONLY when the how-to-vote table has no row for `target_election`; once the
+#' card is published, add its row and this stops applying (Pete, 31 Oct: "put a probability on it ... turn to 100%
+#' once you have the new info"). A card is statewide, so the forecast simulates each card on its own draws and mixes
+#' them (`fit_seats_full.R`, HTV2).
+#' @param target_election Election label.
+#' @param table Injectable how-to-vote table; default [htv_order_table()].
+#' @return The probability in `[0, 1]`, or `NA` when off or the card is known.
+#' @export
+htv_card_p <- function(target_election, table = NULL) {
+  raw <- Sys.getenv("AUSPOL_HTV_CARD_P", "")
+  if (!nzchar(raw)) return(NA_real_)
+  p <- suppressWarnings(as.numeric(raw))
+  if (!is.finite(p) || p < 0 || p > 1) stop("HTV10! AUSPOL_HTV_CARD_P must be in [0, 1]; got '", raw, "'", call. = FALSE)
+  tab <- if (is.null(table)) htv_order_table() else data.table::as.data.table(table)
+  if (!is.null(tab) && any(tab$election == target_election)) return(NA_real_)   # the card is known: use it
+  p
+}
+
+#' Half-life, in years, of the recency weight on the how-to-vote flow rows
+#'
+#' `AUSPOL_HTV_RECENCY_HL`, validated: a finite number >= 0 ("0", the default, is the plain mean).
+#' @return Numeric scalar.
+#' @export
+htv_recency_hl <- function() {
+  v <- suppressWarnings(as.numeric(Sys.getenv("AUSPOL_HTV_RECENCY_HL", "0")))
+  if (length(v) != 1L || !is.finite(v) || v < 0)
+    stop("HTV11! AUSPOL_HTV_RECENCY_HL must be a number >= 0 (years); got '", Sys.getenv("AUSPOL_HTV_RECENCY_HL"), "'", call. = FALSE)
+  v
 }
 
 #' Apply the how-to-vote card to the Liberal-excluded, ALP+GRN-alive flow rows
@@ -137,5 +178,32 @@ htv_flow_override <- function(ov, fm, target_election, seats, table = NULL, rows
   cat(sprintf("HTV1 %s: Liberal card applied to %d of %d seats (%s); fitted Liberal->ALP share when ALP+GRN alive: greens-above %.0f%%, labor-above %.0f%%\n",
               target_election, applied, length(seats), paste(sprintf("%s=%d", names(table(orders)), as.integer(table(orders))), collapse = " "),
               fr$greens_above, fr$labor_above))
+  out
+}
+
+#' Mix two seat simulations run under the two how-to-vote cards, by the card probability
+#'
+#' Both runs must use the same seed and draw count, so draw i shares its statewide draw in each. The first
+#' `round(p * n)` draws come from `labor_above`, the rest from `greens_above`: every seat in a draw has the same card,
+#' as a real statewide card does. `win_prob` is the two runs' table weighted by the same fractions.
+#' @param labor_above,greens_above [simulate_seat_contests()] results, card Labor-above and Greens-above.
+#' @param p Probability the card puts Labor above the Greens.
+#' @return A result of the same shape, with attribute `htv_card` = list(p, n_labor_above, n).
+#' @export
+htv_mix_sims <- function(labor_above, greens_above, p) {
+  a <- labor_above; b <- greens_above
+  n <- nrow(a$totals)
+  if (nrow(b$totals) != n || !identical(colnames(a$totals), colnames(b$totals)))
+    stop("HTV12! the two card runs differ in draws or parties: cannot mix", call. = FALSE)
+  if (!is.finite(p) || p < 0 || p > 1) stop("HTV12! card probability must be in [0, 1]", call. = FALSE)
+  n1 <- as.integer(round(p * n)); ia <- seq_len(n) <= n1
+  out <- a
+  for (f in c("totals", "tcp_winner", "tcp_runnerup", "tcp_share")) if (!is.null(a[[f]])) out[[f]][!ia, ] <- b[[f]][!ia, ]
+  if (!is.null(a$fp_draws)) out$fp_draws[!ia, , ] <- b$fp_draws[!ia, , ]
+  wa <- data.table::as.data.table(a$win_prob); wb <- data.table::as.data.table(b$win_prob)
+  wa[, prob := prob * n1 / n]; wb[, prob := prob * (n - n1) / n]
+  wp <- data.table::rbindlist(list(wa, wb))[, list(prob = sum(prob)), by = list(seat, party)]
+  out$win_prob <- as.data.frame(wp[wp$prob > 0])
+  attr(out, "htv_card") <- list(p = p, n_labor_above = n1, n = n)
   out
 }
