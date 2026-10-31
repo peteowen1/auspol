@@ -380,6 +380,12 @@ if (nrow(mat22) < TARGET$n_seats) {
 .stage("3. statewide 2026, from the model rather than assumed")
 # ---- 3. statewide 2026, from the model rather than assumed -----------------
 cycles <- load_election_cycles(); polls <- load_polls(REGION)
+# How fresh the poll clone is, every run: a stale one looks healthy (2026-10-31: a local run 5 days behind CI built an
+# artifact that contradicted the live site). CI clones fresh, so ANC1! fires only on a stale local clone.
+.anc <- anchor_clone_age()
+cat(sprintf("ANC1%s poll clone %s committed %s, %.1f days ago%s\n", if (isTRUE(.anc$stale)) "!" else " ", .anc$commit,
+            format(.anc$committed, "%Y-%m-%d %H:%M UTC"), .anc$age_days,
+            if (isTRUE(.anc$stale)) " -- STALE: run `git -C external/aus-polling-analyser pull` before trusting or publishing anything from this run" else ""))
 pri <- load_prior_results(); kp <- pri$region == REGION & pri$year == YEAR
 priors <- setNames(pri$prev1[which(kp)], pri$party[which(kp)])
 fl <- flows_for(load_preference_flows(), YEAR, REGION, quiet = TRUE)
