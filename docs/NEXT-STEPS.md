@@ -137,7 +137,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - DONE 1 Nov, PUBLISHED 11:42am (Pete's yes; release shipped-models, MANIFEST git 4ae01eba, 0.3256 over 2,931): sa2026 absent votes (138,549, 12%) swapped into output/candidacies.csv (builder fix 73e7d07b);
   full rebuild done 10:29am (`deciding-runs/20261101-sa-absent-rebuild`): vs the 28 Oct published snapshot +0.0015 (SE 0.0032)
   over 35, AEF-7 -0.0057, sa2026 0.2482 -> 0.2420 on the corrected truth; worse >0.02 = the surge-off elections plus nt2024
-  (+0.065: CLP-landslide seats moved toward Labor; likely the 30 Oct MP-slope pool, unconfirmed). Two stale derived files
+  (+0.065; CLOSED 1 Nov: NOT the MP-slope pool (quick_arm off: 1.0341 -> 1.0357, 8 of 125 cells moved). Shares moved
+  under 0.35 pts per party; the loss is Johnston (IND won on 30.3%, we gave 5%: p 0.004 -> 0.002 is ~45% of it) and
+  winners in landslide seats slipping ~0.5 pts. Log-loss sensitivity on already-missed seats, nothing to fix). Two stale derived files
   fixed: output/salience-v6.csv sa2026 pcv patched from the corrected count (173 rows; its builder fetches Google Trends),
   output/retiring-mp-cases.csv regenerated (was 13 Sep: 343 rows, missing 12 elections; now 507). Stage-3 rebuild running
   (`...-rebuild-s3`); its stage 4 reused all 31 models (5 s vs 1,709 s). TODO after: add build_retiring_mp_cases.R to
