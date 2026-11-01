@@ -87,3 +87,12 @@ at least 0.05 carry the mixture). The cut-off is fixed here and not tuned after 
 35-election log loss no worse than +1 SE AND better on the seats an independent won; AEF-7 subset reported;
 every election worse by more than 0.02 explained to Pete. Dry run: Johnston and Noosa must still rise. If the
 gate removes them (their p below 0.05), that is reported as the gate failing its own dry run, not tuned around.
+
+## Result, gated arm (1 Nov 6:47pm; screen) -- goes to Pete
+
+`AUSPOL_BREAKOUT_MIX_MIN_P=0.05` added; 70 runs, switches confirmed (HD1). Seat log loss, lower is better:
+independent-won seats (n 99) 1.2836 -> 1.2107 (-0.0728); all other seats (n 2,832) 0.2767 -> 0.2816 (+0.0049);
+all 35 elections 0.3107 -> 0.3130 (+0.0023, SE 0.0024, within 1 SE); AEF-7 0.2600 -> 0.2679 (+0.0079, SE 0.0017,
+worse beyond 1 SE). Dry run: Johnston 0.0005 -> 0.0430, Noosa 0.0030 -> 0.0405 (rise), Drysdale 0.0325 -> 0.0340.
+The gate halves the leak and halves the gain. By the letter of amendment 2 it passes (pooled within 1 SE, IND-won
+seats better); the pooled point estimate is still worse and AEF-7 is worse beyond 1 SE. Recommendation: do not ship.
