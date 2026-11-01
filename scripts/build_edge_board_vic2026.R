@@ -119,7 +119,8 @@ cat("EB6  rows", nrow(all), "| status:", paste(names(table(all$status)), table(a
 r4 <- function(x) round(x, 4)
 board <- all[, .(id = sprintf("r%03d", .I), type, market = what, selection, price, book_prob = r4(book), our_prob = r4(ours),
                  edge = r4(edge), edge_low = r4(edge_low), status, kelly = r4(kelly), long_shot = fifelse(long_shot, "yes", "no"),
-                 note, read_at = read_syd, draws = nrow(D), link)]
+                 note, read_at = read_syd, draws = nrow(D), link,
+                 model_at = format(file.mtime(file.path("output", sprintf("seat-probs-vic-2026-%s.csv", RUN))), "%a %d %b %I:%M%p", tz = "Australia/Sydney"))]
 fwrite(board, file.path(OUT, "vic26-sportsbet-edges.csv"))
 cat(sprintf("EB7  wrote %s (%d rows)\n", file.path(OUT, "vic26-sportsbet-edges.csv"), nrow(board)))
 
