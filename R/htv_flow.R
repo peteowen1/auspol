@@ -76,7 +76,9 @@ htv_observed_splits <- function(dir = file.path("external", "elections")) {
 #' `elections_before()`). Elections with fewer than `min_seats` qualifying
 #' seats are dropped as too thin to label. Every `*-transfers.csv` in `dir`
 #' is read, so adding an older election's transfer file adds training data
-#' for every later target (2026-10-13: vec-2006, nswec-2011, aec-fed-2001).
+#' for every later target (2026-10-13: vec-2006, nswec-2011, aec-fed-2001),
+#' unless `dir` holds `coalition-split-events.csv` (the shipped bundle the
+#' forecast runner downloads): then that bundle is the only source.
 #'
 #' @param target_election Election whose splits are fitted from earlier elections.
 #' @param dir,min_seats See [htv_observed_splits()].
