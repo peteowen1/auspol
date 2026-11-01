@@ -13,7 +13,7 @@
 # edge = price x our probability - 1 (expected return per dollar; > 0 favours the bettor; betting/GLOSSARY.md).
 # Low end: our probability moved halfway to the bookie's margin-free probability ("if we are only half right about
 # where we disagree"); Solid = edge >= 2% there, Possible = >= 2% only at our centre, else Under 2%.
-# Emits EB* codes.
+# Emits EBV* codes.
 suppressMessages(library(data.table))
 args <- commandArgs(trailingOnly = TRUE)
 SB_F <- if (length(args) >= 1) args[1] else Sys.glob("external/reference/benchmarks/vic2026/2026-10-31-sb-all/sportsbet-all-markets.csv")[1]
@@ -22,12 +22,12 @@ dir.create(OUT, showWarnings = FALSE, recursive = TRUE)
 THRESHOLD <- 0.02
 
 sb <- fread(SB_F)
-cat(sprintf("EB1  Sportsbet %s: %d rows, %d markets, fetched (UTC) %s\n", SB_F, nrow(sb), uniqueN(sb$market_id), min(sb$fetched_utc)))
+cat(sprintf("EBV1  Sportsbet %s: %d rows, %d markets, fetched (UTC) %s\n", SB_F, nrow(sb), uniqueN(sb$market_id), min(sb$fetched_utc)))
 sb <- oddsdata::implied_probs(sb, "power")
 RUN <- Sys.getenv("EDGE_RUN", "boardmain")
 probs <- fread(file.path("output", sprintf("seat-probs-vic-2026-%s.csv", RUN)))
 draws <- fread(file.path("output", sprintf("seat-sims-full-vic-2026-%s.csv", RUN)))
-cat(sprintf("EB2  our run '%s': %d seats, %d simulated elections\n", RUN, uniqueN(probs$seat), nrow(draws)))
+cat(sprintf("EBV2  our run '%s': %d seats, %d simulated elections\n", RUN, uniqueN(probs$seat), nrow(draws)))
 
 book_class <- function(x) {
   out <- rep(NA_character_, length(x))
@@ -38,7 +38,7 @@ book_class <- function(x) {
 }
 seat <- sb[event == "Victorian State Election - Seat Betting"]
 seat[, cls := book_class(selection)]
-if (anyNA(seat$cls)) cat("EB3! unclassed selections:", paste(unique(seat$selection[is.na(seat$cls)]), collapse = ", "), "\n")
+if (anyNA(seat$cls)) cat("EBV3! unclassed selections:", paste(unique(seat$selection[is.na(seat$cls)]), collapse = ", "), "\n")
 # a seat pricing Liberal AND Nationals separately cannot be split by us (our LNP class holds both)
 seat[, split_coal := any(cls == "LNP") & any(cls == "NAT"), by = market]
 seat[, n_ind := sum(cls == "IND", na.rm = TRUE), by = market]
@@ -89,11 +89,11 @@ ch <- list(
 chamber <- sb[event != "Victorian State Election - Seat Betting" & !grepl("Labor Lead", market)]
 chamber[, key := paste(market, selection, sep = "|")]
 unk <- setdiff(chamber$key, names(ch))
-if (length(unk)) stop("EB4! Sportsbet markets with no rule here: ", paste(unk, collapse = "; "))
+if (length(unk)) stop("EBV4! Sportsbet markets with no rule here: ", paste(unk, collapse = "; "))
 tot <- chamber[grepl("Seats$", market)]
 line_of <- c("Coalition Seats" = 43.5, "Labor Seats" = 28.5, "One Nation Seats" = 10.5, "Greens Seats" = 5.5)
 bad_line <- tot[abs(handicap - line_of[market]) > 1e-9]
-if (nrow(bad_line)) stop("EB5! seat-total line moved: ", paste(unique(paste(bad_line$market, bad_line$handicap)), collapse = "; "))
+if (nrow(bad_line)) stop("EBV5! seat-total line moved: ", paste(unique(paste(bad_line$market, bad_line$handicap)), collapse = "; "))
 chamber[, ours := unlist(ch[key])]
 chamber[, `:=`(type = fifelse(grepl("Seats$", market), "Seat total", "Government"),
                what = fifelse(grepl("Seats$", market), sprintf("%s %s %s", market, selection, handicap), paste(market, "-", selection)),
@@ -113,7 +113,7 @@ all[, read_syd := format(as.POSIXct(fetched_utc, tz = "UTC"), "%a %d %b %I:%M%p"
 all[, link := fifelse(type == "Seat winner", "https://www.sportsbet.com.au/betting/politics/australian-politics/vic-politics/victorian-state-election-seat-betting-10944986",
                       sprintf("https://www.sportsbet.com.au/betting/politics/australian-politics/vic-politics/e-%s", event_id))]
 setorder(all, -edge, na.last = TRUE)
-cat("EB6  rows", nrow(all), "| status:", paste(names(table(all$status)), table(all$status), collapse = "; "), "\n")
+cat("EBV6  rows", nrow(all), "| status:", paste(names(table(all$status)), table(all$status), collapse = "; "), "\n")
 
 # the board's shape: what the page reads
 r4 <- function(x) round(x, 4)
@@ -122,7 +122,7 @@ board <- all[, .(id = sprintf("r%03d", .I), type, market = what, selection, pric
                  note, read_at = read_syd, draws = nrow(D), link,
                  model_at = format(file.mtime(file.path("output", sprintf("seat-probs-vic-2026-%s.csv", RUN))), "%a %d %b %I:%M%p", tz = "Australia/Sydney"))]
 fwrite(board, file.path(OUT, "vic26-sportsbet-edges.csv"))
-cat(sprintf("EB7  wrote %s (%d rows)\n", file.path(OUT, "vic26-sportsbet-edges.csv"), nrow(board)))
+cat(sprintf("EBV7  wrote %s (%d rows)\n", file.path(OUT, "vic26-sportsbet-edges.csv"), nrow(board)))
 
 # per-seat panel: the PUBLISHED forecast, as the site shows it
 fc <- jsonlite::fromJSON("https://data.inthegame.blog/auspol/forecast-vic2026.json", simplifyVector = FALSE)
@@ -148,7 +148,7 @@ sf <- rbindlist(lapply(fc$seats, function(s) {
   }))
 }))
 stopifnot(uniqueN(sf$seat) == length(fc$seats), !anyDuplicated(sf[, .(seat, party)]))
-cat(sprintf("EB8  seat panel: %d rows, %d seats, %d without a 2022 result; forecast built %s (git %s)\n",
+cat(sprintf("EBV8  seat panel: %d rows, %d seats, %d without a 2022 result; forecast built %s (git %s)\n",
             nrow(sf), uniqueN(sf$seat), uniqueN(sf$seat[is.na(sf$primary_2022)]), built, fc$git_sha))
 fwrite(sf, file.path(OUT, "vic26-seat-forecast.csv"))
-cat(sprintf("EB9  wrote %s\n", file.path(OUT, "vic26-seat-forecast.csv")))
+cat(sprintf("EBV9  wrote %s\n", file.path(OUT, "vic26-seat-forecast.csv")))
