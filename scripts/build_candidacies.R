@@ -239,8 +239,25 @@ for (E in sa_files) {
   # declarations), NOT inside a candidate's `declarationVotes`; 2022 has no such list (its absent votes are in
   # declarationVotes). Leaving it out dropped 138,549 votes (12%) from every sa2026 share, total 980,713 against the
   # booth file's 1,116,641, and moved seat shares by up to 2.2 points (Schubert). Found 2026-11-01.
+  # A REVERSED DUPLICATE: Cheltenham's list holds batch 2 (1,548) repeating batch 1, then batches 3 and 4 with formal
+  # totals -1,547 and -1 and NO candidate votes. Summing candidate votes kept the duplicate (+1,548 against the booth
+  # file). When a district's negative-total batches carry no candidate votes, drop the latest positive batch whose
+  # formal total equals the reversal (BC2r). Black (+26, a repeated batch with no reversal) and Newland (+1,047, not in
+  # the absent list) stay untraced. Found 2026-11-01.
   absent_of <- function(d) {
-    a <- unlist(lapply(d$absentOrdinary %||% list(), function(t) lapply(t$candidateVotes %||% list(), function(cv)
+    bl <- d$absentOrdinary %||% list()
+    fv <- vapply(bl, function(t) as.numeric(t$formalVotes %||% 0), 0)
+    cs <- vapply(bl, function(t) sum(vapply(t$candidateVotes %||% list(), function(cv) as.numeric(cv$votes %||% 0), 0)), 0)
+    rev_total <- -sum(fv[fv < 0 & cs == 0])
+    if (rev_total > 0) {
+      hit <- rev(which(fv == rev_total & cs == rev_total))[1]
+      if (!is.na(hit)) {
+        cat(sprintf("BC2r %s: dropped absent batch '%s' (%s votes), reversed by negative batches with no candidate votes\n",
+                    d$districtId %||% "?", bl[[hit]]$absentOrdinaryType %||% "?", format(rev_total, big.mark = ",")))
+        bl <- bl[-hit]
+      }
+    }
+    a <- unlist(lapply(bl, function(t) lapply(t$candidateVotes %||% list(), function(cv)
       stats::setNames(as.numeric(cv$votes %||% 0), as.character(cv$candidateId)))))
     if (!length(a)) return(numeric(0))
     tapply(a, names(a), sum)
