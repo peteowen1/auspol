@@ -406,7 +406,8 @@ breakout_p_for <- function(target, frame = NULL, live_rows = NULL, cache_dir = N
     return(NULL)
   }
   out <- data.table::data.table(seat = te$seat, party = te$party, xgb_pred = te$xgb_pred,
-                                p_raw = r$p, p = .bo_apply_cal(r$p, cal))
+                                p_raw = r$p, p = .bo_apply_cal(r$p, cal),
+                                historic_elected_i = if ("historic_elected_i" %in% names(te)) te$historic_elected_i else NA_integer_)
   if (any(!is.finite(out$p)) || any(out$p < 0 | out$p > 1)) stop("breakout_p_for(): p outside [0, 1]")
   attr(out, "calibration") <- cal
   attr(out, "train_elections") <- r$train_elections
@@ -512,11 +513,32 @@ breakout_mix_args <- function(target, shares, enabled = NULL, frame = NULL) {
     cat(sprintf("BO1! %s: breakout mixture requested but no p or no breakout distribution -- mixture OFF for this pair\n", target))
     return(list(p = NULL, q = NULL))
   }
+  # SCOPE (prereg-new-ind-breakout-2026-11-01.md, Pete 1 Nov): AUSPOL_BREAKOUT_MIX_CLASSES limits which classes
+  # can break out (default every class the classifier covers); AUSPOL_BREAKOUT_MIX_NEW_ONLY="1" drops cells whose
+  # class has a candidate ever elected in the seat (historic_elected_i == 1: sitting members, defectors, former
+  # members), so a breakout never fires FOR an incumbent. An incumbent still loses votes when a challenger's draw
+  # breaks out: the simulator scales every other class down in that draw.
+  cls_env <- Sys.getenv("AUSPOL_BREAKOUT_MIX_CLASSES", paste(.BO_CLASSES, collapse = ","))
+  bo_classes <- trimws(strsplit(cls_env, ",", fixed = TRUE)[[1]])
+  bad_cls <- setdiff(bo_classes, .BO_CLASSES)
+  if (length(bad_cls) || !length(bo_classes)) stop("AUSPOL_BREAKOUT_MIX_CLASSES must name classes from ",
+                                                   paste(.BO_CLASSES, collapse = ","), "; got \"", cls_env, "\"")
+  new_mode <- Sys.getenv("AUSPOL_BREAKOUT_MIX_NEW_ONLY", "0")
+  if (!new_mode %in% c("0", "1")) stop("AUSPOL_BREAKOUT_MIX_NEW_ONLY must be \"0\" or \"1\"; got \"", new_mode, "\"")
+  n_incumbent <- 0L
+  if (identical(new_mode, "1")) {
+    inc <- P$historic_elected_i %in% 1L
+    n_incumbent <- sum(inc)
+    P <- P[!inc]
+  }
   pm <- base::matrix(0, nrow(sh), ncol(sh), dimnames = dimnames(sh))
   ri <- match(P$seat, rownames(sh)); ci <- match(P$party, colnames(sh))
   ok <- !is.na(ri) & !is.na(ci)
   pm[cbind(ri[ok], ci[ok])] <- P$p[ok]
-  elig <- base::matrix(colnames(sh) %in% .BO_CLASSES, nrow(sh), ncol(sh), byrow = TRUE) & sh > 0 & sh < .BO_HARD
+  elig <- base::matrix(colnames(sh) %in% bo_classes, nrow(sh), ncol(sh), byrow = TRUE) & sh > 0 & sh < .BO_HARD
+  if (!identical(cls_env, paste(.BO_CLASSES, collapse = ",")) || identical(new_mode, "1"))
+    cat(sprintf("BO2s %s breakout scope: classes %s; new candidates only %s (%d classifier rows with an ever-elected candidate dropped)\n",
+                target, paste(bo_classes, collapse = ","), if (identical(new_mode, "1")) "ON" else "off", n_incumbent))
   pm[!elig] <- 0
   # GATE (AUSPOL_BREAKOUT_MIX_MIN_P, default "0" = every eligible cell; 2026-10-06
   # prereg). Ungated, thousands of tiny p values summed into real probability taken

@@ -40,6 +40,16 @@ htv_order_table <- function(path = file.path("external", "reference", "htv", "li
 #' @return data.table: election, alp_share, n_seats, label.
 #' @export
 htv_observed_splits <- function(dir = file.path("external", "elections")) {
+  # THE SHIPPED BUNDLE IS THE ONLY SOURCE WHEN PRESENT (1 Nov 2026). The forecast runner fetches only some
+  # transfers files, so the published card fit read 35% Liberal->ALP (greens-above) while the backtests read 37.9%
+  # from all 13, and the scenario job 40%, which failed every What-If publish from 31 Oct (CSC7). The Coalition-split
+  # bundle already carries every LNP row of every local transfers file (coalition_split_transfers(), shipped by
+  # promote_rebuild.R; byte-identical splits on all 26 elections), so a partial set cannot leak in beside it.
+  bundle <- file.path(dir, "coalition-split-events.csv")
+  if (file.exists(bundle) && !nzchar(Sys.getenv("AUSPOL_HTV_EXCLUDE", ""))) {
+    tx <- coalition_split_transfers(dir)
+    tx <- tx[tx$to %in% c("ALP", "GRN"), list(election, seat, round, to, votes)]
+  } else {
   fs <- list.files(dir, pattern = "-transfers[.]csv$", full.names = TRUE)
   # AUSPOL_HTV_EXCLUDE: comma-separated transfer files to leave out (diagnostic; attribution of a new file's effect)
   ex <- strsplit(Sys.getenv("AUSPOL_HTV_EXCLUDE", ""), ",")[[1]]
@@ -49,6 +59,7 @@ htv_observed_splits <- function(dir = file.path("external", "elections")) {
     d <- data.table::fread(f, showProgress = FALSE)
     d[d$from == "LNP" & d$to %in% c("ALP", "GRN"), list(election, seat, round, to, votes)]
   }), fill = TRUE)
+  }
   if (!nrow(tx)) return(NULL)
   both <- tx[, list(nn = data.table::uniqueN(to)), by = list(election, seat, round)][nn == 2L]
   tx <- merge(tx, both[, list(election, seat, round)], by = c("election", "seat", "round"))
@@ -65,7 +76,9 @@ htv_observed_splits <- function(dir = file.path("external", "elections")) {
 #' `elections_before()`). Elections with fewer than `min_seats` qualifying
 #' seats are dropped as too thin to label. Every `*-transfers.csv` in `dir`
 #' is read, so adding an older election's transfer file adds training data
-#' for every later target (2026-10-13: vec-2006, nswec-2011, aec-fed-2001).
+#' for every later target (2026-10-13: vec-2006, nswec-2011, aec-fed-2001),
+#' unless `dir` holds `coalition-split-events.csv` (the shipped bundle the
+#' forecast runner downloads): then that bundle is the only source.
 #'
 #' @param target_election Election whose splits are fitted from earlier elections.
 #' @param dir,min_seats See [htv_observed_splits()].

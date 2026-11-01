@@ -24,5 +24,7 @@ weighted: only elections before \code{target_election} count (line below,
 \code{elections_before()}). Elections with fewer than \code{min_seats} qualifying
 seats are dropped as too thin to label. Every \verb{*-transfers.csv} in \code{dir}
 is read, so adding an older election's transfer file adds training data
-for every later target (2026-10-13: vec-2006, nswec-2011, aec-fed-2001).
+for every later target (2026-10-13: vec-2006, nswec-2011, aec-fed-2001),
+unless \code{dir} holds \code{coalition-split-events.csv} (the shipped bundle the
+forecast runner downloads): then that bundle is the only source.
 }

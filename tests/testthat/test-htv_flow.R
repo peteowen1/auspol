@@ -89,3 +89,20 @@ test_that("htv_mix_sims takes the first p*n draws from the Labor-above run and w
   b <- mk(0L); b$totals <- b$totals[1:3, ]
   expect_error(htv_mix_sims(mk(1L), b, 0.5), "HTV12")
 })
+
+test_that("the shipped coalition-split bundle is the only source when present (1 Nov: runner read a partial set)", {
+  d <- tempfile(); dir.create(d)
+  mk <- function(el, a, g) data.table::data.table(election = el, seat = c("S1", "S1", "S2", "S2"), round = 3L,
+                                                  from = "LNP", to = c("ALP", "GRN", "ALP", "GRN"), votes = c(a, g, a, g))
+  full <- rbind(mk("a2018", 60, 40), mk("b2022", 30, 70))
+  # a partial set on disk: only a2018's file, which would put b2022's greens-above split out of the fit
+  data.table::fwrite(full[full$election == "a2018"], file.path(d, "x-transfers.csv"))
+  expect_true(is.na(fit_htv_flow_rows("zzz", dir = d)$greens_above))
+  # the bundle carries every LNP row (and non-ALP/GRN rows the card fit must ignore)
+  extra <- data.table::data.table(election = "b2022", seat = "S1", round = 3L, from = "LNP", to = "ONP", votes = 999)
+  data.table::fwrite(rbind(full, extra), file.path(d, "coalition-split-events.csv"))
+  f <- fit_htv_flow_rows("zzz", dir = d)
+  expect_equal(f$greens_above, 30); expect_equal(f$labor_above, 60)
+  # the diagnostic exclusion still reads the files (it names files, which the bundle cannot honour)
+  withr::with_envvar(c(AUSPOL_HTV_EXCLUDE = "nothing.csv"), expect_true(is.na(fit_htv_flow_rows("zzz", dir = d)$greens_above)))
+})
