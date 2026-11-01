@@ -8,6 +8,18 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
+- **#1 NEXT SESSION (Pete, 1 Nov 8:30pm): treat polls differently by type, company and age.** Pete: "we 100% should be
+  treating different polls differently based on the poll type and company and how old it is". TODAY the published trend
+  (`trend_as_at()`, R/projection.R, `weights = "equal"`) weights every statewide poll the same: no house effect, no
+  sponsor or mode adjustment. Built and REFUSED 9 Oct: noise-only weights (`"record"`, R/poll_record.R; `"firm_factors"`)
+  in plans/prereg-statewide-poll-sample-weights-2026-10-09.md. NEVER TESTED: LEAN. Trigger case: Online Research Unit for the
+  Victorian Greens (14-26 Oct, on Wikipedia 1 Nov 7:09pm) has ONP 14 vs 20-25 in every other poll.
+  Build the STRONGEST version (CLAUDE.md negative-result rule), not a subset: per-firm house effect per party (bias vs
+  results AND vs the poll consensus), sponsor type (party-commissioned / media / independent), mode, sample size where
+  known (15.5% of polls), plus noise weights and recency; fitted TIME-FORWARD, partially pooled to zero for firms with
+  little history (shrinkage rule). Prereg first; score on all 35 elections' statewide level error, then the seat screen
+  (quick_arm --pairs=all). Also the seat-poll side (register: sponsor, firm, record, recency;
+  AUSPOL_SEAT_POLL_FIRM_FLOOR still "0"). Register rows: PETE-ASKED-FOR lines ~113 and ~119.
 - **Status 1 Nov 8:20pm.** main = dev = PR #184 (merged 8:15pm): card fit reads the shipped coalition-split table
   everywhere (published read 35% Liberal->ALP greens-above from a partial transfer set; backtests 37.9%; What-If job
   40%, which failed every What-If publish since 31 Oct, CSC7). Release `shipped-models` 11:42am 1 Nov (git 4ae01eba).
