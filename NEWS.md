@@ -1,3 +1,8 @@
+# auspol 0.4.127
+
+- **South Australia 2026 absent votes** (138,549, 12%) now in every sa2026 share; Cheltenham's reversed duplicate absent batch dropped (`BC2r`). Published 1 Nov: 35 elections 0.3256, sa2026 0.2482 -> 0.2420.
+- **Freshness gate**: an old local copy stops a run; quiet pollsters only warn (`PFQ1!`), NA-safe.
+
 # auspol 0.4.126
 
 - **Recency-weighted how-to-vote card rows ON** (`AUSPOL_HTV_RECENCY_HL = "8"`): 35 elections -0.0001 (SE 0.0000), moved seats -0.0053.

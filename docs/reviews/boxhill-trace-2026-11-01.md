@@ -34,3 +34,20 @@ Ashwood, Glen Waverley, Bentleigh, Bayswater: "unclear, leaning that the truth i
 overnight. For the morning: walk Box Hill, Ashwood and Glen Waverley with Pete on these rows; the question is
 whether One Nation's gain in a weak seat comes out of Labor in proportion to Labor's size there, or mostly out of
 the Coalition, as the market seems to assume.
+
+## Follow-up 1 Nov morning: does a "middle" fill have support? (Pete: "Test a middle version")
+
+The fill is live-only (no harness has it), so it cannot be backtested over 35 elections. Tested instead on the four
+past new-party surges the 28 Oct analysis used (sa2026, qld2017, qld2024 One Nation; sa2018 SA-Best), fitting each
+major's vote change on BOTH the proportional term (prev_share x new-party share / 100) and a flat term (new-party
+share). Script `scripts/test_onp_fill_blend.R`; source `output/published-predictions.csv` (19,616 rows, 35 pairs).
+
+| major | pooled proportional b (SE) | pooled flat b (SE) | n |
+|---|---|---|---|
+| ALP | -0.97 (0.13) | +0.09 (0.06) | 256 |
+| LNP | -1.07 (0.16) | +0.21 (0.08) | 256 |
+
+A proportional coefficient of -1 is exactly the shipped fill; a 50/50 blend with uniform would sit near -0.5,
+about 3.6 SE from Labor's estimate. The flat term has the wrong sign for a middle version. Per election, only
+sa2026 Labor leans the bookmakers' way (flat -0.27, SE 0.15). Verdict: the record supports the proportional fill;
+no middle version built. The Box Hill gap stays a known disagreement with the market, flagged on the Edge Board.

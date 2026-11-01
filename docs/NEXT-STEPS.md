@@ -129,12 +129,19 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   A preference-data agent measured 80.2 / 82.2 from distribution-of-preference rows (different scope, unreconciled).
   Check what flows-estimated estimates (n_seats 124/115) and whether the 2025 value is real; then the AEC by-party
   and by-state flow files for all eight elections as the anchor. Review: `docs/reviews/aec-preference-data-2026-10-30.md`.
-- OPEN, DATA, NEEDS PETE'S GO: sa2026 shares missed 138,549 absent votes (12%): ECSA's 2026 file keeps them in a district
-  `absentOrdinary` list. FIXED in `scripts/build_candidacies.R` (73e7d07b, dev); rebuilt to the scratchpad, only sa2026
-  rows change (980,713 -> 1,119,262 votes; shares move up to 2.2 pts, Schubert). NOT swapped into output/candidacies.csv:
-  the swap needs the xgb/MP-slope refits and a 35-election rescore (sa2026 is an AEF-7 pair). Audit 1 Nov of every
-  election with a booth file: 19 of 22 match exactly; sa2026 +0.23% (2,621 votes, untraced), vic2018 +0.10%, vic2006 +1.25%
-  (candidacies higher: the booth file is the short one). Federal vs the AEC formal totals: all 7 within 0.1%.
+- DONE 1 Nov, PUBLISHED 11:42am (Pete's yes; release shipped-models, MANIFEST git 4ae01eba, 0.3256 over 2,931): sa2026 absent votes (138,549, 12%) swapped into output/candidacies.csv (builder fix 73e7d07b);
+  full rebuild done 10:29am (`deciding-runs/20261101-sa-absent-rebuild`): vs the 28 Oct published snapshot +0.0015 (SE 0.0032)
+  over 35, AEF-7 -0.0057, sa2026 0.2482 -> 0.2420 on the corrected truth; worse >0.02 = the surge-off elections plus nt2024
+  (+0.065: CLP-landslide seats moved toward Labor; likely the 30 Oct MP-slope pool, unconfirmed). Two stale derived files
+  fixed: output/salience-v6.csv sa2026 pcv patched from the corrected count (173 rows; its builder fetches Google Trends),
+  output/retiring-mp-cases.csv regenerated (was 13 Sep: 343 rows, missing 12 elections; now 507). Stage-3 rebuild running
+  (`...-rebuild-s3`); its stage 4 reused all 31 models (5 s vs 1,709 s). TODO after: add build_retiring_mp_cases.R to
+  rebuild stage 0 (low value: its only reader, AUSPOL_XGB_RETIRING_MP, is off). Stage-3 rebuild byte-identical to the
+  first: neither corrected file reaches the published model (salience-v6 is read only for `jump`). OPEN: Cheltenham
+  reversed-duplicate absent batch fixed in the builder (4ae01eba, BC2r, 8 rows up to 0.36 pts) but output/candidacies.csv
+  NOT yet regenerated; fold into the next rebuild. Newland +1,047 and Black +26 untraced. Audit: 19 of 22 state elections match booth totals exactly; federal within 0.1%.
+  Audit 1 Nov of forecast inputs built OUTSIDE the rebuild vs their builders' last commit: 7 flagged, all false alarms (6 a
+  check-code rename on 9 Oct, 1 a first commit after its first run); only the two files above were really stale.
 - OPEN from the 30 Oct walks (https://claude.ai/artifact/USv8sffhF1zbYagBGwjdQ3, `reviews/walks-wa2017-fed2019-2026-10-30.md`):
   WA seat layer ~5 pts above the statewide Labor level (36.4 -> 41.2) yet 5-15 short in the swing seats, untraced;
   fed2019 shared miss (38% of margin error): is the correlated statewide draw wide enough? Idea only: a per-person

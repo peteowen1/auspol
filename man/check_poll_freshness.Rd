@@ -20,7 +20,8 @@ make every check below vacuously clean and report nothing at all.}
 
 \item{stale_days}{Age at which data counts as stale.}
 
-\item{strict}{Whether stale data stops the run. Set FALSE for a historical
+\item{strict}{Whether stale data stops the run: an old copy of the data stops it; a region whose
+pollsters have published nothing new only warns (PFQ1!), since 2026-11-01. Set FALSE for a historical
 or validation run where old data is the point — the data is still
 REPORTED as stale, because "proceed anyway" and "it is not stale" are
 different claims and only one of them is true. A BROKEN region (no

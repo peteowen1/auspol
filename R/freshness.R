@@ -50,7 +50,8 @@ poll_data_age <- function(region, as_of = Sys.Date()) {
 #'   make every check below vacuously clean and report nothing at all.
 #' @param warn_days Age at which data counts as ageing.
 #' @param stale_days Age at which data counts as stale.
-#' @param strict Whether stale data stops the run. Set FALSE for a historical
+#' @param strict Whether stale data stops the run: an old copy of the data stops it; a region whose
+#'   pollsters have published nothing new only warns (PFQ1!), since 2026-11-01. Set FALSE for a historical
 #'   or validation run where old data is the point — the data is still
 #'   REPORTED as stale, because "proceed anyway" and "it is not stale" are
 #'   different claims and only one of them is true. A BROKEN region (no
@@ -103,8 +104,9 @@ check_poll_freshness <- function(regions, warn_days = 21, stale_days = 60,
   # on 2026-11-01 NSW reached 60 days without a poll (newest 1 Sep) and the strict gate halted the Victorian forecast
   # too, twice, leaving the site on the previous day's numbers. That case now warns loudly (PFQ1!) and carries on.
   bad <- info[which(info$status == "STALE"), ]
-  quiet <- bad[which(bad$cause == " - no new polls published"), ]
-  bad <- bad[which(bad$cause != " - no new polls published"), ]
+  is_quiet <- bad$cause %in% " - no new polls published"   # %in%, not ==: an NA cause stays in `bad` and stops
+  quiet <- bad[is_quiet, ]
+  bad <- bad[!is_quiet, ]
   if (nrow(quiet)) {
     qmsg <- sprintf("PFQ1! no new polls published for %s (%s days since the newest); forecasting from the latest polls.",
                     paste(quiet$region, collapse = ", "), paste(quiet$age_days, collapse = ", "))
