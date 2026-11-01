@@ -45,3 +45,17 @@ keywords; Drysdale nt2020 rise 12.5, actual 4.6).
 
 Screen with `scripts/quick_arm.R --pairs=all`; the deciding 20,000-simulation run detached
 (`scripts/deciding_run.ps1`), then Pete decides.
+
+## Amendment 1 (1 Nov, before any build or run; Pete's correction)
+
+The clause "any sitting member's win probability moving by more than 0.01" is WRONG and is withdrawn (left above,
+unedited). Pete: "surely if a new independent enters a seat the incumbent SHOULD drop? As they're being
+challenged?" Correct: a breakout draw takes its votes from every other class in the seat, so the incumbent's win
+probability SHOULD fall there. What stays excluded is a sitting member RECEIVING a breakout (the old surge's
+fault). Replacement unacceptable-if-it-passes clause: a breakout fired for a sitting member or defector, or an
+incumbent's win probability moving in a seat with no new independent standing.
+
+Also found before building: `R/breakout_mix.R` (`AUSPOL_BREAKOUT_MIX`, built 6 Oct) already is this mechanism
+with a 47-feature time-forward classifier for IND/OTH/OTH_RIGHT/ONP under 15%, and was REFUSED 6 Oct
+(`prereg-breakout-mix-gated-2026-10-06.md`: 22 elections +0.0018, fed2025 +0.023 from Voices-style
+independents flagged who did not win). The decision on how to proceed went to Pete.
