@@ -4,6 +4,7 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-11-01 Card fit: the shipped coalition-split table is the only source when present (PR #184).** The forecast runner read a partial transfer set (35% vs the validated 37.9%). Same rule as the Coalition split, 17 Oct.
 - 2026-11-01 New-independent breakout: Pete chose the evidence-tiered design, then (on finding R/breakout_mix.R, the same mechanism refused 6 Oct) a re-screen of the existing 47-feature mixture limited to new independents, and after the ungated wash a gated version at p >= 0.05. Incumbents SHOULD lose votes to a breakout (Pete; prereg amendment 1). plans/prereg-new-ind-breakout-2026-11-01.md.
 - **2026-11-01 One Nation fill: middle version tested, not supported; proportional kept.** On the 4 past surges the pooled proportional coefficient is -0.97 (SE 0.13) for Labor, -1.07 for the Coalition (-1 = the shipped fill; a 50/50 blend ~ -0.5). `reviews/boxhill-trace-2026-11-01.md`.
 - **2026-11-01 How-to-vote card rows recency-weighted (`AUSPOL_HTV_RECENCY_HL=8`), shipped on dev (prereg rule 3, overnight).** 35 elections at 20k: -0.0001 (SE 0.0000); moved seats -0.0053 (SE 0.0042); no election worse. `plans/prereg-htv-recency-2026-10-31.md` RESULT.

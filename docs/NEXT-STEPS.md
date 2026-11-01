@@ -8,10 +8,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
-- **Status 1 Nov 6:20pm.** main = PR #183 (merged 12:31pm): everything through the SA absent-vote publish, card
-  probability + recency, surge OFF, MP-slope pool, freshness gate. Release `shipped-models` 11:42am 1 Nov (git 4ae01eba,
-  0.3256 over 2,931). The site's 8:38am 1 Nov forecast used the 28 Oct models; the next daily run picks up the new ones.
-  On dev only (unreviewed, needs the gate before a PR): breakout scope switches (off), Edge Board builder, docs.
+- **Status 1 Nov 8:20pm.** main = dev = PR #184 (merged 8:15pm): card fit reads the shipped coalition-split table
+  everywhere (published read 35% Liberal->ALP greens-above from a partial transfer set; backtests 37.9%; What-If job
+  40%, which failed every What-If publish since 31 Oct, CSC7). Release `shipped-models` 11:42am 1 Nov (git 4ae01eba).
+  The live site still shows the 8:38am 1 Nov forecast (28 Oct models, 35% card fit, no ORU poll): the next forecast
+  run (4:30am 2 Nov, or a manual dispatch) publishes the fix, new models, ORU poll and What-If. CHECK its conclusion.
   Run `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
 - **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** Plan and replays:
   `docs/plans/election-night-booth-model.md` (vic2022 seat log loss vs afternoon 0.2643: 0.1133 at 10% counted,
@@ -127,14 +128,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   A preference-data agent measured 80.2 / 82.2 from distribution-of-preference rows (different scope, unreconciled).
   Check what flows-estimated estimates (n_seats 124/115) and whether the 2025 value is real; then the AEC by-party
   and by-state flow files for all eight elections as the anchor. Review: `docs/reviews/aec-preference-data-2026-10-30.md`.
-- IN FLIGHT 1 Nov 6:16pm: new-independent breakout, GATED screen (Pete's go): `AUSPOL_BREAKOUT_MIX=1
-  AUSPOL_BREAKOUT_MIX_CLASSES=IND AUSPOL_BREAKOUT_MIX_NEW_ONLY=1 AUSPOL_BREAKOUT_MIX_MIN_P=0.05`, quick_arm --pairs=all
-  --sims=2000, log `%TEMP%/claude/C--dev-auspol/d9620856-.../scratchpad/qa-newind-gated.log` (fills only at the end;
-  progress = finished elections under %TEMP%/auspol-quickarm/cache/<arm hash>/). Criteria and the UNGATED result
-  (pooled +0.0026 SE 0.0029; IND-won seats -0.1375, others +0.0075; AEF-7 +0.0107 SE 0.0023) in
-  plans/prereg-new-ind-breakout-2026-11-01.md. NEXT: read Q3/Q4 + Johnston/Noosa, write RESULT, take it to Pete.
-  Switches committed OFF (R/breakout_mix.R, tests pass); dev->main PR still needed (unreviewed: breakout switches,
-  scripts/build_edge_board_vic2026.R).
+- NEEDS PETE: new-independent breakout. Both screens done (plans/prereg-new-ind-breakout-2026-11-01.md): ungated pooled
+  +0.0026 (SE 0.0029), AEF-7 +0.0107; gated p>=0.05 pooled +0.0023 (SE 0.0024), AEF-7 +0.0079 (SE 0.0017); IND-won
+  seats -0.073 gated. Gated passes the letter of amendment 2 but is net worse: recommended NOT shipping, switches OFF.
+  Review caveat: NEW_ONLY reads historic_elected_i, constant 0 for most state elections unless the backfill is on, so
+  outside NT the screens mostly measure IND-only, not new-IND-only. Revisit only with better pre-election signals.
 - OPEN: Vic 2026 Edge Board (https://claude.ai/artifact/8U33eGJMiAbpZFSW2dsfQu) builder now in the repo:
   `scripts/build_edge_board_vic2026.R [capture.csv] [out_dir]` (EDGE_RUN=<suffix> picks our run) writes both board datasets;
   checked 1 Nov against the published files (same selections, prices, bookie probabilities, columns; seat panel identical).
