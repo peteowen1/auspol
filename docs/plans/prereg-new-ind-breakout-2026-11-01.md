@@ -79,3 +79,11 @@ Arm: the existing breakout mixture limited to new independents (`AUSPOL_BREAKOUT
   nsw2011 +0.030, nt2020 +0.030, vic2022 +0.020; best nt2024 -0.167, vic2014 -0.029, fed2013 -0.024, qld2017 -0.018.
 - Reading: the same leak as the 6 Oct refusal, smaller: many small breakout chances in safe seats each take a
   little from the real winner. Switches stay OFF.
+
+## Amendment 2 (1 Nov, Pete chose "Screen a gated version"; written before that run)
+
+One arm: the arm above plus `AUSPOL_BREAKOUT_MIX_MIN_P=0.05` (only cells whose time-forward breakout probability is
+at least 0.05 carry the mixture). The cut-off is fixed here and not tuned after the run. Same criteria: pooled
+35-election log loss no worse than +1 SE AND better on the seats an independent won; AEF-7 subset reported;
+every election worse by more than 0.02 explained to Pete. Dry run: Johnston and Noosa must still rise. If the
+gate removes them (their p below 0.05), that is reported as the gate failing its own dry run, not tuned around.
