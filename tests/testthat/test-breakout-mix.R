@@ -161,3 +161,38 @@ test_that("breakout_mix_args() puts p only on non-major cells under 15 with a sh
   expect_true(all(a$p >= 0 & a$p <= 1))
   expect_true(all(diff(a$q) >= 0))
 })
+
+test_that("breakout scope switches: classes and new-candidates-only (prereg-new-ind-breakout-2026-11-01)", {
+  # every IND cell under the 15-point eligibility cut (.BO_HARD), so only the switches decide
+  sh <- matrix(c(40, 38, 12, 10,
+                 35, 43,  8, 14,
+                 45, 30, 20,  5), nrow = 3, byrow = TRUE,
+               dimnames = list(c("s1","s2","s3"), c("ALP","LNP","OTH","IND")))
+  fakeP <- data.table::data.table(seat = c("s1","s1","s2","s3"), party = c("IND","OTH","IND","IND"),
+                                  xgb_pred = c(10, 12, 14, 5), p_raw = 0.3, p = c(0.3, 0.2, 0.25, 0.4),
+                                  historic_elected_i = c(0L, 0L, 1L, NA_integer_))
+  q <- seq(20, 40, length.out = 101)
+  testthat::local_mocked_bindings(breakout_p_for = function(...) fakeP,
+                                  breakout_share_dist = function(...) q, .package = "auspol")
+  withr::local_envvar(AUSPOL_BREAKOUT_MIX = "1", AUSPOL_BREAKOUT_MIX_MIN_P = "0")
+  # defaults: every classifier class, incumbents included
+  withr::with_envvar(c(AUSPOL_BREAKOUT_MIX_CLASSES = NA, AUSPOL_BREAKOUT_MIX_NEW_ONLY = NA), {
+    invisible(utils::capture.output(a <- breakout_mix_args("x2020", sh)))
+    expect_equal(unname(a$p[, "OTH"]), c(0.2, 0, 0))
+    expect_equal(unname(a$p[, "IND"]), c(0.3, 0.25, 0.4))
+  })
+  # IND only: OTH drops out
+  withr::with_envvar(c(AUSPOL_BREAKOUT_MIX_CLASSES = "IND", AUSPOL_BREAKOUT_MIX_NEW_ONLY = "0"), {
+    invisible(utils::capture.output(b <- breakout_mix_args("x2020", sh)))
+    expect_equal(unname(b$p[, "OTH"]), c(0, 0, 0))
+    expect_equal(unname(b$p[, "IND"]), c(0.3, 0.25, 0.4))
+  })
+  # new only: s2's ever-elected IND loses its p; NA (unknown) keeps it
+  withr::with_envvar(c(AUSPOL_BREAKOUT_MIX_CLASSES = "IND", AUSPOL_BREAKOUT_MIX_NEW_ONLY = "1"), {
+    out <- utils::capture.output(cc <- breakout_mix_args("x2020", sh))
+    expect_equal(unname(cc$p[, "IND"]), c(0.3, 0, 0.4))
+    expect_true(any(grepl("^BO2s .*1 classifier rows with an ever-elected candidate dropped", out)))
+  })
+  withr::with_envvar(c(AUSPOL_BREAKOUT_MIX_CLASSES = "IND,GRN"), expect_error(breakout_mix_args("x2020", sh), "must name classes"))
+  withr::with_envvar(c(AUSPOL_BREAKOUT_MIX_NEW_ONLY = "yes"), expect_error(breakout_mix_args("x2020", sh), "must be"))
+})

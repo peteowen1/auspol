@@ -59,3 +59,23 @@ Also found before building: `R/breakout_mix.R` (`AUSPOL_BREAKOUT_MIX`, built 6 O
 with a 47-feature time-forward classifier for IND/OTH/OTH_RIGHT/ONP under 15%, and was REFUSED 6 Oct
 (`prereg-breakout-mix-gated-2026-10-06.md`: 22 elections +0.0018, fed2025 +0.023 from Voices-style
 independents flagged who did not win). The decision on how to proceed went to Pete.
+
+## Result (1 Nov 5:47pm; screen, NOT the deciding run) -- goes to Pete
+
+Arm: the existing breakout mixture limited to new independents (`AUSPOL_BREAKOUT_MIX=1`,
+`AUSPOL_BREAKOUT_MIX_CLASSES=IND`, `AUSPOL_BREAKOUT_MIX_NEW_ONLY=1`), `scripts/quick_arm.R --pairs=all --sims=2000`,
+70 runs, scope confirmed in every arm run (HD1; BO2s). Seat-winner log loss, lower is better:
+
+| seats | n | baseline | arm | change |
+|---|--:|--:|--:|--:|
+| an independent won | 99 | 1.2836 | 1.1460 | -0.1375 |
+| anyone else won | 2,832 | 0.2767 | 0.2843 | +0.0075 |
+| all 35 elections | 2,931 | 0.3107 | 0.3134 | +0.0026 (SE 0.0029), within 1 SE |
+| AEF-7 subset | 681 | 0.2600 | 0.2708 | +0.0107 (SE 0.0023), worse beyond 1 SE |
+
+- Dry run: Johnston 0.0005 -> 0.0415, Noosa 0.0030 -> 0.0400 (both rise); Drysdale 0.0325 -> 0.0310 (does not). PASS.
+- Primary as written (seats where a candidate in scope STOOD) was not computed; the IND-won row above is a
+  narrower stand-in. Do-no-harm pooled: within 1 SE. Elections worse by more than 0.02: vic2010 +0.035,
+  nsw2011 +0.030, nt2020 +0.030, vic2022 +0.020; best nt2024 -0.167, vic2014 -0.029, fed2013 -0.024, qld2017 -0.018.
+- Reading: the same leak as the 6 Oct refusal, smaller: many small breakout chances in safe seats each take a
+  little from the real winner. Switches stay OFF.
