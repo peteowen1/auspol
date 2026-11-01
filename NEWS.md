@@ -1,3 +1,8 @@
+# auspol 0.4.128
+
+- **Liberal how-to-vote card fit reads one table everywhere**: the published forecast read a partial set of transfer files (Liberal->Labor 35%, backtests 37.9%, What-If job 40%, which failed every What-If publish from 31 Oct). The shipped coalition-split table is now the only source when present.
+- Breakout mixture scope switches (`AUSPOL_BREAKOUT_MIX_CLASSES`, `AUSPOL_BREAKOUT_MIX_NEW_ONLY`), off.
+
 # auspol 0.4.127
 
 - **South Australia 2026 absent votes** (138,549, 12%) now in every sa2026 share; Cheltenham's reversed duplicate absent batch dropped (`BC2r`). Published 1 Nov: 35 elections 0.3256, sa2026 0.2482 -> 0.2420.
