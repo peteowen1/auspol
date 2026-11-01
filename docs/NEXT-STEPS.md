@@ -129,6 +129,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   A preference-data agent measured 80.2 / 82.2 from distribution-of-preference rows (different scope, unreconciled).
   Check what flows-estimated estimates (n_seats 124/115) and whether the 2025 value is real; then the AEC by-party
   and by-state flow files for all eight elections as the anchor. Review: `docs/reviews/aec-preference-data-2026-10-30.md`.
+- OPEN: Vic 2026 Edge Board (https://claude.ai/artifact/8U33eGJMiAbpZFSW2dsfQu) builder now in the repo:
+  `scripts/build_edge_board_vic2026.R [capture.csv] [out_dir]` (EDGE_RUN=<suffix> picks our run) writes both board datasets;
+  checked 1 Nov against the published files (same selections, prices, bookie probabilities, columns; seat panel identical).
+  The board's 12:07am `-boardmain` run files are gone from output/, so a refresh needs a fresh suffixed fit_seats_full.R run
+  and a new Sportsbet capture first. Seat panel, filters and links shipped 1 Nov 12:25pm.
 - DONE 1 Nov, PUBLISHED 11:42am (Pete's yes; release shipped-models, MANIFEST git 4ae01eba, 0.3256 over 2,931): sa2026 absent votes (138,549, 12%) swapped into output/candidacies.csv (builder fix 73e7d07b);
   full rebuild done 10:29am (`deciding-runs/20261101-sa-absent-rebuild`): vs the 28 Oct published snapshot +0.0015 (SE 0.0032)
   over 35, AEF-7 -0.0057, sa2026 0.2482 -> 0.2420 on the corrected truth; worse >0.02 = the surge-off elections plus nt2024
