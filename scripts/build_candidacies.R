@@ -255,6 +255,9 @@ for (E in sa_files) {
         cat(sprintf("BC2r %s: dropped absent batch '%s' (%s votes), reversed by negative batches with no candidate votes\n",
                     d$districtId %||% "?", bl[[hit]]$absentOrdinaryType %||% "?", format(rev_total, big.mark = ",")))
         bl <- bl[-hit]
+      } else {
+        cat(sprintf("BC2r! %s: negative absent batches reverse %s votes but no batch matches that total; nothing dropped\n",
+                    d$districtId %||% "?", format(rev_total, big.mark = ",")))
       }
     }
     a <- unlist(lapply(bl, function(t) lapply(t$candidateVotes %||% list(), function(cv)
