@@ -187,3 +187,22 @@ only elections before its cycle began (asserted). Primary = day-before mean abso
   ONP 19.52 -> 19.84, OTH 10.44 -> 9.81. Largest live leans: Redbridge LNP +1.38 pts, Wolf&Smith ONP -3.02, SMS Morgan GRN +1.04.
 
 Not taken to the seat stage; nothing wired into `trend_as_at()`. Remaining: SPN, MOD, AGE, FULL.
+
+## Amendment 1 (2026-11-02, Pete's choice, before arm AGE was built or any BLD number seen): AGE becomes BLD
+
+The original AGE clause above is left as written. Found while scoping AGE: the shipped level already uses poll age for
+ALP, LNP and GRN through the recent-poll blend (`AUSPOL_LEVEL_RECENT="decay"`, 20-day half-life, shipped 11 Oct), and
+a faster walk was refused 12 Oct (`plans/prereg-responsive-trend-2026-10-12.md`, 90-day guard). One Nation is NOT
+blended (`R/level_recent.R`, `.LR_CLS`), so its published level is the trend alone. Pete chose (2 Nov): extend the
+blend to One Nation instead of building AGE.
+
+- **Arm BLD:** `AUSPOL_LEVEL_RECENT_CLS = "ALP,LNP,GRN,ONP"` (published "ALP,LNP,GRN"). Same decayed recent-poll mean,
+  same half-life (20 days), the pull constant `k` fitted exactly as shipped (`level_recent_decay_fit()`, elections
+  before the target only) but over all four classes. Federal state breakdowns carry no One Nation figure, so its
+  recent mean is the state polls alone.
+- **Others is not blended:** the polls' "Others" lumps independents and minor right, while the result classes split
+  them (IND, OTH_RIGHT, OTH), so the two are not the same quantity.
+- **Scored on the SHIPPED level** (trend, then blend), not the trend alone: the ANC and REC results above scored the
+  trend, which for ALP, LNP and GRN is not the published level. Same primary otherwise (day-before mean absolute
+  error over ALP, LNP, GRN, ONP where present and everything else), same clauses 1, 3 and 6, same One Nation and
+  sa2026 report. The incumbent is the shipped blend, recomputed by the same code on the same table.
