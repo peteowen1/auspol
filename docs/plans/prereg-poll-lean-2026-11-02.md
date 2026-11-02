@@ -126,3 +126,21 @@ the other way.
 ## Amendments
 
 (none yet; any change is added below this line with the original text left as it is)
+
+## RESULT, step 0 (2026-11-02, `scripts/screen_poll_lean.R`, before any arm)
+
+- **Firm gate as written: FAIL.** 2010+ Wikipedia statewide poll rows with a firm resolved by `firm_alias.csv`:
+  4,288 of 5,220 (82.1%, bar 95%). The misses are firms missing from the alias table, not unnamed polls:
+  RedBridge/Accent 171, ReachTEL 136, DemosAU 127, Fox & Hedgehog 106, EMRS 94, DemosAU/Premier National 89.
+- **The rows the trend fits** (`load_polls()`, 2010+): firm named on **2,968 of 2,968 (100%)**, 15-31 distinct firm
+  labels per region. REC estimates on these rows, so the gate as written measured the wrong table. Not amended:
+  a gate failure goes to Pete (gate clause).
+- **Method labels: federal only.** 961 of 3,883 federal rows (24.7%); **0% in every state table**. MOD on labels
+  alone is a federal-only arm; for states it needs a firm-and-era method table.
+- **Sponsor (client):** 1,330 of 5,220 rows (25.5%); vic 49.1%, nsw 37.0%, wa and sa 0%.
+- **Primary on the incumbent:** 38 scored elections (not 35: wa1996 and the 2006-2010 state cycles have day-before
+  polls), day-before MAE mean **1.800 points**, sd 1.026 across elections. Worst: sa2018 5.04, wa2017 4.17, wa2013 3.54.
+- **Noise floor (MDE gate): PASS.** A placebo arm (one random poll dropped per election, seed 20261102) moves the
+  primary by a paired SE of **0.0076 points** (n 38; bar 0.10). A real arm meets more noise than this; it is a lower bound.
+- **Earlier-election support:** 0 earlier elections for wa1996, 2 for fed2004/nsw2007/vic2006/sa2006, rising to 32 for
+  fed2025. REC and SPN fall back to zero lean (full shrinkage) where support is 0.
