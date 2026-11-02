@@ -4,10 +4,24 @@
 \alias{trend_anchor}
 \title{Day-0 anchor rule (previous election result, or loosely the first poll)}
 \usage{
-trend_anchor(prep, prior_result, anchor_k = ANCHOR_K)
+trend_anchor(
+  prep,
+  prior_result,
+  anchor_k = ANCHOR_K,
+  anchor_mode = Sys.getenv("AUSPOL_ANCHOR_SD_MULT", "1")
+)
 }
 \arguments{
 \item{anchor_k}{Previous-election share below which the weak anchor is used.}
+
+\item{anchor_mode}{How strongly the previous result pins day 0
+(\code{AUSPOL_ANCHOR_SD_MULT}, arm ANC of \verb{docs/plans/prereg-poll-lean-2026-11-02.md}):
+\code{"1"} (published) as above; a number multiplies the anchor sd; \code{"none"}
+ignores the previous result and starts loosely from the first poll, as when
+there is none; \code{"gap:<g>"} widens the sd by \code{sqrt(1 + (gap / g)^2)}, where
+\code{gap} is the model-scale distance between the first poll and the previous
+result, so a party that has plainly moved (One Nation 0.28 -> 22) is pinned
+loosely and one that has not keeps today's anchor. No threshold anywhere.}
 }
 \description{
 The prior is specified in percentage points and translated onto the model

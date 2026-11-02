@@ -150,3 +150,23 @@ the screen.** `firm_alias.csv` patterns are regular expressions (`red ?bridge|ac
 `screen_poll_lean.R` matched them as fixed text. With regex matching: **5,051 of 5,220 (96.8%, bar 95%)**. Still
 unresolved: EMRS 94 and MediaReach 11 (Tasmania and NT, neither scored here), and non-firm labels (NT News,
 Sky News, "Internal polling", "Unnamed"). `firm_alias.csv` is not changed.
+
+## RESULT, arm ANC at the statewide stage (2026-11-02, `scripts/screen_poll_lean_anc.R` (check codes PLA0-PLA4)): NOT PASSED, not taken to the seat stage
+
+266 fits (38 elections x 7 settings), 1.2 minutes. Primary = day-before mean absolute error in points (lower is better);
+change = arm minus published, SE over elections.
+
+- **Time-forward pick (the arm as registered): +0.0104 points worse, SE 0.0149** (n 38). Clause 1 NOT PASSED. Leave-one-out:
+  better by > 1 SE in 0 of 38 drops. Moved 36 elections, 20 better and 16 worse. The pick wanders (none 13, gap:0.5 12,
+  gap:1 11, published 2) because no setting is reliably better on earlier elections.
+- Fixed settings, reported only: 2 -0.0061 (SE 0.0134), 4 -0.0073 (0.0169), none -0.0062 (0.0182), gap:0.5 -0.0031 (0.0143),
+  gap:1 -0.0025 (0.0132), gap:2 -0.0016 (0.0097). All within 1 SE of zero; a fixed setting chosen after seeing this table
+  would be the cherry-pick the time-forward rule exists to prevent.
+- Biggest single moves under the pick: qld2017 -0.409 (One Nation's 2017 return, error -1.02 -> +0.08), nsw2019 +0.275 and
+  wa2017 0.000/+1.38 on One Nation (the small surges the polls over-stated), fed2010 +0.129, wa2005 +0.115.
+- Named in advance: mean |One Nation error| 1.676 published vs 1.754 under the pick (18 elections); sa2026 -0.059 better
+  (One Nation -2.22 -> -2.07). So loosening the pin helps the big-surge case and hurts the small-surge cases, and nets to nothing.
+
+**`AUSPOL_ANCHOR_SD_MULT` stays "1".** The 2 Nov S7 breach (Vic One Nation 19.52 vs 22.03) is therefore the published
+model behaving as measured, not a defect to patch; per "Not criteria" above, curing S7 is not a reason to ship.
+Next arms: REC, SPN, MOD, AGE (order of work step 3).
