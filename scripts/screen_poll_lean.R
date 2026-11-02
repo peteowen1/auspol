@@ -34,7 +34,7 @@ cat(sprintf("PL0a  %d poll rows, %d with no parseable fieldwork_end (left out)\n
 w <- wiki[is_poll]
 fl <- tolower(ifelse(is.na(w$firm) | w$firm == "", w$firm_raw, w$firm))
 pats <- tolower(alias$pattern)
-w[, firm_ok := vapply(fl, function(f) !is.na(f) && f != "" && any(vapply(pats, function(p) grepl(p, f, fixed = TRUE), TRUE)), TRUE)]
+w[, firm_ok := vapply(fl, function(f) !is.na(f) && f != "" && any(vapply(pats, function(p) grepl(p, f, perl = TRUE), TRUE)), TRUE)]   # patterns are REGEX (`red ?bridge|accent`); matching them as fixed text failed the gate on 2 Nov
 mode_txt <- trimws(w$mode_raw)
 w[, mode_ok := !is.na(mode_txt) & grepl("[A-Za-z]", mode_txt)]
 cl <- trimws(ifelse(is.na(w$client) | w$client == "", w$client_raw, w$client))

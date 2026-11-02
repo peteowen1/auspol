@@ -144,3 +144,9 @@ the other way.
   primary by a paired SE of **0.0076 points** (n 38; bar 0.10). A real arm meets more noise than this; it is a lower bound.
 - **Earlier-election support:** 0 earlier elections for wa1996, 2 for fed2004/nsw2007/vic2006/sa2006, rising to 32 for
   fed2025. REC and SPN fall back to zero lean (full shrinkage) where support is 0.
+
+**Correction (2026-11-02, same session, before any arm): the firm gate PASSES as written; the FAIL above was a bug in
+the screen.** `firm_alias.csv` patterns are regular expressions (`red ?bridge|accent`, `demos|premier national`) and
+`screen_poll_lean.R` matched them as fixed text. With regex matching: **5,051 of 5,220 (96.8%, bar 95%)**. Still
+unresolved: EMRS 94 and MediaReach 11 (Tasmania and NT, neither scored here), and non-firm labels (NT News,
+Sky News, "Internal polling", "Unnamed"). `firm_alias.csv` is not changed.
