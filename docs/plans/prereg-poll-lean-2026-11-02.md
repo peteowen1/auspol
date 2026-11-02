@@ -206,3 +206,25 @@ blend to One Nation instead of building AGE.
   trend, which for ALP, LNP and GRN is not the published level. Same primary otherwise (day-before mean absolute
   error over ALP, LNP, GRN, ONP where present and everything else), same clauses 1, 3 and 6, same One Nation and
   sa2026 report. The incumbent is the shipped blend, recomputed by the same code on the same table.
+
+## RESULT, arm BLD (Amendment 1) at the statewide stage (2026-11-02, `scripts/screen_poll_lean_bld.R`, codes PLB0-PLB4): NOT PASSED
+
+Dry run: the rebuilt pre-blend level reproduces `output/level-recent.csv` on all 105 ALP/LNP/GRN cells (max diff 0.0000).
+35 elections. Primary on the SHIPPED level (pre-blend forecast rescaled, then the blend), mean absolute error in points,
+lower is better; change = arm minus shipped.
+
+- **Change +0.0690 points WORSE, SE 0.0551.** Clause 1 NOT PASSED; leave-one-out better in 0 of 35 drops; 31 elections
+  moved, 11 better and 20 worse. Mean |One Nation error| 1.393 shipped vs 1.747 arm (22 elections).
+- Worst: nsw2023 +1.124 (One Nation -0.07 -> +2.82), nsw2019 +0.900 (-0.61 -> +2.25), vic2022 +0.596 (-0.12 -> +1.55),
+  wa2017 +0.510 (2.00 -> 4.15), fed2025 +0.307. Best: sa2026 -0.744 (-1.85 -> -0.04), wa2008 -0.215.
+- Why: statewide polls ask about One Nation everywhere, and in the elections where it stood in only some seats (NSW 2019
+  and 2023, Victoria 2022) they measure support it could not collect. The trend's lag is protecting those cases. sa2026,
+  where it stood broadly, is the one large gain, and Victoria 2026 may be more like sa2026; nothing here can test that
+  until nominations close (9 Nov) and the candidate count is known. Recorded as an open idea, not a result.
+
+**`AUSPOL_LEVEL_RECENT_CLS` stays "ALP,LNP,GRN".**
+
+**Correction found while walking it (live, 4:30am 2 Nov run log):** the PUBLISHED Victorian One Nation level is **20.92**,
+not the trend's 19.52: the rescale to 100 makes it 19.96 and the blend for the other three parties spills +0.96 onto it.
+The gap to the 90-day poll mean (22.03) is about 1.1 points. S7 checks the trend, not the level the seats get, so the
+"2.5 points under its polls in every seat" reading of `reviews/s7-onp-anchor-2026-11-02.md` overstated it.

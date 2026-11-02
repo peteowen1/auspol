@@ -67,3 +67,11 @@ window and no fit; fed2016 has none.
 LIVE, not a code bug: the published forecast carries One Nation at 19.5 statewide against 22.0 in the polls,
 and S7 will keep firing on every daily run while that holds. Whether to shade a surging party toward its last
 result, and by how much, is a modelling decision for the #1 prereg, fitted time-forward on these cycles.
+
+## Correction, same day (after arm BLD): the published level is 20.92, not 19.52
+
+The forecast's statewide One Nation level is the trend rescaled to 100 (19.96) plus the recent-poll blend's spill from
+the other three parties (+0.96): **20.92** in the 4:30am 2 Nov run (log line "blended minus pre-blend ... ONP +0.96").
+So the published gap to the polls is about 1.1 points, not the 2.5 S7 reports, and "the gap is not confined to the trend
+chart" in S7's own message overstates it. The trend gap and the anchor finding above stand; the size reaching the seats
+is smaller. All three poll-lean arms tested on 2 Nov (`plans/prereg-poll-lean-2026-11-02.md`) did not pass.

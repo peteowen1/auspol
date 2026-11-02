@@ -18,8 +18,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (firm 96.8%, noise floor 0.0076 pts); arm ANC (anchor strength, `AUSPOL_ANCHOR_SD_MULT`) NOT PASSED at the statewide
   stage (+0.0104, SE 0.0149, 38 elections), stays "1", so S7 keeps firing on measured behaviour. REC (company lean vs
   results, `R/poll_lean.R`) NOT PASSED (-0.0154, SE 0.0216; swings both ways; cannot see One Nation's over-statement,
-  which every firm shares). OPEN: SPN, MOD (states need a firm-and-era method table: 0% labels), AGE, FULL; and the
-  shared party-level poll bias REC cannot see (links to the parked 17 Oct per-class level bias). Built and REFUSED 9 Oct: noise-only weights (`"record"`, R/poll_record.R; `"firm_factors"`)
+  which every firm shares). BLD (Amendment 1, Pete: blend One Nation toward recent polls instead of AGE) NOT PASSED
+  (+0.0690 worse, SE 0.0551): polls over-state it where it stood in few seats (nsw2019/2023, vic2022); sa2026 the one gain.
+  CORRECTION: the published Vic One Nation level is 20.92 (rescale + blend spill), not the trend's 19.52; the live gap
+  is ~1.1 pts. OPEN: SPN, MOD (states need a firm-and-era method table: 0% labels), FULL; idea after 9 Nov: condition
+  the One Nation blend on how many seats it stands in; the shared party-level poll bias REC cannot see. Built and REFUSED 9 Oct: noise-only weights (`"record"`, R/poll_record.R; `"firm_factors"`)
   in plans/prereg-statewide-poll-sample-weights-2026-10-09.md. NEVER TESTED: LEAN. Trigger case: Online Research Unit for the
   Victorian Greens (14-26 Oct, on Wikipedia 1 Nov 7:09pm) has ONP 14 vs 20-25 in every other poll.
   Build the STRONGEST version (CLAUDE.md negative-result rule), not a subset: per-firm house effect per party (bias vs

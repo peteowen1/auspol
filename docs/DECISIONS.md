@@ -4,6 +4,7 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-11-02 One Nation stays out of the recent-poll blend (`AUSPOL_LEVEL_RECENT_CLS="ALP,LNP,GRN"`; arm BLD NOT PASSED).** 35 elections on the shipped level: +0.0690 points worse (SE 0.0551), 20 worse and 11 better; polls over-state One Nation where it stands in few seats (NSW 2023 +1.12). `plans/prereg-poll-lean-2026-11-02.md` Amendment 1.
 - **2026-11-02 Company lean against results (arm REC) NOT PASSED; not wired.** 38 elections: -0.0154 points (SE 0.0216), 22 better and 15 worse with big swings both ways; a company's past lean is a weak guide to its next. `plans/prereg-poll-lean-2026-11-02.md`.
 - **2026-11-02 Trend anchor strength stays as published (`AUSPOL_ANCHOR_SD_MULT="1"`; arm ANC NOT PASSED).** Picking the pin setting time-forward over 38 elections: day-before level error +0.0104 points (SE 0.0149); loosening it helps big surges (sa2026, qld2017) and hurts the small ones the polls over-stated (nsw2019, wa2017). So the 2 Nov S7 breach (Vic One Nation 19.52 vs 22.03) is measured behaviour, not a defect. `plans/prereg-poll-lean-2026-11-02.md`, `reviews/s7-onp-anchor-2026-11-02.md`.
 - **2026-11-01 Card fit: the shipped coalition-split table is the only source when present (PR #184).** The forecast runner read a partial transfer set (35% vs the validated 37.9%). Same rule as the Coalition split, 17 Oct.
