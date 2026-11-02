@@ -92,7 +92,7 @@ where a minor-to-minor relabelling (Donato's case) does not behave that way.
 The major-party case is now a fitted carry, not an exclusion. A sitting member who leaves a
 major party keeps a fraction of their previous personal vote, `discount_mp` from
 `fit_defector_discount()` in `R/candidate_returns.R`, fitted on elections before the target
-(federal targets get their own shrunk rate, `AUSPOL_DEFECT_BY_LEVEL = "2"`, `:1268`). The live
+(federal targets get their own shrunk rate, `AUSPOL_DEFECT_BY_LEVEL = "2"`, read inside the same function). The live
 forecast fits it every run (the `AUSPOL_LIVE_DEFECT_FIT` block calling `fit_defector_discount()` in `scripts/fit_seats_full.R`); it read
 a frozen 0.282 until 2026-10-18, and the fitted value then was 0.313 (the frozen number is
 now only the fallback if the fit fails). A minor-to-minor switcher gets the separate
