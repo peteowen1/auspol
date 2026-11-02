@@ -170,3 +170,20 @@ change = arm minus published, SE over elections.
 **`AUSPOL_ANCHOR_SD_MULT` stays "1".** The 2 Nov S7 breach (Vic One Nation 19.52 vs 22.03) is therefore the published
 model behaving as measured, not a defect to patch; per "Not criteria" above, curing S7 is not a reason to ship.
 Next arms: REC, SPN, MOD, AGE (order of work step 3).
+
+## RESULT, arm REC at the statewide stage (2026-11-02, `scripts/screen_poll_lean_rec.R`, codes PLR0-PLR4): NOT PASSED
+
+Company lean against results (`R/poll_lean.R`): 21,599 poll-party rows from 74 completed elections, 47 firms; per target,
+only elections before its cycle began (asserted). Primary = day-before mean absolute error in points (lower is better).
+
+- **Change -0.0154 points, SE 0.0216** (n 38). Clause 1 NOT PASSED. Leave-one-out better by > 1 SE in 1 of 38 drops.
+  Moved 37 elections: 22 better, 15 worse, and the moves are large in both directions (wa2008 -0.43, wa2005 -0.33,
+  wa1996 +0.31, sa2022 +0.15): a company's lean at past elections is a weak guide to its lean at the next, the same
+  finding as the 9 Oct record arm for noise.
+- **One Nation barely moves** (mean |error| 1.676 -> 1.675; sa2026 -2.22 -> -2.19). By design REC removes the miss every
+  company shared, and One Nation's over-statement at small surges is shared, so a company term cannot see it. That is a
+  party-level poll bias, a different term (the 17 Oct per-class level bias, parked; NEXT-STEPS).
+- Live walk (vic2026, lean from all 74 elections): LNP 29.83 -> 29.63, ALP 24.11 -> 24.53, GRN 13.85 -> 13.80,
+  ONP 19.52 -> 19.84, OTH 10.44 -> 9.81. Largest live leans: Redbridge LNP +1.38 pts, Wolf&Smith ONP -3.02, SMS Morgan GRN +1.04.
+
+Not taken to the seat stage; nothing wired into `trend_as_at()`. Remaining: SPN, MOD, AGE, FULL.

@@ -16,8 +16,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   2022 day-0 anchor (0.28%) causes 1.90 of it, the ORU poll 0.68; 10-cycle record and the sa2026 counter-case in
   `reviews/s7-onp-anchor-2026-11-02.md`. PREREG `plans/prereg-poll-lean-2026-11-02.md` (2 Nov): step 0 gates pass
   (firm 96.8%, noise floor 0.0076 pts); arm ANC (anchor strength, `AUSPOL_ANCHOR_SD_MULT`) NOT PASSED at the statewide
-  stage (+0.0104, SE 0.0149, 38 elections), stays "1", so S7 keeps firing on measured behaviour. OPEN: build REC
-  (company lean vs results), SPN, MOD (states need a firm-and-era method table: 0% labels), AGE, FULL. Built and REFUSED 9 Oct: noise-only weights (`"record"`, R/poll_record.R; `"firm_factors"`)
+  stage (+0.0104, SE 0.0149, 38 elections), stays "1", so S7 keeps firing on measured behaviour. REC (company lean vs
+  results, `R/poll_lean.R`) NOT PASSED (-0.0154, SE 0.0216; swings both ways; cannot see One Nation's over-statement,
+  which every firm shares). OPEN: SPN, MOD (states need a firm-and-era method table: 0% labels), AGE, FULL; and the
+  shared party-level poll bias REC cannot see (links to the parked 17 Oct per-class level bias). Built and REFUSED 9 Oct: noise-only weights (`"record"`, R/poll_record.R; `"firm_factors"`)
   in plans/prereg-statewide-poll-sample-weights-2026-10-09.md. NEVER TESTED: LEAN. Trigger case: Online Research Unit for the
   Victorian Greens (14-26 Oct, on Wikipedia 1 Nov 7:09pm) has ONP 14 vs 20-25 in every other poll.
   Build the STRONGEST version (CLAUDE.md negative-result rule), not a subset: per-firm house effect per party (bias vs
