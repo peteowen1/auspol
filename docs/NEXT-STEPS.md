@@ -10,8 +10,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 - **#1 NEXT SESSION (Pete, 1 Nov 8:30pm): treat polls differently by type, company and age.** Pete: "we 100% should be
   treating different polls differently based on the poll type and company and how old it is". TODAY the published trend
-  (`trend_as_at()`, R/projection.R, `weights = "equal"`) weights every statewide poll the same: no house effect, no
-  sponsor or mode adjustment. Built and REFUSED 9 Oct: noise-only weights (`"record"`, R/poll_record.R; `"firm_factors"`)
+  (`trend_as_at()`, R/projection.R, `weights = "equal"`) weights every statewide poll the same and fits a WITHIN-CYCLE
+  house effect per firm per party (soft sum-to-zero; CORRECTED 2 Nov, the earlier "no house effect" was wrong). No
+  house effect against results across cycles, no sponsor or mode adjustment. 2 Nov S7 breach (ONP 19.52 vs 22.03): the
+  2022 day-0 anchor (0.28%) causes 1.90 of it, the ORU poll 0.68; 10-cycle record and the sa2026 counter-case in
+  `reviews/s7-onp-anchor-2026-11-02.md`. The anchor's shading belongs in this prereg. Built and REFUSED 9 Oct: noise-only weights (`"record"`, R/poll_record.R; `"firm_factors"`)
   in plans/prereg-statewide-poll-sample-weights-2026-10-09.md. NEVER TESTED: LEAN. Trigger case: Online Research Unit for the
   Victorian Greens (14-26 Oct, on Wikipedia 1 Nov 7:09pm) has ONP 14 vs 20-25 in every other poll.
   Build the STRONGEST version (CLAUDE.md negative-result rule), not a subset: per-firm house effect per party (bias vs
