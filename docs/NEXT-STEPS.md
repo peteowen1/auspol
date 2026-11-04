@@ -13,11 +13,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   9 Nov, condition One Nation's anchor/blend on how many seats it stands in; (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side still untested:
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` "0" (register row ~119).
-- **Status 4 Nov 10:15pm.** Daily forecast runs green on main and dev through 3 Nov, What-If included (PR #184's fix
-  live). dev is ~22 commits ahead of main (poll-lean arms, all refused; 4 Nov benchmark snapshot; MP-slope tables the
-  1 Nov rebuild wrote, which CI had not been reading): reviewed clean 4 Nov.
-  PR #187 merged to main 10:41pm 4 Nov; issues #131, #136, #138, #139, #142, #177 closed (fixed by merged PRs).
-  VEC feed access details were due 4 Nov: not in Gmail or Hotmail as of 7:30pm. Run
+- **Status 5 Nov 5am.** PR #187 (poll-lean arms, 4 Nov benchmark snapshot, MP-slope tables) merged to main 10:41pm
+  4 Nov; the 5 Nov 4:30am daily run is the first with it (result in `backlog/overnight-2026-11-04.md`). dev since:
+  docs, registries and the salience anchor fix only. Overnight log and Pete's three decisions:
+  `backlog/overnight-2026-11-04.md`. VEC feed access details were due 4 Nov: not in Gmail or Hotmail as of 5am 5 Nov. Run
   `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
 - **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** Plan and replays:
   `docs/plans/election-night-booth-model.md` (vic2022 seat log loss vs afternoon 0.2643: 0.1133 at 10% counted,
@@ -53,10 +52,6 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
      Choices: (a) 2018 Narracan booths as the reference (both majors stood; pre-2021 redistribution), (b) the 2023 booths
      for the parties that stood only, (c) leave Narracan's booths "new". Raw pages saved:
      `external/reference/vec/2022/booths/narracan-supp2023-{fp,2cp}.html`. Nothing built yet.
-  3b. DONE 30 Oct: the night JSON writes `sn` per booth and `swing` per seat (`night_booth_results(conv, ref)`,
-     `night_seat_swing()`, `R/night_runner.R`). Booth swings equal the page builder's `s` on all 1,325 vic2022 booths
-     (max difference 0); the seat swing is like for like over matched booths (vs the builder's whole-district
-     `dswing`: median gap 0.46 pts on 2022's redistribution). A damaged reference table drops the swing (NW14), not the booths.
   4. Navbar link; the "called" rule (99% with 10% counted is a placeholder); find my seat (#166).
   5. Trial 25 Nov (no 2CP); the upper-house model.
   Dated: the satellite basemap's Esri key (Pete's account, basemaps only, pay-as-you-go off) expires 27/10/2027.
@@ -85,9 +80,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   its known answer now (ours 88/88 against its own favourites). Still to build: the VEC 2026 results file itself.
   Roy Morgan dropped 21 Oct (no seat winners) (`plans/external-benchmark-vic2026-2026-10-20.md`).
 
-- Builds waiting for R (26 Oct, each on a LOCAL branch, not pushed). `mp-slope-shrink-1025` is in dev and SHIPPED
-  30 Oct (DECISIONS). `ind-overcall-1025` passes `check_like_ci.R` (28 Oct), 3 commits not in dev. One quick_arm
-  screen at a time:
+- Builds from 26 Oct branches (local; `mp-slope-shrink-1025` SHIPPED 30 Oct, `ind-overcall-1025` merged into dev 30 Oct).
+  One quick_arm screen at a time:
   - `ind-overcall-1025` `7252acb`, merged into dev 30 Oct (`016ed0c3`): `AUSPOL_IND_GAP_RESTAND` (off). The SHARE
     version is NOT built, on Pete's call 30 Oct: it changes nothing, since the base already holds a re-stander's own
     vote (DECISIONS 2026-10-30). The yes/no arm REFUSED on AEF-7 30 Oct (moved seats +0.0014, SE 0.0007; prereg
@@ -144,27 +138,15 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (via `state_blend_flows()`, the QLD and SA backtest harnesses) reads the estimates, for QLD 2001-2017, SA 2002-2022,
   NSW 2003/2007, Vic 2002 and WA 2001, blended at w 0.5-0.79 with earlier published flows (sa2022 Greens 81.3).
   OPEN, small: whether the estimator's Greens bias also shifts those state blends; a backtest-only question.
-- CLOSED 4 Nov (Pete): new-independent breakout stays OFF (DECISIONS 2026-11-04).
 - OPEN: Vic 2026 Edge Board (https://claude.ai/artifact/8U33eGJMiAbpZFSW2dsfQu) builder now in the repo:
   `scripts/build_edge_board_vic2026.R [capture.csv] [out_dir]` (EDGE_RUN=<suffix> picks our run) writes both board datasets;
   checked 1 Nov against the published files (same selections, prices, bookie probabilities, columns; seat panel identical).
   The board's 12:07am `-boardmain` run files are gone from output/, so a refresh needs a fresh suffixed fit_seats_full.R run
   and a new Sportsbet capture first. Seat panel, filters and links shipped 1 Nov 12:25pm.
-- DONE 1 Nov, PUBLISHED 11:42am (Pete's yes; release shipped-models, MANIFEST git 4ae01eba, 0.3256 over 2,931): sa2026 absent votes (138,549, 12%) swapped into output/candidacies.csv (builder fix 73e7d07b);
-  full rebuild done 10:29am (`deciding-runs/20261101-sa-absent-rebuild`): vs the 28 Oct published snapshot +0.0015 (SE 0.0032)
-  over 35, AEF-7 -0.0057, sa2026 0.2482 -> 0.2420 on the corrected truth; worse >0.02 = the surge-off elections plus nt2024
-  (+0.065; CLOSED 1 Nov: NOT the MP-slope pool (quick_arm off: 1.0341 -> 1.0357, 8 of 125 cells moved). Shares moved
-  under 0.35 pts per party; the loss is Johnston (IND won on 30.3%, we gave 5%: p 0.004 -> 0.002 is ~45% of it) and
-  winners in landslide seats slipping ~0.5 pts. Log-loss sensitivity on already-missed seats, nothing to fix). Two stale derived files
-  fixed: output/salience-v6.csv sa2026 pcv patched from the corrected count (173 rows; its builder fetches Google Trends),
-  output/retiring-mp-cases.csv regenerated (was 13 Sep: 343 rows, missing 12 elections; now 507). Stage-3 rebuild running
-  (`...-rebuild-s3`); its stage 4 reused all 31 models (5 s vs 1,709 s). TODO after: add build_retiring_mp_cases.R to
-  rebuild stage 0 (low value: its only reader, AUSPOL_XGB_RETIRING_MP, is off). Stage-3 rebuild byte-identical to the
-  first: neither corrected file reaches the published model (salience-v6 is read only for `jump`). OPEN: Cheltenham
-  reversed-duplicate absent batch fixed in the builder (4ae01eba, BC2r, 8 rows up to 0.36 pts) but output/candidacies.csv
-  NOT yet regenerated; fold into the next rebuild. Newland +1,047 and Black +26 untraced. Audit: 19 of 22 state elections match booth totals exactly; federal within 0.1%.
-  Audit 1 Nov of forecast inputs built OUTSIDE the rebuild vs their builders' last commit: 7 flagged, all false alarms (6 a
-  check-code rename on 9 Oct, 1 a first commit after its first run); only the two files above were really stale.
+- DONE 1 Nov: sa2026 absent votes published (verbatim in `backlog/journal-2026-10-25-to-2026-11-04.md`). Still OPEN
+  from it: output/candidacies.csv NOT regenerated after the Cheltenham absent-batch builder fix (4ae01eba, BC2r, 8 rows
+  up to 0.36 pts), fold into the next rebuild; Newland +1,047 and Black +26 untraced; add build_retiring_mp_cases.R to
+  rebuild stage 0 (low value, its reader is off).
 - OPEN from the 30 Oct walks (https://claude.ai/artifact/USv8sffhF1zbYagBGwjdQ3, `reviews/walks-wa2017-fed2019-2026-10-30.md`):
   WA seat layer ~5 pts above the statewide Labor level (36.4 -> 41.2) yet 5-15 short in the swing seats. PARTLY TRACED
   4 Nov (wa2017 seat means over 59 seats, actual ALP 41.9): level-pred 36.4 -> base_pred 38.9 (+2.5) -> xgb_pred_seat
@@ -203,17 +185,9 @@ contest features / contest base / partial-contest arm A refused, first-term fill
 - OPEN: width arms A0/A1 (`AUSPOL_FP_EXTRA_SD` 0 / 1.2) pre-registered, not yet run (needs the memory F7 needs).
   NOT RUN 25-26 Oct either: the night queue reached GRN_TREE_SHRINK by 00:59, and the next launch could not finish
   before the 03:15 F7 deciding run (memory sat at 3-7 GB from 20:30, so harness runs took about 2 minutes each).
-- 25-26 Oct night screens (quick_arm, results appended to each prereg): One Nation new-seat rule arm A REFUSED (target
-  log loss +0.0007, SE 0.0004); arm B NOT PASSED (-0.0088, SE 0.0090; the whole gain is qld2017; sa2026 clause 4a).
-  B v A where both rules apply is +0.0012 (SE 0.0012), so no House-v-Senate difference is measurable. Surge-level all
-  35 NOT PASSED (target -0.0016, SE 0.0036; LOO sign lost). F8 arm R all 35: +0.0003 (SE 0.0005), not shipped. F8 arm N
-  WORSE on AEF-7 (+0.0003, SE 0.0002), stopped; its netting costs 579 s per harness run (cache it before any rerun).
-  RN not run (it needs R and N to pass). GRN_TREE_SHRINK all 35, LEFT OFF 26 Oct (Pete, after the trace): the primary passes (Greens squared error
-  -0.1247, SE 0.1133, 511 cells) but clause 3 refuses (vic2022 worse by 2.5 SE; leave-one-out above 1 SE in only 15 of 19
-  drops); seat log loss is unchanged (-0.0000). Departed-origin arm A all 35 NOT PASSED (changed-cell share error
-  +1.33, SE 2.56; Mount Gambier, Hillarys and Cabramatta outweigh Morwell). Its part 2 (the xgb feature, stage-4
-  rebuild) CLOSED 27 Oct, not run (Pete agreed). Still not run: departed arm B
-  (`mean`). Level-conserve (refused 29 Oct) and port 3C (shipped 28 Oct) are closed.
+- 25-26 Oct night screens: all refused, not passed or left off (verbatim in `backlog/journal-2026-10-25-to-2026-11-04.md`;
+  results appended to each prereg). Still not run from them: departed arm B (`mean`); F8 arm N netting costs 579 s per
+  harness run, cache it before any rerun.
 - OPEN, DATED (final snapshot 25-27 Nov is the one that ships, per Pete 27 Oct; earlier weekly ones from ~3 Nov are
   for watching only, not the forecast): vic2026 salience snapshots. 26 Oct snapshot fetched, 0 of 101 batches linkable. All 500 candidates fetched
   18 Oct (window to 6 Oct), but that is before the campaign: nobody's search interest is rising yet (Premier 1.1 in the
@@ -244,23 +218,12 @@ party-cor off) and the phantom-votes arm REFUSED: all in the journal and DECISIO
 
 ## Still open from 14-15 Oct (collapsed 15 Oct evening; history in DECISIONS and `plans/overnight-2026-10-14.md`)
 
-- PROVEN 29 Oct: `seat_sd` is inert under the shipped `AUSPOL_LEVEL_SD` ("1.10,8.67"): same seed, seat_sd 3.5 vs 50,
-  identical win probabilities; with level_sd off it moves (test-level_sd.R, 76a1008d). It stays as the flat-variance
-  fallback. NB `AUSPOL_SEAT_SD_MULT` is NOT a seat_sd knob: it also scales level_sd (vic2022 at 50x: 0.2643 -> 1.3561).
-
-**State (15 Oct; HISTORICAL, superseded: published 1 Nov 0.3256 over 2,931 seats, DECISIONS):** 35 scored single-member elections. AEF-7 seat log loss 0.2669 (published 15 Oct 15:33) vs AEF 0.2825;
-pooled 0.3347 over 2,931 seats. Tas/ACT on the Hare-Clark path: pooled 0.496 vs naive 0.974. Training rule P4;
-scoring each election x sqrt(votes). Leak fixes shipped: conserve, MP slopes, census publication date. Later publish
-16 Oct: PA5 0.3356, AEF-7 0.2657 (DECISIONS).
-
 **Open work, in order:**
 - OPEN sa2018 +0.025 from the new inputs: LNP -0.3 pts broadly where IND/GRN rose; which input not isolated (screen
   sa2018 with salience off). nsw2019's +0.026 is Barwon alone (SEAT-REGISTRY). Lead (15 Oct): under the leaking
   surge flag, sa2018 IND (SA-Best, +13.9 actual) was "surging" from its own result; read the surge arms first.
-- OPEN wa2017 / wa2013 regressions: Hillarys and Churchlands traced in SEAT-REGISTRY; the Lib/Nat two-candidate part
-  SHIPPED 17 Oct (journal has the full trace). Remaining: the WA 2017 swing seats (Murray-Wellington, Pilbara, Jandakot,
-  Southern River, Kingsley): all five won by ALP at our P 0.09-0.19; statewide level-pred ALP 36.4 vs actual 42.2
-  but published seat mean ALP 41.2 (the 36.4 -> 41.2 lift not traced); Southern River ALP swing +20.7 vs ours +8.3.
+- OPEN wa2017 / wa2013 regressions: Hillarys and Churchlands traced in SEAT-REGISTRY; Lib/Nat two-candidate part SHIPPED
+  17 Oct. The WA 2017 swing-seat lift is now traced in NEEDS PETE ("OPEN from the 30 Oct walks", 4 Nov).
 - OPEN (finding 17 Oct, not acted on): WA's Coalition over-call is a statewide LEVEL miss, not seat-level. Mean
   Coalition primary error (ours - actual) in one-candidate seats: NT +3.61 (SE 1.08), WA +2.46 (0.34), Qld +0.98,
   NSW +0.45, fed +0.05, SA -0.82, Vic -0.87; WA by election 6 of 7 positive (wa2005 +4.68, wa2001 +3.42, wa2017
@@ -293,7 +256,7 @@ weighting by track record, seat-poll precision blend, typical-vote independent m
 
 - Poll weighting (Pete wants "a LOT better"): statewide lean by company, sponsor, method and age CLOSED 4 Nov (all six arms
   refused; top of this file). Still OPEN: federal state breakdowns in the state trend, preregistered 26 Oct (branch
-  `fed-breakdowns-prereg-1026`; see "Builds waiting for R"). `reviews/poll-weighting-inventory-2026-10-12.md`.
+  `fed-breakdowns-prereg-1026`; see "Builds from 26 Oct branches"). `reviews/poll-weighting-inventory-2026-10-12.md`.
 - OPEN move off AE (`reviews/ae-dependence-audit-2026-10-13.md`): (b) language-model extraction of the Poll Bludger
   posts, the stronger version, not tried.
 - OPEN leader ratings: drift from months out needs horizon scoring. (The blog chart is DONE: inthegame-blog PRs #890
@@ -408,14 +371,8 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
 - **State-deviation**: v2 refused 2026-09-19 (one landslide behind the
   state-election term). Reopens with Tasmanian state results in the corpus
   (7 of the 12 worst state-years are TAS/ACT/NT).
-- SUPERSEDED (checked 4 Nov): **surge v4 vs salience** (hazard AUC 0.936 vs 0.751; `prereg-xgb-surge-parameters-v2`,
-  never run). The surge hazard path is off in the published model (`AUSPOL_SURGE_SOURCE="none"`, `AUSPOL_SURGE_H="0"`,
-  surge-v2 "0" since 31 Oct), so its seat-count test only matters if a surge mechanism comes back.
-- **Overcalled independents**: building on `ind-overcall-1025` (see "Builds waiting for R"). Successor overcalls
+- **Overcalled independents**: the `ind-overcall-1025` re-stand arm REFUSED 30 Oct (see "Builds from 26 Oct branches"). Successor overcalls
   (Morwell, Mildura, Kavel, Finniss) are a separate item, not started; departed-hold refused.
-- CLOSED (queue corrected 4 Nov; it said "unmeasured"): **simulation noise revives zeroed parties** was measured and the
-  fix REFUSED 18 Oct: `AUSPOL_ZERO_ABSENT=1` moved every election (largest win probability 0.027) but every-seat log loss
-  0.3152 -> 0.3152 (SE 0.0003), AEF-7 -0.0002 (`plans/prereg-zero-absent-2026-10-17.md`). Switch stays "0".
 - **Scenario tool** (hold the party exactly at X, others give way by regression: Pete's choices): build NOT
   started, about 40-50 h (a guess); stage 1 is brute-force `AUSPOL_FORCE_FP` runs, also the test oracle
   (`plans/scenario-tool-scoping-2026-10-03.md`). Request register: NOT DONE.
@@ -430,10 +387,6 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
   pooled slope, and was refused 29 Sep (+0.0056, SE 0.0035). DECIDED 27 Oct (Pete): build a tau^2 arm toward
   the pooled slope; NOT built, no prereg yet (the MP-slope pool shipped 30 Oct is a different fit). The `SHIP_SAME/NEW`
   leak is DONE: `AUSPOL_SHIP_TIME_FORWARD=1` (v51) makes the fallback time-forward; the constants are opt-out only.
-- CLOSED (queue corrected 4 Nov; it said "no recorded verdict"): **seat context phase 2** margin arm
-  `AUSPOL_SEAT_CONTEXT_MARGIN` was REFUSED twice on 28 Sep (rebuild H +0.0021, rebuild I a tie) and margin work STOPPED
-  as pre-registered (`plans/prereg-seat-context-complete-2026-09-28.md`); previous swing not filled (r 0.875);
-  first-term fill refused (Oct 20 prereg).
 - **Teal/independent under-call** (Curtin, Goldstein, Mackellar, Wakehurst):
   PARKED by Pete. Overall we lead AEF on independents (36 winners: 16.7 vs
   19.7 log loss). Wave term blocked (`reviews/wave-term-blocked-2026-09-07.md`).
@@ -458,9 +411,6 @@ Still open:
   adds per-pair timing and an opt-in resume cache (`AUSPOL_FED_RESUME=1`). Ran live: outputs byte-identical.
   Untested: more than one pair, a kill mid-run. `FLOW_SD` has the same loop leak, unfixed (dormant,
   `AUSPOL_FLOW_SD_BY_SOURCE` default 0). Also `instrument-backtest-fed-timing` (ae91f62), paused.
-- DONE (checked 4 Nov): the seat-poll, demographic and leader-seat corrections all read THIS run's as-at predictions
-  through `current_seat_predictions()` (`output/xgb-primary-asat-predictions.csv`, `R/seat_predictions.R`); the previous
-  rebuild's `forecasts.csv` is only a fallback when that file is absent, and it prints `SPR0!` when used.
 - Main-tree `R CMD build` failed after ~6 min once (2026-10-04) while the fresh-clone check passed. Likely
   cause, unproven: the junctions in `.claude/worktrees/*/output` and `/external` into the main tree. Remove
   with `cmd /c rmdir` (never a recursive delete) before running the check in the main tree; the
@@ -481,8 +431,6 @@ Still open:
   seat-boundary matching (`external/reference/boundaries/` has CED 2016).
 - GDELT parked (needs a GCP project); Census 2006/2001 have no bulk pack.
 - OPEN: ITG page: a seat map (regions are in the JSON now), per-seat cards, a forecast-over-time chart.
-- DONE (checked 4 Nov): bare "LDP" -> OTH_RIGHT is live in `output/candidacies.csv` (rebuilt 1 Nov: fed2007 47, fed2022 100,
-  vic2026 4 and 107 more rows all OTH_RIGHT), and the 1 Nov full rebuild scored fed2007 on it.
 
 ## Awaiting Pete
 
