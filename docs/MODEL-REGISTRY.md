@@ -1,6 +1,6 @@
 # Model registry
 
-**Generated 2026-10-31 by `scripts/build_model_registry.R`. Do not hand-edit** --
+**Generated 2026-11-05 by `scripts/build_model_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate whenever a switch is added to
 `published_flags.R` or a harness's wiring changes.
 
@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (295 switches from `published_flags.R`, 7 entry points)
+## Switch parity (299 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -39,9 +39,12 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 |---|---|---|---|---|---|---|---|---|
 | `AUSPOL_ANCHOR_EXHAUST` | yes | NO | NO | NO | NO | NO | NO | forecast_mode.R |
 | `AUSPOL_ANCHOR_IMPLIED` | yes | NO | NO | NO | NO | NO | NO | forecast_mode.R |
+| `AUSPOL_ANCHOR_SD_MULT` | NO | NO | NO | NO | NO | NO | NO | trend.R |
 | `AUSPOL_ASAT_MIN_PAIRS` | NO | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_BREAKOUT_MIX` | NO | NO | NO | NO | NO | NO | NO | breakout_mix.R |
+| `AUSPOL_BREAKOUT_MIX_CLASSES` | NO | NO | NO | NO | NO | NO | NO | breakout_mix.R |
 | `AUSPOL_BREAKOUT_MIX_MIN_P` | NO | NO | NO | NO | NO | NO | NO | breakout_mix.R |
+| `AUSPOL_BREAKOUT_MIX_NEW_ONLY` | NO | NO | NO | NO | NO | NO | NO | breakout_mix.R |
 | `AUSPOL_BUCKET_SPLIT` | yes | NO | NO | NO | NO | NO | NO | forecast_statewide.R |
 | `AUSPOL_BUCKET_SPLIT_SRC` | NO | NO | NO | NO | NO | NO | NO | forecast_statewide.R |
 | `AUSPOL_BUCKET_TOTAL` | NO | NO | NO | NO | NO | NO | NO | forecast_mode.R, forecast_statewide.R |
@@ -148,6 +151,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_LEVEL_MULT_OTH` | yes | yes | yes | yes | yes | yes | yes |  |
 | `AUSPOL_LEVEL_PRED_RECENT` | NO | NO | NO | NO | NO | NO | NO | level_recent.R |
 | `AUSPOL_LEVEL_RECENT` | NO | NO | NO | NO | NO | NO | NO | level_recent.R |
+| `AUSPOL_LEVEL_RECENT_CLS` | NO | NO | NO | NO | NO | NO | NO | level_recent.R |
 | `AUSPOL_LEVEL_RECENT_HALFLIFE` | NO | NO | NO | NO | NO | NO | NO | level_recent.R |
 | `AUSPOL_LEVEL_RECIPE` | NO | NO | NO | NO | NO | NO | NO | forecast_mode.R |
 | `AUSPOL_LEVEL_SD` | yes | yes | yes | yes | yes | yes | yes |  |
@@ -337,9 +341,12 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 
 - **`AUSPOL_ANCHOR_EXHAUST`** (intentional / dead experiment): ARM, not shipped (default 0; plans/prereg-anchor-exhaust-2026-09-27.md). Wired everywhere:  read in R/forecast_mode.R (statewide_draws_as_at()), which every harness and fit_seats_full.R reach: the five state harnesses and fit_seats_full.R through forecast_statewide_or_oracle() -> forecast_statewide_for() (R/forecast_statewide.R:81), the federal harness directly. "No" cells are the harness grep missing the R/ read, not drift (corrected 2026-10-09 after review).  No effect where flows carry no exhaust (every non-NSW election, live Victoria).
 - **`AUSPOL_ANCHOR_IMPLIED`** (intentional / dead experiment): ARM, not shipped (default 0; plans/prereg-anchor-implied-tpp-2026-09-20.md). Wired everywhere:  read in R/forecast_mode.R (statewide_draws_as_at()), which every harness and fit_seats_full.R reach: the five state harnesses and fit_seats_full.R through forecast_statewide_or_oracle() -> forecast_statewide_for() (R/forecast_statewide.R:81), the federal harness directly. "No" cells are the harness grep missing the R/ read, not drift (corrected 2026-10-09 after review).  scripts/audit_statewide_forecast.R only prints it.
+- **`AUSPOL_ANCHOR_SD_MULT`** (intentional / dead experiment): ARM ANC, NOT PASSED 2 Nov on 38 elections (plans/prereg-poll-lean-2026-11-02.md), published "1" (byte-identical: trend_anchor() returns early). Read as trend_anchor()'s argument default in R/trend.R, called from R/hyperpars.R, so every path that fits the poll trend gets it; the entry-point grep cannot see it.
 - **`AUSPOL_ASAT_MIN_PAIRS`** (intentional / dead experiment): Training-time switch for scripts/fit_xgb_primary_asat.R only: the minimum number of earlier election pairs a target must have before it gets its own point-in-time model (default 4). Below it the target gets no model and no row in the predictions file, so the harness keeps base_pred for it and says so. Not a harness or forecast switch.
 - **`AUSPOL_BREAKOUT_MIX`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: read by breakout_mix_args() (R/breakout_mix.R), which all seven entry points reach. The old 'yes' cells were comments.
+- **`AUSPOL_BREAKOUT_MIX_CLASSES`** (intentional / dead experiment): ARM, off with its parent AUSPOL_BREAKOUT_MIX (plans/prereg-new-ind-breakout-2026-11-01.md; Pete kept the breakout OFF 4 Nov, DECISIONS 2026-11-04). Read inside breakout_mix_args() in R/breakout_mix.R, which all seven entry points reach; no effect while AUSPOL_BREAKOUT_MIX is 0.
 - **`AUSPOL_BREAKOUT_MIX_MIN_P`** (intentional / dead experiment): PREREG PENDING, default 0 (= every eligible cell, i.e. no gate). Read inside breakout_mix_args() in R/breakout_mix.R, which all six harnesses and fit_seats_full.R call, so the harness grep cannot see it; it reaches all of them when set.
+- **`AUSPOL_BREAKOUT_MIX_NEW_ONLY`** (intentional / dead experiment): ARM, off with its parent AUSPOL_BREAKOUT_MIX (same prereg and decision as AUSPOL_BREAKOUT_MIX_CLASSES). Read inside breakout_mix_args() in R/breakout_mix.R, which all seven entry points reach; no effect while AUSPOL_BREAKOUT_MIX is 0.
 - **`AUSPOL_BUCKET_SPLIT`** (**adopted, shared-function wiring**): SHIPPED 2026-09-28 (ledger v44, 'cand_naive'). Read inside candidate_bucket_ratio() in R/forecast_statewide.R, which every harness and fit_seats_full.R reach through forecast_statewide_for(); only the federal harness names it in a comment. published_flags.R notes the split is backtests-only until the 9 Nov nominations.
 - **`AUSPOL_BUCKET_SPLIT_SRC`** (intentional / dead experiment): FILE CHOICE for AUSPOL_BUCKET_SPLIT: read inside candidate_bucket_ratio() (R/forecast_statewide.R), so it has AUSPOL_BUCKET_SPLIT's reach (its row above); the entry-point columns cannot see a read two calls down.
 - **`AUSPOL_BUCKET_TOTAL`** (intentional / dead experiment): ARM, not shipped (default 'poll'; plans/prereg-bucket-total-candidates-2026-09-28.md). Read in R/forecast_statewide.R (candidate_bucket_total()) and R/forecast_mode.R, both below the harness grep; scripts/build_bucket_total_history.R reads the audit log it produces.
@@ -429,6 +436,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_LEVEL_MODE`** (intentional / dead experiment): Read by scripts/fit_xgb_primary_v6.R when the model is FITTED, not by any harness or by fit_seats_full.R at run time -- the choice is baked into the oof file and the saved model, so it shows as absent everywhere while governing every row of both. 'pred' (default) trains on a poll-based statewide projection; 'now' trains on the target election's actual result and is LEAKAGE, kept only so the cost stays measurable. The live path has always used a prediction (R/xgb_primary_override.R fills level_now from state_mean), so this made training match serving.
 - **`AUSPOL_LEVEL_PRED_RECENT`** (intentional / dead experiment): ARM, off (audit F12, plans/prereg-live-level-pred-2026-10-25.md), TRAINING-SIDE by design: read in R/level_recent.R (level_pred_recent), called only from scripts/build_level_pred.R (rebuild stage 3), so no harness or fit_seats_full.R reads it; it reaches every harness and the live forecast through level-pred.csv and the retrained trees.
 - **`AUSPOL_LEVEL_RECENT`** (**adopted, shared-function wiring**): SHIPPED 2026-10-11 on Pete's override (plans/prereg-level-recent-blend-2026-10-10.md). Read inside R/level_recent.R, called from forecast_statewide_or_oracle() (five harnesses), the federal harness (BF0r) and fit_seats_full.R (FSLR).
+- **`AUSPOL_LEVEL_RECENT_CLS`** (intentional / dead experiment): ARM BLD, NOT PASSED 2 Nov (plans/prereg-poll-lean-2026-11-02.md Amendment 1), published "ALP,LNP,GRN" (the classes the shipped AUSPOL_LEVEL_RECENT blend always moved). Read by lr_classes() in R/level_recent.R, so it has AUSPOL_LEVEL_RECENT's reach (five state harnesses, the federal harness, fit_seats_full.R).
 - **`AUSPOL_LEVEL_RECENT_HALFLIFE`** (**adopted, shared-function wiring**): SHIPPED "20" 2026-10-11 with AUSPOL_LEVEL_RECENT=decay (Pete's override). Read inside R/level_recent.R, called from the five state harnesses, the federal harness (BF0r) and fit_seats_full.R (FSLR).
 - **`AUSPOL_LEVEL_RECIPE`** (**adopted, shared-function wiring**): SHIPPED 2026-09-30 as v56 ('live'). Wired everywhere:  read in R/forecast_mode.R (statewide_draws_as_at()), which every harness and fit_seats_full.R reach: the five state harnesses and fit_seats_full.R through forecast_statewide_or_oracle() -> forecast_statewide_for() (R/forecast_statewide.R:81), the federal harness directly. "No" cells are the harness grep missing the R/ read, not drift (corrected 2026-10-09 after review).
 - **`AUSPOL_LIVE_DEFECT_FIT`** (**adopted, shared-function wiring**): SHIPPED 2026-10-18 as a train/serve fix, LIVE-ONLY by design: read only in fit_seats_full.R, which now fits the major-defector discount as every harness does (fit_defector_discount) instead of the frozen 0.282.
@@ -640,8 +648,8 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR4  every AUSPOL_* switch read in code (394) is registered (278) or listed as not a model switch (116).
+MR4  every AUSPOL_* switch read in code (398) is registered (282) or listed as not a model switch (116).
 
 
 
-MR2  every non-universal switch (264 of 295) has a recorded classification.
+MR2  every non-universal switch (268 of 299) has a recorded classification.
