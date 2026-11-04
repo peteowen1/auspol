@@ -72,7 +72,7 @@ jobs:
           set -e
           mkdir -p output
           gh release download forecast-latest -p night-state-vic-2026.rds -D output --clobber
-          gh release download night-inputs -p booths-vic2022.csv -p council-district-stats-2022.csv -D output --clobber
+          gh release download night-inputs -p booths-vic2026-ref.csv -p council-district-stats-2022.csv -D output --clobber
           # Upper-house booth lean for parties new to a seat (One Nation): optional. Absent from the release, the loop runs
           # without it and says so (NW15!), as the night model did before 30 Oct.
           gh release download night-inputs -p council-fp-2022.csv -D output --clobber \
@@ -85,7 +85,7 @@ jobs:
             gh release download shipped-models -p "xgb-flows-$FTF_TAG-asat-manifest.csv" -D output --clobber
             ls -la "output/xgb-flows-$FTF_TAG-asat-manifest.csv"
           fi
-          ls -la output/night-state-vic-2026.rds output/booths-vic2022.csv output/council-district-stats-2022.csv
+          ls -la output/night-state-vic-2026.rds output/booths-vic2026-ref.csv output/council-district-stats-2022.csv
           Rscript -e 'st <- readRDS("output/night-state-vic-2026.rds"); cat("night state:", st$pair, nrow(st$shares), "seats,", st$n_sims, "sims, saved", if (is.null(st$saved_at)) "(no date)" else st$saved_at, "\n")'
 
       - name: Get the snapshot source
@@ -132,7 +132,7 @@ jobs:
           LEAN=()
           [ -s output/council-fp-2022.csv ] && LEAN=(--council-lean=output/council-fp-2022.csv)
           timeout "${MINUTES}m" Rscript scripts/night_loop.R --every="$EVERY" --source="$SRC" --archive=night-archive \
-            --state=output/night-state-vic-2026.rds --ref=output/booths-vic2022.csv \
+            --state=output/night-state-vic-2026.rds --ref=output/booths-vic2026-ref.csv \
             --turnout=output/council-district-stats-2022.csv --out=night-out/vic2026.json \
             "${LEAN[@]}" --allow-unmatched="${ALLOW:-0}" --upload-key="$KEY" || rc=$?
           [ "$rc" -eq 124 ] && { echo "loop stopped after ${MINUTES} minutes, as asked"; rc=0; }

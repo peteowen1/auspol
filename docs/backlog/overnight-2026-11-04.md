@@ -11,6 +11,7 @@ Times are Sydney. Updated as I go; the morning summary is the top section.
    majors stood, but before the 2021 redistribution), (b) the 2023 booths for the parties that stood only, (c) leave them
    "new". Raw pages saved: `external/reference/vec/2022/booths/narracan-supp2023-{fp,2cp}.html`. My pick: (a), matched by
    booth name, since the night swing is Labor minus Coalition.
+   **DONE 5 Nov morning, Pete's go on (a):** `output/booths-vic2026-ref.csv` (NEXT-STEPS, item 3 of the night queue).
 2. **Your email address is in the User-Agent of eight fetch scripts, and the daily CI run sends it to Wikipedia.**
    I found this while flagging my own slip (the curl for the two VEC pages sent "auspol research (fptpost@gmail.com)"
    to vec.vic.gov.au). The committed ones: `fetch_statewide_poll_samples.R:41` (CI runs it daily, `forecast.yaml:291`),
