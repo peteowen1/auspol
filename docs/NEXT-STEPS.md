@@ -8,36 +8,17 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
-- **#1 NEXT SESSION (Pete, 1 Nov 8:30pm): treat polls differently by type, company and age.** Pete: "we 100% should be
-  treating different polls differently based on the poll type and company and how old it is". TODAY the published trend
-  (`trend_as_at()`, R/projection.R, `weights = "equal"`) weights every statewide poll the same and fits a WITHIN-CYCLE
-  house effect per firm per party (soft sum-to-zero; CORRECTED 2 Nov, the earlier "no house effect" was wrong). No
-  house effect against results across cycles, no sponsor or mode adjustment. 2 Nov S7 breach (ONP 19.52 vs 22.03): the
-  2022 day-0 anchor (0.28%) causes 1.90 of it, the ORU poll 0.68; 10-cycle record and the sa2026 counter-case in
-  `reviews/s7-onp-anchor-2026-11-02.md`. PREREG `plans/prereg-poll-lean-2026-11-02.md` (2 Nov): step 0 gates pass
-  (firm 96.8%, noise floor 0.0076 pts); arm ANC (anchor strength, `AUSPOL_ANCHOR_SD_MULT`) NOT PASSED at the statewide
-  stage (+0.0104, SE 0.0149, 38 elections), stays "1", so S7 keeps firing on measured behaviour. REC (company lean vs
-  results, `R/poll_lean.R`) NOT PASSED (-0.0154, SE 0.0216; swings both ways; cannot see One Nation's over-statement,
-  which every firm shares). BLD (Amendment 1, Pete: blend One Nation toward recent polls instead of AGE) NOT PASSED
-  (+0.0690 worse, SE 0.0551): polls over-state it where it stood in few seats (nsw2019/2023, vic2022); sa2026 the one gain.
-  SPN (sponsor, `R/poll_sponsor.R`) NOT PASSED 4 Nov (+0.0548 worse, SE 0.0199): party sponsors are on Wikipedia only from 2025, so that class has no training elections; media vs the rest made it worse. MOD (method, `R/poll_method.R`) NOT PASSED 4 Nov (+0.0244, SE 0.0161; in-person and SMS are Roy Morgan alone).
-  CORRECTION: the published Vic One Nation level is 20.92 (rescale + blend spill), not the trend's 19.52; the live gap
-  is ~1.1 pts. FULL (all terms, time-forward) NOT PASSED 4 Nov (+0.0121, SE 0.0293): ALL SIX ARMS REFUSED, told Pete; register row closed. OPEN idea after 9 Nov: condition
-  the One Nation blend on how many seats it stands in; the shared party-level poll bias REC cannot see. Built and REFUSED 9 Oct: noise-only weights (`"record"`, R/poll_record.R; `"firm_factors"`)
-  in plans/prereg-statewide-poll-sample-weights-2026-10-09.md. NEVER TESTED: LEAN. Trigger case: Online Research Unit for the
-  Victorian Greens (14-26 Oct, on Wikipedia 1 Nov 7:09pm) has ONP 14 vs 20-25 in every other poll.
-  Build the STRONGEST version (CLAUDE.md negative-result rule), not a subset: per-firm house effect per party (bias vs
-  results AND vs the poll consensus), sponsor type (party-commissioned / media / independent), mode, sample size where
-  known (15.5% of polls), plus noise weights and recency; fitted TIME-FORWARD, partially pooled to zero for firms with
-  little history (shrinkage rule). Prereg first; score on all 35 elections' statewide level error, then the seat screen
-  (quick_arm --pairs=all). Also the seat-poll side (register: sponsor, firm, record, recency;
-  AUSPOL_SEAT_POLL_FIRM_FLOOR still "0"). Register rows: PETE-ASKED-FOR lines ~113 and ~119.
-- **Status 1 Nov 8:20pm.** main = dev = PR #184 (merged 8:15pm): card fit reads the shipped coalition-split table
-  everywhere (published read 35% Liberal->ALP greens-above from a partial transfer set; backtests 37.9%; What-If job
-  40%, which failed every What-If publish since 31 Oct, CSC7). Release `shipped-models` 11:42am 1 Nov (git 4ae01eba).
-  The live site still shows the 8:38am 1 Nov forecast (28 Oct models, 35% card fit, no ORU poll): the next forecast
-  run (4:30am 2 Nov, or a manual dispatch) publishes the fix, new models, ORU poll and What-If. CHECK its conclusion.
-  Run `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
+- CLOSED 4 Nov, NOT SHIPPING (told Pete): poll weighting by type, company and age. All six arms refused on 38
+  elections (`plans/prereg-poll-lean-2026-11-02.md`; DECISIONS 2026-11-04). OPEN triggers: (a) after nominations close
+  9 Nov, condition One Nation's anchor/blend on how many seats it stands in; (b) after vic2026, re-test sponsor lean
+  (first completed election with party-commissioned polls labelled). Seat-poll side still untested:
+  `AUSPOL_SEAT_POLL_FIRM_FLOOR` "0" (register row ~119).
+- **Status 4 Nov 10:15pm.** Daily forecast runs green on main and dev through 3 Nov, What-If included (PR #184's fix
+  live). dev is ~22 commits ahead of main (poll-lean arms, all refused; 4 Nov benchmark snapshot; MP-slope tables the
+  1 Nov rebuild wrote, which CI had not been reading): reviewed clean 4 Nov, PR to main once check_like_ci.R passes.
+  Issues #131, #136, #138, #139, #142, #177 are fixed by merged PRs and still open (closing awaits Pete's OK).
+  VEC feed access details were due 4 Nov: not in Gmail or Hotmail as of 7:30pm. Run
+  `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
 - **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** Plan and replays:
   `docs/plans/election-night-booth-model.md` (vic2022 seat log loss vs afternoon 0.2643: 0.1133 at 10% counted,
   0.0929 at 50%). Upper house designed, NOT built (`plans/upper-house-night-model.md`). DONE: VEC sign-up (#150),
