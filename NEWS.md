@@ -1,3 +1,9 @@
+# auspol 0.4.130
+
+- **Fetchers send the repo URL as their contact, not Pete's email** (eight scripts, including the daily Wikipedia poll fetch).
+- **Federal polls' state breakdowns end at 6 Oct for good**: Wikipedia deleted those sections on 24 Oct. `build_fed_state_breakdowns.R` now refuses to write fewer or older polls than are on disk.
+- The vic2026 search-interest anchor is the current Premier, Ben Carroll.
+
 # auspol 0.4.129
 
 - **Poll lean by company, sponsor and method, all refused**: `poll_lean_table()`, `poll_sponsor_class()`, `poll_method_class()` and the anchor-strength and recent-poll-class switches (`AUSPOL_ANCHOR_SD_MULT`, `AUSPOL_LEVEL_RECENT_CLS`), each off at its published value; none passed on 38 elections. `poll_wiki_path()` is the one place the Wikipedia poll table is found.
