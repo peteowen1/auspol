@@ -392,9 +392,9 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
   surge-v2 "0" since 31 Oct), so its seat-count test only matters if a surge mechanism comes back.
 - **Overcalled independents**: building on `ind-overcall-1025` (see "Builds waiting for R"). Successor overcalls
   (Morwell, Mildura, Kavel, Finniss) are a separate item, not started; departed-hold refused.
-- **Simulation noise revives zeroed parties** (`R/seat_sim.R:1455`, `v <- base_v + shift + rnorm(K, 0, sd_cell)`, or an equal-quantile draw when `has_eq`):
-  written shares are 0, draws are not. Measure how often a revived cell places or wins before masking it;
-  affects every harness number, so it needs a prereg. Unmeasured.
+- CLOSED (queue corrected 4 Nov; it said "unmeasured"): **simulation noise revives zeroed parties** was measured and the
+  fix REFUSED 18 Oct: `AUSPOL_ZERO_ABSENT=1` moved every election (largest win probability 0.027) but every-seat log loss
+  0.3152 -> 0.3152 (SE 0.0003), AEF-7 -0.0002 (`plans/prereg-zero-absent-2026-10-17.md`). Switch stays "0".
 - **Scenario tool** (hold the party exactly at X, others give way by regression: Pete's choices): build NOT
   started, about 40-50 h (a guess); stage 1 is brute-force `AUSPOL_FORCE_FP` runs, also the test oracle
   (`plans/scenario-tool-scoping-2026-10-03.md`). Request register: NOT DONE.
