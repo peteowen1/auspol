@@ -24,7 +24,7 @@ out_csv  <- "external/reference/polls/demosau/crosstabs.csv"
 ambig_txt <- "external/reference/polls/demosau/crosstabs-ambiguous.txt"
 dir.create(raw_dir, recursive = TRUE, showWarnings = FALSE)
 
-ua <- "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36 auspol-research/1.0 (contact: fptpost@gmail.com)"
+ua <- "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36 auspol-research/1.0 (contact: https://github.com/peteowen1/auspol)"
 
 # key -> url. jurisdiction is inferred from the key prefix (vic-/fed-).
 pdfs <- c(

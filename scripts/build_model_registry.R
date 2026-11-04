@@ -716,6 +716,22 @@ CLASSIFY <- list(
   AUSPOL_BREAKOUT_MIX_MIN_P = paste(
     "PREREG PENDING, default 0 (= every eligible cell, i.e. no gate). Read inside breakout_mix_args() in R/breakout_mix.R,",
     "which all six harnesses and fit_seats_full.R call, so the harness grep cannot see it; it reaches all of them when set."),
+  # ---- Added 2026-11-05: four switches built 1-2 Nov that printed UNEXPLAINED (MR2!).
+  AUSPOL_BREAKOUT_MIX_CLASSES = paste(
+    "ARM, off with its parent AUSPOL_BREAKOUT_MIX (plans/prereg-new-ind-breakout-2026-11-01.md; Pete kept the breakout OFF",
+    "4 Nov, DECISIONS 2026-11-04). Read inside breakout_mix_args() in R/breakout_mix.R, which all seven entry points reach;",
+    "no effect while AUSPOL_BREAKOUT_MIX is 0."),
+  AUSPOL_BREAKOUT_MIX_NEW_ONLY = paste(
+    "ARM, off with its parent AUSPOL_BREAKOUT_MIX (same prereg and decision as AUSPOL_BREAKOUT_MIX_CLASSES). Read inside",
+    "breakout_mix_args() in R/breakout_mix.R, which all seven entry points reach; no effect while AUSPOL_BREAKOUT_MIX is 0."),
+  AUSPOL_ANCHOR_SD_MULT = paste(
+    "ARM ANC, NOT PASSED 2 Nov on 38 elections (plans/prereg-poll-lean-2026-11-02.md), published \"1\" (byte-identical:",
+    "trend_anchor() returns early). Read as trend_anchor()'s argument default in R/trend.R, called from R/hyperpars.R, so",
+    "every path that fits the poll trend gets it; the entry-point grep cannot see it."),
+  AUSPOL_LEVEL_RECENT_CLS = paste(
+    "ARM BLD, NOT PASSED 2 Nov (plans/prereg-poll-lean-2026-11-02.md Amendment 1), published \"ALP,LNP,GRN\" (the classes the",
+    "shipped AUSPOL_LEVEL_RECENT blend always moved). Read by lr_classes() in R/level_recent.R, so it has AUSPOL_LEVEL_RECENT's",
+    "reach (five state harnesses, the federal harness, fit_seats_full.R)."),
   AUSPOL_BUCKET_SPLIT = paste(
     "SHIPPED 2026-09-28 (ledger v44, 'cand_naive'). Read inside candidate_bucket_ratio() in R/forecast_statewide.R, which",
     "every harness and fit_seats_full.R reach through forecast_statewide_for(); only the federal harness names it in a comment.",

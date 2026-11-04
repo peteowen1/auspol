@@ -60,6 +60,7 @@ NON_MODEL_SWITCHES <- c(
   AUSPOL_LIVE_PAGES              = "RUN",  # merge_live_poll_pages.R
   AUSPOL_MAX_NEW                 = "BUILDER",  # fetch_emergence_trends.R
   AUSPOL_MC_ARM                  = "BUILDER",  # fit_minor_candidates.R
+  AUSPOL_MC_OWN_RULE             = "BUILDER",  # fit_minor_candidates.R: v2 rebuilds minor-class-shares-v2.csv (5 Nov)
   AUSPOL_NB_PRIOR                = "BUILDER",  # build_notional_baselines.R
   AUSPOL_NB_TARGET               = "BUILDER",  # build_notional_baselines.R
   AUSPOL_NIGHT_SURGE_FADE        = "DIAG",  # night_replay_detail.R (night fixes, review 2026-10-30)

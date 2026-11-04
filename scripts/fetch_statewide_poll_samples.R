@@ -38,7 +38,7 @@ out_csv  <- file.path(base_dir, "statewide_polls_wiki.csv")
 man_csv  <- file.path(base_dir, "pages_manifest.csv")
 dir.create(raw_dir, recursive = TRUE, showWarnings = FALSE)
 
-ua <- "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36 auspol-research/1.0 (contact: fptpost@gmail.com)"
+ua <- "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36 auspol-research/1.0 (contact: https://github.com/peteowen1/auspol)"
 wp <- "https://en.wikipedia.org/wiki/"
 
 # ---- page list ---------------------------------------------------------------

@@ -38,7 +38,7 @@ validate_sheet <- function(path, polling_day) {
   if (cov < 0.9) return(sprintf("ALP and LNP present on only %.0f%% of poll rows (need 90%%)", 100 * cov))
   NA_character_
 }
-ua <- "Mozilla/5.0 auspol-research/1.0 (contact: fptpost@gmail.com)"
+ua <- "Mozilla/5.0 auspol-research/1.0 (contact: https://github.com/peteowen1/auspol)"
 sheets <- data.table(
   election = c("nsw2019", "vic2018"), region = c("nsw", "vic"),
   sheet_id = c("1zwqzVu5J3Xx0Rd8UzmV44PAIGN1ez1CLYGwEsdBfFe4", "1DN2V1AkSSUGrgqhzkraN9sBlVRZJq9jUV7PHC6BRapI"),

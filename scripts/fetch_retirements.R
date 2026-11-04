@@ -27,7 +27,7 @@ RAW_DIR <- "external/reference/retirements/raw"
 OUT_CSV <- "external/reference/retirements/retirements.csv"
 dir.create(RAW_DIR, recursive = TRUE, showWarnings = FALSE)
 
-UA <- "auspol-research/1.0 (https://github.com/peteowen1/auspol; fptpost@gmail.com) R httr"
+UA <- "auspol-research/1.0 (https://github.com/peteowen1/auspol) R httr"
 
 # election -> Wikipedia article title. nsw2023's own article page transcludes
 # its "Retiring MPs" list from a separate article via {{Excerpt}} -- the

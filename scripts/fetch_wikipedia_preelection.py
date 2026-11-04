@@ -31,7 +31,7 @@ TEXT = os.path.join(ROOT, "wikipedia-text.csv")
 os.makedirs(RAW, exist_ok=True)
 
 API = "https://en.wikipedia.org/w/api.php"
-UA = "auspol-research (fptpost@gmail.com)"
+UA = "auspol-research (https://github.com/peteowen1/auspol)"
 MIN_GAP = 1.1
 _last = [0.0]
 
