@@ -15,8 +15,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` "0" (register row ~119).
 - **Status 4 Nov 10:15pm.** Daily forecast runs green on main and dev through 3 Nov, What-If included (PR #184's fix
   live). dev is ~22 commits ahead of main (poll-lean arms, all refused; 4 Nov benchmark snapshot; MP-slope tables the
-  1 Nov rebuild wrote, which CI had not been reading): reviewed clean 4 Nov, PR to main once check_like_ci.R passes.
-  Issues #131, #136, #138, #139, #142, #177 are fixed by merged PRs and still open (closing awaits Pete's OK).
+  1 Nov rebuild wrote, which CI had not been reading): reviewed clean 4 Nov.
+  PR #187 merged to main 10:41pm 4 Nov; issues #131, #136, #138, #139, #142, #177 closed (fixed by merged PRs).
   VEC feed access details were due 4 Nov: not in Gmail or Hotmail as of 7:30pm. Run
   `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
 - **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** Plan and replays:
