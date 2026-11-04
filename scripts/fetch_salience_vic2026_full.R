@@ -13,8 +13,11 @@ suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table)); suppressMessages(library(gtrendsR))
 # ANCHOR: the head of government (fetch_salience_v6.R's rule: high, stable volume, never a candidate being ranked).
 # Was "Daniel Andrews", who left office in 2023; his search interest falls across the window, so his rise is <= 0
-# and no batch could be linked (build_vic2026_salience_jump.R VJ2, 2026-10-18). Jacinta Allan is Premier.
-MAXKW <- 5L; SPAN <- 400L; GEO <- "AU-VIC"; ANCHOR <- Sys.getenv("AUSPOL_SALIENCE_ANCHOR", "Jacinta Allan")
+# and no batch could be linked (build_vic2026_salience_jump.R VJ2, 2026-10-18). It then became "Jacinta Allan",
+# who was replaced as Premier by Ben Carroll on 28 July 2026 (external/reference/leaders/leaders.csv): her series
+# peaked at 100 that week and sat near 1 from September, so again 0 of 101 batches linked (2026-11-04).
+# Check this against leaders.csv before every snapshot.
+MAXKW <- 5L; SPAN <- 400L; GEO <- "AU-VIC"; ANCHOR <- Sys.getenv("AUSPOL_SALIENCE_ANCHOR", "Ben Carroll")
 SLEEP <- as.numeric(Sys.getenv("AUSPOL_SALIENCE_SLEEP", "4")); STOP_AFTER <- 3L
 CACHE <- file.path("external", "reference", "trends")
 # The window END is pinned (AUSPOL_SALIENCE_TO, default the first snapshot's date

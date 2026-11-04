@@ -8,7 +8,7 @@
 #   Rscript scripts/build_vic2026_salience_jump.R      -> output/vic2026-salience-jump.csv   (codes VJ0-VJ5)
 suppressMessages(library(data.table))
 WEEKS <- 8L; BASE_DAYS <- 300L; SPAN <- 400L; GEO <- "AU-VIC"   # as fetch_salience_v6.R:38-41
-ANCHOR <- Sys.getenv("AUSPOL_SALIENCE_ANCHOR", "Jacinta Allan")   # the Premier; must match the fetcher's
+ANCHOR <- Sys.getenv("AUSPOL_SALIENCE_ANCHOR", "Ben Carroll")   # the Premier (since 28 Jul 2026); must match the fetcher's
 TO <- as.Date(Sys.getenv("AUSPOL_SALIENCE_TO", "2026-10-06")); FROM <- TO - SPAN; REF <- TO + 1L
 CACHE <- file.path("external", "reference", "trends")
 mf <- sort(list.files(CACHE, pattern = "^vic2026-manifest-.*\\.csv$", full.names = TRUE), decreasing = TRUE)[1]
