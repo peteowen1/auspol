@@ -84,4 +84,8 @@ Times are Sydney. Updated as I go; the morning summary is the top section.
 
 ## In flight
 
-- Waiting for the 4:30am daily forecast run on main (first one with the MP-slope tables PR #187 merged); result below.
+- DONE: the 5 Nov daily forecast run on main (https://github.com/peteowen1/auspol/actions/runs/41878117366), the first
+  with PR #187, finished 5:19am **green**: gate, refresh and all 16 What-If scenario jobs succeeded (`scenario-alarm`
+  skipped, as on a clean run). The refresh log reads the new table (`MPP1  MP tier read from output/mp-slope-pooled.csv`,
+  vic2026 and nsw2027); no `::error::` or `Error in` lines (the one "FAILED" is the routine `FL1` flow-scale verdict).
+  `FST1!` (no vic2026 candidate split) is expected until nominations (item 3).
