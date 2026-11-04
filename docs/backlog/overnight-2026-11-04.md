@@ -30,6 +30,14 @@ Times are Sydney. Updated as I go; the morning summary is the top section.
    that audit meant.)
 
 ## Done overnight
+- **FIXED: the vic2026 search-interest anchor was the wrong Premier** (`0db2b2e7`). Both salience scripts anchored on
+  Jacinta Allan; Ben Carroll has been Premier since 28 Jul 2026 (our own `leaders.csv`). Allan's series peaked at 100 that
+  week and sat near 1 from September, so 0 of 101 batches could be linked on the 26 Oct and 4 Nov snapshots. Against
+  Carroll: 100 of 100 batches link, 374 of 500 candidates on the common scale. The 4 Nov snapshot is saved as
+  `output/vic2026-salience-jump-2026-11-04.csv`; `output/vic2026-salience-jump.csv` (the 27 Oct, unlinked one local
+  runs read) is untouched. Every other leader record already had the change right (`leaders.csv`, `retirements.csv`).
+  For you: the final 25-27 Nov snapshot will now link; whether local runs should take the 4 Nov file before then is
+  your call (CI has no salience corpus either way, and the surge path is off).
 
 - Doc-audit sentinel (#109, 3 Nov run): the four still-drifted citations now name functions (`83d08209`); the other five
   were already fixed; its CONSTANTS:646 "value differs" is a false alarm (3 earlier elections = 3 pairs).
@@ -47,4 +55,4 @@ Times are Sydney. Updated as I go; the morning summary is the top section.
 
 ## In flight
 
-- vic2026 Google Trends snapshot to 4 Nov (`AUSPOL_SALIENCE_TO=2026-11-04`, watching only; the shipping one is 25-27 Nov).
+- (none)
