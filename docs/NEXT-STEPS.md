@@ -437,11 +437,9 @@ Still open:
   adds per-pair timing and an opt-in resume cache (`AUSPOL_FED_RESUME=1`). Ran live: outputs byte-identical.
   Untested: more than one pair, a kill mid-run. `FLOW_SD` has the same loop leak, unfixed (dormant,
   `AUSPOL_FLOW_SD_BY_SOURCE` default 0). Also `instrument-backtest-fed-timing` (ae91f62), paused.
-- The seat-poll, demographic and leader-seat corrections learn from the PREVIOUS rebuild's
-  `output/forecasts.csv`, so a rebuild's result depends on the one before it; make them read this run's
-  as-at predictions (queued 2026-09-30; the spread fix's compare-and-rerun pattern, `scripts/compare_spread_tables.R`,
-  could cover it). Still live 23 Oct: `R/demographic_residual.R:213` and
-  `.seat_poll_cells()` and `seat_poll_blend_table()` in `R/seat_poll_blend.R` read `output/forecasts.csv`; leader-seat (`R/leader_seat.R:119`) not checked.
+- DONE (checked 4 Nov): the seat-poll, demographic and leader-seat corrections all read THIS run's as-at predictions
+  through `current_seat_predictions()` (`output/xgb-primary-asat-predictions.csv`, `R/seat_predictions.R`); the previous
+  rebuild's `forecasts.csv` is only a fallback when that file is absent, and it prints `SPR0!` when used.
 - Main-tree `R CMD build` failed after ~6 min once (2026-10-04) while the fresh-clone check passed. Likely
   cause, unproven: the junctions in `.claude/worktrees/*/output` and `/external` into the main tree. Remove
   with `cmd /c rmdir` (never a recursive delete) before running the check in the main tree; the
