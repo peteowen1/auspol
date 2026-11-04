@@ -4,14 +4,23 @@
 \alias{poll_lean_errors}
 \title{Every past poll's logit deviation from the result, beyond the miss all firms shared}
 \usage{
-poll_lean_errors(regions = c("fed", "vic", "nsw", "qld", "wa", "sa"))
+poll_lean_errors(
+  regions = c("fed", "vic", "nsw", "qld", "wa", "sa"),
+  group_by = NULL,
+  tag = "firm"
+)
 }
 \arguments{
 \item{regions}{Poll files to read.}
+
+\item{group_by}{\code{NULL} (each poll's \code{firm}, arm REC) or a function \verb{(region, polls)} returning one
+label per poll row, which then stands in the \code{firm} column: arm SPN passes \code{\link[=poll_sponsor_class]{poll_sponsor_class()}}.}
+
+\item{tag}{Cache label for \code{group_by} (two groupings must not share a cache entry).}
 }
 \value{
-data.table \code{region}, \code{year}, \code{election} (polling day), \code{firm}, \code{party},
-\code{d} (logit deviation beyond the shared miss), \code{rec} (recency weight).
+data.table \code{region}, \code{year}, \code{election} (polling day), \code{firm} (or the \code{group_by} label),
+\code{party}, \code{d} (logit deviation beyond the shared miss), \code{rec} (recency weight).
 }
 \description{
 For each completed election and each poll in its cycle, per party in

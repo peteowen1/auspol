@@ -4,12 +4,15 @@
 \alias{apply_poll_lean}
 \title{Take each company's lean out of its polls}
 \usage{
-apply_poll_lean(polls, lean)
+apply_poll_lean(polls, lean, group = polls$firm)
 }
 \arguments{
 \item{polls}{From \code{\link[=load_polls]{load_polls()}}.}
 
 \item{lean}{From \code{\link[=poll_lean_table]{poll_lean_table()}}.}
+
+\item{group}{One label per poll row to look the lean up by; \code{polls$firm} (arm REC) by default, a
+\code{\link[=poll_sponsor_class]{poll_sponsor_class()}} vector for arm SPN.}
 }
 \value{
 The adjusted poll table, attribute \code{lean_applied} (polls x parties moved).

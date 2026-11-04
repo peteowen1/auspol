@@ -228,3 +228,23 @@ lower is better; change = arm minus shipped.
 not the trend's 19.52: the rescale to 100 makes it 19.96 and the blend for the other three parties spills +0.96 onto it.
 The gap to the 90-day poll mean (22.03) is about 1.1 points. S7 checks the trend, not the level the seats get, so the
 "2.5 points under its polls in every seat" reading of `reviews/s7-onp-anchor-2026-11-02.md` overstated it.
+
+## RESULT, arm SPN at the statewide stage (2026-11-04, `scripts/screen_poll_lean_spn.R`, codes PLS0-PLS4): NOT PASSED (worse)
+
+Sponsor class per fitted poll (`R/poll_sponsor.R`): each `load_polls()` row matched back to its Wikipedia row (same
+firm by `firm_alias.csv`, midpoint within 4 days, Labor within 1.5 points), read from the SAME table the trend reads
+(`poll_wiki_path()`, the 2 Nov `output/polls-wiki/` copy; a first run on the 13 Oct scrape gave identical numbers).
+Classes as registered; "media" includes unlabelled polls of a firm with 3+ media-client polls. Lean per class and party
+estimated by the REC machinery with the class in place of the firm, time-forward, shrunk to zero.
+
+- **What the arm could see.** 2010+ fitted polls: party 8, media 1,202, unknown 1,750 (unknown is mostly AE-only rows
+  with no Wikipedia row). Wikipedia lists a party or advocacy client only from 2025 (fed 18, tas 5, vic 2, nsw 1, nt 1),
+  none in a completed scored cycle before the last target, so **the "party" class has zero training elections** and the
+  lean table has 2 classes, media and unknown. That is the data, not a subset: no older source records sponsors.
+- **Change +0.0548 points WORSE, SE 0.0199** (n 38). Clause 1 NOT PASSED; leave-one-out better in 0 of 38 drops;
+  36 elections moved, 13 better and 23 worse. Mean |One Nation error| 1.676 -> 1.668 (18); sa2026 +0.0999 worse.
+- Largest live lean: media OTH +1.05 points at a 20% share (w 0.89); every One Nation lean shrinks to 0 (w 0).
+  Live walk vic2026: LNP 29.84 -> 29.65, ALP 24.11 -> 24.14, GRN 13.85 -> 13.94, ONP 19.51 -> 19.51, OTH 10.45 -> 10.13.
+
+Nothing wired into `trend_as_at()`. The party-commissioned question Pete asked cannot be measured until polls with a
+recorded party sponsor reach completed elections (the first: vic2026, 28 Nov). Remaining: MOD, FULL.

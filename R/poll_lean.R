@@ -21,11 +21,15 @@ POLL_LEAN_PARTIES <- c("ALP", "LNP", "GRN", "ONP", "OTH")   # prereg arm REC, pe
 #' (2019's Labor overstatement) is not one company's lean. Recency weight
 #' `0.5^(days before polling day / POLL_RECORD_HALFLIFE)`, as [poll_error_table()].
 #' @param regions Poll files to read.
-#' @return data.table `region`, `year`, `election` (polling day), `firm`, `party`,
-#'   `d` (logit deviation beyond the shared miss), `rec` (recency weight).
+#' @param group_by `NULL` (each poll's `firm`, arm REC) or a function `(region, polls)` returning one
+#'   label per poll row, which then stands in the `firm` column: arm SPN passes [poll_sponsor_class()].
+#' @param tag Cache label for `group_by` (two groupings must not share a cache entry).
+#' @return data.table `region`, `year`, `election` (polling day), `firm` (or the `group_by` label),
+#'   `party`, `d` (logit deviation beyond the shared miss), `rec` (recency weight).
 #' @export
-poll_lean_errors <- function(regions = c("fed", "vic", "nsw", "qld", "wa", "sa")) {
-  key <- paste("lean", paste(sort(regions), collapse = ","))
+poll_lean_errors <- function(regions = c("fed", "vic", "nsw", "qld", "wa", "sa"), group_by = NULL, tag = "firm") {
+  if (!is.null(group_by) && identical(tag, "firm")) stop("poll_lean_errors(): name the grouping in `tag`")
+  key <- paste(c("lean", if (!identical(tag, "firm")) tag, paste(sort(regions), collapse = ",")), collapse = " ")
   if (!is.null(.poll_record_cache[[key]])) return(.poll_record_cache[[key]])
   cycles <- load_election_cycles()
   ev <- load_eventual_results()
@@ -33,6 +37,8 @@ poll_lean_errors <- function(regions = c("fed", "vic", "nsw", "qld", "wa", "sa")
   for (rg in regions) {
     if (!file.exists(anchor_data_path(sprintf("poll-data-%s.csv", rg), must_exist = FALSE))) next
     pl <- suppressMessages(load_polls(rg))
+    grp <- if (is.null(group_by)) pl$firm else group_by(rg, pl)
+    stopifnot(length(grp) == nrow(pl))
     cy <- cycles[cycles$region == rg]
     for (k in seq_len(nrow(cy))) {
       el_end <- cy$end[k]; el_year <- cy$year[k]
@@ -49,7 +55,7 @@ poll_lean_errors <- function(regions = c("fed", "vic", "nsw", "qld", "wa", "sa")
         e <- to_link(y[ok], "logit")$z - to_link(act, "logit")$z
         rec <- 0.5^(as.numeric(el_end - pl$date[inn][ok]) / POLL_RECORD_HALFLIFE)
         out[[length(out) + 1L]] <- data.table::data.table(
-          region = rg, year = el_year, election = el_end, firm = pl$firm[inn][ok],
+          region = rg, year = el_year, election = el_end, firm = grp[inn][ok],
           party = p, d = e - sum(rec * e) / sum(rec), rec = rec)
       }
     }
@@ -114,9 +120,12 @@ poll_lean_table <- function(as_of, errors = poll_lean_errors()) {
 #' table names; everything else is untouched. Keeps the poll table's attributes.
 #' @param polls From [load_polls()].
 #' @param lean From [poll_lean_table()].
+#' @param group One label per poll row to look the lean up by; `polls$firm` (arm REC) by default, a
+#'   [poll_sponsor_class()] vector for arm SPN.
 #' @return The adjusted poll table, attribute `lean_applied` (polls x parties moved).
 #' @export
-apply_poll_lean <- function(polls, lean) {
+apply_poll_lean <- function(polls, lean, group = polls$firm) {
+  stopifnot(length(group) == nrow(polls))
   out <- data.table::copy(polls)
   n_moved <- 0L
   # `lean` is also a COLUMN of the table: inside `[` the bare name binds to the column, so
@@ -125,7 +134,7 @@ apply_poll_lean <- function(polls, lean) {
   lt_party <- lean$party; lt_firm <- lean$firm; lt_val <- lean$lean
   for (pp in intersect(unique(lt_party), names(out))) {
     is_p <- lt_party == pp
-    sh <- lt_val[is_p][match(out$firm, lt_firm[is_p])]
+    sh <- lt_val[is_p][match(group, lt_firm[is_p])]
     y <- out[[pp]]
     hit <- which(is.finite(sh) & sh != 0 & is.finite(y) & y > 0)
     if (!length(hit)) next

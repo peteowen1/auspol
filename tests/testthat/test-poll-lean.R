@@ -51,3 +51,34 @@ test_that("apply_poll_lean moves only the named firm and party, on the logit sca
   expect_equal(attr(out, "lean_applied"), 1L)
   expect_equal(polls$ONP[1], 20)                          # input not modified by reference
 })
+
+test_that("apply_poll_lean looks the lean up by `group` when given (arm SPN), and by firm otherwise", {
+  polls <- data.table::data.table(date = as.Date("2020-01-01") + 0:1, firm = c("A", "B"), ONP = c(20, 20))
+  lean <- data.table::data.table(firm = "party", party = "ONP", k = 3L, est = 0.2, se = 0.05, tau2 = 0.01, w = 0.8, lean = 0.16)
+  expect_equal(apply_poll_lean(polls, lean)$ONP, c(20, 20))          # no firm called "party"
+  out <- apply_poll_lean(polls, lean, group = c("media", "party"))
+  expect_equal(out$ONP, c(20, from_link(to_link(20, "logit")$z - 0.16, "logit")))
+  expect_error(apply_poll_lean(polls, lean, group = "party"))        # one label per poll row
+})
+
+test_that("poll_sponsor_class labels party, media-series and unknown polls, and matches on firm, date and Labor", {
+  dir <- tempfile("spn"); dir.create(dir)
+  wiki <- data.table::data.table(
+    region = "vic", row_type = "poll", table_type = "primary",
+    fieldwork_start = c("2026-01-01", "2026-02-01", "2026-03-01", "2026-04-01", "2026-05-01", "2026-01-05"),
+    fieldwork_end   = c("2026-01-03", "2026-02-03", "2026-03-03", "2026-04-03", "2026-05-03", "2026-01-07"),
+    firm = c("Resolve", "Resolve", "Resolve", "Resolve", "Morgan", "YouGov"), firm_raw = "",
+    client = "", client_raw = c("The Age", "The Age", "The Age", "—", "—", "Australia Institute"),
+    client_fn = "", alp_fp = c(30, 31, 32, 33, 34, 29))
+  data.table::fwrite(wiki, file.path(dir, "w.csv"))
+  data.table::fwrite(data.table::data.table(pattern = c("resolve", "morgan", "yougov"),
+                                            canonical = c("resolve", "morgan", "yougov")), file.path(dir, "firm_alias.csv"))
+  polls <- data.table::data.table(firm = c("Resolve", "Resolve", "Morgan", "YouGov", "YouGov", "Newspoll"),
+                                  date = as.Date(c("2026-01-02", "2026-04-04", "2026-05-02", "2026-01-06", "2026-01-06", "2026-01-02")),
+                                  ALP = c(30, 33, 34, 29, 35, 30))
+  got <- poll_sponsor_class("vic", polls, path = file.path(dir, "w.csv"))
+  # Resolve has 3 media-client polls, so its unlabelled April poll is media; Morgan has none, so unknown;
+  # YouGov's second row is 6 points off on Labor (a different poll) and Newspoll has no Wikipedia row.
+  expect_equal(as.vector(got), c("media", "media", "unknown", "party", "unknown", "unknown"))
+  expect_equal(attr(got, "matched"), 4L)
+})
