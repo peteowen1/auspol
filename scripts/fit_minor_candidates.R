@@ -23,7 +23,16 @@ suppressMessages({ library(data.table); devtools::load_all(quiet = TRUE) })
 MINOR <- c("IND", "OTH", "OTH_RIGHT", "ONP")
 SEED <- as.integer(Sys.getenv("AUSPOL_SEED", "42"))
 ARM <- Sys.getenv("AUSPOL_MC_ARM", "resid")   # "scratch" = v1, "resid" = v2 (correction on the naive prediction)
-cat(sprintf("MC0  arm: %s\n", ARM))
+# AUSPOL_MC_OWN_RULE: "v3" (default, 28 Sep 15:50) = a vote is the candidate's own only if won as a non-major, and
+# a first-time personal-class candidate gets the class's median first run. "v2" = the rule at 43365e93 (any previous
+# vote is own, the seat's previous class vote is the newcomer fallback), which produced
+# output/minor-class-shares-v2.csv, the file the bucket SPLIT reads (AUSPOL_BUCKET_SPLIT_SRC). Recovered 5 Nov so
+# that file can be rebuilt (overnight-2026-11-04.md item 3). One deviation from 43365e93: the last-resort fallback is
+# the training rows' median, not every election's (that read later elections).
+RULE <- Sys.getenv("AUSPOL_MC_OWN_RULE", "v3")
+if (!RULE %in% c("v2", "v3")) stop("AUSPOL_MC_OWN_RULE must be v2 or v3, not ", RULE)
+SUF <- if (RULE == "v2") "-v2" else ""   # v3 keeps its historical filenames
+cat(sprintf("MC0  arm: %s, own-vote rule: %s (outputs suffixed '%s')\n", ARM, RULE, SUF))
 
 C <- fread("output/candidacies.csv", showProgress = FALSE)
 cat(sprintf("MC0  candidacies: %d rows, %d elections\n", nrow(C), uniqueN(C$election)))
@@ -96,8 +105,9 @@ feat <- function(m) {
   # then independent 14.8), so it is kept apart as its own feature.
   # plans/prereg-minor-candidate-defectors-2026-09-28.md.
   MAJ <- c("ALP", "LNP")
-  own <- P[!party %in% MAJ, .(own_prev = max(share)), by = nk]
-  own_s <- P[!party %in% MAJ, .(own_prev_seat = max(share), held = any(elected %in% TRUE)), by = .(nk, seat)]
+  EXCL <- if (RULE == "v2") character(0) else MAJ   # v2: a previous major-party run counts as own vote
+  own <- P[!party %in% EXCL, .(own_prev = max(share)), by = nk]
+  own_s <- P[!party %in% EXCL, .(own_prev_seat = max(share), held = any(elected %in% TRUE)), by = .(nk, seat)]
   own_maj <- P[party %in% MAJ, .(own_prev_major = max(share), held_major = any(elected %in% TRUE)), by = nk]
   runs <- prior_j[, .(n_prior = uniqueN(election)), by = nk]
   # federal history, matched on each row's OWN state (a federal target has
@@ -105,7 +115,7 @@ feat <- function(m) {
   # the party's mean at the latest earlier federal election in that state
   fedp <- fed[edate < ed]
   fed_last <- if (nrow(fedp)) fedp[edate == max(edate)] else fedp
-  fed_own <- fedp[!party %in% MAJ, .(fed_own = share[which.max(edate)], fed_date = max(edate)), by = nk]
+  fed_own <- fedp[!party %in% EXCL,.(fed_own = share[which.max(edate)], fed_date = max(edate)), by = nk]
   # party
   pp <- pty[election == pv, .(pk, p_prev_mean = p_mean, p_prev_seats = p_seats)]
   pn <- pty[election == el, .(pk, p_now_seats = p_seats)]
@@ -155,9 +165,10 @@ FEATS <- c("own_prev", "own_prev_seat", "held", "own_prev_major", "held_major", 
            "p_prev_mean", "p_prev_seats", "p_now_seats", "p_seat_ratio", "p_new", "p_prev_seat", "p_fed_mean",
            "seat_prev_minor", "seat_prev_n", "seat_prev_cls", "n_minor_now", "n_cands_now", "n_cls_now",
            "cls_prev_state", "cls_cands_now", "cls_cands_prev", "cls_cand_ratio", "has_prev_election")
-cov <- Fx[, lapply(.SD, function(v) round(mean(!is.na(v)), 2)), .SDcols = FEATS]
+if (RULE == "v2") FEATS <- setdiff(FEATS, c("own_prev_major", "held_major"))   # added by v3
+cov <-Fx[, lapply(.SD, function(v) round(mean(!is.na(v)), 2)), .SDcols = FEATS]
 cat("MC3  feature coverage (share of rows non-missing):\n"); print(melt(cov, measure.vars = FEATS)[order(value)], nrows = 40)
-fwrite(Fx, "output/minor-candidate-features.csv")
+fwrite(Fx, paste0("output/minor-candidate-features", SUF, ".csv"))
 
 # ---- the time-forward fit ----------------------------------------------------
 mm <- function(d) {
@@ -173,7 +184,7 @@ mm <- function(d) {
 naive <- function(d, ref) {
   first <- ref[n_prior == 0 & is.na(own_prev), .(fr = stats::median(share)), by = cls]
   fr <- setNames(first$fr, first$cls)[d$cls]
-  personal <- d$cls %in% c("IND", "OTH", "OTH_RIGHT")
+  personal <- d$cls %in% c("IND", "OTH", "OTH_RIGHT") & RULE == "v3"   # v2: everyone takes the seat fallback
   seat_fb <- fifelse(!is.na(d$seat_prev_cls) & !is.na(d$n_cls_now), d$seat_prev_cls / pmax(1, d$n_cls_now), NA_real_)
   b <- fifelse(!is.na(d$own_prev_seat), d$own_prev_seat,
        fifelse(!is.na(d$own_prev), d$own_prev,
@@ -209,7 +220,7 @@ for (i in seq_len(nrow(targets))) {
               el, n_el, nrow(tr), nr, te[, sqrt(mean((pred_xgb - share)^2))], te[, sqrt(mean((pred_naive - share)^2))]))
 }
 O <- rbindlist(oof)
-fwrite(O[, .(election, seat, name, cls, pk, share, pred_xgb, pred_naive, n_train_el, nrounds)], paste0("output/minor-candidate-oof-", ARM, ".csv"))
+fwrite(O[, .(election, seat, name, cls, pk, share, pred_xgb, pred_naive, n_train_el, nrounds)], paste0("output/minor-candidate-oof-", ARM, SUF, ".csv"))
 cat(sprintf("\nMC5  candidate-level RMSE over %d rows (points; lower is better): xgb %.3f, naive %.3f\n",
             nrow(O), O[, sqrt(mean((pred_xgb - share)^2))], O[, sqrt(mean((pred_naive - share)^2))]))
 
@@ -229,14 +240,14 @@ cls_sum[, `:=`(m_xgb = m_xgb / W, m_naive = m_naive / W)]
 # was predicted by a model fitted on earlier elections only.
 fwrite(cls_sum[, .(election, cls, pred_resid = if (ARM == "resid") m_xgb else NA_real_,
                    pred_naive = m_naive, arm = ARM)],
-       paste0("output/minor-class-shares-", ARM, ".csv"))
+       paste0("output/minor-class-shares-", ARM, SUF, ".csv"))
 A <- fread("output/statewide-forecast-audit-base27sepB.csv")[in_bucket == TRUE & cls %in% MINOR]
 S <- merge(A[, .(election = pair, cls, current = forecast, actual)], cls_sum, by = c("election", "cls"), all.x = TRUE)
 S[is.na(m_xgb), `:=`(m_xgb = 0, m_naive = 0)]   # a class with no candidates predicts zero
 P <- S[, .(cur = mean(abs(current - actual)), xgb = mean(abs(m_xgb - actual)), nai = mean(abs(m_naive - actual)),
            n_cls = .N), by = election]
 P <- merge(P, unique(O[, .(election, n_train_el)]), by = "election", all.x = TRUE)
-fwrite(merge(S, P[, .(election, n_train_el)], by = "election"), paste0("output/minor-candidate-scores-", ARM, ".csv"))
+fwrite(merge(S, P[, .(election, n_train_el)], by = "election"), paste0("output/minor-candidate-scores-", ARM, SUF, ".csv"))
 score <- function(P, lab) {
   d <- P$xgb - P$cur; se <- sd(d) / sqrt(nrow(P))
   cat(sprintf("%s: %d pairs | mean |statewide class share error| current %.3f, candidate model %.3f, naive %.3f | change %+.3f, paired SE %.3f (t %.2f) %s\n",

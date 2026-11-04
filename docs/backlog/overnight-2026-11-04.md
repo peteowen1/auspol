@@ -32,6 +32,16 @@ Times are Sydney. Updated as I go; the morning summary is the top section.
    Choices: (a) recover v2 as a named arm in the script (`AUSPOL_MC_OWN_RULE=v2`), regenerate it, add it to the rebuild
    and give it vic2026 rows after nominations (live = backtest); (b) switch the split to v3 (committed) with a screen.
    My pick: (a) first, so what ships is reproducible, then (b) as its own screen.
+   **5 Nov morning, Pete's go on (a):** `AUSPOL_MC_OWN_RULE=v2` added to `fit_minor_candidates.R` (default v3, unchanged).
+   It writes `output/minor-class-shares-resid-v2.csv` and leaves the file the split reads alone. It cannot reproduce the
+   frozen file exactly: the 28 Sep corpus is gone, and `candidacies.csv` now covers 40 predicted elections, not 27
+   (NT, older NSW/QLD/SA/VIC/WA pairs, LDP, sa2026 votes). Over the 93 shared rows the median gap is 0.40 points and
+   the largest 10.5 (fed2013 OTH_RIGHT). Bucket criterion today (mean |class share error|, lower is better, 21 pairs):
+   1.506 now vs 1.314 candidate model (t -0.68). AEF-7 screen, frozen file -> rebuilt file
+   (`AUSPOL_BUCKET_SPLIT_SRC=minor-class-shares-resid-v2.csv`, 1,000 sims, 681 seats): seat-winner log loss 0.2584 ->
+   0.2584 (no change); share squared error on the 313 moved cells +55.1 (+1%, SE 9.3, WORSE), 300 of them wa2025;
+   vic2022 byte-identical. Not adopted. The choice (rebuilt and reproducible, or frozen and slightly better on WA
+   shares) needs the all-22 run.
    (The 1 Nov audit of inputs built outside the rebuild likely saw this one and filed it as a false alarm, "a first
    commit after its first run": the commit came after the run, but it also changed the rule. Not confirmed which file
    that audit meant.)
