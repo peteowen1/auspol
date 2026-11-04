@@ -15,6 +15,17 @@ Times are Sydney. Updated as I go; the morning summary is the top section.
    ("auspol research (fptpost@gmail.com)"). It went only to vec.vic.gov.au, but it should not have gone anywhere.
    Later fetches do not do it.
 
+3. **The others-bucket split every harness uses cannot be rebuilt from committed code, and is stale.**
+   `AUSPOL_BUCKET_SPLIT=cand_naive` reads `output/minor-class-shares-v2.csv` (`published_flags.R`,
+   `candidate_bucket_ratio()`). That file is byte-identical to the 28 Sep 15:42 run's `minor-class-shares-resid-v2.csv`;
+   `scripts/rebuild_forecasts.sh` never runs `fit_minor_candidates.R`, and the one committed version of that script
+   (29 Sep) already has the v3 defector rule, so the v2 file is not reproducible. It predates the 25 Oct LDP
+   reclassification and the 1 Nov sa2026 absent-vote fix. Live vic2026 is unaffected today (no vic2026 rows, so the
+   live run falls back to the 2022 mix, `FST1!`), but that means live and backtests split the bucket differently.
+   Choices: (a) recover v2 as a named arm in the script (`AUSPOL_MC_OWN_RULE=v2`), regenerate it, add it to the rebuild
+   and give it vic2026 rows after nominations (live = backtest); (b) switch the split to v3 (committed) with a screen.
+   My pick: (a) first, so what ships is reproducible, then (b) as its own screen.
+
 ## Done overnight
 
 - Doc-audit sentinel (#109, 3 Nov run): the four still-drifted citations now name functions (`83d08209`); the other five

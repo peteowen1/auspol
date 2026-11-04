@@ -176,6 +176,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   rest); live `FST1!` (no candidate-model split for vic2026); Kew and Hawthorn, where the bookies price independents
   far above us; Benambra (a NEW independent succeeding Hawkins).
 
+- NEEDS PETE (found 4 Nov night): the others-bucket split file `output/minor-class-shares-v2.csv` is a frozen 28 Sep
+  output that the committed `fit_minor_candidates.R` cannot reproduce (it has the v3 rule) and the rebuild never
+  regenerates; live vic2026 has no rows (`FST1!`, falls back to the 2022 mix). Detail and choices:
+  `backlog/overnight-2026-11-04.md` item 3.
+
 ## 2026-10-18 pipeline audit (READ FIRST; `reviews/pipeline-overwrite-audit-2026-10-18.md`, Sonnet, read-only)
 
 20 findings where work is overwritten, doubled or ignored, or live and backtest diverge. Spot-checked in code 18 Oct.
