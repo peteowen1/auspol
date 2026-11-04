@@ -166,7 +166,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   Audit 1 Nov of forecast inputs built OUTSIDE the rebuild vs their builders' last commit: 7 flagged, all false alarms (6 a
   check-code rename on 9 Oct, 1 a first commit after its first run); only the two files above were really stale.
 - OPEN from the 30 Oct walks (https://claude.ai/artifact/USv8sffhF1zbYagBGwjdQ3, `reviews/walks-wa2017-fed2019-2026-10-30.md`):
-  WA seat layer ~5 pts above the statewide Labor level (36.4 -> 41.2) yet 5-15 short in the swing seats, untraced;
+  WA seat layer ~5 pts above the statewide Labor level (36.4 -> 41.2) yet 5-15 short in the swing seats. PARTLY TRACED
+  4 Nov (wa2017 seat means over 59 seats, actual ALP 41.9): level-pred 36.4 -> base_pred 38.9 (+2.5) -> xgb_pred_seat
+  41.7 (+2.8; partly `forecasts.csv` rescaling five classes to 100 with no One Nation rows, sums 95.1 -> 100.1) ->
+  published 41.3, One Nation's seat mean 4.2 vs its 7.7 level (actual 5.1). So the seat layer recovers most of a 5.8-point
+  statewide miss ON AVERAGE; what is wrong is the spread (too little in the swing seats). Next: the +2.5 inside
+  `dev_slope()`, and the swing seats' share of the lift;
   fed2019 shared miss (38% of margin error): is the correlated statewide draw wide enough? Idea only: a per-person
   trend for Cupper (under-called every time). Closed Mildura checks (tree cut, swing floor refused, One Nation fill
   proportional; recheck the fill after vic2026 counts) are in DECISIONS 30 Oct and `backlog/journal-2026-10-30-to-31.md`.
