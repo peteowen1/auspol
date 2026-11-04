@@ -51,7 +51,7 @@ if (!is.na(offline)) {
   cat(sprintf("AB0  OFFLINE parse of %s (fetched_at taken from its file name: %s)\n", raw_path, fetched_at))
 } else {
   suppressMessages(library(httr))
-  resp <- GET(URL, user_agent("auspol-research (fptpost@gmail.com)"), timeout(60))
+  resp <- GET(URL, user_agent("auspol-research (https://github.com/peteowen1/auspol)"), timeout(60))
   if (status_code(resp) != 200L) stop("AB1! HTTP ", status_code(resp), " from ", URL)
   bytes <- content(resp, "raw")
   html  <- rawToChar(bytes); Encoding(html) <- "UTF-8"

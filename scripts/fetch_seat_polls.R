@@ -57,7 +57,7 @@ raw_dir <- "external/reference/polls/seat-polls/raw"
 out_csv <- "external/reference/polls/seat-polls/seat_polls.csv"
 dir.create(raw_dir, recursive = TRUE, showWarnings = FALSE)
 
-ua <- "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36 auspol-research/1.0 (contact: fptpost@gmail.com)"
+ua <- "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36 auspol-research/1.0 (contact: https://github.com/peteowen1/auspol)"
 
 # key -> wikipedia URL. Every key in the requested election list is included,
 # even the ones confirmed to carry zero seat polls, so the per-election

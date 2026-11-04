@@ -13,6 +13,16 @@ print(cov)
 # Coverage, not presence: a column parsed to all-NA would pass a schema check and quietly drop that class.
 mainland <- c("nsw", "vic", "qld", "wa", "sa")
 if (!all(mainland %in% cov$st)) stop("FK2! a mainland state has no federal breakdowns: ", paste(setdiff(mainland, cov$st), collapse = ", "))
+# Wikipedia DELETED the sub-national sections from the fed2028 page on 2026-10-24 (revision 1381724607, "excessive
+# detail"), so a local refresh of fed2028_opinion parses to no breakdowns from May 2025 on. The 6 Oct set (471
+# polls) is final; never overwrite it with fewer or older. Pre-deletion copy: raw/fed2028_opinion-oldid1381712590.html.
+prev_f <- out_path("fed-state-breakdowns.csv")
+if (file.exists(prev_f)) {
+  prev <- fread(prev_f, select = "end")
+  if (nrow(out) < nrow(prev) || max(out$end) < max(as.Date(prev$end)))
+    stop(sprintf("FK2! would shrink %s: %d polls to %s now vs %d to %s on disk. The fed2028 page lost its state sections on 2026-10-24; restore raw/fed2028_opinion.html from raw/fed2028_opinion-oldid1381712590.html and re-run the fetcher. Delete the output file only if the shrink is intended.",
+                 prev_f, nrow(out), format(max(out$end)), nrow(prev), format(max(as.Date(prev$end)))))
+}
 if (nrow(out) < 300) stop("FK2! only ", nrow(out), " polls parsed (439 on 2026-10-12): the source or the parser changed")
 if (mean(is.finite(out$LNP)) < 0.9 || mean(is.finite(out$GRN)) < 0.8)
   stop(sprintf("FK2! coverage too low: LNP %.0f%%, GRN %.0f%% (2026-10-12: 100%% / ~97%%)", 100 * mean(is.finite(out$LNP)), 100 * mean(is.finite(out$GRN))))

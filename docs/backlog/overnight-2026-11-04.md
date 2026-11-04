@@ -19,6 +19,8 @@ Times are Sydney. Updated as I go; the morning summary is the top section.
    for a contact in the User-Agent, and a URL works. Choices: (a) swap the email for
    `https://github.com/peteowen1/auspol` in all eight (one small PR); (b) keep it. My pick: (a). Until you say, I am not
    running any of them (so the federal breakdowns refresh below waits).
+   **DECIDED 5 Nov morning: (a), Pete's go.** All eight swapped. The breakdowns refresh turned out moot: Wikipedia
+   deleted the state sections on 24 Oct (NEXT-STEPS, "federal polls' state breakdowns").
 
 3. **The others-bucket split every harness uses cannot be rebuilt from committed code, and is stale.**
    `AUSPOL_BUCKET_SPLIT=cand_naive` reads `output/minor-class-shares-v2.csv` (`published_flags.R`,
