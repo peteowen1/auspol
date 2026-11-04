@@ -34,6 +34,12 @@ Times are Sydney. Updated as I go; the morning summary is the top section.
    commit after its first run": the commit came after the run, but it also changed the rule. Not confirmed which file
    that audit meant.)
 
+4. **Departed-member slope (your 27 Oct "tau^2 toward the pooled slope"): walk prepared, nothing built.**
+   `docs/reviews/departed-slope-pooling-walk-2026-11-05.md`. All 12 cells the 40-seat cliff snaps to 1 have their own
+   estimate below 1 (0.25-0.87); the pooled ALP+LNP slope is 0.44-0.71 there and 0.63 live. Two ways to get tau^2:
+   (A) from the two party cells (noisy: 0.000-0.085), (B) from earlier elections' party gaps. My pick: B. Live
+   vic2026 moves at most 0.016 either way.
+
 ## Done overnight
 - **FIXED: the vic2026 search-interest anchor was the wrong Premier** (`0db2b2e7`). Both salience scripts anchored on
   Jacinta Allan; Ben Carroll has been Premier since 28 Jul 2026 (our own `leaders.csv`). Allan's series peaked at 100 that

@@ -385,7 +385,8 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
   which the shipped config never calls (`AUSPOL_FIT_SLOPES=0`). Live: `fit_major_departed_slope()` falls back to 1.0
   below 40 seats (fed2007, fed2010, sa2010, wa2001, wa2005, wa2008). `AUSPOL_SLOPE_SHRINK` shrinks toward 1, not the
   pooled slope, and was refused 29 Sep (+0.0056, SE 0.0035). DECIDED 27 Oct (Pete): build a tau^2 arm toward
-  the pooled slope; NOT built, no prereg yet (the MP-slope pool shipped 30 Oct is a different fit). The `SHIP_SAME/NEW`
+  the pooled slope; NOT built, no prereg yet (the MP-slope pool shipped 30 Oct is a different fit). Walk for Pete
+  5 Nov: `reviews/departed-slope-pooling-walk-2026-11-05.md` (target and tau^2 source to choose). The `SHIP_SAME/NEW`
   leak is DONE: `AUSPOL_SHIP_TIME_FORWARD=1` (v51) makes the fallback time-forward; the constants are opt-out only.
 - **Teal/independent under-call** (Curtin, Goldstein, Mackellar, Wakehurst):
   PARKED by Pete. Overall we lead AEF on independents (36 winners: 16.7 vs
