@@ -173,7 +173,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   statewide miss ON AVERAGE. By previous Labor share there is no band bias (prev <30: our swing +13.0 v actual +14.0,
   n 29; 30-40: +6.6 v +8.4, n 11; >=40: +9.2 v +8.5, n 19); the misses are seat-specific: Southern River +8.3 v +20.7,
   Geraldton +4.1 v +16.6, Bunbury +7.1 v +15.4, Wanneroo +5.5 v +14.7, Kimberley +8.9 v +18.1. Next: what those five share;
-  fed2019 shared miss (38% of margin error): is the correlated statewide draw wide enough? Idea only: a per-person
+  fed2019 shared miss (38% of margin error): is the correlated statewide draw wide enough? (4 Nov: needs each harness to
+  write its statewide draw quantiles per election; then coverage of the 35 actual levels is one table. `output/fp-coverage.csv`
+  is from 19 Aug and predates the shipped `AUSPOL_LEVEL_SD`.) Idea only: a per-person
   trend for Cupper (under-called every time). Closed Mildura checks (tree cut, swing floor refused, One Nation fill
   proportional; recheck the fill after vic2026 counts) are in DECISIONS 30 Oct and `backlog/journal-2026-10-30-to-31.md`.
 
