@@ -266,3 +266,25 @@ unknown 306. Classes phone, online, sms, inperson, mixed, unknown. Same REC lean
 - Live walk vic2026: ALP 24.11 -> 24.07, GRN 13.85 -> 13.87, others unchanged.
 
 Nothing wired into `trend_as_at()`. Remaining: FULL (REC + SPN + MOD + ANC + the BLD-replaced AGE + record noise).
+
+## RESULT, arm FULL at the statewide stage (2026-11-04, `scripts/screen_poll_lean_full.R`, codes PLF0-PLF4): NOT PASSED
+
+Every term together, each time-forward per target: lean against results BACKFITTED (firm lean first, then the sponsor
+class lean on what it leaves, then the method class lean on what both leave; the three error tables checked to line
+up row for row, 21,599 rows), the 9 Oct record noise weights (`weights = "record"`), and the day-0 anchor strength
+picked over earlier elections from ANC's grid. Not in FULL: AGE (replaced by BLD under Amendment 1) and BLD (a
+post-trend blend, not the trend scored here; alone +0.069 worse). 266 fits, 2.0 minutes.
+
+- **Change +0.0121 points worse, SE 0.0293** (n 38). Clause 1 NOT PASSED; leave-one-out better in 0 of 38 drops;
+  all 38 moved, 21 better and 17 worse, with large swings both ways (wa2013 -0.42, wa2008 -0.34, wa2021 -0.24; qld2017
+  +0.48, vic2006 +0.41, wa1996 +0.34, sa2022 +0.23). With the anchor held at the published value: +0.0103 (SE 0.0345).
+- Anchor picks: none 17, gap:1 11, published 8, gap:0.5 2 (the pick wanders, as under ANC alone).
+- Named in advance: mean |One Nation error| 1.676 -> 1.569 (18); sa2026 -0.130 better (One Nation -2.22 -> -1.71). The One Nation gain comes with losses elsewhere and nets to nothing.
+- Live walk vic2026 (anchor "none", picked over all 38): LNP 29.84 -> 29.37, ALP 24.11 -> 24.65, GRN 13.85 -> 13.88,
+  **ONP 19.51 -> 21.88**, OTH 10.45 -> 9.43. Walked, not measured.
+
+**All six arms refused (ANC, REC, BLD, SPN, MOD, FULL). Nothing ships; the published trend is unchanged.** The
+measurable residue is One Nation: loosening the anchor helps the big-surge cases (sa2026, qld2017 under ANC) and hurts
+the small-surge ones. That is the open idea already recorded (condition on how many seats One Nation stands in, after
+nominations close 9 Nov), and the sponsor question becomes testable after vic2026 (the first completed election with
+party-commissioned polls labelled).

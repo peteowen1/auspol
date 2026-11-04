@@ -22,7 +22,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (+0.0690 worse, SE 0.0551): polls over-state it where it stood in few seats (nsw2019/2023, vic2022); sa2026 the one gain.
   SPN (sponsor, `R/poll_sponsor.R`) NOT PASSED 4 Nov (+0.0548 worse, SE 0.0199): party sponsors are on Wikipedia only from 2025, so that class has no training elections; media vs the rest made it worse. MOD (method, `R/poll_method.R`) NOT PASSED 4 Nov (+0.0244, SE 0.0161; in-person and SMS are Roy Morgan alone).
   CORRECTION: the published Vic One Nation level is 20.92 (rescale + blend spill), not the trend's 19.52; the live gap
-  is ~1.1 pts. OPEN: FULL; idea after 9 Nov: condition
+  is ~1.1 pts. FULL (all terms, time-forward) NOT PASSED 4 Nov (+0.0121, SE 0.0293): ALL SIX ARMS REFUSED, told Pete; register row closed. OPEN idea after 9 Nov: condition
   the One Nation blend on how many seats it stands in; the shared party-level poll bias REC cannot see. Built and REFUSED 9 Oct: noise-only weights (`"record"`, R/poll_record.R; `"firm_factors"`)
   in plans/prereg-statewide-poll-sample-weights-2026-10-09.md. NEVER TESTED: LEAN. Trigger case: Online Research Unit for the
   Victorian Greens (14-26 Oct, on Wikipedia 1 Nov 7:09pm) has ONP 14 vs 20-25 in every other poll.
