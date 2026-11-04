@@ -42,7 +42,7 @@ poll_method_eras <- function(path = poll_wiki_path()) {
   x
 }
 
-# Free-text method label -> class; NA for no label ("", "—", "?", a stray sample size).
+# Free-text method label -> class; NA for no label ("", an em dash, "?", a stray sample size).
 #' @noRd
 .poll_method_label <- function(m) {
   online <- grepl("online", m); phone <- grepl("telephone|landline|cati|ivr|mobile|phone", m)

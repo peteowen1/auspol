@@ -63,7 +63,7 @@ poll_sponsor_class <- function(region, polls, path = poll_wiki_path()) {
   fs <- as.Date(substr(as.character(w$fieldwork_start), 1, 10)); fe <- as.Date(substr(as.character(w$fieldwork_end), 1, 10))
   mid <- as.Date(ifelse(is.finite(fs) & is.finite(fe) & fs <= fe, as.integer(fs) + (as.integer(fe) - as.integer(fs)) %/% 2L,
                         as.integer(fe)), origin = "1970-01-01")
-  txt <- function(x) { x <- trimws(as.character(x)); x[is.na(x) | x %in% c("", "—", "-", "N/A", "n/a")] <- ""; x }
+  txt <- function(x) { x <- trimws(as.character(x)); x[is.na(x) | x %in% c("", "\u2014", "-", "N/A", "n/a")] <- ""; x }
   sp <- trimws(paste(txt(w$client), txt(w$client_raw), txt(w$client_fn)))
   fam <- .ps_family(.ps_canon(ifelse(is.na(w$firm) | w$firm == "", w$firm_raw, w$firm), alias))
   cls <- ifelse(sp == "", "none", ifelse(grepl(POLL_SPONSOR_ADVOCACY, sp, ignore.case = TRUE), "party", "media"))
