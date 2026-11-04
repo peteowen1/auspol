@@ -36,6 +36,15 @@ Times are Sydney. Updated as I go; the morning summary is the top section.
 - Flows queue item narrowed (`b56f2032`): the federal Greens->Labor estimate running 3-7 points above the AEC is the
   estimator's known bias (failed its bar 13 Oct) and reaches no published forecast; federal flows come from the AEC.
 
+- Staleness audit of the published path (42 `output/` files `fit_seats_full.R` and `R/` read): 9 have a builder committed
+  after the file was written. Checked each diff: only flagged-off changes (`AUSPOL_SITTING_MEMBER_ADJ`, `AUSPOL_STATE_POLL_EXTRA`,
+  the departed width arm) or the 9 Oct check-code rename. The bucket split (item 3) is the only live case.
+- Queue corrected where it contradicted recorded results: seat-margin arm (refused 28 Sep), zeroed-party revival
+  (measured and refused 18 Oct), HTV recency (shipped 1 Nov), surge v4 (superseded: surge off), the post-xgb corrections'
+  inputs (already this run's), LDP class (live since 1 Nov).
+- Value-odds page republished with the 4 Nov prices: https://claude.ai/artifact/GdrpxSB7zkY1xEvJvU3TKx (its readiness
+  checklist is still the hand-written 28 Oct text, and says so).
+
 ## In flight
 
 - vic2026 Google Trends snapshot to 4 Nov (`AUSPOL_SALIENCE_TO=2026-11-04`, watching only; the shipping one is 25-27 Nov).
