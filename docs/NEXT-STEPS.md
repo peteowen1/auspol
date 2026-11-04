@@ -47,7 +47,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
      65,536 bytes; Classification renamed; and the 2022 file passes, 87 districts). GAP FOUND: Narracan is not in
      `booths-vic2022.json` (87 of 88; its 2022 poll was the 28 Jan 2023 supplementary), so every Narracan booth is "new"
      on the night, with no swing. The VEC publishes it by voting centre (`Narracan District-Results by Voting Centre.xls`,
-     linked from the supplementary results page): add it to the 2022 history and the night runner's reference.
+     linked from the supplementary results page). NEEDS PETE (found 4 Nov night): that supplementary (28 Jan 2023) had NO
+     Labor and NO Nationals candidate (Liberal 16,741, Greens 4,132, DLP 2,641, Freedom 2,254, One Nation 2,246, IND
+     Wolfe 4,110; 2CP Liberal 62.9 v Wolfe), so it is not a like-for-like base for the Labor-minus-Coalition booth swing.
+     Choices: (a) 2018 Narracan booths as the reference (both majors stood; pre-2021 redistribution), (b) the 2023 booths
+     for the parties that stood only, (c) leave Narracan's booths "new". Raw pages saved:
+     `external/reference/vec/2022/booths/narracan-supp2023-{fp,2cp}.html`. Nothing built yet.
   3b. DONE 30 Oct: the night JSON writes `sn` per booth and `swing` per seat (`night_booth_results(conv, ref)`,
      `night_seat_swing()`, `R/night_runner.R`). Booth swings equal the page builder's `s` on all 1,325 vic2022 booths
      (max difference 0); the seat swing is like for like over matched booths (vs the builder's whole-district
@@ -62,7 +67,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `contested-seats-light-checks-2026-10-28.md` (agent's sign error corrected at the top; other-right lead pooled over
   20 elections is -0.040, SE 0.015: small), `live-walk-contested-seats-2026-10-28.md` (xgb cut to the eastern Liberals
   0.1-1.6, not 3). Branch checks `ind-overcall-1025` and `mp-slope-shrink-1025`: both PASS `check_like_ci.R` 28 Oct.
-  Still open from it: One Nation spread pooling (needs code: spread fixed to SA 2026 at `fit_seats_full.R:781`);
+  Still open from it: One Nation spread pooling (needs code: spread fixed to SA 2026 by the `sa_ratio` quantile map in `fit_seats_full.R`);
   Hastings/Cranbourne recheck after nominations (9 Nov); re-entry inflated bases (other classes over-called -2.9,
   SE 0.84, where a party re-entered; Narracan Greens is the live case).
 
@@ -365,7 +370,7 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
   still to walk with Pete (questions in the review). Refused arms:
   `prereg-fundamentals-drop-fed-aligned`, `prereg-phantom-minor-vote`.
 
-- **NSW variance / floor seats**: per-cell fat tails already SHIP (`AUSPOL_ERROR_DIST=1`, `published_flags.R:763`,
+- **NSW variance / floor seats**: per-cell fat tails already SHIP (`AUSPOL_ERROR_DIST=1`, `scripts/published_flags.R`,
   17 Oct; excess kurtosis 2.8-18 by class). Pete (26 Oct): first count floor seats (winner under 1%) under the
   shipped config on all 22; build a seat-level variance multiplier only if they remain.
 - **One Nation in Victoria**: polls ~25%, Nepean by-election 24.5%,
@@ -432,7 +437,7 @@ Still open:
   `output/forecasts.csv`, so a rebuild's result depends on the one before it; make them read this run's
   as-at predictions (queued 2026-09-30; the spread fix's compare-and-rerun pattern, `scripts/compare_spread_tables.R`,
   could cover it). Still live 23 Oct: `R/demographic_residual.R:213` and
-  `R/seat_poll_blend.R:728,791` read `output/forecasts.csv`; leader-seat (`R/leader_seat.R:119`) not checked.
+  `.seat_poll_cells()` and `seat_poll_blend_table()` in `R/seat_poll_blend.R` read `output/forecasts.csv`; leader-seat (`R/leader_seat.R:119`) not checked.
 - Main-tree `R CMD build` failed after ~6 min once (2026-10-04) while the fresh-clone check passed. Likely
   cause, unproven: the junctions in `.claude/worktrees/*/output` and `/external` into the main tree. Remove
   with `cmd /c rmdir` (never a recursive delete) before running the check in the main tree; the
