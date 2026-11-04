@@ -1,3 +1,8 @@
+# auspol 0.4.129
+
+- **Poll lean by company, sponsor and method, all refused**: `poll_lean_table()`, `poll_sponsor_class()`, `poll_method_class()` and the anchor-strength and recent-poll-class switches (`AUSPOL_ANCHOR_SD_MULT`, `AUSPOL_LEVEL_RECENT_CLS`), each off at its published value; none passed on 38 elections. `poll_wiki_path()` is the one place the Wikipedia poll table is found.
+- The MP-slope tables now match the 1 Nov rebuild (sa2026 absent votes), which the daily forecast had not been reading.
+
 # auspol 0.4.128
 
 - **Liberal how-to-vote card fit reads one table everywhere**: the published forecast read a partial set of transfer files (Liberal->Labor 35%, backtests 37.9%, What-If job 40%, which failed every What-If publish from 31 Oct). The shipped coalition-split table is now the only source when present.

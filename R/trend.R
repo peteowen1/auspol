@@ -99,18 +99,40 @@ ANCHOR_K <- 0
 #' applies to a low prior. See docs/plans/prereg-anchor-informativeness.md.
 #'
 #' @param anchor_k Previous-election share below which the weak anchor is used.
+#' @param anchor_mode How strongly the previous result pins day 0
+#'   (`AUSPOL_ANCHOR_SD_MULT`, arm ANC of `docs/plans/prereg-poll-lean-2026-11-02.md`):
+#'   `"1"` (published) as above; a number multiplies the anchor sd; `"none"`
+#'   ignores the previous result and starts loosely from the first poll, as when
+#'   there is none; `"gap:<g>"` widens the sd by `sqrt(1 + (gap / g)^2)`, where
+#'   `gap` is the model-scale distance between the first poll and the previous
+#'   result, so a party that has plainly moved (One Nation 0.28 -> 22) is pinned
+#'   loosely and one that has not keeps today's anchor. No threshold anywhere.
 #' @keywords internal
-trend_anchor <- function(prep, prior_result, anchor_k = ANCHOR_K) {
+trend_anchor <- function(prep, prior_result, anchor_k = ANCHOR_K,
+                         anchor_mode = Sys.getenv("AUSPOL_ANCHOR_SD_MULT", "1")) {
   weak <- sd_to_link(10, prep$p_ref, prep$scale)
   strong <- sd_to_link(5, prep$p_ref, prep$scale)
-  if (is.na(prior_result)) {
-    list(val = prep$obs$y[which.min(prep$obs$t)], sd = weak)
-  } else {
-    list(val = to_link(prior_result, prep$scale)$z,
-         # `<` not `<=`, so anchor_k = 0 reproduces the old behaviour exactly
-         # for every party -- which is what the control arm of the grid needs.
-         sd = if (isTRUE(prior_result < anchor_k)) weak else strong)
+  first <- prep$obs$y[which.min(prep$obs$t)]
+  if (is.na(prior_result) || identical(anchor_mode, "none")) {
+    return(list(val = first, sd = weak))
   }
+  out <- list(val = to_link(prior_result, prep$scale)$z,
+              # `<` not `<=`, so anchor_k = 0 reproduces the old behaviour exactly
+              # for every party -- which is what the control arm of the grid needs.
+              sd = if (isTRUE(prior_result < anchor_k)) weak else strong)
+  if (identical(anchor_mode, "1")) return(out)   # published: untouched, byte-identical
+  if (startsWith(anchor_mode, "gap:")) {
+    g <- suppressWarnings(as.numeric(sub("^gap:", "", anchor_mode)))
+    if (!is.finite(g) || g <= 0) stop("AUSPOL_ANCHOR_SD_MULT '", anchor_mode, "': gap scale must be a positive number")
+    out$sd <- out$sd * sqrt(1 + (abs(first - out$val) / g)^2)
+    return(out)
+  }
+  m <- suppressWarnings(as.numeric(anchor_mode))
+  if (!is.finite(m) || m <= 0) {
+    stop("AUSPOL_ANCHOR_SD_MULT must be \"1\", a positive number, \"none\" or \"gap:<g>\"; got '", anchor_mode, "'")
+  }
+  out$sd <- out$sd * m
+  out
 }
 
 #' Prior precision matrix P and linear term b0 (everything except the polls)

@@ -1,0 +1,290 @@
+# Pre-registration: treat statewide polls differently by company, sponsor, method and age, and size the day-0 anchor
+
+Written 2026-11-02, before any arm is built or run. Pete, 1 Nov 8:30pm: *"we 100% should be treating different polls
+differently based on the poll type and company and how old it is"*. Register: `docs/PETE-ASKED-FOR.md` (1 Nov row).
+Trigger evidence: `docs/reviews/s7-onp-anchor-2026-11-02.md`. Starts from the standard decision rule
+(`docs/PRE-REGISTRATION-RULES.md`); departures are named where they occur.
+
+## What the published trend does today, so the arms are measured against the real thing
+
+`trend_as_at()` (`R/projection.R:64`), `sigmas = "default"`, `weights = "equal"`, through `fit_cycle_trends()`
+(`R/trend.R`):
+
+- **Company: within-cycle house effect per firm per party**, prior sd `sigma_house_pts`, centred by a soft
+  poll-count-weighted sum-to-zero. Firms with few polls pool into "(other firms)". So each company is measured
+  against the other companies IN THIS CYCLE, never against results.
+- **Age: a random walk** (`sigma_rw` 0.0044/day in logit for Victorian One Nation). Older polls count less because the
+  walk lets the level move away from them. No campaign-period change in the walk.
+- **Noise: equal per poll** (fixed 1.7 points). Sample size, record-based noise and estimated noise were refused
+  9 Oct (`plans/prereg-statewide-poll-sample-weights-2026-10-09.md`): those arms changed the WIDTH a poll gets, not
+  its LEAN. This prereg is about lean.
+- **Day-0 anchor:** the previous election's result at the strong sd (5 points translated at the observed level).
+  `ANCHOR_K = 0`, so a 0.28% result anchors as strongly as a 37% one. On Victoria 2026 this anchor holds One Nation
+  1.90 points under its polls (S7 breach, 2 Nov).
+- **Not used: sponsor, method (phone / online panel / SMS / robopoll / MRP), or any company's record against
+  results.**
+
+## The arms (each a switch, published value off; the strongest version is arm FULL)
+
+All signed lean terms are on the model scale (logit), estimated per party class (ALP, LNP, GRN, ONP, OTH), and
+applied as a fixed offset to each poll before the trend is fitted, so the existing within-cycle house effect then
+centres on what is left.
+
+1. **REC: company lean against results** (`AUSPOL_POLL_LEAN_FIRM`). For each firm and party: the poll minus the
+   result at earlier elections, minus that election's recency-weighted mean miss across all firms (the shared miss is
+   not one company's lean). Recency weight halves every 30 days before polling day (as `POLL_RECORD_HALFLIFE`).
+   Shrunk to zero by `w = tau^2 / (tau^2 + se_i^2)`, with `tau^2` from DerSimonian-Laird over firms. Firms are
+   matched through `firm_alias.csv`; method variants of one company (SMS Morgan, Morgan Phone) count as separate firms.
+2. **SPN: sponsor lean** (`AUSPOL_POLL_LEAN_SPONSOR`). Three classes: commissioned by a party or advocacy group;
+   media (any listed media client, and an unlisted client on a firm's regular media series); unknown. Signed lean per
+   class and party against results, same shared-miss removal, shrunk the same way. Sponsor labels cover 76 of 1,176
+   matched 2010+ polls (6%; `reviews/statewide-poll-samples-2026-10-09.md` section 3). Expected to shrink nearly to
+   zero; it is included because shrinkage makes a thin term safe to include (CLAUDE.md shrinkage rule).
+3. **MOD: method lean** (`AUSPOL_POLL_LEAN_MODE`). Classes from `mode_raw` and the firm alias: phone (live), robopoll
+   (IVR), online panel, SMS, mixed, MRP, unknown. Same estimation. A method class confounded with one firm is reported
+   as such.
+4. **ANC: day-0 anchor strength** (`AUSPOL_ANCHOR_SD_MULT`). Grid of multipliers on the strong anchor sd:
+   **{1 (today), 2, 4, no anchor (first-poll start at the weak sd)}**, plus one continuous form: the anchor sd
+   scaled by `sqrt(1 + (gap / g)^2)`, where `gap` = |logit(first poll) - logit(previous result)|, with `g` from the
+   grid **{0.5, 1, 2}**. No threshold anywhere (no-cliff rule). The setting is chosen time-forward: for a target
+   election, the value with the lowest day-before level error over elections held before it.
+5. **AGE: campaign walk** (`AUSPOL_TREND_CAMPAIGN_RW`). The walk sd multiplied by `m` in the final 60 days, `m` from
+   the grid **{1, 1.5, 2}**, chosen time-forward. 60 days is a fixed window, but it applies a multiplier, not a
+   cut-off. This arm is the one "how old it is" asks for beyond what the walk already does.
+6. **FULL: REC + SPN + MOD + ANC + AGE together**, each term estimated time-forward as above, plus the 9 Oct
+   `weights = "record"` noise factors (the noise half, refused alone, rides along in case it helps beside lean).
+
+## Data gate (step 0; stop and report before building arms if it fails)
+
+- Coverage, printed per region: polls with a firm resolved by `firm_alias.csv`, a method class, a sponsor class.
+  Gate: firm resolved on 95% of 2010+ polls, or REC is not built and the gap goes to Pete.
+- Earlier-election support: for each scored target, the number of earlier elections with polls and a result in
+  its region and in all regions. REC uses ALL regions' earlier elections (firms poll across regions).
+- MDE: before any arm, the per-election day-before level error on the incumbent, and the 1-SE MDE of the
+  primary (clustered on election) printed. If the MDE exceeds 0.10 points the primary is too noisy to resolve
+  plausible effects, and the plan goes back to Pete before arms run.
+
+## Scored elections and metrics
+
+- **Statewide stage, all 35 scored elections** (every one with day-before polls; the 10 Oct registry lists which
+  have none, and those are reported as unscored, not dropped silently). Script: a new `scripts/screen_poll_lean.R`,
+  which refits `trend_as_at()` at each election's day-before date under each arm.
+- **Primary (clause 1): day-before statewide primary level error**: mean absolute error of the trend endpoint against the
+  actual statewide primary, over ALP, LNP, GRN, ONP and OTH, weighted equally per party-election, SE clustered on
+  election. Better than the incumbent by more than 1 SE. Reported at 30, 90 and 180 days out too; those are
+  reported, not deciding (alternating signs across horizons are noise).
+- **Seat stage, the arms that pass the statewide stage**: `quick_arm.R --pairs=all` (every scored election),
+  `scripts/screen_level_share.R` first as the cheap stop. **Guard (clause 2): seat log loss on every seat, not worse
+  by more than 1 SE.** Seat log loss decides between arms that pass (clause 7).
+- **Clauses 3-6 as standard**: leave-one-election-out on the primary; no election worse on seat log loss by more
+  than 2 SE of its own paired seat differences; for ANC, the gain keeps its sign with the two largest-gain elections
+  removed; moved-row direction counted and reported.
+
+## Leakage rules
+
+- Every lean, anchor setting and campaign multiplier for target election E uses only elections whose polling day
+  is before E's first poll. An assertion fails if any training election's date is on or after E's cycle start, and
+  a test feeds it a deliberately leaked record and must fail.
+- The shared-miss removal uses only polls of the training election.
+- vic2026 and nsw2027 are never scored. Their arms are walked, not measured.
+
+## What would make an apparent win unacceptable (named now)
+
+- **A gain that exists only because One Nation is pushed DOWN everywhere** while REC, SPN and MOD are all
+  inert. The 10-cycle record (polls over-stated One Nation in 8 of 10) predicts the ANC arm may win this way.
+  Then ANC is judged on its own, and sa2026 (the only completed case the size of Victoria, where the polls were
+  exact) is reported separately. A win that makes sa2026 worse by more than 2 SE of its own seats goes to Pete
+  (clause 9), not straight to shipping.
+- Any lean term estimated from one company's single election (n of 1 election) that moves a vic2026 party by more
+  than 1 point after shrinkage: printed and walked with Pete before shipping.
+- Pre-xgb only: the arm must be measured on the published path (`fit_seats_full.R` reads the trend for
+  `state_mean`), and the live walk (vic2026 with and without the arm, per party, per seat) is shown before any ship.
+
+## Not criteria
+
+That company leans "should" exist. That the S7 breach goes away. That the trend looks closer to the polls on the
+chart. S7's bound is a check on the fit, not an objective; an arm that cures S7 and loses on the primary is refused.
+
+## Expectation, stated before running
+
+Within-cycle house effects already absorb most of what REC can find, and the 9 Oct record arm found that a
+company accurate last time is not reliably accurate next time. **I expect REC, SPN and MOD to move the primary by
+less than its MDE.** ANC is the arm with a visible mechanism (1.90 points on vic2026, 1.38 on wa2017); its sign
+is unknown: the 10-cycle record leans toward keeping the anchor (MAE 2.01 against 2.12 without it), and sa2026 points
+the other way.
+
+## Order of work
+
+1. Step 0 gate and MDE (one script, under a minute).
+2. ANC alone at the statewide stage (cheap: one refit per election per grid value).
+3. REC, SPN, MOD, AGE builds, each behind its switch with a test that the switch at its default is byte-identical
+   to today's trend.
+4. FULL.
+5. Seat stage for every arm that passed step 2-4, then the deciding 20k run for one winner via
+   `scripts/deciding_run.ps1`.
+
+## Amendments
+
+(none yet; any change is added below this line with the original text left as it is)
+
+## RESULT, step 0 (2026-11-02, `scripts/screen_poll_lean.R`, before any arm)
+
+- **Firm gate as written: FAIL.** 2010+ Wikipedia statewide poll rows with a firm resolved by `firm_alias.csv`:
+  4,288 of 5,220 (82.1%, bar 95%). The misses are firms missing from the alias table, not unnamed polls:
+  RedBridge/Accent 171, ReachTEL 136, DemosAU 127, Fox & Hedgehog 106, EMRS 94, DemosAU/Premier National 89.
+- **The rows the trend fits** (`load_polls()`, 2010+): firm named on **2,968 of 2,968 (100%)**, 15-31 distinct firm
+  labels per region. REC estimates on these rows, so the gate as written measured the wrong table. Not amended:
+  a gate failure goes to Pete (gate clause).
+- **Method labels: federal only.** 961 of 3,883 federal rows (24.7%); **0% in every state table**. MOD on labels
+  alone is a federal-only arm; for states it needs a firm-and-era method table.
+- **Sponsor (client):** 1,330 of 5,220 rows (25.5%); vic 49.1%, nsw 37.0%, wa and sa 0%.
+- **Primary on the incumbent:** 38 scored elections (not 35: wa1996 and the 2006-2010 state cycles have day-before
+  polls), day-before MAE mean **1.800 points**, sd 1.026 across elections. Worst: sa2018 5.04, wa2017 4.17, wa2013 3.54.
+- **Noise floor (MDE gate): PASS.** A placebo arm (one random poll dropped per election, seed 20261102) moves the
+  primary by a paired SE of **0.0076 points** (n 38; bar 0.10). A real arm meets more noise than this; it is a lower bound.
+- **Earlier-election support:** 0 earlier elections for wa1996, 2 for fed2004/nsw2007/vic2006/sa2006, rising to 32 for
+  fed2025. REC and SPN fall back to zero lean (full shrinkage) where support is 0.
+
+**Correction (2026-11-02, same session, before any arm): the firm gate PASSES as written; the FAIL above was a bug in
+the screen.** `firm_alias.csv` patterns are regular expressions (`red ?bridge|accent`, `demos|premier national`) and
+`screen_poll_lean.R` matched them as fixed text. With regex matching: **5,051 of 5,220 (96.8%, bar 95%)**. Still
+unresolved: EMRS 94 and MediaReach 11 (Tasmania and NT, neither scored here), and non-firm labels (NT News,
+Sky News, "Internal polling", "Unnamed"). `firm_alias.csv` is not changed.
+
+## RESULT, arm ANC at the statewide stage (2026-11-02, `scripts/screen_poll_lean_anc.R` (check codes PLA0-PLA4)): NOT PASSED, not taken to the seat stage
+
+266 fits (38 elections x 7 settings), 1.2 minutes. Primary = day-before mean absolute error in points (lower is better);
+change = arm minus published, SE over elections.
+
+- **Time-forward pick (the arm as registered): +0.0104 points worse, SE 0.0149** (n 38). Clause 1 NOT PASSED. Leave-one-out:
+  better by > 1 SE in 0 of 38 drops. Moved 36 elections, 20 better and 16 worse. The pick wanders (none 13, gap:0.5 12,
+  gap:1 11, published 2) because no setting is reliably better on earlier elections.
+- Fixed settings, reported only: 2 -0.0061 (SE 0.0134), 4 -0.0073 (0.0169), none -0.0062 (0.0182), gap:0.5 -0.0031 (0.0143),
+  gap:1 -0.0025 (0.0132), gap:2 -0.0016 (0.0097). All within 1 SE of zero; a fixed setting chosen after seeing this table
+  would be the cherry-pick the time-forward rule exists to prevent.
+- Biggest single moves under the pick: qld2017 -0.409 (One Nation's 2017 return, error -1.02 -> +0.08), nsw2019 +0.275 and
+  wa2017 0.000/+1.38 on One Nation (the small surges the polls over-stated), fed2010 +0.129, wa2005 +0.115.
+- Named in advance: mean |One Nation error| 1.676 published vs 1.754 under the pick (18 elections); sa2026 -0.059 better
+  (One Nation -2.22 -> -2.07). So loosening the pin helps the big-surge case and hurts the small-surge cases, and nets to nothing.
+
+**`AUSPOL_ANCHOR_SD_MULT` stays "1".** The 2 Nov S7 breach (Vic One Nation 19.52 vs 22.03) is therefore the published
+model behaving as measured, not a defect to patch; per "Not criteria" above, curing S7 is not a reason to ship.
+Next arms: REC, SPN, MOD, AGE (order of work step 3).
+
+## RESULT, arm REC at the statewide stage (2026-11-02, `scripts/screen_poll_lean_rec.R`, codes PLR0-PLR4): NOT PASSED
+
+Company lean against results (`R/poll_lean.R`): 21,599 poll-party rows from 74 completed elections, 47 firms; per target,
+only elections before its cycle began (asserted). Primary = day-before mean absolute error in points (lower is better).
+
+- **Change -0.0154 points, SE 0.0216** (n 38). Clause 1 NOT PASSED. Leave-one-out better by > 1 SE in 1 of 38 drops.
+  Moved 37 elections: 22 better, 15 worse, and the moves are large in both directions (wa2008 -0.43, wa2005 -0.33,
+  wa1996 +0.31, sa2022 +0.15): a company's lean at past elections is a weak guide to its lean at the next, the same
+  finding as the 9 Oct record arm for noise.
+- **One Nation barely moves** (mean |error| 1.676 -> 1.675; sa2026 -2.22 -> -2.19). By design REC removes the miss every
+  company shared, and One Nation's over-statement at small surges is shared, so a company term cannot see it. That is a
+  party-level poll bias, a different term (the 17 Oct per-class level bias, parked; NEXT-STEPS).
+- Live walk (vic2026, lean from all 74 elections): LNP 29.83 -> 29.63, ALP 24.11 -> 24.53, GRN 13.85 -> 13.80,
+  ONP 19.52 -> 19.84, OTH 10.44 -> 9.81. Largest live leans: Redbridge LNP +1.38 pts, Wolf&Smith ONP -3.02, SMS Morgan GRN +1.04.
+
+Not taken to the seat stage; nothing wired into `trend_as_at()`. Remaining: SPN, MOD, AGE, FULL.
+
+## Amendment 1 (2026-11-02, Pete's choice, before arm AGE was built or any BLD number seen): AGE becomes BLD
+
+The original AGE clause above is left as written. Found while scoping AGE: the shipped level already uses poll age for
+ALP, LNP and GRN through the recent-poll blend (`AUSPOL_LEVEL_RECENT="decay"`, 20-day half-life, shipped 11 Oct), and
+a faster walk was refused 12 Oct (`plans/prereg-responsive-trend-2026-10-12.md`, 90-day guard). One Nation is NOT
+blended (`R/level_recent.R`, `.LR_CLS`), so its published level is the trend alone. Pete chose (2 Nov): extend the
+blend to One Nation instead of building AGE.
+
+- **Arm BLD:** `AUSPOL_LEVEL_RECENT_CLS = "ALP,LNP,GRN,ONP"` (published "ALP,LNP,GRN"). Same decayed recent-poll mean,
+  same half-life (20 days), the pull constant `k` fitted exactly as shipped (`level_recent_decay_fit()`, elections
+  before the target only) but over all four classes. Federal state breakdowns carry no One Nation figure, so its
+  recent mean is the state polls alone.
+- **Others is not blended:** the polls' "Others" lumps independents and minor right, while the result classes split
+  them (IND, OTH_RIGHT, OTH), so the two are not the same quantity.
+- **Scored on the SHIPPED level** (trend, then blend), not the trend alone: the ANC and REC results above scored the
+  trend, which for ALP, LNP and GRN is not the published level. Same primary otherwise (day-before mean absolute
+  error over ALP, LNP, GRN, ONP where present and everything else), same clauses 1, 3 and 6, same One Nation and
+  sa2026 report. The incumbent is the shipped blend, recomputed by the same code on the same table.
+
+## RESULT, arm BLD (Amendment 1) at the statewide stage (2026-11-02, `scripts/screen_poll_lean_bld.R`, codes PLB0-PLB4): NOT PASSED
+
+Dry run: the rebuilt pre-blend level reproduces `output/level-recent.csv` on all 105 ALP/LNP/GRN cells (max diff 0.0000).
+35 elections. Primary on the SHIPPED level (pre-blend forecast rescaled, then the blend), mean absolute error in points,
+lower is better; change = arm minus shipped.
+
+- **Change +0.0690 points WORSE, SE 0.0551.** Clause 1 NOT PASSED; leave-one-out better in 0 of 35 drops; 31 elections
+  moved, 11 better and 20 worse. Mean |One Nation error| 1.393 shipped vs 1.747 arm (22 elections).
+- Worst: nsw2023 +1.124 (One Nation -0.07 -> +2.82), nsw2019 +0.900 (-0.61 -> +2.25), vic2022 +0.596 (-0.12 -> +1.55),
+  wa2017 +0.510 (2.00 -> 4.15), fed2025 +0.307. Best: sa2026 -0.744 (-1.85 -> -0.04), wa2008 -0.215.
+- Why: statewide polls ask about One Nation everywhere, and in the elections where it stood in only some seats (NSW 2019
+  and 2023, Victoria 2022) they measure support it could not collect. The trend's lag is protecting those cases. sa2026,
+  where it stood broadly, is the one large gain, and Victoria 2026 may be more like sa2026; nothing here can test that
+  until nominations close (9 Nov) and the candidate count is known. Recorded as an open idea, not a result.
+
+**`AUSPOL_LEVEL_RECENT_CLS` stays "ALP,LNP,GRN".**
+
+**Correction found while walking it (live, 4:30am 2 Nov run log):** the PUBLISHED Victorian One Nation level is **20.92**,
+not the trend's 19.52: the rescale to 100 makes it 19.96 and the blend for the other three parties spills +0.96 onto it.
+The gap to the 90-day poll mean (22.03) is about 1.1 points. S7 checks the trend, not the level the seats get, so the
+"2.5 points under its polls in every seat" reading of `reviews/s7-onp-anchor-2026-11-02.md` overstated it.
+
+## RESULT, arm SPN at the statewide stage (2026-11-04, `scripts/screen_poll_lean_spn.R`, codes PLS0-PLS4): NOT PASSED (worse)
+
+Sponsor class per fitted poll (`R/poll_sponsor.R`): each `load_polls()` row matched back to its Wikipedia row (same
+firm by `firm_alias.csv`, midpoint within 4 days, Labor within 1.5 points), read from the SAME table the trend reads
+(`poll_wiki_path()`, the 2 Nov `output/polls-wiki/` copy; a first run on the 13 Oct scrape gave identical numbers).
+Classes as registered; "media" includes unlabelled polls of a firm with 3+ media-client polls. Lean per class and party
+estimated by the REC machinery with the class in place of the firm, time-forward, shrunk to zero.
+
+- **What the arm could see.** 2010+ fitted polls: party 8, media 1,202, unknown 1,750 (unknown is mostly AE-only rows
+  with no Wikipedia row). Wikipedia lists a party or advocacy client only from 2025 (fed 18, tas 5, vic 2, nsw 1, nt 1),
+  none in a completed scored cycle before the last target, so **the "party" class has zero training elections** and the
+  lean table has 2 classes, media and unknown. That is the data, not a subset: no older source records sponsors.
+- **Change +0.0548 points WORSE, SE 0.0199** (n 38). Clause 1 NOT PASSED; leave-one-out better in 0 of 38 drops;
+  36 elections moved, 13 better and 23 worse. Mean |One Nation error| 1.676 -> 1.668 (18); sa2026 +0.0999 worse.
+- Largest live lean: media OTH +1.05 points at a 20% share (w 0.89); every One Nation lean shrinks to 0 (w 0).
+  Live walk vic2026: LNP 29.84 -> 29.65, ALP 24.11 -> 24.14, GRN 13.85 -> 13.94, ONP 19.51 -> 19.51, OTH 10.45 -> 10.13.
+
+Nothing wired into `trend_as_at()`. The party-commissioned question Pete asked cannot be measured until polls with a
+recorded party sponsor reach completed elections (the first: vic2026, 28 Nov). Remaining: MOD, FULL.
+
+## RESULT, arm MOD at the statewide stage (2026-11-04, `scripts/screen_poll_lean_mod.R`, codes PLM0-PLM4): NOT PASSED
+
+Method class per fitted poll (`R/poll_method.R`), three sources in order: (1) AE's method-split firm names
+("F2F Morgan" in person, "Morgan Phone", "SMS Morgan", "Morgan multi-mode", "Newspoll" to 2015 phone): 3,588 polls;
+(2) the nearest Wikipedia method label of the same firm (773 labelled federal polls, 18 firms; 2016 and 2019+ only),
+840 within 90 days and 992 extended further (an assumption, counted); (3) three unlabelled firms set by hand from
+general knowledge, NOT checked against a document (Nielsen phone, Morning Consult online, Westpoll phone): 569 polls;
+unknown 306. Classes phone, online, sms, inperson, mixed, unknown. Same REC lean machinery, time-forward, shrunk.
+
+- **Change +0.0244 points worse, SE 0.0161** (n 38). Clause 1 NOT PASSED; leave-one-out better in 0 of 38 drops;
+  36 moved, 16 better and 20 worse. Mean |One Nation error| 1.676 -> 1.681; sa2026 unchanged.
+- **Confounded, as the prereg asked to report:** in person (1,571 polls) and SMS (128) are each ONE firm (Roy Morgan's
+  face-to-face and SMS series), so those leans are Morgan's lean, which REC already measured by firm. The other classes
+  span 7-20 firms. Every One Nation and OTH lean shrinks to 0; the largest live lean is in-person ALP +1.22 points at 20%.
+- Live walk vic2026: ALP 24.11 -> 24.07, GRN 13.85 -> 13.87, others unchanged.
+
+Nothing wired into `trend_as_at()`. Remaining: FULL (REC + SPN + MOD + ANC + the BLD-replaced AGE + record noise).
+
+## RESULT, arm FULL at the statewide stage (2026-11-04, `scripts/screen_poll_lean_full.R`, codes PLF0-PLF4): NOT PASSED
+
+Every term together, each time-forward per target: lean against results BACKFITTED (firm lean first, then the sponsor
+class lean on what it leaves, then the method class lean on what both leave; the three error tables checked to line
+up row for row, 21,599 rows), the 9 Oct record noise weights (`weights = "record"`), and the day-0 anchor strength
+picked over earlier elections from ANC's grid. Not in FULL: AGE (replaced by BLD under Amendment 1) and BLD (a
+post-trend blend, not the trend scored here; alone +0.069 worse). 266 fits, 2.0 minutes.
+
+- **Change +0.0121 points worse, SE 0.0293** (n 38). Clause 1 NOT PASSED; leave-one-out better in 0 of 38 drops;
+  all 38 moved, 21 better and 17 worse, with large swings both ways (wa2013 -0.42, wa2008 -0.34, wa2021 -0.24; qld2017
+  +0.48, vic2006 +0.41, wa1996 +0.34, sa2022 +0.23). With the anchor held at the published value: +0.0103 (SE 0.0345).
+- Anchor picks: none 17, gap:1 11, published 8, gap:0.5 2 (the pick wanders, as under ANC alone).
+- Named in advance: mean |One Nation error| 1.676 -> 1.569 (18); sa2026 -0.130 better (One Nation -2.22 -> -1.71). The One Nation gain comes with losses elsewhere and nets to nothing.
+- Live walk vic2026 (anchor "none", picked over all 38): LNP 29.84 -> 29.37, ALP 24.11 -> 24.65, GRN 13.85 -> 13.88,
+  **ONP 19.51 -> 21.88**, OTH 10.45 -> 9.43. Walked, not measured.
+
+**All six arms refused (ANC, REC, BLD, SPN, MOD, FULL). Nothing ships; the published trend is unchanged.** The
+measurable residue is One Nation: loosening the anchor helps the big-surge cases (sa2026, qld2017 under ANC) and hurts
+the small-surge ones. That is the open idea already recorded (condition on how many seats One Nation stands in, after
+nominations close 9 Nov), and the sponsor question becomes testable after vic2026 (the first completed election with
+party-commissioned polls labelled).

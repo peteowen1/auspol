@@ -444,6 +444,32 @@ archive_polls <- function(region, parties, path) {
   list(ours = ours, added = sum(!dup), dup = sum(dup))
 }
 
+#' The Wikipedia poll table the layered source reads
+#'
+#' `AUSPOL_POLL_WIKI`, else the NEWER of the local scrape folder and `output/polls-wiki/` (CI: the published file
+#' merged with that morning's fresh live pages by forecast.yaml). The scrape folder used to win always, and a
+#' 13 Oct scrape beat a fresh CI-style table (2026-10-31; scripts/refresh_local_poll_inputs.sh). Anything else that
+#' reads this table (poll_sponsor_class()) must use this, or it reads a different copy from the trend's.
+#' @return Path (may not exist: then a "(not found)" placeholder).
+#' @export
+poll_wiki_path <- function() {
+  cands <- c(Sys.getenv("AUSPOL_POLL_WIKI", ""),
+             file.path(pkg_root(), "external", "reference", "polls", "statewide-samples", "statewide_polls_wiki.csv"),
+             out_path(file.path("polls-wiki", "statewide_polls_wiki.csv")))
+  explicit <- cands[1]
+  cands <- cands[nzchar(cands) & file.exists(cands)]
+  if (length(cands) > 1L && !(nzchar(explicit) && identical(cands[1], explicit))) cands <- cands[order(-as.numeric(file.mtime(cands)))]
+  if (length(cands)) cands[1] else "statewide_polls_wiki.csv (not found)"
+}
+
+# firm_alias.csv beside the poll table, else the scrape folder's copy.
+#' @noRd
+poll_wiki_alias <- function(path) {
+  alias_f <- file.path(dirname(path), "firm_alias.csv")
+  if (!file.exists(alias_f)) alias_f <- file.path(pkg_root(), "external", "reference", "polls", "statewide-samples", "firm_alias.csv")
+  data.table::fread(alias_f, showProgress = FALSE)
+}
+
 #' Layer our polls over AE's for one region (see the file header)
 #'
 #' @param ae AE's polls as [load_polls()] reads them (before layering).
@@ -454,23 +480,11 @@ archive_polls <- function(region, parties, path) {
 #' @export
 poll_layer <- function(ae, region, path = NULL, window = 4L) {
   if (is.null(path)) {
-    # AUSPOL_POLL_WIKI, else the scrape folder (local), else output/polls-wiki/ (CI: the published file merged with
-    # that morning's fresh live pages by forecast.yaml; every job that gets output/ gets it too).
-    cands <- c(Sys.getenv("AUSPOL_POLL_WIKI", ""),
-               file.path(pkg_root(), "external", "reference", "polls", "statewide-samples", "statewide_polls_wiki.csv"),
-               out_path(file.path("polls-wiki", "statewide_polls_wiki.csv")))
-    explicit <- cands[1]
-    cands <- cands[nzchar(cands) & file.exists(cands)]
-    # Without AUSPOL_POLL_WIKI, the NEWER of the local scrape folder and output/polls-wiki/ wins: the scrape folder used
-    # to win always, and a 13 Oct scrape beat a fresh CI-style table (2026-10-31; scripts/refresh_local_poll_inputs.sh).
-    if (length(cands) > 1L && !(nzchar(explicit) && identical(cands[1], explicit))) cands <- cands[order(-as.numeric(file.mtime(cands)))]
-    path <- if (length(cands)) cands[1] else "statewide_polls_wiki.csv (not found)"
+    path <- poll_wiki_path()
     if (file.exists(path)) message(sprintf("PZ0 poll table [%s]: %s, written %s", region, path, format(file.mtime(path), "%Y-%m-%d %H:%M")))
   }
   if (!file.exists(path)) stop("AUSPOL_POLL_SOURCE=layered needs statewide_polls_wiki.csv: set AUSPOL_POLL_WIKI, run scripts/fetch_statewide_poll_samples.R, or put it in output/polls-wiki/ (forecast.yaml does)")
-  alias_f <- file.path(dirname(path), "firm_alias.csv")
-  alias <- if (file.exists(alias_f)) data.table::fread(alias_f, showProgress = FALSE) else
-    data.table::fread(file.path(pkg_root(), "external", "reference", "polls", "statewide-samples", "firm_alias.csv"), showProgress = FALSE)
+  alias <- poll_wiki_alias(path)
   parties <- attr(ae, "parties")
   ours <- wiki_polls(region, parties, path)
   bt_log <- c(bt = 0L, both = 0L, bt_only = 0L, differ_gt1 = 0L)

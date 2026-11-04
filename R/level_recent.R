@@ -10,6 +10,17 @@
 
 .LR_CLS <- c("ALP", "LNP", "GRN")
 
+# Classes the blend moves (AUSPOL_LEVEL_RECENT_CLS; arm BLD, plans/prereg-poll-lean-2026-11-02.md Amendment 1).
+# Published "ALP,LNP,GRN" returns .LR_CLS exactly, so every default path is unchanged. "ONP" may be added; OTH
+# may not: the polls' Others lumps independents and minor right, which the result classes split.
+lr_classes <- function() {
+  v <- Sys.getenv("AUSPOL_LEVEL_RECENT_CLS", "ALP,LNP,GRN")
+  cls <- trimws(strsplit(v, ",", fixed = TRUE)[[1]])
+  if (!length(cls) || anyDuplicated(cls) || !all(cls %in% c(.LR_CLS, "ONP")))
+    stop("AUSPOL_LEVEL_RECENT_CLS must be a comma list drawn from ALP, LNP, GRN, ONP, not ", v, call. = FALSE)
+  cls
+}
+
 #' Is the recent-poll level blend on?
 #'
 #' @return `"decay"` (shipped 2026-10-11, 20-day half-life), `"1"` (28-day window, shipped earlier that day) or
@@ -56,11 +67,12 @@ level_recent_decay_avg <- function(region, election_date, half_life, cycle_start
   w <- p[p$date < aa & p$date > as.Date(cycle_start)]
   wt <- 2^(-as.numeric(aa - w$date) / half_life)
   fed <- .lr_fed_part(region, aa, half_life, cycle_start, w)
-  avg <- vapply(.LR_CLS, function(k) {
+  avg <- vapply(lr_classes(), function(k) {
     if (!nrow(w) || !k %in% names(w)) return(NA_real_)
     ok <- is.finite(w[[k]]); if (!any(ok)) return(NA_real_)
     num <- sum(wt[ok] * w[[k]][ok]); den <- sum(wt[ok])
-    if (!is.null(fed) && is.finite(fed$sum[[k]])) { num <- num + fed$sum[[k]]; den <- den + fed$wt[[k]] }
+    # `k %in% names(fed$sum)`: the federal breakdowns carry no One Nation figure (arm BLD)
+    if (!is.null(fed) && k %in% names(fed$sum) && is.finite(fed$sum[[k]])) { num <- num + fed$sum[[k]]; den <- den + fed$wt[[k]] }
     num / den
   }, 0)
   list(avg = avg, n_eff = sum(wt) + if (is.null(fed)) 0 else fed$n_eff)
@@ -149,7 +161,8 @@ fed_state_breakdowns_parse <- function(f) {
   wf <- 2^(-as.numeric(aa - f$date) / half_life)
   gf <- 2^(-as.numeric(aa - f$date) / ghl)
   gs <- 2^(-as.numeric(aa - state_polls$date) / ghl)
-  res <- lapply(.LR_CLS, function(k) {
+  fcls <- intersect(.LR_CLS, lr_classes())
+  res <- lapply(fcls, function(k) {
     okf <- is.finite(f[[k]])
     oks <- if (k %in% names(state_polls)) is.finite(state_polls[[k]]) else rep(FALSE, nrow(state_polls))
     if (!any(okf) || !any(oks)) return(c(sum = NA_real_, wt = 0))
@@ -158,7 +171,7 @@ fed_state_breakdowns_parse <- function(f) {
     gap <- gap * n / (n + 1)
     c(sum = r * sum(wf[okf] * (f[[k]][okf] + gap)), wt = r * sum(wf[okf]))
   })
-  names(res) <- .LR_CLS
+  names(res) <- fcls
   # n_eff counts every breakdown (all have ALP), the same convention as the state side, whose n_eff counts every
   # poll whatever classes it reports. The per-class `wt` is what weights each class's mean.
   list(sum = vapply(res, `[[`, 0, "sum"), wt = vapply(res, `[[`, 0, "wt"), n_eff = r * sum(wf))
@@ -235,7 +248,7 @@ level_recent_avg <- function(region, election_date, days = 28L, as_at = election
     w$LNP <- rowSums(cbind(w$LNP, w$NAT), na.rm = TRUE)
     w$LNP[both_na] <- NA_real_
   }
-  avg <- vapply(.LR_CLS, function(k) if (nrow(w) && k %in% names(w)) mean(w[[k]], na.rm = TRUE) else NA_real_, 0)
+  avg <- vapply(lr_classes(), function(k) if (nrow(w) && k %in% names(w)) mean(w[[k]], na.rm = TRUE) else NA_real_, 0)
   list(avg = avg, n = nrow(w))
 }
 
@@ -287,7 +300,7 @@ level_recent_apply <- function(levels, target, region, election_date, code = "LR
     fit <- .lr_decay_fit_cached(target, tab)
     cs <- .lr_prev_date(target)
     ra <- if (is.finite(fit$half_life) && !is.na(cs))
-      level_recent_decay_avg(region, election_date, fit$half_life, cs, as_at = as_at) else list(avg = stats::setNames(rep(NA_real_, 3), .LR_CLS), n_eff = 0)
+      level_recent_decay_avg(region, election_date, fit$half_life, cs, as_at = as_at) else list(avg = stats::setNames(rep(NA_real_, length(lr_classes())), lr_classes()), n_eff = 0)
     n <- ra$n_eff; k <- fit$k
     note <- sprintf("half-life %s days, n_eff %.2f, k %.2f (fitted on %d earlier elections)",
                     if (is.finite(fit$half_life)) format(fit$half_life) else "-", n, k, fit$n_el)
@@ -299,7 +312,7 @@ level_recent_apply <- function(levels, target, region, election_date, code = "LR
   }
   w <- if (n > 0 && is.finite(k)) n / (n + k) else 0
   out <- levels
-  hit <- intersect(.LR_CLS, names(levels))
+  hit <- intersect(lr_classes(), names(levels))
   hit <- hit[is.finite(ra$avg[hit])]
   if (w > 0 && length(hit)) {
     new <- (1 - w) * levels[hit] + w * ra$avg[hit]
@@ -320,7 +333,7 @@ level_recent_apply <- function(levels, target, region, election_date, code = "LR
   if (!is.null(tab)) return(level_recent_decay_fit(target, tab))
   f <- out_path("level-recent.csv")
   key <- paste(target, Sys.getenv("AUSPOL_LEVEL_RECENT_HALFLIFE", "20"), Sys.getenv("AUSPOL_LEVEL_FED_R", "0.15"),
-               Sys.getenv("AUSPOL_LEVEL_FED_GAP_HL", "90"), if (file.exists(f)) paste(file.info(f)$mtime, file.info(f)$size) else "none")
+               Sys.getenv("AUSPOL_LEVEL_FED_GAP_HL", "90"), Sys.getenv("AUSPOL_LEVEL_RECENT_CLS", "ALP,LNP,GRN"), if (file.exists(f)) paste(file.info(f)$mtime, file.info(f)$size) else "none")
   if (is.null(.lr_fit_memo[[key]])) assign(key, level_recent_decay_fit(target, NULL), envir = .lr_fit_memo)
   .lr_fit_memo[[key]]
 }
