@@ -125,8 +125,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   won Melbourne on it. Melbourne also: afternoon GRN 47.5 vs actual 39.5 (ALP 21.7 vs 31.3). Idea: seat-level
   how-to-vote cards as a flow input. FOUND 31 Oct: the card mechanism already exists (`AUSPOL_HTV_FLOW`, R/htv_flow.R).
   BUILT 31 Oct (Pete): `AUSPOL_HTV_CARD_P=0.67` mixes both Liberal cards for vic2026 until it is published (live walk:
-  Footscray ALP 0.72 -> 0.64, Pascoe Vale 0.56 -> 0.50); recency-weighted card rows `AUSPOL_HTV_RECENCY_HL` screening
-  (`plans/prereg-htv-recency-2026-10-31.md`). OPEN, DATED: the day the Victorian Liberals publish their card, add a
+  Footscray ALP 0.72 -> 0.64, Pascoe Vale 0.56 -> 0.50); recency-weighted card rows `AUSPOL_HTV_RECENCY_HL` SHIPPED 1 Nov at "8"
+  (`plans/prereg-htv-recency-2026-10-31.md` RESULT: 35 elections at 20k, -0.0001). OPEN, DATED: the day the Victorian Liberals publish their card, add a
   `vic2026,ALL,<greens_above_labor>,<source>` row to `external/reference/htv/liberal-alp-grn-order.csv` (the mix then stops).
   Review nits: duplicate region refused and the night `htv_card` test added (1 Nov). Timed 1 Nov: a night update with the
   card mix takes 23.9 s vs 11.4 s (20k sims): fine at a minutes cadence, and gone once the card row is added. CLOSED.
