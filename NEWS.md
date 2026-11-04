@@ -1,3 +1,7 @@
+# auspol 0.4.131
+
+- **Election night: Narracan's booth swing is measured against its 2018 booths** (`output/booths-vic2026-ref.csv`; its 2022 poll was a supplementary with no Labor or Nationals candidate). Rows spliced in from an older election feed the swing only: `night_turnout_table()` and `night_early_frac()` leave them out.
+
 # auspol 0.4.130
 
 - **Fetchers send the repo URL as their contact, not Pete's email** (eight scripts, including the daily Wikipedia poll fetch).

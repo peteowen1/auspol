@@ -409,18 +409,31 @@ night_check_fresh <- function(stamp, out_file) {
   "ok"
 }
 
+# A booth reference may splice in an older election for a district the previous one lacks (Narracan 2018 in
+# output/booths-vic2026-ref.csv, column `ref_year`). Those rows are for the booth SWING only: their votes are on old
+# boundaries and an old turnout, so turnout and vote-type shares use only the latest election's rows, and a spliced
+# district takes the statewide rate as it did with no rows at all. A table without `ref_year` is returned unchanged.
+.night_ref_latest <- function(ref) {
+  b <- data.table::as.data.table(ref)
+  if (!"ref_year" %in% names(b)) return(b)
+  yr <- b$ref_year
+  if (anyNA(yr)) stop("NW18! booth reference has rows with no ref_year", call. = FALSE)
+  b[yr == max(yr)]
+}
+
 #' Previous election's Assembly votes per district, as a turnout table
 #'
 #' The turnout base must be the Assembly count the night counts: `rbvc_formal` in the council stats file is the
 #' UPPER-HOUSE formal count (1.026x the Assembly booth-file total in 2022, n = 86), so it is not used. Enrolment is a
-#' district roll and is taken from the council stats file.
+#' district roll and is taken from the council stats file. Rows of a booth reference spliced in from an older
+#' election (`ref_year` below the newest) are left out, so that district takes the statewide rate.
 #' @param stats Data frame `district` (names ending " District"), `enrolment` (previous election's council stats file).
 #' @param booths_prev Previous election's booth table (`district, booth, booth_type, party, votes`).
 #' @return data.table `district, enrolment, total_votes` (all vote types, final), `night_votes` (ordinary + early +
 #'   postal: what is counted on the night; absent, provisional and marked-as-voted come later).
 #' @export
 night_turnout_table <- function(stats, booths_prev) {
-  b <- data.table::as.data.table(booths_prev)
+  b <- .night_ref_latest(booths_prev)
   v <- ifelse(is.na(b$votes), 0, b$votes)
   tot <- data.table::data.table(district = b$district, v = v, night = b$booth_type %in% c("ordinary", "early", "postal"))
   agg <- tot[, list(total_votes = sum(v), night_votes = sum(v[night])), by = "district"]

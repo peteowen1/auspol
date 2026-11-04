@@ -26,7 +26,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   R2 upload tested to `auspol/night/test-vic2026.json` (`scripts/night_publish_r2.sh`), night state saved every forecast
   run and uploaded to `forecast-latest` (#169), break-glass Actions backup `.github/workflows/night-backup.yaml` (#170;
   inputs on release `night-inputs`). Night runbook: `gh release download forecast-latest -p night-state-vic-2026.rds -D
-  output`, then `night_runner.R --state=output/night-state-vic-2026.rds --council-lean=output/council-fp-2022.csv`.
+  output`, then `night_runner.R --state=output/night-state-vic-2026.rds --ref=output/booths-vic2026-ref.csv --council-lean=output/council-fp-2022.csv`.
   Booth lean for parties new to a seat (One Nation), added 30 Oct: `night_council_lean()` from the 2022 upper house by
   voting centre; on the vic2022 replay with each class made "new", projection RMSE 3.03 -> 2.41 pts (real history
   2.45); named parties only (pooled OTH_RIGHT got worse). Without the flag the runner warns NW15! and runs as before.
@@ -45,13 +45,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
      DRY RUN 4 Nov: all five refusals fire with nothing written (VEC test file, 9 districts; names mangled; truncated at
      65,536 bytes; Classification renamed; and the 2022 file passes, 87 districts). GAP FOUND: Narracan is not in
      `booths-vic2022.json` (87 of 88; its 2022 poll was the 28 Jan 2023 supplementary), so every Narracan booth is "new"
-     on the night, with no swing. The VEC publishes it by voting centre (`Narracan District-Results by Voting Centre.xls`,
-     linked from the supplementary results page). NEEDS PETE (found 4 Nov night): that supplementary (28 Jan 2023) had NO
-     Labor and NO Nationals candidate (Liberal 16,741, Greens 4,132, DLP 2,641, Freedom 2,254, One Nation 2,246, IND
-     Wolfe 4,110; 2CP Liberal 62.9 v Wolfe), so it is not a like-for-like base for the Labor-minus-Coalition booth swing.
-     Choices: (a) 2018 Narracan booths as the reference (both majors stood; pre-2021 redistribution), (b) the 2023 booths
-     for the parties that stood only, (c) leave Narracan's booths "new". Raw pages saved:
-     `external/reference/vec/2022/booths/narracan-supp2023-{fp,2cp}.html`. Nothing built yet.
+     on the night, with no swing. The 28 Jan 2023 supplementary had no Labor or Nationals candidate. DONE 5 Nov (Pete:
+     2018 booths): `scripts/build_booths_vic2026_ref.R` writes `output/booths-vic2026-ref.csv` (2022 booths + Narracan
+     2018, 41 booths, `ref_year` column; on release `night-inputs`), and `night-backup.yaml` passes it as `--ref`. All 26
+     of the 2023 supplementary centre names match a 2018 Narracan booth. A cycle on the VEC 2026 sample feed gives
+     output identical to the old reference (that feed has no Narracan). The runbook above now passes it. OPEN: the
+     page's pre-count map (`booths-vic2026.json`, built from
+     `booths-vic2022.json`) still shows Narracan centres as "new" until counted. Live booth swings come from the runner.
   4. Navbar link; the "called" rule (99% with 10% counted is a placeholder); find my seat (#166).
   5. Trial 25 Nov (no 2CP); the upper-house model.
   Dated: the satellite basemap's Esri key (Pete's account, basemaps only, pay-as-you-go off) expires 27/10/2027.
