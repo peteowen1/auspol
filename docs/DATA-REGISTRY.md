@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-10-30 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-11-04 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
@@ -183,7 +183,7 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | sa2014 | 47 | 204 | 11 | 3 |
 | sa2018 | 47 | 264 | 51 | 12 |
 | sa2022 | 47 | 240 | 20 | 6 |
-| sa2026 | 47 | 388 | 34 | 31 |
+| sa2026 | 47 | 388 | 34 | 33 |
 | vic2006 | 88 | 459 | 43 | 7 |
 | vic2010 | 88 | 502 | 75 | 9 |
 | vic2014 | 88 | 545 | 91 | 9 |
