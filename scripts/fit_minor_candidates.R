@@ -25,10 +25,12 @@ SEED <- as.integer(Sys.getenv("AUSPOL_SEED", "42"))
 ARM <- Sys.getenv("AUSPOL_MC_ARM", "resid")   # "scratch" = v1, "resid" = v2 (correction on the naive prediction)
 # AUSPOL_MC_OWN_RULE: "v3" (default, 28 Sep 15:50) = a vote is the candidate's own only if won as a non-major, and
 # a first-time personal-class candidate gets the class's median first run. "v2" = the rule at 43365e93 (any previous
-# vote is own, the seat's previous class vote is the newcomer fallback), which produced
-# output/minor-class-shares-v2.csv, the file the bucket SPLIT reads (AUSPOL_BUCKET_SPLIT_SRC). Recovered 5 Nov so
-# that file can be rebuilt (overnight-2026-11-04.md item 3). One deviation from 43365e93: the last-resort fallback is
-# the training rows' median, not every election's (that read later elections).
+# vote is own, the seat's previous class vote is the newcomer fallback). An uncommitted 28 Sep version with that rule
+# and the class-shares write below produced output/minor-class-shares-v2.csv, the file the bucket SPLIT reads
+# (AUSPOL_BUCKET_SPLIT_SRC). Recovered 5 Nov so that file can be rebuilt (overnight-2026-11-04.md item 3). A v2 run
+# writes output/minor-class-shares-resid-v2.csv; point AUSPOL_BUCKET_SPLIT_SRC at it (or copy it) to use it. One
+# deviation from 43365e93: the last-resort fallback is the training rows' median, not every election's (that read
+# later elections).
 RULE <- Sys.getenv("AUSPOL_MC_OWN_RULE", "v3")
 if (!RULE %in% c("v2", "v3")) stop("AUSPOL_MC_OWN_RULE must be v2 or v3, not ", RULE)
 SUF <- if (RULE == "v2") "-v2" else ""   # v3 keeps its historical filenames
