@@ -152,11 +152,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   A preference-data agent measured 80.2 / 82.2 from distribution-of-preference rows (different scope, unreconciled).
   Check what flows-estimated estimates (n_seats 124/115) and whether the 2025 value is real; then the AEC by-party
   and by-state flow files for all eight elections as the anchor. Review: `docs/reviews/aec-preference-data-2026-10-30.md`.
-- NEEDS PETE: new-independent breakout. Both screens done (plans/prereg-new-ind-breakout-2026-11-01.md): ungated pooled
-  +0.0026 (SE 0.0029), AEF-7 +0.0107; gated p>=0.05 pooled +0.0023 (SE 0.0024), AEF-7 +0.0079 (SE 0.0017); IND-won
-  seats -0.073 gated. Gated passes the letter of amendment 2 but is net worse: recommended NOT shipping, switches OFF.
-  Review caveat: NEW_ONLY reads historic_elected_i, constant 0 for most state elections unless the backfill is on, so
-  outside NT the screens mostly measure IND-only, not new-IND-only. Revisit only with better pre-election signals.
+- CLOSED 4 Nov (Pete): new-independent breakout stays OFF (DECISIONS 2026-11-04).
 - OPEN: Vic 2026 Edge Board (https://claude.ai/artifact/8U33eGJMiAbpZFSW2dsfQu) builder now in the repo:
   `scripts/build_edge_board_vic2026.R [capture.csv] [out_dir]` (EDGE_RUN=<suffix> picks our run) writes both board datasets;
   checked 1 Nov against the published files (same selections, prices, bookie probabilities, columns; seat panel identical).
