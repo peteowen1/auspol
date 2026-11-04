@@ -43,6 +43,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   2. SharePoint live-feed fetch (VEC access details from 4 Nov); the backup's source live waits on it.
   3. 10 Nov: in ITG `politics/night-maps/`, `python -I build-booths-2026.py <State2026MediaFilePollingLocationsV2.xml>`
      (expect ~88 districts, few "new" centres; refuses under 85 districts or half matched), commit `booths-vic2026.json`.
+     DRY RUN 4 Nov: all five refusals fire with nothing written (VEC test file, 9 districts; names mangled; truncated at
+     65,536 bytes; Classification renamed; and the 2022 file passes, 87 districts). GAP FOUND: Narracan is not in
+     `booths-vic2022.json` (87 of 88; its 2022 poll was the 28 Jan 2023 supplementary), so every Narracan booth is "new"
+     on the night, with no swing. The VEC publishes it by voting centre (`Narracan District-Results by Voting Centre.xls`,
+     linked from the supplementary results page): add it to the 2022 history and the night runner's reference.
   3b. DONE 30 Oct: the night JSON writes `sn` per booth and `swing` per seat (`night_booth_results(conv, ref)`,
      `night_seat_swing()`, `R/night_runner.R`). Booth swings equal the page builder's `s` on all 1,325 vic2022 booths
      (max difference 0); the seat swing is like for like over matched booths (vs the builder's whole-district
