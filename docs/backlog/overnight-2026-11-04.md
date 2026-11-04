@@ -25,6 +25,9 @@ Times are Sydney. Updated as I go; the morning summary is the top section.
    Choices: (a) recover v2 as a named arm in the script (`AUSPOL_MC_OWN_RULE=v2`), regenerate it, add it to the rebuild
    and give it vic2026 rows after nominations (live = backtest); (b) switch the split to v3 (committed) with a screen.
    My pick: (a) first, so what ships is reproducible, then (b) as its own screen.
+   (The 1 Nov audit of inputs built outside the rebuild likely saw this one and filed it as a false alarm, "a first
+   commit after its first run": the commit came after the run, but it also changed the rule. Not confirmed which file
+   that audit meant.)
 
 ## Done overnight
 
