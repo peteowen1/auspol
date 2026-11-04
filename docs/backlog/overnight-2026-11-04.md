@@ -11,9 +11,14 @@ Times are Sydney. Updated as I go; the morning summary is the top section.
    majors stood, but before the 2021 redistribution), (b) the 2023 booths for the parties that stood only, (c) leave them
    "new". Raw pages saved: `external/reference/vec/2022/booths/narracan-supp2023-{fp,2cp}.html`. My pick: (a), matched by
    booth name, since the night swing is Labor minus Coalition.
-2. **My mistake to flag:** the curl that fetched those two VEC pages sent your email address in its User-Agent header
-   ("auspol research (fptpost@gmail.com)"). It went only to vec.vic.gov.au, but it should not have gone anywhere.
-   Later fetches do not do it.
+2. **Your email address is in the User-Agent of eight fetch scripts, and the daily CI run sends it to Wikipedia.**
+   I found this while flagging my own slip (the curl for the two VEC pages sent "auspol research (fptpost@gmail.com)"
+   to vec.vic.gov.au). The committed ones: `fetch_statewide_poll_samples.R:41` (CI runs it daily, `forecast.yaml:291`),
+   `fetch_seat_polls.R:60`, `fetch_poll_breakdowns.R:59`, `fetch_demosau_crosstabs.R:27`, `fetch_pollbludger_tracker_polls.R:41`,
+   `fetch_retirements.R:30`, `fetch_abc_vic2026_candidates.R:54`, `fetch_wikipedia_preelection.py:34`. Wikipedia asks
+   for a contact in the User-Agent, and a URL works. Choices: (a) swap the email for
+   `https://github.com/peteowen1/auspol` in all eight (one small PR); (b) keep it. My pick: (a). Until you say, I am not
+   running any of them (so the federal breakdowns refresh below waits).
 
 3. **The others-bucket split every harness uses cannot be rebuilt from committed code, and is stale.**
    `AUSPOL_BUCKET_SPLIT=cand_naive` reads `output/minor-class-shares-v2.csv` (`published_flags.R`,
@@ -57,7 +62,11 @@ Times are Sydney. Updated as I go; the morning summary is the top section.
   Kimberley) under-called by 8-12 points of swing.
 - Queue notes added: the "52 re-stand cases" have no recorded definition; the statewide draw-width check needs the
   harnesses to write their draw quantiles first.
-- Data registry regenerated (`14f55eba`).
+- Data registry regenerated (`14f55eba`). Model and poll registries regenerated (`f453b62b`): four switches built
+  1-2 Nov had no classification (MR2!), now recorded; the poll registry picks up 4 new vic2026 polls.
+- VEC feed-access email (due 4 Nov): still not in Gmail (all folders incl. spam) or Hotmail as of ~5am 5 Nov.
+- Federal state breakdowns stop at 6 Oct and CI cannot refresh them; fix written into the queue (NEXT-STEPS, "federal
+  breakdown poll page"), not built because it needs the fetcher (item 2).
 
 ## Not done, and why
 

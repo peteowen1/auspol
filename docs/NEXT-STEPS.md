@@ -299,6 +299,12 @@ weighting by track record, seat-poll precision blend, typical-vote independent m
 - OPEN leader ratings: drift from months out needs horizon scoring. (The blog chart is DONE: inthegame-blog PRs #890
   and #895, "The leaders" in `politics/_forecast-body.qmd`.)
 - OPEN (by hand) the federal breakdown poll page is not auto-refreshed (FK3! warns past 45 days); live statewide pages are (17 Oct).
+  Checked 5 Nov: `output/fed-state-breakdowns.csv` (and both local wiki copies) stop at 6 Oct, 471 polls, 118 Victorian;
+  FK3 trips about 20 Nov. CI downloads the file from the release and fetches only `vic2026_opinion,nsw2027_opinion,
+  fed2028_leaders` (`forecast.yaml:291`), so the daily run can never pick up newer ones. Fix, before 20 Nov: add
+  `fed2028_opinion` to that fetch and rebuild the breakdowns in CI (the builder's source path is hardcoded to
+  statewide-samples). Not refetched locally overnight: the fetcher's User-Agent carries Pete's email (Needs Pete,
+  overnight-2026-11-04.md). Whether Wikipedia has newer Victorian breakdowns is unconfirmed (WebFetch could not see the tables).
 - OPEN fed2025 vs AEF (0.377 vs 0.303; Pete asked 18 Oct): base_pred minor-party growth as flat points tested and
   REFUSED (logit, proportional, growth-ratio slopes all worse; `prereg-growth-ratio-features` RESULT; journal has the
   numbers). Remaining: fed2025 drifted 0.318 (30 Sep) -> 0.377 across many changes (a snapshot bisect would separate
