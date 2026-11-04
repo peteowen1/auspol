@@ -136,13 +136,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - OPEN, REPLAY METHOD: federal and vic2022 replay on real nights (`scripts/night_replay_feed.R`,
   `scripts/night_replay_vec.R`); the other state replays are still simulated (one block per seat, clock = 6pm + 4h x
   step). Calls at 0.99 need 20,000 sims. Tally Room "returned" times are post-recheck, not night times.
-- OPEN, FLOWS (30 Oct): `output/flows-estimated.csv` has Greens -> Labor HIGH against the AEC's official two-party
-  flow every time: fed2019 86.16 vs 82.21, fed2022 89.07 vs 85.66, fed2025 95.06 vs 88.19 (+3.95/+3.41/+6.87;
-  `external/reference/aec/tallyroom/<event>/HouseTppFlowByPartyDownload-<event>.csv`; the 2025 file puts the ALP
-  columns FIRST, the earlier ones the Coalition's).
-  A preference-data agent measured 80.2 / 82.2 from distribution-of-preference rows (different scope, unreconciled).
-  Check what flows-estimated estimates (n_seats 124/115) and whether the 2025 value is real; then the AEC by-party
-  and by-state flow files for all eight elections as the anchor. Review: `docs/reviews/aec-preference-data-2026-10-30.md`.
+- NARROWED 4 Nov, FLOWS: `output/flows-estimated.csv` putting Greens -> Labor 3-7 points above the AEC's official federal
+  flow (fed2019 86.16 v 82.21, fed2022 89.07 v 85.66, fed2025 95.06 v 88.19) is the estimator's KNOWN bias: it failed
+  its own bar on 13 Oct (Greens 3-16 points above the answer key; `reviews/flow-estimation-validation-2026-10-13.md`).
+  Federal rows reach nothing: federal flows come from the AEC's official table, and only `output/flows-state-blend.csv`
+  (via `state_blend_flows()`, the QLD and SA backtest harnesses) reads the estimates, for QLD 2001-2017, SA 2002-2022,
+  NSW 2003/2007, Vic 2002 and WA 2001, blended at w 0.5-0.79 with earlier published flows (sa2022 Greens 81.3).
+  OPEN, small: whether the estimator's Greens bias also shifts those state blends; a backtest-only question.
 - CLOSED 4 Nov (Pete): new-independent breakout stays OFF (DECISIONS 2026-11-04).
 - OPEN: Vic 2026 Edge Board (https://claude.ai/artifact/8U33eGJMiAbpZFSW2dsfQu) builder now in the repo:
   `scripts/build_edge_board_vic2026.R [capture.csv] [out_dir]` (EDGE_RUN=<suffix> picks our run) writes both board datasets;
