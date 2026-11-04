@@ -52,7 +52,21 @@ Times are Sydney. Updated as I go; the morning summary is the top section.
   inputs (already this run's), LDP class (live since 1 Nov).
 - Value-odds page republished with the 4 Nov prices: https://claude.ai/artifact/GdrpxSB7zkY1xEvJvU3TKx (its readiness
   checklist is still the hand-written 28 Oct text, and says so).
+- WA 2017 seat-layer lift partly traced (queue item): level 36.4 -> base_pred 38.9 -> xgb 41.7 -> published 41.3 Labor,
+  actual 41.9; no bias by previous-share band; the misses are five seats (Southern River, Geraldton, Bunbury, Wanneroo,
+  Kimberley) under-called by 8-12 points of swing.
+- Queue notes added: the "52 re-stand cases" have no recorded definition; the statewide draw-width check needs the
+  harnesses to write their draw quantiles first.
+- Data registry regenerated (`14f55eba`).
+
+## Not done, and why
+
+- Narracan booth history (item 1) and the bucket split (item 3): your decisions.
+- MP-slope tau^2 review nit: touches old backtest targets only (qld2015, sa2014, vic2014; vic2026's tau^2 is 0) and
+  needs its own screen; left.
+- Stray worktree `.claude/worktrees/wf_240a01af-c97-2` (branch `ind-overcall-1025`, fully merged, no junctions inside):
+  safe to remove with `git worktree remove`; left for your yes since it deletes a folder.
 
 ## In flight
 
-- (none)
+- Waiting for the 4:30am daily forecast run on main (first one with the MP-slope tables PR #187 merged); result below.
