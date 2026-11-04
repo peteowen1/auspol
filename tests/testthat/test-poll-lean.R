@@ -82,3 +82,23 @@ test_that("poll_sponsor_class labels party, media-series and unknown polls, and 
   expect_equal(as.vector(got), c("media", "media", "unknown", "party", "unknown", "unknown"))
   expect_equal(attr(got, "matched"), 4L)
 })
+
+test_that("poll_method_class: AE's method-split firm names first, then the nearest Wikipedia label, then unknown", {
+  eras <- data.table::data.table(fam = c("resolve", "resolve", "resolve"), method = c("online", "mixed", "online"),
+                                 d = as.Date(c("2021-06-01", "2022-05-17", "2023-06-01")))
+  alias <- data.table::data.table(pattern = c("resolve", "morgan"), canonical = c("resolve", "roymorgan"))
+  polls <- data.table::data.table(firm = c("ResolvePM", "ResolvePM", "ResolvePM", "SMS Morgan", "Nielsen", "Zed"),
+                                  date = as.Date(c("2022-05-20", "2022-12-01", "2019-01-01", "2015-01-01", "2010-01-01", "2020-01-01")))
+  got <- poll_method_class("vic", polls, eras = eras, alias = alias)
+  # the one-off mixed label moves only the poll beside it; 2019 extends back from the first label
+  expect_equal(as.vector(got), c("mixed", "online", "online", "sms", "phone", "unknown"))
+  expect_equal(attr(got, "source")[["ae_label"]], 1L)
+  expect_equal(attr(got, "source")[["wiki_near"]], 1L)
+  expect_equal(attr(got, "source")[["wiki_extended"]], 2L)
+  expect_equal(attr(got, "source")[["known_unchecked"]], 1L)
+})
+
+test_that(".poll_method_label reads the free-text labels into classes", {
+  expect_equal(auspol:::.poll_method_label(c("online", "telephone/online", "landline", "in person and sms", "sms", "—", "")),
+               c("online", "mixed", "phone", "mixed", "sms", NA, NA))
+})

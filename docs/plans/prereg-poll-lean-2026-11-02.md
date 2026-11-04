@@ -248,3 +248,21 @@ estimated by the REC machinery with the class in place of the firm, time-forward
 
 Nothing wired into `trend_as_at()`. The party-commissioned question Pete asked cannot be measured until polls with a
 recorded party sponsor reach completed elections (the first: vic2026, 28 Nov). Remaining: MOD, FULL.
+
+## RESULT, arm MOD at the statewide stage (2026-11-04, `scripts/screen_poll_lean_mod.R`, codes PLM0-PLM4): NOT PASSED
+
+Method class per fitted poll (`R/poll_method.R`), three sources in order: (1) AE's method-split firm names
+("F2F Morgan" in person, "Morgan Phone", "SMS Morgan", "Morgan multi-mode", "Newspoll" to 2015 phone): 3,588 polls;
+(2) the nearest Wikipedia method label of the same firm (773 labelled federal polls, 18 firms; 2016 and 2019+ only),
+840 within 90 days and 992 extended further (an assumption, counted); (3) three unlabelled firms set by hand from
+general knowledge, NOT checked against a document (Nielsen phone, Morning Consult online, Westpoll phone): 569 polls;
+unknown 306. Classes phone, online, sms, inperson, mixed, unknown. Same REC lean machinery, time-forward, shrunk.
+
+- **Change +0.0244 points worse, SE 0.0161** (n 38). Clause 1 NOT PASSED; leave-one-out better in 0 of 38 drops;
+  36 moved, 16 better and 20 worse. Mean |One Nation error| 1.676 -> 1.681; sa2026 unchanged.
+- **Confounded, as the prereg asked to report:** in person (1,571 polls) and SMS (128) are each ONE firm (Roy Morgan's
+  face-to-face and SMS series), so those leans are Morgan's lean, which REC already measured by firm. The other classes
+  span 7-20 firms. Every One Nation and OTH lean shrinks to 0; the largest live lean is in-person ALP +1.22 points at 20%.
+- Live walk vic2026: ALP 24.11 -> 24.07, GRN 13.85 -> 13.87, others unchanged.
+
+Nothing wired into `trend_as_at()`. Remaining: FULL (REC + SPN + MOD + ANC + the BLD-replaced AGE + record noise).
