@@ -233,7 +233,7 @@ party-cor off) and the phantom-votes arm REFUSED: all in the journal and DECISIO
   identical win probabilities; with level_sd off it moves (test-level_sd.R, 76a1008d). It stays as the flat-variance
   fallback. NB `AUSPOL_SEAT_SD_MULT` is NOT a seat_sd knob: it also scales level_sd (vic2022 at 50x: 0.2643 -> 1.3561).
 
-**State (15 Oct):** 35 scored single-member elections. AEF-7 seat log loss 0.2669 (published 15 Oct 15:33) vs AEF 0.2825;
+**State (15 Oct; HISTORICAL, superseded: published 1 Nov 0.3256 over 2,931 seats, DECISIONS):** 35 scored single-member elections. AEF-7 seat log loss 0.2669 (published 15 Oct 15:33) vs AEF 0.2825;
 pooled 0.3347 over 2,931 seats. Tas/ACT on the Hare-Clark path: pooled 0.496 vs naive 0.974. Training rule P4;
 scoring each election x sqrt(votes). Leak fixes shipped: conserve, MP slopes, census publication date. Later publish
 16 Oct: PA5 0.3356, AEF-7 0.2657 (DECISIONS).
@@ -276,7 +276,8 @@ whenever a change adds a file `forecast.yaml` downloads. Refused, built and off 
 leader ratings as a model input, trend-replaces-blend, poll-level centring, the two-way person rule, statewide poll
 weighting by track record, seat-poll precision blend, typical-vote independent models.
 
-- OPEN poll weighting (Pete wants "a LOT better"): federal state breakdowns preregistered 26 Oct (branch
+- Poll weighting (Pete wants "a LOT better"): statewide lean by company, sponsor, method and age CLOSED 4 Nov (all six arms
+  refused; top of this file). Still OPEN: federal state breakdowns in the state trend, preregistered 26 Oct (branch
   `fed-breakdowns-prereg-1026`; see "Builds waiting for R"). `reviews/poll-weighting-inventory-2026-10-12.md`.
 - OPEN move off AE (`reviews/ae-dependence-audit-2026-10-13.md`): (b) language-model extraction of the Poll Bludger
   posts, the stronger version, not tried.
@@ -349,7 +350,7 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
 - **The day Liberal how-to-vote cards are published**: add
   `vic2026,ALL,<TRUE/FALSE>,<source>` to
   `external/reference/htv/liberal-alp-grn-order.csv` (~8 points of 2CP in
-  inner-Melbourne ALP-v-GRN seats). Nothing announced as of 19 Sep.
+  inner-Melbourne ALP-v-GRN seats). Until then `AUSPOL_HTV_CARD_P=0.67` mixes both cards (31 Oct; see FLOW MEANS above).
 - **Nomination-day procedure**: `docs/PIPELINE.md` section D. Upload `candidacies.csv` to the `shipped-models`
   release (CI downloads it from there), then set `AUSPOL_NOM_LIVE` to "1" in `published_flags.R`. The gate is
   MANUAL by Pete's choice and never opens on date alone. Also wire the live candidate split into
@@ -458,9 +459,8 @@ Still open:
   seat-boundary matching (`external/reference/boundaries/` has CED 2016).
 - GDELT parked (needs a GCP project); Census 2006/2001 have no bulk pack.
 - OPEN: ITG page: a seat map (regions are in the JSON now), per-seat cards, a forecast-over-time chart.
-- OPEN: bare "LDP" -> OTH_RIGHT is in `classify_party()` (Pete, 25 Oct; 47 fed2007 + 4 vic2026 rows). Takes effect
-  only after `build_candidacies.R` reruns and `candidacies.csv` is re-uploaded to `shipped-models`; fed2007 needs a
-  screen (`quick_arm.R --pairs=fed2007`) after that rebuild.
+- DONE (checked 4 Nov): bare "LDP" -> OTH_RIGHT is live in `output/candidacies.csv` (rebuilt 1 Nov: fed2007 47, fed2022 100,
+  vic2026 4 and 107 more rows all OTH_RIGHT), and the 1 Nov full rebuild scored fed2007 on it.
 
 ## Awaiting Pete
 
