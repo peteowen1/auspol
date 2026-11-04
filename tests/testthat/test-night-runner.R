@@ -543,3 +543,20 @@ test_that("night_apply_tcp(flow_sd_floor) gives the counted flow its weight when
   expect_gt(hi$post_a, 0.52)                       # floor 0.065: the count dominates (prior 0.504, count 0.552)
   expect_equal(hi$changed, n)
 })
+
+test_that("rows spliced in from an older election give the booth swing only, not turnout or early share", {
+  # booths-vic2026-ref.csv: 2022 booths plus Narracan's 2018 ones (ref_year 2018), whose votes sit on old boundaries.
+  ref <- data.frame(district = c("Morwell", "Morwell", "Narracan", "Narracan"),
+                    booth = c("Moe", NA, "Warragul", NA), booth_type = c("ordinary", "early", "ordinary", "early"),
+                    party = "Liberal", votes = c(500, 500, 900, 100), ref_year = c(2022L, 2022L, 2018L, 2018L))
+  stats <- data.frame(district = c("Morwell District", "Narracan District"), enrolment = c(2000, 2000))
+  tt <- night_turnout_table(stats, ref)
+  expect_identical(tt$district, "Morwell")     # Narracan is left to the statewide rate, as with no rows at all
+  expect_equal(tt$night_votes, 1000)
+  ef <- night_early_frac(data.frame(district = c("Morwell", "Narracan"), booth_type = "early", votes = 50),
+                         c(Morwell = 1000, Narracan = 1000), ref)
+  expect_false("Narracan" %in% names(ef))       # no 2018 early share (10% here) applied to 2026
+  expect_identical(night_turnout_table(stats, ref[, -6])$district, c("Morwell", "Narracan"))   # no ref_year: unchanged
+  ref$ref_year[1] <- NA
+  expect_error(night_turnout_table(stats, ref), "NW18!")
+})

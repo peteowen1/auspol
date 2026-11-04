@@ -18,5 +18,6 @@ postal: what is counted on the night; absent, provisional and marked-as-voted co
 \description{
 The turnout base must be the Assembly count the night counts: \code{rbvc_formal} in the council stats file is the
 UPPER-HOUSE formal count (1.026x the Assembly booth-file total in 2022, n = 86), so it is not used. Enrolment is a
-district roll and is taken from the council stats file.
+district roll and is taken from the council stats file. Rows of a booth reference spliced in from an older
+election (\code{ref_year} below the newest) are left out, so that district takes the statewide rate.
 }

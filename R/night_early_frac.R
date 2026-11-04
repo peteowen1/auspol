@@ -28,7 +28,7 @@
 #'   previous behaviour). Seats with nothing counted, or no basis, are absent.
 #' @export
 night_early_frac <- function(live, expected, ref) {
-  L <- data.table::as.data.table(live); R <- data.table::as.data.table(ref)
+  L <- data.table::as.data.table(live); R <- .night_ref_latest(ref)   # spliced older-election rows: swing only
   R[is.na(votes), votes := 0]
   night_types <- c("ordinary", "early", "postal")
   rs <- R[R$booth_type %in% night_types, list(early = sum(votes[booth_type == "early"]), night = sum(votes)), by = "district"]
