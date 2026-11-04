@@ -387,8 +387,9 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
 - **State-deviation**: v2 refused 2026-09-19 (one landslide behind the
   state-election term). Reopens with Tasmanian state results in the corpus
   (7 of the 12 worst state-years are TAS/ACT/NT).
-- **Surge v4 vs salience**: hazard AUC 0.936 vs 0.751 but over-dispersed;
-  deciding seat-count test not run (`prereg-xgb-surge-parameters-v2`).
+- SUPERSEDED (checked 4 Nov): **surge v4 vs salience** (hazard AUC 0.936 vs 0.751; `prereg-xgb-surge-parameters-v2`,
+  never run). The surge hazard path is off in the published model (`AUSPOL_SURGE_SOURCE="none"`, `AUSPOL_SURGE_H="0"`,
+  surge-v2 "0" since 31 Oct), so its seat-count test only matters if a surge mechanism comes back.
 - **Overcalled independents**: building on `ind-overcall-1025` (see "Builds waiting for R"). Successor overcalls
   (Morwell, Mildura, Kavel, Finniss) are a separate item, not started; departed-hold refused.
 - **Simulation noise revives zeroed parties** (`R/seat_sim.R:1455`, `v <- base_v + shift + rnorm(K, 0, sd_cell)`, or an equal-quantile draw when `has_eq`):
@@ -408,8 +409,10 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
   pooled slope, and was refused 29 Sep (+0.0056, SE 0.0035). DECIDED 27 Oct (Pete): build a tau^2 arm toward
   the pooled slope; NOT built, no prereg yet (the MP-slope pool shipped 30 Oct is a different fit). The `SHIP_SAME/NEW`
   leak is DONE: `AUSPOL_SHIP_TIME_FORWARD=1` (v51) makes the fallback time-forward; the constants are opt-out only.
-- **Seat context phase 2**: margin BUILT 28 Sep as arm `AUSPOL_SEAT_CONTEXT_MARGIN` (published "0"; `5e50f07`), no
-  recorded verdict; previous swing not filled (r 0.875 vs the seat file); first-term fill refused (Oct 20 prereg).
+- CLOSED (queue corrected 4 Nov; it said "no recorded verdict"): **seat context phase 2** margin arm
+  `AUSPOL_SEAT_CONTEXT_MARGIN` was REFUSED twice on 28 Sep (rebuild H +0.0021, rebuild I a tie) and margin work STOPPED
+  as pre-registered (`plans/prereg-seat-context-complete-2026-09-28.md`); previous swing not filled (r 0.875);
+  first-term fill refused (Oct 20 prereg).
 - **Teal/independent under-call** (Curtin, Goldstein, Mackellar, Wakehurst):
   PARKED by Pete. Overall we lead AEF on independents (36 winners: 16.7 vs
   19.7 log loss). Wave term blocked (`reviews/wave-term-blocked-2026-09-07.md`).
