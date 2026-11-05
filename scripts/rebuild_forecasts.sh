@@ -242,6 +242,11 @@ fi
 if at_least 3; then
   python scripts/build_council_history.py > "$LOG/s3_council.log" 2>&1 || { echo "!! build_council_history.py failed -- see $LOG/s3_council.log"; exit 1; }
 fi
+# BUCKET SPLIT FILE (AUSPOL_BUCKET_SPLIT_SRC, shipped 2026-11-06): output/minor-class-shares-resid-v2.csv is rebuilt
+# from candidacies.csv each run, so the file the harnesses split the unpolled bucket with comes from committed code.
+if at_least 1; then
+  AUSPOL_MC_OWN_RULE=v2 Rscript scripts/fit_minor_candidates.R > "$LOG/s0_minor_cand.log" 2>&1 || { echo "!! fit_minor_candidates.R (v2) failed -- see $LOG/s0_minor_cand.log"; exit 1; }
+fi
 if at_least 1; then stage "1-harnesses-base_pred"; AUSPOL_XGB_BASE_RECORD=1 AUSPOL_REENTRY=0 AUSPOL_NEW_IND_SHRINK=0 AUSPOL_DEPARTED_SUCCESSOR=0 AUSPOL_IND_PERSON=0 AUSPOL_GRN_TREE_SHRINK=0 AUSPOL_LEVEL_RECENT=0 AUSPOL_IND_TYPICAL=0 AUSPOL_IND_MIXTURE=0 AUSPOL_IND_RETURN=0 AUSPOL_LEVEL_CONSERVE=0 AUSPOL_ONP_NEWSEAT_RULE=0 AUSPOL_ONP_ORDER=federal AUSPOL_SEAT_SWING_PORT_3C=0 AUSPOL_IND_GAP_RESTAND=0 AUSPOL_SWING_FORM=points AUSPOL_N_SIMS="${AUSPOL_STAGE1_SIMS:-2000}" run6 0 s1; done_stage "1-harnesses-base_pred"; fi
 if at_least 2; then stage "2-pool-sharedetail";    AUSPOL_POOL_MIN_SIMS="${AUSPOL_STAGE1_SIMS:-2000}" Rscript scripts/pool_sharedetail.R      > "$LOG/s2_pool.log" 2>&1; done_stage "2-pool-sharedetail"; fi
 # AUSPOL_LEVEL_PRED_RECENT=1 (audit F12, plans/prereg-live-level-pred-2026-10-25.md): build_level_pred.R blends

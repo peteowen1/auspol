@@ -16,6 +16,8 @@ while the deciding runs hold the machine (bucket split from 10:30pm, departed-sl
 
 ## FOR PETE IN THE MORNING
 
+**ANSWERED 6 Nov 7:05am:** items 1-4 yes (three switches shipped in 0.4.137, PR #195 merged). Items 5 (cleanup) and 6 (poll-series class) still open.
+
 In order: three decisions, one merge, one cleanup yes/no, one lower-priority decision.
 
 1. DECISION: ship `AUSPOL_STATEWIDE_ENDPOINT=party`? (`plans/prereg-statewide-endpoint-2026-11-06.md` RESULT.) It fixes a real bug: the backtests'

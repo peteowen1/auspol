@@ -196,3 +196,7 @@ the amended code.
 - Verdict by the letter: clause 3 fails, so the prepared rule says refused. The failures are noise-sized moves in elections
   the arm barely touches, where a near-zero seat SE makes any move "significant". Headline result positive. To Pete
   (memory clause-refusals-go-to-pete), recommendation mine: ship, recording the override.
+
+### Decision (6 Nov 7:05am)
+
+Pete: ship, overriding the failed clause-3 guard (nsw2015, qld2024), as recommended. Recorded here as an override, not a pass.
