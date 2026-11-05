@@ -1,3 +1,8 @@
+# auspol 0.4.136
+
+- **New switch `AUSPOL_STATEWIDE_ENDPOINT` (off; published numbers unchanged).** `"party"` makes the backtests read each party's statewide trend at its own last poll, as the live forecast does, instead of dropping parties missing from the newest poll (11 of 32 targets; nsw2023 One Nation 4.6 -> 0). Screen on the 11 affected elections: seat log loss -0.0007 (SE 0.0004). Shipping waits on Pete and a tree retrain.
+- Tests: the poll-date switch end to end (`test-poll-date-ours.R`) and the BludgerTrack breakdowns reader.
+
 # auspol 0.4.135
 
 - **Polls are dated at their real fieldwork midpoint** where our copy matches AE's (`AUSPOL_POLL_DATE_OURS`, on). AE dated Resolve's two-month state polls about two weeks early. A tie on 38 elections (first-preference error -0.003, SE 0.004); Victoria moves 0.01 points or less.
