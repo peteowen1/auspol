@@ -4,6 +4,7 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-11-05 Backtest preference flows dated by the target cycle, not 1969 (PR #193, 0.4.134).** `statewide_draws_as_at()` matched all 88 cycles (data.table name trap), so backtests read each target's own recorded flows; seat draws identical old vs fixed, only the two-party diagnostics move (nsw2023 implied 55.20 -> 53.97).
 - **2026-11-05 Poll dates: a matched poll takes our fieldwork-midpoint date, not AE's (`AUSPOL_POLL_DATE_OURS=1`, Pete, as a correctness fix on a tie).** 82 of 2,214 matched polls were >7 days off (Resolve state polls ~2 weeks early); day-before FP error over 38 elections -0.003 (SE 0.004), live Victoria <= 0.01. `scripts/screen_poll_date_ours.R`.
 - **2026-11-05 BludgerTrack federal state breakdowns NOT added to the blend (Pete).** +228 polls made qld2024, sa2026, wa2025 slightly worse (level RMSE 1.224 -> 1.231); live Victoria 0.04. Builder option `--with-bt`, off.
 - **2026-11-05 Federal state breakdowns in the state trend (`AUSPOL_TREND_FED_R`) left OFF (Pete, on a tie).** 7 state elections: B2 day-before -0.003 (SE 0.008), 90/180 days +0.008 (SE 0.009), every arm 2-2.7 SE worse at 90 days; the time-forward weight came out 0 wherever fittable. Branch `fed-breakdowns-trend-1105`, `reviews/fed-breakdowns-trend-screen-2026-11-05.md` there.
