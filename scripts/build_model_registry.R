@@ -669,7 +669,7 @@ CLASSIFY <- list(
   AUSPOL_SALIENCE_EXP_SD = paste(
     "WA: same salience-corpus exclusion as AUSPOL_SALIENCE_EXPECTED, intentional.",
     "fit_seats_full.R: OPEN GAP, not fixed -- registered as published but sd_override is never wired into the forecast script at all (docs/reviews/pre-main-review-gate-2026-09-08.md). Currently harmless: this whole salience-variance arm is still pre-registered and undecided (docs/plans/prereg-salience-expected-and-variance-2026-09-07.md), so the switch is off everywhere. Wire it in the same commit that ships the arm, not before."),
-  AUSPOL_DEPARTED_RATE = "WA: intentional NEGATIVE CONTROL. backtest_candidate_wa.R runs conditional_slopes() only (no salience_permit_for()/screened_slopes() wiring), so the departed branch the rate feeds does not exist there and the switch cannot reach it; WA must come back byte-identical under any value (plans/prereg-departed-rate-refit-2026-10-03.md section 9). Registered 2026-10-03, default \"0\" (the hardcoded 0.38), not adopted. Modes 0, fit, new; fit_juris and fit_all are registered arms not yet implemented.",
+  AUSPOL_DEPARTED_RATE = "Wired in all seven harnesses and fit_seats_full.R (WA and NT added 2026-11-05: the 10-03 plan's WA negative control predates WA's own screened_slopes() wiring of 2026-10-15). Registered 2026-10-03, default \"0\" (the hardcoded 0.38), not adopted. Modes 0, fit, new; fit_juris and fit_all are registered arms not yet implemented.",
   AUSPOL_SURGE_FROM_ZERO = "WA has no candidate-level salience corpus -- same exclusion as AUSPOL_SALIENCE_EXPECTED, intentional.",
   AUSPOL_SALIENCE_SURGE_V2 = paste(
     "WA: OPEN GAP, not fixed. Marked `yes*` above because the switch's name",

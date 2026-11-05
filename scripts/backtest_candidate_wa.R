@@ -572,6 +572,8 @@ for (K in PAIRS) {
   # A cross-seat credit (AUSPOL_CROSS_SEAT_VOTE) can only RAISE the class base, never lower it.
   .own_x <- function(p, seats, x) own_prev_substitute(.own_prev, p, seats, x)
   .permit <- if (.screened && .cond && !is.null(.returns)) salience_permit_for(el_to, el_from, "wa") else NULL
+  # AUSPOL_DEPARTED_RATE (default "0" = the hardcoded 0.38, byte-identical): time-forward refit of the departed-leader rate. Prints one DRT0 line either way. docs/plans/prereg-departed-rate-refit-2026-10-03.md
+  .DEPRATE <- departed_rate_for_harness(el_to, active = .screened && .honour_departed && !is.null(.permit))
   cat(sprintf("BW1s  %s slopes: %s\n", el_to, if (!is.null(.permit)) sprintf("screened (%d permit rows)", nrow(.permit))
               else if (.cond && !is.null(.returns)) "conditional (no salience permit table)" else "plain"))
   HELD <- matrix(FALSE, nrow(mat), ncol(mat), dimnames = dimnames(mat))
@@ -581,7 +583,7 @@ for (K in PAIRS) {
     .sl <- if (!is.null(.permit)) {
       pm <- unname(.permit_lut(.permit[.permit$party == p, ])[rownames(mat)])   # a missing permit row is NOT a permit
       screened_slopes(p, rownames(mat), .returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES,
-                      honour_departed = .honour_departed, with_flags = .departed_hold, successor_rate = .SUCC_RATE, gap_restand = .GAP_RESTAND,
+                      honour_departed = .honour_departed, with_flags = .departed_hold, successor_rate = .SUCC_RATE, departed_rate = if (is.null(.DEPRATE)) eval(formals(screened_slopes)$departed_rate) else .DEPRATE, gap_restand = .GAP_RESTAND,
                       same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same,
                       new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new)
     } else if (.cond && !is.null(.returns)) conditional_slopes(p, rownames(mat), .returns, gap_restand = .GAP_RESTAND, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new) else DEV_SLOPE[[p]]
