@@ -965,7 +965,7 @@ if (.succ_on) { cat(sprintf("DSR1 departed successor rates (%s): %d seat(s) for 
 .permit  <- if (.screened && !is.null(.returns))
               .try("permit", salience_permit_for(TGT, PREV, REGION,
                                                  surge_levels = surge_levels_live(TGT, .permit_level))) else NULL
-# AUSPOL_DEPARTED_RATE (default "0" = the hardcoded 0.38, byte-identical): time-forward refit of the departed-leader rate. Prints one DR0 line either way. docs/plans/prereg-departed-rate-refit-2026-10-03.md
+# AUSPOL_DEPARTED_RATE (default "0" = the hardcoded 0.38, byte-identical): time-forward refit of the departed-leader rate. Prints one DRT0 line either way. docs/plans/prereg-departed-rate-refit-2026-10-03.md
 .DEPRATE <- departed_rate_for_harness(TGT, active = .screened && .honour_departed && !is.null(.permit) && !is.null(.returns))
 if (.cond && is.null(.returns)) {
   cat(sprintf(sub("@T", TGT, "DS2  arm CS requested but @T has no candidate list yet -- FALLING BACK to uniform swing%s\n", fixed = TRUE),

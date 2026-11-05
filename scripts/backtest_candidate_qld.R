@@ -673,7 +673,7 @@ if (identical(Sys.getenv("AUSPOL_MAJOR_DEPARTED", "0"), "1") || identical(Sys.ge
 # A cross-seat credit (AUSPOL_CROSS_SEAT_VOTE) can only RAISE the class base, never lower it.
 .own_x <- function(p, seats, x) own_prev_substitute(.own_prev, p, seats, x)
 .permit <- if (.screened) salience_permit_for(TGT, PRV, "qld") else NULL
-# AUSPOL_DEPARTED_RATE (default "0" = the hardcoded 0.38, byte-identical): time-forward refit of the departed-leader rate. Prints one DR0 line either way. docs/plans/prereg-departed-rate-refit-2026-10-03.md
+# AUSPOL_DEPARTED_RATE (default "0" = the hardcoded 0.38, byte-identical): time-forward refit of the departed-leader rate. Prints one DRT0 line either way. docs/plans/prereg-departed-rate-refit-2026-10-03.md
 .DEPRATE <- departed_rate_for_harness(TGT, active = .screened && .honour_departed && !is.null(.permit))
 .sa_slope <- function(p, seats) {
   if (.screened && !is.null(.permit)) {

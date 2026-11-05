@@ -719,7 +719,7 @@ if (identical(Sys.getenv("AUSPOL_MAJOR_DEPARTED", "0"), "1") || identical(Sys.ge
 # elections, zero winners) and protects anyone it permits by leaving them on
 # uniform swing instead. See screened_slopes() and prereg-salience-screen.md.
 .permit <- if (.screened) salience_permit_for(TGT, PRV, "nsw") else NULL
-# AUSPOL_DEPARTED_RATE (default "0" = the hardcoded 0.38, byte-identical): time-forward refit of the departed-leader rate. Prints one DR0 line either way. docs/plans/prereg-departed-rate-refit-2026-10-03.md
+# AUSPOL_DEPARTED_RATE (default "0" = the hardcoded 0.38, byte-identical): time-forward refit of the departed-leader rate. Prints one DRT0 line either way. docs/plans/prereg-departed-rate-refit-2026-10-03.md
 .DEPRATE <- departed_rate_for_harness(TGT, active = .screened && .honour_departed && !is.null(.permit))
 cat(sprintf("BN1d  dev slopes: %s%s
 ",

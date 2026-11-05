@@ -60,7 +60,7 @@ test_that("(a) switch off is byte-identical to the old default", {
   expect_equal(moved[1], 0.2)
   expect_identical(moved[-1], old[-1])
   # the off line says it was off (a run that prints nothing cannot be told from "no effect")
-  expect_output(departed_rate_for_harness("tst2020", mode = "0"), "DR0 tst2020 IND rate 0.38 \\[arm 0")
+  expect_output(departed_rate_for_harness("tst2020", mode = "0"), "DRT0 tst2020 IND rate 0.38 \\[arm 0")
   # not active (honour_departed off, no screen): nothing fitted, and it says so
   expect_output(r2 <- departed_rate_for_harness("tst2020", mode = "fit", active = FALSE), "not active")
   expect_null(r2)
@@ -189,7 +189,7 @@ test_that("(g) a non-finite pooled value stops; the harness never passes one on"
 test_that("(h) an error that drops a pair from the fit is logged, not swallowed", {
   boom <- function(el, prev, region) if (identical(el, "tst2008")) stop("screen exploded") else .dr_nopermit(el, prev, region)
   expect_message(f <- fit_departed_rate("tst2020", corpus = .dr_corpus(), pairs = .dr_pairs(), permit_fn = boom),
-                 "DR1! pair tst2004 -> tst2008 DROPPED.*screen exploded")
+                 "DRT1! pair tst2004 -> tst2008 DROPPED.*screen exploded")
   expect_equal(f$n_dropped, 1L); expect_equal(f$n_screened, 3L)
   expect_false("tst2008" %in% f$elections)
 })
@@ -217,10 +217,10 @@ test_that("(i) cells the successor table names are left out of the fit (prereg A
   withr::local_envvar(AUSPOL_TIME_FORWARD_FITS = "1")
   expect_message(h <- fit_departed_rate("tst2020", corpus = .dr_corpus(), pairs = .dr_pairs(), permit_fn = .dr_nopermit,
                                         exclude_fn = bad),
-                 "DR1! pair tst2008 -> tst2012 DROPPED.*successor table unreadable")
+                 "DRT1! pair tst2008 -> tst2012 DROPPED.*successor table unreadable")
   expect_equal(h$n_dropped, 1L)
   expect_false("tst2012" %in% h$elections)
-  # and the DR0 line reports the count
+  # and the DRT0 line reports the count
   withr::local_envvar(AUSPOL_DEPARTED_RATE = "fit")
   expect_output(suppressMessages(departed_rate_for_harness("tst2020", corpus = .dr_corpus(), pairs = .dr_pairs(),
                                                            permit_fn = .dr_nopermit)),

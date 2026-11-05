@@ -886,7 +886,7 @@ fit_major_departed_slope <- function(target_election, corpus = NULL, pairs = NUL
   # An error drops the pair from the fit; it is LOGGED (message, not warning: R defers
   # warnings to the end of a run), never swallowed.
   r <- tryCatch(candidate_returns(pr$prev, pr$election, corpus = C), error = function(e) {
-    message(sprintf("DR1! pair %s -> %s DROPPED from the departed-rate fit: candidate_returns() failed: %s",
+    message(sprintf("DRT1! pair %s -> %s DROPPED from the departed-rate fit: candidate_returns() failed: %s",
                     pr$prev, pr$election, conditionMessage(e)))
     NULL })
   if (is.null(r) || !"prior_leader_returns" %in% names(r)) return(list(rows = NULL, why = "no returns table"))
@@ -894,7 +894,7 @@ fit_major_departed_slope <- function(target_election, corpus = NULL, pairs = NUL
   pm <- NULL; permit_failed <- FALSE
   utils::capture.output(pm <- tryCatch(permit_fn(pr$election, pr$prev, region), error = function(e) {
     permit_failed <<- TRUE
-    message(sprintf("DR1! pair %s -> %s DROPPED from the departed-rate fit: salience screen failed: %s",
+    message(sprintf("DRT1! pair %s -> %s DROPPED from the departed-rate fit: salience screen failed: %s",
                     pr$prev, pr$election, conditionMessage(e)))
     NULL }))
   if (is.null(pm)) return(list(rows = NULL, why = if (permit_failed) "screen error" else "no screen"))
@@ -916,7 +916,7 @@ fit_major_departed_slope <- function(target_election, corpus = NULL, pairs = NUL
     ex_failed <- FALSE
     ex <- tryCatch(exclude_fn(pr$election), error = function(e) {
       ex_failed <<- TRUE
-      message(sprintf("DR1! pair %s -> %s DROPPED from the departed-rate fit: successor table unreadable: %s",
+      message(sprintf("DRT1! pair %s -> %s DROPPED from the departed-rate fit: successor table unreadable: %s",
                       pr$prev, pr$election, conditionMessage(e)))
       NULL })
     if (ex_failed) return(list(rows = NULL, why = "successor table error", n_excluded = 0L))
@@ -1030,7 +1030,7 @@ dl_pool <- function(b, se2, tau2_floor = .DR_TAU2_FLOOR) {
 #'   another rate at that election and so is left out of the fit (prereg
 #'   `docs/plans/prereg-departed-rate-screen-2026-10-25.md` Amendment 1 item 2). Default: the
 #'   seats [departed_successor_rates()] names (none when `AUSPOL_DEPARTED_SUCCESSOR` is off).
-#'   An error drops that pair from the fit with a `DR1!` message. `NULL` excludes nothing.
+#'   An error drops that pair from the fit with a `DRT1!` message. `NULL` excludes nothing.
 #' @return list(rate, fallback_used, fallback_reason, mu, tau2, G, n, elections,
 #'   per_election, rows). `rate` is a length-1 numeric named `cls`.
 #' @export
@@ -1106,9 +1106,9 @@ control_rate <- function(cls = "IND") {
 #' keeps `screened_slopes()`'s own default, `c(IND = 0.38)`, byte-identically); `"fit"`
 #' uses [fit_departed_rate()] (control value 0.38 when under 3 informative earlier
 #' elections); `"new"` uses `fit_conditional_slopes()$new` for IND alone (arm D), with its own
-#' fallback behaviour stated on the DR0 line. A non-finite rate is never returned.
+#' fallback behaviour stated on the DRT0 line. A non-finite rate is never returned.
 #' `"fit_juris"` and `"fit_all"` are registered arms that are NOT implemented yet: they
-#' are a loud failure, never a silent no-op. Always prints one `DR0` line saying what was
+#' are a loud failure, never a silent no-op. Always prints one `DRT0` line saying what was
 #' applied (value, rows, elections, tau, which fallback fired, elections used) so a run
 #' can not read as "this does not matter" when the switch did not apply. Any failure
 #' prints `BF0d!` and returns `NULL` (default rate kept).
@@ -1126,12 +1126,12 @@ departed_rate_for_harness <- function(target_election, mode = Sys.getenv("AUSPOL
   if (!isTRUE(active)) {
     # the departed branch cannot run (not screened mode, honour_departed off, or no screen for
     # this pair), so the rate is never read; say so rather than fit a number nothing uses
-    cat(sprintf("DR0 %s departed branch not active (screened mode / AUSPOL_HONOUR_DEPARTED / screen absent): rate unused, switch=%s\n",
+    cat(sprintf("DRT0 %s departed branch not active (screened mode / AUSPOL_HONOUR_DEPARTED / screen absent): rate unused, switch=%s\n",
                 target_election, mode))
     return(NULL)
   }
   if (mode %in% c("0", "")) {
-    cat(sprintf("DR0 %s IND rate %.2f [arm 0: shipped constant, switch off]\n", target_election,
+    cat(sprintf("DRT0 %s IND rate %.2f [arm 0: shipped constant, switch off]\n", target_election,
                 eval(formals(screened_slopes)$departed_rate)[["IND"]]))
     return(NULL)
   }
@@ -1147,7 +1147,7 @@ departed_rate_for_harness <- function(target_election, mode = Sys.getenv("AUSPOL
       rate <- stats::setNames(fb, "IND")
       if (length(rate) != 1L || !is.finite(rate[["IND"]]))
         stop(sprintf("arm new produced a non-finite rate (%s)", format(rate)), call. = FALSE)
-      cat(sprintf("DR0 %s IND rate %.4f [arm new: NOT a departed-specific fit; own fallback behaviour: rate = %s]\n",
+      cat(sprintf("DRT0 %s IND rate %.4f [arm new: NOT a departed-specific fit; own fallback behaviour: rate = %s]\n",
                   target_election, rate[["IND"]], src))
       return(rate)
     }
@@ -1155,7 +1155,7 @@ departed_rate_for_harness <- function(target_election, mode = Sys.getenv("AUSPOL
     # never hand a non-finite value to screened_slopes()
     if (length(f$rate) != 1L || !is.finite(f$rate[["IND"]]))
       stop(sprintf("departed rate is not finite (%s)", format(f$rate)), call. = FALSE)
-    cat(sprintf("DR0 %s IND rate %.4f (%d rows, %d elections of which %d informative, tau2 %s, mu %s, screened %d of %d earlier pairs, %d dropped on error, %d successor-named cells left out) [arm %s%s] elections used: %s\n",
+    cat(sprintf("DRT0 %s IND rate %.4f (%d rows, %d elections of which %d informative, tau2 %s, mu %s, screened %d of %d earlier pairs, %d dropped on error, %d successor-named cells left out) [arm %s%s] elections used: %s\n",
                 target_election, f$rate[["IND"]], f$n, f$G, f$G_informative,
                 if (is.finite(f$tau2)) sprintf("%.4f", f$tau2) else "NA",
                 if (is.finite(f$mu)) sprintf("%.4f", f$mu) else "NA", f$n_screened, f$n_pairs, f$n_dropped, f$n_excluded, mode,

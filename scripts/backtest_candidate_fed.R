@@ -906,7 +906,7 @@ for (K in PAIRS) {
   # ARM CS: arm C plus the salience screen, protecting the rare emergent that
   # arm C's harsh new-candidate slope crushed. See screened_slopes().
   .permit <- if (.screened) salience_permit_for(eb, ea, "fed") else NULL
-  # AUSPOL_DEPARTED_RATE (default "0" = the hardcoded 0.38, byte-identical): time-forward refit of the departed-leader rate. Prints one DR0 line either way. docs/plans/prereg-departed-rate-refit-2026-10-03.md
+  # AUSPOL_DEPARTED_RATE (default "0" = the hardcoded 0.38, byte-identical): time-forward refit of the departed-leader rate. Prints one DRT0 line either way. docs/plans/prereg-departed-rate-refit-2026-10-03.md
   .DEPRATE <- departed_rate_for_harness(eb, active = .screened && .honour_departed && !is.null(.permit))
   # `permit_tbl`, not `permit`: a parameter whose NAME is literally identical to
   # one of its own data.table columns ("permit") triggers a data.table $-typo
