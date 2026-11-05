@@ -16,8 +16,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - **Status 5 Nov 3pm.** main = dev (PRs #188-#191 merged 5 Nov). Deciding runs tonight: bucket split 10:30pm
   (`deciding-runs/20261105-0941-bucket-split-v2-rebuilt/`), departed-slope pool 2:00am 6 Nov
   (`deciding-runs/20261105-1252-departed-slope-pool-a1/`). After them: rebuild `output/candidacies.csv` (vic2006 winners,
-  see Data and infra), release upload on Pete's yes, screen vic2010 + sa2026. OPEN, NEEDS PETE: VEC feed access details
-  due 4 Nov, not in Gmail (all folders) or Hotmail at 3pm 5 Nov. Run `scripts/refresh_local_poll_inputs.sh` before ANY
+  see Data and infra), release upload on Pete's yes, screen vic2010 + sa2026. OPEN: VEC feed access details
+  due 4 Nov, not in Gmail (all folders) or Hotmail at 3pm 5 Nov. Pete waits to 7 Nov, then sends the chase (Gmail
+  draft saved 5 Nov as a reply in his 28 Oct thread to resultsdatafeed@vec.vic.gov.au). Run `scripts/refresh_local_poll_inputs.sh` before ANY
   local forecast run.
 - **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** Plan and replays:
   `docs/plans/election-night-booth-model.md` (vic2022 seat log loss vs afternoon 0.2643: 0.1133 at 10% counted,
