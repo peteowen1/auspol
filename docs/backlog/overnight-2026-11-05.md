@@ -6,7 +6,15 @@ while the deciding runs hold the machine (bucket split from 10:30pm, departed-sl
 
 ## FOR PETE IN THE MORNING
 
-(filled in as the night goes)
+- HOUSEKEEPING PROPOSAL (nothing deleted; your yes needed): auspol has 68 local branches. 52 have no commit missing from dev
+  (checked by patch content, `git cherry dev <branch>`): all `worktree-agent-*` and `worktree-wf_*` branches with 0 unmerged, plus
+  census-retire-old-builder-1025, ci-step-timeout-1026, conserve-shrink, cov-tf, fat-tail-cell-error-1026, forecast-on-time,
+  ind-overcall-1025, mp-slope-shrink-1025, newind-seatpoll-1026, night-replay-json, night-runner, party-class-fix, seat-spread-tf,
+  slim-decisions-1028, surge-live, upper-house-design, upper-house-results, work-5c, zero-order-late. Recommend: delete those locally.
+  Keep (unmerged work): departed-rate-fit-1105, fed-breakdowns-trend-1105, prereg-offbranches-1025 (results), the research/ and
+  prototype/ branches, fed-timing-resume-fixed and instrument-backtest-fed-timing (queue item, never reviewed), departed-rate-refit
+  (superseded by departed-rate-fit-1105; delete after a look), and the 6 worktree-agent branches with 1 unmerged commit each.
+  Worktrees removable (branches pushed): .claude/worktrees/deprate-1105, fedbd-1105, wf_068cdb55-fff-2, wf_240a01af-c97-1 (checked 12:10am: no junctions, nothing uncommitted in any of the four).
 
 ## Shipped tonight
 
