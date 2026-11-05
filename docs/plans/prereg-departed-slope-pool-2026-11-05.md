@@ -170,3 +170,15 @@ moves a little more than before (up to 0.012) and clause 1 is a real check, not 
 original rule, and my edit landed while the AEF-7 screen ran, so it counts for nothing. Both screens are re-run on the
 amended code and decide clauses 1 and 2. The 2am all-elections run booked on the original code is replaced by one on
 the amended code.
+
+### Results on the amended code (5 Nov, 1,000 sims, code tc7a118c)
+
+- **Clause 1, AEF-7 (681 seats): PASS.** Seat log loss 0.2584 -> 0.2583 (-0.0001, SE 0.0001): not worse. 20 cells moved
+  by more than 0.05 points (largest 0.13); their share squared error 423.8 -> 427.1 (+3.4, +1%, SE 0.9, 3 elections),
+  outside the criterion (log loss decides clause 1) and recorded here.
+- **Clause 2, the eight (689 seats): PASS.** Seat log loss 0.3540 -> 0.3478 (-0.0062, SE 0.0040): better by 1.55 SE.
+  Share squared error on 425 moved cells -367.7 (-2%, SE 757, not clear on its own). wa2001 and vic2010 byte-identical
+  (vic2010: no departed flags, see above). Per election, log loss change: fed2010 -0.0212, nsw2011 -0.0098, wa2005
+  -0.0049, fed2007 -0.0008, wa2008 +0.0011, sa2010 +0.0013. Share error worse in 2 of 6 (sa2010 +55.5, wa2005 +431.4).
+- **Clause 4: PASS.** Every `BF0m` departed value in the arm cache matches the amendment table, 15 of 15 elections.
+- Clause 3 and the deciding numbers: the all-elections run, 6 Nov 2:00am, `deciding-runs/20261105-1252-departed-slope-pool-a1/`.
