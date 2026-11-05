@@ -22,7 +22,7 @@ In order: two decisions, one merge, one cleanup yes/no, one finding.
   code, a tie on log loss, 3% better on shares. Then add `fit_minor_candidates.R AUSPOL_MC_OWN_RULE=v2` to the rebuild.
   The run overlapped my check_like_ci 10:42-10:47pm and was not harmed (35 of 35 scored).
 3. MERGE: PR #195 (dev -> main, 0.4.136) is open and NOT merged, per your CLAUDE.md rule for overnight work. Contents: two new switches, both off
-  (statewide endpoint; poll-series class), the two new tests, docs. check_like_ci clean at 1:08am after the last code push (4,989 passed); review 0 Important (the poll-series switch was not separately reviewed: off, byte-identical default). Merge on CI green if you agree.
+  (statewide endpoint; poll-series class), the two new tests, docs. check_like_ci clean at 1:08am after the last code push (4,989 passed); review 0 Important, and the poll-series commit reviewed separately at 1:10am: 0 Important. Merge on CI green if you agree.
 4. HOUSEKEEPING PROPOSAL (nothing deleted; your yes needed): auspol has 68 local branches. 52 have no commit missing from dev
   (checked by patch content, `git cherry dev <branch>`): all `worktree-agent-*` and `worktree-wf_*` branches with 0 unmerged, plus
   census-retire-old-builder-1025, ci-step-timeout-1026, conserve-shrink, cov-tf, fat-tail-cell-error-1026, forecast-on-time,
