@@ -1,3 +1,7 @@
+# auspol 0.4.134
+
+- **Backtest preference flows are now dated by the target election's own cycle** (`statewide_draws_as_at()`, new `.cycle_flow_as_of()`). A data.table name clash dated every target's flows 1969, so backtests used each election's recorded flows instead of the time-forward estimate. Seat probabilities are unchanged (the flows only reach the trend's two-party figure under the published recipe); the backtests' reported two-party numbers move, e.g. nsw2023 implied 55.20 -> 53.97.
+
 # auspol 0.4.133
 
 - **`build_candidacies.R` records the vic2006 winners** (from each seat's final two; ALP 55, LNP 32, IND 1), so vic2010 gets its departed- and sitting-member flags (4 returning members flagged before, 79 after a rebuild). `output/candidacies.csv` itself is not rebuilt yet.
