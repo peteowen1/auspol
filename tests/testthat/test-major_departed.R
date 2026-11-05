@@ -55,3 +55,57 @@ test_that("a pair dated after the target is not used (time-forward)", {
   g <- suppressWarnings(fit_major_departed_slope("vic2022", corpus = corpus, pairs = pairs, min_n = 1L))
   expect_equal(unname(g$n), c(0L, 0L))
 })
+
+# AUSPOL_DEPARTED_POOL -- docs/plans/prereg-departed-slope-pool-2026-11-05.md
+test_that("departed slopes pool toward the two-party slope with tau^2 from per-election gaps", {
+  mk <- function(p, cl, dev, k) data.table::data.table(pair = p, party = cl, dev = dev, yy = k * dev + c(0.3, -0.2, 0.1, -0.1))
+  dev <- c(-10, -5, 5, 10)
+  # Same gap in every election: tau^2 > 0, each party stays near its own slope.
+  dep <- data.table::rbindlist(lapply(c("e1", "e2", "e3"), function(p) rbind(mk(p, "ALP", dev, 0.4), mk(p, "LNP", dev, 0.8))))
+  r <- auspol:::.pool_departed_slopes(dep)
+  expect_gt(r$tau2, 0.03)
+  expect_equal(unname(r$slope[["ALP"]]), unname(r$own[["ALP"]]), tolerance = 0.02)
+  expect_equal(unname(r$slope[["LNP"]]), unname(r$own[["LNP"]]), tolerance = 0.02)
+  expect_lt(r$slope[["ALP"]], 0.5); expect_gt(r$slope[["LNP"]], 0.7)
+  # Same true slope for both parties, independent noise: tau^2 near 0, both close to mu.
+  set.seed(7)
+  sim <- function(p, cl, n, k) { d <- stats::rnorm(n, 0, 8); data.table::data.table(pair = p, party = cl, dev = d, yy = k * d + stats::rnorm(n, 0, 4)) }
+  dep2 <- data.table::rbindlist(lapply(paste0("e", 1:5), function(p) rbind(sim(p, "ALP", 30, 0.6), sim(p, "LNP", 30, 0.6))))
+  r2 <- auspol:::.pool_departed_slopes(dep2)
+  expect_lt(r2$tau2, 0.01)
+  # Review 5 Nov: one election with two seats per party must not blow tau^2 up. Before amendment 1 its own
+  # near-zero variance took almost all the weight (tau^2 up to 1.2 in simulation with a true value of 0).
+  worst <- 0
+  for (i in 1:100) {
+    tiny <- rbind(sim("e6", "ALP", 2, 0.6), sim("e6", "LNP", 2, 0.6))
+    worst <- max(worst, auspol:::.pool_departed_slopes(rbind(dep2, tiny))$tau2)
+  }
+  expect_lt(worst, 0.05)
+  # Identical rows for both parties: every gap is exactly 0, tau^2 0, both take mu.
+  dep3 <- rbind(mk("e1", "ALP", dev, 0.6), mk("e1", "LNP", dev, 0.6), mk("e2", "ALP", dev, 0.6), mk("e2", "LNP", dev, 0.6))
+  r3a <- auspol:::.pool_departed_slopes(dep3)
+  expect_equal(r3a$tau2, 0)
+  expect_equal(unname(r3a$slope[["ALP"]]), r3a$mu); expect_equal(unname(r3a$slope[["LNP"]]), r3a$mu)
+  # One party with no rows takes mu; no rows at all returns NULL (the caller keeps 1).
+  r3 <- auspol:::.pool_departed_slopes(mk("e1", "ALP", dev, 0.5))
+  expect_equal(unname(r3$slope[["LNP"]]), r3$mu)
+  expect_null(auspol:::.pool_departed_slopes(dep[0]))
+})
+
+test_that("AUSPOL_DEPARTED_POOL removes the min_n cliff in fit_major_departed_slope", {
+  pairs <- list(list(election = "nsw2023", prev = "nsw2019"))
+  # A third seat the Coalition held whose member left, so both parties have one departed row.
+  c2 <- rbind(corpus, data.table::data.table(
+    election = c("nsw2019", "nsw2019", "nsw2023", "nsw2023"), seat = "Penrith", party = c("ALP", "LNP", "ALP", "LNP"),
+    surname = c("DAVIS", "AYRES", "DAVIS", "NEWMAN"), given = c("Ed", "Stu", "Ed", "Ken"), name = NA_character_,
+    pcv = c(40, 52, 47, 44), votes = c(400, 520, 470, 440), tot = 1000, elected = c(FALSE, TRUE, FALSE, TRUE)))
+  withr::local_envvar(AUSPOL_DEPARTED_POOL = "0")
+  off <- suppressWarnings(fit_major_departed_slope("vic2026", corpus = c2, pairs = pairs))   # n = 1 < 40: cliff gives 1
+  expect_equal(off$slope[["ALP"]], 1); expect_null(off$pool)
+  withr::local_envvar(AUSPOL_DEPARTED_POOL = "1")
+  on <- suppressWarnings(fit_major_departed_slope("vic2026", corpus = c2, pairs = pairs))
+  expect_equal(unname(on$n), c(1L, 1L))
+  expect_equal(unname(on$slope[["ALP"]]), on$pool$mu); expect_equal(unname(on$slope[["LNP"]]), on$pool$mu)
+  expect_false(is.null(on$pool))
+  expect_false(isTRUE(all.equal(on$slope[["ALP"]], 1)))
+})

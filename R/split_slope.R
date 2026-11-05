@@ -765,13 +765,93 @@ fit_major_departed_slope <- function(target_election, corpus = NULL, pairs = NUL
     cm <- summary(fit)$coefficients
     if (nrow(cm) && is.finite(cm[1, 1])) cm[1, 1] else NA_real_
   }
+  pooled <- if (.departed_pool_on()) .pool_departed_slopes(rows[mp_departed %in% TRUE]) else NULL
   for (cl in MAJ) {
     sub <- rows[party == cl & mp_departed %in% TRUE]; n[[cl]] <- nrow(sub)
-    s <- fit1(sub); if (is.finite(s)) slope[[cl]] <- s
+    s <- if (is.null(pooled)) fit1(sub) else pooled$slope[[cl]]
+    if (is.finite(s)) slope[[cl]] <- s
     # THE OTHER TIER: member stayed, or the class never held the seat
     # (docs/plans/prereg-major-present-slope-2026-09-18.md).
     subp <- rows[party == cl & !mp_departed %in% TRUE]; n_present[[cl]] <- nrow(subp)
     sp <- fit1(subp); if (is.finite(sp)) slope_present[[cl]] <- sp
   }
-  list(slope = slope, n = n, slope_present = slope_present, n_present = n_present, rows = rows)
+  out <- list(slope = slope, n = n, slope_present = slope_present, n_present = n_present, rows = rows)
+  if (!is.null(pooled)) out$pool <- pooled
+  out
+}
+
+# AUSPOL_DEPARTED_POOL=1: the ALP and LNP departed-member slopes partially pooled
+# toward the pooled ALP+LNP departed slope, with no min_n cliff (Pete 2026-10-27,
+# option B 2026-11-05; docs/plans/prereg-departed-slope-pool-2026-11-05.md).
+#   mu     = slope through the origin over both parties' departed rows
+#   own_c  = each party's own slope, se_c^2 the larger of the cluster-robust (by
+#            election) and ordinary variance, as in .shrunk_slope()
+#   tau^2  = the between-party variance, estimated from EARLIER ELECTIONS' gaps,
+#            not from the two cells' own spread: for every pair p with departed
+#            rows for both parties, g_p = b_ALP,p - b_LNP,p with sampling variance
+#            v_p = s2 / sxx_ALP,p + s2 / sxx_LNP,p, s2 ONE residual variance pooled over every
+#            (election, party) cell (prereg amendment 1); E[g_p^2] = v_p + 4 tau^2 when the two true slopes sit at mu +- delta,
+#            so tau^2 = max(0, weighted mean(g_p^2 - v_p)) / 4, weights 1 / (v_p + 4 tau^2)^2
+#            (the inverse variance of g_p^2), iterated.
+#   shrunk = mu + tau^2 / (tau^2 + se_c^2) * (own_c - mu)
+# A party with no departed rows takes mu; neither party with rows returns NULL,
+# and the caller keeps 1. Rows are already time-forward (fit_pairs_for()).
+.departed_pool_on <- function() identical(Sys.getenv("AUSPOL_DEPARTED_POOL", "0"), "1")
+.origin_fit <- function(sub) {
+  sub <- sub[is.finite(sub$dev) & is.finite(sub$yy)]
+  sxx <- sum(sub$dev^2)
+  if (nrow(sub) < 2L || !isTRUE(sxx > 0)) return(c(b = NA_real_, se2 = NA_real_))
+  b <- sum(sub$dev * sub$yy) / sxx
+  e <- sub$yy - b * sub$dev
+  se2_ols <- (sum(e^2) / max(1, nrow(sub) - 1)) / sxx
+  G <- length(unique(sub$pair))
+  se2_cl <- if (G >= 2L) sum(tapply(sub$dev * e, sub$pair, sum)^2) / sxx^2 * G / (G - 1) else 0
+  c(b = b, se2 = max(se2_cl, se2_ols))
+}
+.pool_departed_slopes <- function(dep) {
+  MAJ <- c("ALP", "LNP")
+  dep <- dep[dep$party %in% MAJ & is.finite(dep$dev) & is.finite(dep$yy)]
+  if (!nrow(dep)) return(NULL)
+  mu <- .origin_fit(dep)[["b"]]
+  if (!is.finite(mu)) return(NULL)
+  own <- lapply(stats::setNames(MAJ, MAJ), function(cl) .origin_fit(dep[dep$party == cl]))
+  # Per (election, party) cell: its slope and sum of dev^2. Sampling variance uses ONE residual variance pooled over
+  # every cell (review 5 Nov: a cell's own variance from 2-3 rows can come out near zero, take almost all the weight
+  # and push tau^2 above 1; 19 of the 67 cells behind vic2026 have under 5 rows). A 1-row cell counts, at s2 / dev^2.
+  cells <- data.table::rbindlist(lapply(unique(dep$pair), function(pp) data.table::rbindlist(lapply(MAJ, function(cl) {
+    d <- dep[dep$pair == pp & dep$party == cl]
+    sxx <- sum(d$dev^2)
+    if (!nrow(d) || !isTRUE(sxx > 0)) return(NULL)
+    b <- sum(d$dev * d$yy) / sxx
+    data.table::data.table(pair = pp, cls = cl, b = b, sxx = sxx, n = nrow(d), rss = sum((d$yy - b * d$dev)^2))
+  }))))
+  gaps <- data.table::data.table(pair = character(0), g = numeric(0), v = numeric(0))
+  if (nrow(cells)) {
+    df <- sum(cells$n - 1L)
+    s2 <- if (df > 0) sum(cells$rss) / df else NA_real_
+    both <- intersect(cells$pair[cells$cls == "ALP"], cells$pair[cells$cls == "LNP"])
+    if (is.finite(s2) && s2 > 0 && length(both)) {
+      A <- cells[cells$cls == "ALP"][match(both, cells$pair[cells$cls == "ALP"])]
+      L <- cells[cells$cls == "LNP"][match(both, cells$pair[cells$cls == "LNP"])]
+      gaps <- data.table::data.table(pair = both, g = A$b - L$b, v = s2 / A$sxx + s2 / L$sxx)
+    }
+  }
+  gaps <- gaps[is.finite(gaps$v) & gaps$v > 0]
+  tau2 <- 0
+  if (nrow(gaps)) {
+    for (it in 1:50) {
+      w <- 1 / (gaps$v + 4 * tau2)^2
+      t_new <- max(0, sum(w * (gaps$g^2 - gaps$v)) / sum(w)) / 4
+      if (abs(t_new - tau2) < 1e-10) { tau2 <- t_new; break }
+      tau2 <- t_new
+    }
+  }
+  slope <- vapply(MAJ, function(cl) {
+    o <- own[[cl]]
+    if (!is.finite(o[["b"]])) return(mu)
+    w <- if (tau2 + o[["se2"]] > 0) tau2 / (tau2 + o[["se2"]]) else 0
+    mu + w * (o[["b"]] - mu)
+  }, numeric(1))
+  list(slope = slope, mu = mu, tau2 = tau2, n_gap_elections = nrow(gaps),
+       own = vapply(own, function(o) o[["b"]], numeric(1)), own_se = vapply(own, function(o) sqrt(o[["se2"]]), numeric(1)))
 }
