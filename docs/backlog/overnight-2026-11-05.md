@@ -33,6 +33,7 @@ while the deciding runs hold the machine (bucket split from 10:30pm, departed-sl
 
 ## Shipped tonight
 
+- `2cc061fa`: arm `AUSPOL_POLL_SERIES_CLASS` (off) + prereg `plans/prereg-poll-series-class-2026-11-06.md`. FOUND from the Katter lead: the backtest statewide level classifies poll columns by CODE, so KAP, UAP, FF (and SAB) land in OTH and are dropped before the rescale to 100, while their candidates are OTH_RIGHT / IND by full name. sa2018: SA-Best's ~21 polled points went to nobody and Labor/Liberal were inflated 8-9 points each; the arm moves IND +21.25. Also qld2015 OTH_RIGHT +7.5, fed2019/2022/2025 +2.9/+3.0/+1.8, sa2010 +3.1, qld2024 +1.4. Live keeps poll names in `state_mean` (separate path; small for Victoria: UAP, DEM).
 - `c94cc074`: NEXT-STEPS under 40k (43,758 -> 39,982 chars). Status block brought current; fixed/closed items moved to DECISIONS; the election-night entry's history moved verbatim to `backlog/journal-2026-11-05-election-night.md` (runbook and every open step kept in the hub).
 - `8cf24ad2`: arm `AUSPOL_STATEWIDE_ENDPOINT` (off). CONFIRMED BUG: `statewide_draws_as_at()` read every party at the single latest series date, so a party missing from the newest poll was dropped to 0 and folded into Others. 11 of 32 backtest targets: nsw2023 One Nation 4.6 -> 0 (last poll 12 days out), nsw2019 One Nation 3.9 (6 days), fed2016 Xenophon 3.0 (1 day), qld2017 Katter 1.8 (4 days); also defunct parties (fed2019 Centre Alliance 221 days, sa2018 Family First 548 days). Live already reads per party (`fit_seats_full.R:566`), so backtests and the trees' training levels differ from what ships. On nsw2023 the fix gives One Nation 4.53 against an actual ~1.8, so it is not automatically better: screen pending.
 - `44d2c10c` (dev): tests for #194's review nits, `test-poll-date-ours.R` (poll_layer end to end; on/off/default) and the BludgerTrack reader test. Both pass; full check_like_ci deferred until the deciding runs finish.
@@ -49,6 +50,7 @@ while the deciding runs hold the machine (bucket split from 10:30pm, departed-sl
 
 ## Log
 
+- 12:49am. Poll-series class arm built and pre-registered; screen launched (7 pairs). Slip: pushed the R change to dev with PR #195 open before rerunning check_like_ci (CLAUDE.md rule); default path unchanged; check runs after the screen.
 - 12:41am. check_like_ci on dev (tests + switch + forecast_mode): 4,989 passed, R CMD check clean. Pre-PR review launched (Sonnet).
 - 12:29am. Statewide-endpoint screen done: passes the primary (-0.0007, SE 0.0004). To Pete.
 - 12:14am. Bucket split DONE (tie; to Pete). Statewide-endpoint screen launched detached (11 pairs, 1,000 sims, 2 slots); another session's 7.5 GB R job started 12:13am, so 4.1 GB free: messaged it, watching memory.
