@@ -11,9 +11,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - CLOSED 4 Nov, NOT SHIPPING (told Pete): poll weighting by type, company and age. All six arms refused on 38
   elections (`plans/prereg-poll-lean-2026-11-02.md`; DECISIONS 2026-11-04). OPEN triggers: (a) after nominations close
   9 Nov, condition One Nation's anchor/blend on how many seats it stands in; (b) after vic2026, re-test sponsor lean
-  (first completed election with party-commissioned polls labelled). Seat-poll side still untested:
-  `AUSPOL_SEAT_POLL_FIRM_FLOOR` "0" (register row ~119).
-- **Status 5 Nov 3pm.** main = dev (PRs #188-#191 merged 5 Nov). Deciding runs tonight: bucket split 10:30pm
+  (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
+  `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
+- **Status 5 Nov 4pm.** main = dev except queue/log docs (PRs #188-#191 merged 5 Nov). Deciding runs tonight: bucket split 10:30pm
   (`deciding-runs/20261105-0941-bucket-split-v2-rebuilt/`), departed-slope pool 2:00am 6 Nov
   (`deciding-runs/20261105-1252-departed-slope-pool-a1/`). After them: rebuild `output/candidacies.csv` (vic2006 winners,
   see Data and infra): screened and KEPT 5 Nov (Pete); it ships with the 10 Nov nominations rebuild. OPEN: VEC feed access details
@@ -309,8 +309,8 @@ Verbatim in `backlog/journal-2026-10-07-to-10-08.md`. Still OPEN from them:
   base_pred 6.0 and xgb 4.9 were both under, so the 29 is the seat-poll step (AUSPOL_SEAT_POLL_IND_MAP). ROOT: the
   seat-poll weight uses age, sample size and kind, NOT the pollster's record, method or agreement with other polls.
   DONE 18 Oct: every seat poll classified (`external/reference/polls/seat-polls/poll_methods.csv`,
-  `reviews/seat-poll-methods-2026-10-18.md`). NEXT: prereg seat-poll weights by method and sponsor (+ per-pollster
-  reliability, consensus down-weight), time-forward, shrunk by group size, scored on seat-poll seats. Dirty pollster
+  `reviews/seat-poll-methods-2026-10-18.md`). PARKED 5 Nov (told Pete): the by-method/sponsor/pollster weight prereg
+  waits with "Seat polls: PARKED" under Model, open (arms S, T, U refused; one or two earlier polled elections). Dirty pollster
   labels: checked 23 Oct, NOT reaching the model. The blend takes the firm from `poll_methods.csv`'s `pollster_clean`
   (`R/seat_poll_blend.R:174`; "YouGo (MRP)" -> YouGov, "44%" -> uComms, sponsors -> unknown), and the "44%" duplicate of
   uComms Brisbane 20 Mar 2025 has no fieldwork date, so `:89` drops it. Raw `seat_polls.csv` labels are cosmetic.
