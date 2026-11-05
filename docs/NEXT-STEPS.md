@@ -382,6 +382,12 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
   covariance pools every era; WA has no surge-v2 hazard.
 
 ## Harness and pipeline hygiene
+- OPEN (speed, measured 6 Nov) `rebuild_forecasts.sh` pre-stage `fit_minor_candidates.R` (v2, added 6 Nov for the shipped bucket
+  split file) costs 6.4 min every full rebuild (7:21:28-7:27:54) and its output was byte-identical to the tracked copy. Cache it:
+  skip when `output/minor-class-shares-resid-v2.csv` is newer than `output/candidacies.csv`, the audit file it reads, the script
+  and every `R/*.R` it load_all()s (memo key = everything it reads). Do NOT edit the script while a rebuild runs (bash reads it as it goes).
+- OPEN (speed) stage 3 took 533 s on 6 Nov against 160 s in the previous driver.log run; `fit_xgb_primary_v6.R` ~7.7 min of it.
+  Not yet explained (more features since? CPU shared with a mediaverse R job that morning). Time it alone before acting.
 
 Closed 2026-09-19/20 (DECISIONS; fast loop in `PIPELINE.md` C0): forecast
 mode everywhere, time-forward folds, registry classified, zero-placeholder
