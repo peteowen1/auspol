@@ -1,6 +1,6 @@
 # Model registry
 
-**Generated 2026-11-05 by `scripts/build_model_registry.R`. Do not hand-edit** --
+**Generated 2026-11-06 by `scripts/build_model_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate whenever a switch is added to
 `published_flags.R` or a harness's wiring changes.
 
@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (301 switches from `published_flags.R`, 7 entry points)
+## Switch parity (302 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -287,6 +287,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_STATE_NOTIONAL` | NO | NO | NO | NO | NO | NO | NO | state_notional.R |
 | `AUSPOL_STATE_POLL_EXTRA` | NO | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_STATE_POLL_POOL` | NO | NO | NO | NO | NO | NO | NO | state_poll_pool.R |
+| `AUSPOL_STATEWIDE_ENDPOINT` | NO | NO | NO | NO | NO | NO | NO | forecast_mode.R |
 | `AUSPOL_SURGE_FROM_ZERO` | yes | yes | yes | yes | yes | yes | NO |  |
 | `AUSPOL_SURGE_H` | yes | yes | yes | yes | yes | yes | yes |  |
 | `AUSPOL_SURGE_H_TF` | NO | NO | NO | NO | NO | NO | NO |  |
@@ -562,6 +563,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_STATE_NOTIONAL`** (**adopted, shared-function wiring**): SHIPPED v57 and STATE-BACKTEST-ONLY by design: the state notional prior replaces the prior only on state pairs preceded by a redistribution (STATE_REDISTRIBUTIONS, R/state_notional.R). The federal harness has its own (AUSPOL_NOTIONAL), and the published Victoria forecast needs none: 2026 is fought on the 2022 boundaries. plans/prereg-state-notional-2026-10-01.md
 - **`AUSPOL_STATE_POLL_EXTRA`** (**shipped, fitting-time switch (reaches harnesses via the artifact)**): FITTING-TIME, TESTING (default 0; plans/prereg-state-polls-extra-2026-10-02.md). Read only in scripts/build_state_deviation_features.R, which builds the state-deviation features the xgb model trains on.
 - **`AUSPOL_STATE_POLL_POOL`** (**adopted, shared-function wiring**): SHIPPED v60 2026-10-02 (Pete overrode the prereg clause). FEDERAL-HARNESS-ONLY by design: pools a state signal from seat polls before the seat-poll blend (R/state_poll_pool.R); published_flags.R states 'federal harness only'. Only backtest_candidate_fed.R calls it.
+- **`AUSPOL_STATEWIDE_ENDPOINT`** (intentional / dead experiment): ARM 2026-11-06, being screened: backtest statewide level read per party at its own last poll date (R/forecast_mode.R statewide_draws_as_at()), as fit_seats_full.R already does at line 566 -- so the published forecast has no read of it by design.
 - **`AUSPOL_SURGE_FROM_ZERO`** (intentional / dead experiment): WA has no candidate-level salience corpus -- same exclusion as AUSPOL_SALIENCE_EXPECTED, intentional.
 - **`AUSPOL_SURGE_H_TF`** (**adopted, shared-function wiring**): SHIPPED 2026-10-18 as a leak fix, TRAINING-ONLY by design: read in scripts/fit_xgb_primary_v6.R, which builds the xgb training features (stage 3). Harnesses and fit_seats_full.R were already time-forward.
 - **`AUSPOL_SURGE_LEVEL`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: the default of simulate_seat_contests(surge_level = surge_level_on()) (R/surge_level.R), so every harness, NT and fit_seats_full.R honour it with no call-site argument; the C++ core takes it as an argument. 'NO' in the harness columns is the grep, not a gap. plans/prereg-surge-level-2026-10-25.md
@@ -652,8 +654,8 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR4  every AUSPOL_* switch read in code (401) is registered (284) or listed as not a model switch (117).
+MR4  every AUSPOL_* switch read in code (402) is registered (285) or listed as not a model switch (117).
 
 
 
-MR2  every non-universal switch (270 of 301) has a recorded classification.
+MR2  every non-universal switch (271 of 302) has a recorded classification.
