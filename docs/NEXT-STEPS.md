@@ -51,9 +51,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
      `scripts/build_booths_vic2026_ref.R`); the page's pre-count map shows them with their 2018 result, labelled 2018
      (ITG #1142, `build-booths-ref2018.py`; the 10 Nov command is unchanged). OPEN, 10 Nov: check the popup in a browser
      at 390/1280 px, and check the 38 Narracan-only 2018 names against the 2026 polling places.
-  4. Navbar link; the "called" rule (99% with 10% counted is a placeholder). Find my seat (#166): BUILT 5 Nov, ITG PR
-     #1144 merged into ITG dev (reviewed, build green); live on inthegame.blog once ITG dev goes to main. OPEN: Pete checks it
-     on his phone, then close #166.
+  4. Navbar link; the "called" rule (99% with 10% counted is a placeholder). Find my seat (#166): LIVE 5 Nov 5:28pm on
+     inthegame.blog/politics/live (ITG #1144 dev, #1147 main). OPEN: Pete checks it on his phone, then close #166.
   5. Trial 25 Nov (no 2CP); the upper-house model.
   Dated: the satellite basemap's Esri key (Pete's account, basemaps only, pay-as-you-go off) expires 27/10/2027.
 - 28 Oct: value-odds page https://claude.ai/artifact/GdrpxSB7zkY1xEvJvU3TKx (readiness, seat click-through, our
