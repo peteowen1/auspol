@@ -20,11 +20,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   due 4 Nov, not in Gmail (all folders) or Hotmail at 3pm 5 Nov. Pete waits to 7 Nov, then sends the chase (Gmail
   draft saved 5 Nov as a reply in his 28 Oct thread to resultsdatafeed@vec.vic.gov.au). Run `scripts/refresh_local_poll_inputs.sh` before ANY
   local forecast run.
-- OPEN, BROKEN (found 5 Nov by the fed-breakdowns agent, confirmed in R): `statewide_draws_as_at()`
+- FIXED 5 Nov (PR #193, 0.4.134; seat probabilities unchanged, backtest two-party diagnostics corrected): `statewide_draws_as_at()`
   (`R/forecast_mode.R:110`) hits the data.table NSE trap: `cycles[cycles$region == region & cycles$year == year, ]`
   matches all 88 cycles, so the preference-flow `as_of` is 1969-10-26 for every target. Twelfth instance. Size first
-  (statewide flows reach the draws' two-party anchoring; `AUSPOL_STATE_FLOWS_AEC` was byte-identical at seat level on
-  AEF-7), then fix with a quick_arm screen. Also from the agent, NOT yet confirmed: a fitted party whose last poll is
+  (old vs fixed on vic2022/nsw2023: draws, mu, sd identical; trend TPP and implied_tpp move). Also from the agent, NOT yet confirmed: a fitted party whose last poll is
   earlier than the others' is folded into Others (nsw2023 One Nation, day before).
 - **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** Plan and replays:
   `docs/plans/election-night-booth-model.md` (vic2022 seat log loss vs afternoon 0.2643: 0.1133 at 10% counted,
