@@ -1,3 +1,7 @@
+# auspol 0.4.132
+
+- **New arm `AUSPOL_DEPARTED_POOL` (off; the published forecast is unchanged)**: when a Labor or Coalition member leaves, each party's departed-member slope is pooled toward the two parties' combined slope, with the between-party spread taken from earlier elections, in place of the flat 1 below 40 seats. Screens pass (AEF-7 not worse; the eight affected elections 1.55 SE better); the all-elections run decides it. `docs/plans/prereg-departed-slope-pool-2026-11-05.md`.
+
 # auspol 0.4.131
 
 - **Election night: Narracan's booth swing is measured against its 2018 booths** (`output/booths-vic2026-ref.csv`; its 2022 poll was a supplementary with no Labor or Nationals candidate). Rows spliced in from an older election feed the swing only: `night_turnout_table()` and `night_early_frac()` leave them out.
