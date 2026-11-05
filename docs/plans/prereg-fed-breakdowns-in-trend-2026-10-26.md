@@ -432,7 +432,7 @@ touches the scored set (item 2) removes cells the arm cannot reach in any arm, s
 
 1. **wa2021 is reachable.** The prereg says wa2021 "has no trend at all ... takes the thin-cycle path". On today's
    layered poll set its trend fits the day before (14 state polls), so 6 (shipped file) or 9 (union) breakdowns
-   enter it. It is printed separately (FB4) and **not scored**: the seven targets stay the seven. Every other
+   enter it. It is printed separately (FDT4) and **not scored**: the seven targets stay the seven. Every other
    non-target election, federal pairs included, must still be exactly unchanged, and is asserted.
 2. **Horizons with no trend.** sa2022, wa2025 and sa2026 have no trend 90 or 180 days out (no class at 8 state
    polls). The published path there is `thin_cycle_statewide()`, which reads every poll before polling day and so
@@ -452,7 +452,7 @@ touches the scored set (item 2) removes cells the arm cannot reach in any arm, s
    folded into the others downstream (`statewide_draws_as_at()`; nsw2023 One Nation the day before is one). The
    first build extended every party to the newest breakdown, which un-folded nsw2023 One Nation in every arm,
    B1 included, which has no One Nation breakdown at all: a level change from the folding, not from a breakdown.
-   The class-gate check (FB4 d) caught it before any score was read. Fixed: the parties that reach the last
+   The class-gate check (FDT4 d) caught it before any score was read. Fixed: the parties that reach the last
    state-poll day move together to the newest admitted breakdown when that is later; a party that ends earlier
    keeps its end, and its breakdowns that ended after it are left out (printed). Under R = 0 nothing changes. The
    folding itself is today's behaviour and is left as it is (reported separately).

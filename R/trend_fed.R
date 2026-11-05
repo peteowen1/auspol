@@ -146,12 +146,12 @@ trend_fed_for <- function(region, as_at, cycle_start, cfg = trend_fed_config()) 
   as_at <- as.Date(as_at)
   late <- which(!(as.Date(fed$end) < as_at))
   if (length(late)) {
-    stop(sprintf("TF0! %d federal breakdown(s) handed to trend_as_at() did not end before the as-at date %s (latest end %s). A forecast cannot see a poll still in the field.",
+    stop(sprintf("FTR0! %d federal breakdown(s) handed to trend_as_at() did not end before the as-at date %s (latest end %s). A forecast cannot see a poll still in the field.",
                  length(late), format(as_at), format(max(as.Date(fed$end)))), call. = FALSE)
   }
   cs <- as.Date(attr(cp2, "cycle_start"))
   early <- which(!(as.Date(fed$start) > cs))
-  if (length(early)) stop(sprintf("TF0! %d federal breakdown(s) started on or before the cycle start %s", length(early), format(cs)), call. = FALSE)
+  if (length(early)) stop(sprintf("FTR0! %d federal breakdown(s) started on or before the cycle start %s", length(early), format(cs)), call. = FALSE)
   cls <- intersect(c("ALP", "LNP", "GRN", "ONP"), ps)
   dropped <- character(0)
   if ("LNP" %in% cls && any(c("NAT", "LIB") %in% ps)) {
@@ -190,7 +190,7 @@ trend_fed_for <- function(region, as_at, cycle_start, cfg = trend_fed_config()) 
   }
   obs <- obs[!vapply(obs, is.null, TRUE)]
   if (!length(obs)) return(NULL)
-  if (verbose) cat(sprintf("TF1  federal breakdowns in the trend: %s; latent walk %s%s%s\n",
+  if (verbose) cat(sprintf("FTR1  federal breakdowns in the trend: %s; latent walk %s%s%s\n",
                            paste(sprintf("%s %d", names(obs), vapply(obs, nrow, 1L)), collapse = ", "),
                            if (E > D) sprintf("extended %s -> %s", format(as.Date(D, origin = "1970-01-01")), format(as.Date(E, origin = "1970-01-01"))) else "unchanged",
                            if (cut_n) sprintf("; %d breakdowns after a short party's last poll left out", cut_n) else "",

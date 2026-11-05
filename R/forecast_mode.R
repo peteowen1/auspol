@@ -135,16 +135,16 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   # NOT `cyc` above: `cycles[cycles$region == region & cycles$year == year, ]` binds both bare names to the
   # data.table's own columns (the NSE trap, CLAUDE.md), matches every cycle and makes min(cyc$start) the first
   # cycle on record (1969), which admitted breakdowns from before this cycle until the gate's assertion caught it
-  # (TF0!, qld2024, 2026-11-05). trend_fed_for_cycle() compares plain vectors with differently-named locals.
+  # (FTR0!, qld2024, 2026-11-05). trend_fed_for_cycle() compares plain vectors with differently-named locals.
   fed <- trend_fed_for_cycle(region, year, as_at, cycles)
-  if (identical(region, "fed") && !is.null(fed)) stop("TF0! federal breakdowns reached a federal target")
+  if (identical(region, "fed") && !is.null(fed)) stop("FTR0! federal breakdowns reached a federal target")
   if (!is.null(fed)) tr_extra <- c(tr_extra, list(fed = fed))
   tr <- do.call(trend_as_at, c(list(polls, year, cycles, as_at, priors, fl, with_series = TRUE,
                                     sigmas = tr_sig), tr_extra))
   if (is.null(tr)) return(NULL)
   if (!is.null(tr$fed_effects)) {
     fe <- tr$fed_effects
-    cat(sprintf("TF2  %s%d as at %s: %d breakdowns admitted; offsets (points, sd): %s\n", region, year, format(as_at), tr$n_fed,
+    cat(sprintf("FTR2  %s%d as at %s: %d breakdowns admitted; offsets (points, sd): %s\n", region, year, format(as_at), tr$n_fed,
                 paste(sprintf("%s %s %+.1f(%.1f) n%d", fe$party, sub("^fed:", "", fe$firm), fe$offset_pts, fe$sd_pts, fe$n), collapse = "; ")))
   }
 

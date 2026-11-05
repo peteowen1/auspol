@@ -46,10 +46,10 @@ test_that("a breakdown whose fieldwork had not ended before the as-at date trips
   late <- data.table::copy(s$fed)
   late$end[nrow(late)] <- s$as_at          # ends ON the as-at date: still in the field
   data.table::setattr(late, "prior_sd", 10)
-  expect_error(trend_as_at(s$polls, 2022, s$cycles, s$as_at, s$priors, s$flows, fed = late), "TF0!")
+  expect_error(trend_as_at(s$polls, 2022, s$cycles, s$as_at, s$priors, s$flows, fed = late), "FTR0!")
   early <- data.table::copy(s$fed); early$start[1] <- s$cycles$start - 1
   data.table::setattr(early, "prior_sd", 10)
-  expect_error(trend_as_at(s$polls, 2022, s$cycles, s$as_at, s$priors, s$flows, fed = early), "TF0!")
+  expect_error(trend_as_at(s$polls, 2022, s$cycles, s$as_at, s$priors, s$flows, fed = early), "FTR0!")
   # the clean table runs and admits every row
   ok <- trend_as_at(s$polls, 2022, s$cycles, s$as_at, s$priors, s$flows, fed = s$fed)
   expect_equal(ok$n_fed, 2L * nrow(s$fed))   # ALP and LNP rows (ONP is not a fitted class)
