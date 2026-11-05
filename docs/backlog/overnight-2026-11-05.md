@@ -67,7 +67,7 @@ In order: three decisions, one merge, one cleanup yes/no, one lower-priority dec
 
 ## Failed / not done, and why
 
-- Not done: a unit test for the "party" branch of `statewide_draws_as_at()` (review nit); the registry note's stale line number.
+- DONE 3:40am: the "party" branch is now a tested helper `.statewide_endpoints()` (behaviour-identical: nsw2023 ONP 0 / 4.53 before and after), and the registry note no longer cites a line number. check_like_ci clean, review 0 Important.
 - Slips, recorded: pushed R code to dev with PR #195 open before rerunning check_like_ci (12:49am; check ran after, clean).
 - GitHub returned a 500 on one push at 3:01am; the retry succeeded.
 

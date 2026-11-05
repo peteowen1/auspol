@@ -22,6 +22,21 @@
                        FF = "Family First", SFF = "Shooters, Fishers and Farmers", NXT = "Nick Xenophon Team",
                        SAB = "SA-Best", DLP = "Democratic Labour Party", NAT = "The Nationals")
 
+#' The rows of a trend series that statewide_draws_as_at() reads as each party's level
+#'
+#' `"global"` (the old behaviour) keeps the rows at the single latest date, so a party whose series ends earlier is
+#' absent; `"party"` keeps each party's own latest row (AUSPOL_STATEWIDE_ENDPOINT, 2026-11-06).
+#' @param s Trend series: one row per party and date (`party`, `date`, `mean`, ...).
+#' @param mode `"global"` or `"party"`.
+#' @keywords internal
+.statewide_endpoints <- function(s, mode = "global") {
+  if (identical(mode, "party")) {
+    keep_i <- unlist(lapply(split(seq_len(nrow(s)), s$party), function(ix) ix[which.max(s$date[ix])]), use.names = FALSE)
+    return(s[keep_i])
+  }
+  s[s$date == max(s$date), ]
+}
+
 #' Date the preference flows are taken "as of" for one cycle: the cycle's start
 #'
 #' Masks are built OUTSIDE the `[`: `cycles` is a data.table with `region` and
@@ -181,14 +196,12 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   # poll and folded it into OTH: nsw2023 One Nation 4.6 -> 0 (its last poll 12 days out), fed2016 Xenophon 3.0 (1
   # day), qld2017 Katter 1.8 (4 days); 11 of 32 backtest targets. "party" reads each party at its own last date, which
   # is what trend_as_at()'s endpoints and the live forecast already do.
-  if (identical(Sys.getenv("AUSPOL_STATEWIDE_ENDPOINT", "global"), "party")) {
-    keep_i <- unlist(lapply(split(seq_len(nrow(s)), s$party), function(ix) ix[which.max(s$date[ix])]), use.names = FALSE)
-    last <- s[keep_i]
+  mode_ep <- Sys.getenv("AUSPOL_STATEWIDE_ENDPOINT", "global")
+  last <- .statewide_endpoints(s, mode_ep)
+  if (identical(mode_ep, "party")) {
     stale <- last[last$date < max(s$date) & last$party != "TPP_ALP"]
     if (nrow(stale)) cat(sprintf("SWE1 %s%d: read at their own last date (not folded): %s\n", region, year,
                                  paste(sprintf("%s %.1f (%s)", stale$party, stale$mean, format(stale$date)), collapse = ", ")))
-  } else {
-    last <- s[s$date == max(s$date), ]
   }
   fp_parties <- setdiff(unique(last$party), "TPP_ALP")
 
