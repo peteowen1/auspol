@@ -1099,8 +1099,9 @@ if (file.exists(.t06)) {
   .n2 <- t6[, .N, by = seat]
   if (nrow(.n2) != 88L || any(.n2$N != 2L)) stop("BC7v! vec-2006-vic-tcp-basis.csv: expected 88 seats with two rows each, got ",
                                                  nrow(.n2), " seats, row counts ", paste(unique(.n2$N), collapse = ","))
+  .tie <- t6[, list(tie = uniqueN(votes) < 2L), by = seat][tie == TRUE]
+  if (nrow(.tie)) stop("BC7v! vic2006 final two tied on votes, no winner: ", paste(.tie$seat, collapse = ", "))
   t6 <- t6[order(seat, -votes)][, .SD[1L], by = seat]
-  if (any(duplicated(t6$seat))) stop("BC7v! vic2006 winners not unique by seat")
   cat(sprintf("BC7v vic2006 winners from the final two: %s\n",
               paste(sprintf("%s %d", names(table(t6$party)), as.integer(table(t6$party))), collapse = ", ")))
   WV[[length(WV) + 1L]] <- t6[, .(election = "vic2006", seat, winner = party)]
