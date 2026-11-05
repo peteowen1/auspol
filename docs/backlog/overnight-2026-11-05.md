@@ -45,6 +45,7 @@ while the deciding runs hold the machine (bucket split from 10:30pm, departed-sl
 
 ## Log
 
+- 12:41am. check_like_ci on dev (tests + switch + forecast_mode): 4,989 passed, R CMD check clean. Pre-PR review launched (Sonnet).
 - 12:29am. Statewide-endpoint screen done: passes the primary (-0.0007, SE 0.0004). To Pete.
 - 12:14am. Bucket split DONE (tie; to Pete). Statewide-endpoint screen launched detached (11 pairs, 1,000 sims, 2 slots); another session's 7.5 GB R job started 12:13am, so 4.1 GB free: messaged it, watching memory.
 - 12:05am. Fold bug confirmed and arm built; screen after the deciding runs.
