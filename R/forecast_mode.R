@@ -16,6 +16,12 @@
 # This function produces the statewide draws a forecaster could have made on a
 # given date, using the same construction the published path uses.
 
+# Full party names for the poll columns that are not simulation classes, so a polled series can be classified the way
+# its candidates are (AUSPOL_POLL_SERIES_CLASS="name"). Codes as they appear in the poll files' column names.
+.POLL_SERIES_NAME <- c(KAP = "Katter's Australian Party", UAP = "United Australia Party", DEM = "Australian Democrats",
+                       FF = "Family First", SFF = "Shooters, Fishers and Farmers", NXT = "Nick Xenophon Team",
+                       SAB = "SA-Best", DLP = "Democratic Labour Party", NAT = "The Nationals")
+
 #' Date the preference flows are taken "as of" for one cycle: the cycle's start
 #'
 #' Masks are built OUTSIDE the `[`: `cycles` is a data.table with `region` and
@@ -211,6 +217,18 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   folded_into <- list()   # class -> named shares folded in, for the anchoring's implied two-party
   for (q in extra) {
     cls <- tryCatch(classify_party(name = q, code = q), error = function(e) NA_character_)
+    # AUSPOL_POLL_SERIES_CLASS (arm 2026-11-06, "code" = as before): classify a poll column by its party's FULL name,
+    # the way candidates are classified at the seat level. By code alone KAP, UAP and FF land in OTH and SAB in OTH,
+    # while their candidates are OTH_RIGHT (KAP, UAP, FF) and IND (SA-Best): so a polled series the seats count in
+    # one class was left in the OTH remainder statewide (qld2017 Katter 1.8, sa2018 SA-Best).
+    if (identical(Sys.getenv("AUSPOL_POLL_SERIES_CLASS", "code"), "name")) {
+      full <- .POLL_SERIES_NAME[q]
+      if (!is.na(full)) {
+        cls_n <- tryCatch(classify_party(name = full, code = ""), error = function(e) NA_character_)
+        if (!identical(cls_n, cls)) cat(sprintf("PSC1 %s%d: poll series %s classed by name as %s (by code: %s)\n", region, year, q, cls_n, cls))
+        cls <- cls_n
+      }
+    }
     if (is.na(cls) || !cls %in% parties || cls == "OTH") next
     r <- last[last$party == q, ]
     if (!nrow(r) || !is.finite(r$mean[1])) next

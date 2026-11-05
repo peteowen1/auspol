@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (302 switches from `published_flags.R`, 7 entry points)
+## Switch parity (303 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -207,6 +207,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_POLL_BT` | NO | NO | NO | NO | NO | NO | NO | poll_source.R |
 | `AUSPOL_POLL_DATE_OURS` | NO | NO | NO | NO | NO | NO | NO | poll_source.R |
 | `AUSPOL_POLL_PB` | NO | NO | NO | NO | NO | NO | NO | poll_source.R |
+| `AUSPOL_POLL_SERIES_CLASS` | NO | NO | NO | NO | NO | NO | NO | forecast_mode.R |
 | `AUSPOL_POLL_SOURCE` | NO | NO | NO | NO | NO | NO | NO | poll_source.R |
 | `AUSPOL_POOL_BY_JURISDICTION` | NO | NO | NO | NO | NO | NO | NO | pool_hierarchical.R |
 | `AUSPOL_POSTXGB_RESID_NET` | NO | NO | NO | NO | NO | NO | NO | seat_predictions.R |
@@ -486,6 +487,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_POLL_BT`** (intentional / dead experiment): 2026-10-13 (Pete: go): BludgerTrack poll tables join the layered source. Read inside poll_layer() (R/poll_source.R) via load_polls() -- universal in practice.
 - **`AUSPOL_POLL_DATE_OURS`** (**adopted, shared-function wiring**): SHIPPED 2026-11-05 (Pete, correctness on a tie): matched polls take our fieldwork-midpoint date. Read inside poll_layer() (R/poll_source.R) via load_polls() -- universal in practice.
 - **`AUSPOL_POLL_PB`** (intentional / dead experiment): 2026-10-13 (Pete: go): Poll Bludger posts (model-read, stated figures) replace AE's numbers where they agree. Read inside poll_layer() (R/poll_source.R) via load_polls() -- universal in practice.
+- **`AUSPOL_POLL_SERIES_CLASS`** (intentional / dead experiment): ARM 2026-11-06, being screened: statewide poll columns classified by full party name (R/forecast_mode.R statewide_draws_as_at()); the published forecast keeps poll names in state_mean and has no read of it.
 - **`AUSPOL_POLL_SOURCE`** (**adopted, shared-function wiring**): SHIPPED layered 2026-10-13 (Pete; plans/prereg-own-poll-source-step2-2026-10-12.md). Read inside load_polls() (R/load_polls.R), which every harness and fit_seats_full.R call -- universal in practice.
 - **`AUSPOL_POOL_BY_JURISDICTION`** (intentional / dead experiment): BUILT 2026-10-13, OFF, not measured across all pairs (docs/reviews/pooled-fits-inventory-2026-10-13.md). Gate is pool_by_jurisdiction_on() in R/pool_hierarchical.R, called from fit_defector_discount(), fit_minor_defector_discount() and fit_sitting_minor_level() in R/candidate_returns.R, so it reaches every harness and fit_seats_full.R; not a gap.
 - **`AUSPOL_POSTXGB_RESID_NET`** (intentional / dead experiment): ARM, default 0 (audit F8, built 2026-10-25; plans/prereg-postxgb-resid-net-2026-10-25.md). UNIVERSAL via R/: read in R/seat_predictions.R (postxgb_resid_net_on), the default of current_seat_predictions(), which every post-xgb table fit reads in all seven harnesses and fit_seats_full.R; no entry point names it. Federal harness: its federal rows never move, but tables that pool state rows (demographic, leader seat) do, so fed pairs can change.
@@ -654,8 +656,8 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR4  every AUSPOL_* switch read in code (402) is registered (285) or listed as not a model switch (117).
+MR4  every AUSPOL_* switch read in code (403) is registered (286) or listed as not a model switch (117).
 
 
 
-MR2  every non-universal switch (271 of 302) has a recorded classification.
+MR2  every non-universal switch (272 of 303) has a recorded classification.
