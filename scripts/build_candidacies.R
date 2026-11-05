@@ -1089,6 +1089,23 @@ for (y in c(2010L, 2014L, 2018L, 2022L)) {
   w <- fread(f, showProgress = FALSE)
   WV[[length(WV) + 1L]] <- w[, .(election = sprintf("vic%d", y), seat, winner)]
 }
+# vic2006 winners (2026-11-05): no VEC winners file, so each seat's winner is the larger side of its final two in
+# vec-2006-vic-tcp-basis.csv (fetch_official_results_2000s.R; `party` is already a classify_party() class). Without
+# it all 459 vic2006 rows had `elected` NA and vic2010 got no departed- or sitting-member flags. Checked against the
+# 2006 result: ALP 55, LNP 32 (Liberal 23 + Nationals 9), IND 1 (Gippsland East), 88 seats with exactly two rows each.
+.t06 <- file.path(election_data_path(), "vec-2006-vic-tcp-basis.csv")
+if (file.exists(.t06)) {
+  t6 <- fread(.t06, showProgress = FALSE)
+  .n2 <- t6[, .N, by = seat]
+  if (nrow(.n2) != 88L || any(.n2$N != 2L)) stop("BC7v! vec-2006-vic-tcp-basis.csv: expected 88 seats with two rows each, got ",
+                                                 nrow(.n2), " seats, row counts ", paste(unique(.n2$N), collapse = ","))
+  .tie <- t6[, list(tie = uniqueN(votes) < 2L), by = seat][tie == TRUE]
+  if (nrow(.tie)) stop("BC7v! vic2006 final two tied on votes, no winner: ", paste(.tie$seat, collapse = ", "))
+  t6 <- t6[order(seat, -votes)][, .SD[1L], by = seat]
+  cat(sprintf("BC7v vic2006 winners from the final two: %s\n",
+              paste(sprintf("%s %d", names(table(t6$party)), as.integer(table(t6$party))), collapse = ", ")))
+  WV[[length(WV) + 1L]] <- t6[, .(election = "vic2006", seat, winner = party)]
+}
 # nsw2011 winners (2026-10-13): the NSWEC ELECTED cell, from scripts/parse_booths_nsw2011.py.
 for (n11w in file.path(election_data_path(), c("nswec-2007-nsw-winners.csv", "nswec-2011-nsw-winners.csv"))) {
   if (file.exists(n11w)) {
