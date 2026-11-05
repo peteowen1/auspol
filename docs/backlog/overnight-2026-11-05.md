@@ -6,6 +6,13 @@ while the deciding runs hold the machine (bucket split from 10:30pm, departed-sl
 
 ## FOR PETE IN THE MORNING
 
+- DECISION: bucket split, rebuilt file or frozen (`deciding-runs/20261105-0941-bucket-split-v2-rebuilt/results.txt`, DONE 12:14am,
+  all 35 elections at 20,000 sims). Seat log loss (lower is better) 0.3168 -> 0.3159, -0.0009 (SE 0.0010): a tie. AEF-7 +0.0001
+  (SE 0.0001): worse by ~1 SE, tiny. Share squared error on the 3,525 moved cells -3% (SE 1.4%): better. By election: better on
+  qld2017 -0.026, sa2018 -0.022, wa2017 -0.010; worse on nsw2015 +0.0065, sa2014 +0.006, nsw2011 +0.0056; 11 of 35 byte-identical.
+  My recommendation: ADOPT the rebuilt file (`AUSPOL_BUCKET_SPLIT_SRC=minor-class-shares-resid-v2.csv`): reproducible from committed
+  code, a tie on log loss, 3% better on shares. Then add `fit_minor_candidates.R AUSPOL_MC_OWN_RULE=v2` to the rebuild.
+  The run overlapped my check_like_ci 10:42-10:47pm and was not harmed (35 of 35 scored).
 - HOUSEKEEPING PROPOSAL (nothing deleted; your yes needed): auspol has 68 local branches. 52 have no commit missing from dev
   (checked by patch content, `git cherry dev <branch>`): all `worktree-agent-*` and `worktree-wf_*` branches with 0 unmerged, plus
   census-retire-old-builder-1025, ci-step-timeout-1026, conserve-shrink, cov-tf, fat-tail-cell-error-1026, forecast-on-time,
@@ -32,6 +39,7 @@ while the deciding runs hold the machine (bucket split from 10:30pm, departed-sl
 
 ## Log
 
+- 12:14am. Bucket split DONE (tie; to Pete). Statewide-endpoint screen launched detached (11 pairs, 1,000 sims, 2 slots); another session's 7.5 GB R job started 12:13am, so 4.1 GB free: messaged it, watching memory.
 - 12:05am. Fold bug confirmed and arm built; screen after the deciding runs.
 - 11:55pm. 8.7 GB free. Bucket split deciding run RUNNING (70 harness runs, est ~62 min at 1 slot; started 10:30pm).
   Departed-slope pool a1 PENDING for 2:00am. The 12:41 departed run is SUPERSEDED (its task was removed).

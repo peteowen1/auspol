@@ -148,7 +148,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   rest); live `FST1!` (no candidate-model split for vic2026); Kew and Hawthorn, where the bookies price independents
   far above us; Benambra (a NEW independent succeeding Hawkins).
 
-- IN FLIGHT (decided 5 Nov, Pete: recover v2): the others-bucket split. `AUSPOL_MC_OWN_RULE=v2` rebuilds it
+- RESULT 6 Nov 12:14am, NEEDS PETE (recommend adopt; `backlog/overnight-2026-11-05.md`): all-35 run a tie (-0.0009, SE 0.0010),
+  shares -3%. Was: IN FLIGHT (decided 5 Nov, Pete: recover v2): the others-bucket split. `AUSPOL_MC_OWN_RULE=v2` rebuilds it
   (`output/minor-class-shares-resid-v2.csv`); AEF-7 said share error +1% (WORSE), log loss unchanged; the all-22 run
   tonight 10:30pm decides adopt-or-keep-frozen. Still open after that: add it to the rebuild, give it vic2026 rows after
   nominations (`FST1!`), then v3 as its own screen. `backlog/overnight-2026-11-04.md` item 3.
