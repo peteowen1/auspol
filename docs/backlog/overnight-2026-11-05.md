@@ -16,7 +16,7 @@ while the deciding runs hold the machine (bucket split from 10:30pm, departed-sl
 
 ## FOR PETE IN THE MORNING
 
-**ANSWERED 6 Nov 7:05am:** items 1-4 yes (three switches shipped in 0.4.137, PR #195 merged). Items 5 (cleanup) and 6 (poll-series class) still open.
+**ANSWERED 6 Nov 7:05am:** items 1-4 yes (three switches shipped in 0.4.137, PR #195 merged). Item 5 DONE 7:30am (Pete yes): 4 worktrees removed, 47 merged local branches deleted (5 of the 52 already gone), 18 local branches left. Item 6 (poll-series class) still open.
 
 In order: three decisions, one merge, one cleanup yes/no, one lower-priority decision.
 
