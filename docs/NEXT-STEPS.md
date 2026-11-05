@@ -58,7 +58,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
      (ITG #1142, `build-booths-ref2018.py`; the 10 Nov command is unchanged). OPEN, 10 Nov: check the popup in a browser
      at 390/1280 px, and check the 38 Narracan-only 2018 names against the 2026 polling places.
   4. Navbar link; the "called" rule (99% with 10% counted is a placeholder). Find my seat (#166): LIVE 5 Nov 5:28pm on
-     inthegame.blog/politics/live (ITG #1144 dev, #1147 main); CSP fix #1149, no-bias #1151, suggestions as you type #1152 (live 6:55pm). Pete checked it on his phone 5 Nov 7:09pm; #166 CLOSED. Live page hero bar: majority line over a label (ITG fixed the forecast page in #1150; live.qmd left to auspol).
+     inthegame.blog/politics/live (ITG #1144 dev, #1147 main); CSP fix #1149, no-bias #1151, suggestions as you type #1152 (live 6:55pm). Pete checked it on his phone 5 Nov 7:09pm; #166 CLOSED. Live page hero bar: majority line no longer over a label (ITG #1154, live 5 Nov 7:29pm).
   5. Trial 25 Nov (no 2CP); the upper-house model.
   Dated: the satellite basemap's Esri key (Pete's account, basemaps only, pay-as-you-go off) expires 27/10/2027.
 - 28 Oct: value-odds page https://claude.ai/artifact/GdrpxSB7zkY1xEvJvU3TKx (readiness, seat click-through, our
