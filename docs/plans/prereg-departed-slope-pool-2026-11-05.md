@@ -121,3 +121,12 @@ pre-existing data gap, not this arm; queued. So the targeted set is effectively 
 
 Unacceptable-win check: share error on the moved cells is worse in 2 of the 6 elections that moved (sa2010, wa2005),
 not most. Passes.
+
+### Prepared for the all-elections run (not applied)
+
+- All clauses pass: ask Pete; on his yes set `AUSPOL_DEPARTED_POOL = "1"` in `scripts/published_flags.R` AND the inline
+  default in `.departed_pool_on()` (`R/split_slope.R`, `Sys.getenv("AUSPOL_DEPARTED_POOL", "0")` -> `"1"`), regenerate
+  `docs/MODEL-REGISTRY.md`, then a live `fit_seats_full.R` walk with and without it (vic2026 departed slopes 0.618 /
+  0.641 -> 0.620 / 0.638; expect small moves) before the PR.
+- Clause 2 holds but clause 3 fails: refused; record in DECISIONS with the failing election.
+- Clause 2 fails at 20k with 1 and 3 passing: to Pete as "ship on the no-cliff rule, or keep the cliff".
