@@ -423,3 +423,45 @@ before polling day, against the actual result.
 
 **Not verified here (no R was run):** whether the fundamentals mix and the blend can be computed as at 90 and 180
 days for all seven targets (the blend window may hold few polls that far out). The first run prints it.
+
+### Amendment 2 (2026-11-05): what the implementation found and had to settle
+
+Added before any arm result was read, while the mechanism checks were running. The original text and Amendment 1
+are left as written. None of these changes which cells or elections decide, the rule, or a threshold; the one that
+touches the scored set (item 2) removes cells the arm cannot reach in any arm, so it cannot favour either answer.
+
+1. **wa2021 is reachable.** The prereg says wa2021 "has no trend at all ... takes the thin-cycle path". On today's
+   layered poll set its trend fits the day before (14 state polls), so 6 (shipped file) or 9 (union) breakdowns
+   enter it. It is printed separately (FB4) and **not scored**: the seven targets stay the seven. Every other
+   non-target election, federal pairs included, must still be exactly unchanged, and is asserted.
+2. **Horizons with no trend.** sa2022, wa2025 and sa2026 have no trend 90 or 180 days out (no class at 8 state
+   polls). The published path there is `thin_cycle_statewide()`, which reads every poll before polling day and so
+   cannot be computed as at a horizon. Those election-horizons are left out of H in every arm. The arm cannot
+   touch them anyway (a cycle that returns NULL still returns NULL, step 2). H therefore has 4 election clusters
+   (qld2020, vic2022, nsw2023, qld2024), printed.
+3. **Step 8, the mix.** Under the shipped `AUSPOL_LEVEL_RECIPE = "live"`, `statewide_draws_as_at()` drops the
+   two-party target (`LR1  ... level NOT anchored`), so the fundamentals-and-trend mix never reaches the published
+   level at any horizon. `output/projection-data.csv` is therefore not rebuilt; the screen asserts that LR1 printed
+   in every fit, and stops otherwise. The level-recent table IS rebuilt under every arm (its trend column for the
+   seven targets), and the blend's k is refitted on it.
+4. **Fourth switch.** The diagnostics need the offset prior's width, so `AUSPOL_TREND_FED_PRIOR_SD` (default
+   `"10"`, inert at R = 0) is added beside the three registered switches. B-eq is the union, no sample-size factor,
+   r = 1, sd 0.5 (the prereg named no source for it).
+5. **Where the walk ends.** Without breakdowns each party's series ends at its own last state poll, and the
+   published level reads only the parties that reach the latest of those days; a fitted party that ends earlier is
+   folded into the others downstream (`statewide_draws_as_at()`; nsw2023 One Nation the day before is one). The
+   first build extended every party to the newest breakdown, which un-folded nsw2023 One Nation in every arm,
+   B1 included, which has no One Nation breakdown at all: a level change from the folding, not from a breakdown.
+   The class-gate check (FB4 d) caught it before any score was read. Fixed: the parties that reach the last
+   state-poll day move together to the newest admitted breakdown when that is later; a party that ends earlier
+   keeps its end, and its breakdowns that ended after it are left out (printed). Under R = 0 nothing changes. The
+   folding itself is today's behaviour and is left as it is (reported separately).
+6. **B1's fieldwork start.** The shipped file carries the midpoint and end, not the start; start = 2 x midpoint -
+   end, exact for even spans and one day early for odd ones.
+7. **The union** (step 7): firms are matched on the canonical names in
+   `external/reference/polls/statewide-samples/firm_alias.csv`; 21 rows that duplicated a source already in their
+   poll are counted and the first kept; 41 disagreements over 1 point are printed by the builder. BludgerTrack is
+   read from the 13 Oct parse plus a one-off refetch on 5 Nov (`raw/bludgertrack/fed2028-current-2026-11-05.xml`,
+   stamped 2 Nov), whose fed2028 rows replace the older file's.
+8. **Live levels** are the statewide path as the harnesses compute it (`forecast_statewide_for()` as at today,
+   then the blend), not a `fit_seats_full.R` run.

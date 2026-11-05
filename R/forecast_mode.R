@@ -132,8 +132,11 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   tr_extra <- if (rw_mult != 1) list(sigma_rw = rw_mult * default_sigmas("logit")[["sigma_rw"]]) else list()
   # Federal polls' state breakdowns in the trend (AUSPOL_TREND_FED_R, R/trend_fed.R). NULL when off (published)
   # and ALWAYS NULL for a federal target, so every federal pair is byte-identical by construction (asserted).
-  fed_cs <- if (nrow(cyc)) min(cyc$start) else as.Date(NA)
-  fed <- trend_fed_for(region, as_at, fed_cs)
+  # NOT `cyc` above: `cycles[cycles$region == region & cycles$year == year, ]` binds both bare names to the
+  # data.table's own columns (the NSE trap, CLAUDE.md), matches every cycle and makes min(cyc$start) the first
+  # cycle on record (1969), which admitted breakdowns from before this cycle until the gate's assertion caught it
+  # (TF0!, qld2024, 2026-11-05). trend_fed_for_cycle() compares plain vectors with differently-named locals.
+  fed <- trend_fed_for_cycle(region, year, as_at, cycles)
   if (identical(region, "fed") && !is.null(fed)) stop("TF0! federal breakdowns reached a federal target")
   if (!is.null(fed)) tr_extra <- c(tr_extra, list(fed = fed))
   tr <- do.call(trend_as_at, c(list(polls, year, cycles, as_at, priors, fl, with_series = TRUE,

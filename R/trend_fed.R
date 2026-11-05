@@ -167,10 +167,33 @@ trend_fed_for <- function(region, as_at, cycle_start, cfg = trend_fed_config()) 
     obs[[p]] <- o
   }
   if (!length(obs)) return(NULL)
-  t_end <- max(max(cp2$date), max(vapply(obs, function(o) as.integer(max(o$end)), 1L)))
-  t_end <- as.Date(t_end, origin = "1970-01-01")
-  if (verbose) cat(sprintf("TF1  federal breakdowns in the trend: %s; latent walk to %s%s\n",
-                           paste(sprintf("%s %d", names(obs), vapply(obs, nrow, 1L)), collapse = ", "), format(t_end),
+  # Where each party's walk ends. Without breakdowns a party's series ends at its own last state poll, and the
+  # published level reads the parties that reach the LATEST of those days (D); a fitted party whose last poll is
+  # earlier is folded into the others downstream (statewide_draws_as_at(): nsw2023 One Nation, day before). The
+  # arm must not change that, or it would move levels through the folding rather than through the breakdowns. So
+  # the parties that reach D are all moved, together, to E = the later of D and the newest admitted breakdown;
+  # a party that ends before D keeps its end, and its breakdowns that ended after it are left out (printed).
+  own_end <- vapply(ps, function(p) {
+    d <- if (p %in% names(cp2)) cp2$date[!is.na(cp2[[p]])] else cp2$date[0]
+    if (length(d)) as.integer(max(d)) else NA_integer_ }, 1L)
+  D <- max(own_end, na.rm = TRUE)
+  own_end[is.na(own_end)] <- D
+  E <- max(D, max(vapply(obs, function(o) as.integer(max(o$end)), 1L)))
+  t_end <- lapply(ps, function(p) if (own_end[[p]] == D && E > D) as.Date(E, origin = "1970-01-01") else NULL)
+  names(t_end) <- ps
+  cut_n <- 0L
+  for (p in names(obs)) if (own_end[[p]] < D) {
+    keep <- as.integer(obs[[p]]$end) <= own_end[[p]]
+    cut_n <- cut_n + sum(!keep)
+    o <- obs[[p]][keep]; data.table::setattr(o, "prior_sd", attr(fed, "prior_sd"))
+    obs[[p]] <- if (nrow(o)) o else NULL
+  }
+  obs <- obs[!vapply(obs, is.null, TRUE)]
+  if (!length(obs)) return(NULL)
+  if (verbose) cat(sprintf("TF1  federal breakdowns in the trend: %s; latent walk %s%s%s\n",
+                           paste(sprintf("%s %d", names(obs), vapply(obs, nrow, 1L)), collapse = ", "),
+                           if (E > D) sprintf("extended %s -> %s", format(as.Date(D, origin = "1970-01-01")), format(as.Date(E, origin = "1970-01-01"))) else "unchanged",
+                           if (cut_n) sprintf("; %d breakdowns after a short party's last poll left out", cut_n) else "",
                            if (length(dropped)) paste0("; left out: ", dropped) else ""))
   list(obs = obs, t_end = t_end, dropped = dropped)
 }

@@ -193,7 +193,7 @@ trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
     fed_gate <- .trend_fed_gate(fed, cp2, ps, as_at)
     if (!is.null(fed_gate)) {
       for (p in names(fed_gate$obs)) overrides[[p]] <- c(overrides[[p]], list(fed_obs = fed_gate$obs[[p]]))
-      for (p in ps) overrides[[p]] <- c(overrides[[p]], list(t_end = fed_gate$t_end))
+      for (p in ps) if (!is.null(fed_gate$t_end[[p]])) overrides[[p]] <- c(overrides[[p]], list(t_end = fed_gate$t_end[[p]]))
     }
   }
 

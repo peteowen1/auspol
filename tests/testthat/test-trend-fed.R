@@ -126,3 +126,18 @@ test_that("a breakdown observes the mean of its fieldwork days (1/L spreading)",
   H0 <- as.matrix(trend_obs_matrix(prep0))
   expect_equal(H[seq_len(n), seq_len(ncol(H0))], H0)
 })
+
+test_that("the walk extension keeps today's folding: only parties that reach the last poll day move, together", {
+  s <- fed_synth()
+  cp <- cycle_polls(s$polls, 2022, s$cycles)
+  D <- max(cp$date)
+  cp$LNP[cp$date > D - 60] <- NA                    # LNP's own series now ends ~2 months before the last poll
+  late <- data.table::copy(s$fed)
+  late$end[nrow(late)] <- D + 5; late$start[nrow(late)] <- D + 2
+  data.table::setattr(late, "prior_sd", 10)
+  g <- .trend_fed_gate(late, cp, c("ALP", "LNP", "OTH"), D + 10, verbose = FALSE)
+  expect_equal(g$t_end$ALP, D + 5); expect_equal(g$t_end$OTH, D + 5)   # the parties on the last day move together
+  expect_null(g$t_end$LNP)                                             # the short party keeps its own end
+  expect_true(all(g$obs$LNP$end <= max(cp$date[!is.na(cp$LNP)])))     # and loses breakdowns past it
+  expect_true(any(g$obs$ALP$end == D + 5))
+})
