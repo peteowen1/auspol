@@ -12,7 +12,8 @@ fit_departed_rate(
   permit_fn = NULL,
   fallback = NULL,
   min_elections = .DR_MIN_ELECTIONS,
-  pool_fn = dl_pool
+  pool_fn = dl_pool,
+  exclude_fn = .dr_successor_seats
 )
 }
 \arguments{
@@ -30,6 +31,12 @@ fit_departed_rate(
 \item{min_elections}{Minimum earlier INFORMATIVE elections (>= 2 departed rows each).}
 
 \item{pool_fn}{Pooling function, \code{\link[=dl_pool]{dl_pool()}}; injectable for tests.}
+
+\item{exclude_fn}{\verb{function(election)} returning the seats whose IND cell is governed by
+another rate at that election and so is left out of the fit (prereg
+\verb{docs/plans/prereg-departed-rate-screen-2026-10-25.md} Amendment 1 item 2). Default: the
+seats \code{\link[=departed_successor_rates]{departed_successor_rates()}} names (none when \code{AUSPOL_DEPARTED_SUCCESSOR} is off).
+An error drops that pair from the fit with a \verb{DR1!} message. \code{NULL} excludes nothing.}
 }
 \value{
 list(rate, fallback_used, fallback_reason, mu, tau2, G, n, elections,

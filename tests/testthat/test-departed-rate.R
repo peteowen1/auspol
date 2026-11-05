@@ -30,8 +30,12 @@
   list(election = paste0("tst", .dr_years[k]), prev = paste0("tst", .dr_years[k - 1])))
 # Screen that permits nobody: every departed cell is in the departed branch.
 .dr_nopermit <- function(el, prev, region) data.table::data.table(seat = .dr_seats, party = "IND", permit = FALSE)
+# The synthetic tst elections have no successor-table rows: with the switch at its shipped
+# "1", the default exclude_fn would error on every pair. Off for this file; the exclusion
+# itself is tested with an injected exclude_fn in (h).
+withr::local_envvar(AUSPOL_DEPARTED_SUCCESSOR = "0")
 .dr_fit <- function(target, corpus = .dr_corpus(), permit_fn = .dr_nopermit, ...) {
-  withr::local_envvar(AUSPOL_TIME_FORWARD_FITS = "1", .local_envir = parent.frame())
+  withr::local_envvar(AUSPOL_TIME_FORWARD_FITS = "1", AUSPOL_DEPARTED_SUCCESSOR = "0", .local_envir = parent.frame())
   suppressMessages(fit_departed_rate(target, corpus = corpus, pairs = .dr_pairs(), permit_fn = permit_fn, ...))
 }
 
@@ -188,4 +192,37 @@ test_that("(h) an error that drops a pair from the fit is logged, not swallowed"
                  "DR1! pair tst2004 -> tst2008 DROPPED.*screen exploded")
   expect_equal(f$n_dropped, 1L); expect_equal(f$n_screened, 3L)
   expect_false("tst2008" %in% f$elections)
+})
+
+test_that("(i) cells the successor table names are left out of the fit (prereg Amendment 1 item 2)", {
+  base <- .dr_fit("tst2020", exclude_fn = NULL)
+  # switch off: the default exclusion names nothing, so the fit is identical to excluding nothing
+  off <- .dr_fit("tst2020")
+  expect_identical(off$rate, base$rate); expect_equal(off$n_excluded, 0L)
+  # two seats named at tst2008 only: exactly those two rows leave, every other election is untouched
+  named <- function(el) if (identical(el, "tst2008")) c("S1", "S6") else character(0)
+  f <- .dr_fit("tst2020", exclude_fn = named)
+  expect_equal(f$n_excluded, 2L)   # departed cells named, counted before the prior-base filter
+  gone <- sum(base$rows$pair == "tst2008" & base$rows$seat %in% c("S1", "S6"))
+  expect_gt(gone, 0L)
+  expect_equal(f$n, base$n - gone)
+  expect_false(any(f$rows$pair == "tst2008" & f$rows$seat %in% c("S1", "S6")))
+  expect_equal(f$per_election[election == "tst2012"]$b, base$per_election[election == "tst2012"]$b)
+  expect_equal(f$per_election[election == "tst2008"]$n, base$per_election[election == "tst2008"]$n - gone)
+  # a seat named that is not in the corpus excludes nothing (exact name match, as screened_slopes())
+  g <- .dr_fit("tst2020", exclude_fn = function(el) "Nowhere")
+  expect_identical(g$rate, base$rate); expect_equal(g$n_excluded, 0L)
+  # an unreadable table for one election drops that pair, loudly
+  bad <- function(el) if (identical(el, "tst2012")) stop("no rows for target tst2012") else character(0)
+  withr::local_envvar(AUSPOL_TIME_FORWARD_FITS = "1")
+  expect_message(h <- fit_departed_rate("tst2020", corpus = .dr_corpus(), pairs = .dr_pairs(), permit_fn = .dr_nopermit,
+                                        exclude_fn = bad),
+                 "DR1! pair tst2008 -> tst2012 DROPPED.*successor table unreadable")
+  expect_equal(h$n_dropped, 1L)
+  expect_false("tst2012" %in% h$elections)
+  # and the DR0 line reports the count
+  withr::local_envvar(AUSPOL_DEPARTED_RATE = "fit")
+  expect_output(suppressMessages(departed_rate_for_harness("tst2020", corpus = .dr_corpus(), pairs = .dr_pairs(),
+                                                           permit_fn = .dr_nopermit)),
+                "0 successor-named cells left out")
 })

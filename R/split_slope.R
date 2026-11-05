@@ -880,7 +880,7 @@ fit_major_departed_slope <- function(target_election, corpus = NULL, pairs = NUL
 # leader did not return (prior_leader_returns == FALSE; NA counts as returning, exactly as
 # screened_slopes() does), that the screen does not permit (permit %in% TRUE is FALSE, so
 # NA = silent counts as not permitted, 2026-09-20), and that stood this time.
-.dr_pair_rows <- function(pr, C, cls, permit_fn) {
+.dr_pair_rows <- function(pr, C, cls, permit_fn, exclude_fn = NULL) {
   lp <- .dr_state_level(C, pr$prev); ln <- .dr_state_level(C, pr$election)
   if (is.null(lp) || is.null(ln)) return(list(rows = NULL, why = "no state level"))
   # An error drops the pair from the fit; it is LOGGED (message, not warning: R defers
@@ -907,7 +907,24 @@ fit_major_departed_slope <- function(target_election, corpus = NULL, pairs = NUL
   permitted <- unname(lut[rr$seat]) %in% TRUE
   departed  <- !is.na(rr$prior_leader_returns) & !rr$prior_leader_returns
   rr <- rr[which(departed & !permitted)]
-  if (!nrow(rr)) return(list(rows = NULL, why = "no departed-branch rows"))
+  # Amendment 1 item 2 (Pete, 29 Oct): fit only on the cells the rate is APPLIED to. A seat the
+  # successor table names for this earlier election takes its successor rate in
+  # screened_slopes(), not departed_rate, so it is left out of the fit. Matched exactly on the
+  # seat name, as screened_slopes() matches it. The table governs IND only.
+  n_excl <- 0L
+  if (!is.null(exclude_fn) && identical(want_cls, "IND") && nrow(rr)) {
+    ex_failed <- FALSE
+    ex <- tryCatch(exclude_fn(pr$election), error = function(e) {
+      ex_failed <<- TRUE
+      message(sprintf("DR1! pair %s -> %s DROPPED from the departed-rate fit: successor table unreadable: %s",
+                      pr$prev, pr$election, conditionMessage(e)))
+      NULL })
+    if (ex_failed) return(list(rows = NULL, why = "successor table error", n_excluded = 0L))
+    hit <- rr$seat %in% as.character(ex)
+    n_excl <- sum(hit)
+    rr <- rr[which(!hit)]
+  }
+  if (!nrow(rr)) return(list(rows = NULL, why = "no departed-branch rows", n_excluded = n_excl))
   NOWT <- C[C$election == pr$election]
   now_idx <- which(NOWT$party == want_cls)
   nowc <- NOWT[now_idx, list(actual_now = sum(pcv, na.rm = TRUE)), by = list(seat, party)]
@@ -922,7 +939,15 @@ fit_major_departed_slope <- function(target_election, corpus = NULL, pairs = NUL
   m[, pair := pr$election]
   m <- m[which(m$x > 0)]
   m[, dev := x - level_prev]; m[, yy := actual_now - level_now]
-  list(rows = m, why = if (nrow(m)) "ok" else "no rows with a prior base")
+  list(rows = m, why = if (nrow(m)) "ok" else "no rows with a prior base", n_excluded = n_excl)
+}
+
+# The seats the successor table names for one election (they take their own rate, so the
+# departed-rate fit leaves them out). character(0) when AUSPOL_DEPARTED_SUCCESSOR is off;
+# departed_successor_rates() errors when the switch is on and the election has no rows.
+.dr_successor_seats <- function(election) {
+  r <- departed_successor_rates(election)
+  if (is.null(r)) character(0) else names(r)
 }
 
 # One election's slope through the origin and its variance: the LARGER of the ordinary
@@ -1001,12 +1026,18 @@ dl_pool <- function(b, se2, tau2_floor = .DR_TAU2_FLOOR) {
 #' @param fallback Rate to return when under-supported; `NULL` is the control value.
 #' @param min_elections Minimum earlier INFORMATIVE elections (>= 2 departed rows each).
 #' @param pool_fn Pooling function, [dl_pool()]; injectable for tests.
+#' @param exclude_fn `function(election)` returning the seats whose IND cell is governed by
+#'   another rate at that election and so is left out of the fit (prereg
+#'   `docs/plans/prereg-departed-rate-screen-2026-10-25.md` Amendment 1 item 2). Default: the
+#'   seats [departed_successor_rates()] names (none when `AUSPOL_DEPARTED_SUCCESSOR` is off).
+#'   An error drops that pair from the fit with a `DR1!` message. `NULL` excludes nothing.
 #' @return list(rate, fallback_used, fallback_reason, mu, tau2, G, n, elections,
 #'   per_election, rows). `rate` is a length-1 numeric named `cls`.
 #' @export
 fit_departed_rate <- function(target_election, corpus = NULL, pairs = NULL, cls = "IND",
                               permit_fn = NULL, fallback = NULL,
-                              min_elections = .DR_MIN_ELECTIONS, pool_fn = dl_pool) {
+                              min_elections = .DR_MIN_ELECTIONS, pool_fn = dl_pool,
+                              exclude_fn = .dr_successor_seats) {
   if (identical(Sys.getenv("AUSPOL_TIME_FORWARD_FITS", "1"), "0"))
     stop("fit_departed_rate() is time-forward only; AUSPOL_TIME_FORWARD_FITS=0 would read later elections", call. = FALSE)
   C <- corpus
@@ -1019,10 +1050,11 @@ fit_departed_rate <- function(target_election, corpus = NULL, pairs = NULL, cls 
   if (is.null(permit_fn)) permit_fn <- function(election, prev_election, region) salience_permit_for(election, prev_election, region)
   pairs_in <- if (is.null(pairs)) all_election_pairs() else pairs
   pairs_tf <- fit_pairs_for(target_election, pairs_in)   # strictly earlier elections only
-  got <- lapply(pairs_tf, function(pr) .dr_pair_rows(pr, C, cls, permit_fn))
+  got <- lapply(pairs_tf, function(pr) .dr_pair_rows(pr, C, cls, permit_fn, exclude_fn))
   rows <- data.table::rbindlist(lapply(got, `[[`, "rows"), fill = TRUE)
   n_screened <- sum(vapply(got, function(g) !g$why %in% c("no screen", "screen error"), logical(1)))
-  n_dropped <- sum(vapply(got, function(g) g$why %in% c("no returns table", "screen error"), logical(1)))
+  n_dropped <- sum(vapply(got, function(g) g$why %in% c("no returns table", "screen error", "successor table error"), logical(1)))
+  n_excluded <- sum(vapply(got, function(g) if (is.null(g$n_excluded)) 0L else as.integer(g$n_excluded), integer(1)))
   per <- data.table::data.table(election = character(), n = integer(), b = numeric(), se2 = numeric())
   if (nrow(rows)) {
     for (g in unique(rows$pair)) {
@@ -1038,7 +1070,7 @@ fit_departed_rate <- function(target_election, corpus = NULL, pairs = NULL, cls 
   G_inf <- sum(per$n >= .DR_MIN_ROWS)
   base <- list(G = G, G_informative = G_inf, n = if (nrow(rows)) nrow(rows) else 0L, elections = per$election,
                per_election = per, rows = rows, n_pairs = length(pairs_tf), n_screened = n_screened,
-               n_dropped = n_dropped)
+               n_dropped = n_dropped, n_excluded = n_excluded)
   if (G_inf < min_elections) {
     # Fallback is the CONTROL value (arm A), not the run's `new` slope: that is
     # fit_conditional_slopes()$new, which returns 1.0 under AUSPOL_SHIP_TIME_FORWARD=1
@@ -1123,10 +1155,10 @@ departed_rate_for_harness <- function(target_election, mode = Sys.getenv("AUSPOL
     # never hand a non-finite value to screened_slopes()
     if (length(f$rate) != 1L || !is.finite(f$rate[["IND"]]))
       stop(sprintf("departed rate is not finite (%s)", format(f$rate)), call. = FALSE)
-    cat(sprintf("DR0 %s IND rate %.4f (%d rows, %d elections of which %d informative, tau2 %s, mu %s, screened %d of %d earlier pairs, %d dropped on error) [arm %s%s] elections used: %s\n",
+    cat(sprintf("DR0 %s IND rate %.4f (%d rows, %d elections of which %d informative, tau2 %s, mu %s, screened %d of %d earlier pairs, %d dropped on error, %d successor-named cells left out) [arm %s%s] elections used: %s\n",
                 target_election, f$rate[["IND"]], f$n, f$G, f$G_informative,
                 if (is.finite(f$tau2)) sprintf("%.4f", f$tau2) else "NA",
-                if (is.finite(f$mu)) sprintf("%.4f", f$mu) else "NA", f$n_screened, f$n_pairs, f$n_dropped, mode,
+                if (is.finite(f$mu)) sprintf("%.4f", f$mu) else "NA", f$n_screened, f$n_pairs, f$n_dropped, f$n_excluded, mode,
                 if (isTRUE(f$fallback_used)) sprintf("; %s", f$fallback_reason) else "",
                 if (length(f$elections)) paste(f$elections, collapse = ",") else "none"))
     f$rate
