@@ -918,6 +918,9 @@ CLASSIFY <- list(
   AUSPOL_SITTING_MEMBER_ADJ = paste(
     "ARM, not shipped (default 0; plans/prereg-sitting-member-baseline-2026-09-28.md). Read in R/xgb_primary_override.R and",
     "scripts/fit_xgb_primary_v6.R, i.e. at xgb training and in the override, not in a harness."),
+  AUSPOL_DEPARTED_POOL = paste(
+    "ARM, not shipped (default 0; plans/prereg-departed-slope-pool-2026-11-05.md). Read through .departed_pool_on() in",
+    "R/split_slope.R's fit_major_departed_slope(), which every harness and fit_seats_full.R call, so live and backtests share it."),
   AUSPOL_SLOPE_SHRINK = paste(
     "ARM, not shipped (default 0; plans/prereg-slope-shrinkage-2026-09-28.md). Read through .slope_shrink_on() in R/split_slope.R,",
     "which the six harnesses call; if adopted it needs a published-forecast check since fit_seats_full.R does not name split_slope."),
