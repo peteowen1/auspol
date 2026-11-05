@@ -6,7 +6,7 @@ while the deciding runs hold the machine (bucket split from 10:30pm, departed-sl
 
 ## FOR PETE IN THE MORNING
 
-In order: two decisions, one merge, one cleanup yes/no, one finding.
+In order: three decisions, one merge, one cleanup yes/no, one lower-priority decision.
 
 1. DECISION: ship `AUSPOL_STATEWIDE_ENDPOINT=party`? (`plans/prereg-statewide-endpoint-2026-11-06.md` RESULT.) It fixes a real bug: the backtests'
   statewide level dropped any party missing from the newest poll (11 of 32 targets; nsw2023 One Nation 4.6 -> 0), unlike live.
@@ -14,16 +14,22 @@ In order: two decisions, one merge, one cleanup yes/no, one finding.
   nsw2023 -0.0038, fed2016 -0.0018; wa2008 +0.0009, fed2019 +0.0003. Recommend: yes. Shipping = flip the flag, rebuild
   level-pred.csv and retrain the as-at trees (they trained on the buggy levels), then the 20,000-sim run. Live Victoria is unaffected
   by the flag itself (live already reads per party); it changes only through retrained trees.
-2. DECISION: bucket split, rebuilt file or frozen (`deciding-runs/20261105-0941-bucket-split-v2-rebuilt/results.txt`, DONE 12:14am,
+2. DECISION (clause override): departed-member slope pool `AUSPOL_DEPARTED_POOL` (your 27 Oct "tau^2 toward the pooled slope").
+  Deciding run DONE 2:59am, all 35 elections at 20,000 sims: all elections -0.0020 (SE 0.0015), better; the eight targeted
+  elections -0.0081 (SE 0.0052), PASS; leave-one-out and the two-biggest-seats check PASS. The one guard that fails is "no
+  election worse by 2 SE": nsw2015 +0.0011 (z 2.07) and qld2024 +0.00004 (z 2.11), noise-sized moves where the seat SE is
+  near zero. By the letter: refused. My recommendation: ship and record the override. Shipping = `AUSPOL_DEPARTED_POOL="1"` in
+  published_flags.R and the inline default, then the next rebuild. (`plans/prereg-departed-slope-pool-2026-11-05.md`, results.)
+3. DECISION: bucket split, rebuilt file or frozen (`deciding-runs/20261105-0941-bucket-split-v2-rebuilt/results.txt`, DONE 12:14am,
   all 35 elections at 20,000 sims). Seat log loss (lower is better) 0.3168 -> 0.3159, -0.0009 (SE 0.0010): a tie. AEF-7 +0.0001
   (SE 0.0001): worse by ~1 SE, tiny. Share squared error on the 3,525 moved cells -3% (SE 1.4%): better. By election: better on
   qld2017 -0.026, sa2018 -0.022, wa2017 -0.010; worse on nsw2015 +0.0065, sa2014 +0.006, nsw2011 +0.0056; 11 of 35 byte-identical.
   My recommendation: ADOPT the rebuilt file (`AUSPOL_BUCKET_SPLIT_SRC=minor-class-shares-resid-v2.csv`): reproducible from committed
   code, a tie on log loss, 3% better on shares. Then add `fit_minor_candidates.R AUSPOL_MC_OWN_RULE=v2` to the rebuild.
   The run overlapped my check_like_ci 10:42-10:47pm and was not harmed (35 of 35 scored).
-3. MERGE: PR #195 (dev -> main, 0.4.136) is open and NOT merged, per your CLAUDE.md rule for overnight work. Contents: two new switches, both off
+4. MERGE: PR #195 (dev -> main, 0.4.136) is open and NOT merged, per your CLAUDE.md rule for overnight work. Contents: two new switches, both off
   (statewide endpoint; poll-series class), the two new tests, docs. check_like_ci clean at 1:08am after the last code push (4,989 passed); review 0 Important, and the poll-series commit reviewed separately at 1:10am: 0 Important. Merge on CI green if you agree.
-4. HOUSEKEEPING PROPOSAL (nothing deleted; your yes needed): auspol has 68 local branches. 52 have no commit missing from dev
+5. HOUSEKEEPING PROPOSAL (nothing deleted; your yes needed): auspol has 68 local branches. 52 have no commit missing from dev
   (checked by patch content, `git cherry dev <branch>`): all `worktree-agent-*` and `worktree-wf_*` branches with 0 unmerged, plus
   census-retire-old-builder-1025, ci-step-timeout-1026, conserve-shrink, cov-tf, fat-tail-cell-error-1026, forecast-on-time,
   ind-overcall-1025, mp-slope-shrink-1025, newind-seatpoll-1026, night-replay-json, night-runner, party-class-fix, seat-spread-tf,
@@ -32,12 +38,14 @@ In order: two decisions, one merge, one cleanup yes/no, one finding.
   prototype/ branches, fed-timing-resume-fixed and instrument-backtest-fed-timing (queue item, never reviewed), departed-rate-refit
   (superseded by departed-rate-fit-1105; delete after a look), and the 6 worktree-agent branches with 1 unmerged commit each.
   Worktrees removable (branches pushed): .claude/worktrees/deprate-1105, fedbd-1105, wf_068cdb55-fff-2, wf_240a01af-c97-1 (checked 12:10am: no junctions, nothing uncommitted in any of the four).
-5. DECISION (lower priority): poll-series class fix, `AUSPOL_POLL_SERIES_CLASS=name`. SA-Best, Katter, UAP and Family First poll
+6. DECISION (lower priority): poll-series class fix, `AUSPOL_POLL_SERIES_CLASS=name`. SA-Best, Katter, UAP and Family First poll
   columns were classed by code and dropped from the backtests' statewide level (sa2018 SA-Best's ~21 points went to nobody). The
   first version tied leaning worse because a class with no series of its own (IND) is re-split from the others bucket by fixed
   ratios; Amendment 1 (post hoc, 1:15am) stops that. Rerun, 7 elections: pooled -0.0026 (SE 0.0040), a tie; AEF-7 subset -0.0074
   (SE 0.0016), better; federal elections -0.007 to -0.010 each; but sa2018 +0.040 (SA-Best got ~14% and won no seat) and
   qld2015 +0.012. Recommend: book the all-pairs 20,000-sim deciding run before deciding; post hoc, so the screen is not enough.
+  Amendment 1 code reviewed 1:40am (0 Important). Design point from the review: with the fix, sa2018's statewide IND level is
+  SA-Best's polls alone; other independents stay in the Others remainder. Worth deciding before the deciding run.
 
 ## Shipped tonight
 
@@ -59,6 +67,9 @@ In order: two decisions, one merge, one cleanup yes/no, one finding.
 ## Log
 
 - 1:08am. check_like_ci clean after the poll-series push (4,989 passed); everything pushed. PR #195 CI starting.
+- 2:59am. Departed-slope deciding run DONE: headline better, one guard fails on noise-sized moves. To Pete (clause override).
+- 2:00am. Departed-slope deciding run started on schedule.
+- 1:35am. check_like_ci clean after Amendment 1 (4,989 passed); pushed. Amendment 1 code reviewed 1:40am, 0 Important.
 - 1:23am. Poll-series rerun with the bucket fix (Amendment 1, post hoc): pooled tie, AEF-7 better, sa2018 worse. To Pete.
 - 12:58am. Poll-series class screen: tie leaning worse; sa2018 traced (seat layer does not carry the IND level). Not recommended alone.
 - 12:49am. Poll-series class arm built and pre-registered; screen launched (7 pairs). Slip: pushed the R change to dev with PR #195 open before rerunning check_like_ci (CLAUDE.md rule); default path unchanged; check runs after the screen.

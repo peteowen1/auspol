@@ -368,9 +368,9 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
 - **Time-forward fits still use `min_n` cliffs**: `R/split_slope.R:395,416` sit in `fit_conditional_slopes()`,
   which the shipped config never calls (`AUSPOL_FIT_SLOPES=0`). Live: `fit_major_departed_slope()` falls back to 1.0
   below 40 seats (fed2007, fed2010, sa2010, wa2001, wa2005, wa2008). `AUSPOL_SLOPE_SHRINK` shrinks toward 1, not the
-  pooled slope, refused 29 Sep. IN FLIGHT 5 Nov (Pete: tau^2 from earlier elections' party gaps): arm
-  `AUSPOL_DEPARTED_POOL` built (`b0197dbd`), prereg `plans/prereg-departed-slope-pool-2026-11-05.md`, screens
-  running; all-pairs deciding run to follow.
+  pooled slope, refused 29 Sep. DECIDING RUN DONE 6 Nov 2:59am (`AUSPOL_DEPARTED_POOL`): all 35
+  -0.0020 (SE 0.0015), the eight -0.0081 (SE 0.0052); one guard fails on noise-sized moves (nsw2015, qld2024). NEEDS PETE
+  (clause override; recommend ship). Prereg results.
 - **Teal/independent under-call** (Curtin, Goldstein, Mackellar, Wakehurst):
   PARKED by Pete. Overall we lead AEF on independents (36 winners: 16.7 vs
   19.7 log loss). Wave term blocked (`reviews/wave-term-blocked-2026-09-07.md`).
