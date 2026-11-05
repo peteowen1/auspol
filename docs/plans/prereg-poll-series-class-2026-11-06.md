@@ -41,6 +41,21 @@ pairs are exactly these seven.
 
 Nothing ships overnight.
 
+## RESULT (2026-11-06 12:58am, 1,000 sims, 7 pairs): a TIE that leans worse; NOT recommended alone. To Pete.
+
+- Applied: PSC1 lines (sa2018: "SAB classed by name as IND (by code: OTH)"); all 7 pairs moved.
+- Primary, pooled seat-winner log loss, 721 seats: 0.2874 -> 0.2890, +0.0016 (SE 0.0024): within 1 SE.
+- Per election: qld2015 +0.0120, sa2018 +0.0067, sa2010 +0.0031, fed2022 +0.0026, fed2019 +0.0015, qld2024 +0.0008; fed2025 -0.0070.
+  Six of seven worse. Share squared error on 3,495 moved cells +1% (SE 2.7%).
+- The known answer FAILED (sa2018 worse), so the second mechanism was looked for (seat means from the cached sharedetail, points,
+  base / arm / actual): IND 11.42 / 12.32 / 17.89; ALP 32.68 / 31.63 / 32.43; LNP 36.18 / 35.00 / 38.04; OTH 5.14 / 5.80 / 2.01;
+  OTH_RIGHT 5.39 / 6.22 / 2.86. The statewide IND level rose 21 points but the seats' IND rose 0.9: the seat layer does not carry
+  a statewide IND rise into the seats, and the share taken from the majors went to OTH and OTH_RIGHT, which were already over.
+  Not traced in code; the likely place is how a class level reaches seats with no candidate of that class (SA-Best stood in
+  some seats only). Morphett is the largest loss (LNP winner 0.110 -> 0.073).
+- Reading: the classification fix is right (one class per party at both levels) but cannot ship until the seat layer passes a
+  class level through to the seats that have that class's candidates. Shipping it alone would move share to the wrong classes.
+
 ## Amendments
 
 (none)

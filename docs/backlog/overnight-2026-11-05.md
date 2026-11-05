@@ -6,6 +6,11 @@ while the deciding runs hold the machine (bucket split from 10:30pm, departed-sl
 
 ## FOR PETE IN THE MORNING
 
+- FINDING (no decision needed yet): statewide poll columns are classed by code, so SA-Best, Katter, UAP and Family First drop out
+  of the backtests' statewide level (sa2018 SA-Best's ~21 points went to nobody). Fixing the class (arm `AUSPOL_POLL_SERIES_CLASS`) is a
+  tie leaning worse (7 pairs, +0.0016, SE 0.0024; 6 of 7 worse) because the seat layer does not pass a statewide IND rise into the
+  seats: sa2018 statewide IND +21, seat IND +0.9, and the majors' lost share went to Others. Recommend: do not ship alone; the real
+  question is how a class level reaches seats (prereg RESULT has the table). Off, nothing changed.
 - MERGE: PR #195 (dev -> main, 0.4.136) is open and NOT merged, per your CLAUDE.md rule for overnight work. Contents: the
   statewide-endpoint switch (off), the two new tests, docs. check_like_ci clean (4,989 passed), review 0 Important. Merge on CI green if you agree.
 - DECISION: ship `AUSPOL_STATEWIDE_ENDPOINT=party`? (`plans/prereg-statewide-endpoint-2026-11-06.md` RESULT.) It fixes a real bug: the backtests'
@@ -50,6 +55,7 @@ while the deciding runs hold the machine (bucket split from 10:30pm, departed-sl
 
 ## Log
 
+- 12:58am. Poll-series class screen: tie leaning worse; sa2018 traced (seat layer does not carry the IND level). Not recommended alone.
 - 12:49am. Poll-series class arm built and pre-registered; screen launched (7 pairs). Slip: pushed the R change to dev with PR #195 open before rerunning check_like_ci (CLAUDE.md rule); default path unchanged; check runs after the screen.
 - 12:41am. check_like_ci on dev (tests + switch + forecast_mode): 4,989 passed, R CMD check clean. Pre-PR review launched (Sonnet).
 - 12:29am. Statewide-endpoint screen done: passes the primary (-0.0007, SE 0.0004). To Pete.
