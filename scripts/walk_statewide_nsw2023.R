@@ -19,7 +19,7 @@ parties <- c("ALP", "LNP", "GRN", "ONP", "IND", "OTH", "OTH_RIGHT")
 pri <- load_prior_results(); kp <- pri$region == region & pri$year == year
 priors <- setNames(pri$prev1[which(kp)], pri$party[which(kp)])
 cat("\nW2  prior election (2019) first preferences the trend is anchored to:\n"); print(round(priors, 1))
-fl <- flows_for(load_preference_flows(), year, region, as_of = min(cycles[cycles$region == region & cycles$year == year, ]$start), cycles = cycles, quiet = TRUE)
+fl <- flows_for(load_preference_flows(), year, region, as_of = .cycle_flow_as_of(cycles, region, year, as_at), cycles = cycles, quiet = TRUE)
 tr <- trend_as_at(polls, year, cycles, as_at, priors, fl, with_series = TRUE)
 s <- as.data.table(tr$series); last <- s[date == max(date)]
 cat("W2  trend at", as.character(max(s$date)), ": per-party level (mean, 95% band)\n")
@@ -58,4 +58,4 @@ cat("\nW5  forecast vs actual first preferences (points):\n")
 cls <- c("ALP", "LNP", "GRN", "ONP", "IND", "OTH_RIGHT", "OTH")
 print(data.table(class = cls, trend = round(sapply(cls, function(p) if (p %in% last$party) last[party == p]$mean else NA), 1),
                  forecast = round(fc$st_fc[cls], 1), actual = round(act[cls], 1), miss = round(fc$st_fc[cls] - act[cls], 1)))
-cat("W5  two-party: trend", round(fc$tpp, 2), " fundamentals", round(fc$fund, 2), " anchor", round(fc$anchor_mean, 2), " draws realise", round(fc$implied_tpp, 2), " actual 54.3\n")
+cat("W5  two-party: trend", round(fc$tpp, 2), " fundamentals", round(fc$fund, 2), " anchor", if (is.null(fc$anchor_mean)) "none (live recipe: level not anchored)" else round(fc$anchor_mean, 2), " draws realise", round(fc$implied_tpp, 2), " actual 54.3\n")

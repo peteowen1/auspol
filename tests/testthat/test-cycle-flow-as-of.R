@@ -20,8 +20,7 @@ test_that("the flow date is the target cycle's start, with a data.table calendar
 })
 
 test_that("on the real calendar every scored target gets its own cycle start", {
-  skip_if_not(file.exists(file.path(getOption("auspol.root", "."), "external", "aus-polling-analyser")) ||
-                nzchar(Sys.getenv("AUSPOL_ANCHOR_DIR")), "no anchor calendar on this machine")
+  skip_if_no_anchor()
   cy <- tryCatch(load_election_cycles(), error = function(e) NULL)
   skip_if(is.null(cy), "election calendar not loadable")
   d <- .cycle_flow_as_of(cy, "vic", 2022L, as.Date(NA))
