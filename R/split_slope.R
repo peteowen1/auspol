@@ -789,7 +789,8 @@ fit_major_departed_slope <- function(target_election, corpus = NULL, pairs = NUL
 #   tau^2  = the between-party variance, estimated from EARLIER ELECTIONS' gaps,
 #            not from the two cells' own spread: for every pair p with departed
 #            rows for both parties, g_p = b_ALP,p - b_LNP,p with sampling variance
-#            v_p; E[g_p^2] = v_p + 4 tau^2 when the two true slopes sit at mu +- delta,
+#            v_p = s2 / sxx_ALP,p + s2 / sxx_LNP,p, s2 ONE residual variance pooled over every
+#            (election, party) cell (prereg amendment 1); E[g_p^2] = v_p + 4 tau^2 when the two true slopes sit at mu +- delta,
 #            so tau^2 = max(0, weighted mean(g_p^2 - v_p)) / 4, weights 1 / (v_p + 4 tau^2)^2
 #            (the inverse variance of g_p^2), iterated.
 #   shrunk = mu + tau^2 / (tau^2 + se_c^2) * (own_c - mu)
@@ -814,11 +815,27 @@ fit_major_departed_slope <- function(target_election, corpus = NULL, pairs = NUL
   mu <- .origin_fit(dep)[["b"]]
   if (!is.finite(mu)) return(NULL)
   own <- lapply(stats::setNames(MAJ, MAJ), function(cl) .origin_fit(dep[dep$party == cl]))
-  gaps <- data.table::rbindlist(lapply(unique(dep$pair), function(p) {
-    a <- .origin_fit(dep[dep$pair == p & dep$party == "ALP"]); l <- .origin_fit(dep[dep$pair == p & dep$party == "LNP"])
-    if (!is.finite(a[["b"]]) || !is.finite(l[["b"]])) return(NULL)
-    data.table::data.table(pair = p, g = a[["b"]] - l[["b"]], v = a[["se2"]] + l[["se2"]])
-  }))
+  # Per (election, party) cell: its slope and sum of dev^2. Sampling variance uses ONE residual variance pooled over
+  # every cell (review 5 Nov: a cell's own variance from 2-3 rows can come out near zero, take almost all the weight
+  # and push tau^2 above 1; 19 of the 67 cells behind vic2026 have under 5 rows). A 1-row cell counts, at s2 / dev^2.
+  cells <- data.table::rbindlist(lapply(unique(dep$pair), function(pp) data.table::rbindlist(lapply(MAJ, function(cl) {
+    d <- dep[dep$pair == pp & dep$party == cl]
+    sxx <- sum(d$dev^2)
+    if (!nrow(d) || !isTRUE(sxx > 0)) return(NULL)
+    b <- sum(d$dev * d$yy) / sxx
+    data.table::data.table(pair = pp, cls = cl, b = b, sxx = sxx, n = nrow(d), rss = sum((d$yy - b * d$dev)^2))
+  }))))
+  gaps <- data.table::data.table(pair = character(0), g = numeric(0), v = numeric(0))
+  if (nrow(cells)) {
+    df <- sum(cells$n - 1L)
+    s2 <- if (df > 0) sum(cells$rss) / df else NA_real_
+    both <- intersect(cells$pair[cells$cls == "ALP"], cells$pair[cells$cls == "LNP"])
+    if (is.finite(s2) && s2 > 0 && length(both)) {
+      A <- cells[cells$cls == "ALP"][match(both, cells$pair[cells$cls == "ALP"])]
+      L <- cells[cells$cls == "LNP"][match(both, cells$pair[cells$cls == "LNP"])]
+      gaps <- data.table::data.table(pair = both, g = A$b - L$b, v = s2 / A$sxx + s2 / L$sxx)
+    }
+  }
   gaps <- gaps[is.finite(gaps$v) & gaps$v > 0]
   tau2 <- 0
   if (nrow(gaps)) {

@@ -67,11 +67,25 @@ test_that("departed slopes pool toward the two-party slope with tau^2 from per-e
   expect_equal(unname(r$slope[["ALP"]]), unname(r$own[["ALP"]]), tolerance = 0.02)
   expect_equal(unname(r$slope[["LNP"]]), unname(r$own[["LNP"]]), tolerance = 0.02)
   expect_lt(r$slope[["ALP"]], 0.5); expect_gt(r$slope[["LNP"]], 0.7)
-  # Gaps that cancel across elections (same true slope, noise only): tau^2 0, both take mu.
-  dep2 <- rbind(mk("e1", "ALP", dev, 0.6), mk("e1", "LNP", dev, 0.6), mk("e2", "ALP", dev, 0.6), mk("e2", "LNP", dev, 0.6))
+  # Same true slope for both parties, independent noise: tau^2 near 0, both close to mu.
+  set.seed(7)
+  sim <- function(p, cl, n, k) { d <- stats::rnorm(n, 0, 8); data.table::data.table(pair = p, party = cl, dev = d, yy = k * d + stats::rnorm(n, 0, 4)) }
+  dep2 <- data.table::rbindlist(lapply(paste0("e", 1:5), function(p) rbind(sim(p, "ALP", 30, 0.6), sim(p, "LNP", 30, 0.6))))
   r2 <- auspol:::.pool_departed_slopes(dep2)
-  expect_equal(r2$tau2, 0)
-  expect_equal(unname(r2$slope[["ALP"]]), r2$mu); expect_equal(unname(r2$slope[["LNP"]]), r2$mu)
+  expect_lt(r2$tau2, 0.01)
+  # Review 5 Nov: one election with two seats per party must not blow tau^2 up. Before amendment 1 its own
+  # near-zero variance took almost all the weight (tau^2 up to 1.2 in simulation with a true value of 0).
+  worst <- 0
+  for (i in 1:100) {
+    tiny <- rbind(sim("e6", "ALP", 2, 0.6), sim("e6", "LNP", 2, 0.6))
+    worst <- max(worst, auspol:::.pool_departed_slopes(rbind(dep2, tiny))$tau2)
+  }
+  expect_lt(worst, 0.05)
+  # Identical rows for both parties: every gap is exactly 0, tau^2 0, both take mu.
+  dep3 <- rbind(mk("e1", "ALP", dev, 0.6), mk("e1", "LNP", dev, 0.6), mk("e2", "ALP", dev, 0.6), mk("e2", "LNP", dev, 0.6))
+  r3a <- auspol:::.pool_departed_slopes(dep3)
+  expect_equal(r3a$tau2, 0)
+  expect_equal(unname(r3a$slope[["ALP"]]), r3a$mu); expect_equal(unname(r3a$slope[["LNP"]]), r3a$mu)
   # One party with no rows takes mu; no rows at all returns NULL (the caller keeps 1).
   r3 <- auspol:::.pool_departed_slopes(mk("e1", "ALP", dev, 0.5))
   expect_equal(unname(r3$slope[["LNP"]]), r3$mu)

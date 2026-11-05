@@ -130,3 +130,43 @@ not most. Passes.
   0.641 -> 0.620 / 0.638; expect small moves) before the PR.
 - Clause 2 holds but clause 3 fails: refused; record in DECISIONS with the failing election.
 - Clause 2 fails at 20k with 1 and 3 passing: to Pete as "ship on the no-cliff rule, or keep the cliff".
+
+## Amendment 1 (5 Nov, after the targeted screen; the clauses above are unedited)
+
+**What changed:** the sampling variance `v` of each earlier election's ALP-minus-LNP gap now uses ONE residual
+variance pooled over every (election, party) cell, `v = s2/sxx_ALP + s2/sxx_LNP`, instead of each cell's own residual
+variance. 1-row cells now count too.
+
+**Why, and why it is not chosen to fit the answer:** the pre-PR code review found it, not the results. A cell with 2-3
+departed seats can give a near-zero own variance, take almost all the weight (`1/v^2`) and push `tau^2` to 1 or more,
+which turns the pooling off. In simulation (true `tau^2` 0, five 30-seat elections plus one 2-seat election) the old
+code's worst `tau^2` over 100 draws was 4.22; the new code's stays under 0.05
+(`tests/testthat/test-major_departed.R`). The real corpus has these cells everywhere: 19 of the 67 behind vic2026 have
+under 5 rows. The direction of the change on the targeted screen was not known when it was made.
+
+**The cells it now produces** (replaces the table above for every run after this amendment):
+
+| target | mu | tau^2 (gap elections) | pooled ALP / LNP | was (original rule) |
+|---|---|---|---|---|
+| fed2007 | 0.689 | 0.0077 (2) | 0.644 / 0.703 | 0.668 / 0.695 |
+| fed2010 | 0.713 | 0.0043 (5) | 0.689 / 0.730 | 0.648 / 0.754 |
+| sa2010 | 0.682 | 0.0114 (4) | 0.635 / 0.707 | 0.607 / 0.724 |
+| wa2005 | 0.439 | 0.0052 (1) | 0.428 / 0.477 | 0.432 / 0.466 |
+| wa2008 | 0.709 | 0.0092 (3) | 0.670 / 0.731 | 0.709 / 0.709 |
+| nsw2011, vic2010 | 0.688 | 0.0023 (6) | 0.666 / 0.701 | 0.620 / 0.730 |
+| fed2022 | 0.668 | 0.0010 (25) | 0.671 / 0.667 | 0.673 / 0.666 |
+| fed2025 | 0.648 | 0.0004 (31) | 0.644 / 0.649 | 0.637 / 0.656 |
+| nsw2023 | 0.659 | 0.0018 (27) | 0.656 / 0.660 | 0.654 / 0.662 |
+| qld2024 | 0.648 | 0.0000 (29) | 0.648 / 0.648 | 0.647 / 0.648 |
+| sa2026 | 0.644 | 0.0004 (32) | 0.641 / 0.645 | 0.633 / 0.651 |
+| vic2022 | 0.663 | 0.0012 (26) | 0.664 / 0.663 | 0.664 / 0.663 |
+| wa2025 | 0.647 | 0.0000 (30) | 0.647 / 0.647 | 0.643 / 0.650 |
+| vic2026 (live) | 0.630 | 0.0000 (33) | 0.630 / 0.630 | 0.620 / 0.638 |
+
+Recent elections now put both parties on nearly one slope (live: 0.618 / 0.641 shipped -> 0.630 / 0.630), so AEF-7
+moves a little more than before (up to 0.012) and clause 1 is a real check, not a near no-op.
+
+**Runs:** the targeted screen above (clause 2 PASS) and the first AEF-7 screen (seat log loss 0.2584 -> 0.2584) used the
+original rule, and my edit landed while the AEF-7 screen ran, so it counts for nothing. Both screens are re-run on the
+amended code and decide clauses 1 and 2. The 2am all-elections run booked on the original code is replaced by one on
+the amended code.
