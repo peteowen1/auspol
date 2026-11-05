@@ -23,7 +23,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
 - OPEN, CONFIRMED 6 Nov, arm built (off): `AUSPOL_STATEWIDE_ENDPOINT=party` (`8cf24ad2`). The backtests' statewide level dropped any
   party missing from the newest poll into OTH (11 of 32 targets; nsw2023 One Nation 4.6 -> 0); live already reads per party
-  (`fit_seats_full.R:566`). Screen pending (`backlog/overnight-2026-11-05.md`); shipping also needs level-pred and a tree retrain.
+  (`fit_seats_full.R:566`). SCREEN PASSED 6 Nov (11 affected, -0.0007, SE 0.0004); NEEDS PETE to ship (+ level-pred rebuild, tree retrain).
 - **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** History, DONE list and replay evidence:
   `backlog/journal-2026-11-05-election-night.md` (moved verbatim 6 Nov); plan `plans/election-night-booth-model.md`. Runbook:
   `gh release download forecast-latest -p night-state-vic-2026.rds -D output`, then `night_runner.R --state=output/night-state-vic-2026.rds

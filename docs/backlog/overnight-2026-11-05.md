@@ -6,6 +6,12 @@ while the deciding runs hold the machine (bucket split from 10:30pm, departed-sl
 
 ## FOR PETE IN THE MORNING
 
+- DECISION: ship `AUSPOL_STATEWIDE_ENDPOINT=party`? (`plans/prereg-statewide-endpoint-2026-11-06.md` RESULT.) It fixes a real bug: the backtests'
+  statewide level dropped any party missing from the newest poll (11 of 32 targets; nsw2023 One Nation 4.6 -> 0), unlike live.
+  Screen, 11 affected elections at 1,000 sims: seat log loss 0.3071 -> 0.3065, -0.0007 (SE 0.0004), BETTER by more than 1 SE;
+  nsw2023 -0.0038, fed2016 -0.0018; wa2008 +0.0009, fed2019 +0.0003. Recommend: yes. Shipping = flip the flag, rebuild
+  level-pred.csv and retrain the as-at trees (they trained on the buggy levels), then the 20,000-sim run. Live Victoria is unaffected
+  by the flag itself (live already reads per party); it changes only through retrained trees.
 - DECISION: bucket split, rebuilt file or frozen (`deciding-runs/20261105-0941-bucket-split-v2-rebuilt/results.txt`, DONE 12:14am,
   all 35 elections at 20,000 sims). Seat log loss (lower is better) 0.3168 -> 0.3159, -0.0009 (SE 0.0010): a tie. AEF-7 +0.0001
   (SE 0.0001): worse by ~1 SE, tiny. Share squared error on the 3,525 moved cells -3% (SE 1.4%): better. By election: better on
@@ -39,6 +45,7 @@ while the deciding runs hold the machine (bucket split from 10:30pm, departed-sl
 
 ## Log
 
+- 12:29am. Statewide-endpoint screen done: passes the primary (-0.0007, SE 0.0004). To Pete.
 - 12:14am. Bucket split DONE (tie; to Pete). Statewide-endpoint screen launched detached (11 pairs, 1,000 sims, 2 slots); another session's 7.5 GB R job started 12:13am, so 4.1 GB free: messaged it, watching memory.
 - 12:05am. Fold bug confirmed and arm built; screen after the deciding runs.
 - 11:55pm. 8.7 GB free. Bucket split deciding run RUNNING (70 harness runs, est ~62 min at 1 slot; started 10:30pm).
