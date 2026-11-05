@@ -41,8 +41,8 @@ Nothing ships overnight under any outcome: shipping changes the published path's
 
 ## RESULT (2026-11-06 12:29am, 1,000 sims, the 11 affected targets): PASSES the primary. Recommend shipping, with the level-pred rebuild and tree retrain. Pete decides.
 
-- Applied: SWE1 lines in the affected harness logs; 5 of 11 byte-identical (vic2014, vic2022, qld2017, sa2018, wa2017: the dropped
-  party is not a class the harness simulates there), as the prereg allowed.
+- Applied: SWE1 lines in the affected harness logs; 5 of 11 byte-identical (vic2014, vic2022, qld2017, sa2018, wa2017). Why NOT
+  CHECKED: likely the dropped party never reaches a simulated class there (qld2017 Katter would be the case to trace first).
 - Primary, pooled seat-winner log loss, 1,063 seats: 0.3071 -> 0.3065, -0.0007 (SE 0.0004, clustered on election): better by more than 1 SE.
 - AEF-7 subset (181 seats): 0.2171 -> 0.2152, -0.0019 (SE 0.0019).
 - Per election: nsw2023 -0.0038, fed2016 -0.0018, nsw2019 -0.0009, fed2007 -0.0008, fed2019 +0.0003, wa2008 +0.0009. Guard (no
