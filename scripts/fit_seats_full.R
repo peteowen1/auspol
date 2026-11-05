@@ -965,6 +965,8 @@ if (.succ_on) { cat(sprintf("DSR1 departed successor rates (%s): %d seat(s) for 
 .permit  <- if (.screened && !is.null(.returns))
               .try("permit", salience_permit_for(TGT, PREV, REGION,
                                                  surge_levels = surge_levels_live(TGT, .permit_level))) else NULL
+# AUSPOL_DEPARTED_RATE (default "0" = the hardcoded 0.38, byte-identical): time-forward refit of the departed-leader rate. Prints one DR0 line either way. docs/plans/prereg-departed-rate-refit-2026-10-03.md
+.DEPRATE <- departed_rate_for_harness(TGT, active = .screened && .honour_departed && !is.null(.permit) && !is.null(.returns))
 if (.cond && is.null(.returns)) {
   cat(sprintf(sub("@T", TGT, "DS2  arm CS requested but @T has no candidate list yet -- FALLING BACK to uniform swing%s\n", fixed = TRUE),
               .reason("returns")))
@@ -1280,6 +1282,7 @@ if (!is.null(.fitsl)) {
     pm <- unname(lut[seats]); # a missing permit row is NOT a permit (NA = silent; 2026-09-20)
     return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES,
                             honour_departed = .honour_departed, with_flags = .departed_hold, successor_rate = .SUCC_RATE, gap_restand = .GAP_RESTAND,
+                            departed_rate = if (is.null(.DEPRATE)) eval(formals(screened_slopes)$departed_rate) else .DEPRATE,
                             same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same,
                             new  = if (is.null(.fitsl)) formals(screened_slopes)$new  else .fitsl$new))
   }

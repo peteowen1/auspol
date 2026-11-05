@@ -906,6 +906,8 @@ for (K in PAIRS) {
   # ARM CS: arm C plus the salience screen, protecting the rare emergent that
   # arm C's harsh new-candidate slope crushed. See screened_slopes().
   .permit <- if (.screened) salience_permit_for(eb, ea, "fed") else NULL
+  # AUSPOL_DEPARTED_RATE (default "0" = the hardcoded 0.38, byte-identical): time-forward refit of the departed-leader rate. Prints one DR0 line either way. docs/plans/prereg-departed-rate-refit-2026-10-03.md
+  .DEPRATE <- departed_rate_for_harness(eb, active = .screened && .honour_departed && !is.null(.permit))
   # `permit_tbl`, not `permit`: a parameter whose NAME is literally identical to
   # one of its own data.table columns ("permit") triggers a data.table $-typo
   # check that throws "$ operator is invalid for atomic vectors" -- not an NSE
@@ -972,7 +974,7 @@ for (K in PAIRS) {
       lut <- .permit_lut(pv)
       pm <- unname(lut[seats])
       # a missing permit row is NOT a permit (NA = silent; 2026-09-20)
-      return(screened_slopes(p, seats, returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, honour_departed = .honour_departed, with_flags = .departed_hold, successor_rate = .SUCC_RATE, gap_restand = .GAP_RESTAND, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new))
+      return(screened_slopes(p, seats, returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, honour_departed = .honour_departed, with_flags = .departed_hold, successor_rate = .SUCC_RATE, departed_rate = if (is.null(.DEPRATE)) eval(formals(screened_slopes)$departed_rate) else .DEPRATE, gap_restand = .GAP_RESTAND, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new))
     }
     if (cond && !is.null(returns))
       return(conditional_slopes(p, seats, returns, gap_restand = .GAP_RESTAND, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new))

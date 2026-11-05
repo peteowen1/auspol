@@ -719,6 +719,8 @@ if (identical(Sys.getenv("AUSPOL_MAJOR_DEPARTED", "0"), "1") || identical(Sys.ge
 # elections, zero winners) and protects anyone it permits by leaving them on
 # uniform swing instead. See screened_slopes() and prereg-salience-screen.md.
 .permit <- if (.screened) salience_permit_for(TGT, PRV, "nsw") else NULL
+# AUSPOL_DEPARTED_RATE (default "0" = the hardcoded 0.38, byte-identical): time-forward refit of the departed-leader rate. Prints one DR0 line either way. docs/plans/prereg-departed-rate-refit-2026-10-03.md
+.DEPRATE <- departed_rate_for_harness(TGT, active = .screened && .honour_departed && !is.null(.permit))
 cat(sprintf("BN1d  dev slopes: %s%s
 ",
             if (all(DEV_SLOPE == 1)) "all 1.000 (uniform swing)" else
@@ -752,7 +754,7 @@ for (p in parties) {
     pv <- .permit[.permit$party == p, ]
     lut <- .permit_lut(pv)
     pm <- unname(lut[rownames(mat)]); # a missing permit row is NOT a permit (NA = silent; 2026-09-20)
-    screened_slopes(p, rownames(mat), .returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, honour_departed = .honour_departed, with_flags = .departed_hold, successor_rate = .SUCC_RATE, gap_restand = .GAP_RESTAND, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new)
+    screened_slopes(p, rownames(mat), .returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, honour_departed = .honour_departed, with_flags = .departed_hold, successor_rate = .SUCC_RATE, departed_rate = if (is.null(.DEPRATE)) eval(formals(screened_slopes)$departed_rate) else .DEPRATE, gap_restand = .GAP_RESTAND, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new)
   } else if (.cond) conditional_slopes(p, rownames(mat), .returns, gap_restand = .GAP_RESTAND, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new) else DEV_SLOPE[[p]]
   .hd <- attr(sl, "departed"); if (.departed_hold && !is.null(.hd)) HELD[, p] <- ((.hd %in% TRUE) & (mat[, p] >= .hold_min)) %in% TRUE
   if (!is.null(.major_sl) && p %in% names(.major_sl$same) && !is.null(.returns)) {
