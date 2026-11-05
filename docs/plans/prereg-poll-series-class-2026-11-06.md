@@ -82,3 +82,15 @@ confirmatory test: the deciding run on all pairs is the one that counts.
 
 Seat log loss 0.2905 -> 0.2877, -0.0028 (SE 0.0038): a tie, the same pattern as at 1,000 sims. fed2022 -0.0088, fed2025
 -0.0082, fed2019 -0.0067, sa2010 -0.0142, qld2024 -0.0037; sa2018 +0.0370, qld2015 +0.0122. Share squared error -2% (SE 6%).
+
+### Where the sa2018 loss comes from (6 Nov 8:45am, read-only, the 20k caches above)
+
+Not an amendment; nothing rerun. sa2018 +0.0370 per seat, of which Morphett alone is +0.0311; the other 39 seats +0.0060
+(14 better, 26 worse). Morphett: sitting Liberal Duncan McFetridge (57.7% in 2014) ran as an independent and got 14.2%; SA-Best's
+Simon Jones got 12.1%; Liberal Stephen Patterson won with 41.4%. The baseline ALREADY gave IND 0.742 there (Liberal 0.104); the arm
+raised it to 0.928 (Liberal 0.030). So most of the cost is a pre-existing over-call of a defecting sitting member, which the
+correct SA-Best level amplifies (two IND candidates in one seat). Next 4 worst: Hartley +0.233 (IND 0.026 -> 0.166; Xenophon
+himself stood and lost), Davenport +0.231, Elder +0.149, Kavel +0.126.
+
+Reading: the class fix is not the problem in sa2018; the defector's carried personal vote is. Worth a look at how a sitting member
+who loses preselection and runs as IND keeps his vote (`docs/plans/prereg-defector-pooling-2026-09-09.md`) before deciding this switch.
