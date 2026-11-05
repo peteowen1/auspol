@@ -20,6 +20,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   due 4 Nov, not in Gmail (all folders) or Hotmail at 3pm 5 Nov. Pete waits to 7 Nov, then sends the chase (Gmail
   draft saved 5 Nov as a reply in his 28 Oct thread to resultsdatafeed@vec.vic.gov.au). Run `scripts/refresh_local_poll_inputs.sh` before ANY
   local forecast run.
+- OPEN, BROKEN (found 5 Nov by the fed-breakdowns agent, confirmed in R): `statewide_draws_as_at()`
+  (`R/forecast_mode.R:110`) hits the data.table NSE trap: `cycles[cycles$region == region & cycles$year == year, ]`
+  matches all 88 cycles, so the preference-flow `as_of` is 1969-10-26 for every target. Twelfth instance. Size first
+  (statewide flows reach the draws' two-party anchoring; `AUSPOL_STATE_FLOWS_AEC` was byte-identical at seat level on
+  AEF-7), then fix with a quick_arm screen. Also from the agent, NOT yet confirmed: a fitted party whose last poll is
+  earlier than the others' is folded into Others (nsw2023 One Nation, day before).
 - **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** Plan and replays:
   `docs/plans/election-night-booth-model.md` (vic2022 seat log loss vs afternoon 0.2643: 0.1133 at 10% counted,
   0.0929 at 50%). Upper house designed, NOT built (`plans/upper-house-night-model.md`). DONE: VEC sign-up (#150),
@@ -94,9 +100,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
     (identical to the refused pooled arm at every AEF-7 target on cached history), SALIENCE_STATE (needs two as-at
     retrains; blanks for fed/WA/vic2026 rows are a jurisdiction marker risk), departed-rate-refit (10 conflicts;
     3 choices for Pete: fallback 0.38 / slope 1.0 / per-target rate; fit rows; which decision rule).
-  - `fed-breakdowns-prereg-1026` `45e2bc4`: federal state breakdowns in the state trend. Reaches vic2022, nsw2023,
-    qld2024, wa2025, sa2026 (qld2020/sa2022 trace). Pete added 90/180 days out as a second deciding metric:
-    written as Amendment 1 (6a3d89c7, 27 Oct).
+  - CLOSED 5 Nov: federal state breakdowns in the state trend, BUILT and screened (branch `fed-breakdowns-trend-1105`,
+    `AUSPOL_TREND_FED_R` off): B1 FAIL, B2/B3 TIE; Pete: leave it off (DECISIONS 2026-11-05).
 - OPEN, 26 Oct decisions not yet built: hunt the real primaries for two-candidate-only seat polls (Fowler 2022
   Laidlaw, Pittwater 2023 Freshwater, Cowper and New England 2016) into `hand_keyed_primaries.csv`; if none found,
   try inferring the primary from the two-candidate split (J4 30 Sep is the refused relative). Prereg a shrunk,
@@ -257,19 +262,21 @@ leader ratings as a model input, trend-replaces-blend, poll-level centring, the 
 weighting by track record, seat-poll precision blend, typical-vote independent models.
 
 - Poll weighting (Pete wants "a LOT better"): statewide lean by company, sponsor, method and age CLOSED 4 Nov (all six arms
-  refused; top of this file). Still OPEN: federal state breakdowns in the state trend, preregistered 26 Oct (branch
-  `fed-breakdowns-prereg-1026`; see "Builds from 26 Oct branches"). `reviews/poll-weighting-inventory-2026-10-12.md`.
+  refused; top of this file). Federal breakdowns in the state trend: built, tied, left off 5 Nov (Pete). `reviews/poll-weighting-inventory-2026-10-12.md`.
 - OPEN move off AE (`reviews/ae-dependence-audit-2026-10-13.md`): (b) language-model extraction of the Poll Bludger
   posts, the stronger version, not tried.
 - OPEN leader ratings: drift from months out needs horizon scoring. (The blog chart is DONE: inthegame-blog PRs #890
   and #895, "The leaders" in `politics/_forecast-body.qmd`.)
-- OPEN (source gone) federal polls' state breakdowns end at 6 Oct for good: Wikipedia deleted the sub-national
+- CORRECTED 5 Nov: the breakdowns did NOT stop. BludgerTrack still publishes them (refetched 5 Nov, newest fieldwork
+  25 Oct, raw `external/reference/polls/pollbludger/raw/bludgertrack/fed2028-current-2026-11-05.xml`; branch
+  `fed-breakdowns-trend-1105` builds the union, 704 polls). OPEN, small: feed BludgerTrack's state rows into
+  `output/fed-state-breakdowns.csv` so the shipped blend stops decaying (FK3 trips ~20 Nov). Wikipedia's part: deleted the sub-national
   sections from the fed2028 page on 24 Oct (revision 1381724607, "excessive detail"; checked 5 Nov). The last
   pre-deletion revision (1381712590, saved as `raw/fed2028_opinion-oldid1381712590.html`) parses to the same 471 polls
   as ours, so nothing was added after 6 Oct either. Adding `fed2028_opinion` to the CI fetch would lose rows (PM2!).
   `build_fed_state_breakdowns.R` now refuses to write fewer or older polls than on disk (FK2!, proven on a broken
   input). Live effect: the blend's federal share (`AUSPOL_LEVEL_FED_R` 0.15) decays with no new data; FK3 (45 days)
-  would trip ~20 Nov. Open: another source for state breakdowns (Newspoll quarterly, Resolve) if wanted.
+  would trip ~20 Nov.
 - OPEN fed2025 vs AEF (0.377 vs 0.303; Pete asked 18 Oct): base_pred minor-party growth as flat points tested and
   REFUSED (logit, proportional, growth-ratio slopes all worse; `prereg-growth-ratio-features` RESULT; journal has the
   numbers). Remaining: fed2025 drifted 0.318 (30 Sep) -> 0.377 across many changes (a snapshot bisect would separate

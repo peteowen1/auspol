@@ -72,7 +72,7 @@ waiting for R"; Claude in the auspol session did not see these requests firsthan
 |---|---|
 | Seat-poll primaries where a poll reports only two candidates: hunt for the full primaries first, infer only when none exist | **NOT DONE.** Recorded by the NEXT-STEPS session; no branch named. |
 | A shrunk new-independent seat-poll bias term | **NOT DONE.** Recorded by the NEXT-STEPS session; no branch named. |
-| Federal state breakdowns in the state trend, with 90/180 days out as a second deciding metric | **PREREG ONLY.** Branch `fed-breakdowns-prereg-1026` (45e2bc4, local); the 90/180-day amendment written 27 Oct (6a3d89c7, Amendment 1). |
+| Federal state breakdowns in the state trend, with 90/180 days out as a second deciding metric | **NOT SHIPPING, Pete's call 5 Nov (told in chat):** built off by default (`AUSPOL_TREND_FED_R`, branch `fed-breakdowns-trend-1105`, 704 breakdowns incl. BludgerTrack to 25 Oct) and screened on 7 elections: B1 FAIL, B2/B3 TIE (day before -0.003, SE 0.008; 90/180 days +0.008, SE 0.009; fitted weight 0 wherever fittable). Review `reviews/fed-breakdowns-trend-screen-2026-11-05.md` on the branch. |
 
 ---
 
