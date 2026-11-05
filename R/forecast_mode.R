@@ -135,9 +135,9 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   # NOT `cyc` above: `cycles[cycles$region == region & cycles$year == year, ]` binds both bare names to the
   # data.table's own columns (the NSE trap, CLAUDE.md), matches every cycle and makes min(cyc$start) the first
   # cycle on record (1969), which admitted breakdowns from before this cycle until the gate's assertion caught it
-  # (FTR0!, qld2024, 2026-11-05). trend_fed_for_cycle() compares plain vectors with differently-named locals.
+  # (the admission assertion in .trend_fed_gate(), qld2024, 2026-11-05). trend_fed_for_cycle() compares plain vectors with differently-named locals.
   fed <- trend_fed_for_cycle(region, year, as_at, cycles)
-  if (identical(region, "fed") && !is.null(fed)) stop("FTR0! federal breakdowns reached a federal target")
+  if (identical(region, "fed") && !is.null(fed)) stop("FTR3! federal breakdowns reached a federal target")
   if (!is.null(fed)) tr_extra <- c(tr_extra, list(fed = fed))
   tr <- do.call(trend_as_at, c(list(polls, year, cycles, as_at, priors, fl, with_series = TRUE,
                                     sigmas = tr_sig), tr_extra))
