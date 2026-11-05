@@ -129,6 +129,75 @@ fed_state_breakdowns_parse <- function(f) {
   out
 }
 
+#' BludgerTrack's federal state breakdowns, in the shape of [fed_state_breakdowns_parse()]
+#'
+#' Reads `bludgertrack_polls.csv` (`scripts/extract_bludgertrack.R`, the 13 Oct 2026 parse) and, when present, the
+#' newest dated `fed2028-current-YYYY-MM-DD.xml` refetch in `raw_dir`, whose fed2028 rows replace the older parse's
+#' (each refetch carries every poll of the term). Keeps the `federal` section's state scopes, drops result rows.
+#' Dated at the fieldwork midpoint like the Wikipedia rows. Wikipedia deleted its state sections on 2026-10-24;
+#' BludgerTrack still publishes them, which is why this exists.
+#' @param csv Path to `bludgertrack_polls.csv`.
+#' @param raw_dir Folder of raw BludgerTrack XML; `NULL` skips the refetch.
+#' @return data.table `st, date, firm, end, ALP, LNP, GRN, src` (`src` = "bt").
+#' @export
+fed_state_breakdowns_bt <- function(csv, raw_dir = NULL) {
+  if (!file.exists(csv)) stop("fed_state_breakdowns_bt(): ", csv, " not found (scripts/extract_bludgertrack.R)")
+  bt <- data.table::fread(csv, colClasses = "character", showProgress = FALSE)
+  dated <- if (!is.null(raw_dir) && dir.exists(raw_dir)) sort(list.files(raw_dir, "^fed2028-current-[0-9]{4}-[0-9]{2}-[0-9]{2}[.]xml$")) else character(0)
+  if (length(dated)) {
+    f <- utils::tail(dated, 1)
+    x <- xml2::read_xml(file.path(raw_dir, f))
+    pts <- xml2::xml_find_all(x, "//table/point")
+    d <- data.table::rbindlist(lapply(pts, function(p) {
+      a <- as.list(xml2::xml_attrs(p)); ch <- xml2::xml_children(p)
+      v <- as.list(xml2::xml_text(ch)); names(v) <- xml2::xml_name(ch); c(a, v)
+    }), fill = TRUE)
+    d[, `:=`(cycle = "fed2028", section = vapply(pts, function(p) xml2::xml_name(xml2::xml_parent(xml2::xml_parent(p))), ""))]
+    bt <- data.table::rbindlist(list(bt[bt$cycle != "fed2028"], d), fill = TRUE)
+    message(sprintf("FKB0 BludgerTrack fed2028 rows from %s (stamp %s)", f, xml2::xml_attr(x, "date")))
+  }
+  num <- function(v) suppressWarnings(as.numeric(v))
+  pdate <- function(s) {
+    s <- as.character(s); out <- as.Date(rep(NA_character_, length(s)))
+    iso <- grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2}", s); dmy <- grepl("^[0-9]{2}/[0-9]{2}/[0-9]{4}$", s)
+    out[iso] <- as.Date(substr(s[iso], 1, 10), format = "%Y-%m-%d"); out[dmy] <- as.Date(s[dmy], format = "%d/%m/%Y")
+    out
+  }
+  keep <- bt$section == "federal" & bt$scope %in% c("NSW", "VIC", "QLD", "WA", "SA", "TAS") &
+    !grepl("election|exit poll|^result", tolower(bt$pollster))
+  b <- bt[which(keep)]
+  fs <- pdate(b$start); fe <- pdate(b$end)
+  fs[!is.finite(fs) | fs > fe] <- fe[!is.finite(fs) | fs > fe]
+  mid <- as.Date(as.integer(fs) + (as.integer(fe) - as.integer(fs)) %/% 2L, origin = "1970-01-01")
+  out <- data.table::data.table(st = tolower(b$scope), date = mid, firm = b$pollster, end = fe,
+                                ALP = num(b$ALP), LNP = num(b$LNC), GRN = num(b$GRN), src = "bt")
+  out <- out[is.finite(out$end) & is.finite(out$ALP)]
+  unique(out, by = c("st", "end", "firm", "ALP", "LNP", "GRN"))
+}
+
+#' Add BludgerTrack's breakdowns that Wikipedia lacks
+#'
+#' One poll per state, canonical firm (`.ps_canon()` over `firm_alias.csv`) and fieldwork end within 3 days;
+#' the Wikipedia row wins where both have it, so the shipped rows keep their values exactly.
+#' @param wiki From [fed_state_breakdowns_parse()].
+#' @param bt From [fed_state_breakdowns_bt()].
+#' @param alias The firm alias table (`pattern, canonical`).
+#' @return `wiki` (with `src` = "wiki") plus the BludgerTrack rows matching no Wikipedia row, sorted by state and date.
+#' @export
+fed_state_breakdowns_merge <- function(wiki, bt, alias) {
+  w <- data.table::copy(data.table::as.data.table(wiki)); w[, src := "wiki"]
+  b <- data.table::copy(data.table::as.data.table(bt))
+  wc <- .ps_canon(w$firm, alias); bc <- .ps_canon(b$firm, alias)
+  dup <- vapply(seq_len(nrow(b)), function(i) {
+    any(w$st == b$st[i] & wc == bc[i] & abs(as.integer(w$end - b$end[i])) <= 3L)
+  }, logical(1))
+  add <- b[which(!dup)]
+  out <- data.table::rbindlist(list(w, add), use.names = TRUE, fill = TRUE)
+  data.table::setorderv(out, c("st", "date"))
+  attr(out, "n_bt_added") <- nrow(add); attr(out, "n_bt_matched") <- sum(dup)
+  out
+}
+
 # The blend's copy: output/fed-state-breakdowns.csv, read once per process.
 #' @noRd
 .lr_fed_polls <- function() {
