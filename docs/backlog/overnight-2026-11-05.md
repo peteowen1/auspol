@@ -4,6 +4,16 @@ Pete: "keep working through next steps on dev and making fixes and housekeeping 
 save it for the morning and move onto something else". Rules: dev only, no merges to main, no deletes, light work
 while the deciding runs hold the machine (bucket split from 10:30pm, departed-slope pool from 2:00am).
 
+## Summary (3:30am)
+
+- Both deciding runs finished cleanly: bucket split a tie (item 3), departed-slope pool better on its headline with one guard
+  tripped on noise (item 2).
+- Two real backtest bugs found and built as off-by-default switches, each screened and confirmed at 20,000 sims:
+  parties dropped when absent from the newest poll (fix better, -0.0009, SE 0.0004; item 1), and poll columns classed by code
+  (fix a tie that helps federal elections and hurts sa2018; item 6). Neither changes the published forecast until you ship it.
+- PR #195 (0.4.136) open, unmerged: CI green on the last code commit. Nothing reached main overnight.
+- Still to check: the next daily forecast run is the first with `AUSPOL_POLL_DATE_OURS=1` (merged 10:54pm; last run 9:51am 5 Nov, success).
+
 ## FOR PETE IN THE MORNING
 
 In order: three decisions, one merge, one cleanup yes/no, one lower-priority decision.
@@ -57,7 +67,13 @@ In order: three decisions, one merge, one cleanup yes/no, one lower-priority dec
 
 ## Failed / not done, and why
 
+- Not done: a unit test for the "party" branch of `statewide_draws_as_at()` (review nit); the registry note's stale line number.
+- Slips, recorded: pushed R code to dev with PR #195 open before rerunning check_like_ci (12:49am; check ran after, clean).
+- GitHub returned a 500 on one push at 3:01am; the retry succeeded.
+
 ## Decided on Pete's behalf
+
+- Nothing shipped or merged. Decided only: to build the two bug fixes as off switches, to screen them, and to run the 20k confirmations while the machine was free.
 
 ## Still queued
 
