@@ -11,7 +11,7 @@ In order: three decisions, one merge, one cleanup yes/no, one lower-priority dec
 1. DECISION: ship `AUSPOL_STATEWIDE_ENDPOINT=party`? (`plans/prereg-statewide-endpoint-2026-11-06.md` RESULT.) It fixes a real bug: the backtests'
   statewide level dropped any party missing from the newest poll (11 of 32 targets; nsw2023 One Nation 4.6 -> 0), unlike live.
   Screen, 11 affected elections at 1,000 sims: seat log loss 0.3071 -> 0.3065, -0.0007 (SE 0.0004), BETTER by more than 1 SE;
-  nsw2023 -0.0038, fed2016 -0.0018; wa2008 +0.0009, fed2019 +0.0003. Recommend: yes. Shipping = flip the flag, rebuild
+  nsw2023 -0.0038, fed2016 -0.0018; wa2008 +0.0009, fed2019 +0.0003. CONFIRMED at 20,000 sims (3:26am): -0.0009 (SE 0.0004). Recommend: yes. Shipping = flip the flag, rebuild
   level-pred.csv and retrain the as-at trees (they trained on the buggy levels), then the 20,000-sim run. Live Victoria is unaffected
   by the flag itself (live already reads per party); it changes only through retrained trees.
 2. DECISION (clause override): departed-member slope pool `AUSPOL_DEPARTED_POOL` (your 27 Oct "tau^2 toward the pooled slope").
@@ -43,7 +43,8 @@ In order: three decisions, one merge, one cleanup yes/no, one lower-priority dec
   first version tied leaning worse because a class with no series of its own (IND) is re-split from the others bucket by fixed
   ratios; Amendment 1 (post hoc, 1:15am) stops that. Rerun, 7 elections: pooled -0.0026 (SE 0.0040), a tie; AEF-7 subset -0.0074
   (SE 0.0016), better; federal elections -0.007 to -0.010 each; but sa2018 +0.040 (SA-Best got ~14% and won no seat) and
-  qld2015 +0.012. Recommend: book the all-pairs 20,000-sim deciding run before deciding; post hoc, so the screen is not enough.
+  qld2015 +0.012. At 20,000 sims (3:26am): -0.0028 (SE 0.0038), the same tie and pattern. Recommend: decide the sa2018 question
+  (a correct IND level costs seats SA-Best did not win) before shipping; post hoc, so not on this evidence alone.
   Amendment 1 code reviewed 1:40am (0 Important). Design point from the review: with the fix, sa2018's statewide IND level is
   SA-Best's polls alone; other independents stay in the Others remainder. Worth deciding before the deciding run.
 
@@ -67,6 +68,8 @@ In order: three decisions, one merge, one cleanup yes/no, one lower-priority dec
 ## Log
 
 - 1:08am. check_like_ci clean after the poll-series push (4,989 passed); everything pushed. PR #195 CI starting.
+- 3:26am. 20k confirmations done: statewide endpoint -0.0009 (SE 0.0004), confirmed; poll-series -0.0028 (SE 0.0038), tie.
+- 3:03am. Machine free: 20,000-sim confirmation runs of both new arms on their affected elections, detached and sequential (statewide endpoint, 11 pairs; poll-series class, 7 pairs).
 - 2:59am. Departed-slope deciding run DONE: headline better, one guard fails on noise-sized moves. To Pete (clause override).
 - 2:00am. Departed-slope deciding run started on schedule.
 - 1:35am. check_like_ci clean after Amendment 1 (4,989 passed); pushed. Amendment 1 code reviewed 1:40am, 0 Important.

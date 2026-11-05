@@ -55,3 +55,8 @@ Nothing ships overnight under any outcome: shipping changes the published path's
 ## Amendments
 
 (none)
+
+### Confirmation at 20,000 sims (6 Nov 3:26am, same 11 pairs, fresh baseline)
+
+Seat log loss 0.3149 -> 0.3140, -0.0009 (SE 0.0004): better by more than 1 SE, as at the screen. nsw2023 -0.0034, fed2016
+-0.0022, fed2007 -0.0019, nsw2019 -0.0011; fed2019 +0.0003, wa2008 +0.0006. Share squared error -1% (SE 1.4%).

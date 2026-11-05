@@ -77,3 +77,8 @@ confirmatory test: the deciding run on all pairs is the one that counts.
   seat, so a correct IND level raises IND win chances that did not convert. qld2015 unchanged by the amendment.
 - Reading: the class fix plus the bucket fix is right on shares and helps the federal and AEF-7 seats; it costs sa2018 seats.
   Post hoc (Amendment 1), so the all-pairs deciding run decides. To Pete.
+
+### Amendment 1 at 20,000 sims (6 Nov 3:26am, same 7 pairs)
+
+Seat log loss 0.2905 -> 0.2877, -0.0028 (SE 0.0038): a tie, the same pattern as at 1,000 sims. fed2022 -0.0088, fed2025
+-0.0082, fed2019 -0.0067, sa2010 -0.0142, qld2024 -0.0037; sa2018 +0.0370, qld2015 +0.0122. Share squared error -2% (SE 6%).
