@@ -16,8 +16,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - **Status 5 Nov 3pm.** main = dev (PRs #188-#191 merged 5 Nov). Deciding runs tonight: bucket split 10:30pm
   (`deciding-runs/20261105-0941-bucket-split-v2-rebuilt/`), departed-slope pool 2:00am 6 Nov
   (`deciding-runs/20261105-1252-departed-slope-pool-a1/`). After them: rebuild `output/candidacies.csv` (vic2006 winners,
-  see Data and infra), release upload on Pete's yes, screen vic2010 + sa2026. DEADLINE 9 Nov: the 10 Nov nominations
-  rebuild regenerates and uploads candidacies.csv anyway, so the screen must come first. OPEN: VEC feed access details
+  see Data and infra): screened and KEPT 5 Nov (Pete); it ships with the 10 Nov nominations rebuild. OPEN: VEC feed access details
   due 4 Nov, not in Gmail (all folders) or Hotmail at 3pm 5 Nov. Pete waits to 7 Nov, then sends the chase (Gmail
   draft saved 5 Nov as a reply in his 28 Oct thread to resultsdatafeed@vec.vic.gov.au). Run `scripts/refresh_local_poll_inputs.sh` before ANY
   local forecast run.
@@ -431,8 +430,11 @@ table on the blog page, To Do reminders (9 Nov, HTV row, VEC email).
 - OPEN (5 Nov): `output/candidacies.csv` has `elected` NA on all 459 vic2006 rows, so vic2010 gets no departed-member
   or sitting-member flags. Builder FIXED on dev (winners from `vec-2006-vic-tcp-basis.csv`, BC7v; ALP 55, LNP 32, IND 1).
   Dry run: only vic2006 `elected` (459 rows), vic2010 `historic_elected` (4 -> 79 returning) and the 8 pending sa2026
-  absent-vote rows change. NOT rebuilt: tonight's two deciding runs read it. After them: rebuild, upload to
-  `shipped-models`, screen vic2010 + sa2026 (`quick_arm.R "" --pairs=vic2010,sa2026` against the old file).
+  absent-vote rows change. SCREENED 5 Nov (1,000 sims, baselines on old vs rebuilt inputs via AUSPOL_QUICK_SRC_OUTPUT,
+  output/ untouched): vic2010 seat log loss 0.2281 -> 0.2335 (+0.0054, seat SE 0.0021, WORSE; Gippsland East: Ingram now
+  flagged sitting, lost; Ballarat West, Brunswick not traced), sa2026 0.2368 -> 0.2364. KEPT (Pete, 5 Nov: correct data;
+  the backtest trees are frozen as-at models trained before the fix). It lands with the 10 Nov nominations rebuild.
+  OPEN: re-measure vic2010 after the next full rebuild retrains the trees.
 
 Still open:
 - Federal results as a correlated signal for state seat lean: needs
