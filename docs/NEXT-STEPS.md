@@ -16,7 +16,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - **Status 5 Nov 3pm.** main = dev (PRs #188-#191 merged 5 Nov). Deciding runs tonight: bucket split 10:30pm
   (`deciding-runs/20261105-0941-bucket-split-v2-rebuilt/`), departed-slope pool 2:00am 6 Nov
   (`deciding-runs/20261105-1252-departed-slope-pool-a1/`). After them: rebuild `output/candidacies.csv` (vic2006 winners,
-  see Data and infra), release upload on Pete's yes, screen vic2010 + sa2026. OPEN: VEC feed access details
+  see Data and infra), release upload on Pete's yes, screen vic2010 + sa2026. DEADLINE 9 Nov: the 10 Nov nominations
+  rebuild regenerates and uploads candidacies.csv anyway, so the screen must come first. OPEN: VEC feed access details
   due 4 Nov, not in Gmail (all folders) or Hotmail at 3pm 5 Nov. Pete waits to 7 Nov, then sends the chase (Gmail
   draft saved 5 Nov as a reply in his 28 Oct thread to resultsdatafeed@vec.vic.gov.au). Run `scripts/refresh_local_poll_inputs.sh` before ANY
   local forecast run.
@@ -68,8 +69,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - F16 `AUSPOL_ROW_SHIFT_EXACT` NOT PASSED 29 Oct (DECISIONS). OPEN: F18 `AUSPOL_NOM_ZERO_PRE_XGB` (off): walk 1 done
   29 Oct (predictions 1, 2, 4 pass; 3 a finding in Morwell, to walk with Pete); walk 2 on the VEC final list. Dead-party
   `AUSPOL_LEVEL_DEAD_PARTY` (337f4cd) PARKED: its screen says not worth it; do not merge.
-- OPEN, screens not yet run (one at a time, >= 6.5 GB free): width A0/A1; departed arm B. F8 RN is dead
-  (arm N worse). F8 arm N's netting costs 579 s per harness run: cache it to disk before any rerun.
+- F8 RN is dead (arm N worse). F8 arm N's netting costs 579 s per harness run: cache it to disk before any rerun.
+  (Departed arm B `mean`: DEAD, departed-origin closed 27 Oct. Width A0/A1: see the pipeline-audit section.)
 
 - OPEN, DATED (Tue 27 Oct, 3, 10, 17 and Fri 27 Nov): vic2026 benchmark capture. Built and run 22 Oct (all four
   sources, `docs/benchmarks/vic2026/2026-10-22/`). Each date: `Rscript scripts/snapshot_benchmarks.R`, plus the GES
@@ -183,12 +184,12 @@ contest features / contest base / partial-contest arm A refused, first-term fill
 - OPEN, from the 22 Oct old-election fill diagnosis (the `AUSPOL_TRAIN_DECAY_H=4` test of it REFUSED 25 Oct,
   half-life stays 8; DECISIONS, `plans/prereg-train-decay-4-2026-10-22.md`): Greens over-called in high-Greens seats by the trees (Melbourne, Griffith, Northcote);
   retiring Labor members about -2.0 (n 34); Dickson's published stage moved a correct tree LNP figure +5.5.
-- OPEN: width arms A0/A1 (`AUSPOL_FP_EXTRA_SD` 0 / 1.2) pre-registered, not yet run (needs the memory F7 needs).
-  NOT RUN 25-26 Oct either: the night queue reached GRN_TREE_SHRINK by 00:59, and the next launch could not finish
-  before the 03:15 F7 deciding run (memory sat at 3-7 GB from 20:30, so harness runs took about 2 minutes each).
+- OPEN, REWRITE BEFORE RUNNING: width arms A0/A1 (`plans/prereg-harness-sw-draws-2026-10-19.md`) were written for
+  `AUSPOL_HARNESS_SW_DRAWS=1`; what ships is `=net` (F4), so they test a superseded setting. The question they carry
+  stands: is the statewide spread `AUSPOL_FP_EXTRA_SD` 2.419 (fitted on the scored elections, a mild leak) too wide
+  for states? Rewrite as `net` arms with a time-forward value before any screen.
 - 25-26 Oct night screens: all refused, not passed or left off (verbatim in `backlog/journal-2026-10-25-to-2026-11-04.md`;
-  results appended to each prereg). Still not run from them: departed arm B (`mean`); F8 arm N netting costs 579 s per
-  harness run, cache it before any rerun.
+  results appended to each prereg). Departed arm B (`mean`) will not run (departed-origin closed 27 Oct, Pete).
 - OPEN, DATED (final snapshot 25-27 Nov is the one that ships, per Pete 27 Oct; earlier weekly ones from ~3 Nov are
   for watching only, not the forecast): vic2026 salience snapshots. 26 Oct snapshot fetched, 0 of 101 batches linkable. All 500 candidates fetched
   18 Oct (window to 6 Oct), but that is before the campaign: nobody's search interest is rising yet (Premier 1.1 in the
@@ -246,7 +247,7 @@ party-cor off) and the phantom-votes arm REFUSED: all in the journal and DECISIO
 - OPEN Hare-Clark candidate-level count loses on zero-probability new independents (needs a heavier tail).
 - OPEN fed2007 Newspoll gaps (Jul 2005-Apr 2006, Jul-Sep 2006, Jul-Nov 2007) and Nielsen/Galaxy archives.
 - OPEN fed2028 live forecast build (decided 13 Oct; 8-11 days).
-- OPEN registries regenerated after the final rebuild (DATA/MODEL/POLL); SEAT-REGISTRY entries for the new worst seats.
+- OPEN SEAT-REGISTRY entries for the new worst seats (DATA/MODEL/POLL registries: regenerated 4 Nov, `f453b62b`, `14f55eba`).
 
 ## 2026-10-11 to 2026-10-12: still open (collapsed 15 Oct)
 
