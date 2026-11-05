@@ -1,3 +1,7 @@
+# auspol 0.4.133
+
+- **`build_candidacies.R` records the vic2006 winners** (from each seat's final two; ALP 55, LNP 32, IND 1), so vic2010 gets its departed- and sitting-member flags (4 returning members flagged before, 79 after a rebuild). `output/candidacies.csv` itself is not rebuilt yet.
+
 # auspol 0.4.132
 
 - **New arm `AUSPOL_DEPARTED_POOL` (off; the published forecast is unchanged)**: when a Labor or Coalition member leaves, each party's departed-member slope is pooled toward the two parties' combined slope, with the between-party spread taken from earlier elections, in place of the flat 1 below 40 seats. Screens pass (AEF-7 not worse; the eight affected elections 1.55 SE better); the all-elections run decides it. `docs/plans/prereg-departed-slope-pool-2026-11-05.md`.
