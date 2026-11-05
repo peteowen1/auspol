@@ -182,3 +182,17 @@ the amended code.
   -0.0049, fed2007 -0.0008, wa2008 +0.0011, sa2010 +0.0013. Share error worse in 2 of 6 (sa2010 +55.5, wa2005 +431.4).
 - **Clause 4: PASS.** Every `BF0m` departed value in the arm cache matches the amendment table, 15 of 15 elections.
 - Clause 3 and the deciding numbers: the all-elections run, 6 Nov 2:00am, `deciding-runs/20261105-1252-departed-slope-pool-a1/`.
+
+### Deciding run, all 35 elections at 20,000 sims (DONE 6 Nov 2:59am; `deciding-runs/20261105-1252-departed-slope-pool-a1/`; scored overnight)
+
+- Pooled seat log loss, 2,931 seats: 0.3168 -> 0.3148, -0.0020 (SE 0.0015): better. AEF-7 -0.0001 (SE 0.0000).
+- Clause 2, the eight (685 seats; scored from the caches): -0.0081 (SE 0.0052, clustered on election): PASS. vic2010 and wa2001
+  byte-identical (as expected: vic2010 has no departed flags until the vic2006 winners land, wa2001 by construction).
+- Clause 3: pooled not worse: PASS (better). Leave-one-election-out on the eight: every drop stays better by more than 1 SE
+  (worst: drop fed2010, -0.0021, SE 0.0015): PASS. Two largest-gain seats removed (fed2010 -4.07, wa2005 -0.65): -0.0012, sign
+  kept: PASS. No election worse by more than 2 SE of its own paired seat differences: FAILS on two, both negligible in size:
+  nsw2015 +0.0011 (seat SE 0.0005, z 2.07) and qld2024 +0.00004 (seat SE ~0.00002, z 2.11). Also worse but under 2 SE:
+  qld2012 +0.0035 (z 1.18), sa2010 +0.0020 (z 0.55), wa2008 +0.0011 (z 0.55), fed2019 +0.0002 (z 1.95).
+- Verdict by the letter: clause 3 fails, so the prepared rule says refused. The failures are noise-sized moves in elections
+  the arm barely touches, where a near-zero seat SE makes any move "significant". Headline result positive. To Pete
+  (memory clause-refusals-go-to-pete), recommendation mine: ship, recording the override.

@@ -16,6 +16,27 @@
 # This function produces the statewide draws a forecaster could have made on a
 # given date, using the same construction the published path uses.
 
+# Full party names for the poll columns that are not simulation classes, so a polled series can be classified the way
+# its candidates are (AUSPOL_POLL_SERIES_CLASS="name"). Codes as they appear in the poll files' column names.
+.POLL_SERIES_NAME <- c(KAP = "Katter's Australian Party", UAP = "United Australia Party", DEM = "Australian Democrats",
+                       FF = "Family First", SFF = "Shooters, Fishers and Farmers", NXT = "Nick Xenophon Team",
+                       SAB = "SA-Best", DLP = "Democratic Labour Party", NAT = "The Nationals")
+
+#' The rows of a trend series that statewide_draws_as_at() reads as each party's level
+#'
+#' `"global"` (the old behaviour) keeps the rows at the single latest date, so a party whose series ends earlier is
+#' absent; `"party"` keeps each party's own latest row (AUSPOL_STATEWIDE_ENDPOINT, 2026-11-06).
+#' @param s Trend series: one row per party and date (`party`, `date`, `mean`, ...).
+#' @param mode `"global"` or `"party"`.
+#' @keywords internal
+.statewide_endpoints <- function(s, mode = "global") {
+  if (identical(mode, "party")) {
+    keep_i <- unlist(lapply(split(seq_len(nrow(s)), s$party), function(ix) ix[which.max(s$date[ix])]), use.names = FALSE)
+    return(s[keep_i])
+  }
+  s[s$date == max(s$date), ]
+}
+
 #' Date the preference flows are taken "as of" for one cycle: the cycle's start
 #'
 #' Masks are built OUTSIDE the `[`: `cycles` is a data.table with `region` and
@@ -170,7 +191,18 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   }
 
   s <- data.table::as.data.table(tr$series)
-  last <- s[s$date == max(s$date), ]
+  # AUSPOL_STATEWIDE_ENDPOINT (arm 2026-11-06; "global" = as before). Each party's trend ends at ITS OWN last poll
+  # (prep_trend_obs()), so reading every party at the single latest date dropped any party missing from the newest
+  # poll and folded it into OTH: nsw2023 One Nation 4.6 -> 0 (its last poll 12 days out), fed2016 Xenophon 3.0 (1
+  # day), qld2017 Katter 1.8 (4 days); 11 of 32 backtest targets. "party" reads each party at its own last date, which
+  # is what trend_as_at()'s endpoints and the live forecast already do.
+  mode_ep <- Sys.getenv("AUSPOL_STATEWIDE_ENDPOINT", "global")
+  last <- .statewide_endpoints(s, mode_ep)
+  if (identical(mode_ep, "party")) {
+    stale <- last[last$date < max(s$date) & last$party != "TPP_ALP"]
+    if (nrow(stale)) cat(sprintf("SWE1 %s%d: read at their own last date (not folded): %s\n", region, year,
+                                 paste(sprintf("%s %.1f (%s)", stale$party, stale$mean, format(stale$date)), collapse = ", ")))
+  }
   fp_parties <- setdiff(unique(last$party), "TPP_ALP")
 
   # D1. A party the trend could not fit is FOLDED INTO OTH, which is what the
@@ -198,6 +230,18 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   folded_into <- list()   # class -> named shares folded in, for the anchoring's implied two-party
   for (q in extra) {
     cls <- tryCatch(classify_party(name = q, code = q), error = function(e) NA_character_)
+    # AUSPOL_POLL_SERIES_CLASS (arm 2026-11-06, "code" = as before): classify a poll column by its party's FULL name,
+    # the way candidates are classified at the seat level. By code alone KAP, UAP and FF land in OTH and SAB in OTH,
+    # while their candidates are OTH_RIGHT (KAP, UAP, FF) and IND (SA-Best): so a polled series the seats count in
+    # one class was left in the OTH remainder statewide (qld2017 Katter 1.8, sa2018 SA-Best).
+    if (identical(Sys.getenv("AUSPOL_POLL_SERIES_CLASS", "code"), "name")) {
+      full <- .POLL_SERIES_NAME[q]
+      if (!is.na(full)) {
+        cls_n <- tryCatch(classify_party(name = full, code = ""), error = function(e) NA_character_)
+        if (!identical(cls_n, cls)) cat(sprintf("PSC1 %s%d: poll series %s classed by name as %s (by code: %s)\n", region, year, q, cls_n, cls))
+        cls <- cls_n
+      }
+    }
     if (is.na(cls) || !cls %in% parties || cls == "OTH") next
     r <- last[last$party == q, ]
     if (!nrow(r) || !is.finite(r$mean[1])) next
@@ -206,6 +250,17 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
     if (is.finite(band) && band > 0) sd[[cls]] <- sqrt(sd[[cls]]^2 + band^2)
     folded_into[[cls]] <- c(folded_into[[cls]], stats::setNames(r$mean[1], q))
     cat(sprintf("FM1  %s%d: fitted series %s (%.1f) folded into class %s\n", region, year, q, r$mean[1], cls))
+  }
+  # Under AUSPOL_POLL_SERIES_CLASS=name a class that received a polled series (IND from SA-Best) IS polled: left in
+  # `folded`, forecast_statewide_for() sums it into the others bucket and re-splits the bucket by fixed ratios, which
+  # handed SA-Best's 21 points mostly to OTH and OTH_RIGHT (sa2018 seat IND +0.9 against a statewide +21, 6 Nov).
+  if (identical(Sys.getenv("AUSPOL_POLL_SERIES_CLASS", "code"), "name") && length(folded_into)) {
+    now_polled <- intersect(folded, names(folded_into))
+    if (length(now_polled)) {
+      folded <- setdiff(folded, now_polled)
+      cat(sprintf("PSC2 %s%d: %s now polled (a series was folded in), so not re-split as part of the others bucket\n",
+                  region, year, paste(now_polled, collapse = ", ")))
+    }
   }
   # AUSPOL_LEVEL_RECIPE=live scores the LIVE forecast's recipe in the
   # backtests (Pete 2026-09-28: "test live on back test ... use the method
