@@ -238,6 +238,17 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
     folded_into[[cls]] <- c(folded_into[[cls]], stats::setNames(r$mean[1], q))
     cat(sprintf("FM1  %s%d: fitted series %s (%.1f) folded into class %s\n", region, year, q, r$mean[1], cls))
   }
+  # Under AUSPOL_POLL_SERIES_CLASS=name a class that received a polled series (IND from SA-Best) IS polled: left in
+  # `folded`, forecast_statewide_for() sums it into the others bucket and re-splits the bucket by fixed ratios, which
+  # handed SA-Best's 21 points mostly to OTH and OTH_RIGHT (sa2018 seat IND +0.9 against a statewide +21, 6 Nov).
+  if (identical(Sys.getenv("AUSPOL_POLL_SERIES_CLASS", "code"), "name") && length(folded_into)) {
+    now_polled <- intersect(folded, names(folded_into))
+    if (length(now_polled)) {
+      folded <- setdiff(folded, now_polled)
+      cat(sprintf("PSC2 %s%d: %s now polled (a series was folded in), so not re-split as part of the others bucket\n",
+                  region, year, paste(now_polled, collapse = ", ")))
+    }
+  }
   # AUSPOL_LEVEL_RECIPE=live scores the LIVE forecast's recipe in the
   # backtests (Pete 2026-09-28: "test live on back test ... use the method
   # that performs best"): the level is the trend endpoints rescaled to 100

@@ -32,11 +32,12 @@ In order: two decisions, one merge, one cleanup yes/no, one finding.
   prototype/ branches, fed-timing-resume-fixed and instrument-backtest-fed-timing (queue item, never reviewed), departed-rate-refit
   (superseded by departed-rate-fit-1105; delete after a look), and the 6 worktree-agent branches with 1 unmerged commit each.
   Worktrees removable (branches pushed): .claude/worktrees/deprate-1105, fedbd-1105, wf_068cdb55-fff-2, wf_240a01af-c97-1 (checked 12:10am: no junctions, nothing uncommitted in any of the four).
-5. FINDING (no decision needed yet): statewide poll columns are classed by code, so SA-Best, Katter, UAP and Family First drop out
-  of the backtests' statewide level (sa2018 SA-Best's ~21 points went to nobody). Fixing the class (arm `AUSPOL_POLL_SERIES_CLASS`) is a
-  tie leaning worse (7 pairs, +0.0016, SE 0.0024; 6 of 7 worse) because the seat layer does not pass a statewide IND rise into the
-  seats: sa2018 statewide IND +21, seat IND +0.9, and the majors' lost share went to Others. Recommend: do not ship alone; the real
-  question is how a class level reaches seats (prereg RESULT has the table). Off, nothing changed.
+5. DECISION (lower priority): poll-series class fix, `AUSPOL_POLL_SERIES_CLASS=name`. SA-Best, Katter, UAP and Family First poll
+  columns were classed by code and dropped from the backtests' statewide level (sa2018 SA-Best's ~21 points went to nobody). The
+  first version tied leaning worse because a class with no series of its own (IND) is re-split from the others bucket by fixed
+  ratios; Amendment 1 (post hoc, 1:15am) stops that. Rerun, 7 elections: pooled -0.0026 (SE 0.0040), a tie; AEF-7 subset -0.0074
+  (SE 0.0016), better; federal elections -0.007 to -0.010 each; but sa2018 +0.040 (SA-Best got ~14% and won no seat) and
+  qld2015 +0.012. Recommend: book the all-pairs 20,000-sim deciding run before deciding; post hoc, so the screen is not enough.
 
 ## Shipped tonight
 
@@ -58,6 +59,7 @@ In order: two decisions, one merge, one cleanup yes/no, one finding.
 ## Log
 
 - 1:08am. check_like_ci clean after the poll-series push (4,989 passed); everything pushed. PR #195 CI starting.
+- 1:23am. Poll-series rerun with the bucket fix (Amendment 1, post hoc): pooled tie, AEF-7 better, sa2018 worse. To Pete.
 - 12:58am. Poll-series class screen: tie leaning worse; sa2018 traced (seat layer does not carry the IND level). Not recommended alone.
 - 12:49am. Poll-series class arm built and pre-registered; screen launched (7 pairs). Slip: pushed the R change to dev with PR #195 open before rerunning check_like_ci (CLAUDE.md rule); default path unchanged; check runs after the screen.
 - 12:41am. check_like_ci on dev (tests + switch + forecast_mode): 4,989 passed, R CMD check clean. Pre-PR review launched (Sonnet).

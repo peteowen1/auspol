@@ -58,4 +58,22 @@ Nothing ships overnight.
 
 ## Amendments
 
-(none)
+### Amendment 1 (2026-11-06 1:15am, AFTER the first result; post hoc, so read the rerun with that in mind)
+
+The first screen's sa2018 trace found the second mechanism: a class with no poll series of its own (IND) is in `folded`, and
+`forecast_statewide_for()` (R/forecast_statewide.R ~92-131) sums every folded class into the others bucket and re-splits the
+bucket by fixed prior-election ratios. So SA-Best's share, correctly given to IND, went back into the bucket and mostly to
+OTH and OTH_RIGHT (seat IND +0.9 against a statewide +21). The arm now also removes a class that received a folded-in series
+from `folded` (prints PSC2), so its level is the polls' rather than a ratio of the bucket. Same switch, same 7 pairs, same
+rule. Because this change was made after seeing a result, a pass on the rerun is evidence for the mechanism, not a clean
+confirmatory test: the deciding run on all pairs is the one that counts.
+
+### Amendment 1 RESULT (1:23am, same 7 pairs, 1,000 sims): pooled a TIE, AEF-7 subset better; sa2018 much worse on seats, better on shares.
+
+- Pooled seat-winner log loss, 721 seats: 0.2874 -> 0.2848, -0.0026 (SE 0.0040): within 1 SE. AEF-7 subset (394 seats): -0.0074 (SE 0.0016).
+- Per election (first version in brackets): fed2019 -0.0074 (+0.0015), fed2022 -0.0075 (+0.0026), fed2025 -0.0097 (-0.0070),
+  sa2010 -0.0116 (+0.0031), qld2024 -0.0033 (+0.0008), qld2015 +0.0120 (+0.0120), sa2018 +0.0402 (+0.0067).
+- sa2018: share squared error on its moved cells -2,350 (much better) while seat log loss is +0.040: SA-Best took ~14% and won no
+  seat, so a correct IND level raises IND win chances that did not convert. qld2015 unchanged by the amendment.
+- Reading: the class fix plus the bucket fix is right on shares and helps the federal and AEF-7 seats; it costs sa2018 seats.
+  Post hoc (Amendment 1), so the all-pairs deciding run decides. To Pete.
