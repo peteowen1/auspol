@@ -6,6 +6,8 @@ while the deciding runs hold the machine (bucket split from 10:30pm, departed-sl
 
 ## FOR PETE IN THE MORNING
 
+- MERGE: PR #195 (dev -> main, 0.4.136) is open and NOT merged, per your CLAUDE.md rule for overnight work. Contents: the
+  statewide-endpoint switch (off), the two new tests, docs. check_like_ci clean (4,989 passed), review 0 Important. Merge on CI green if you agree.
 - DECISION: ship `AUSPOL_STATEWIDE_ENDPOINT=party`? (`plans/prereg-statewide-endpoint-2026-11-06.md` RESULT.) It fixes a real bug: the backtests'
   statewide level dropped any party missing from the newest poll (11 of 32 targets; nsw2023 One Nation 4.6 -> 0), unlike live.
   Screen, 11 affected elections at 1,000 sims: seat log loss 0.3071 -> 0.3065, -0.0007 (SE 0.0004), BETTER by more than 1 SE;
@@ -41,6 +43,8 @@ while the deciding runs hold the machine (bucket split from 10:30pm, departed-sl
 
 ## Still queued
 
+- Review nits from #195: a unit test for the "party" branch of `statewide_draws_as_at()`; the registry note cites "fit_seats_full.R line 566" (will go stale); pre-existing, the fp_parties loop has no finite check on `r$mean[1]`.
+- UNCHECKED: why qld2017 (Katter) came back byte-identical under `AUSPOL_STATEWIDE_ENDPOINT=party`; trace which statewide path that pair uses.
 - LATENT (not live): `wiki_polls()` row self-check is NA when the AE file has no One Nation column (`.ps_implied()` gets NULL), so matched rows would keep AE's numbers and date silently. Every layered region has the column today; NT is never layered. Fix if a region without ONP is ever layered: give `.ps_implied()` a zero for a missing column.
 
 ## Log
