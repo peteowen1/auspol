@@ -25,6 +25,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   matches all 88 cycles, so the preference-flow `as_of` is 1969-10-26 for every target. Twelfth instance. Size first
   (old vs fixed on vic2022/nsw2023: draws, mu, sd identical; trend TPP and implied_tpp move). Also from the agent, NOT yet confirmed: a fitted party whose last poll is
   earlier than the others' is folded into Others (nsw2023 One Nation, day before).
+- OPEN, NEXT SESSION (5 Nov night): (1) read both deciding-run markers (bucket split 10:30pm, departed-slope pool 2:00am 6 Nov); the bucket-split run shared the machine with a check_like_ci run 10:42-10:47pm, so check its log for a memory kill. (2) Read the next daily forecast run's conclusion: `AUSPOL_POLL_DATE_OURS=1` (PR #194, 0.4.135) changes the published inputs (live Victoria <= 0.01 pts expected). (3) Review nits queued from #194: a unit test that fails when the date switch is off, and a test for `fed_state_breakdowns_bt()`.
 - **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** Plan and replays:
   `docs/plans/election-night-booth-model.md` (vic2022 seat log loss vs afternoon 0.2643: 0.1133 at 10% counted,
   0.0929 at 50%). Upper house designed, NOT built (`plans/upper-house-night-model.md`). DONE: VEC sign-up (#150),
