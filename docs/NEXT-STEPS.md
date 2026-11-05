@@ -45,13 +45,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
      DRY RUN 4 Nov: all five refusals fire with nothing written (VEC test file, 9 districts; names mangled; truncated at
      65,536 bytes; Classification renamed; and the 2022 file passes, 87 districts). GAP FOUND: Narracan is not in
      `booths-vic2022.json` (87 of 88; its 2022 poll was the 28 Jan 2023 supplementary), so every Narracan booth is "new"
-     on the night, with no swing. The 28 Jan 2023 supplementary had no Labor or Nationals candidate. DONE 5 Nov (Pete:
-     2018 booths): `scripts/build_booths_vic2026_ref.R` writes `output/booths-vic2026-ref.csv` (2022 booths + Narracan
-     2018, 41 booths, `ref_year` column; on release `night-inputs`), and `night-backup.yaml` passes it as `--ref`. All 26
-     of the 2023 supplementary centre names match a 2018 Narracan booth. A cycle on the VEC 2026 sample feed gives
-     output identical to the old reference (that feed has no Narracan). The runbook above now passes it. OPEN: the
-     page's pre-count map (`booths-vic2026.json`, built from
-     `booths-vic2022.json`) still shows Narracan centres as "new" until counted. Live booth swings come from the runner.
+     on the night. DONE 5 Nov (PR #189): the runner's `--ref` is `output/booths-vic2026-ref.csv` (Narracan from 2018,
+     `scripts/build_booths_vic2026_ref.R`). OPEN: the page's pre-count map (`booths-vic2026.json`) still shows Narracan
+     centres as "new" until counted; 10 Nov, check the 38 Narracan-only 2018 names against the 2026 polling places.
   4. Navbar link; the "called" rule (99% with 10% counted is a placeholder); find my seat (#166).
   5. Trial 25 Nov (no 2CP); the upper-house model.
   Dated: the satellite basemap's Esri key (Pete's account, basemaps only, pay-as-you-go off) expires 27/10/2027.
@@ -384,10 +380,9 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
 - **Time-forward fits still use `min_n` cliffs**: `R/split_slope.R:395,416` sit in `fit_conditional_slopes()`,
   which the shipped config never calls (`AUSPOL_FIT_SLOPES=0`). Live: `fit_major_departed_slope()` falls back to 1.0
   below 40 seats (fed2007, fed2010, sa2010, wa2001, wa2005, wa2008). `AUSPOL_SLOPE_SHRINK` shrinks toward 1, not the
-  pooled slope, and was refused 29 Sep (+0.0056, SE 0.0035). DECIDED 27 Oct (Pete): build a tau^2 arm toward
-  the pooled slope; NOT built, no prereg yet (the MP-slope pool shipped 30 Oct is a different fit). Walk for Pete
-  5 Nov: `reviews/departed-slope-pooling-walk-2026-11-05.md` (target and tau^2 source to choose). The `SHIP_SAME/NEW`
-  leak is DONE: `AUSPOL_SHIP_TIME_FORWARD=1` (v51) makes the fallback time-forward; the constants are opt-out only.
+  pooled slope, refused 29 Sep. IN FLIGHT 5 Nov (Pete: tau^2 from earlier elections' party gaps): arm
+  `AUSPOL_DEPARTED_POOL` built (`b0197dbd`), prereg `plans/prereg-departed-slope-pool-2026-11-05.md`, screens
+  running; all-pairs deciding run to follow.
 - **Teal/independent under-call** (Curtin, Goldstein, Mackellar, Wakehurst):
   PARKED by Pete. Overall we lead AEF on independents (36 winners: 16.7 vs
   19.7 log loss). Wave term blocked (`reviews/wave-term-blocked-2026-09-07.md`).
@@ -426,6 +421,10 @@ Closed 2026-09-19/20 (DATA-REGISTRY, DECISIONS): poll snapshot + zero-byte
 guard, empty-column dictionary failure, vic2022 VEC-official TCP truth,
 Tasmanian primaries table and state-swing prior rows, district-to-region
 table on the blog page, To Do reminders (9 Nov, HTV row, VEC email).
+
+- OPEN (5 Nov): `output/candidacies.csv` has `elected` NA on all 459 vic2006 rows, so vic2010 gets no departed-member
+  or sitting-member flags (`candidate_returns(vic2006, vic2010)`: 0 major departures). Fill from the VEC 2006 results.
+- OPEN speed (5 Nov): the wa2008 harness run took 1,730 s in quick_arm (wa2005 21 s, fed2010 49 s); not profiled.
 
 Still open:
 - Federal results as a correlated signal for state seat lean: needs

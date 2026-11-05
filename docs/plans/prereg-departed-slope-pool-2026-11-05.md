@@ -93,3 +93,31 @@ powershell.exe -Command 'Rscript scripts/quick_arm.R "AUSPOL_DEPARTED_POOL=1"'
 powershell.exe -Command 'Rscript scripts/quick_arm.R "AUSPOL_DEPARTED_POOL=1" --pairs=fed2007,fed2010,sa2010,wa2001,wa2005,wa2008,nsw2011,vic2010'
 powershell.exe -File scripts\deciding_run.ps1 -Arm "AUSPOL_DEPARTED_POOL=1" -Label departed-slope-pool -At 02:00
 ```
+
+## Results (added after the runs; clauses above unedited)
+
+### Clause 2, targeted screen (5 Nov, 1,000 sims, code t4bc5e21, 689 seats in 8 elections): PASS
+
+Seat-winner log loss (lower is better) 0.3540 -> 0.3488, change -0.0052, SE 0.0036 clustered on election: better by
+1.44 SE. Share squared error on the 410 moved cells 15,857 -> 15,533 (-2%, SE 777: not clear on its own).
+
+Per election (log loss change, lower is better; squared-error change on that election's moved cells, lower is better):
+
+| election | moved cells | log loss change | sq. error change |
+|---|---|---|---|
+| fed2010 | 87 | -0.0189 | -570.3 |
+| nsw2011 | 100 | -0.0063 | -59.8 |
+| wa2005 | 47 | -0.0048 | +445.9 |
+| fed2007 | 81 | -0.0003 | -117.8 |
+| sa2010 | 71 | +0.0007 | +50.7 |
+| wa2008 | 24 | +0.0013 | -72.6 |
+| wa2001 | 0 | 0 (byte-identical) | 0 |
+| vic2010 | 0 | 0 (byte-identical) | 0 |
+
+Clause 4: every `BF0m` departed value in the arm matches the table above; baseline printed 1.000 for the six snapped
+elections. **vic2010 got the new slopes but has no departed-member cells to apply them to**: `candidate_returns(vic2006,
+vic2010)` flags 0 major departures because `output/candidacies.csv` has `elected` NA on all 459 vic2006 rows. A
+pre-existing data gap, not this arm; queued. So the targeted set is effectively seven elections.
+
+Unacceptable-win check: share error on the moved cells is worse in 2 of the 6 elections that moved (sa2010, wa2005),
+not most. Passes.
