@@ -177,7 +177,7 @@ fed_state_breakdowns_bt <- function(csv, raw_dir = NULL) {
 
 #' Add BludgerTrack's breakdowns that Wikipedia lacks
 #'
-#' One poll per state, canonical firm ([.ps_canon()] over `firm_alias.csv`) and fieldwork end within 3 days;
+#' One poll per state, canonical firm (`.ps_canon()` over `firm_alias.csv`) and fieldwork end within 3 days;
 #' the Wikipedia row wins where both have it, so the shipped rows keep their values exactly.
 #' @param wiki From [fed_state_breakdowns_parse()].
 #' @param bt From [fed_state_breakdowns_bt()].

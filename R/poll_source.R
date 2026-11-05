@@ -567,6 +567,14 @@ poll_layer <- function(ae, region, path = NULL, window = 4L) {
     ae$.fill[pa[fill]] <- paste0(ae$.fill[pa[fill]], p, " ")
   }
   for (p in parties) ae[[p]][pa] <- ours[[p]][po]
+  # AUSPOL_POLL_DATE_OURS (SHIPPED "1" 2026-11-05; "0" = AE's date as before): a matched poll takes OUR date, the fieldwork midpoint
+  # from Wikipedia/BludgerTrack. AE dates Resolve's two-month state polls ~2 weeks early (Victoria 9 Sep-12 Oct
+  # 2025 dated 1 Sep); 82 of 2,214 matched polls sit more than 7 days from the midpoint (counted 2026-11-05).
+  if (identical(Sys.getenv("AUSPOL_POLL_DATE_OURS", "1"), "1") && length(pa)) {
+    moved <- sum(abs(as.integer(ae$date[pa] - ours$date[po])) > 0, na.rm = TRUE)
+    ae$date[pa] <- ours$date[po]
+    message(sprintf("PZ5 poll dates [%s]: %d of %d matched polls take our fieldwork midpoint (AUSPOL_POLL_DATE_OURS=1)", region, moved, length(pa)))
+  }
   # unmatched ours: label of the same firm's nearest AE poll, else our own text
   extra <- ours[!used_o]
   n_suspect_dropped <- sum(extra$check == "suspect")

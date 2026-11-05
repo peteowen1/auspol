@@ -1,3 +1,8 @@
+# auspol 0.4.135
+
+- **Polls are dated at their real fieldwork midpoint** where our copy matches AE's (`AUSPOL_POLL_DATE_OURS`, on). AE dated Resolve's two-month state polls about two weeks early. A tie on 38 elections (first-preference error -0.003, SE 0.004); Victoria moves 0.01 points or less.
+- `scripts/build_fed_state_breakdowns.R --with-bt` can add BludgerTrack's federal state breakdowns (off: they made three backtests slightly worse).
+
 # auspol 0.4.134
 
 - **Backtest preference flows are now dated by the target election's own cycle** (`statewide_draws_as_at()`, new `.cycle_flow_as_of()`). A data.table name clash dated every target's flows 1969, so backtests used each election's recorded flows instead of the time-forward estimate. Seat probabilities are unchanged (the flows only reach the trend's two-party figure under the published recipe); the backtests' reported two-party numbers move, e.g. nsw2023 implied 55.20 -> 53.97.

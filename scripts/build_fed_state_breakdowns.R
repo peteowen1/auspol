@@ -16,6 +16,8 @@ args <- commandArgs(TRUE)
 with_bt <- "--with-bt" %in% args
 out_arg <- sub("^--out=", "", grep("^--out=", args, value = TRUE))
 dest <- if (length(out_arg)) out_arg else out_path("fed-state-breakdowns.csv")
+# The BludgerTrack merge is not shipped: it may only be written somewhere other than the blend's file (review nit, 5 Nov).
+if (with_bt && !length(out_arg)) stop("FK2! --with-bt needs --out=<path>: the BludgerTrack merge is not shipped (DECISIONS 2026-11-05), so it must not overwrite ", out_path("fed-state-breakdowns.csv"))
 src <- file.path("external", "reference", "polls", "statewide-samples", "statewide_polls_wiki.csv")
 out <- fed_state_breakdowns_parse(src)
 if (with_bt) {

@@ -17,6 +17,6 @@ fed_state_breakdowns_merge(wiki, bt, alias)
 \code{wiki} (with \code{src} = "wiki") plus the BludgerTrack rows matching no Wikipedia row, sorted by state and date.
 }
 \description{
-One poll per state, canonical firm (\code{\link[=.ps_canon]{.ps_canon()}} over \code{firm_alias.csv}) and fieldwork end within 3 days;
+One poll per state, canonical firm (\code{.ps_canon()} over \code{firm_alias.csv}) and fieldwork end within 3 days;
 the Wikipedia row wins where both have it, so the shipped rows keep their values exactly.
 }
