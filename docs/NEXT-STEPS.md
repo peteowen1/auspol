@@ -447,5 +447,5 @@ Still open:
 ## Awaiting Pete
 
 Nothing (departed-rate answered 29 Oct, census 27 Oct; DECISIONS).
-- OPEN, build: departed-rate fit restricted to cells the successor table does not name (Pete, 29 Oct; Amendment 1
-  of `plans/prereg-departed-rate-screen-2026-10-25.md` on `prereg-offbranches-1025`), then its screen.
+- CLOSED 5 Nov: departed-rate fit restricted to non-successor cells, built and screened: NOT SHOWN (AEF-7 +0.0001,
+  SE 0.0003), stays off (DECISIONS 2026-11-05). Branch `departed-rate-fit-1105` (local + origin) kept, not merged.
