@@ -44,7 +44,7 @@ while the deciding runs hold the machine (bucket split from 10:30pm, departed-sl
 ## Still queued
 
 - Review nits from #195: a unit test for the "party" branch of `statewide_draws_as_at()`; the registry note cites "fit_seats_full.R line 566" (will go stale); pre-existing, the fp_parties loop has no finite check on `r$mean[1]`.
-- UNCHECKED: why qld2017 (Katter) came back byte-identical under `AUSPOL_STATEWIDE_ENDPOINT=party`; trace which statewide path that pair uses.
+- LEAD (from the qld2017 check, 12:50am): the Queensland backtest's statewide level never maps Katter (KAP) to a simulated class: its trend (1.8 in qld2017) is read but no FM1 fold follows, so it sits in the OTH remainder with or without the endpoint fix. Related to the existing queue item "qld2017 / qld2012 Katter polled inside Others". Check `classify_party("KAP")` against the harness's classes before anything else.
 - LATENT (not live): `wiki_polls()` row self-check is NA when the AE file has no One Nation column (`.ps_implied()` gets NULL), so matched rows would keep AE's numbers and date silently. Every layered region has the column today; NT is never layered. Fix if a region without ONP is ever layered: give `.ps_implied()` a zero for a missing column.
 
 ## Log
