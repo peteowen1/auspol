@@ -423,7 +423,10 @@ Tasmanian primaries table and state-swing prior rows, district-to-region
 table on the blog page, To Do reminders (9 Nov, HTV row, VEC email).
 
 - OPEN (5 Nov): `output/candidacies.csv` has `elected` NA on all 459 vic2006 rows, so vic2010 gets no departed-member
-  or sitting-member flags (`candidate_returns(vic2006, vic2010)`: 0 major departures). Fill from the VEC 2006 results.
+  or sitting-member flags. Builder FIXED on dev (winners from `vec-2006-vic-tcp-basis.csv`, BC7v; ALP 55, LNP 32, IND 1).
+  Dry run: only vic2006 `elected` (459 rows), vic2010 `historic_elected` (4 -> 79 returning) and the 8 pending sa2026
+  absent-vote rows change. NOT rebuilt: tonight's two deciding runs read it. After them: rebuild, upload to
+  `shipped-models`, screen vic2010 + sa2026 (`quick_arm.R "" --pairs=vic2010,sa2026` against the old file).
 - OPEN speed (5 Nov): the wa2008 harness run took 1,730 s in quick_arm (wa2005 21 s, fed2010 49 s); not profiled.
 
 Still open:
