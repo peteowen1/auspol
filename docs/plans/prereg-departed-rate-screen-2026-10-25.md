@@ -172,3 +172,30 @@ target in that list voids the run (10-03 refusal 5).
    code change before the screen; the "screened as built" line in item 2 no longer holds.
 3. Decision rule: **the 2026-10-18 standard rule decides; the 10-03 rule is reported beside it**, and any
    disagreement goes to Pete (standard clause 9).
+
+## RESULT (2026-11-05, AEF-7 screen at 1,000 sims): NOT SHOWN AT THE SCREEN. Stays off; no deciding run.
+
+Built on branch `departed-rate-fit-1105` (the `departed-rate-refit` branch merged onto dev `0268cf0a`, then Amendment 1
+item 2 as code `7681b9f6`: the fit leaves out cells the successor table names for each earlier election; check codes
+renamed `DRT0`/`DRT1!` `b65028e5` because `R/demographic_residual.R` already prints `DR0!`/`DR1!`; WA and NT wired
+`8b927e87`). Review (Sonnet, pre-screen) found WA and NT unwired: both have called `screened_slopes()` since
+2026-10-15, so this plan's "wa2025 negative control" premise was wrong. They are wired here, and wa2025 was screened
+separately after the fix.
+
+- Dry run, broken input (HONOUR_DEPARTED=0 both sides, vic2022): byte-identical, 616 of 616 cells; `DRT0 ... departed
+  branch not active` on both sides. PASS.
+- `DRT0` in the harnesses: IND rate 0.210-0.233 (fed2022 0.2326, fed2025 0.2223, nsw2023 0.2101, qld2024 0.2106,
+  vic2022 0.2322), 26-32 informative earlier elections each, no fallback, 0 pairs dropped, 18-23 successor-named
+  cells left out, no election on or after its target. All below 0.38 (unacceptable-list clause holds). NOT TRACED: a
+  standalone `fit_departed_rate()` call outside the harness gave 0.08-0.11 on the same targets; the harness setup
+  must select different rows (salience screen settings). The harness value is the one applied.
+- Q3 primary, pooled seat log loss, 681 seats in 7 elections (first six from the main screen, wa2025 after wiring):
+  0.2584 -> 0.2585, +0.0001 (SE 0.0003, six elections; wa2025 -0.0001 adds ~-0.00001). Within 1 SE.
+- Per election (seat log loss change, seats that moved): vic2022 +0.0011 (8), qld2024 +0.0004 (5), fed2022 +0.0004
+  (12), fed2025 +0.0001 (20), sa2026 0.0000 (1), nsw2023 -0.0019 (7), wa2025 -0.0001 (15 cells). Four of seven worse.
+- Targeted (approximate: per-election change times seats, over the ~60 moved seats, not computed from allprobs):
+  about +0.0004 per moved seat, i.e. WORSE, not better by 1 SE.
+- Q2 squared share error on the 253 changed cells (six elections): 5317.7 -> 5440.9, +2% (SE 165.0). Not clear.
+- Decision rule: primary within 1 SE and targeted not better => "not shown at the screen", stays off, numbers to Pete.
+  The 10-03 rule (P1 squared share error on departed-branch rows, t <= -1.28) is not met either (Q2 moved the wrong
+  way), so the two rules agree; nothing for clause 9.
