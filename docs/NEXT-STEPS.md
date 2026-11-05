@@ -21,8 +21,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   ships with the 10 Nov nominations rebuild. OPEN: VEC feed access details due 4 Nov, not in Gmail or Hotmail at 3pm 5 Nov; Pete
   waits to 7 Nov, then sends the chase (Gmail draft saved 5 Nov in his 28 Oct thread to resultsdatafeed@vec.vic.gov.au). Run
   `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
-- OPEN lead, NOT confirmed (fed-breakdowns agent, 5 Nov): a fitted party whose last poll is earlier than the others' is folded
-  into Others (nsw2023 One Nation, day before). Reproduce on nsw2023 before anything else.
+- OPEN, CONFIRMED 6 Nov, arm built (off): `AUSPOL_STATEWIDE_ENDPOINT=party` (`8cf24ad2`). The backtests' statewide level dropped any
+  party missing from the newest poll into OTH (11 of 32 targets; nsw2023 One Nation 4.6 -> 0); live already reads per party
+  (`fit_seats_full.R:566`). Screen pending (`backlog/overnight-2026-11-05.md`); shipping also needs level-pred and a tree retrain.
 - **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** History, DONE list and replay evidence:
   `backlog/journal-2026-11-05-election-night.md` (moved verbatim 6 Nov); plan `plans/election-night-booth-model.md`. Runbook:
   `gh release download forecast-latest -p night-state-vic-2026.rds -D output`, then `night_runner.R --state=output/night-state-vic-2026.rds

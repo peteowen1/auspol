@@ -10,6 +10,8 @@ while the deciding runs hold the machine (bucket split from 10:30pm, departed-sl
 
 ## Shipped tonight
 
+- `c94cc074`: NEXT-STEPS under 40k (43,758 -> 39,982 chars). Status block brought current; fixed/closed items moved to DECISIONS; the election-night entry's history moved verbatim to `backlog/journal-2026-11-05-election-night.md` (runbook and every open step kept in the hub).
+- `8cf24ad2`: arm `AUSPOL_STATEWIDE_ENDPOINT` (off). CONFIRMED BUG: `statewide_draws_as_at()` read every party at the single latest series date, so a party missing from the newest poll was dropped to 0 and folded into Others. 11 of 32 backtest targets: nsw2023 One Nation 4.6 -> 0 (last poll 12 days out), nsw2019 One Nation 3.9 (6 days), fed2016 Xenophon 3.0 (1 day), qld2017 Katter 1.8 (4 days); also defunct parties (fed2019 Centre Alliance 221 days, sa2018 Family First 548 days). Live already reads per party (`fit_seats_full.R:566`), so backtests and the trees' training levels differ from what ships. On nsw2023 the fix gives One Nation 4.53 against an actual ~1.8, so it is not automatically better: screen pending.
 - `44d2c10c` (dev): tests for #194's review nits, `test-poll-date-ours.R` (poll_layer end to end; on/off/default) and the BludgerTrack reader test. Both pass; full check_like_ci deferred until the deciding runs finish.
 
 ## Failed / not done, and why
@@ -22,5 +24,6 @@ while the deciding runs hold the machine (bucket split from 10:30pm, departed-sl
 
 ## Log
 
+- 12:05am. Fold bug confirmed and arm built; screen after the deciding runs.
 - 11:55pm. 8.7 GB free. Bucket split deciding run RUNNING (70 harness runs, est ~62 min at 1 slot; started 10:30pm).
   Departed-slope pool a1 PENDING for 2:00am. The 12:41 departed run is SUPERSEDED (its task was removed).
