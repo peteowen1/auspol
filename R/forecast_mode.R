@@ -16,6 +16,25 @@
 # This function produces the statewide draws a forecaster could have made on a
 # given date, using the same construction the published path uses.
 
+#' Date the preference flows are taken "as of" for one cycle: the cycle's start
+#'
+#' Masks are built OUTSIDE the `[`: `cycles` is a data.table with `region` and
+#' `year` columns, so `cycles[cycles$region == region & ...]` binds the bare
+#' names to the columns, matches all 88 cycles, and returned 1969-10-26 for every
+#' target (found 2026-11-05; the CLAUDE.md data.table trap, twelfth instance).
+#' With that date no election counts as held, so [estimate_flows_for()] never
+#' estimated: a backtest took the target election's own recorded flows (a leak)
+#' and the trend's two-party figure carried them.
+#' @param cycles From [load_election_cycles()].
+#' @param region,year The cycle.
+#' @param fallback Returned when the cycle is not in `cycles`.
+#' @keywords internal
+.cycle_flow_as_of <- function(cycles, region, year, fallback) {
+  want_region <- region; want_year <- year
+  hit <- which(cycles$region == want_region & cycles$year == want_year)
+  if (length(hit)) min(cycles$start[hit]) else fallback
+}
+
 #' Statewide first-preference draws as at a date, leakage-guarded
 #'
 #' Builds the `statewide_draws` matrix `simulate_seat_contests()` expects, from
@@ -107,8 +126,7 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   # Flows as of the START of the cycle, which is the pattern
   # build_projection_data() already uses -- a later flow estimate would be a
   # leak arriving through the preferences rather than through the polls.
-  cyc <- cycles[cycles$region == region & cycles$year == year, ]
-  as_of <- if (nrow(cyc)) min(cyc$start) else as_at
+  as_of <- .cycle_flow_as_of(cycles, region, year, as_at)
   fl <- tryCatch(
     flows_for(load_preference_flows(), year, region, as_of = as_of, cycles = cycles, quiet = TRUE),
     error = function(e) {
