@@ -52,6 +52,9 @@ Times are Sydney. Updated as I go; the morning summary is the top section.
    estimate below 1 (0.25-0.87); the pooled ALP+LNP slope is 0.44-0.71 there and 0.63 live. Two ways to get tau^2:
    (A) from the two party cells (noisy: 0.000-0.085), (B) from earlier elections' party gaps. My pick: B. Live
    vic2026 moves at most 0.016 either way.
+   **5 Nov, Pete's go on B:** built (`AUSPOL_DEPARTED_POOL`, off; PR #190), review found a variance flaw, fixed as
+   prereg amendment 1. Screens on the amended code pass (AEF-7 0.2584 -> 0.2583; the eight 0.3540 -> 0.3478, 1.55 SE).
+   All-elections 20k run 6 Nov 2:00am decides (`plans/prereg-departed-slope-pool-2026-11-05.md`).
 
 ## Done overnight
 - **FIXED: the vic2026 search-interest anchor was the wrong Premier** (`0db2b2e7`). Both salience scripts anchored on
