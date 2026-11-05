@@ -13,11 +13,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   9 Nov, condition One Nation's anchor/blend on how many seats it stands in; (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side still untested:
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` "0" (register row ~119).
-- **Status 5 Nov 5am.** PR #187 (poll-lean arms, 4 Nov benchmark snapshot, MP-slope tables) merged to main 10:41pm
-  4 Nov; the 5 Nov 4:30am daily run is the first with it (result in `backlog/overnight-2026-11-04.md`). dev since:
-  docs, registries and the salience anchor fix only. Overnight log and Pete's three decisions:
-  `backlog/overnight-2026-11-04.md`. VEC feed access details were due 4 Nov: not in Gmail or Hotmail as of 5am 5 Nov. Run
-  `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
+- **Status 5 Nov 3pm.** main = dev (PRs #188-#191 merged 5 Nov). Deciding runs tonight: bucket split 10:30pm
+  (`deciding-runs/20261105-0941-bucket-split-v2-rebuilt/`), departed-slope pool 2:00am 6 Nov
+  (`deciding-runs/20261105-1252-departed-slope-pool-a1/`). After them: rebuild `output/candidacies.csv` (vic2006 winners,
+  see Data and infra), release upload on Pete's yes, screen vic2010 + sa2026. OPEN, NEEDS PETE: VEC feed access details
+  due 4 Nov, not in Gmail (all folders) or Hotmail at 3pm 5 Nov. Run `scripts/refresh_local_poll_inputs.sh` before ANY
+  local forecast run.
 - **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** Plan and replays:
   `docs/plans/election-night-booth-model.md` (vic2022 seat log loss vs afternoon 0.2643: 0.1133 at 10% counted,
   0.0929 at 50%). Upper house designed, NOT built (`plans/upper-house-night-model.md`). DONE: VEC sign-up (#150),
@@ -46,8 +47,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
      65,536 bytes; Classification renamed; and the 2022 file passes, 87 districts). GAP FOUND: Narracan is not in
      `booths-vic2022.json` (87 of 88; its 2022 poll was the 28 Jan 2023 supplementary), so every Narracan booth is "new"
      on the night. DONE 5 Nov (PR #189): the runner's `--ref` is `output/booths-vic2026-ref.csv` (Narracan from 2018,
-     `scripts/build_booths_vic2026_ref.R`). OPEN: the page's pre-count map (`booths-vic2026.json`) still shows Narracan
-     centres as "new" until counted; 10 Nov, check the 38 Narracan-only 2018 names against the 2026 polling places.
+     `scripts/build_booths_vic2026_ref.R`); the page's pre-count map shows them with their 2018 result, labelled 2018
+     (ITG #1142, `build-booths-ref2018.py`; the 10 Nov command is unchanged). OPEN, 10 Nov: check the popup in a browser
+     at 390/1280 px, and check the 38 Narracan-only 2018 names against the 2026 polling places.
   4. Navbar link; the "called" rule (99% with 10% counted is a placeholder); find my seat (#166).
   5. Trial 25 Nov (no 2CP); the upper-house model.
   Dated: the satellite basemap's Esri key (Pete's account, basemaps only, pay-as-you-go off) expires 27/10/2027.
@@ -139,10 +141,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   checked 1 Nov against the published files (same selections, prices, bookie probabilities, columns; seat panel identical).
   The board's 12:07am `-boardmain` run files are gone from output/, so a refresh needs a fresh suffixed fit_seats_full.R run
   and a new Sportsbet capture first. Seat panel, filters and links shipped 1 Nov 12:25pm.
-- DONE 1 Nov: sa2026 absent votes published (verbatim in `backlog/journal-2026-10-25-to-2026-11-04.md`). Still OPEN
-  from it: output/candidacies.csv NOT regenerated after the Cheltenham absent-batch builder fix (4ae01eba, BC2r, 8 rows
-  up to 0.36 pts), fold into the next rebuild; Newland +1,047 and Black +26 untraced; add build_retiring_mp_cases.R to
-  rebuild stage 0 (low value, its reader is off).
+- OPEN from the 1 Nov sa2026 absent votes: the 8 Cheltenham rows reach `output/candidacies.csv` with the vic2006 rebuild
+  (Data and infra); Newland +1,047 and Black +26 untraced; add build_retiring_mp_cases.R to rebuild stage 0 (low value,
+  its reader is off).
 - OPEN from the 30 Oct walks (https://claude.ai/artifact/USv8sffhF1zbYagBGwjdQ3, `reviews/walks-wa2017-fed2019-2026-10-30.md`):
   WA seat layer ~5 pts above the statewide Labor level (36.4 -> 41.2) yet 5-15 short in the swing seats. PARTLY TRACED
   4 Nov (wa2017 seat means over 59 seats, actual ALP 41.9): level-pred 36.4 -> base_pred 38.9 (+2.5) -> xgb_pred_seat
@@ -163,10 +164,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   rest); live `FST1!` (no candidate-model split for vic2026); Kew and Hawthorn, where the bookies price independents
   far above us; Benambra (a NEW independent succeeding Hawkins).
 
-- NEEDS PETE (found 4 Nov night): the others-bucket split file `output/minor-class-shares-v2.csv` is a frozen 28 Sep
-  output that the committed `fit_minor_candidates.R` cannot reproduce (it has the v3 rule) and the rebuild never
-  regenerates; live vic2026 has no rows (`FST1!`, falls back to the 2022 mix). Detail and choices:
-  `backlog/overnight-2026-11-04.md` item 3.
+- IN FLIGHT (decided 5 Nov, Pete: recover v2): the others-bucket split. `AUSPOL_MC_OWN_RULE=v2` rebuilds it
+  (`output/minor-class-shares-resid-v2.csv`); AEF-7 said share error +1% (WORSE), log loss unchanged; the all-22 run
+  tonight 10:30pm decides adopt-or-keep-frozen. Still open after that: add it to the rebuild, give it vic2026 rows after
+  nominations (`FST1!`), then v3 as its own screen. `backlog/overnight-2026-11-04.md` item 3.
 
 ## 2026-10-18 pipeline audit (READ FIRST; `reviews/pipeline-overwrite-audit-2026-10-18.md`, Sonnet, read-only)
 
