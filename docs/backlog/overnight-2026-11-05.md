@@ -10,11 +10,15 @@ while the deciding runs hold the machine (bucket split from 10:30pm, departed-sl
 
 ## Shipped tonight
 
+- `44d2c10c` (dev): tests for #194's review nits, `test-poll-date-ours.R` (poll_layer end to end; on/off/default) and the BludgerTrack reader test. Both pass; full check_like_ci deferred until the deciding runs finish.
+
 ## Failed / not done, and why
 
 ## Decided on Pete's behalf
 
 ## Still queued
+
+- LATENT (not live): `wiki_polls()` row self-check is NA when the AE file has no One Nation column (`.ps_implied()` gets NULL), so matched rows would keep AE's numbers and date silently. Every layered region has the column today; NT is never layered. Fix if a region without ONP is ever layered: give `.ps_implied()` a zero for a missing column.
 
 ## Log
 
