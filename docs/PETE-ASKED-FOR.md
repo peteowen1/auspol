@@ -37,7 +37,7 @@ moved verbatim 2026-10-24. Every row below still has something open.
 
 | Request | Status |
 |---|---|
-| *"tau^2 toward the pooled slope"* for the major departed-member slope (27 Oct; option B, tau^2 from earlier elections' party gaps, "go" 5 Nov) | **OPEN, built and screening:** arm `AUSPOL_DEPARTED_POOL` (default off), `plans/prereg-departed-slope-pool-2026-11-05.md`. Targeted screen passed (1.44 SE better); AEF-7 do-no-harm running; all-elections run booked 6 Nov 2:00am. Not shipped until that run passes and Pete says ship. |
+| *"tau^2 toward the pooled slope"* for the major departed-member slope (27 Oct; option B, tau^2 from earlier elections' party gaps, "go" 5 Nov) | **OPEN, built and screening:** arm `AUSPOL_DEPARTED_POOL` (default off), `plans/prereg-departed-slope-pool-2026-11-05.md`. Review found a variance flaw; fixed (prereg amendment 1, af3c68db); both screens re-running; all-elections run booked 6 Nov 2:00am on the fixed code. Not shipped until that run passes and Pete says ship. |
 | Swap the email in the fetchers' User-Agent for the repo URL | **SHIPPED** (PR #188). |
 | Narracan booth history on election night from 2018 booths | **SHIPPED** for the runner (PR #189). OPEN: the page's pre-count map still shows Narracan as new. |
 
