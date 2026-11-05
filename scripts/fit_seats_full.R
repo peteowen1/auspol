@@ -465,7 +465,8 @@ cat(sprintf(paste0("S6  run config: seed %d, FP sd %s, flow %+.2f, ",
             if (default_run) "PASS" else
               paste("FAIL -- NOT A DEFAULT PUBLISH RUN; changed:",
                     paste(changed, collapse = ", "))))
-now <- trend_as_at(polls, YEAR, cycles, Sys.Date(), priors, fl, with_series = TRUE)
+now <- trend_as_at(polls, YEAR, cycles, Sys.Date(), priors, fl, with_series = TRUE,
+                   fed = trend_fed_for_cycle(REGION, YEAR, Sys.Date(), cycles))   # AUSPOL_TREND_FED_R (R/trend_fed.R); NULL when off
 
 .stage("S7: does the PUBLISHED trend follow the polls it was fitted ")
 # ---- S7: does the PUBLISHED trend follow the polls it was fitted to? --------

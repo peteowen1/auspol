@@ -130,9 +130,20 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   if (rw_mult != 1 && !identical(tr_sig, "default"))
     stop("AUSPOL_TREND_RW_MULT and AUSPOL_TREND_SIGMAS=", tr_sig, " cannot be combined: the per-party sigmas would override the multiplier")
   tr_extra <- if (rw_mult != 1) list(sigma_rw = rw_mult * default_sigmas("logit")[["sigma_rw"]]) else list()
+  # Federal polls' state breakdowns in the trend (AUSPOL_TREND_FED_R, R/trend_fed.R). NULL when off (published)
+  # and ALWAYS NULL for a federal target, so every federal pair is byte-identical by construction (asserted).
+  fed_cs <- if (nrow(cyc)) min(cyc$start) else as.Date(NA)
+  fed <- trend_fed_for(region, as_at, fed_cs)
+  if (identical(region, "fed") && !is.null(fed)) stop("TF0! federal breakdowns reached a federal target")
+  if (!is.null(fed)) tr_extra <- c(tr_extra, list(fed = fed))
   tr <- do.call(trend_as_at, c(list(polls, year, cycles, as_at, priors, fl, with_series = TRUE,
                                     sigmas = tr_sig), tr_extra))
   if (is.null(tr)) return(NULL)
+  if (!is.null(tr$fed_effects)) {
+    fe <- tr$fed_effects
+    cat(sprintf("TF2  %s%d as at %s: %d breakdowns admitted; offsets (points, sd): %s\n", region, year, format(as_at), tr$n_fed,
+                paste(sprintf("%s %s %+.1f(%.1f) n%d", fe$party, sub("^fed:", "", fe$firm), fe$offset_pts, fe$sd_pts, fe$n), collapse = "; ")))
+  }
 
   # SECOND LEAKAGE ASSERTION -- and the first version of this could not fail.
   # It re-applied `cp$date <= as_at`, the identical filter trend_as_at() uses
@@ -387,9 +398,11 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
            (100 - rowSums(lost)))
   } else mean(num_out)
 
-  list(draws = draws, folded = folded, n_polls = tr$n_polls, fp = tr$fp,
+  out <- list(draws = draws, folded = folded, n_polls = tr$n_polls, fp = tr$fp,
        tpp = tr$tpp, mu = mu, sd = sd, implied_tpp = implied_tpp,
        anchor = tpp_target)
+  if (!is.null(tr$fed_effects)) { out$fed_effects <- tr$fed_effects; out$n_fed <- tr$n_fed }
+  out
 }
 
 # Share (0-1) of each party's first preferences that exhausts, from a flow

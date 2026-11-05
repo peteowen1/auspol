@@ -47,6 +47,8 @@
 #'   which is the same leak as using its polls.
 #' @param mix The projection-mix table (`output/projection-mix.csv`).
 #' @param n_sims,seed Passed through to [statewide_draws_as_at()].
+#' @param as_at Cutoff date; `NULL` (default) is the day before polling day. A horizon screen passes an earlier
+#'   date, and the projection mix is then evaluated at that horizon.
 #' @return A list: `st_fc` (named numeric, the forecast statewide level),
 #'   `draws` (n_sims x length(parties) matrix), `folded`, `n_polls`, `tpp`,
 #'   `fund`, `anchor_mean`, `implied_tpp`. Stops rather than returning `NULL`
@@ -54,9 +56,13 @@
 #'   scored as though the forecast had succeeded.
 #' @export
 forecast_statewide_for <- function(region, year, election_date, parties, st_a,
-                                   fund_loo, mix, n_sims = 20000L, seed = NULL) {
+                                   fund_loo, mix, n_sims = 20000L, seed = NULL, as_at = NULL) {
   ed <- tryCatch(as.Date(election_date), error = function(e) as.Date(NA))
   if (!is.finite(ed)) stop("forecast_statewide_for(): unparseable election_date for ", region, year)
+  # as_at: the forecast as it would have been published on that date (horizon screens). NULL = the day before.
+  aa <- if (is.null(as_at)) ed - 1 else as.Date(as_at)
+  hz <- as.integer(ed - aa)
+  if (!is.finite(hz) || hz < 1L) stop("forecast_statewide_for(): as_at must be before polling day")
   # NINTH instance of the data.table NSE trap (CLAUDE.md keeps the count).
   # `year` and `region` are both arguments here AND columns of `fund_loo`, and
   # data.table scopes the table's columns into the WHOLE `i` expression -- so
@@ -75,10 +81,10 @@ forecast_statewide_for <- function(region, year, election_date, parties, st_a,
   # One day out. project_result() blends trend and fundamentals BY HORIZON, so
   # the horizon has to be the real one rather than a convenient default.
   tpp_fn <- function(trend_tpp) {
-    pj <- project_result(trend_tpp, fr, mix, horizon = 1L)
+    pj <- project_result(trend_tpp, fr, mix, horizon = hz)
     list(mean = pj$mean, sd = pj$sd)
   }
-  FC <- statewide_draws_as_at(region, year, as_at = ed - 1, election_date = ed,
+  FC <- statewide_draws_as_at(region, year, as_at = aa, election_date = ed,
                               parties = parties, n_sims = n_sims, seed = seed,
                               tpp_target = tpp_fn, fp_extra_sd = fp_extra_sd_env())
   if (is.null(FC)) {
@@ -137,13 +143,15 @@ forecast_statewide_for <- function(region, year, election_date, parties, st_a,
     st_fc <- colMeans(sw_draws)
   }
   cat(sprintf("STA1  %s%d forecast statewide: %d polls to %s; folded into OTH: %s\n",
-              region, year, FC$n_polls, as.character(ed - 1),
+              region, year, FC$n_polls, as.character(aa),
               if (length(FC$folded)) paste(FC$folded, collapse = ", ") else "none"))
   cat(sprintf("STA1  trend TPP %.2f, fundamentals %.2f, projection %.2f, draws realise %.2f\n",
               FC$tpp, fr, FC$anchor$mean, FC$implied_tpp))
-  list(st_fc = st_fc, draws = sw_draws, folded = FC$folded, n_polls = FC$n_polls,
+  out <- list(st_fc = st_fc, draws = sw_draws, folded = FC$folded, n_polls = FC$n_polls,
        tpp = FC$tpp, fund = fr, anchor_mean = FC$anchor$mean,
        implied_tpp = FC$implied_tpp)
+  if (!is.null(FC$fed_effects)) { out$fed_effects <- FC$fed_effects; out$n_fed <- FC$n_fed }
+  out
 }
 
 #' How the unpolled "others" bucket divides among its classes

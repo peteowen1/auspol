@@ -19,7 +19,9 @@ fit_trend(
   want_var = TRUE,
   nu = Inf,
   nu_iter = 25L,
-  nu_tol = 1e-04
+  nu_tol = 1e-04,
+  fed_obs = NULL,
+  t_end = NULL
 )
 }
 \arguments{
@@ -91,6 +93,11 @@ than error. See docs/NEXT-STEPS.md.}
 \item{nu_iter}{Maximum reweighting passes.}
 
 \item{nu_tol}{Convergence threshold on the largest weight change.}
+
+\item{fed_obs}{Federal polls' state breakdowns for this party, from \code{trend_as_at(fed = )} via
+\code{.trend_fed_gate()} (R/trend_fed.R); \code{NULL} (default) fits the state polls alone, unchanged.}
+
+\item{t_end}{Optional end date of the latent walk (set with \code{fed_obs}, so every party ends on one day).}
 }
 \value{
 List: \code{trend} (date/mean/sd/lo95/hi95 in percent, plus the

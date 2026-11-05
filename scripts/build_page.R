@@ -93,7 +93,7 @@ pri <- load_prior_results(); kp <- pri$region == "vic" & pri$year == 2026
 priors <- setNames(pri$prev1[which(kp)], pri$party[which(kp)])
 fl <- flows_for(load_preference_flows(), 2026, "vic", quiet = TRUE)
 now <- trend_as_at(polls, 2026, cycles, Sys.Date(), priors, fl,
-                   with_series = TRUE)
+                   with_series = TRUE, fed = trend_fed_for_cycle("vic", 2026, Sys.Date(), cycles))   # AUSPOL_TREND_FED_R; NULL when off
 stopifnot(!is.null(now), !is.null(now$series), nrow(now$series) > 0)
 tr <- data.table::copy(now$series)
 tr[, date := as.Date(date)]
@@ -205,7 +205,7 @@ stopifnot(nrow(sa) == 1, length(sa_fp_raw) == 1,
 sa_fp <- sa_fp_raw[1]
 fl_cmp <- copy(fl)
 fl_cmp[party == "ONP", flow_alp := sa$flow_alp[1]]
-now_cmp <- trend_as_at(polls, 2026, cycles, Sys.Date(), priors, fl_cmp)
+now_cmp <- trend_as_at(polls, 2026, cycles, Sys.Date(), priors, fl_cmp, fed = trend_fed_for_cycle("vic", 2026, Sys.Date(), cycles))
 pj_cmp <- project_result(now_cmp$tpp, fund, mix, days_out)
 stopifnot(is.finite(pj_cmp$mean))
 

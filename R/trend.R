@@ -147,6 +147,8 @@ trend_anchor <- function(prep, prior_result, anchor_k = ANCHOR_K,
 #'   with the scale and the house effects stop being centred.
 #' @keywords internal
 trend_prior_system <- function(prep, sigma_rw, sigma_house, anchor, szc_sd) {
+  # federal breakdowns (R/trend_fed.R): only when a fit was handed some; otherwise the code below, unchanged
+  if (!is.null(prep$fed)) return(.trend_prior_system_fed(prep, sigma_rw, sigma_house, anchor, szc_sd))
   T_ <- prep$T_; J <- prep$J
   n_par <- T_ + J
   ijx <- list()
@@ -187,6 +189,7 @@ trend_prior_system <- function(prep, sigma_rw, sigma_house, anchor, szc_sd) {
 #'
 #' @keywords internal
 trend_obs_matrix <- function(prep) {
+  if (!is.null(prep$fed)) return(.trend_obs_matrix_fed(prep))
   n <- nrow(prep$obs)
   Matrix::sparseMatrix(
     i = rep(seq_len(n), 2L),
@@ -237,6 +240,12 @@ trend_solve <- function(prep, sigma_obs, sigma_rw, sigma_house_pts, anchor,
   n <- length(y)
   w <- 1 / (sigma_obs * obs_noise_factors(prep, firm_factors))^2
   if (!is.null(obs_weight)) w <- w * obs_weight
+  if (!is.null(prep$fed)) {
+    # federal breakdowns: variance sigma_obs^2 * vmult (vmult = sample-size factor / r), after the state rows
+    y <- c(y, prep$fed$y)
+    w <- c(w, 1 / (sigma_obs^2 * prep$fed$vmult))
+    n <- length(y)
+  }
 
   A <- Matrix::forceSymmetric(prior$P + Matrix::crossprod(H, Matrix::Diagonal(x = w) %*% H))
   b <- prior$b0 + as.numeric(Matrix::crossprod(H, w * y))
@@ -257,8 +266,17 @@ trend_solve <- function(prep, sigma_obs, sigma_rw, sigma_house_pts, anchor,
     Sigma_diag <- Matrix::diag(Matrix::solve(ch, Matrix::Diagonal(n_par)))
     sds <- sqrt(pmax(Sigma_diag, 0))
   }
+  fed_sd <- NULL
+  if (!is.null(prep$fed)) {
+    idx <- prep$T_ + prep$J_state + seq_len(prep$fed$J)
+    fed_sd <- if (!is.null(sds)) sds[idx] else {
+      E <- Matrix::sparseMatrix(i = idx, j = seq_along(idx), x = 1, dims = c(prep$T_ + prep$J, length(idx)))
+      X <- as.matrix(Matrix::solve(ch, E))
+      sqrt(pmax(X[cbind(idx, seq_along(idx))], 0))
+    }
+  }
   list(theta = theta, sds = sds, logml = logml,
-       logml_y = logml + prep$log_jac)
+       logml_y = logml + prep$log_jac, fed_sd = fed_sd)
 }
 
 #' Robust weights for a Student-t observation model
@@ -380,6 +398,9 @@ default_sigmas <- function(scale = c("logit", "points")) {
 #'   the ~1.4% clean Gaussian data would produce. Discounting them simply does
 #'   not improve the forecast, which suggests those polls carry signal rather
 #'   than error. See docs/NEXT-STEPS.md.
+#' @param fed_obs Federal polls' state breakdowns for this party, from `trend_as_at(fed = )` via
+#'   `.trend_fed_gate()` (R/trend_fed.R); `NULL` (default) fits the state polls alone, unchanged.
+#' @param t_end Optional end date of the latent walk (set with `fed_obs`, so every party ends on one day).
 #' @param nu_iter Maximum reweighting passes.
 #' @param nu_tol Convergence threshold on the largest weight change.
 #' @return List: `trend` (date/mean/sd/lo95/hi95 in percent, plus the
@@ -398,7 +419,8 @@ fit_trend <- function(polls, party,
                       min_firm_polls = 3,
                       firm_factors = NULL,
                       szc_sd_pts = 1.5, want_var = TRUE,
-                      nu = Inf, nu_iter = 25L, nu_tol = 1e-4) {
+                      nu = Inf, nu_iter = 25L, nu_tol = 1e-4,
+                      fed_obs = NULL, t_end = NULL) {
   scale <- match.arg(scale)
   defs <- default_sigmas(scale)
   if (is.null(sigma_obs)) sigma_obs <- defs[["sigma_obs"]]
@@ -406,6 +428,12 @@ fit_trend <- function(polls, party,
 
   prep <- prep_trend_obs(polls, party, min_firm_polls, scale, prior_result)
   anchor <- trend_anchor(prep, prior_result, anchor_k)
+  # Federal breakdowns (R/trend_fed.R), only when trend_as_at() handed some over; the anchor above is computed
+  # from the state polls alone either way.
+  if (!is.null(fed_obs) || !is.null(t_end)) {
+    prep <- prep_add_fed(prep, fed_obs, t_end, min_firm_polls)
+    if (!is.null(prep$fed) && is.finite(nu)) stop("fit_trend(): federal breakdowns with a Student-t fit (nu = ", nu, ") are not implemented")
+  }
 
   # Gaussian pass first; with nu = Inf this is the whole fit and the weights
   # stay exactly one, so the default path is unchanged.
@@ -452,6 +480,9 @@ fit_trend <- function(polls, party,
   trend[, sd := sd_from_link(sd_link, mean, scale)]
   data.table::setcolorder(trend, c("date", "mean", "sd", "lo95", "hi95"))
 
+  if (!is.null(prep$fed)) {
+    house <- .trend_fed_house(prep, sol, mu, scale)
+  } else {
   hj <- T_ + seq_len(prep$J)
   obs_t_by_firm <- split(prep$obs$t, prep$obs$j)[as.character(seq_len(prep$J))]
   house <- data.table::data.table(
@@ -476,6 +507,7 @@ fit_trend <- function(polls, party,
     mu_k <- mu[obs_t_by_firm[[k]]]
     mean(from_link(mu_k + effect[k], scale) - from_link(mu_k, scale))
   }, numeric(1))]
+  }
 
   obs <- prep$obs
   residuals <- data.table::data.table(

@@ -31,7 +31,8 @@ pri <- load_prior_results(); kp <- pri$region == REGION & pri$year == YEAR
 priors <- setNames(pri$prev1[which(kp)], pri$party[which(kp)])
 if (!length(priors)) stop("TP0! no prior results for ", ELECTION)
 fl <- flows_for(load_preference_flows(), YEAR, REGION, quiet = TRUE)
-now <- trend_as_at(polls, YEAR, cycles, Sys.Date(), priors, fl, with_series = TRUE)
+now <- trend_as_at(polls, YEAR, cycles, Sys.Date(), priors, fl, with_series = TRUE,
+                   fed = trend_fed_for_cycle(REGION, YEAR, Sys.Date(), cycles))   # AUSPOL_TREND_FED_R; NULL when off
 if (is.null(now) || is.null(now$series) || !nrow(now$series))
   stop("TP0! trend_as_at() returned no series for ", ELECTION)
 tr <- copy(now$series); tr[, date := as.Date(date)]

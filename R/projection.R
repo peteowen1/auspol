@@ -58,6 +58,8 @@
 #'   arguments [poll_tracking_check()] takes, for the same reason: so a caller
 #'   can assert on the fit it publishes rather than a differently-configured
 #'   one.
+#' @param fed Federal polls' state breakdowns admitted to this cycle, from [trend_fed_for()]; `NULL`
+#'   (default, published) fits the state polls alone. See `R/trend_fed.R`.
 #' @return List: `tpp`, `fp` (named vector), `n_polls`, and -- if
 #'   `with_series` -- `series`, `polls` and `fits`. NULL if too thin.
 #' @export
@@ -65,7 +67,7 @@ trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
                         min_polls = 8, nu = Inf, with_series = FALSE,
                         sigmas = c("default", "per_cycle", "pooled_tf"),
                         weights = c("equal", "firm_factors", "record"),
-                        score_after = NULL, ...) {
+                        score_after = NULL, fed = NULL, ...) {
   sigmas <- match.arg(sigmas)
   weights <- match.arg(weights)
   firm_w <- NULL
@@ -182,6 +184,19 @@ trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
     }
   }
 
+  # FEDERAL POLLS' STATE BREAKDOWNS (AUSPOL_TREND_FED_R, R/trend_fed.R; plans/prereg-fed-breakdowns-in-trend-
+  # 2026-10-26.md). `fed` comes from trend_fed_for(); NULL (the default, and the published value) skips this
+  # block entirely. The classes were chosen above from the STATE polls alone, so a breakdown cannot create a
+  # class, rescue a thin one or count toward min_polls; admission is asserted again inside the gate.
+  fed_gate <- NULL
+  if (!is.null(fed) && nrow(fed)) {
+    fed_gate <- .trend_fed_gate(fed, cp2, ps, as_at)
+    if (!is.null(fed_gate)) {
+      for (p in names(fed_gate$obs)) overrides[[p]] <- c(overrides[[p]], list(fed_obs = fed_gate$obs[[p]]))
+      for (p in ps) overrides[[p]] <- c(overrides[[p]], list(t_end = fed_gate$t_end))
+    }
+  }
+
   # Skip the posterior-variance solve unless the caller wants the bands. The
   # backtest refits ~200 times and reads endpoint MEANS only; profiling put
   # Matrix::solve() + diag() for the variance at 31% of the run, and dropping
@@ -203,6 +218,17 @@ trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
   out <- list(tpp = end_of(tpp),
               fp = vapply(fits, function(f) end_of(f$trend), numeric(1)),
               n_polls = nrow(cp2))
+  if (!is.null(fed_gate)) {
+    out$fed_effects <- data.table::rbindlist(lapply(names(fits), function(p) {
+      h <- fits[[p]]$house_effects
+      if (!"kind" %in% names(h)) return(NULL)
+      h <- h[h$kind == "fed"]
+      if (!nrow(h)) return(NULL)
+      data.table::data.table(party = p, firm = h$firm, n = h$n_polls, offset_pts = h$effect_pts, sd_pts = h$sd_pts)
+    }))
+    out$n_fed <- sum(vapply(fed_gate$obs, nrow, 1L))
+    out$fed_dropped <- fed_gate$dropped
+  }
   # HELD-OUT POLLS: score the cycle's polls dated after `as_at` up to
   # `score_after` (a Date) against this fit's predictive distribution.
   if (!is.null(score_after)) {

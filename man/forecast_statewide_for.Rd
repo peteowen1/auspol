@@ -13,7 +13,8 @@ forecast_statewide_for(
   fund_loo,
   mix,
   n_sims = 20000L,
-  seed = NULL
+  seed = NULL,
+  as_at = NULL
 )
 }
 \arguments{
@@ -36,6 +37,9 @@ which is the same leak as using its polls.}
 \item{mix}{The projection-mix table (\code{output/projection-mix.csv}).}
 
 \item{n_sims, seed}{Passed through to \code{\link[=statewide_draws_as_at]{statewide_draws_as_at()}}.}
+
+\item{as_at}{Cutoff date; \code{NULL} (default) is the day before polling day. A horizon screen passes an earlier
+date, and the projection mix is then evaluated at that horizon.}
 }
 \value{
 A list: \code{st_fc} (named numeric, the forecast statewide level),
