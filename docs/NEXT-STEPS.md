@@ -427,7 +427,6 @@ table on the blog page, To Do reminders (9 Nov, HTV row, VEC email).
   Dry run: only vic2006 `elected` (459 rows), vic2010 `historic_elected` (4 -> 79 returning) and the 8 pending sa2026
   absent-vote rows change. NOT rebuilt: tonight's two deciding runs read it. After them: rebuild, upload to
   `shipped-models`, screen vic2010 + sa2026 (`quick_arm.R "" --pairs=vic2010,sa2026` against the old file).
-- OPEN speed (5 Nov): the wa2008 harness run took 1,730 s in quick_arm (wa2005 21 s, fed2010 49 s); not profiled.
 
 Still open:
 - Federal results as a correlated signal for state seat lean: needs
