@@ -465,3 +465,30 @@ touches the scored set (item 2) removes cells the arm cannot reach in any arm, s
    stamped 2 Nov), whose fed2028 rows replace the older file's.
 8. **Live levels** are the statewide path as the harnesses compute it (`forecast_statewide_for()` as at today,
    then the blend), not a `fit_seats_full.R` run.
+
+## RESULT (2026-11-05)
+
+Screen: `scripts/screen_fed_breakdowns_trend.R`; write-up `reviews/fed-breakdowns-trend-screen-2026-11-05.md`.
+Every registered arm and diagnostic ran on all seven targets and both deciding metrics. RMSE of the published
+statewide level, points; change = arm minus B0, negative is better; SE = delete-one-election jackknife.
+
+| arm | primary change (SE), 24 cells / 7 elections | H change (SE), 28 cells / 4 elections | Amendment 1 verdict |
+|---|---|---|---|
+| B1 | +0.0023 (0.0048) | +0.0142 (0.0105) | **FAIL** |
+| B2 | -0.0028 (0.0079) | +0.0084 (0.0088) | TIE |
+| B3 | -0.0025 (0.0076) | +0.0073 (0.0083) | TIE |
+| B-eq | +0.0567 (0.1334) | +0.2535 (0.2299) | FAIL on H; **TIE on the primary** |
+| B2-noblend (vs B0-noblend) | -0.0039 (0.0088) | +0.0050 (0.0128) | TIE |
+| B2-wide20 | -0.0012 (0.0023) | +0.0023 (0.0047) | TIE |
+
+- **Dry run 3 not met:** B-eq does not fail the primary (0.42 SE), so the polling-day metric cannot see this
+  input; before the blend it is 1.03 points worse (SE 0.30). H does catch it (1.10 SE). Reported, as the prereg
+  requires; no deciding run.
+- Dry runs 1 and 2, the size check (both bounds above 1.84 SE) and every mechanism check passed (R = 0 identity,
+  27 non-target elections identical, admission, class gate).
+- Every arm is 2 to 2.7 SE worse 90 days out on its own and flat at 180; direction 11 toward / 13 away for B1-B3.
+- B3's r_hat is 0 at every target with an earlier target; never the top of the grid.
+- Live: vic2026 moves under 0.2 points in every class; nsw2027 Labor -0.27 (B1), -0.33 (B2), -0.69 (B3). No move
+  over 1 point.
+- **Decision under the rule:** B1 refused; B2 and B3 TIE, which is not a ship and goes to Pete as a clause decision
+  (the blend precedent: that version shipped on a tie at his preference). The switch stays `"0"`.
