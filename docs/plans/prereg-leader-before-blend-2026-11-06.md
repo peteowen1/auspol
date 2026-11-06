@@ -35,6 +35,13 @@ where it belongs) with the split shown; worse: to Pete with the split.
 What would make a win unacceptable: the gain coming from unpolled seats (impossible by construction; if any unpolled
 seat moves, the plumbing is wrong and the run is void).
 
+## Primary set, named 7:25pm before the screen finished (`leader_seats()` x `seat_poll_shares(by_type = TRUE)`)
+
+7 polled leader seats in 3 elections: fed2022 Grayndler (ALP, Albanese), Cook (LNP, Morrison), Melbourne (GRN, Bandt);
+fed2025 Grayndler, Dickson (LNP, Dutton), Melbourne; wa2021 Dawesville (LNP, Kirkup). With 7 seats the primary is
+descriptive: its SE (clustered on 3 elections) is barely estimable, so the decision leans on the correctness argument
+and the guard, as stated above.
+
 ## RESULT
 
 (not run)

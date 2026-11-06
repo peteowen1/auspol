@@ -185,7 +185,7 @@ Dug 2026-10-09 from run 0cbaa82 (`scripts/biggest_misses.R --pairs=vic2018`). Th
   correctly sized tail, **NOTHING TO FIX** on the spread; the miss is the polls'.
 - **Forde** -- **OPEN** (6 Nov 2026) see Hughes: LNP 38.3 vs 30.7, ALP 28.3 vs 34.2.
 - **Dickson** -- **OPEN** (6 Nov 2026) see Hughes; plus the opposition-leader bonus +2.58 (tree 39.1 -> 41.5 published; Dutton
-  got 34.7). Unpolled, so `AUSPOL_LEADER_BEFORE_BLEND` does not move it; the bonus is fitted on 24 earlier leader seats.
+  got 34.7). It IS polled (corrected 6 Nov; the first note said unpolled), so `AUSPOL_LEADER_BEFORE_BLEND` moves it.
 - **Melbourne** -- **OPEN** (6 Nov 2026) the worst AEF-7 seat: Labor won, we gave it 0.006. Primaries, not flows: Greens 49.3
   ours vs 39.5, Labor 22.8 vs 31.3 (notional prior right: GRN 48.1). Tree 49.35; the seat-poll blend alone takes it to 45.9
   (YouGov MRP x3 had GRN 41-43, ALP 28-31); then the leader-seat bonus (+2.58, fitted on the PRE-blend residual) is added
