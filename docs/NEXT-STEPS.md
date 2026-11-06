@@ -340,6 +340,9 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
   under optional preferencing Liberal votes mostly exhaust. Next: an arm reading the researched file (OPEN needs a third
   state in `R/htv_flow.R`, not the TRUE/FALSE flag); fill the UNKNOWNs from the commissions' registered cards (sa2014 has an
   archive.org capture of ECSA's card page). Vic 2026: re-check when cards are lodged with the VEC.
+- OPEN (idea, 6 Nov, from Griffith/Ryan 2022): a state -> federal carry of a party's own strength in the overlapping state
+  booths (the Greens held Maiwar and South Brisbane before winning Griffith and Ryan; polls and model both missed by 6-8
+  points). Booth transposition exists (`seat_swing_port_3c.R`, `PollingPlaceID`); size it on the corpus before building.
 - **28 November 2026**: election night.
 
 ## Model, open (triaged 2026-09-19; nothing here blocks Victoria)

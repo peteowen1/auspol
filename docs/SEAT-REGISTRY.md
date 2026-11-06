@@ -118,6 +118,11 @@ Dug 2026-10-09 from run 0cbaa82 (`scripts/biggest_misses.R --pairs=vic2018`). Th
 - **Geelong** — fixed by the departed-leader honour change (0.43 -> 0.03).
 
 ## fed2022
+- **Griffith** -- **OPEN** (6 Nov 2026) with Ryan: Greens won both; ours GRN 26.4 / 23.3 vs 34.6 / 30.2, and the YouGov MRP
+  missed too (GRN 26 / 24; we followed it). Not used anywhere: the Greens already held the overlapping state seats (Maiwar
+  2017, South Brisbane 2020). The seat-swing port carries federal -> state Labor-v-Coalition swing only; a state -> federal
+  carry of a party's own booth-level strength is untried (idea in NEXT-STEPS).
+- **Ryan** -- **OPEN** (6 Nov 2026) see Griffith.
 - **Fowler** -- **OPEN** (6 Nov 2026) Dai Le (IND) won, we gave her 0.019. Ours 15.9 vs 29.5; Keneally (ALP) 45.4 vs 36.1.
   Le got 25.9 in state Cabramatta 2019 (part of Fowler); the cross-jurisdiction carry gave base 15.6. Neither seat poll
   named her (YouGov MRP IND blank, Laidlaw ALP 42 only). Unmodelled: a major party importing a non-local candidate
