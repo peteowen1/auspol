@@ -174,26 +174,38 @@ if (RULE == "v2") FEATS <- setdiff(FEATS, c("own_prev_major", "held_major"))   #
 # comparable only WITHIN an election): used as the candidate's share of the seat's measured jump, and as a
 # percentile among the election's NON-ZERO jumps (CLAUDE.md percentile trap: jump is mostly zero). An election
 # with no salience fetch is NA, never a filler. Backing: a Climate 200 / Voices independent stands in the seat
-# (seat-level; the file does not say which independent), 0 before 2019 when neither existed.
+# (seat-level; the file does not say which independent), 0 where the file has no row: before 2019 neither existed,
+# and the file covers fed2019-2025, nsw2023 and vic2022/2026 only (wa, sa, qld and nsw2019 read 0 throughout).
 EXTRA <- Sys.getenv("AUSPOL_MC_EXTRA", "")
 if (nzchar(EXTRA)) {
   if (!identical(EXTRA, "sal")) stop("AUSPOL_MC_EXTRA must be empty or sal, not ", EXTRA)
   SV <- fread("output/salience-v6.csv", showProgress = FALSE)
   # Joined on election, seat and the candidate's exact first-preference percent (both files carry it, to full
   # precision): the search terms are not the candidacy names ("Heather Holmes Ross", WA surname-only). The percent
-  # is a JOIN KEY only, never a feature.
-  SV[, pk4 := round(pcv, 4)]
+  # is a JOIN KEY only, never a feature. Seats are compared lower-case letters only (vic2014 is stored "albertpark"),
+  # the class is in the key (qld2012 Mudgeeraba: an OTH_RIGHT and a GRN candidate on identical votes), and a key
+  # still shared by two rows is dropped on both sides rather than handing one candidate the other's search interest.
+  .sk <- function(x) gsub("[^a-z]", "", tolower(x))
+  SV[, `:=`(pk4 = round(pcv, 4), sk = .sk(seat))]
   SV <- SV[is.finite(jump)]
-  SV <- SV[!duplicated(SV[, .(election, seat, pk4)])]
-  SV[, sal_seat_share := { s <- sum(pmax(jump, 0)); if (s > 0) pmax(jump, 0) / s else NA_real_ }, by = .(election, seat)]
+  SV[, sal_seat_share := { s <- sum(pmax(jump, 0)); if (s > 0) pmax(jump, 0) / s else NA_real_ }, by = .(election, sk)]
   SV[, sal_el_pct := { nz <- jump > 0; out <- rep(0, .N); if (any(nz)) out[nz] <- rank(jump[nz]) / sum(nz); out }, by = election]
   SV[, sal_pos := as.numeric(jump > 0)]
+  SV[, nkey := .N, by = .(election, sk, party, pk4)]
+  n_tie <- sum(SV$nkey > 1L)
+  SV <- SV[nkey == 1L]
   n0 <- nrow(Fx)
-  Fx[, pk4 := round(pcv, 4)]
-  Fx <- merge(Fx, SV[, .(election, seat, pk4, sal_seat_share, sal_el_pct, sal_pos)], by = c("election", "seat", "pk4"), all.x = TRUE)
+  Fx[, `:=`(pk4 = round(pcv, 4), sk = .sk(seat))]
+  Fx <- merge(Fx, SV[, .(election, sk, party, pk4, sal_seat_share, sal_el_pct, sal_pos)],
+              by = c("election", "sk", "party", "pk4"), all.x = TRUE)
   if (nrow(Fx) != n0) stop("MC3! salience join changed the row count ", n0, " -> ", nrow(Fx))
-  Fx[, pk4 := NULL]
+  Fx[, c("pk4", "sk") := NULL]
   sal_el <- unique(SV$election)
+  # Coverage, per election: a fetched election matching nothing is a broken join, not missing data.
+  cov_el <- Fx[election %in% sal_el, .(n = .N, hit = sum(!is.na(sal_pos))), by = election]
+  if (any(cov_el$hit == 0L)) stop("MC3! salience fetched but 0 rows matched for: ", paste(cov_el[hit == 0L, election], collapse = ", "))
+  cat(sprintf("MC3s salience: per-election match %.0f%%-%.0f%% of minor rows (lowest %s); %d tied keys dropped\n",
+              100 * min(cov_el$hit / cov_el$n), 100 * max(cov_el$hit / cov_el$n), cov_el[which.min(hit / n), election], n_tie))
   cat(sprintf("MC3s salience: %d of %d rows matched in the %d elections fetched (%d rows in those elections); jump percent zero %.0f%%, %d distinct\n",
               sum(!is.na(Fx$sal_pos)), n0, length(sal_el), sum(Fx$election %in% sal_el),
               100 * mean(SV$jump == 0), uniqueN(SV$jump)))
