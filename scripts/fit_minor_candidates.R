@@ -186,20 +186,22 @@ if (nzchar(EXTRA)) {
   # the class is in the key (qld2012 Mudgeeraba: an OTH_RIGHT and a GRN candidate on identical votes), and a key
   # still shared by two rows is dropped on both sides rather than handing one candidate the other's search interest.
   .sk <- function(x) gsub("[^a-z]", "", tolower(x))
-  SV[, `:=`(pk4 = round(pcv, 4), sk = .sk(seat))]
+  # salience-v6 has no OTH_RIGHT class (it files those candidates as OTH), so the key compares OTH and OTH_RIGHT as one.
+  .kc <- function(p) fifelse(p %in% c("OTH", "OTH_RIGHT"), "OTH", p)
+  SV[, `:=`(pk4 = round(pcv, 4), sk = .sk(seat), kp = .kc(party))]
   SV <- SV[is.finite(jump)]
   SV[, sal_seat_share := { s <- sum(pmax(jump, 0)); if (s > 0) pmax(jump, 0) / s else NA_real_ }, by = .(election, sk)]
   SV[, sal_el_pct := { nz <- jump > 0; out <- rep(0, .N); if (any(nz)) out[nz] <- rank(jump[nz]) / sum(nz); out }, by = election]
   SV[, sal_pos := as.numeric(jump > 0)]
-  SV[, nkey := .N, by = .(election, sk, party, pk4)]
+  SV[, nkey := .N, by = .(election, sk, kp, pk4)]
   n_tie <- sum(SV$nkey > 1L)
   SV <- SV[nkey == 1L]
   n0 <- nrow(Fx)
-  Fx[, `:=`(pk4 = round(pcv, 4), sk = .sk(seat))]
-  Fx <- merge(Fx, SV[, .(election, sk, party, pk4, sal_seat_share, sal_el_pct, sal_pos)],
-              by = c("election", "sk", "party", "pk4"), all.x = TRUE)
+  Fx[, `:=`(pk4 = round(pcv, 4), sk = .sk(seat), kp = .kc(party))]
+  Fx <- merge(Fx, SV[, .(election, sk, kp, pk4, sal_seat_share, sal_el_pct, sal_pos)],
+              by = c("election", "sk", "kp", "pk4"), all.x = TRUE)
   if (nrow(Fx) != n0) stop("MC3! salience join changed the row count ", n0, " -> ", nrow(Fx))
-  Fx[, c("pk4", "sk") := NULL]
+  Fx[, c("pk4", "sk", "kp") := NULL]
   sal_el <- unique(SV$election)
   # Coverage, per election: a fetched election matching nothing is a broken join, not missing data.
   cov_el <- Fx[election %in% sal_el, .(n = .N, hit = sum(!is.na(sal_pos))), by = election]

@@ -113,3 +113,19 @@ file, same arm, same rule. The out-of-fold numbers in Amendment 1 are from the u
 
 Primary +0.0138 (SE 0.0185), within 1 SE; guard 1 +0.0031 (SE 0.0021) WORSE; guard 2 +0.0017 (SE 0.0012) WORSE. Class won 35
 seats +0.3471 (SE 0.0651), was +0.4151; others -0.0046 (SE 0.0016). Monash IND 0.634 -> 0.355 (was -> 0.486).
+
+#### A1 (deciding read; refitted file, 5:07pm, caches df6658a2887a / e450b9f0ebe0): REFUSED on both guards. The split stays off.
+
+| Set (seat-winner log loss, lower is better) | Seats | Arm - base (SE) | Verdict |
+|---|---|---|---|
+| Primary | 78 | +0.0117 (0.0180) | within 1 SE |
+| Guard 1: split-active | 1,600 | +0.0029 (0.0021) | WORSE |
+| Guard 2: all 35 | 2,931 | +0.0016 (0.0011) | WORSE |
+| The split class won | 35 | +0.3283 (0.0640) | WORSE (A0 +0.4151) |
+| Someone else won | 1,560 | -0.0044 (0.0014) | better |
+
+Walkthrough IND probability: Morphett 0.798 -> 0.702, Waite 0.757 -> 0.622, Monash 0.634 -> 0.405, Calwell 0.033 -> 0.020.
+Refit: candidate RMSE 5.116 (shipped 5.212); vic2014 joined 119 of 277 rows. Known gap in that file, found after the run:
+salience-v6 files OTH_RIGHT candidates as OTH, so the class key dropped them (about 217 rows; fixed in code for the next
+fit, not rerun: OTH_RIGHT seats moved +0.0007, SE 0.0008, and cannot change the verdict). Per Amendment 1 this was the one
+rescreen; no further arm on this mechanism without a new design from Pete.
