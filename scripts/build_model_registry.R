@@ -407,6 +407,10 @@ CLASSIFY <- list(
     "UNIVERSAL via R/: read inside coalition_split_args() (R/coalition_split.R), which every harness (six + NT)",
     "and fit_seats_full.R call at their simulate_seat_contests() site, so the per-harness greps cannot see it.",
     "SHIPPED (1) 2026-10-17 on Pete's call; 20k deciding run passed every clause (reviews/lib-nat-plumbing-2026-10-16.md)."),
+  AUSPOL_CLASS_SPLIT = paste(
+    "UNIVERSAL via R/: read inside class_split_args() (R/class_split.R) through coalition_split_args(), which",
+    "every harness (six + NT) and fit_seats_full.R call. EXPERIMENT, default 0 (plans/prereg-class-split-2026-11-06.md);",
+    "no vic2026 per-candidate predictions yet, so the live forecast would get no class split even at 1."),
   AUSPOL_COALITION_SPLIT_F = paste(
     "UNIVERSAL via R/: read inside coalition_f() (R/coalition_split.R) through coalition_split_args(), which",
     "every harness (six + NT) and fit_seats_full.R call; inert unless AUSPOL_COALITION_SPLIT=1. Prereg amendment 2. SHIPPED (state) 2026-10-17."),

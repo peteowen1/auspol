@@ -24,6 +24,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `AUSPOL_CLASS_SPLIT`, extending the Coalition split. Prereg `plans/prereg-class-split-2026-11-06.md` (primary: the 84 seats with
   2+ of one minor class at 5%+; guards prediction-defined). Walkthrough `reviews/two-candidates-one-class-2026-11-06.md`. Does not
   reach the live forecast until vic2026 per-candidate predictions exist (after the 10 Nov nominations rebuild).
+  Reviewed 6 Nov (Sonnet): 0 Important. Pre-existing, open: a final two of one class (LNP|LNP since 17 Oct, now also
+  IND|IND) leaves the second side empty in the TCP tables (`R/tcp_scenarios.R` setdiff, `fit_seats_full.R:2166`); display only.
 - OPEN (separate item, Pete 6 Nov): the per-candidate model gives a newcomer independent the generic 4-8% beside a sitting member
   (Jones 4.8 vs 12.1, Holmes-Ross 4.3 vs 14.6, Leonard 7.6 vs 17.1). Table in the walkthrough doc.
 - OPEN, blocked on the item above: `AUSPOL_POLL_SERIES_CLASS=name` (SA-Best, Katter, UAP, FF classed by full name). 20k on 7 pairs a tie
