@@ -1,6 +1,6 @@
 # Pre-registration: the researched Coalition card order (`AUSPOL_HTV_TABLE=researched`)
 
-Written 2026-11-06 ~8:55pm, before any screen. Pete, 6 Nov: "spin up an agent to research this - and create the data
+Written 2026-11-06 ~8:45pm, before any screen. Pete, 6 Nov: "spin up an agent to research this - and create the data
 ourselves if needed".
 
 ## What it changes
