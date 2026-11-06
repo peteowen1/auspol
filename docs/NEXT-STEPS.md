@@ -20,7 +20,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   then `scripts/scheduled_rebuild.ps1` (02:00, waits for 8 GB) for the next rebuild. `output/candidacies.csv` (vic2006 winners) ships with
   the 10 Nov nominations rebuild. OPEN: VEC feed access details; Pete waits to 7 Nov, then sends the chase (Gmail draft saved 5 Nov).
   Run `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
-- OPEN, NEEDS PETE (screen REFUSED 6 Nov 2:58pm: all 35 +0.0022 SE 0.0013; class-won seats +0.415, others -0.0052; prereg RESULT)
+- OPEN, PARKED until the item below lands (Pete 6 Nov 3:05pm: keep off, fix predictions first; screen REFUSED 6 Nov 2:58pm: all 35 +0.0022 SE 0.0013; class-won seats +0.415, others -0.0052; prereg RESULT)
   (Pete walked it 6 Nov 1:15pm, chose "Split now"): **two candidates of one minor class counted separately**,
   `AUSPOL_CLASS_SPLIT`, extending the Coalition split. Prereg `plans/prereg-class-split-2026-11-06.md` (primary: the 84 seats with
   2+ of one minor class at 5%+; guards prediction-defined). Walkthrough `reviews/two-candidates-one-class-2026-11-06.md`. Does not
@@ -29,7 +29,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   IND|IND) leaves the second side empty in the TCP tables (`R/tcp_scenarios.R` setdiff, `fit_seats_full.R:2166`); display only.
   If the screen passes: deciding run `powershell.exe -File scripts\deciding_run.ps1 -Arm "AUSPOL_CLASS_SPLIT=1" -Label class-split -At 02:00`
   (20k, all 35), then `Rscript scripts/score_class_split.R <run>/cache/<base key> <run>/cache/<arm key> 20000` (keys: `_key.rds` in each).
-- OPEN (separate item, Pete 6 Nov): the per-candidate model gives a newcomer independent the generic 4-8% beside a sitting member
+- OPEN, NEXT (Pete 6 Nov: before the class split is rescreened): the per-candidate model gives a newcomer independent the generic 4-8% beside a sitting member
   (Jones 4.8 vs 12.1, Holmes-Ross 4.3 vs 14.6, Leonard 7.6 vs 17.1). Table in the walkthrough doc.
 - OPEN, blocked on the item above: `AUSPOL_POLL_SERIES_CLASS=name` (SA-Best, Katter, UAP, FF classed by full name). 20k on 7 pairs a tie
   (-0.0028, SE 0.0038); sa2018 +0.037 of which Morphett +0.031. `plans/prereg-poll-series-class-2026-11-06.md`, last section.
