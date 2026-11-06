@@ -1,3 +1,7 @@
+# auspol 0.4.139
+
+- `scripts/scheduled_rebuild.ps1`: run the full rebuild from Task Scheduler at a quiet hour (default 02:00), once enough memory is free (default 8 GB, until 06:00). Never publishes; a late wake-up after its deadline does not run.
+
 # auspol 0.4.138
 
 - `rebuild_forecasts.sh` skips the 6.4-minute bucket split build when its file is newer than everything it reads (prints the decision; a missing input or `AUSPOL_MC_FORCE=1` forces it).

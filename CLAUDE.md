@@ -488,6 +488,12 @@ was logged off) or `RUNNING` (no live pid in `started.txt` means it was killed).
 folder's marker next session, not only the newest `DONE`. `-Pairs` defaults to `all`, and
 `DONE` requires the scored election count to equal the one asked for. Never touches `output/`.
 
+**A full rebuild runs the same way, at a quiet hour:** `powershell.exe -File scripts\scheduled_rebuild.ps1
+[-At 02:00] [-MinFreeGB 8] [-Deadline 06:00] [-From 1] [-Now]` registers a one-shot Scheduled Task that waits for
+free memory, then runs `rebuild_forecasts.sh` IN THIS CHECKOUT (it must write the real `output/`), refusing
+uncommitted code. It never publishes (stage 9 stays a deliberate step), and a task that wakes after its deadline
+writes FAILED "missed its window" instead of rebuilding on a busy machine. Markers in `deciding-runs/<stamp>-rebuild/`.
+
 ## The seat model is the candidate model. There is no second seat model.
 
 **`fit_seats_full.R` / `simulate_seat_contests()` is the forecast.** The
