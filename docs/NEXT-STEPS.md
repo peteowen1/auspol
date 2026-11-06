@@ -20,13 +20,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   then `scripts/scheduled_rebuild.ps1` (02:00, waits for 8 GB) for the next rebuild. `output/candidacies.csv` (vic2006 winners) ships with
   the 10 Nov nominations rebuild. OPEN: VEC feed access details; Pete waits to 7 Nov, then sends the chase (Gmail draft saved 5 Nov).
   Run `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
-- OPEN, NEEDS PETE (walk real seats first, model-design rule): **two candidates of one class run as ONE runner in the seat
-  simulation.** Class shares are summed and the preference count refuses duplicate names (`R/preferences.R:75`), so two independents
-  on 14% and 12% compete as one IND on 26%. Morphett sa2018: IND predicted 33.0 (actual 26.3, split McFetridge 14.2 / SA-Best 12.1),
-  LNP 30.1 (actual 41.4); IND win 0.81, Liberal won. 84 of 3,680 seat-elections have 2+ candidates of one minor class at 5%+
-  (Newcastle 2007, Waite 2022, Monash 2025, Calwell 2025 ...). Never tested (the multiplicity prereg was about flows only). The
-  per-candidate shares already exist (`output/minor-candidate-oof-resid-v2.csv`). Walkthrough READY: `reviews/two-candidates-one-class-2026-11-06.md`
-  (Morphett, Waite, Monash, Calwell; Waite is the clean case).
+- OPEN, BUILDING (Pete walked it 6 Nov 1:15pm, chose "Split now"): **two candidates of one minor class counted separately**,
+  `AUSPOL_CLASS_SPLIT`, extending the Coalition split. Prereg `plans/prereg-class-split-2026-11-06.md` (primary: the 84 seats with
+  2+ of one minor class at 5%+; guards prediction-defined). Walkthrough `reviews/two-candidates-one-class-2026-11-06.md`. Does not
+  reach the live forecast until vic2026 per-candidate predictions exist (after the 10 Nov nominations rebuild).
+- OPEN (separate item, Pete 6 Nov): the per-candidate model gives a newcomer independent the generic 4-8% beside a sitting member
+  (Jones 4.8 vs 12.1, Holmes-Ross 4.3 vs 14.6, Leonard 7.6 vs 17.1). Table in the walkthrough doc.
 - OPEN, blocked on the item above: `AUSPOL_POLL_SERIES_CLASS=name` (SA-Best, Katter, UAP, FF classed by full name). 20k on 7 pairs a tie
   (-0.0028, SE 0.0038); sa2018 +0.037 of which Morphett +0.031. `plans/prereg-poll-series-class-2026-11-06.md`, last section.
 - **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** History, DONE list and replay evidence:

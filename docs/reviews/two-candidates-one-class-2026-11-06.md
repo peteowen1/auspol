@@ -47,5 +47,23 @@ on 5% or more; the class won 14 of them.
    transfer data (independent to independent is a measurable flow).
 3. Score on the 84 seats as the primary target, all 35 elections as the do-no-harm guard (prereg first).
 
+### What the split would hand each candidate (added 6 Nov, from `output/minor-candidate-oof-resid-v2.csv`)
+
+Per-candidate prediction (`pred_xgb`, %) against actual, and the class total split in proportion to those predictions:
+
+| Seat | Candidate | Per-candidate pred | Split of class total | Actual |
+|---|---|---|---|---|
+| Morphett 2018 | McFetridge (sitting member) | 26.0 | 27.8 | 14.2 |
+| | Jones | 4.8 | 5.2 | 12.1 |
+| Waite 2022 | Duluk (sitting member) | 24.8 | 25.7 | 19.7 |
+| | Holmes-Ross | 4.3 | 4.5 | 14.6 |
+| Monash 2025 | Broadbent (sitting member) | 28.3 | 18.8 | 10.2 |
+| | Leonard | 7.6 | 5.1 | 17.1 |
+| Calwell 2025 | Moore, Youhana, Moslih, Ragupathy | 3.6-3.7 each | about 3.1 each | 12.0, 10.8, 6.9, 0.6 |
+
+The per-candidate model gives the sitting member nearly all of it and every newcomer independent the generic 4-8%. In all
+three two-candidate seats the newcomer got 12-17% and in Monash beat the sitting member. So the split stops two candidates
+being added together, but it leans the wrong way between them: the newcomer surge is what the per-candidate model misses.
+
 Questions for Pete: is a per-candidate split the right shape, or should the second independent be a separate class? How much do
 we trust the minor-candidate model's split between two independents (its own RMSE ~4-9 points per candidate)?
