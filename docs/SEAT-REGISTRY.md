@@ -169,6 +169,13 @@ Dug 2026-10-09 from run 0cbaa82 (`scripts/biggest_misses.R --pairs=vic2018`). Th
   ranking on raw votes. **DATA**, 2026-09-18.
 
 ## fed2025
+- **Hughes** -- **OPEN** (6 Nov 2026) with Forde and Dickson: one cause, the 2025 national polling miss. Our federal level
+  ALP 31.9 / LNP 34.7 (BF0r, from the polls) against about 34.6 / 31.8; larger in outer-suburban seats (Hughes LNP 43.2 vs
+  36.5, ALP 29.4 vs 39.0; LNP 0.94 favourite, Labor won). Open question: is a 0.94 favourite too confident under a
+  national error that size (the statewide spread's calibration), not a seat fix.
+- **Forde** -- **OPEN** (6 Nov 2026) see Hughes: LNP 38.3 vs 30.7, ALP 28.3 vs 34.2.
+- **Dickson** -- **OPEN** (6 Nov 2026) see Hughes; plus the opposition-leader bonus +2.58 (tree 39.1 -> 41.5 published; Dutton
+  got 34.7). Unpolled, so `AUSPOL_LEADER_BEFORE_BLEND` does not move it; the bonus is fitted on 24 earlier leader seats.
 - **Melbourne** -- **OPEN** (6 Nov 2026) the worst AEF-7 seat: Labor won, we gave it 0.006. Primaries, not flows: Greens 49.3
   ours vs 39.5, Labor 22.8 vs 31.3 (notional prior right: GRN 48.1). Tree 49.35; the seat-poll blend alone takes it to 45.9
   (YouGov MRP x3 had GRN 41-43, ALP 28-31); then the leader-seat bonus (+2.58, fitted on the PRE-blend residual) is added
