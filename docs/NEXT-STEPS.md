@@ -387,16 +387,12 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
   split file) costs 6.4 min every full rebuild (7:21:28-7:27:54) and its output was byte-identical to the tracked copy. Cache it:
   skip when `output/minor-class-shares-resid-v2.csv` is newer than `output/candidacies.csv`, the audit file it reads, the script
   and every `R/*.R` it load_all()s (memo key = everything it reads). Do NOT edit the script while a rebuild runs (bash reads it as it goes).
-- OPEN (speed) stage 3 took 533 s on 6 Nov against 160 s in the previous driver.log run; `fit_xgb_primary_v6.R` ~7.7 min of it.
-  Stage 4 (as-at trees) 1669 s against 287 s, same run. 8:17am sample: our job ~2 of 24 cores, 8 other sessions' R jobs ~1
-  core each, so the CPU was not saturated; not explained (threads? memory pressure from the kernel pool leak?). Time stage 4 alone
-  after a reboot before acting.
-
-Closed 2026-09-19/20 (DECISIONS; fast loop in `PIPELINE.md` C0): forecast
-mode everywhere, time-forward folds, registry classified, zero-placeholder
-audit, smoke loop + as-at cache + `tidy_output.R`, `out_path()`.
-
-Still open:
+- OPEN (speed, CORRECTED 6 Nov 12:40pm) stage 4 (`fit_xgb_primary_asat.R`) 1,664 s for 31 models on a full retrain. The "287 s before"
+  I compared it with was `driver.log` of 19 SEP (22 elections, ensemble 1); not the kernel leak. Cost per model grows with the corpus:
+  `xgb.cv` uses ONE FOLD PER EARLIER ELECTION (sa2026: 34 folds, 401 rounds, 142 s; sa2010: 4 folds, 1 s), times `AUSPOL_XGB_ENSEMBLE=3`
+  training. Its skip-if-current cache only helps when base_pred is unchanged, which a model change never is. Options, each a model
+  change needing a screen: cap CV at ~5 grouped folds (est. ~5x faster on late targets; changes nrounds), or fit targets in parallel
+  processes (memory). Stage 3 (533 s) not yet broken down the same way; time it from its own log before guessing again.
 - Both branches below RECREATED 25 Oct on Pete's yes (local only, not pushed).
 - Branch `fed-timing-resume-fixed` (b21fb77, unmerged, NOT through the review gate or `check_like_ci`): fixes
   the federal `PARTY_COR` loop leak (a full fed run simulates every pair with the LAST pair's matrix; dormant
