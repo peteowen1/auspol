@@ -172,7 +172,9 @@ Dug 2026-10-09 from run 0cbaa82 (`scripts/biggest_misses.R --pairs=vic2018`). Th
 - **Hughes** -- **OPEN** (6 Nov 2026) with Forde and Dickson: one cause, the 2025 national polling miss. Our federal level
   ALP 31.9 / LNP 34.7 (BF0r, from the polls) against about 34.6 / 31.8; larger in outer-suburban seats (Hughes LNP 43.2 vs
   36.5, ALP 29.4 vs 39.0; LNP 0.94 favourite, Labor won). Open question: is a 0.94 favourite too confident under a
-  national error that size (the statewide spread's calibration), not a seat fix.
+  national error that size (the statewide spread's calibration), not a seat fix. ANSWERED 6 Nov: no. Favourites at 0.90-0.95
+  won 0.940 against 0.925 given (301 seats, 35 elections, SE 0.015); fed2025's 0.90-0.99 favourites won 67 of 69. A
+  correctly sized tail, **NOTHING TO FIX** on the spread; the miss is the polls'.
 - **Forde** -- **OPEN** (6 Nov 2026) see Hughes: LNP 38.3 vs 30.7, ALP 28.3 vs 34.2.
 - **Dickson** -- **OPEN** (6 Nov 2026) see Hughes; plus the opposition-leader bonus +2.58 (tree 39.1 -> 41.5 published; Dutton
   got 34.7). Unpolled, so `AUSPOL_LEADER_BEFORE_BLEND` does not move it; the bonus is fitted on 24 earlier leader seats.
