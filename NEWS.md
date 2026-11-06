@@ -1,3 +1,7 @@
+# auspol 0.4.138
+
+- `rebuild_forecasts.sh` skips the 6.4-minute bucket split build when its file is newer than everything it reads (prints the decision; a missing input or `AUSPOL_MC_FORCE=1` forces it).
+
 # auspol 0.4.137
 
 - **Three switches shipped (Pete, 6 Nov).** The backtests read each party's statewide trend at its own last poll (`AUSPOL_STATEWIDE_ENDPOINT="party"`); the ALP and LNP departed-member slopes are partially pooled toward the two-party slope (`AUSPOL_DEPARTED_POOL="1"`, your 27 Oct ask, shipped over one tripped guard); the unpolled bucket is split by the file `fit_minor_candidates.R` rebuilds each run (`minor-class-shares-resid-v2.csv`). Seat log loss: -0.0009 (SE 0.0004), -0.0020 (SE 0.0015), -0.0009 (SE 0.0010). The published numbers move at the next full rebuild.
