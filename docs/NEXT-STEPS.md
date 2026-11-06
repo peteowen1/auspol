@@ -13,17 +13,21 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   9 Nov, condition One Nation's anchor/blend on how many seats it stands in; (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 5 Nov 11pm.** main = dev 0.4.135 except docs/tests (PRs #193, #194 merged 5 Nov); overnight work is logged in
-  `backlog/overnight-2026-11-05.md`. Deciding runs: bucket split from 10:30pm (`deciding-runs/20261105-0941-bucket-split-v2-rebuilt/`;
-  it shared the machine with a check_like_ci run 10:42-10:47pm: read its log for a memory kill), departed-slope pool 2:00am 6 Nov
-  (`deciding-runs/20261105-1252-departed-slope-pool-a1/`). OPEN: read the next daily forecast run's conclusion (`AUSPOL_POLL_DATE_OURS=1`,
-  0.4.135, changes the published inputs; live Victoria <= 0.01 pts expected). `output/candidacies.csv` (vic2006 winners, KEPT 5 Nov)
-  ships with the 10 Nov nominations rebuild. OPEN: VEC feed access details due 4 Nov, not in Gmail or Hotmail at 3pm 5 Nov; Pete
-  waits to 7 Nov, then sends the chase (Gmail draft saved 5 Nov in his 28 Oct thread to resultsdatafeed@vec.vic.gov.au). Run
-  `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
-- OPEN, CONFIRMED 6 Nov, arm built (off): `AUSPOL_STATEWIDE_ENDPOINT=party` (`8cf24ad2`). The backtests' statewide level dropped any
-  party missing from the newest poll into OTH (11 of 32 targets; nsw2023 One Nation 4.6 -> 0); live already reads per party
-  (`fit_seats_full.R:566`). SCREEN PASSED 6 Nov (11 affected, -0.0007, SE 0.0004); NEEDS PETE to ship (+ level-pred rebuild, tree retrain).
+- **Status 6 Nov 12:15pm.** main = dev 0.4.139 (PRs #195, #197, #198, #199 merged 6 Nov). Shipped 6 Nov: `AUSPOL_STATEWIDE_ENDPOINT="party"`,
+  `AUSPOL_DEPARTED_POOL="1"` (clause override), `AUSPOL_BUCKET_SPLIT_SRC="minor-class-shares-resid-v2.csv"`; rebuild published 10:58am
+  (pooled seat log loss 0.3256 -> 0.3224, 2,931 seats; nsw2019 +0.052 is Murray alone at the log-loss floor). OPEN: read the next daily
+  forecast run's conclusion, the first with all three live. OPEN: machine has a kernel pool leak (2-3 GB free at noon 6 Nov); reboot,
+  then `scripts/scheduled_rebuild.ps1` (02:00, waits for 8 GB) for the next rebuild. `output/candidacies.csv` (vic2006 winners) ships with
+  the 10 Nov nominations rebuild. OPEN: VEC feed access details; Pete waits to 7 Nov, then sends the chase (Gmail draft saved 5 Nov).
+  Run `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
+- OPEN, NEEDS PETE (walk real seats first, model-design rule): **two candidates of one class run as ONE runner in the seat
+  simulation.** Class shares are summed and the preference count refuses duplicate names (`R/preferences.R:75`), so two independents
+  on 14% and 12% compete as one IND on 26%. Morphett sa2018: IND predicted 33.0 (actual 26.3, split McFetridge 14.2 / SA-Best 12.1),
+  LNP 30.1 (actual 41.4); IND win 0.81, Liberal won. 84 of 3,680 seat-elections have 2+ candidates of one minor class at 5%+
+  (Newcastle 2007, Waite 2022, Monash 2025, Calwell 2025 ...). Never tested (the multiplicity prereg was about flows only). The
+  per-candidate shares already exist (`output/minor-candidate-oof-resid-v2.csv`). Walk Morphett, Newcastle 2007, Waite 2022 with Pete.
+- OPEN, blocked on the item above: `AUSPOL_POLL_SERIES_CLASS=name` (SA-Best, Katter, UAP, FF classed by full name). 20k on 7 pairs a tie
+  (-0.0028, SE 0.0038); sa2018 +0.037 of which Morphett +0.031. `plans/prereg-poll-series-class-2026-11-06.md`, last section.
 - **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** History, DONE list and replay evidence:
   `backlog/journal-2026-11-05-election-night.md` (moved verbatim 6 Nov); plan `plans/election-night-booth-model.md`. Runbook:
   `gh release download forecast-latest -p night-state-vic-2026.rds -D output`, then `night_runner.R --state=output/night-state-vic-2026.rds
@@ -148,11 +152,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   rest); live `FST1!` (no candidate-model split for vic2026); Kew and Hawthorn, where the bookies price independents
   far above us; Benambra (a NEW independent succeeding Hawkins).
 
-- RESULT 6 Nov 12:14am, NEEDS PETE (recommend adopt; `backlog/overnight-2026-11-05.md`): all-35 run a tie (-0.0009, SE 0.0010),
-  shares -3%. Was: IN FLIGHT (decided 5 Nov, Pete: recover v2): the others-bucket split. `AUSPOL_MC_OWN_RULE=v2` rebuilds it
-  (`output/minor-class-shares-resid-v2.csv`); AEF-7 said share error +1% (WORSE), log loss unchanged; the all-22 run
-  tonight 10:30pm decides adopt-or-keep-frozen. Still open after that: add it to the rebuild, give it vic2026 rows after
-  nominations (`FST1!`), then v3 as its own screen. `backlog/overnight-2026-11-04.md` item 3.
+- OPEN (bucket split, SHIPPED 6 Nov; DECISIONS): `minor-class-shares-resid-v2.csv` is built in `rebuild_forecasts.sh` (cached when
+  current). Still open: give it vic2026 rows after nominations (`FST1!`), then v3 as its own screen. `backlog/overnight-2026-11-04.md` item 3.
 
 ## 2026-10-18 pipeline audit (READ FIRST; `reviews/pipeline-overwrite-audit-2026-10-18.md`, Sonnet, read-only)
 
@@ -368,9 +369,8 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
 - **Time-forward fits still use `min_n` cliffs**: `R/split_slope.R:395,416` sit in `fit_conditional_slopes()`,
   which the shipped config never calls (`AUSPOL_FIT_SLOPES=0`). Live: `fit_major_departed_slope()` falls back to 1.0
   below 40 seats (fed2007, fed2010, sa2010, wa2001, wa2005, wa2008). `AUSPOL_SLOPE_SHRINK` shrinks toward 1, not the
-  pooled slope, refused 29 Sep. DECIDING RUN DONE 6 Nov 2:59am (`AUSPOL_DEPARTED_POOL`): all 35
-  -0.0020 (SE 0.0015), the eight -0.0081 (SE 0.0052); one guard fails on noise-sized moves (nsw2015, qld2024). NEEDS PETE
-  (clause override; recommend ship). Prereg results.
+  pooled slope, refused 29 Sep. `AUSPOL_DEPARTED_POOL` SHIPPED 6 Nov (no cliff for the departed slope; DECISIONS); the
+  `fit_conditional_slopes()` cliffs above remain, unshipped code.
 - **Teal/independent under-call** (Curtin, Goldstein, Mackellar, Wakehurst):
   PARKED by Pete. Overall we lead AEF on independents (36 winners: 16.7 vs
   19.7 log loss). Wave term blocked (`reviews/wave-term-blocked-2026-09-07.md`).
