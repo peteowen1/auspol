@@ -107,7 +107,7 @@ class_split_fit <- function(target_election, oof = NULL, transfers = NULL,
 #' The class-split elements of the `coalition_split` argument
 #'
 #' Reads `AUSPOL_CLASS_SPLIT` (default `"0"`): anything but `"1"` returns
-#' `NULL`. Prints the plumbing line `CS1` per election.
+#' `NULL`. Prints the plumbing line `CLS1` per election.
 #'
 #' @param target_election Election label.
 #' @param seat_names The simulation's seats, in its order.
@@ -134,7 +134,7 @@ class_split_args <- function(target_election, seat_names) {
   cls[s$seat] <- s$cls; r[s$seat] <- s$r; sdv[s$seat] <- s$sd; f[s$seat] <- s$f
   miss <- setdiff(fit$seats$seat, seat_names)
   tab <- table(s$cls)
-  cat(sprintf(paste0("CS1 class split %s: %d seat(s) [%s] of %d with 2+ candidates of one minor class%s%s;",
+  cat(sprintf(paste0("CLS1 class split %s: %d seat(s) [%s] of %d with 2+ candidates of one minor class%s%s;",
                      " sd=%.3f on %d earlier seat-classes; f %s; mean r=%.3f\n"),
               target_election, nrow(s), paste(names(tab), tab, sep = "=", collapse = " "), fit$n_target,
               if (isTRUE(fit$missing)) " (NO per-candidate predictions for this election: no class split)" else "",

@@ -16,7 +16,7 @@ eps <- if (n_sims >= 20000) 1e-6 else 0.5 / n_sims
 els <- intersect(list.dirs(base_dir, full.names = FALSE, recursive = FALSE),
                  list.dirs(arm_dir, full.names = FALSE, recursive = FALSE))
 els <- els[file.exists(file.path(base_dir, els, "allprobs.csv")) & file.exists(file.path(arm_dir, els, "allprobs.csv"))]
-cat(sprintf("CX0 %d elections in both folders; floor eps %.1e\n", length(els), eps))
+cat(sprintf("CSX0 %d elections in both folders; floor eps %.1e\n", length(els), eps))
 classes <- c("IND", "OTH", "OTH_RIGHT")
 
 # Primary set: defined by ACTUAL shares (stated in the prereg as favouring the arm).
@@ -24,11 +24,11 @@ cd <- fread(out_path("candidacies.csv"))
 mc <- cd[cd$party %in% classes, list(n5 = sum(get("pcv") >= 5, na.rm = TRUE)), by = c("election", "seat", "party")]
 prim <- unique(mc[mc$n5 >= 2L, c("election", "seat"), with = FALSE])
 prim_key <- paste(prim$election, prim$seat)
-cat(sprintf("CX1 primary set: %d seat-elections with 2+ of one minor class at 5%%+\n", length(prim_key)))
+cat(sprintf("CSX1 primary set: %d seat-elections with 2+ of one minor class at 5%%+\n", length(prim_key)))
 
 # Junior (by prediction) actual share per split seat, for the unacceptable-win line.
 oof <- fread(out_path(class_split_src()))   # the file the arm split by (AUSPOL_CLASS_SPLIT_SRC)
-cat(sprintf("CX2 junior shares from %s\n", class_split_src()))
+cat(sprintf("CSX2 junior shares from %s\n", class_split_src()))
 oof <- oof[oof$cls %in% classes & is.finite(oof$pred_xgb)]
 oof[, "p" := pmax(get("pred_xgb"), 0.01)]
 setorderv(oof, c("election", "seat", "cls", "p"), c(1L, 1L, 1L, -1L))

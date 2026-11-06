@@ -17,5 +17,5 @@ seat (\code{NA} where no split).
 }
 \description{
 Reads \code{AUSPOL_CLASS_SPLIT} (default \code{"0"}): anything but \code{"1"} returns
-\code{NULL}. Prints the plumbing line \code{CS1} per election.
+\code{NULL}. Prints the plumbing line \code{CLS1} per election.
 }
