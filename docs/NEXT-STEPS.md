@@ -334,6 +334,12 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
 - **10 Nov, after the VEC list (NEEDS PETE before it reaches the forecast)**: per-candidate predictions for vic2026,
   `AUSPOL_MC_LIVE=vic2026` (`PIPELINE.md` E step 5; built and checked 6 Nov on the pre-nomination list). Wiring them into
   the live bucket split changes the published path (a vic2026 row in the shipped file + `forecast.yaml` fetching it).
+- OPEN (built 6 Nov, not wired): researched Coalition card order, `external/reference/htv/coalition-card-order-researched.csv`
+  (36 elections, 45 rows, pre-election sources, raw pages under `htv/raw/`, local only; 15 UNKNOWN). Disagrees with the
+  9-row `liberal-alp-grn-order.csv` on nsw2019 and nsw2023: Liberal cards were OPEN ("just vote 1"), not Greens-last, so
+  under optional preferencing Liberal votes mostly exhaust. Next: an arm reading the researched file (OPEN needs a third
+  state in `R/htv_flow.R`, not the TRUE/FALSE flag); fill the UNKNOWNs from the commissions' registered cards (sa2014 has an
+  archive.org capture of ECSA's card page). Vic 2026: re-check when cards are lodged with the VEC.
 - **28 November 2026**: election night.
 
 ## Model, open (triaged 2026-09-19; nothing here blocks Victoria)
