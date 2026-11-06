@@ -22,12 +22,12 @@
 #' @return data.table, or NULL with a message when the file is absent.
 #' @export
 htv_order_table <- function(path = NULL) {
-  # AUSPOL_HTV_TABLE (6 Nov, default "shipped"): "researched" reads coalition-card-order-researched.csv instead (36
+  # AUSPOL_HTV_TABLE (6 Nov; SHIPPED "researched" 6 Nov, Pete; "shipped" = the old 9-row file): "researched" reads coalition-card-order-researched.csv instead (36
   # elections from sources dated before polling day; scripts/agent research 6 Nov). Its card orders map onto the same
   # flag: GRN_ABOVE_ALP TRUE, ALP_ABOVE_GRN FALSE. An OPEN ("just vote 1"), NO_CARD, SPLIT or UNKNOWN card, and any LOW
   # confidence row, give no row, so the flows learned from earlier counts stand. Liberal / LNP / CLP rows only.
   # plans/prereg-htv-researched-2026-11-06.md
-  mode <- Sys.getenv("AUSPOL_HTV_TABLE", "shipped")
+  mode <- Sys.getenv("AUSPOL_HTV_TABLE", "researched")   # the published value (shipped 6 Nov)
   if (!mode %in% c("shipped", "researched")) stop("AUSPOL_HTV_TABLE must be shipped or researched, not ", mode, call. = FALSE)
   if (is.null(path) && identical(mode, "researched")) return(htv_researched_table())
   if (is.null(path)) path <- file.path("external", "reference", "htv", "liberal-alp-grn-order.csv")
