@@ -581,6 +581,22 @@ A Liberal and a National in one seat counted as two candidates. Prereg: `plans/p
 | junior fraction clamp | [1e-9, 1 - 1e-9] | **COMPUTATIONAL**. |
 | side-stream seed | `(seed * 7919 + 104729) mod 2^31-1` | **COMPUTATIONAL**: keeps the split's draws off the count's stream so unsplit seats are byte-identical. |
 
+## Class split (`AUSPOL_CLASS_SPLIT`, built 2026-11-06, off; `R/class_split.R`)
+
+Two candidates of one minor class (IND, OTH, OTH_RIGHT) counted separately by the Coalition-split count. Prereg:
+`plans/prereg-class-split-2026-11-06.md`.
+
+| Constant | Value | Status |
+|---|---|---|
+| junior fraction `r` | second-largest per-candidate prediction / sum of the class's predictions in the seat | **ESTIMATED** per seat from `output/minor-candidate-oof-resid-v2.csv` (time-forward trees). |
+| `r` cap | 0.5 | **DEFINITIONAL**: the junior is the smaller by prediction. |
+| prediction floor | 0.01 (percent) | **COMPUTATIONAL**: a prediction at or below 0 would give `r` = 0 or a zero denominator. |
+| spread `sd` | RMSE of (actual junior fraction - `r`) over earlier years' seat-classes; 0.22-0.28 | **ESTIMATED** time-forward, one number per election. Larger where the class total is larger (0.32 above 20%, 0.20 under 5%, 6 Nov): pooled is a CHOICE, recorded in the prereg. |
+| minimum earlier seat-classes | 5 | **COMPUTATIONAL**, as the Coalition split. |
+| `f`, same-class share of an excluded candidate's votes | per class: IND 0.38-0.46, OTH 0.24-0.26, OTH_RIGHT 0.20-0.31 | **ESTIMATED** time-forward from transfers rows `from == to`, shrunk by jurisdiction (`coalition_f()`); a class with no events takes the all-class rate. |
+| class side-stream seed | `(seed * 7919 + 1299709) mod 2^31-1` | **COMPUTATIONAL**: drawn after the Coalition's, so Coalition seats are byte-identical. |
+| one split per seat | Coalition first, else the class with the largest junior prediction | **CHOSEN** (version one; the count holds one hidden candidate). |
+
 ## Seat-composition spread (`AUSPOL_COMPOSITION_SD`, built 2026-10-17, SHIPPED 2026-10-17 with the error distribution on Pete's override; `plans/prereg-composition-spread-2026-10-17.md`; `R/size_sd.R`)
 
 | Constant | Where | Value | Status |

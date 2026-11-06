@@ -268,7 +268,21 @@ coalition_f <- function(ev, jur, mode = c("pooled", "state")) {
 #' @return `NULL`, or a list `r`, `sd` (named by seat, `NA` for no split) and `f`.
 #' @export
 coalition_split_args <- function(target_election, seat_names, ...) {
-  if (!identical(Sys.getenv("AUSPOL_COALITION_SPLIT", "1"), "1")) return(NULL)
+  # The class split (AUSPOL_CLASS_SPLIT, R/class_split.R) rides in the same
+  # argument, so every harness and fit_seats_full.R pick it up through this one
+  # call. With no Coalition split the list carries r = NA everywhere and f = 0.
+  cs <- if (identical(Sys.getenv("AUSPOL_COALITION_SPLIT", "1"), "1"))
+    .coalition_split_part(target_election, seat_names, ...) else NULL
+  cl <- class_split_args(target_election, seat_names)
+  if (is.null(cl)) return(cs)
+  if (is.null(cs)) {
+    na <- stats::setNames(rep(NA_real_, length(seat_names)), seat_names)
+    cs <- list(r = na, sd = na, f = 0)
+  }
+  c(cs, cl)
+}
+
+.coalition_split_part <- function(target_election, seat_names, ...) {
   # Cached per election for a call with no inputs supplied: the Victorian
   # harness simulates in a loop, and the fit reads two corpora each time.
   # Keyed on the files' modification times too, so a rebuilt corpus refits.

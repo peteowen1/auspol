@@ -1,3 +1,9 @@
+# auspol 0.4.140
+
+- `AUSPOL_CLASS_SPLIT` (off): two candidates of one minor class (independents, OTH, OTH_RIGHT) counted as separate runners, extending the Liberal/National split's count. Screened twice on all 35 elections and refused both times (+0.0022, then +0.0016 on better predictions): it fixes Waite, Monash and Morphett but costs the seats an independent actually won. Closed for now (Pete, 6 Nov). `docs/plans/prereg-class-split-2026-11-06.md`.
+- `AUSPOL_MC_EXTRA=sal` (off): the per-candidate model with campaign search interest and Climate 200 / Voices backing. Independents' prediction error 7.86 -> 7.57 points; not shipped.
+- `scripts/score_class_split.R`: scores a class-split arm on its prereg's terms.
+
 # auspol 0.4.139
 
 - `scripts/scheduled_rebuild.ps1`: run the full rebuild from Task Scheduler at a quiet hour (default 02:00), once enough memory is free (default 8 GB, until 06:00). Never publishes; a late wake-up after its deadline does not run.

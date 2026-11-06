@@ -1142,7 +1142,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   absent_m <- if (za) unname(as.matrix(shares) <= 0) else base::matrix(FALSE, 0L, 0L)
   has_split <- FALSE; split_lnp <- 0L; split_f <- 0
   split_r <- base::matrix(0, 0L, 0L)
-  split_info <- NULL
+  split_info <- NULL; class_info <- NULL
+  split_cls <- integer(nseat); split_fv <- numeric(nseat)
   if (!is.null(coalition_split)) {
     cs <- coalition_split
     if (!is.list(cs) || !all(c("r", "sd", "f") %in% names(cs)))
@@ -1195,6 +1196,57 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
       else rm(".Random.seed", envir = globalenv())
       split_info <- list(n_seats = sum(on), seats = seat_names[on], f = split_f,
                          mean_r = mean(split_r[, on]))
+      split_cls[on] <- split_lnp; split_fv[on] <- split_f
+    }
+    # CLASS SPLIT (AUSPOL_CLASS_SPLIT, built by class_split_args() inside
+    # coalition_split_args()): two candidates of one minor class (IND, OTH,
+    # OTH_RIGHT) counted separately, by the same count as the Coalition split.
+    # One split per seat: a seat already split for the Coalition keeps that.
+    # The fractions come from a SECOND separate stream drawn after the
+    # Coalition's, so every Coalition seat's draws are unchanged and a seat
+    # with no class split is byte-identical at zero flow noise.
+    # docs/plans/prereg-class-split-2026-11-06.md.
+    if (!is.null(cs$cls)) {
+      .cc <- cs$cls
+      if (!is.null(names(.cc))) {
+        miss <- setdiff(seat_names, names(.cc))
+        if (length(miss)) stop("coalition_split$cls is named but has no entry for ", length(miss), " seat(s)")
+        .cc <- unname(.cc[seat_names])
+      } else if (length(.cc) != nseat) stop("coalition_split$cls must be named by seat or length ", nseat)
+      .cc <- as.character(.cc)
+      .cr <- .by_seat(cs$cls_r, "cls_r"); .csd <- .by_seat(cs$cls_sd, "cls_sd"); .cf <- .by_seat(cs$cls_f, "cls_f")
+      want <- !is.na(.cc) & !is.na(.cr)
+      overlap <- want & split_cls > 0L
+      nocol <- want & !overlap & !(.cc %in% parties)
+      con <- want & !overlap & !nocol
+      if (any(con & (!is.finite(.cr) | .cr <= 0 | .cr >= 1)))
+        stop("coalition_split$cls_r must be in (0, 1) where a class split is given")
+      if (any(con & (is.na(.csd) | !is.finite(.csd) | .csd < 0)))
+        stop("coalition_split$cls_sd must be finite and >= 0 where a class split is given")
+      if (any(con & (is.na(.cf) | !is.finite(.cf) | .cf < 0 | .cf > 1)))
+        stop("coalition_split$cls_f must be in [0, 1] where a class split is given")
+      if (any(con)) {
+        if (!has_split) split_r <- base::matrix(0, n_sims, nseat)
+        has_split <- TRUE
+        .had <- exists(".Random.seed", envir = globalenv(), inherits = FALSE)
+        .old <- if (.had) get(".Random.seed", envir = globalenv(), inherits = FALSE) else NULL
+        .s3 <- if (!is.null(seed)) as.integer((as.numeric(seed) * 7919 + 1299709) %% .Machine$integer.max)
+               else if (.had) as.integer((abs(.old[length(.old)]) + 1299709) %% .Machine$integer.max) else 1299709L
+        set.seed(.s3)
+        for (i in which(con)) {
+          m <- .cr[i]; sdv <- min(.csd[i], 0.95 * sqrt(m * (1 - m)))
+          if (sdv <= 0) { split_r[, i] <- m; next }
+          kk <- m * (1 - m) / sdv^2 - 1
+          x <- stats::rbeta(n_sims, m * kk, (1 - m) * kk)
+          split_r[, i] <- pmin(pmax(x, 1e-9), 1 - 1e-9)
+        }
+        if (.had) assign(".Random.seed", .old, envir = globalenv())
+        else rm(".Random.seed", envir = globalenv())
+        split_cls[con] <- unname(pidx[.cc[con]]); split_fv[con] <- .cf[con]
+      }
+      class_info <- list(n_seats = sum(con), by_class = table(.cc[con]),
+                         skipped_coalition = sum(overlap), skipped_no_column = sum(nocol),
+                         seats = seat_names[con], cls = .cc[con], mean_r = if (any(con)) mean(.cr[con]) else NA_real_)
     }
   }
   # "auto" reads AUSPOL_SIM_ENGINE (published_flags.R carries the shipped
@@ -1354,7 +1406,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                           as.numeric(shrink), ov_seat, ov_key, ov_mat,
                           as.numeric(fallback_flow_sd), as.numeric(ov_sd), isTRUE(keep_fp),
                           has_bo, bo_p, bo_q,
-                          has_split, as.integer(split_lnp), split_r, as.numeric(split_f),
+                          has_split, as.integer(split_cls), split_r, as.numeric(split_fv),
                           has_eq, eq, za, absent_m, isTRUE(surge_level))
     wins[] <- core$wins; totals[] <- core$totals
     tcp_winner[] <- parties[core$tcp_w]; tcp_runnerup[] <- parties[core$tcp_r]
@@ -1526,8 +1578,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
       if (!is.null(fp_draws)) { .fs <- sum(v); if (.fs > 0) fp_draws[s, i, ] <- 100 * v / .fs }
       # COALITION SPLIT: the junior Coalition candidate holds `.jv`, outside
       # the class vector; slot L always holds a live Coalition candidate.
-      if (has_split && split_r[s, i] > 0 && v[split_lnp] > 0) {
-        L <- split_lnp
+      if (has_split && split_cls[i] > 0L && split_r[s, i] > 0 && v[split_cls[i]] > 0) {
+        L <- split_cls[i]; split_f <- split_fv[i]
         .jv <- split_r[s, i] * v[L]; v[L] <- v[L] - .jv; .jal <- TRUE
         alive <- which(v > 0)
         .n0 <- length(alive)   # the one-candidate count's alive set: governs the shrink toss
@@ -1758,7 +1810,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
        engine = engine,
        fp_draws = fp_draws,
        breakout_draws = n_bo,
-       coalition_split = split_info,
+       coalition_split = split_info, class_split = class_info,
        error_dist = has_eq,
        zero_absent = za), lvl)
 }

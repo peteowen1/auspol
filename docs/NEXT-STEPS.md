@@ -13,17 +13,28 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   9 Nov, condition One Nation's anchor/blend on how many seats it stands in; (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 5 Nov 11pm.** main = dev 0.4.135 except docs/tests (PRs #193, #194 merged 5 Nov); overnight work is logged in
-  `backlog/overnight-2026-11-05.md`. Deciding runs: bucket split from 10:30pm (`deciding-runs/20261105-0941-bucket-split-v2-rebuilt/`;
-  it shared the machine with a check_like_ci run 10:42-10:47pm: read its log for a memory kill), departed-slope pool 2:00am 6 Nov
-  (`deciding-runs/20261105-1252-departed-slope-pool-a1/`). OPEN: read the next daily forecast run's conclusion (`AUSPOL_POLL_DATE_OURS=1`,
-  0.4.135, changes the published inputs; live Victoria <= 0.01 pts expected). `output/candidacies.csv` (vic2006 winners, KEPT 5 Nov)
-  ships with the 10 Nov nominations rebuild. OPEN: VEC feed access details due 4 Nov, not in Gmail or Hotmail at 3pm 5 Nov; Pete
-  waits to 7 Nov, then sends the chase (Gmail draft saved 5 Nov in his 28 Oct thread to resultsdatafeed@vec.vic.gov.au). Run
-  `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
-- OPEN, CONFIRMED 6 Nov, arm built (off): `AUSPOL_STATEWIDE_ENDPOINT=party` (`8cf24ad2`). The backtests' statewide level dropped any
-  party missing from the newest poll into OTH (11 of 32 targets; nsw2023 One Nation 4.6 -> 0); live already reads per party
-  (`fit_seats_full.R:566`). SCREEN PASSED 6 Nov (11 affected, -0.0007, SE 0.0004); NEEDS PETE to ship (+ level-pred rebuild, tree retrain).
+- **Status 6 Nov 12:15pm.** main = dev 0.4.139 (PRs #195, #197, #198, #199 merged 6 Nov). Shipped 6 Nov: `AUSPOL_STATEWIDE_ENDPOINT="party"`,
+  `AUSPOL_DEPARTED_POOL="1"` (clause override), `AUSPOL_BUCKET_SPLIT_SRC="minor-class-shares-resid-v2.csv"`; rebuild published 10:58am
+  (pooled seat log loss 0.3256 -> 0.3224, 2,931 seats; nsw2019 +0.052 is Murray alone at the log-loss floor). OPEN: read the next daily
+  forecast run's conclusion, the first with all three live. OPEN: machine has a kernel pool leak (2-3 GB free at noon 6 Nov); reboot,
+  then `scripts/scheduled_rebuild.ps1` (02:00, waits for 8 GB) for the next rebuild. `output/candidacies.csv` (vic2006 winners) ships with
+  the 10 Nov nominations rebuild. OPEN: VEC feed access details; Pete waits to 7 Nov, then sends the chase (Gmail draft saved 5 Nov).
+  Run `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
+- CLOSED FOR NOW (Pete 6 Nov ~5:20pm; built, off, reopen only with a new design walk): class split REFUSED twice 6 Nov (A0 +0.0022; A1 on the `sal` predictions +0.0016,
+  SE 0.0011; seats the class won +0.328 each). Pete 6 Nov 3:05pm: keep off, fix predictions first; screen REFUSED 6 Nov 2:58pm: all 35 +0.0022 SE 0.0013; class-won seats +0.415, others -0.0052; prereg RESULT)
+  (Pete walked it 6 Nov 1:15pm, chose "Split now"): **two candidates of one minor class counted separately**,
+  `AUSPOL_CLASS_SPLIT`, extending the Coalition split. Prereg `plans/prereg-class-split-2026-11-06.md` (primary: the 84 seats with
+  2+ of one minor class at 5%+; guards prediction-defined). Walkthrough `reviews/two-candidates-one-class-2026-11-06.md`. Does not
+  reach the live forecast until vic2026 per-candidate predictions exist (after the 10 Nov nominations rebuild).
+  Reviewed 6 Nov (Sonnet): 0 Important. Pre-existing, open: a final two of one class (LNP|LNP since 17 Oct, now also
+  IND|IND) leaves the second side empty in the TCP tables (`R/tcp_scenarios.R` setdiff, `fit_seats_full.R:2166`); display only.
+  If the screen passes: deciding run `powershell.exe -File scripts\deciding_run.ps1 -Arm "AUSPOL_CLASS_SPLIT=1" -Label class-split -At 02:00`
+  (20k, all 35), then `Rscript scripts/score_class_split.R <run>/cache/<base key> <run>/cache/<arm key> 20000` (keys: `_key.rds` in each).
+- OPEN, PARTLY DONE 6 Nov (`AUSPOL_MC_EXTRA=sal`: independents' RMSE 7.86 -> 7.57; not shipped, the bucket split it feeds is
+  unchanged at 1.314; not rerun since the OTH_RIGHT key fix): the per-candidate model gives a newcomer independent the generic 4-8% beside a sitting member
+  (Jones 4.8 vs 12.1, Holmes-Ross 4.3 vs 14.6, Leonard 7.6 vs 17.1). Table in the walkthrough doc.
+- OPEN, blocked on the item above: `AUSPOL_POLL_SERIES_CLASS=name` (SA-Best, Katter, UAP, FF classed by full name). 20k on 7 pairs a tie
+  (-0.0028, SE 0.0038); sa2018 +0.037 of which Morphett +0.031. `plans/prereg-poll-series-class-2026-11-06.md`, last section.
 - **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** History, DONE list and replay evidence:
   `backlog/journal-2026-11-05-election-night.md` (moved verbatim 6 Nov); plan `plans/election-night-booth-model.md`. Runbook:
   `gh release download forecast-latest -p night-state-vic-2026.rds -D output`, then `night_runner.R --state=output/night-state-vic-2026.rds
@@ -148,11 +159,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   rest); live `FST1!` (no candidate-model split for vic2026); Kew and Hawthorn, where the bookies price independents
   far above us; Benambra (a NEW independent succeeding Hawkins).
 
-- RESULT 6 Nov 12:14am, NEEDS PETE (recommend adopt; `backlog/overnight-2026-11-05.md`): all-35 run a tie (-0.0009, SE 0.0010),
-  shares -3%. Was: IN FLIGHT (decided 5 Nov, Pete: recover v2): the others-bucket split. `AUSPOL_MC_OWN_RULE=v2` rebuilds it
-  (`output/minor-class-shares-resid-v2.csv`); AEF-7 said share error +1% (WORSE), log loss unchanged; the all-22 run
-  tonight 10:30pm decides adopt-or-keep-frozen. Still open after that: add it to the rebuild, give it vic2026 rows after
-  nominations (`FST1!`), then v3 as its own screen. `backlog/overnight-2026-11-04.md` item 3.
+- OPEN (bucket split, SHIPPED 6 Nov; DECISIONS): `minor-class-shares-resid-v2.csv` is built in `rebuild_forecasts.sh` (cached when
+  current). Still open: give it vic2026 rows after nominations (`FST1!`), then v3 as its own screen. `backlog/overnight-2026-11-04.md` item 3.
 
 ## 2026-10-18 pipeline audit (READ FIRST; `reviews/pipeline-overwrite-audit-2026-10-18.md`, Sonnet, read-only)
 
@@ -368,9 +376,8 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
 - **Time-forward fits still use `min_n` cliffs**: `R/split_slope.R:395,416` sit in `fit_conditional_slopes()`,
   which the shipped config never calls (`AUSPOL_FIT_SLOPES=0`). Live: `fit_major_departed_slope()` falls back to 1.0
   below 40 seats (fed2007, fed2010, sa2010, wa2001, wa2005, wa2008). `AUSPOL_SLOPE_SHRINK` shrinks toward 1, not the
-  pooled slope, refused 29 Sep. DECIDING RUN DONE 6 Nov 2:59am (`AUSPOL_DEPARTED_POOL`): all 35
-  -0.0020 (SE 0.0015), the eight -0.0081 (SE 0.0052); one guard fails on noise-sized moves (nsw2015, qld2024). NEEDS PETE
-  (clause override; recommend ship). Prereg results.
+  pooled slope, refused 29 Sep. `AUSPOL_DEPARTED_POOL` SHIPPED 6 Nov (no cliff for the departed slope; DECISIONS); the
+  `fit_conditional_slopes()` cliffs above remain, unshipped code.
 - **Teal/independent under-call** (Curtin, Goldstein, Mackellar, Wakehurst):
   PARKED by Pete. Overall we lead AEF on independents (36 winners: 16.7 vs
   19.7 log loss). Wave term blocked (`reviews/wave-term-blocked-2026-09-07.md`).
@@ -386,16 +393,12 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
   split file) costs 6.4 min every full rebuild (7:21:28-7:27:54) and its output was byte-identical to the tracked copy. Cache it:
   skip when `output/minor-class-shares-resid-v2.csv` is newer than `output/candidacies.csv`, the audit file it reads, the script
   and every `R/*.R` it load_all()s (memo key = everything it reads). Do NOT edit the script while a rebuild runs (bash reads it as it goes).
-- OPEN (speed) stage 3 took 533 s on 6 Nov against 160 s in the previous driver.log run; `fit_xgb_primary_v6.R` ~7.7 min of it.
-  Stage 4 (as-at trees) 1669 s against 287 s, same run. 8:17am sample: our job ~2 of 24 cores, 8 other sessions' R jobs ~1
-  core each, so the CPU was not saturated; not explained (threads? memory pressure from the kernel pool leak?). Time stage 4 alone
-  after a reboot before acting.
-
-Closed 2026-09-19/20 (DECISIONS; fast loop in `PIPELINE.md` C0): forecast
-mode everywhere, time-forward folds, registry classified, zero-placeholder
-audit, smoke loop + as-at cache + `tidy_output.R`, `out_path()`.
-
-Still open:
+- OPEN (speed, CORRECTED 6 Nov 12:40pm) stage 4 (`fit_xgb_primary_asat.R`) 1,664 s for 31 models on a full retrain. The "287 s before"
+  I compared it with was `driver.log` of 19 SEP (22 elections, ensemble 1); not the kernel leak. Cost per model grows with the corpus:
+  `xgb.cv` uses ONE FOLD PER EARLIER ELECTION (sa2026: 34 folds, 401 rounds, 142 s; sa2010: 4 folds, 1 s), times `AUSPOL_XGB_ENSEMBLE=3`
+  training. Its skip-if-current cache only helps when base_pred is unchanged, which a model change never is. Options, each a model
+  change needing a screen: cap CV at ~5 grouped folds (est. ~5x faster on late targets; changes nrounds), or fit targets in parallel
+  processes (memory). Stage 3 (533 s) not yet broken down the same way; time it from its own log before guessing again.
 - Both branches below RECREATED 25 Oct on Pete's yes (local only, not pushed).
 - Branch `fed-timing-resume-fixed` (b21fb77, unmerged, NOT through the review gate or `check_like_ci`): fixes
   the federal `PARTY_COR` loop leak (a full fed run simulates every pair with the LAST pair's matrix; dormant
