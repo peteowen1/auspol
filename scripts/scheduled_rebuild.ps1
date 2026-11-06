@@ -15,6 +15,7 @@
 #
 # Output in deciding-runs/<YYYYMMDD-HHMM>-rebuild/ (gitignored):
 #   PENDING   scheduled, not started (still here after its time: the machine was logged off or asleep)
+#   FAILED "missed its window"   it fired after -Deadline (woke late) and deliberately did not run
 #   WAITING   started, waiting for -MinFreeGB (polls every minute until -Deadline, then runs anyway)
 #   RUNNING   rebuilding; with no DONE/FAILED and no live pid in started.txt, it was killed
 #   DONE / FAILED   written last: exit code, time, why
@@ -37,8 +38,12 @@ function Get-Dirty($r) { @(& git -C $r status --porcelain -- R scripts src DESCR
 if ($Worker) {
   $log = Join-Path $RunDir "log.txt"; $code = 1; $why = "worker failed before the rebuild started"
   try {
-    $p = Get-Content (Join-Path $RunDir "params.json") -Raw | ConvertFrom-Json
     Remove-Item (Join-Path $RunDir "PENDING") -ErrorAction SilentlyContinue
+    $p = Get-Content (Join-Path $RunDir "params.json") -Raw | ConvertFrom-Json
+    "worker pid $PID; woke $(Get-Date -Format s); scheduled for $($p.StartAt)" | Set-Content (Join-Path $RunDir "started.txt")
+    # A task that fires late (StartWhenAvailable: the laptop was asleep or logged off at its time) past its
+    # deadline must not start a 1-3 h rebuild on a busy daytime machine: that is what this script exists to avoid.
+    if ((Get-Date) -ge [datetime]$p.DeadlineAt) { $code = 4; throw "missed its window: woke at $(Get-Date -Format s), after the deadline $($p.DeadlineAt) (machine asleep or logged off at $($p.StartAt)); not run, relaunch it" }
     "waiting since $(Get-Date -Format s) for $($p.MinFreeGB) GB free, until $($p.DeadlineAt)" | Set-Content (Join-Path $RunDir "WAITING")
     $dl = [datetime]$p.DeadlineAt
     while ((Get-FreeGB) -lt $p.MinFreeGB -and (Get-Date) -lt $dl) { Start-Sleep -Seconds 60 }
@@ -49,14 +54,14 @@ if ($Worker) {
     $dirty = Get-Dirty $p.Repo
     if ($dirty.Count) { $code = 3; throw "uncommitted changes appeared since launch; refusing to rebuild from a working tree that is not a commit:`n$($dirty -join "`n")" }
     $sha = (& git -C $p.Repo rev-parse --short HEAD).Trim()
-    "worker pid $PID; started $(Get-Date -Format s); commit $sha (launched at $($p.Commit))" | Set-Content (Join-Path $RunDir "started.txt")
+    "rebuild started $(Get-Date -Format s); commit $sha (launched at $($p.Commit))" | Add-Content (Join-Path $RunDir "started.txt")
     "started $(Get-Date -Format s)" | Set-Content (Join-Path $RunDir "RUNNING")
     $env:AUSPOL_REBUILD_FROM = "$($p.From)"
     if ($p.Slots -gt 0) { $env:AUSPOL_REBUILD_SLOTS = "$($p.Slots)" }
     Remove-Item Env:\AUSPOL_PUBLISH -ErrorAction SilentlyContinue   # never publishes
     $ErrorActionPreference = "Continue"   # stderr lines are not failures
     & $p.Bash scripts/rebuild_forecasts.sh 2>&1 | ForEach-Object { "$_" } | Out-File $log -Encoding utf8
-    $code = $LASTEXITCODE; $ErrorActionPreference = "Stop"
+    $code = if ($null -eq $LASTEXITCODE) { 127 } else { [int]$LASTEXITCODE }; $ErrorActionPreference = "Stop"
     $why = if ($code -eq 0) { "" } else { "rebuild_forecasts.sh exited $code" }
     if ($code -eq 0) { "exit 0 at $(Get-Date -Format s); commit $sha; free at start $free GB" | Set-Content (Join-Path $RunDir "DONE") }
   } catch {
