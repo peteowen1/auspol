@@ -25,7 +25,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   on 14% and 12% compete as one IND on 26%. Morphett sa2018: IND predicted 33.0 (actual 26.3, split McFetridge 14.2 / SA-Best 12.1),
   LNP 30.1 (actual 41.4); IND win 0.81, Liberal won. 84 of 3,680 seat-elections have 2+ candidates of one minor class at 5%+
   (Newcastle 2007, Waite 2022, Monash 2025, Calwell 2025 ...). Never tested (the multiplicity prereg was about flows only). The
-  per-candidate shares already exist (`output/minor-candidate-oof-resid-v2.csv`). Walk Morphett, Newcastle 2007, Waite 2022 with Pete.
+  per-candidate shares already exist (`output/minor-candidate-oof-resid-v2.csv`). Walkthrough READY: `reviews/two-candidates-one-class-2026-11-06.md`
+  (Morphett, Waite, Monash, Calwell; Waite is the clean case).
 - OPEN, blocked on the item above: `AUSPOL_POLL_SERIES_CLASS=name` (SA-Best, Katter, UAP, FF classed by full name). 20k on 7 pairs a tie
   (-0.0028, SE 0.0038); sa2018 +0.037 of which Morphett +0.031. `plans/prereg-poll-series-class-2026-11-06.md`, last section.
 - **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** History, DONE list and replay evidence:
