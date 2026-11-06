@@ -18,7 +18,7 @@ while the deciding runs hold the machine (bucket split from 10:30pm, departed-sl
 
 **ANSWERED 6 Nov 7:05am:** items 1-4 yes (three switches shipped in 0.4.137, PR #195 merged). Item 5 DONE 7:30am (Pete yes): 4 worktrees removed, 47 merged local branches deleted (5 of the 52 already gone), 18 local branches left. Item 6 (poll-series class) still open; 8:45am: sa2018's loss is mostly Morphett, a defecting sitting Liberal the baseline already over-called (prereg, last section).
 
-**IN FLIGHT 6 Nov 7:20am:** full rebuild with the three switches (unpublished; 2 slots, kernel pool leak). When it lands: read `output/rebuild-forecasts-logs/` scoreboard and the promote gates, then `AUSPOL_REBUILD_FROM=9 AUSPOL_PUBLISH=1 bash scripts/rebuild_forecasts.sh` (stage 9 only), then the dev -> main PR (publish before merge: the live run downloads the retrained trees).
+**DONE 6 Nov:** rebuild finished 10:22am (pooled 0.3256 -> 0.3224, 2,931 seats; nsw2019 +0.052 is Murray alone at the log-loss floor), published 10:58am (Pete ran stage 9), PR #197 merged ~11:45am. Next daily forecast run is the first with all three switches live: check its conclusion. Was: full rebuild with the three switches (unpublished; 2 slots, kernel pool leak). When it lands: read `output/rebuild-forecasts-logs/` scoreboard and the promote gates, then `AUSPOL_REBUILD_FROM=9 AUSPOL_PUBLISH=1 bash scripts/rebuild_forecasts.sh` (stage 9 only), then the dev -> main PR (publish before merge: the live run downloads the retrained trees).
 
 In order: three decisions, one merge, one cleanup yes/no, one lower-priority decision.
 
