@@ -54,9 +54,9 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
                    bool has_bo = false,
                    NumericMatrix bo_p = NumericMatrix(0, 0),
                    NumericVector bo_q = NumericVector::create(),
-                   bool has_split = false, int split_lnp = 0,
+                   bool has_split = false, IntegerVector split_cls = IntegerVector::create(),
                    NumericMatrix split_r = NumericMatrix(0, 0),
-                   double split_f = 0,
+                   NumericVector split_fv = NumericVector::create(),
                    bool has_eq = false,
                    NumericMatrix eq = NumericMatrix(0, 0),
                    bool za = false,
@@ -283,9 +283,11 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
       }
       // ---- coalition split (R/seat_sim.R, same order and arithmetic) ----
       // The junior Coalition candidate holds jv, outside the class vector; the
-      // LNP slot always holds a live Coalition candidate. split_lnp is 1-based.
-      if (has_split && split_r(s, i) > 0 && v[split_lnp - 1] > 0) {
-        const int L = split_lnp - 1;
+      // split slot always holds a live candidate of that class. split_cls is 1-based per seat
+      // (0: no split); the Coalition split and the class split (AUSPOL_CLASS_SPLIT) share this count.
+      if (has_split && split_cls[i] > 0 && split_r(s, i) > 0 && v[split_cls[i] - 1] > 0) {
+        const int L = split_cls[i] - 1;
+        const double split_f = split_fv[i];
         double jv = split_r(s, i) * v[L];
         v[L] = v[L] - jv;
         bool jal = true;
