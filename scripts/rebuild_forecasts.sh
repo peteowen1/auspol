@@ -247,10 +247,12 @@ fi
 # 6.4 min, so it is skipped when the file is newer than everything it reads (6 Nov: a rerun was byte-identical):
 # candidacies.csv, the audit file, the script, DESCRIPTION and every R/ file it load_all()s. A non-default
 # AUSPOL_SEED or AUSPOL_MC_ARM, or AUSPOL_MC_FORCE=1, always rebuilds. The decision and its reason are printed.
+# Not tracked: the seed a file was BUILT with. After a hand run at a non-default seed, rebuild with AUSPOL_MC_FORCE=1.
 if at_least 1; then
   MC_OUT=output/minor-class-shares-resid-v2.csv; mc_why=""
   if [ ! -f "$MC_OUT" ]; then mc_why="file missing"; fi
   for f in output/candidacies.csv output/statewide-forecast-audit-base27sepB.csv scripts/fit_minor_candidates.R DESCRIPTION R/*.R; do
+    if [ -z "$mc_why" ] && [ ! -e "$f" ]; then mc_why="$f missing (the build will say why)"; fi
     if [ -z "$mc_why" ] && [ "$f" -nt "$MC_OUT" ]; then mc_why="$f is newer"; fi
   done
   if [ -z "$mc_why" ] && { [ "${AUSPOL_SEED:-42}" != "42" ] || [ -n "${AUSPOL_MC_ARM:-}" ] || [ "${AUSPOL_MC_FORCE:-0}" = "1" ]; }; then
