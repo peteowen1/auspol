@@ -1,3 +1,9 @@
+# auspol 0.4.141
+
+- **The Liberal how-to-vote card order now comes from a researched table** (`AUSPOL_HTV_TABLE="researched"`, Pete, 6 Nov, a correctness fix on a tie): 36 elections from sources dated before polling day (`external/reference/htv/coalition-card-order-researched.csv`). NSW 2019 and 2023 were open tickets, not Greens-last, so they no longer get a Labor-above override. 11 affected elections: -0.0012 seat log loss (SE 0.0029). The live Victorian forecast is unchanged (no 2026 card yet; the 0.67 mix still applies).
+- `AUSPOL_LEADER_BEFORE_BLEND` (off, screened, 20k run 7 Nov): the leader-seat bonus before the seat-poll blend, where it was fitted.
+- `AUSPOL_MC_LIVE=<election>` in `fit_minor_candidates.R`: per-candidate predictions for an election with nominations and no votes.
+
 # auspol 0.4.140
 
 - `AUSPOL_CLASS_SPLIT` (off): two candidates of one minor class (independents, OTH, OTH_RIGHT) counted as separate runners, extending the Liberal/National split's count. Screened twice on all 35 elections and refused both times (+0.0022, then +0.0016 on better predictions): it fixes Waite, Monash and Morphett but costs the seats an independent actually won. Closed for now (Pete, 6 Nov). `docs/plans/prereg-class-split-2026-11-06.md`.

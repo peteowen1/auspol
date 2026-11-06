@@ -1542,6 +1542,8 @@ for (K in PAIRS) {
   # State signal pooled from seat polls (AUSPOL_STATE_POLL_POOL), BEFORE the
   # blend so a polled seat is pulled only the remaining way to its own polls.
   # plans/prereg-state-poll-pool-2026-10-02.md
+  # AUSPOL_LEADER_BEFORE_BLEND=1: the leader-seat bonus here, before the seat polls (R/leader_seat.R).
+  if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")) shares <- leader_seat_apply(shares, sprintf("fed%d", K$to), stage = "pre_blend")
   if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1"))
     shares <- state_poll_pool_apply(shares, sprintf("fed%d", K$to))
   if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1"))

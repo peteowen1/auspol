@@ -331,6 +331,23 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
   release (CI downloads it from there), then set `AUSPOL_NOM_LIVE` to "1" in `published_flags.R`. The gate is
   MANUAL by Pete's choice and never opens on date alone. Also wire the live candidate split into
   `fit_seats_full.R` (`fit_minor_candidates.R` on vic2026 rows; v44's bucket split is backtest-only).
+- **10 Nov, after the VEC list (NEEDS PETE before it reaches the forecast)**: per-candidate predictions for vic2026,
+  `AUSPOL_MC_LIVE=vic2026` (`PIPELINE.md` E step 5; built and checked 6 Nov on the pre-nomination list). Wiring them into
+  the live bucket split changes the published path (a vic2026 row in the shipped file + `forecast.yaml` fetching it).
+- SHIPPED 6 Nov evening (Pete, correctness on a tie; `AUSPOL_HTV_TABLE="researched"`; moves the ledger at the next rebuild). Still OPEN: fill the 15 UNKNOWNs; an OPEN-card third state. Was: researched Coalition card order, `external/reference/htv/coalition-card-order-researched.csv`
+  (36 elections, 45 rows, pre-election sources, raw pages under `htv/raw/`, local only; 15 UNKNOWN). Disagrees with the
+  9-row `liberal-alp-grn-order.csv` on nsw2019 and nsw2023: Liberal cards were OPEN ("just vote 1"), not Greens-last, so
+  under optional preferencing Liberal votes mostly exhaust. Next: an arm reading the researched file (OPEN needs a third
+  state in `R/htv_flow.R`, not the TRUE/FALSE flag); fill the UNKNOWNs from the commissions' registered cards (sa2014 has an
+  archive.org capture of ECSA's card page). Vic 2026: re-check when cards are lodged with the VEC.
+- OPEN (idea, 6 Nov, from Griffith/Ryan 2022): a state -> federal carry of a party's own strength in the overlapping state
+  booths (the Greens held Maiwar and South Brisbane before winning Griffith and Ryan; polls and model both missed by 6-8
+  points). Booth transposition exists (`seat_swing_port_3c.R`, `PollingPlaceID`); size it on the corpus before building.
+- OPEN, NEEDS PETE 7 Nov morning: `AUSPOL_LEADER_BEFORE_BLEND=1` (leader bonus before the seat-poll blend; it double counted
+  in polled leader seats). Screen PASSED 6 Nov (35 elections -0.0003 SE 0.0003; AEF-7 -0.0012 SE 0.0011; Dickson 2025
+  Labor 0.07 -> 0.14). 20k deciding run scheduled 7 Nov 2:00am: `deciding-runs/20261106-1951-leader-before-blend/`
+  (check its marker). If DONE and it holds: ship = flag "1" in published_flags.R + inline default, rebuild, Pete publishes.
+  `plans/prereg-leader-before-blend-2026-11-06.md`.
 - **28 November 2026**: election night.
 
 ## Model, open (triaged 2026-09-19; nothing here blocks Victoria)
@@ -389,10 +406,6 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
   covariance pools every era; WA has no surge-v2 hazard.
 
 ## Harness and pipeline hygiene
-- DONE 6 Nov (cache added, skip logic tested on 5 cases) `rebuild_forecasts.sh` pre-stage `fit_minor_candidates.R` (v2, added 6 Nov for the shipped bucket
-  split file) costs 6.4 min every full rebuild (7:21:28-7:27:54) and its output was byte-identical to the tracked copy. Cache it:
-  skip when `output/minor-class-shares-resid-v2.csv` is newer than `output/candidacies.csv`, the audit file it reads, the script
-  and every `R/*.R` it load_all()s (memo key = everything it reads). Do NOT edit the script while a rebuild runs (bash reads it as it goes).
 - OPEN (speed, CORRECTED 6 Nov 12:40pm) stage 4 (`fit_xgb_primary_asat.R`) 1,664 s for 31 models on a full retrain. The "287 s before"
   I compared it with was `driver.log` of 19 SEP (22 elections, ensemble 1); not the kernel leak. Cost per model grows with the corpus:
   `xgb.cv` uses ONE FOLD PER EARLIER ELECTION (sa2026: 34 folds, 401 rounds, 142 s; sa2010: 4 folds, 1 s), times `AUSPOL_XGB_ENSEMBLE=3`
@@ -406,10 +419,6 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
   adds per-pair timing and an opt-in resume cache (`AUSPOL_FED_RESUME=1`). Ran live: outputs byte-identical.
   Untested: more than one pair, a kill mid-run. `FLOW_SD` has the same loop leak, unfixed (dormant,
   `AUSPOL_FLOW_SD_BY_SOURCE` default 0). Also `instrument-backtest-fed-timing` (ae91f62), paused.
-- Main-tree `R CMD build` failed after ~6 min once (2026-10-04) while the fresh-clone check passed. Likely
-  cause, unproven: the junctions in `.claude/worktrees/*/output` and `/external` into the main tree. Remove
-  with `cmd /c rmdir` (never a recursive delete) before running the check in the main tree; the
-  `zero-order-late` worktree's `.wt-orig` folders then get renamed back.
 - Diagnosed, not built: widening simulated variance for the majors' floor
   seats (`sd_override` into the WA harness); WA personal-vote transfer helps
   Pilbara and hurts WA overall (one seed).

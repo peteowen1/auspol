@@ -16,11 +16,21 @@
 
 #' Read the Liberal how-to-vote order table
 #'
-#' @param path CSV with columns election, seat ("ALL" or a seat name),
+#' @param path `NULL` (the default: the shipped `liberal-alp-grn-order.csv`, or the researched table under
+#'   `AUSPOL_HTV_TABLE=researched`, [htv_researched_table()]), or a CSV with columns election, seat ("ALL" or a seat name),
 #'   greens_above_labor (TRUE/FALSE), source.
 #' @return data.table, or NULL with a message when the file is absent.
 #' @export
-htv_order_table <- function(path = file.path("external", "reference", "htv", "liberal-alp-grn-order.csv")) {
+htv_order_table <- function(path = NULL) {
+  # AUSPOL_HTV_TABLE (6 Nov; SHIPPED "researched" 6 Nov, Pete; "shipped" = the old 9-row file): "researched" reads coalition-card-order-researched.csv instead (36
+  # elections from sources dated before polling day; scripts/agent research 6 Nov). Its card orders map onto the same
+  # flag: GRN_ABOVE_ALP TRUE, ALP_ABOVE_GRN FALSE. An OPEN ("just vote 1"), NO_CARD, SPLIT or UNKNOWN card, and any LOW
+  # confidence row, give no row, so the flows learned from earlier counts stand. Liberal / LNP / CLP rows only.
+  # plans/prereg-htv-researched-2026-11-06.md
+  mode <- Sys.getenv("AUSPOL_HTV_TABLE", "researched")   # the published value (shipped 6 Nov)
+  if (!mode %in% c("shipped", "researched")) stop("AUSPOL_HTV_TABLE must be shipped or researched, not ", mode, call. = FALSE)
+  if (is.null(path) && identical(mode, "researched")) return(htv_researched_table())
+  if (is.null(path)) path <- file.path("external", "reference", "htv", "liberal-alp-grn-order.csv")
   if (!file.exists(path)) { cat(sprintf("HTV0! how-to-vote table missing at %s -- AUSPOL_HTV_FLOW does NOTHING this run\n", path)); return(NULL) }
   d <- data.table::fread(path, showProgress = FALSE)
   need <- c("election", "seat", "greens_above_labor")
@@ -28,6 +38,35 @@ htv_order_table <- function(path = file.path("external", "reference", "htv", "li
   if (length(miss)) stop("HTV table lacks: ", paste(miss, collapse = ", "), call. = FALSE)
   d[, greens_above_labor := as.logical(greens_above_labor)]
   d
+}
+
+#' The researched Coalition card order as a how-to-vote table
+#'
+#' Reads `external/reference/htv/coalition-card-order-researched.csv` (columns `election`, `seat` ("ALL", a seat, or
+#' seats separated by ";"), `party`, `order`, `confidence`, `source_url`, ...) and returns the shape
+#' [htv_order_table()] returns: one row per election and seat with a HIGH or MED confidence Liberal / LNP / CLP card
+#' that orders the two (`GRN_ABOVE_ALP` TRUE, `ALP_ABOVE_GRN` FALSE). Prints HTV13 with what it kept and dropped.
+#' @param path The researched CSV.
+#' @return data.table `election`, `seat`, `greens_above_labor`, `source`; NULL with a message when the file is absent.
+#' @export
+htv_researched_table <- function(path = file.path("external", "reference", "htv", "coalition-card-order-researched.csv")) {
+  if (!file.exists(path)) { cat(sprintf("HTV0! researched card table missing at %s -- AUSPOL_HTV_FLOW does NOTHING this run\n", path)); return(NULL) }
+  d <- data.table::fread(path, showProgress = FALSE)
+  need <- c("election", "seat", "party", "order", "confidence", "source_url")
+  miss <- setdiff(need, names(d))
+  if (length(miss)) stop("researched HTV table lacks: ", paste(miss, collapse = ", "), call. = FALSE)
+  map <- c(GRN_ABOVE_ALP = TRUE, ALP_ABOVE_GRN = FALSE)
+  keep <- d$party %in% c("LIB", "LNP", "CLP") & d$confidence %in% c("HIGH", "MED") & d$order %in% names(map)
+  k <- d[keep]
+  seats <- strsplit(as.character(k$seat), ";", fixed = TRUE)
+  out <- data.table::data.table(election = rep(k$election, lengths(seats)), seat = trimws(unlist(seats)),
+                                greens_above_labor = unname(rep(map[k$order], lengths(seats))),
+                                source = rep(k$source_url, lengths(seats)))
+  dup <- out[duplicated(out[, c("election", "seat"), with = FALSE])]
+  if (nrow(dup)) stop("researched HTV table has two kept rows for: ", paste(unique(paste(dup$election, dup$seat)), collapse = ", "), call. = FALSE)
+  cat(sprintf("HTV13 researched card table: %d rows kept (%d elections), %d dropped (open/no card/split/unknown/low confidence or not Liberal)\n",
+              nrow(out), data.table::uniqueN(out$election), sum(!keep)))
+  out
 }
 
 #' Observed Liberal-to-ALP share when ALP and GRN are both alive, per election

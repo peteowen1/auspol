@@ -62,6 +62,7 @@ NON_MODEL_SWITCHES <- c(
   AUSPOL_MC_ARM                  = "BUILDER",  # fit_minor_candidates.R
   AUSPOL_MC_OWN_RULE             = "BUILDER",  # fit_minor_candidates.R: v2 writes minor-class-shares-resid-v2.csv, the shipped split file (rebuild_forecasts.sh, 6 Nov)
   AUSPOL_MC_EXTRA                = "BUILDER",  # fit_minor_candidates.R: "sal" adds campaign search interest and backing, writes the -v2-sal files (6 Nov, class split amendment 1)
+  AUSPOL_MC_LIVE                 = "BUILDER",  # fit_minor_candidates.R: predict an election with nominations and no votes (vic2026), -live outputs (6 Nov)
   AUSPOL_NB_PRIOR                = "BUILDER",  # build_notional_baselines.R
   AUSPOL_NB_TARGET               = "BUILDER",  # build_notional_baselines.R
   AUSPOL_NIGHT_SURGE_FADE        = "DIAG",  # night_replay_detail.R (night fixes, review 2026-10-30)

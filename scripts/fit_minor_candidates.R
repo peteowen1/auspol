@@ -41,7 +41,21 @@ cat(sprintf("MC0  candidacies: %d rows, %d elections\n", nrow(C), uniqueN(C$elec
 dts <- election_dates()
 C[, edate := as.Date(unname(dts[election]))]
 if (anyNA(C$edate)) stop("MC0! no date for: ", paste(unique(C[is.na(edate), election]), collapse = ", "))
-C <- C[is.finite(votes)]
+# AUSPOL_MC_LIVE=<election> (6 Nov, nominations prep): also predict an election that has nominations but no votes yet
+# (vic2026: 500 announced candidates now, the VEC list from 10 Nov). Its rows carry share NA, never train anything
+# (every fit uses edate < target), and every earlier target is unchanged. Outputs gain "-live" so the shipped files
+# are never overwritten by a live run.
+LIVE <- Sys.getenv("AUSPOL_MC_LIVE", "")
+if (nzchar(LIVE)) {
+  if (!LIVE %in% C$election) stop("MC0! AUSPOL_MC_LIVE=", LIVE, " has no rows in candidacies.csv")
+  if (any(is.finite(C$votes[C$election == LIVE]))) stop("MC0! AUSPOL_MC_LIVE=", LIVE, " already has votes; run it as an ordinary target")
+  if (C[election == LIVE, max(edate)] < C[is.finite(votes), max(edate)])
+    stop("MC0! AUSPOL_MC_LIVE=", LIVE, " is not after every election with votes")
+  SUF <- paste0(SUF, "-live")
+  cat(sprintf("MC0  live target %s: %d nominated rows in %d seats, no votes (outputs suffixed '%s')\n",
+              LIVE, C[election == LIVE, .N], C[election == LIVE, uniqueN(seat)], SUF))
+}
+C <- C[is.finite(votes) | election %in% LIVE]
 C[, share := 100 * votes / sum(votes), by = .(election, seat)]
 C[, juris := region]
 STATE_AB <- c(vic = "VIC", nsw = "NSW", qld = "QLD", sa = "SA", wa = "WA")
@@ -278,7 +292,14 @@ for (i in seq_len(nrow(targets))) {
 O <- rbindlist(oof)
 fwrite(O[, .(election, seat, name, cls, pk, share, pred_xgb, pred_naive, n_train_el, nrounds)], paste0("output/minor-candidate-oof-", ARM, SUF, ".csv"))
 cat(sprintf("\nMC5  candidate-level RMSE over %d rows (points; lower is better): xgb %.3f, naive %.3f\n",
-            nrow(O), O[, sqrt(mean((pred_xgb - share)^2))], O[, sqrt(mean((pred_naive - share)^2))]))
+            O[is.finite(share), .N], O[is.finite(share), sqrt(mean((pred_xgb - share)^2))],
+            O[is.finite(share), sqrt(mean((pred_naive - share)^2))]))
+if (nzchar(LIVE)) {
+  Lv <- O[election == LIVE]
+  cat(sprintf("MC5L live %s: %d candidates predicted in %d seats from %d earlier elections; predicted class totals (mean per seat): %s\n",
+              LIVE, nrow(Lv), uniqueN(Lv$seat), Lv$n_train_el[1],
+              paste(Lv[, .(m = sum(pred_xgb) / uniqueN(Lv$seat)), by = cls][order(-m), sprintf("%s %.2f", cls, m)], collapse = ", ")))
+}
 
 # ---- the criterion: statewide bucket-class shares ---------------------------
 # Seat weights: the previous election's formal votes in that seat (known
@@ -320,7 +341,8 @@ print(P[order(xgb - cur), .(election, n_train_el, current = round(cur, 2), candi
 
 # ---- what the model used -----------------------------------------------------
 set.seed(SEED)
-dall <- xgboost::xgb.DMatrix(mm(Fx), label = Fx$share)
+Fk <- Fx[is.finite(share)]   # a live target has no label
+dall <- xgboost::xgb.DMatrix(mm(Fk), label = Fk$share)
 fall <- xgboost::xgb.train(list(objective = "reg:squarederror", eta = 0.05, max_depth = 4, subsample = 0.8,
                                 colsample_bytree = 0.8, min_child_weight = 5), dall, nrounds = stats::median(O$nrounds))
 imp <- xgboost::xgb.importance(model = fall)

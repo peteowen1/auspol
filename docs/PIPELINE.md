@@ -172,3 +172,14 @@ because the vic2026 list in `output/candidacies.csv` is provisional (Wikipedia,
    value, missing `candidacies.csv`, no vic2026 rows, no vic2022 baseline, or
    fewer than 85% of vic2022's candidacies (a load error). The run also checks, at
    the final write, that no zeroed cell was revived by a later step.
+5. Optional, NOT in the published path (Pete decides): per-candidate predictions for vic2026 from the final list.
+
+   ```
+   AUSPOL_MC_OWN_RULE=v2 AUSPOL_MC_LIVE=vic2026 Rscript scripts/fit_minor_candidates.R
+   ```
+
+   About 8 minutes. Writes `output/minor-candidate-oof-resid-v2-live.csv` and `minor-class-shares-resid-v2-live.csv`
+   (the `-live` suffix never touches the shipped files; every earlier election is byte-identical to them, checked
+   6 Nov on the pre-nomination list: 252 minor candidates in 87 seats). Reaching the live forecast would need a
+   `vic2026` row in the shipped bucket split file AND `forecast.yaml` fetching it (`bucket_split_ratio()` falls back to
+   the previous election's ratio without one, `fit_seats_full.R:1497`); both change the published path.

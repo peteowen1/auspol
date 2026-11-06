@@ -69,6 +69,9 @@ Dug 2026-10-09 from run 0cbaa82 (`scripts/biggest_misses.R --pairs=vic2018`). Th
 - **Nepean, Box Hill, Bayswater, Ringwood** -- **NOTHING TO FIX** in the seat model beyond the statewide poll miss: Labor under-called 3.9-6.1, Liberals over-called 1.5-5.0, no large minor-party error.
 
 ## vic2022
+- **Shepparton** -- **OPEN** (6 Nov 2026) sitting IND Suzanna Sheed (re-stood; VEC results 12,146 votes, checked) 38.4 in
+  2018 -> 29.4; ours 40.8 (tree 39.4); the Coalition 39.6 combined -> 52.6 (O'Keeffe, Nationals). IND favourite 0.886, the
+  Nationals won. Not traced further: a third-term independent's decline and the Coalition consolidating behind one candidate.
 
 - **Malvern** -- **OPEN** (traced 2026-10-10). O'Brien (LNP, sitting since 2006)
   52.5 actual vs 42.5 published; AEF 50.9. Two separate faults. (1) The
@@ -118,6 +121,15 @@ Dug 2026-10-09 from run 0cbaa82 (`scripts/biggest_misses.R --pairs=vic2018`). Th
 - **Geelong** — fixed by the departed-leader honour change (0.43 -> 0.03).
 
 ## fed2022
+- **Griffith** -- **OPEN** (6 Nov 2026) with Ryan: Greens won both; ours GRN 26.4 / 23.3 vs 34.6 / 30.2, and the YouGov MRP
+  missed too (GRN 26 / 24; we followed it). Not used anywhere: the Greens already held the overlapping state seats (Maiwar
+  2017, South Brisbane 2020). The seat-swing port carries federal -> state Labor-v-Coalition swing only; a state -> federal
+  carry of a party's own booth-level strength is untried (idea in NEXT-STEPS).
+- **Ryan** -- **OPEN** (6 Nov 2026) see Griffith.
+- **Fowler** -- **OPEN** (6 Nov 2026) Dai Le (IND) won, we gave her 0.019. Ours 15.9 vs 29.5; Keneally (ALP) 45.4 vs 36.1.
+  Le got 25.9 in state Cabramatta 2019 (part of Fowler); the cross-jurisdiction carry gave base 15.6. Neither seat poll
+  named her (YouGov MRP IND blank, Laidlaw ALP 42 only). Unmodelled: a major party importing a non-local candidate
+  (Keneally replaced the local candidate). No feature for it; not tried.
 
 - **Hughes** — **NOTHING TO FIX**. Craig Kelly (Liberal 53.2 in 2019) ran as
   UAP. The major-defector discount gave him 0.28-0.37 of his vote and
@@ -165,6 +177,20 @@ Dug 2026-10-09 from run 0cbaa82 (`scripts/biggest_misses.R --pairs=vic2018`). Th
   ranking on raw votes. **DATA**, 2026-09-18.
 
 ## fed2025
+- **Hughes** -- **OPEN** (6 Nov 2026) with Forde and Dickson: one cause, the 2025 national polling miss. Our federal level
+  ALP 31.9 / LNP 34.7 (BF0r, from the polls) against about 34.6 / 31.8; larger in outer-suburban seats (Hughes LNP 43.2 vs
+  36.5, ALP 29.4 vs 39.0; LNP 0.94 favourite, Labor won). Open question: is a 0.94 favourite too confident under a
+  national error that size (the statewide spread's calibration), not a seat fix. ANSWERED 6 Nov: no. Favourites at 0.90-0.95
+  won 0.940 against 0.925 given (301 seats, 35 elections, SE 0.015); fed2025's 0.90-0.99 favourites won 67 of 69. A
+  correctly sized tail, **NOTHING TO FIX** on the spread; the miss is the polls'.
+- **Forde** -- **OPEN** (6 Nov 2026) see Hughes: LNP 38.3 vs 30.7, ALP 28.3 vs 34.2.
+- **Dickson** -- **OPEN** (6 Nov 2026) see Hughes; plus the opposition-leader bonus +2.58 (tree 39.1 -> 41.5 published; Dutton
+  got 34.7). It IS polled (corrected 6 Nov; the first note said unpolled), so `AUSPOL_LEADER_BEFORE_BLEND` moves it.
+- **Melbourne** -- **OPEN** (6 Nov 2026) the worst AEF-7 seat: Labor won, we gave it 0.006. Primaries, not flows: Greens 49.3
+  ours vs 39.5, Labor 22.8 vs 31.3 (notional prior right: GRN 48.1). Tree 49.35; the seat-poll blend alone takes it to 45.9
+  (YouGov MRP x3 had GRN 41-43, ALP 28-31); then the leader-seat bonus (+2.58, fitted on the PRE-blend residual) is added
+  AFTER the blend and double counts. Arm `AUSPOL_LEADER_BEFORE_BLEND` (prereg-leader-before-blend-2026-11-06.md) moves
+  it to 47.0; the rest is the blend's partial weight. Dickson fed2025 (Dutton) got the same bonus.
 
 - **Braddon** — the ledger's costliest single seat (v42): LNP 0.950 to win, Labor
   won; LNP 46.1 predicted vs 31.7 real, ALP 25.7 vs 39.5. A 14-point primary
