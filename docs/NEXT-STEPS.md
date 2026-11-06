@@ -34,8 +34,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   IND|IND) leaves the second side empty in the TCP tables (`R/tcp_scenarios.R` setdiff, `fit_seats_full.R:2166`); display only.
   If the screen passes: deciding run `powershell.exe -File scripts\deciding_run.ps1 -Arm "AUSPOL_CLASS_SPLIT=1" -Label class-split -At 02:00`
   (20k, all 35), then `Rscript scripts/score_class_split.R <run>/cache/<base key> <run>/cache/<arm key> 20000` (keys: `_key.rds` in each).
-- OPEN, PARTLY DONE 6 Nov (`AUSPOL_MC_EXTRA=sal`: independents' RMSE 7.86 -> 7.57; not shipped, the bucket split it feeds is
-  unchanged at 1.314; not rerun since the OTH_RIGHT key fix): the per-candidate model gives a newcomer independent the generic 4-8% beside a sitting member
+- OPEN, PARTLY DONE 6 Nov (`AUSPOL_MC_EXTRA=sal`: independents' RMSE 7.86 -> 7.57; not shipped). SCREENED 7 Nov 12:27am
+  (refit on the OTH_RIGHT key fix; 1,000 sims, 35 elections): it CANNOT reach the shipped split, which reads `pred_naive`
+  (`AUSPOL_BUCKET_SPLIT=cand_naive`, `R/forecast_statewide.R:217`; arm byte-identical on 35 of 35). Via
+  `cand_resid` + the sal file: seat log loss -0.0000 (SE 0.0006), AEF-7 -0.0015 (SE 0.0018), changed-cell share error
+  +2% (+2,583, SE 1,357, FAIL), sa2026 +0.011. Not shown; that arm mixes resid-vs-naive with sal, so unseparated.
+  Refits are 73 s now with `AUSPOL_MC_ROUNDS_FROM=<earlier oof csv>` (7dd04a82; exact on the same features). The per-candidate model gives a newcomer independent the generic 4-8% beside a sitting member
   (Jones 4.8 vs 12.1, Holmes-Ross 4.3 vs 14.6, Leonard 7.6 vs 17.1). Table in the walkthrough doc.
 - OPEN, blocked on the item above: `AUSPOL_POLL_SERIES_CLASS=name` (SA-Best, Katter, UAP, FF classed by full name). 20k on 7 pairs a tie
   (-0.0028, SE 0.0038); sa2018 +0.037 of which Morphett +0.031. `plans/prereg-poll-series-class-2026-11-06.md`, last section.
