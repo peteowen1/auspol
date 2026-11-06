@@ -343,6 +343,11 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
 - OPEN (idea, 6 Nov, from Griffith/Ryan 2022): a state -> federal carry of a party's own strength in the overlapping state
   booths (the Greens held Maiwar and South Brisbane before winning Griffith and Ryan; polls and model both missed by 6-8
   points). Booth transposition exists (`seat_swing_port_3c.R`, `PollingPlaceID`); size it on the corpus before building.
+- OPEN, NEEDS PETE 7 Nov morning: `AUSPOL_LEADER_BEFORE_BLEND=1` (leader bonus before the seat-poll blend; it double counted
+  in polled leader seats). Screen PASSED 6 Nov (35 elections -0.0003 SE 0.0003; AEF-7 -0.0012 SE 0.0011; Dickson 2025
+  Labor 0.07 -> 0.14). 20k deciding run scheduled 7 Nov 2:00am: `deciding-runs/20261106-1951-leader-before-blend/`
+  (check its marker). If DONE and it holds: ship = flag "1" in published_flags.R + inline default, rebuild, Pete publishes.
+  `plans/prereg-leader-before-blend-2026-11-06.md`.
 - **28 November 2026**: election night.
 
 ## Model, open (triaged 2026-09-19; nothing here blocks Victoria)
