@@ -27,7 +27,8 @@ prim_key <- paste(prim$election, prim$seat)
 cat(sprintf("CX1 primary set: %d seat-elections with 2+ of one minor class at 5%%+\n", length(prim_key)))
 
 # Junior (by prediction) actual share per split seat, for the unacceptable-win line.
-oof <- fread(out_path("minor-candidate-oof-resid-v2.csv"))
+oof <- fread(out_path(class_split_src()))   # the file the arm split by (AUSPOL_CLASS_SPLIT_SRC)
+cat(sprintf("CX2 junior shares from %s\n", class_split_src()))
 oof <- oof[oof$cls %in% classes & is.finite(oof$pred_xgb)]
 oof[, "p" := pmax(get("pred_xgb"), 0.01)]
 setorderv(oof, c("election", "seat", "cls", "p"), c(1L, 1L, 1L, -1L))
