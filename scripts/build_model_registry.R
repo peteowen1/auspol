@@ -414,6 +414,12 @@ CLASSIFY <- list(
   AUSPOL_CLASS_SPLIT_SRC = paste(
     "UNIVERSAL via R/: read inside class_split_src() (R/class_split.R) through coalition_split_args(); inert unless",
     "AUSPOL_CLASS_SPLIT=1. EXPERIMENT: which per-candidate predictions file the class split reads (prereg amendment 1)."),
+  AUSPOL_HTV_TABLE = paste(
+    "UNIVERSAL via R/: read inside htv_order_table() (R/htv_flow.R), which htv_flow_override() and htv_card_p() call",
+    "in every harness and fit_seats_full.R. SHIPPED researched 2026-11-06 (plans/prereg-htv-researched-2026-11-06.md)."),
+  AUSPOL_LEADER_BEFORE_BLEND = paste(
+    "UNIVERSAL via R/: read inside leader_seat_apply() (R/leader_seat.R), which every harness (six + NT) and",
+    "fit_seats_full.R call twice (pre and post blend). EXPERIMENT, default 0; screened 6 Nov, 20k run 7 Nov 2am."),
   AUSPOL_COALITION_SPLIT_F = paste(
     "UNIVERSAL via R/: read inside coalition_f() (R/coalition_split.R) through coalition_split_args(), which",
     "every harness (six + NT) and fit_seats_full.R call; inert unless AUSPOL_COALITION_SPLIT=1. Prereg amendment 2. SHIPPED (state) 2026-10-17."),
