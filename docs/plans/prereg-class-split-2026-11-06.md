@@ -108,3 +108,8 @@ Review of the `sal` arm (Sonnet, 6 Nov) found vic2014's search interest never jo
 74945b73 (normalised seat key, class in the key, a stop if any fetched election matches nothing). The A1 rescreen
 launched at 3:29pm read the unfixed file; it is reported as A1-unfixed. The deciding read is A1 rerun on the refitted
 file, same arm, same rule. The out-of-fold numbers in Amendment 1 are from the unfixed file and are restated after the refit.
+
+#### A1-unfixed (interim, read the unfixed file; 4:17pm, caches 696c0a9dc702 / b8c9ca15df6d)
+
+Primary +0.0138 (SE 0.0185), within 1 SE; guard 1 +0.0031 (SE 0.0021) WORSE; guard 2 +0.0017 (SE 0.0012) WORSE. Class won 35
+seats +0.3471 (SE 0.0651), was +0.4151; others -0.0046 (SE 0.0016). Monash IND 0.634 -> 0.355 (was -> 0.486).
