@@ -69,6 +69,9 @@ Dug 2026-10-09 from run 0cbaa82 (`scripts/biggest_misses.R --pairs=vic2018`). Th
 - **Nepean, Box Hill, Bayswater, Ringwood** -- **NOTHING TO FIX** in the seat model beyond the statewide poll miss: Labor under-called 3.9-6.1, Liberals over-called 1.5-5.0, no large minor-party error.
 
 ## vic2022
+- **Shepparton** -- **OPEN** (6 Nov 2026) sitting IND Suzanna Sheed (re-stood; VEC results 12,146 votes, checked) 38.4 in
+  2018 -> 29.4; ours 40.8 (tree 39.4); the Coalition 39.6 combined -> 52.6 (O'Keeffe, Nationals). IND favourite 0.886, the
+  Nationals won. Not traced further: a third-term independent's decline and the Coalition consolidating behind one candidate.
 
 - **Malvern** -- **OPEN** (traced 2026-10-10). O'Brien (LNP, sitting since 2006)
   52.5 actual vs 42.5 published; AEF 50.9. Two separate faults. (1) The
