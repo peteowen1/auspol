@@ -100,3 +100,11 @@ Arm A1: `AUSPOL_CLASS_SPLIT=1 AUSPOL_CLASS_SPLIT_SRC=minor-candidate-oof-resid-v
 primary, guards and decision rule as above, unedited. Expectation stated now: a smaller loss on the seats the class won,
 not a pass; Alfred Cove's order is still wrong (Jackson 23.9 against Woollard 19.0). This arm is the one rescreen Pete
 asked for; another amendment after it would be tuning to the outcome.
+
+### Amendment 1a (2026-11-06 3:55pm, while the A1 rescreen ran; a correction, not a new arm)
+
+Review of the `sal` arm (Sonnet, 6 Nov) found vic2014's search interest never joined (salience-v6 stores its seats as
+"albertpark"; 0 of 277 rows matched, checked), so vic2014 and every Victorian target trained on it saw NA there. Fixed in
+74945b73 (normalised seat key, class in the key, a stop if any fetched election matches nothing). The A1 rescreen
+launched at 3:29pm read the unfixed file; it is reported as A1-unfixed. The deciding read is A1 rerun on the refitted
+file, same arm, same rule. The out-of-fold numbers in Amendment 1 are from the unfixed file and are restated after the refit.
