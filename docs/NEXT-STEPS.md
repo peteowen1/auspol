@@ -406,10 +406,6 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
   covariance pools every era; WA has no surge-v2 hazard.
 
 ## Harness and pipeline hygiene
-- DONE 6 Nov (cache added, skip logic tested on 5 cases) `rebuild_forecasts.sh` pre-stage `fit_minor_candidates.R` (v2, added 6 Nov for the shipped bucket
-  split file) costs 6.4 min every full rebuild (7:21:28-7:27:54) and its output was byte-identical to the tracked copy. Cache it:
-  skip when `output/minor-class-shares-resid-v2.csv` is newer than `output/candidacies.csv`, the audit file it reads, the script
-  and every `R/*.R` it load_all()s (memo key = everything it reads). Do NOT edit the script while a rebuild runs (bash reads it as it goes).
 - OPEN (speed, CORRECTED 6 Nov 12:40pm) stage 4 (`fit_xgb_primary_asat.R`) 1,664 s for 31 models on a full retrain. The "287 s before"
   I compared it with was `driver.log` of 19 SEP (22 elections, ensemble 1); not the kernel leak. Cost per model grows with the corpus:
   `xgb.cv` uses ONE FOLD PER EARLIER ELECTION (sa2026: 34 folds, 401 rounds, 142 s; sa2010: 4 folds, 1 s), times `AUSPOL_XGB_ENSEMBLE=3`
@@ -423,10 +419,6 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
   adds per-pair timing and an opt-in resume cache (`AUSPOL_FED_RESUME=1`). Ran live: outputs byte-identical.
   Untested: more than one pair, a kill mid-run. `FLOW_SD` has the same loop leak, unfixed (dormant,
   `AUSPOL_FLOW_SD_BY_SOURCE` default 0). Also `instrument-backtest-fed-timing` (ae91f62), paused.
-- Main-tree `R CMD build` failed after ~6 min once (2026-10-04) while the fresh-clone check passed. Likely
-  cause, unproven: the junctions in `.claude/worktrees/*/output` and `/external` into the main tree. Remove
-  with `cmd /c rmdir` (never a recursive delete) before running the check in the main tree; the
-  `zero-order-late` worktree's `.wt-orig` folders then get renamed back.
 - Diagnosed, not built: widening simulated variance for the majors' floor
   seats (`sd_override` into the WA harness); WA personal-vote transfer helps
   Pilbara and hurts WA overall (one seed).
