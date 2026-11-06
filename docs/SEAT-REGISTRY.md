@@ -118,6 +118,10 @@ Dug 2026-10-09 from run 0cbaa82 (`scripts/biggest_misses.R --pairs=vic2018`). Th
 - **Geelong** — fixed by the departed-leader honour change (0.43 -> 0.03).
 
 ## fed2022
+- **Fowler** -- **OPEN** (6 Nov 2026) Dai Le (IND) won, we gave her 0.019. Ours 15.9 vs 29.5; Keneally (ALP) 45.4 vs 36.1.
+  Le got 25.9 in state Cabramatta 2019 (part of Fowler); the cross-jurisdiction carry gave base 15.6. Neither seat poll
+  named her (YouGov MRP IND blank, Laidlaw ALP 42 only). Unmodelled: a major party importing a non-local candidate
+  (Keneally replaced the local candidate). No feature for it; not tried.
 
 - **Hughes** — **NOTHING TO FIX**. Craig Kelly (Liberal 53.2 in 2019) ran as
   UAP. The major-defector discount gave him 0.28-0.37 of his vote and
@@ -165,6 +169,11 @@ Dug 2026-10-09 from run 0cbaa82 (`scripts/biggest_misses.R --pairs=vic2018`). Th
   ranking on raw votes. **DATA**, 2026-09-18.
 
 ## fed2025
+- **Melbourne** -- **OPEN** (6 Nov 2026) the worst AEF-7 seat: Labor won, we gave it 0.006. Primaries, not flows: Greens 49.3
+  ours vs 39.5, Labor 22.8 vs 31.3 (notional prior right: GRN 48.1). Tree 49.35; the seat-poll blend alone takes it to 45.9
+  (YouGov MRP x3 had GRN 41-43, ALP 28-31); then the leader-seat bonus (+2.58, fitted on the PRE-blend residual) is added
+  AFTER the blend and double counts. Arm `AUSPOL_LEADER_BEFORE_BLEND` (prereg-leader-before-blend-2026-11-06.md) moves
+  it to 47.0; the rest is the blend's partial weight. Dickson fed2025 (Dutton) got the same bonus.
 
 - **Braddon** — the ledger's costliest single seat (v42): LNP 0.950 to win, Labor
   won; LNP 46.1 predicted vs 31.7 real, ALP 25.7 vs 39.5. A 14-point primary
