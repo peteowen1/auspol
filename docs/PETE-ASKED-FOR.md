@@ -33,6 +33,13 @@ moved verbatim 2026-10-24. Every row below still has something open.
 
 ---
 
+## 2026-11-06
+
+| Request | Status |
+|---|---|
+| Two candidates of one minor class counted separately (walked Morphett, Waite, Monash, Calwell; chose "Split now", newcomer under-call a separate item) | **BUILT, OFF, screening.** `AUSPOL_CLASS_SPLIT` (`R/class_split.R`, 4d765927); prereg `plans/prereg-class-split-2026-11-06.md`; screen of all 35 elections launched 2:17pm. Does not reach the live forecast until vic2026 per-candidate predictions exist. |
+| The per-candidate model gives a newcomer independent the generic 4-8% beside a sitting member | **NOT DONE.** Queued in NEXT-STEPS; table in `reviews/two-candidates-one-class-2026-11-06.md`. |
+
 ## 2026-11-05
 
 | Request | Status |
