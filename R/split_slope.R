@@ -796,7 +796,7 @@ fit_major_departed_slope <- function(target_election, corpus = NULL, pairs = NUL
 #   shrunk = mu + tau^2 / (tau^2 + se_c^2) * (own_c - mu)
 # A party with no departed rows takes mu; neither party with rows returns NULL,
 # and the caller keeps 1. Rows are already time-forward (fit_pairs_for()).
-.departed_pool_on <- function() identical(Sys.getenv("AUSPOL_DEPARTED_POOL", "0"), "1")
+.departed_pool_on <- function() identical(Sys.getenv("AUSPOL_DEPARTED_POOL", "1"), "1")
 .origin_fit <- function(sub) {
   sub <- sub[is.finite(sub$dev) & is.finite(sub$yy)]
   sxx <- sum(sub$dev^2)

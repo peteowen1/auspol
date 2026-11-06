@@ -191,12 +191,12 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   }
 
   s <- data.table::as.data.table(tr$series)
-  # AUSPOL_STATEWIDE_ENDPOINT (arm 2026-11-06; "global" = as before). Each party's trend ends at ITS OWN last poll
+  # AUSPOL_STATEWIDE_ENDPOINT (shipped "party" 2026-11-06; "global" = as before). Each party's trend ends at ITS OWN last poll
   # (prep_trend_obs()), so reading every party at the single latest date dropped any party missing from the newest
   # poll and folded it into OTH: nsw2023 One Nation 4.6 -> 0 (its last poll 12 days out), fed2016 Xenophon 3.0 (1
   # day), qld2017 Katter 1.8 (4 days); 11 of 32 backtest targets. "party" reads each party at its own last date, which
   # is what trend_as_at()'s endpoints and the live forecast already do.
-  mode_ep <- Sys.getenv("AUSPOL_STATEWIDE_ENDPOINT", "global")
+  mode_ep <- Sys.getenv("AUSPOL_STATEWIDE_ENDPOINT", "party")
   last <- .statewide_endpoints(s, mode_ep)
   if (identical(mode_ep, "party")) {
     stale <- last[last$date < max(s$date) & last$party != "TPP_ALP"]

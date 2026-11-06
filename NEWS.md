@@ -1,3 +1,8 @@
+# auspol 0.4.137
+
+- **Three switches shipped (Pete, 6 Nov).** The backtests read each party's statewide trend at its own last poll (`AUSPOL_STATEWIDE_ENDPOINT="party"`); the ALP and LNP departed-member slopes are partially pooled toward the two-party slope (`AUSPOL_DEPARTED_POOL="1"`, your 27 Oct ask, shipped over one tripped guard); the unpolled bucket is split by the file `fit_minor_candidates.R` rebuilds each run (`minor-class-shares-resid-v2.csv`). Seat log loss: -0.0009 (SE 0.0004), -0.0020 (SE 0.0015), -0.0009 (SE 0.0010). The published numbers move at the next full rebuild.
+- `rebuild_forecasts.sh` builds the bucket split file before stage 1.
+
 # auspol 0.4.136
 
 - **New switch `AUSPOL_STATEWIDE_ENDPOINT` (off; published numbers unchanged).** `"party"` makes the backtests read each party's statewide trend at its own last poll, as the live forecast does, instead of dropping parties missing from the newest poll (11 of 32 targets; nsw2023 One Nation 4.6 -> 0). Screen on the 11 affected elections: seat log loss -0.0007 (SE 0.0004). Shipping waits on Pete and a tree retrain.

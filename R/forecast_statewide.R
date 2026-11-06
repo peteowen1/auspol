@@ -210,7 +210,7 @@ candidate_bucket_ratio <- function(election, bucket) {
   # The SPLIT reads the v2 candidate model (v44); v3 (defectors and newcomers
   # treated as personal votes) divides worse but totals better, so each
   # purpose names its source. plans/prereg-minor-candidate-defectors-2026-09-28.md.
-  sf <- out_path(Sys.getenv("AUSPOL_BUCKET_SPLIT_SRC", "minor-class-shares-v2.csv"))
+  sf <- out_path(Sys.getenv("AUSPOL_BUCKET_SPLIT_SRC", "minor-class-shares-resid-v2.csv"))
   if (!file.exists(sf)) stop("AUSPOL_BUCKET_SPLIT=", split_mode, " needs ", sf,
                              " (scripts/fit_minor_candidates.R).")
   cs <- data.table::fread(sf, showProgress = FALSE)

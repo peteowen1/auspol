@@ -1494,7 +1494,7 @@ if (!is.null(.nis)) shares <- .nis else if (!identical(new_ind_mode(), "0"))
 .level_split <- NULL
 if (identical(Sys.getenv("AUSPOL_LIVE_LEVEL_SPLIT", "1"), "1") && "OTH" %in% names(state_mean)) {
   .bk <- c(setdiff(intersect(parties, c(unmodelled, "OTH")), "OTH"), "OTH")
-  # The daily CI run has no output/minor-class-shares-v2.csv (forecast.yaml does not fetch it), and
+  # The daily CI run has no bucket split file (AUSPOL_BUCKET_SPLIT_SRC; forecast.yaml does not fetch it), and
   # candidate_bucket_ratio() stops without it; the prior-election ratio is what bucket_split_ratio() itself falls back
   # to when the candidate model has no row for the target (vic2026 has none), so use it, and say so (review 2026-10-18).
   .rt <- tryCatch(bucket_split_ratio(paste0(REGION, YEAR), .bk, a22), error = function(e) {
