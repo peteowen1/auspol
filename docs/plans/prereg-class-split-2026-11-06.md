@@ -86,4 +86,17 @@ than it saves on the wrong ones.
 
 ## Amendments
 
-(none)
+### Amendment 1 (2026-11-06 ~3:50pm, after the RESULT above, before any rescreen): the same split fed better predictions
+
+Pete, 6 Nov 3:05pm: keep the split off and fix the per-candidate predictions first, then rescreen. Built:
+`AUSPOL_MC_EXTRA=sal` in `scripts/fit_minor_candidates.R` (campaign search interest from `output/salience-v6.csv` as
+the candidate's share of the seat's jump and a percentile among the election's non-zero jumps, and a Climate 200 /
+Voices independent in the seat; 31 features against 26). Out of fold (`output/minor-candidate-oof-resid-v2-sal.csv`):
+candidate RMSE 5.212 -> 5.135 points over 10,762 rows; independents 7.86 -> 7.57; the bigger of two same-class
+candidates picked right in 66% of the 146 pairs whose class total is over 20% (58% before); junior-fraction error 0.216
+-> 0.222 over all 2,500 pairs, 0.321 -> 0.308 on the 146 big ones. Holmes-Ross and Jones unchanged (low search interest).
+
+Arm A1: `AUSPOL_CLASS_SPLIT=1 AUSPOL_CLASS_SPLIT_SRC=minor-candidate-oof-resid-v2-sal.csv`, same screen, same
+primary, guards and decision rule as above, unedited. Expectation stated now: a smaller loss on the seats the class won,
+not a pass; Alfred Cove's order is still wrong (Jackson 23.9 against Woollard 19.0). This arm is the one rescreen Pete
+asked for; another amendment after it would be tuning to the outcome.

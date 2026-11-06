@@ -14,7 +14,7 @@ class_split_fit(
 \arguments{
 \item{target_election}{Election label, e.g. \code{"sa2022"}.}
 
-\item{oof}{Per-candidate predictions (\verb{election, seat, cls, share, pred_xgb}); default \code{output/minor-candidate-oof-resid-v2.csv}.}
+\item{oof}{Per-candidate predictions (\verb{election, seat, cls, share, pred_xgb}); default the file \code{\link[=class_split_src]{class_split_src()}} names.}
 
 \item{transfers}{Same-class exclusions; default \code{\link[=class_split_transfers]{class_split_transfers()}}.}
 

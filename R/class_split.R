@@ -4,6 +4,16 @@
 
 .cls_cache <- new.env(parent = emptyenv())
 
+#' The per-candidate predictions file the class split reads
+#'
+#' `AUSPOL_CLASS_SPLIT_SRC`, default `"minor-candidate-oof-resid-v2.csv"`;
+#' `"minor-candidate-oof-resid-v2-sal.csv"` is the model with campaign search
+#' interest and backing (`AUSPOL_MC_EXTRA=sal`, prereg amendment 1).
+#'
+#' @return A file name under `output/`.
+#' @export
+class_split_src <- function() Sys.getenv("AUSPOL_CLASS_SPLIT_SRC", "minor-candidate-oof-resid-v2.csv")
+
 #' Every same-class exclusion the class split's `f` is fitted from
 #'
 #' @param dir The elections directory.
@@ -36,7 +46,7 @@ class_split_transfers <- function(dir = file.path("external", "elections"),
 #'
 #' @param target_election Election label, e.g. `"sa2022"`.
 #' @param oof Per-candidate predictions (`election, seat, cls, share,
-#'   pred_xgb`); default `output/minor-candidate-oof-resid-v2.csv`.
+#'   pred_xgb`); default the file [class_split_src()] names.
 #' @param transfers Same-class exclusions; default [class_split_transfers()].
 #' @param classes Minor classes that can be split.
 #' @return A list: `seats` (data.frame `seat, cls, r, sd, f, n_cand`), `sd`,
@@ -49,7 +59,7 @@ class_split_fit <- function(target_election, oof = NULL, transfers = NULL,
   .yr <- function(e) as.integer(sub("^[a-z]+", "", e))
   .rg <- function(e) sub("[0-9]+$", "", e)
   tgt_year <- .yr(tgt_el)
-  if (is.null(oof)) oof <- data.table::fread(out_path("minor-candidate-oof-resid-v2.csv"))
+  if (is.null(oof)) oof <- data.table::fread(out_path(class_split_src()))
   o <- data.table::as.data.table(oof)
   o <- o[o$cls %in% classes & is.finite(o$pred_xgb)]
   o[, "p" := pmax(get("pred_xgb"), 0.01)]
@@ -106,9 +116,9 @@ class_split_fit <- function(target_election, oof = NULL, transfers = NULL,
 #' @export
 class_split_args <- function(target_election, seat_names) {
   if (!identical(Sys.getenv("AUSPOL_CLASS_SPLIT", "0"), "1")) return(NULL)
-  src <- out_path("minor-candidate-oof-resid-v2.csv")
+  src <- out_path(class_split_src())
   tf <- list.files(file.path("external", "elections"), "transfers[.]csv$", full.names = TRUE)
-  key <- paste(target_election, Sys.getenv("AUSPOL_COALITION_SPLIT_F", "state"),
+  key <- paste(target_election, src, Sys.getenv("AUSPOL_COALITION_SPLIT_F", "state"),
                if (file.exists(src)) file.mtime(src) else "nofile",
                if (length(tf)) max(file.mtime(tf)) else "notx")
   fit <- .cls_cache[[key]]
