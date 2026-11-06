@@ -680,6 +680,8 @@ for (K in PAIRS) {
   # Seat-poll blend (AUSPOL_SEAT_POLL_BLEND), after the override and the port;
   # xgb layer only, so stage-1 base_pred never includes it.
   # plans/prereg-seat-poll-blend-2026-09-29.md
+  # AUSPOL_LEADER_BEFORE_BLEND=1: the leader-seat bonus here, before the seat polls (R/leader_seat.R).
+  if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")) shares <- leader_seat_apply(shares, el_to, stage = "pre_blend")
   if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1"))
     shares <- seat_poll_blend_apply(shares, el_to)
 

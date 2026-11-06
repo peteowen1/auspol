@@ -4,12 +4,20 @@
 \alias{leader_seat_apply}
 \title{Add the leader-seat bonus to each party in its own leader's seat}
 \usage{
-leader_seat_apply(shares, target_election)
+leader_seat_apply(
+  shares,
+  target_election,
+  stage = c("post_blend", "pre_blend")
+)
 }
 \arguments{
 \item{shares}{Matrix of primary shares, rownames = seats, colnames = classes.}
 
 \item{target_election}{Label such as \code{"nsw2023"}.}
+
+\item{stage}{\code{"post_blend"} (the default, the shipped place: after the
+seat-poll blend) or \code{"pre_blend"}. The bonus is applied only at the stage
+\code{AUSPOL_LEADER_BEFORE_BLEND} names (\code{"1"}: pre, \code{"0"}: post).}
 }
 \value{
 \code{shares}, adjusted.

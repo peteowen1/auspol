@@ -1618,6 +1618,9 @@ if (!is.null(.shares_p)) {
 ",
               .reason("seat_swing_port")))
 }
+# AUSPOL_LEADER_BEFORE_BLEND=1: the leader-seat bonus here, before the seat polls (R/leader_seat.R).
+.shares_l0 <- .try("leader_seat_pre", leader_seat_apply(shares, TGT, stage = "pre_blend"))
+if (!is.null(.shares_l0)) shares <- .shares_l0 else cat(sprintf("LS1!! pre-blend leader-seat bonus FAILED%s\n", .reason("leader_seat_pre")))
 .shares_b <- .try("seat_poll_blend", seat_poll_blend_apply(shares, TGT))
 if (!is.null(.shares_b)) {
   shares <- .shares_b
