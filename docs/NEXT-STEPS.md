@@ -331,6 +331,9 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
   release (CI downloads it from there), then set `AUSPOL_NOM_LIVE` to "1" in `published_flags.R`. The gate is
   MANUAL by Pete's choice and never opens on date alone. Also wire the live candidate split into
   `fit_seats_full.R` (`fit_minor_candidates.R` on vic2026 rows; v44's bucket split is backtest-only).
+- **10 Nov, after the VEC list (NEEDS PETE before it reaches the forecast)**: per-candidate predictions for vic2026,
+  `AUSPOL_MC_LIVE=vic2026` (`PIPELINE.md` E step 5; built and checked 6 Nov on the pre-nomination list). Wiring them into
+  the live bucket split changes the published path (a vic2026 row in the shipped file + `forecast.yaml` fetching it).
 - **28 November 2026**: election night.
 
 ## Model, open (triaged 2026-09-19; nothing here blocks Victoria)
