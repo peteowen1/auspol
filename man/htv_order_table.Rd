@@ -4,12 +4,11 @@
 \alias{htv_order_table}
 \title{Read the Liberal how-to-vote order table}
 \usage{
-htv_order_table(
-  path = file.path("external", "reference", "htv", "liberal-alp-grn-order.csv")
-)
+htv_order_table(path = NULL)
 }
 \arguments{
-\item{path}{CSV with columns election, seat ("ALL" or a seat name),
+\item{path}{\code{NULL} (the default: the shipped \code{liberal-alp-grn-order.csv}, or the researched table under
+\code{AUSPOL_HTV_TABLE=researched}, \code{\link[=htv_researched_table]{htv_researched_table()}}), or a CSV with columns election, seat ("ALL" or a seat name),
 greens_above_labor (TRUE/FALSE), source.}
 }
 \value{
