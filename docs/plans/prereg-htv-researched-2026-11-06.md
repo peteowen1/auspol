@@ -56,4 +56,4 @@ Seat-winner log loss (lower is better), 1,093 seats: 0.2856 -> 0.2843, -0.0012 (
 - Guard holds: no election worse by more than 2 SE of its own seats (vic2014 +1.2 SE).
 - Applied: HTV13 kept 22 rows in 12 elections; every changed election moved (0 of 11 byte-identical, as designed).
 - Unacceptable-win check: not triggered; vic2018 and fed2019 got slightly WORSE, as predicted.
-- Without vic2010 the rest is +0.0019: the tie leans on one election; the case for it is that the NSW rows were wrong.
+- Without vic2010 the other 10 elections are about +0.0014 (computed from the totals above): the tie leans on one election; the case for it is that the NSW rows were wrong.
