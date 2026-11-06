@@ -13,12 +13,16 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   9 Nov, condition One Nation's anchor/blend on how many seats it stands in; (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 6 Nov 12:15pm.** main = dev 0.4.139 (PRs #195, #197, #198, #199 merged 6 Nov). Shipped 6 Nov: `AUSPOL_STATEWIDE_ENDPOINT="party"`,
-  `AUSPOL_DEPARTED_POOL="1"` (clause override), `AUSPOL_BUCKET_SPLIT_SRC="minor-class-shares-resid-v2.csv"`; rebuild published 10:58am
-  (pooled seat log loss 0.3256 -> 0.3224, 2,931 seats; nsw2019 +0.052 is Murray alone at the log-loss floor). OPEN: read the next daily
-  forecast run's conclusion, the first with all three live. OPEN: machine has a kernel pool leak (2-3 GB free at noon 6 Nov); reboot,
-  then `scripts/scheduled_rebuild.ps1` (02:00, waits for 8 GB) for the next rebuild. `output/candidacies.csv` (vic2006 winners) ships with
-  the 10 Nov nominations rebuild. OPEN: VEC feed access details; Pete waits to 7 Nov, then sends the chase (Gmail draft saved 5 Nov).
+- **Status 6 Nov 9:45pm.** main = dev 0.4.141 (PRs #200, #201 merged 6 Nov evening). Shipped 6 Nov: `AUSPOL_STATEWIDE_ENDPOINT="party"`,
+  `AUSPOL_DEPARTED_POOL="1"`, `AUSPOL_BUCKET_SPLIT_SRC` (rebuild published 10:58am, pooled 0.3224), and in the evening
+  `AUSPOL_HTV_TABLE="researched"` (not yet in a rebuild: the ledger moves at the next one; the live forecast is unchanged).
+  MORNING 7 Nov, in order: (1) `deciding-runs/20261106-1951-leader-before-blend/` marker (20k from 2:00am; DONE + holds = ask
+  Pete to ship `AUSPOL_LEADER_BEFORE_BLEND`); (2) the 9:49am daily forecast run's conclusion, the first with the morning's three
+  switches; (3) a rebuild (`scripts/scheduled_rebuild.ps1`, or at 2 slots) so the ledger carries the card table, then Pete
+  publishes (`! AUSPOL_REBUILD_FROM=9 AUSPOL_PUBLISH=1 bash scripts/rebuild_forecasts.sh`). Pete declined a reboot; memory
+  sits at 2.5-4.5 GB and Claude Code's low-memory stop kills background watchers (not the detached jobs): ask before
+  re-arming. `output/candidacies.csv` (vic2006 winners) ships with the 10 Nov nominations rebuild. OPEN: VEC feed access
+  details; Pete waits to 7 Nov, then sends the chase (Gmail draft saved 5 Nov).
   Run `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
 - CLOSED FOR NOW (Pete 6 Nov ~5:20pm; built, off, reopen only with a new design walk): class split REFUSED twice 6 Nov (A0 +0.0022; A1 on the `sal` predictions +0.0016,
   SE 0.0011; seats the class won +0.328 each). Pete 6 Nov 3:05pm: keep off, fix predictions first; screen REFUSED 6 Nov 2:58pm: all 35 +0.0022 SE 0.0013; class-won seats +0.415, others -0.0052; prereg RESULT)
