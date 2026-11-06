@@ -16,8 +16,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - **Status 6 Nov 9:45pm.** main = dev 0.4.141 (PRs #200, #201 merged 6 Nov evening). Shipped 6 Nov: `AUSPOL_STATEWIDE_ENDPOINT="party"`,
   `AUSPOL_DEPARTED_POOL="1"`, `AUSPOL_BUCKET_SPLIT_SRC` (rebuild published 10:58am, pooled 0.3224), and in the evening
   `AUSPOL_HTV_TABLE="researched"` (not yet in a rebuild: the ledger moves at the next one; the live forecast is unchanged).
-  MORNING 7 Nov, in order: (1) `deciding-runs/20261106-1951-leader-before-blend/` marker (20k from 2:00am; DONE + holds = ask
-  Pete to ship `AUSPOL_LEADER_BEFORE_BLEND`); (2) the 9:49am daily forecast run's conclusion, the first with the morning's three
+  MORNING 7 Nov, in order: (1) DONE: `AUSPOL_LEADER_BEFORE_BLEND` shipped 7 Nov (below); (2) the 9:49am daily forecast run's conclusion, the first with the morning's three
   switches; (3) a rebuild (`scripts/scheduled_rebuild.ps1`, or at 2 slots) so the ledger carries the card table, then Pete
   publishes (`! AUSPOL_REBUILD_FROM=9 AUSPOL_PUBLISH=1 bash scripts/rebuild_forecasts.sh`). Pete declined a reboot; memory
   sits at 2.5-4.5 GB and Claude Code's low-memory stop kills background watchers (not the detached jobs): ask before
@@ -353,11 +352,8 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
 - OPEN (idea, 6 Nov, from Griffith/Ryan 2022): a state -> federal carry of a party's own strength in the overlapping state
   booths (the Greens held Maiwar and South Brisbane before winning Griffith and Ryan; polls and model both missed by 6-8
   points). Booth transposition exists (`seat_swing_port_3c.R`, `PollingPlaceID`); size it on the corpus before building.
-- OPEN, NEEDS PETE 7 Nov morning: `AUSPOL_LEADER_BEFORE_BLEND=1` (leader bonus before the seat-poll blend; it double counted
-  in polled leader seats). Screen PASSED 6 Nov (35 elections -0.0003 SE 0.0003; AEF-7 -0.0012 SE 0.0011; Dickson 2025
-  Labor 0.07 -> 0.14). 20k deciding run scheduled 7 Nov 2:00am: `deciding-runs/20261106-1951-leader-before-blend/`
-  (check its marker). If DONE and it holds: ship = flag "1" in published_flags.R + inline default, rebuild, Pete publishes.
-  `plans/prereg-leader-before-blend-2026-11-06.md`.
+- SHIPPED 7 Nov (Pete): `AUSPOL_LEADER_BEFORE_BLEND="1"` (20k: 35 elections -0.0002 SE 0.0002; spillover traced to the
+  state poll pool; DECISIONS 2026-11-07). Reaches the ledger at the next rebuild, with the card table.
 - **28 November 2026**: election night.
 
 ## Model, open (triaged 2026-09-19; nothing here blocks Victoria)
