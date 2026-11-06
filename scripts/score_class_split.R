@@ -107,3 +107,8 @@ for (k in list(c("sa2018", "Morphett"), c("sa2022", "Waite"), c("fed2025", "Mona
 cat("Biggest movers, primary set:\n")
 top <- rows[rows$primary == TRUE][order(get("d"))]
 print(rbind(utils::head(top, 6), utils::tail(top, 4))[, c("election", "seat", "actual", "cls", "ll_a", "ll_s", "d"), with = FALSE])
+cat("By split class (split-active seats):\n")
+for (k in classes) pr(paste0("  class ", k), rows[rows$split == TRUE & rows$cls %in% k])
+cat("By who won (split-active seats):\n")
+pr("  the split class won", rows[rows$split == TRUE & rows$actual == rows$cls])
+pr("  someone else won", rows[rows$split == TRUE & rows$actual != rows$cls])

@@ -20,7 +20,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   then `scripts/scheduled_rebuild.ps1` (02:00, waits for 8 GB) for the next rebuild. `output/candidacies.csv` (vic2006 winners) ships with
   the 10 Nov nominations rebuild. OPEN: VEC feed access details; Pete waits to 7 Nov, then sends the chase (Gmail draft saved 5 Nov).
   Run `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
-- OPEN, BUILDING (Pete walked it 6 Nov 1:15pm, chose "Split now"): **two candidates of one minor class counted separately**,
+- OPEN, NEEDS PETE (screen REFUSED 6 Nov 2:58pm: all 35 +0.0022 SE 0.0013; class-won seats +0.415, others -0.0052; prereg RESULT)
+  (Pete walked it 6 Nov 1:15pm, chose "Split now"): **two candidates of one minor class counted separately**,
   `AUSPOL_CLASS_SPLIT`, extending the Coalition split. Prereg `plans/prereg-class-split-2026-11-06.md` (primary: the 84 seats with
   2+ of one minor class at 5%+; guards prediction-defined). Walkthrough `reviews/two-candidates-one-class-2026-11-06.md`. Does not
   reach the live forecast until vic2026 per-candidate predictions exist (after the 10 Nov nominations rebuild).
