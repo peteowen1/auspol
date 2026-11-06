@@ -36,6 +36,24 @@ ALL row (no change). Every other election is byte-identical by construction.
 What would make a win unacceptable: a gain driven by vic2018/fed2019 losing their card (it would mean the source rule,
 not the data, did the work). Reported per election.
 
-## RESULT
+## RESULT (2026-11-06 8:59pm, 1,000 sims, the 11 affected elections; caches 0803a92bfd33 / 714843ad32a9): A TIE. To Pete as a data-correctness fix.
 
-(not run)
+Seat-winner log loss (lower is better), 1,093 seats: 0.2856 -> 0.2843, -0.0012 (SE 0.0029), within 1 SE.
+
+| Election | Change (own-seat SE) | Biggest movers |
+|---|---|---|
+| vic2010 | -0.0313 (0.0149) | Brunswick -0.86, Melbourne -0.70, Richmond -0.59 (Labor-above card; the Greens lost all three) |
+| nsw2023 | -0.0013 (0.0011) | Balmain -0.09 (open ticket) |
+| nsw2019 | -0.0011 (0.0008) | Balmain -0.06, Newtown -0.01 |
+| wa2013 | -0.0005 | |
+| qld2017, fed2016 | 0.0000 | |
+| sa2018 | +0.0002 | |
+| vic2018 | +0.0004 (0.0022) | Northcote +0.16 (lost its card, as predicted) |
+| fed2019 | +0.0006 (0.0005) | Cooper +0.08 (lost its card, as predicted) |
+| fed2013 | +0.0031 (0.0039) | Melbourne +0.59 |
+| vic2014 | +0.0118 (0.0098) | Melbourne +0.76, Prahran +0.41 (Greens-last card, the Greens won anyway) |
+
+- Guard holds: no election worse by more than 2 SE of its own seats (vic2014 +1.2 SE).
+- Applied: HTV13 kept 22 rows in 12 elections; every changed election moved (0 of 11 byte-identical, as designed).
+- Unacceptable-win check: not triggered; vic2018 and fed2019 got slightly WORSE, as predicted.
+- Without vic2010 the rest is +0.0019: the tie leans on one election; the case for it is that the NSW rows were wrong.
