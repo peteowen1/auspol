@@ -660,7 +660,7 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR4  every AUSPOL_* switch read in code (406) is registered (288) or listed as not a model switch (118).
+MR4  every AUSPOL_* switch read in code (407) is registered (288) or listed as not a model switch (119).
 
 
 
