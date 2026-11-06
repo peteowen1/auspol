@@ -86,7 +86,7 @@ than it saves on the wrong ones.
 
 ## Amendments
 
-### Amendment 1 (2026-11-06 ~3:50pm, after the RESULT above, before any rescreen): the same split fed better predictions
+### Amendment 1 (2026-11-06 ~3:25pm, after the RESULT above, before any rescreen): the same split fed better predictions
 
 Pete, 6 Nov 3:05pm: keep the split off and fix the per-candidate predictions first, then rescreen. Built:
 `AUSPOL_MC_EXTRA=sal` in `scripts/fit_minor_candidates.R` (campaign search interest from `output/salience-v6.csv` as
