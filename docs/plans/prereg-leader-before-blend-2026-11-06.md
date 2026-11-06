@@ -1,6 +1,6 @@
 # Pre-registration: the leader-seat bonus before the seat-poll blend (`AUSPOL_LEADER_BEFORE_BLEND`)
 
-Written 2026-11-06 ~7:50pm, before any screen. Found tracing the worst AEF-7 seat (Pete: "keep going and digging").
+Written 2026-11-06 ~7:10pm, before any screen. Found tracing the worst AEF-7 seat (Pete: "keep going and digging").
 
 ## What it changes
 
