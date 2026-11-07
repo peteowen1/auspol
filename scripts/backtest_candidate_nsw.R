@@ -1155,7 +1155,7 @@ if (identical(Sys.getenv("AUSPOL_XGB_SURGE", "0"), "1")) {
 # R-ENGINE ONLY -- src/seat_sim_core.cpp has no exhaustion path, and
 # simulate_seat_contests() refuses engine="cpp" with nonzero exhaust rather
 # than silently ignoring it, so this must force engine="r" explicitly.
-.exhaust_on <- identical(Sys.getenv("AUSPOL_NSW_EXHAUST", "0"), "1")
+.exhaust_on <- identical(Sys.getenv("AUSPOL_NSW_EXHAUST", "1"), "1")   # shipped "1" 7 Nov 2026
 EXHAUST_ARG <- 0
 SIM_ENGINE <- "auto"
 if (.exhaust_on) {

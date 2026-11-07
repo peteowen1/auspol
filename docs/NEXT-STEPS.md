@@ -28,10 +28,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `reviews/aef7-gap-and-sal-screen-2026-11-07.md` section 1). Refits take 73 s with `AUSPOL_MC_ROUNDS_FROM`.
 - ANSWERED 7 Nov, nothing to ship: where we lose to AEF on AEF-7 (IND/GRN widening refused, salience bias weak,
   by-election weight 0.5 stands). `reviews/aef7-gap-and-sal-screen-2026-11-07.md` section 2.
-- OPEN 7 Nov, TCP error vs AEF (Pete): `reviews/tcp-mae-vs-aef-2026-11-07.md` (Opus, read-only). Common seats a tie (3.62 vs
-  3.59, n 583); on the real final two we lead (3.722 vs 3.733, n 657). The loss is nsw2023 and fed2025. Recommended arm
-  `AUSPOL_NSW_EXHAUST=1 AUSPOL_ANCHOR_EXHAUST=1` (proxy -0.064); needs nsw2019 final counts from the DOP cache first, and
-  the anchoring half was refused alone 27 Sep (nsw2019 worse). Draft prereg in the review, section 5.
+- OPEN 7 Nov, TCP error vs AEF (Pete): NSW exhaustion SHIPPED 7 Nov (`plans/prereg-nsw-exhaust-tcp-2026-11-07.md`); with it
+  common seats ours 3.585 vs AEF 3.593 (n 583, screen estimate), headline 3.636 vs 3.635. Left: fed2025 (+0.73 over 130
+  seats, `reviews/tcp-mae-vs-aef-2026-11-07.md`), and 5 new nsw2023 seats (Badgerys Creek, Kellyville, Leppington,
+  Wahroonga, Winston Hills) missing from `aef7-final-two-and-tcp-reference.csv` though their NSWEC pages are cached.
+  Needs a rebuild from the NSW stage, then Pete's stage-9 publish.
 - OPEN, blocked on the item above: `AUSPOL_POLL_SERIES_CLASS=name` (SA-Best, Katter, UAP, FF classed by full name). 20k on 7 pairs a tie
   (-0.0028, SE 0.0038); sa2018 +0.037 of which Morphett +0.031. `plans/prereg-poll-series-class-2026-11-06.md`, last section.
 - **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** History, DONE list and replay evidence:

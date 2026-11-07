@@ -843,7 +843,7 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_MINOR_POLL_ADJ      = "0",          # fed harness: minor-party poll overstatement adjustment, off.
   AUSPOL_MP_SLOPE_GRN        = "0",          # all seven harnesses: "1" keeps a Greens member slope; off drops it, as live does.
   AUSPOL_NSW_EST_FLOOR       = "20",         # scripts/fit_nsw.R: NSW estimation floor (a min_n cliff; CONSTANTS).
-  AUSPOL_NSW_EXHAUST         = "0",          # nsw harness: optional-preferential exhaustion arm, off.
+  AUSPOL_NSW_EXHAUST         = "1",          # SHIPPED 7 Nov 2026 (plans/prereg-nsw-exhaust-tcp-2026-11-07.md): NSW optional-preferential exhaustion in the seat simulation (R engine). nsw2023 TCP MAE -0.345 (SE 0.171), seat log loss 0.2618 -> 0.2566 on both NSW pairs at 20k. NSW harness only.
   AUSPOL_NT_TRANSFER         = "",           # nt harness: forces candidate transfer on/off; empty keeps it coupled to the slope mode.
   AUSPOL_PARTY_SD            = "1.5",        # every harness: flat party sd fed to the simulation (CONSTANTS, "flat statewide reference, harnesses").
   AUSPOL_REENTRY_SD_K        = "0",          # every harness: re-entry sd widening, off.

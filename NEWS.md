@@ -1,3 +1,9 @@
+# auspol 0.4.143
+
+- **NSW optional-preferential exhaustion in the seat simulation ships** (`AUSPOL_NSW_EXHAUST="1"`, Pete, 7 Nov). Minor-party ballots can now stop before reaching either finalist, so NSW final-two margins are no longer too narrow (actual on predicted slope, nsw2023 1.41 -> 1.27). Screen: nsw2023 TCP mean absolute error -0.345 (SE 0.171, 79 seats), nsw2019 -0.560; 20k: seat log loss on both NSW pairs 0.2618 -> 0.2566 (SE 0.0006). NSW harness only; no primary vote moves. `AUSPOL_ANCHOR_EXHAUST` stays off: inert under the shipped recipe. `docs/plans/prereg-nsw-exhaust-tcp-2026-11-07.md`.
+- Fixed: the NSW exhaust path died on a `NAT` rate the simulator refuses since 83964fdd.
+- New: `scripts/build_nsw2019_tcp_official.R` (nsw2019 final two from NSWEC's pages, 93 of 93 seats), `scripts/score_tcp_arm.R` (TCP error, baseline vs arm); `quick_arm.R` and `deciding_run.ps1` keep each run's TCP scenarios.
+
 # auspol 0.4.142
 
 - **The party leader's seat bonus now applies before the seat-poll blend** (`AUSPOL_LEADER_BEFORE_BLEND="1"`, Pete, 7 Nov), where it was fitted. Rebuild: AEF-7 seat log loss 0.2585 -> 0.2572 (AE Forecasts 0.2825); 35 elections 0.3224 -> 0.3216. Published 7 Nov 4:19pm. The spillover to other seats comes from the state poll pool; override recorded in `docs/plans/prereg-leader-before-blend-2026-11-06.md`.

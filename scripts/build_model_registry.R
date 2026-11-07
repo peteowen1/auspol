@@ -1021,7 +1021,7 @@ CLASSIFY <- list(
   AUSPOL_NSW_EST_FLOOR = paste(
     "FITTING-TIME: read by scripts/fit_nsw.R (run_all.R), a min_n floor in the NSW estimation (CONSTANTS);",
     "no harness or live read."),
-  AUSPOL_NSW_EXHAUST = "HARNESS-ONLY ARM, off: NSW harness only (optional-preferential exhaustion); never shipped.",
+  AUSPOL_NSW_EXHAUST = "HARNESS-ONLY, SHIPPED \"1\" 7 Nov 2026: NSW harness only (optional-preferential exhaustion in the seat simulation; plans/prereg-nsw-exhaust-tcp-2026-11-07.md). The only optional-preferential election in the backtests; live Victoria is compulsory preferential.",
   AUSPOL_NT_TRANSFER = "HARNESS-ONLY, NT: forces candidate transfer on/off; empty (published) keeps it tied to the slope mode.",
   AUSPOL_PARTY_SD = paste(
     "HARNESSES (all): the flat 1.5-point party sd. Live passes the same 1.5 as a literal (CONSTANTS, 'flat statewide",
