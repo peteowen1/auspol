@@ -19,6 +19,8 @@ seat's own past flows. This arm gives each seat a small shift toward its own his
   in the count moves `w_T * d_{T-1}` of the votes going to the two of them from the Coalition to Labor (negative
   moves the other way), clamped so neither share goes below 0.
 
+**Amendment (8 Nov, before any arm ran; the definitions above are left unedited).** `d = f - election mean` double counts: built, it persists at 0.59-0.70, but most of that is the vote mix (a seat with many Greens sends more to Labor), which the flow trees already model. The term uses instead the seat's MISS against our own prediction, the quantity the research measured (0.25-0.49): `r_E = f_actual - f_ours`, where `f_ours` uses our published-path primaries (`published-predictions.csv`) and our ALP-v-LNP TCP for that election (`backtest-fedE-ourtcp`, newest shipped run; each backtest of E uses only data before E). `w_T` is the slope of `r_E` on `r_{E-1}` over earlier pairs, and the shift is `w_T * r_{T-1}`.
+
 **Arm:** `AUSPOL_SEAT_FLOW_PERSIST=1` (built off), federal harness only in this round. States follow only if
 federal passes (their TCP histories need building).
 
