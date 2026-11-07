@@ -1,6 +1,9 @@
-# auspol 0.4.146
+# auspol 0.4.147
 
 - **Seat flow persistence in the federal backtests** (`AUSPOL_SEAT_FLOW_PERSIST="1"`; Pete, 8 Nov, over a screen refusal): each seat's Labor-vs-Coalition transfers shift by a time-forward weight (~0.35-0.45) times how far its flow beat or missed our prediction last election. Screen: fed2022/fed2025 seat log loss -0.0031/-0.0092 and TCP error about -0.12 each; fed2013/16/19 worse; pooled -0.0004 (SE 0.0026). Inputs frozen in git. A per-seat shrinkage variant was screened and was not better.
+
+# auspol 0.4.146
+
 - **NSW exhaust rates now come from NSWEC's own counts** (`AUSPOL_NSW_EXHAUST_SRC="measured"`, `AUSPOL_NSW_EXHAUST_MEAS_MAJORS="0"`; Pete, 8 Nov, over a 1.4-SE nsw2023 TCP guard miss): the share of votes exhausted at each minor-party exclusion, from the latest NSW election before the target (`scripts/build_nsw_exhaust_measured.R`, now run in rebuild stage 6). nsw2019 gets exhaustion for the first time (from 2015). 20k: seat log loss nsw2019 0.3344 -> 0.3283, nsw2023 0.1849 -> 0.1842; TCP error nsw2019 -0.605, nsw2023 +0.019.
 - **Leak fix:** NSW exhaust rates are time-forward (`AUSPOL_NSW_EXHAUST_TF="1"`); 0.4.143-0.4.145 read the target election's own row of the flow file.
 - **The compiled seat simulator now handles NSW exhaustion**, so NSW backtests no longer fall back to the slower R loop (nsw2019 859 s, nsw2023 1,040 s at 20k simulations; about 28 minutes per rebuild). Byte-identical to the R loop with and without the Coalition split. No forecast number changes.

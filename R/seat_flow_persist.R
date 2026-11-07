@@ -1,4 +1,4 @@
-# Seat flow persistence (AUSPOL_SEAT_FLOW_PERSIST, an arm, 8 Nov 2026;
+# Seat flow persistence (AUSPOL_SEAT_FLOW_PERSIST, SHIPPED "1" 8 Nov 2026 on Pete's override;
 # plans/prereg-seat-flow-persistence-2026-11-08.md).
 #
 # A seat whose minor-party votes reached Labor more (or less) than we predicted last time tends to do
