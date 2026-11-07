@@ -1184,18 +1184,22 @@ if (.exhaust_on) {
   EXHAUST_ARG <- c(ALP = 0, LNP = 0,
                    GRN = .rate_of("GRN"), ONP = .rate_of("ONP"),
                    OTH_RIGHT = .rate_of("SFF"), OTH = .oth_ex, IND = .oth_ex)
-  # AND REFUSE AN ALL-ZERO RATE SET. load_preference_flows() collapses a
-  # missing exhaust field to 0 at parse time (R/load_polls.R), and NSW rows
-  # from 2015 and earlier carry only 4 fields -- no exhaust column existed
-  # yet. So "every rate is 0" is indistinguishable from "no ballot exhausts
-  # here", and silently means the flag did nothing. Both current targets
-  # (2019, 2023) carry real rates; this guards the next pair someone adds.
-  if (all(EXHAUST_ARG == 0))
-    stop("AUSPOL_NSW_EXHAUST=1 but every exhaust rate for nsw", TO, " is 0 -- ",
-         "the source rows predate the exhaust column; refusing to run a no-op arm")
-  SIM_ENGINE <- "r"
-  cat(sprintf("BN0x  exhaust ON for nsw%d: %s\n", TO,
-              paste(sprintf("%s=%.1f%%", names(EXHAUST_ARG), EXHAUST_ARG), collapse = " ")))
+  # AN ALL-ZERO RATE SET MEANS "NO DATA", NOT "NO EXHAUSTION". load_preference_flows()
+  # collapses a missing exhaust field to 0 at parse time (R/load_polls.R), and NSW rows
+  # from 2015 and earlier carry only 4 fields -- no exhaust column existed yet. Until
+  # 7 Nov 2026 this refused to run; once the switch shipped ON that refusal failed every
+  # full rebuild at nsw2015/nsw2011. So run WITHOUT exhaustion (EXHAUST_ARG 0, engine
+  # left "auto": identical to the switch off, i.e. those pairs exactly as before the
+  # ship) and SAY SO. Borrowing 2019's rates would leak a later election into an
+  # earlier backtest; real 2011/2015 rates need those years' NSWEC DOP pages.
+  if (all(EXHAUST_ARG == 0)) {
+    EXHAUST_ARG <- 0
+    cat(sprintf("BN0x! nsw%d has no exhaust rates (source rows predate the column): exhaustion NOT modelled for this pair\n", TO))
+  } else {
+    SIM_ENGINE <- "r"
+    cat(sprintf("BN0x  exhaust ON for nsw%d: %s\n", TO,
+                paste(sprintf("%s=%.1f%%", names(EXHAUST_ARG), EXHAUST_ARG), collapse = " ")))
+  }
 }
 # HOW-TO-VOTE CARD (AUSPOL_HTV_FLOW=1): the Liberal-excluded, ALP+GRN-alive flow rows follow the recorded
 # card order for this election (R/htv_flow.R, external/reference/htv/liberal-alp-grn-order.csv).
