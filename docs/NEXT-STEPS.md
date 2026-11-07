@@ -32,7 +32,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   common seats ours 3.585 vs AEF 3.593 (n 583, screen estimate), headline 3.636 vs 3.635. Left: fed2025 (+0.73 over 130
   seats, `reviews/tcp-mae-vs-aef-2026-11-07.md`), and 5 new nsw2023 seats (Badgerys Creek, Kellyville, Leppington,
   Wahroonga, Winston Hills) missing from `aef7-final-two-and-tcp-reference.csv` though their NSWEC pages are cached.
-  Needs a rebuild from the NSW stage, then Pete's stage-9 publish.
+  PUBLISHED 7 Nov 11:25pm (snapshot `20261107-2326-b33a4986-from9`): AEF-7 seat log loss 0.2566, 35 elections 0.3213.
 - OPEN 7 Nov, NSW exhaust bug on nsw2011/2015 (shipped in PR #203): FIXED ON DEV (73259004, reviewed), NOT YET ON MAIN
   -- PR after the NSW rebuild. Their flow rows predate the exhaust column, so the all-zero guard stopped both and the
   9:13pm rebuild failed at stage 6. Now: no rates -> no exhaustion, `BN0x!` line; byte-identical to the switch off on
