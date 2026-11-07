@@ -95,3 +95,15 @@ simulation's exhaustion. The "pulls Labor down" concern was about anchoring and 
 **Amendment (7 Nov, after the screen, visible):** the deciding run covers nsw2019 and nsw2023
 only, not all 22. Guard 3 holds by construction (above), and rerunning 20 untouched elections
 cannot change them.
+
+**Deciding run, 7 Nov 7:15pm** (20,000 sims, `deciding-runs/20261107-1839-nsw-exhaust`, commit
+a29cc7f3, 2,144 s). Seat log loss, lower is better: nsw2023 0.1891 -> 0.1846, nsw2019 0.3344 ->
+0.3287; pooled 0.2618 -> 0.2566, change -0.0051 (SE 0.0006): guard 1 BETTER. 0 of 1,302
+primary shares moved (guard 4). **The primary metric could not be scored at 20k:**
+`deciding_run.ps1` copied back only allprobs/sharedetail before deleting its scratch, so the
+TCP scenarios were lost (fixed for the next run). The TCP result stands on the screen above
+(1,000 sims; a baseline-vs-baseline control on the AEF-7 pool moves 0.002).
+
+AEF-7 TCP mean absolute error with the screen's nsw2023 swapped into the ledger (points, lower
+is better): common seats (n 583) ours 3.6225 -> 3.5851, AEF 3.5925; headline ours 3.6788 (n 610)
+-> 3.6359, AEF 3.6347 (n 600).
