@@ -172,21 +172,22 @@ leader_seat_table <- function(target_election, write = FALSE) {
 #'
 #' @param shares Matrix of primary shares, rownames = seats, colnames = classes.
 #' @param target_election Label such as `"nsw2023"`.
-#' @param stage `"post_blend"` (the default, the shipped place: after the
-#'   seat-poll blend) or `"pre_blend"`. The bonus is applied only at the stage
-#'   `AUSPOL_LEADER_BEFORE_BLEND` names (`"1"`: pre, `"0"`: post).
+#' @param stage `"post_blend"` (the default argument: after the seat-poll
+#'   blend) or `"pre_blend"`. The bonus is applied only at the stage
+#'   `AUSPOL_LEADER_BEFORE_BLEND` names (`"1"`, shipped 7 Nov 2026: pre;
+#'   `"0"`: post), so callers make both calls.
 #' @return `shares`, adjusted.
 #' @export
 leader_seat_apply <- function(shares, target_election, stage = c("post_blend", "pre_blend")) {
   if (!identical(Sys.getenv("AUSPOL_LEADER_SEAT", "1"), "1")) return(shares)
-  # AUSPOL_LEADER_BEFORE_BLEND (6 Nov, off): the bonus is fitted as actual minus the PRE-blend tree prediction
+  # AUSPOL_LEADER_BEFORE_BLEND (6 Nov; SHIPPED "1" 7 Nov): the bonus is fitted as actual minus the PRE-blend tree prediction
   # (leader_seat_bonus(): xgb_pred_seat), so it corrects the number the seat polls are blended into. Added after the
   # blend, a polled leader's seat gets the leader effect twice: once in the polls, once here (Melbourne fed2025: blend
   # 49.35 -> 45.94 Greens, then +2.58, published 49.26; Bandt got 39.5). Each script calls this twice, before the
   # seat-poll blend with stage = "pre_blend" and after it with "post_blend"; the switch says which one acts.
   # plans/prereg-leader-before-blend-2026-11-06.md
   stage <- match.arg(stage)
-  lb <- Sys.getenv("AUSPOL_LEADER_BEFORE_BLEND", "0")
+  lb <- Sys.getenv("AUSPOL_LEADER_BEFORE_BLEND", "1")
   if (!lb %in% c("0", "1")) stop("AUSPOL_LEADER_BEFORE_BLEND must be \"0\" or \"1\", not ", lb)
   if (!identical(stage, if (lb == "1") "pre_blend" else "post_blend")) return(shares)
   # Neither sources nor a shipped table (a fresh checkout's first rebuild):

@@ -33,13 +33,20 @@ moved verbatim 2026-10-24. Every row below still has something open.
 
 ---
 
+## 2026-11-07
+
+| Request | Status |
+|---|---|
+| Where we lose to AEF on AEF-7: seat polls, salience, calibration and bias for independents, Greens and the confident wrong major seats; what is fixable | **ANSWERED in chat 7 Nov, nothing to ship.** Widening IND/GRN contests refused (proxy, and C2 17 Oct); salience bias on unpolled IND weak (+2.3 mid band, SE 1.3); by-election weight fitted 0.62 (SE 0.11), 0.5 stands. NEXT-STEPS item "AEF-7 gap diagnosis". |
+| Spin up an agent to get our two-candidate-preferred MAE (3.68, n 610) below AEF's (3.63, n 600) | **IN PROGRESS: research DONE, arm not run.** `reviews/tcp-mae-vs-aef-2026-11-07.md`: a tie on common seats (3.62 vs 3.59, n 583), ahead on the real final two (3.722 vs 3.733, n 657); loss is nsw2023 + fed2025. Recommended arm `AUSPOL_NSW_EXHAUST=1 AUSPOL_ANCHOR_EXHAUST=1` (proxy -0.064), needs nsw2019 final counts first. |
+
 ## 2026-11-06
 
 | Request | Status |
 |---|---|
-| Biggest AEF-7 misses, why, and keep digging; research Coalition how-to-vote card order and build the data | **IN PROGRESS.** Card order: `external/reference/htv/coalition-card-order-researched.csv` (36 elections), SHIPPED on dev 6 Nov (`AUSPOL_HTV_TABLE=researched`; to main with tomorrow's PR). Traced: Melbourne, Fowler, Hughes, Forde, Dickson, Griffith, Ryan, Shepparton (`SEAT-REGISTRY.md`). Fix built and screened: `AUSPOL_LEADER_BEFORE_BLEND` (passed; 20k run 7 Nov 2am). |
+| Biggest AEF-7 misses, why, and keep digging; research Coalition how-to-vote card order and build the data | **IN PROGRESS.** Card order: `external/reference/htv/coalition-card-order-researched.csv` (36 elections), SHIPPED 6 Nov (`AUSPOL_HTV_TABLE=researched`; on main via PR #201). Traced: Melbourne, Fowler, Hughes, Forde, Dickson, Griffith, Ryan, Shepparton (`SEAT-REGISTRY.md`). `AUSPOL_LEADER_BEFORE_BLEND` SHIPPED 7 Nov (20k held; reaches the ledger at the next rebuild). |
 | Two candidates of one minor class counted separately (walked Morphett, Waite, Monash, Calwell; chose "Split now", newcomer under-call a separate item) | **BUILT, OFF, refused twice 6 Nov (also on the better `sal` predictions: +0.0016, SE 0.0011; helps the 1,560 seats someone else won, costs the 35 the class won; told Pete in chat).** `AUSPOL_CLASS_SPLIT` (`R/class_split.R`, 4d765927); prereg `plans/prereg-class-split-2026-11-06.md`; screen of all 35 elections launched 2:17pm. Does not reach the live forecast until vic2026 per-candidate predictions exist. |
-| The per-candidate model gives a newcomer independent the generic 4-8% beside a sitting member | **BUILT, OFF (`AUSPOL_MC_EXTRA=sal`): independents' RMSE 7.86 -> 7.57; newcomers on 10%+ predicted 10%+: 30 -> 78 of 281; Holmes-Ross and Jones unmoved.** Queued in NEXT-STEPS; table in `reviews/two-candidates-one-class-2026-11-06.md`. |
+| The per-candidate model gives a newcomer independent the generic 4-8% beside a sitting member | **BUILT, OFF (`AUSPOL_MC_EXTRA=sal`): independents' RMSE 7.86 -> 7.57; newcomers on 10%+ predicted 10%+: 30 -> 78 of 281; Holmes-Ross and Jones unmoved.** 7 Nov 1am, told Pete: no route to the forecast helps. The shipped bucket split reads the naive column, which sal never touches; switching the split to sal's residual column is a seat tie and shares 2% worse (35 elections, 1,000 sims). Still open: the newcomer under-call itself. Queued in NEXT-STEPS; table in `reviews/two-candidates-one-class-2026-11-06.md`. |
 
 ## 2026-11-05
 

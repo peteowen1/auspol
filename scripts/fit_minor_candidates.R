@@ -263,6 +263,16 @@ naive <- function(d, ref) {
   fifelse(is.na(b), stats::median(ref$share), b)
 }
 targets <- unique(Fx[, .(election, edate)])[order(edate)]
+# AUSPOL_MC_ROUNDS_FROM=<oof csv> (7 Nov, Pete: the xgb.cv below is ~95% of a 440 s run): take each election's
+# round count from an earlier run's OOF file (its `nrounds` column, itself chosen time-forward by this CV) and skip
+# the CV. Exact when that file came from the same features and rule (checked byte-identical 7 Nov); with different
+# features the rounds are an approximation, fine for a screen, NOT for a shipped file. rebuild_forecasts.sh never sets it.
+ROUNDS_FROM <- Sys.getenv("AUSPOL_MC_ROUNDS_FROM", "")
+if (nzchar(ROUNDS_FROM)) {
+  RR <- unique(fread(ROUNDS_FROM, select = c("election", "nrounds"), showProgress = FALSE))
+  if (anyDuplicated(RR$election)) stop("AUSPOL_MC_ROUNDS_FROM: ", ROUNDS_FROM, " has two round counts for one election")
+  cat(sprintf("MC4  rounds REUSED from %s (%d elections), no CV\n", ROUNDS_FROM, nrow(RR)))
+}
 oof <- list()
 for (i in seq_len(nrow(targets))) {
   el <- targets$election[i]; ed <- targets$edate[i]
@@ -279,8 +289,13 @@ for (i in seq_len(nrow(targets))) {
   if (ARM == "resid") xgboost::setinfo(dtr, "base_margin", naive(tr, tr))
   prm <- list(objective = "reg:squarederror", eta = 0.05, max_depth = 4, subsample = 0.8,
               colsample_bytree = 0.8, min_child_weight = 5)
-  cv <- xgboost::xgb.cv(prm, dtr, nrounds = 1500, folds = folds, early_stopping_rounds = 50, verbose = 0)
-  nr <- cv$best_iteration %||% cv$early_stop$best_iteration
+  if (nzchar(ROUNDS_FROM)) {
+    nr <- RR$nrounds[match(el, RR$election)]
+    if (is.na(nr)) stop("AUSPOL_MC_ROUNDS_FROM: ", ROUNDS_FROM, " has no nrounds for ", el)
+  } else {
+    cv <- xgboost::xgb.cv(prm, dtr, nrounds = 1500, folds = folds, early_stopping_rounds = 50, verbose = 0)
+    nr <- cv$best_iteration %||% cv$early_stop$best_iteration
+  }
   fit <- xgboost::xgb.train(prm, dtr, nrounds = nr, verbose = 0)
   dte <- xgboost::xgb.DMatrix(mm(te))
   if (ARM == "resid") xgboost::setinfo(dte, "base_margin", naive(te, tr))

@@ -57,3 +57,18 @@ and the guard, as stated above.
   fed2022/fed2025: unpolled leader seats now get the bonus before the demographic step rather than after it, and in fed2025
   36 seats moved by small win probabilities, very likely through the state-poll pool (it spreads a state's poll gap over
   its seats, and Dickson's change moves Queensland's total). UNVERIFIED; check in the deciding run's per-seat files.
+
+### RESULT, deciding run (2026-11-07 3:00am, 20,000 sims, all 35 elections; `deciding-runs/20261106-1951-leader-before-blend/`, caches 628c972c300b / 1d1236a31c81): HOLDS. SHIPPED 7 Nov (Pete).
+
+- Guard, pooled seat-winner log loss (lower is better), 2,931 seats: 0.3125 -> 0.3123, -0.0002 (SE 0.0002); AEF-7 (681 seats)
+  0.2585 -> 0.2574, -0.0010 (SE 0.0010). Share error on the 42 changed cells -18% (SE 45.5 on -111.0). No election worse
+  by more than 0.0001 (sa2018 +0.0001). fed2025 -0.0048, wa2021 -0.0004.
+- The void clause ("if any unpolled seat moves, the plumbing is wrong"), read strictly, trips: in fed2025, 147 seats besides
+  Dickson, Melbourne and Grayndler move by at most 0.046 share points (median 0.001), net seat log loss +0.0034. The three
+  polled leader seats carry -0.716. Traced 7 Nov: ALL of it is the state poll pool (`state_poll_pool_apply()`, which
+  runs right after the pre-blend bonus, `backtest_candidate_fed.R:1546`). A fed2025 screen with `AUSPOL_STATE_POLL_POOL=0` in
+  both arms moves exactly those 3 seats, with every other seat's shares and win probabilities identical. By state: NSW, QLD
+  and Victoria move 0.02-0.05 points; every other state about 0.001, through the national mean the pool measures each
+  state's gap against (`R/state_poll_pool.R:83`). The pool now reads the poll gap against a model that already has the
+  leader bonus, instead of reading Dutton's personal vote as a Queensland polling miss. Pete shipped with the clause
+  overridden on that trace (the clause's purpose, a gain made in unpolled seats, does not hold: they net +0.0034).

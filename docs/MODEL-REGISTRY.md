@@ -1,6 +1,6 @@
 # Model registry
 
-**Generated 2026-11-06 by `scripts/build_model_registry.R`. Do not hand-edit** --
+**Generated 2026-11-07 by `scripts/build_model_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate whenever a switch is added to
 `published_flags.R` or a harness's wiring changes.
 
@@ -438,7 +438,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_IND_TYPICAL`** (intentional / dead experiment): ARM, REFUSED 2026-10-09 (plans/prereg-ind-typical-2026-10-09.md), off. In all six harnesses; NOT in fit_seats_full.R by design: a refused arm is not wired into the published forecast.
 - **`AUSPOL_IND_TYPICAL_STAT`** (intentional / dead experiment): Sub-setting of the refused AUSPOL_IND_TYPICAL, read inside R/ind_typical.R; harness-only like its parent.
 - **`AUSPOL_INSURGENCY_SHRINK`** (intentional / dead experiment): Per-seat shrink experiment, REFUSED 2026-09-06 (worse than the scalar shrink on 5 of 6 federal pairs) -- see docs/NEXT-STEPS.md. Fed/fit_seats-only because that is as far as the experiment got before being set aside. Not adopted.
-- **`AUSPOL_LEADER_BEFORE_BLEND`** (intentional / dead experiment): UNIVERSAL via R/: read inside leader_seat_apply() (R/leader_seat.R), which every harness (six + NT) and fit_seats_full.R call twice (pre and post blend). EXPERIMENT, default 0; screened 6 Nov, 20k run 7 Nov 2am.
+- **`AUSPOL_LEADER_BEFORE_BLEND`** (intentional / dead experiment): UNIVERSAL via R/: read inside leader_seat_apply() (R/leader_seat.R), which every harness (six + NT) and fit_seats_full.R call twice (pre and post blend). SHIPPED "1" 7 Nov (20k run 7 Nov 2am; plans/prereg-leader-before-blend-2026-11-06.md).
 - **`AUSPOL_LEADER_SEAT`** (**adopted, shared-function wiring**): SHIPPED (1), UNIVERSAL via R/: read inside leader_seat_apply() (R/leader_seat.R); fit_seats_full.R also reads it directly. The harness 'yes' cells were comments.
 - **`AUSPOL_LEADERS_SUPPLEMENT`** (intentional / dead experiment): DIAGNOSTIC 2026-10-13: 0 drops leaders-supplement.csv in read_leaders() (R/leader_seat.R) -- universal in practice; published 1.
 - **`AUSPOL_LEVEL_CONSERVE`** (intentional / dead experiment): ARM (0), built 2026-10-25, not run. Wired at the same two points in all seven harnesses (fed, vic, nsw, sa, wa, qld, nt) and fit_seats_full.R through ONE function, level_conserve_apply() (R/level_conserve.R): 'base' just before the xgb override (xgb_primary_predict_live() live), 'final' after the last nomination zero. Post-xgb (post_xgb_switches()). The switch is read inside R/ (level_conserve_mode()), so 'NO' in the entry-point columns is the grep, not a gap. plans/prereg-level-conserve-2026-10-25.md
@@ -664,7 +664,7 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR4  every AUSPOL_* switch read in code (409) is registered (290) or listed as not a model switch (119).
+MR4  every AUSPOL_* switch read in code (410) is registered (290) or listed as not a model switch (120).
 
 
 

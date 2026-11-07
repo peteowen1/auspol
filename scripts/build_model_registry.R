@@ -419,7 +419,7 @@ CLASSIFY <- list(
     "in every harness and fit_seats_full.R. SHIPPED researched 2026-11-06 (plans/prereg-htv-researched-2026-11-06.md)."),
   AUSPOL_LEADER_BEFORE_BLEND = paste(
     "UNIVERSAL via R/: read inside leader_seat_apply() (R/leader_seat.R), which every harness (six + NT) and",
-    "fit_seats_full.R call twice (pre and post blend). EXPERIMENT, default 0; screened 6 Nov, 20k run 7 Nov 2am."),
+    "fit_seats_full.R call twice (pre and post blend). SHIPPED \"1\" 7 Nov (20k run 7 Nov 2am; plans/prereg-leader-before-blend-2026-11-06.md)."),
   AUSPOL_COALITION_SPLIT_F = paste(
     "UNIVERSAL via R/: read inside coalition_f() (R/coalition_split.R) through coalition_split_args(), which",
     "every harness (six + NT) and fit_seats_full.R call; inert unless AUSPOL_COALITION_SPLIT=1. Prereg amendment 2. SHIPPED (state) 2026-10-17."),
