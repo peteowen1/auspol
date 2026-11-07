@@ -37,6 +37,13 @@ the real final two at class level. Real final twos: nsw2023 from
 3. Any non-NSW pair not byte-identical.
 4. Mean absolute ALP primary miss on nsw2019 above 1.547 (the refused 2026-09-27 anchoring arm).
 
+**Amendment (7 Nov, before any arm result was read; the clause above is unedited).** The
+1.547 in guard 4 is the 2026-09-27 STATEWIDE audit figure: nsw2019 mean |miss| over the ALP,
+LNP and GRN statewide first preferences (baseline 1.027), from
+`scripts/audit_statewide_forecast.R`, not a per-seat ALP mean. Guard 4 is scored on that
+measure: the same audit run with the arm's two switches, `AUSPOL_AUDIT_TAG` set.
+`score_tcp_arm.R` also prints a per-seat ALP primary miss; it is reported, not a guard.
+
 ## Predicted result, written before running
 
 nsw2023 ALP v LNP TCP MAE 5.06 to about 4.5; slope of actual on predicted ALP TCP 1.41 to

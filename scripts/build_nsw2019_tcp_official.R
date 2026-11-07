@@ -55,7 +55,9 @@ res <- rbindlist(lapply(files, function(f) {
     fails <<- c(fails, sprintf("%s (%d rows)", slug, if (is.null(d)) 0L else nrow(d)))
     return(NULL)
   }
-  d[, `:=`(seat = tools::toTitleCase(gsub("-", " ", slug)), slug = slug)]
+  seat <- tools::toTitleCase(gsub("-", " ", slug))
+  if (slug == "ku-ring-gai") seat <- "Ku-ring-gai"   # the one seat whose real name keeps its hyphens
+  d[, `:=`(seat = seat, slug = slug)]
 }), fill = TRUE)
 
 if (length(fails)) cat(sprintf("N19-1! %d page(s) without exactly two finalists: %s\n",
