@@ -172,9 +172,10 @@ leader_seat_table <- function(target_election, write = FALSE) {
 #'
 #' @param shares Matrix of primary shares, rownames = seats, colnames = classes.
 #' @param target_election Label such as `"nsw2023"`.
-#' @param stage `"post_blend"` (the default, the shipped place: after the
-#'   seat-poll blend) or `"pre_blend"`. The bonus is applied only at the stage
-#'   `AUSPOL_LEADER_BEFORE_BLEND` names (`"1"`: pre, `"0"`: post).
+#' @param stage `"post_blend"` (the default argument: after the seat-poll
+#'   blend) or `"pre_blend"`. The bonus is applied only at the stage
+#'   `AUSPOL_LEADER_BEFORE_BLEND` names (`"1"`, shipped 7 Nov 2026: pre;
+#'   `"0"`: post), so callers make both calls.
 #' @return `shares`, adjusted.
 #' @export
 leader_seat_apply <- function(shares, target_election, stage = c("post_blend", "pre_blend")) {

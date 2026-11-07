@@ -15,9 +15,10 @@ leader_seat_apply(
 
 \item{target_election}{Label such as \code{"nsw2023"}.}
 
-\item{stage}{\code{"post_blend"} (the default, the shipped place: after the
-seat-poll blend) or \code{"pre_blend"}. The bonus is applied only at the stage
-\code{AUSPOL_LEADER_BEFORE_BLEND} names (\code{"1"}: pre, \code{"0"}: post).}
+\item{stage}{\code{"post_blend"} (the default argument: after the seat-poll
+blend) or \code{"pre_blend"}. The bonus is applied only at the stage
+\code{AUSPOL_LEADER_BEFORE_BLEND} names (\code{"1"}, shipped 7 Nov 2026: pre;
+\code{"0"}: post), so callers make both calls.}
 }
 \value{
 \code{shares}, adjusted.
