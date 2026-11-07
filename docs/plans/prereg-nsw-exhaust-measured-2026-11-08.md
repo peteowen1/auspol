@@ -46,4 +46,9 @@ pairs, 20k). Results go below; the ship question goes to Pete.
 
 ## RESULT
 
-(not yet run)
+**Screen, 8 Nov ~1:15am (1k sims; baseline `5280dfff031c`, arm `247c1af5ad36`): REFUSED as specified.**
+Seat log loss: nsw2019 0.2711 -> 0.2673 (-0.0038), nsw2023 0.1844 -> 0.1888 (+0.0044); pooled over 279
+seats 0.2448 -> 0.2450 (+0.0002, SE 0.0024). Primary not met; guard 1 fails (nsw2023 worse). Guard 3:
+nsw2015 byte-identical; guard 4: 0 of 1,860 primary cells moved. TCP MAE on matched seats: nsw2019 4.166 ->
+3.654 (-0.512, SE 0.163; slope 1.111 -> 1.014), nsw2023 4.487 -> 4.484 (-0.003), ours+AEF set 4.582 ->
+4.650 (+0.068, SE 0.078). Not shipped; the split goes to Pete.

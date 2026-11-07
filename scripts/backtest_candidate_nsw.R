@@ -1197,6 +1197,31 @@ if (.exhaust_on) {
   EXHAUST_ARG <- c(ALP = 0, LNP = 0,
                    GRN = .rate_of("GRN"), ONP = .rate_of("ONP"),
                    OTH_RIGHT = .rate_of("SFF"), OTH = .oth_ex, IND = .oth_ex)
+  # MEASURED RATES (AUSPOL_NSW_EXHAUST_SRC=measured, an ARM, 8 Nov 2026;
+  # plans/prereg-nsw-exhaust-measured-2026-11-08.md): replace the anchor's rates with the share
+  # exhausted at each exclusion, by excluded class, from NSWEC's own DOP pages
+  # (scripts/build_nsw_exhaust_measured.R), from the latest NSW election BEFORE the target.
+  # Includes the majors (the anchor gives them 0). A class the source year lacks takes OTH_RIGHT
+  # (One Nation did not stand in 2015), then OTH. No earlier measured year: no exhaustion.
+  if (identical(Sys.getenv("AUSPOL_NSW_EXHAUST_SRC", "anchor"), "measured")) {
+    .mf <- file.path("output", "nsw-exhaust-measured.csv")
+    if (!file.exists(.mf)) stop("AUSPOL_NSW_EXHAUST_SRC=measured but ", .mf, " is missing -- run scripts/build_nsw_exhaust_measured.R")
+    .m <- data.table::fread(.mf)
+    .m_el <- unique(.m$election)
+    .m_prior <- .m_el[elections_before(.m_el, TGT)]
+    if (!length(.m_prior)) {
+      EXHAUST_ARG <- c(ALP = 0)
+      cat(sprintf("BN0m! nsw%d: no measured exhaust year before it -- exhaustion NOT modelled\n", TO))
+    } else {
+      .src <- .m_prior[which.max(vapply(.m_prior, function(e) as.numeric(election_dates()[[e]]), 0))]
+      .ms <- .m[.m$election == .src]
+      .mr <- setNames(.ms$rate, .ms$cls)
+      .pick <- function(k) if (!is.na(.mr[k])) unname(.mr[k]) else if (!is.na(.mr["OTH_RIGHT"])) unname(.mr["OTH_RIGHT"]) else unname(.mr["OTH"])
+      EXHAUST_ARG <- vapply(c("ALP", "LNP", "GRN", "ONP", "OTH_RIGHT", "OTH", "IND"), .pick, 0)
+      cat(sprintf("BN0m  nsw%d exhaust rates MEASURED from %s (%s)\n", TO, .src,
+                  paste(sprintf("%s=%.1f%%", names(EXHAUST_ARG), EXHAUST_ARG), collapse = " ")))
+    }
+  }
   # AN ALL-ZERO RATE SET MEANS "NO DATA", NOT "NO EXHAUSTION". load_preference_flows()
   # collapses a missing exhaust field to 0 at parse time (R/load_polls.R), and NSW rows
   # from 2015 and earlier carry only 4 fields -- no exhaust column existed yet. Until
