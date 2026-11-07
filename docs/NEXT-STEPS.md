@@ -33,6 +33,17 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   seats, `reviews/tcp-mae-vs-aef-2026-11-07.md`), and 5 new nsw2023 seats (Badgerys Creek, Kellyville, Leppington,
   Wahroonga, Winston Hills) missing from `aef7-final-two-and-tcp-reference.csv` though their NSWEC pages are cached.
   Needs a rebuild from the NSW stage, then Pete's stage-9 publish.
+- OPEN 7 Nov 8:40pm, LIVE BUG from the NSW exhaust ship (PR #203): nsw2011 and nsw2015 have NO exhaust rates (every
+  rate 0.0; their flow rows predate the column), so with the switch on by default the harness stops at its all-zero
+  guard (`backtest_candidate_nsw.R:1194`) and a full rebuild fails there. Fix queued: no rates -> run without
+  exhaustion with a loud `BN0x!` line (2011/2015 stay as before today); borrowing 2019 rates would leak. Live
+  Victoria and the daily run never read the NSW harness. Completing the data: real 2011/2015 rates need those
+  years' NSWEC distribution-of-preferences pages (only SG1901/SG2301 are cached).
+- OPEN 7 Nov, SPEED: exhaustion forces the R simulator (`src/seat_sim_core.cpp` has no exhaust path). Deciding run at
+  20k: nsw2019 134 s -> 859 s, nsw2023 59 s -> 1,040 s, so every rebuild now pays ~28 min more on NSW (rebuild
+  stage 6 nsw2023 took ~44 min). The R engine applies it as one multiply on `pot` per transfer
+  (`R/seat_sim.R:1586-1651`, three sites incl. the Coalition split); porting it means an `exhaust_by` vector argument
+  and the same multiply at the matching C++ sites, then an R-vs-cpp parity test at a fixed seed.
 - OPEN, blocked on the item above: `AUSPOL_POLL_SERIES_CLASS=name` (SA-Best, Katter, UAP, FF classed by full name). 20k on 7 pairs a tie
   (-0.0028, SE 0.0038); sa2018 +0.037 of which Morphett +0.031. `plans/prereg-poll-series-class-2026-11-06.md`, last section.
 - **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** History, DONE list and replay evidence:
