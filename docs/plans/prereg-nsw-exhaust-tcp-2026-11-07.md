@@ -107,3 +107,9 @@ TCP scenarios were lost (fixed for the next run). The TCP result stands on the s
 AEF-7 TCP mean absolute error with the screen's nsw2023 swapped into the ledger (points, lower
 is better): common seats (n 583) ours 3.6225 -> 3.5851, AEF 3.5925; headline ours 3.6788 (n 610)
 -> 3.6359, AEF 3.6347 (n 600).
+
+**Primary metric at 20k, published path (7 Nov 10:05pm).** The 8pm stage-6 rebuild's nsw2023
+(`a592d60-g4d0be17`) and nsw2019 (`ac509c4-g4d0be17x`) ourtcp files against the pre-ship ones of
+12:06-12:11pm, scored with `score_tcp_arm.R`: nsw2023 ours+AEF-matched (n 79) 4.919 -> 4.573,
+**-0.346 (SE 0.172): PASS**; ALP v LNP -0.314; marginal -0.072; slope 1.412 -> 1.268. nsw2019
+(n 83) 4.180 -> 3.608, -0.572 (SE 0.139); slope 1.113 -> 1.017. Matches the screen.
