@@ -1178,7 +1178,10 @@ if (.exhaust_on) {
   # them here (the anchor files them as IND -- see CLAUDE.md's note on that
   # mismatch, which is why this reads from our own class, not the anchor's).
   .rate_of <- function(p) { r <- .flows_nsw[party == p, exhaust]; if (length(r)) r[1] else .oth_ex }
-  EXHAUST_ARG <- c(ALP = 0, LNP = 0, NAT = 0,
+  # No NAT entry: the Nationals are inside LNP in `shares`, and since 83964fdd
+  # simulate_seat_contests() refuses a name that is not a column (found 7 Nov,
+  # when this arm was first run after that guard landed).
+  EXHAUST_ARG <- c(ALP = 0, LNP = 0,
                    GRN = .rate_of("GRN"), ONP = .rate_of("ONP"),
                    OTH_RIGHT = .rate_of("SFF"), OTH = .oth_ex, IND = .oth_ex)
   # AND REFUSE AN ALL-ZERO RATE SET. load_preference_flows() collapses a
