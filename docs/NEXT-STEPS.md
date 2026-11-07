@@ -13,12 +13,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   9 Nov, condition One Nation's anchor/blend on how many seats it stands in; (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **OVERNIGHT 7-8 Nov, FOR PETE (needs you):** (1) MERGE PR #206 (C++ exhaust path + NSW exhaust leak fix; reviewed,
-  CI green on head 31828ccb, 8 Nov 1:15am): https://github.com/peteowen1/auspol/pull/206. (2) REPUBLISH: the 7 Nov
-  11:44pm publish carries a LEAK (NSW exhaust read the target election's own flow row; worth nsw2019 -0.0064 and
-  nsw2023 -0.0004 seat log loss). Leak-free rebuild ready, unpublished (snapshot `20261108-0037-d8f94948-from6`):
-  AEF-7 0.2567 (was 0.2566), 35 elections 0.3215 (was 0.3213); TCP same seats 3.66 vs AEF 3.73. Line:
-  `! AUSPOL_REBUILD_FROM=9 AUSPOL_PUBLISH=1 bash scripts/rebuild_forecasts.sh`. (3) Measured NSW exhaust for minor parties SHIPPED 8 Nov morning (Pete: "Ship"; DECISIONS).
+- **8 Nov 7:45am, FOR PETE: REPUBLISH.** PR #206 merged (C++ exhaust path, exhaust leak fix, measured NSW exhaust for
+  minor parties shipped on Pete's "Ship"). The 7 Nov 11:44pm publish carries the leak. Ready, unpublished: snapshot
+  `20261108-0742-3911d85d-from6`, AEF-7 seat log loss 0.2566 (AEF 0.2825), 35 elections 0.3213, TCP same seats 3.66 vs
+  3.73. Line: `! AUSPOL_REBUILD_FROM=9 AUSPOL_PUBLISH=1 bash scripts/rebuild_forecasts.sh`.
 - **Status 7 Nov 5pm.** Rebuild on 49f19560 PUBLISHED 4:19pm by Pete (AEF-7 0.2572 vs AEF 0.2825; 35 elections 0.3216);
   carries `AUSPOL_HTV_TABLE="researched"` and `AUSPOL_LEADER_BEFORE_BLEND="1"`. PR #202 merged. The next daily forecast
   run is the first on the new shipped models: read its conclusion.
