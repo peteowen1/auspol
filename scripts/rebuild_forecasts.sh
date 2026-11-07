@@ -295,6 +295,9 @@ run_stage6() {
   [ -f output/spread-by-size.csv ] && cp output/spread-by-size.csv "$LOG/spread-by-size-read-by-s6.csv"
   # ...and the composition spread and error quantiles (shipped 2026-10-17), which have the same lag
   for _t in spread-by-composition error-quantiles; do rm -f "$LOG/$_t-read-by-s6.csv"; [ -f "output/$_t.csv" ] && cp "output/$_t.csv" "$LOG/$_t-read-by-s6.csv"; done
+  # NSW exhaust rates measured from NSWEC's DOP pages (AUSPOL_NSW_EXHAUST_SRC="measured", shipped 8 Nov 2026):
+  # gitignored output, so it is built here, before the NSW harness reads it (~10 s).
+  Rscript scripts/build_nsw_exhaust_measured.R > "$LOG/s6_nsw_exhaust_measured.log" 2>&1 || { echo "!! build_nsw_exhaust_measured.R failed -- see $LOG/s6_nsw_exhaust_measured.log"; exit 1; }
   export AUSPOL_STAGE6_START=$(date +%s); rm -rf output/upset-floor-raw; stage "6-harnesses-shipped";   run6 1 s6; done_stage "6-harnesses-shipped"
   # 6b UPSET INSURANCE (AUSPOL_UPSET_FLOOR=1, R/upset_floor.R): mixes THIS run's
   # stage-6 win probabilities with a time-forward-fitted floor for minor

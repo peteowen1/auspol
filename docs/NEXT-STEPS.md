@@ -13,9 +13,15 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   9 Nov, condition One Nation's anchor/blend on how many seats it stands in; (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
+- **OVERNIGHT 7-8 Nov, FOR PETE (needs you):** (1) MERGE PR #206 (C++ exhaust path + NSW exhaust leak fix; reviewed,
+  CI green on head 31828ccb, 8 Nov 1:15am): https://github.com/peteowen1/auspol/pull/206. (2) REPUBLISH: the 7 Nov
+  11:44pm publish carries a LEAK (NSW exhaust read the target election's own flow row; worth nsw2019 -0.0064 and
+  nsw2023 -0.0004 seat log loss). Leak-free rebuild ready, unpublished (snapshot `20261108-0037-d8f94948-from6`):
+  AEF-7 0.2567 (was 0.2566), 35 elections 0.3215 (was 0.3213); TCP same seats 3.66 vs AEF 3.73. Line:
+  `! AUSPOL_REBUILD_FROM=9 AUSPOL_PUBLISH=1 bash scripts/rebuild_forecasts.sh`. (3) Measured NSW exhaust for minor parties SHIPPED 8 Nov morning (Pete: "Ship"; DECISIONS).
 - **Status 7 Nov 5pm.** Rebuild on 49f19560 PUBLISHED 4:19pm by Pete (AEF-7 0.2572 vs AEF 0.2825; 35 elections 0.3216);
-  carries `AUSPOL_HTV_TABLE="researched"` and `AUSPOL_LEADER_BEFORE_BLEND="1"`. PR #202 (dev -> main, 0.4.142) open,
-  reviewed (0 Important). The next daily forecast run is the first on the new shipped models: read its conclusion.
+  carries `AUSPOL_HTV_TABLE="researched"` and `AUSPOL_LEADER_BEFORE_BLEND="1"`. PR #202 merged. The next daily forecast
+  run is the first on the new shipped models: read its conclusion.
   OPEN: VEC feed access details (Pete sends the chase 7 Nov, Gmail draft saved 5 Nov). `output/candidacies.csv`
   (vic2006 winners) ships with the 10 Nov nominations rebuild. Memory sits at 2.5-4.5 GB (Pete declined a reboot);
   Claude Code's low-memory stop kills background watchers, not detached jobs. Run `scripts/refresh_local_poll_inputs.sh`
@@ -28,19 +34,15 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `reviews/aef7-gap-and-sal-screen-2026-11-07.md` section 1). Refits take 73 s with `AUSPOL_MC_ROUNDS_FROM`.
 - ANSWERED 7 Nov, nothing to ship: where we lose to AEF on AEF-7 (IND/GRN widening refused, salience bias weak,
   by-election weight 0.5 stands). `reviews/aef7-gap-and-sal-screen-2026-11-07.md` section 2.
-- OPEN 7 Nov, TCP error vs AEF (Pete): NSW exhaustion SHIPPED + PUBLISHED 7 Nov 11:25pm (`plans/prereg-nsw-exhaust-tcp-2026-11-07.md`;
-  AEF-7 seat log loss 0.2566, 35 elections 0.3213). Ledger TCP headline now scores both sides on the SAME seats (each
-  side's margin for the real pairing): ours 3.654 vs AEF 3.727 (n 667), goal met; the old #1-pick figure (3.616 vs
-  3.635) is kept as `tcp_mae_pick`. 10 seats new at the nsw2023/wa2025 redistributions added to the reference.
-  Ledger page needs a stage-9 republish to show it. Left: fed2025 (+0.73 over 130 seats, `reviews/tcp-mae-vs-aef-2026-11-07.md`).
-- OPEN 7 Nov, nsw2011/2015 exhaust: the shipped switch's all-zero guard broke full rebuilds; FIXED (PR #204, published).
-  Those pairs run without exhaustion and say so (`BN0x!`). Completing the data: real 2011/2015 rates need those years'
-  NSWEC distribution-of-preferences pages (only SG1901/SG2301 are cached).
-- OPEN 7 Nov, SPEED: exhaustion forces the R simulator (`src/seat_sim_core.cpp` has no exhaust path). Deciding run at
-  20k: nsw2019 134 s -> 859 s, nsw2023 59 s -> 1,040 s, so every rebuild now pays ~28 min more on NSW (rebuild
-  stage 6 nsw2023 took ~44 min). The R engine applies it as one multiply on `pot` per transfer
-  (`R/seat_sim.R:1586-1651`, three sites incl. the Coalition split); porting it means an `exhaust_by` vector argument
-  and the same multiply at the matching C++ sites, then an R-vs-cpp parity test at a fixed seed.
+- OPEN 7-8 Nov, TCP error vs AEF (Pete): NSW exhaustion SHIPPED (`plans/prereg-nsw-exhaust-tcp-2026-11-07.md`); ledger
+  TCP headline scores both sides on the SAME seats: 3.654 vs AEF 3.727 (n 667), goal met (PR #205). 8 Nov on dev
+  (PR #206): C++ engine applies exhaust (NSW stage 6 ~65 -> 11 min); exhaust rates made time-forward (leak fix,
+  `AUSPOL_NSW_EXHAUST_TF`). nsw2011/2015/2019 now get no exhaustion from the anchor (no earlier rates); measured rates
+  from NSWEC's pages (`scripts/build_nsw_exhaust_measured.R`, all 2015/2019/2023 pages ARE cached) are the off arm
+  `AUSPOL_NSW_EXHAUST_SRC=measured` (+ `_MEAS_MAJORS=0`). Left: fed2025 (+0.73 over 130 seats, `reviews/tcp-mae-vs-aef-2026-11-07.md`).
+  Low priority, pre-existing: `fit_nsw.R`/`fit_federal.R`/`fit_vic.R` read same-year flow rows; they feed no backtest.
+  OPEN, pre-existing (review 8 Nov): `AUSPOL_REBUILD_ONLY` reuse (`reuse_check()`, `rebuild_forecasts.sh`) checks file age, not
+  flags, so after a switch flip a rebuild that skips the affected harness silently reuses its old-config results.
 - OPEN, blocked on the item above: `AUSPOL_POLL_SERIES_CLASS=name` (SA-Best, Katter, UAP, FF classed by full name). 20k on 7 pairs a tie
   (-0.0028, SE 0.0038); sa2018 +0.037 of which Morphett +0.031. `plans/prereg-poll-series-class-2026-11-06.md`, last section.
 - **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** History, DONE list and replay evidence:

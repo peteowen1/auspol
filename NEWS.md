@@ -1,3 +1,9 @@
+# auspol 0.4.146
+
+- **NSW exhaust rates now come from NSWEC's own counts** (`AUSPOL_NSW_EXHAUST_SRC="measured"`, `AUSPOL_NSW_EXHAUST_MEAS_MAJORS="0"`; Pete, 8 Nov, over a 1.4-SE nsw2023 TCP guard miss): the share of votes exhausted at each minor-party exclusion, from the latest NSW election before the target (`scripts/build_nsw_exhaust_measured.R`, now run in rebuild stage 6). nsw2019 gets exhaustion for the first time (from 2015). 20k: seat log loss nsw2019 0.3344 -> 0.3283, nsw2023 0.1849 -> 0.1842; TCP error nsw2019 -0.605, nsw2023 +0.019.
+- **Leak fix:** NSW exhaust rates are time-forward (`AUSPOL_NSW_EXHAUST_TF="1"`); 0.4.143-0.4.145 read the target election's own row of the flow file.
+- **The compiled seat simulator now handles NSW exhaustion**, so NSW backtests no longer fall back to the slower R loop (nsw2019 859 s, nsw2023 1,040 s at 20k simulations; about 28 minutes per rebuild). Byte-identical to the R loop with and without the Coalition split. No forecast number changes.
+
 # auspol 0.4.145
 
 - **The AEF-7 ledger's two-candidate (TCP) error now scores both models on the same seats** (Pete, 7 Nov): each side's margin for the pairing that actually happened, wherever both have one. Ours 3.654 vs AE Forecasts 3.727 over 667 seats. The old figure, where each side counted only seats its own top pick got right (ours 610, AEF 600), stays as `tcp_mae_pick` (3.616 vs 3.635).

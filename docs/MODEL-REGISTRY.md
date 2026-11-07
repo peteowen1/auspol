@@ -1,6 +1,6 @@
 # Model registry
 
-**Generated 2026-11-07 by `scripts/build_model_registry.R`. Do not hand-edit** --
+**Generated 2026-11-08 by `scripts/build_model_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate whenever a switch is added to
 `published_flags.R` or a harness's wiring changes.
 
@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (307 switches from `published_flags.R`, 7 entry points)
+## Switch parity (310 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -195,6 +195,9 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_NOTIONAL` | NO | yes | NO | NO | NO | NO | NO |  |
 | `AUSPOL_NSW_EST_FLOOR` | NO | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_NSW_EXHAUST` | NO | NO | yes | NO | NO | NO | NO |  |
+| `AUSPOL_NSW_EXHAUST_MEAS_MAJORS` | NO | NO | yes | NO | NO | NO | NO |  |
+| `AUSPOL_NSW_EXHAUST_SRC` | NO | NO | yes | NO | NO | NO | NO |  |
+| `AUSPOL_NSW_EXHAUST_TF` | NO | NO | yes | NO | NO | NO | NO |  |
 | `AUSPOL_NSW_THIN_WALK` | NO | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_NT_TRANSFER` | NO | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_ONP_CONC_SD` | NO | NO | NO | yes | yes | NO | NO |  |
@@ -480,6 +483,9 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_NOTIONAL`** (**adopted, shared-function wiring**): SHIPPED (2) and FEDERAL-BACKTEST-ONLY by design: the redistribution-adjusted (notional) prior only exists where build_notional_baselines.R has a table (federal). State harnesses have no notional table to read, so 'no' there is a data fact, not a parity gap. docs/reviews/notional-prior-redistribution-2026-09-13.md
 - **`AUSPOL_NSW_EST_FLOOR`** (**shipped, fitting-time switch (reaches harnesses via the artifact)**): FITTING-TIME: read by scripts/fit_nsw.R (run_all.R), a min_n floor in the NSW estimation (CONSTANTS); no harness or live read.
 - **`AUSPOL_NSW_EXHAUST`** (intentional / dead experiment): HARNESS-ONLY, SHIPPED "1" 7 Nov 2026: NSW harness only (optional-preferential exhaustion in the seat simulation; plans/prereg-nsw-exhaust-tcp-2026-11-07.md). The only optional-preferential election in the backtests; live Victoria is compulsory preferential.
+- **`AUSPOL_NSW_EXHAUST_MEAS_MAJORS`** (intentional / dead experiment): HARNESS-ONLY, SHIPPED "0" 8 Nov 2026 with AUSPOL_NSW_EXHAUST_SRC=measured: majors' exhaust stays 0.
+- **`AUSPOL_NSW_EXHAUST_SRC`** (intentional / dead experiment): HARNESS-ONLY, SHIPPED "measured" 8 Nov 2026 (Pete): NSW exhaust rates from NSWEC DOP pages (scripts/build_nsw_exhaust_measured.R, run in rebuild stage 6); plans/prereg-nsw-exhaust-measured-minors-2026-11-08.md.
+- **`AUSPOL_NSW_EXHAUST_TF`** (intentional / dead experiment): HARNESS-ONLY, SHIPPED "1" 8 Nov 2026 (leak fix): NSW harness reads exhaust rates only from elections before the target; "0" is the 7 Nov read of the target year's own row.
 - **`AUSPOL_NSW_THIN_WALK`** (intentional / dead experiment): NOT A PUBLISHED-CONFIG SWITCH: read by scripts/fit_nsw.R (the NSW poll-trend validation stage), which does not source published_flags.R. The comment block in published_flags.R says why it is deliberately unregistered.
 - **`AUSPOL_NT_TRANSFER`** (intentional / dead experiment): HARNESS-ONLY, NT: forces candidate transfer on/off; empty (published) keeps it tied to the slope mode.
 - **`AUSPOL_ONP_CONC_SD`** (**adopted, shared-function wiring**): SHIPPED 2026-09-14 ('auto') for the harnesses that model a One Nation seat concentration from federal booth-transposed votes: qld and sa (where One Nation contests every seat). fed/nsw/vic/wa have no ONP concentration mechanism, and fit_seats_full.R has its own live ONP path; a gap only if One Nation's Victorian seat spread is ever driven from this switch (the VIC2022 IND-coupling regression is the reason it is not: docs/reviews/sa2026-onp-base-pred-diagnosis-2026-09-14.md).
@@ -664,8 +670,8 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR4  every AUSPOL_* switch read in code (410) is registered (290) or listed as not a model switch (120).
+MR4  every AUSPOL_* switch read in code (413) is registered (293) or listed as not a model switch (120).
 
 
 
-MR2  every non-universal switch (276 of 307) has a recorded classification.
+MR2  every non-universal switch (279 of 310) has a recorded classification.

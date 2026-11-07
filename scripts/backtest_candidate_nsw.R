@@ -1152,22 +1152,35 @@ if (identical(Sys.getenv("AUSPOL_XGB_SURGE", "0"), "1")) {
 # to OTH's rate, the same convention derive_tpp() already uses for an
 # unlisted minor party; majors get 0 (no rate is ever given for them, and
 # they are essentially never excluded early enough for it to matter).
-# R-ENGINE ONLY -- src/seat_sim_core.cpp has no exhaustion path, and
-# simulate_seat_contests() refuses engine="cpp" with nonzero exhaust rather
-# than silently ignoring it, so this must force engine="r" explicitly.
+# BOTH ENGINES since 7 Nov 2026: src/seat_sim_core.cpp applies exhaustion
+# byte-identically to the R loop, so this no longer forces engine="r" (which
+# cost 134 -> 859 s on nsw2019 at 20k). AUSPOL_SIM_ENGINE=r still forces it.
 .exhaust_on <- identical(Sys.getenv("AUSPOL_NSW_EXHAUST", "1"), "1")   # shipped "1" 7 Nov 2026
 EXHAUST_ARG <- 0
 SIM_ENGINE <- "auto"
+# TIME-FORWARD RATES (AUSPOL_NSW_EXHAUST_TF, shipped "1" 8 Nov 2026). The anchor file's row for
+# the target year is that election's own row, which every other reader in this repo excludes
+# (R/forecast_mode.R:147 "a later flow estimate would be a leak"; R/seat_poll_joint.R:60 keeps
+# only elections dated before the target). Until 8 Nov this read year = TO, so nsw2023 used the
+# nsw2023 row (ONP 71.1) and nsw2019 the nsw2019 row. "1": only rows from NSW elections before
+# the target (nsw2023 -> the 2019 rates; nsw2019 -> 2015, which has no exhaust column, so none).
+# "0": the old read, kept to measure what the leak was worth.
+.exhaust_tf <- !identical(Sys.getenv("AUSPOL_NSW_EXHAUST_TF", "1"), "0")
 if (.exhaust_on) {
+  .pf_all <- load_preference_flows()
+  if (.exhaust_tf) .pf_all <- .pf_all[which(elections_before(paste0(.pf_all$region, .pf_all$year), TGT))]
   .flows_nsw <- tryCatch(
-    flows_for(load_preference_flows(), year = TO, region = "nsw", estimate = FALSE, quiet = TRUE),
+    flows_for(.pf_all, year = TO, region = "nsw", estimate = FALSE, quiet = TRUE),
     error = function(e) { cat(sprintf("BN0x! preference flows unavailable for nsw%d: %s\n", TO, conditionMessage(e))); NULL })
+  if (!is.null(.flows_nsw))
+    cat(sprintf("BN0t  nsw%d exhaust rates from %s row(s) (time-forward %s)\n", TO,
+                paste(sort(unique(.flows_nsw$flow_year)), collapse = "/"), if (.exhaust_tf) "on" else "OFF"))
   # REFUSE RATHER THAN QUIETLY DO NOTHING. Falling through here would leave
-  # EXHAUST_ARG at 0 and SIM_ENGINE at "auto", which resolves to the cpp
-  # engine -- the one with no exhaustion path at all. A run that explicitly
-  # asked for exhaustion would then produce output identical to the flag being
-  # off, behind a single log line. That is this repo's own "an experiment that
-  # never ran looks exactly like an experiment with no effect" trap.
+  # EXHAUST_ARG at 0: a run that asked for exhaustion would produce output
+  # identical to the flag being off, behind a single log line. That is this
+  # repo's own "an experiment that never ran looks exactly like an experiment
+  # with no effect" trap. (No flows at all is a load failure; no RATES in the
+  # flows is old data, handled below.)
   if (is.null(.flows_nsw))
     stop("AUSPOL_NSW_EXHAUST=1 but no preference flows for nsw", TO,
          " -- refusing to run with exhaustion silently disabled")
@@ -1184,6 +1197,35 @@ if (.exhaust_on) {
   EXHAUST_ARG <- c(ALP = 0, LNP = 0,
                    GRN = .rate_of("GRN"), ONP = .rate_of("ONP"),
                    OTH_RIGHT = .rate_of("SFF"), OTH = .oth_ex, IND = .oth_ex)
+  # MEASURED RATES (AUSPOL_NSW_EXHAUST_SRC="measured", SHIPPED 8 Nov 2026 with _MEAS_MAJORS="0";
+  # plans/prereg-nsw-exhaust-measured-minors-2026-11-08.md): replace the anchor's rates with the share
+  # exhausted at each exclusion, by excluded class, from NSWEC's own DOP pages
+  # (scripts/build_nsw_exhaust_measured.R), from the latest NSW election BEFORE the target.
+  # Majors' measured rates exist but are NOT used by default (_MEAS_MAJORS="0" below; using them
+  # was refused, plans/prereg-nsw-exhaust-measured-2026-11-08.md). A class the source year lacks takes OTH_RIGHT
+  # (One Nation did not stand in 2015), then OTH. No earlier measured year: no exhaustion.
+  if (identical(Sys.getenv("AUSPOL_NSW_EXHAUST_SRC", "measured"), "measured")) {
+    .mf <- file.path("output", "nsw-exhaust-measured.csv")
+    if (!file.exists(.mf)) stop("AUSPOL_NSW_EXHAUST_SRC=measured but ", .mf, " is missing -- run scripts/build_nsw_exhaust_measured.R")
+    .m <- data.table::fread(.mf)
+    .m_el <- unique(.m$election)
+    .m_prior <- .m_el[elections_before(.m_el, TGT)]
+    if (!length(.m_prior)) {
+      EXHAUST_ARG <- c(ALP = 0)
+      cat(sprintf("BN0m! nsw%d: no measured exhaust year before it -- exhaustion NOT modelled\n", TO))
+    } else {
+      .src <- .m_prior[which.max(vapply(.m_prior, function(e) as.numeric(election_dates()[[e]]), 0))]
+      .ms <- .m[.m$election == .src]
+      .mr <- setNames(.ms$rate, .ms$cls)
+      .pick <- function(k) if (!is.na(.mr[k])) unname(.mr[k]) else if (!is.na(.mr["OTH_RIGHT"])) unname(.mr["OTH_RIGHT"]) else unname(.mr["OTH"])
+      EXHAUST_ARG <- vapply(c("ALP", "LNP", "GRN", "ONP", "OTH_RIGHT", "OTH", "IND"), .pick, 0)
+      # Majors at 0, as the anchor has them (shipped "0" 8 Nov; "1" uses their measured rates,
+      # which cost nsw2023 in the refused all-classes screen).
+      if (identical(Sys.getenv("AUSPOL_NSW_EXHAUST_MEAS_MAJORS", "0"), "0")) EXHAUST_ARG[c("ALP", "LNP")] <- 0
+      cat(sprintf("BN0m  nsw%d exhaust rates MEASURED from %s (%s)\n", TO, .src,
+                  paste(sprintf("%s=%.1f%%", names(EXHAUST_ARG), EXHAUST_ARG), collapse = " ")))
+    }
+  }
   # AN ALL-ZERO RATE SET MEANS "NO DATA", NOT "NO EXHAUSTION". load_preference_flows()
   # collapses a missing exhaust field to 0 at parse time (R/load_polls.R), and NSW rows
   # from 2015 and earlier carry only 4 fields -- no exhaust column existed yet. Until
@@ -1196,7 +1238,6 @@ if (.exhaust_on) {
     EXHAUST_ARG <- 0
     cat(sprintf("BN0x! nsw%d has no exhaust rates (source rows predate the column): exhaustion NOT modelled for this pair\n", TO))
   } else {
-    SIM_ENGINE <- "r"
     cat(sprintf("BN0x  exhaust ON for nsw%d: %s\n", TO,
                 paste(sprintf("%s=%.1f%%", names(EXHAUST_ARG), EXHAUST_ARG), collapse = " ")))
   }

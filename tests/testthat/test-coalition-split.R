@@ -69,6 +69,25 @@ test_that("the compiled core is byte-identical to the R engine with the split on
   expect_equal(r$coalition_split$n_seats, 2L)
 })
 
+test_that("the compiled core stays byte-identical with the split AND exhaustion on (7 Nov 2026 port)", {
+  # LNP exhaust is nonzero on purpose: the junior and senior Coalition pots use the senior
+  # slot's rate, the third split branch and the plain count use the excluded party's rate.
+  sh <- matrix(c(38, 40, 20, 2,  45, 35, 15, 5,  30, 45, 15, 10), nrow = 3, byrow = TRUE,
+               dimnames = list(c("s1", "s2", "s3"), c("ALP", "LNP", "GRN", "IND")))
+  args <- list(sh, split_fm(), party_sd = c(ALP = 2, LNP = 2, GRN = 1.5, IND = 1), seat_sd = 3,
+               n_sims = 300, seed = 5, flow_sd = 3, smooth = 0.1,
+               exhaust = c(ALP = 5, LNP = 20, GRN = 40, IND = 60),
+               coalition_split = list(r = c(s1 = 0.2, s2 = NA, s3 = 0.45), sd = c(s1 = 0.1, s2 = NA, s3 = 0.15), f = 0.7))
+  strip <- function(x) { x$engine <- NULL; x }
+  r <- do.call(simulate_seat_contests, c(args, list(engine = "r")))
+  cc <- do.call(simulate_seat_contests, c(args, list(engine = "cpp")))
+  expect_identical(cc$engine, "cpp")
+  expect_identical(strip(cc), strip(r))
+  a_off <- args; a_off$exhaust <- NULL
+  off <- do.call(simulate_seat_contests, c(a_off, list(engine = "cpp")))
+  expect_false(identical(off$tcp_share, cc$tcp_share))
+})
+
 test_that("malformed coalition_split is refused, not ignored", {
   sh <- matrix(c(40, 60), nrow = 1, dimnames = list("x", c("ALP", "LNP")))
   sim <- function(cs) simulate_seat_contests(sh, split_fm(), party_sd = c(ALP = 0, LNP = 0),
