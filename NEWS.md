@@ -1,3 +1,8 @@
+# auspol 0.4.142
+
+- **The party leader's seat bonus now applies before the seat-poll blend** (`AUSPOL_LEADER_BEFORE_BLEND="1"`, Pete, 7 Nov), where it was fitted. Rebuild: AEF-7 seat log loss 0.2585 -> 0.2572 (AE Forecasts 0.2825); 35 elections 0.3224 -> 0.3216. Published 7 Nov 4:19pm. The spillover to other seats comes from the state poll pool; override recorded in `docs/plans/prereg-leader-before-blend-2026-11-06.md`.
+- `AUSPOL_MC_ROUNDS_FROM=<oof csv>` in `fit_minor_candidates.R` (screens only): reuses each election's boosting rounds and skips `xgb.cv`, 440 s -> 73 s.
+
 # auspol 0.4.141
 
 - **The Liberal how-to-vote card order now comes from a researched table** (`AUSPOL_HTV_TABLE="researched"`, Pete, 6 Nov, a correctness fix on a tie): 36 elections from sources dated before polling day (`external/reference/htv/coalition-card-order-researched.csv`). NSW 2019 and 2023 were open tickets, not Greens-last, so they no longer get a Labor-above override. 11 affected elections: -0.0012 seat log loss (SE 0.0029). The live Victorian forecast is unchanged (no 2026 card yet; the 0.67 mix still applies).
