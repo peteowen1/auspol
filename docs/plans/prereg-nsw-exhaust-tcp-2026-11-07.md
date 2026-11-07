@@ -113,3 +113,13 @@ is better): common seats (n 583) ours 3.6225 -> 3.5851, AEF 3.5925; headline our
 12:06-12:11pm, scored with `score_tcp_arm.R`: nsw2023 ours+AEF-matched (n 79) 4.919 -> 4.573,
 **-0.346 (SE 0.172): PASS**; ALP v LNP -0.314; marginal -0.072; slope 1.412 -> 1.268. nsw2019
 (n 83) 4.180 -> 3.608, -0.572 (SE 0.139); slope 1.113 -> 1.017. Matches the screen.
+
+**LEAK FOUND AND FIXED, 8 Nov ~12:40am (visible addition; everything above unedited).** The harness
+read exhaust rates at `year = TO`: the target election's own row of the anchor flow file, which every
+other reader excludes. Fixed by `AUSPOL_NSW_EXHAUST_TF="1"` (rows from elections before the target only:
+nsw2023 gets the 2019 rates, nsw2019 gets none because 2015 has no exhaust column). Re-measured at 1k
+(baseline no exhaust `ae3bb06e516f`, arm time-forward `c39dec10b672`): nsw2023 seat log loss 0.1870 ->
+0.1844; primary TCP (ours + AEF matched, n 79) 4.906 -> 4.581, **-0.324 (SE 0.170): still PASS**;
+slope 1.399 -> 1.259; nsw2019 byte-identical to no exhaustion. Everything nsw2019 showed above
+(-0.560 TCP, 0.2711 -> 0.2647 log loss) was the leak. The 7 Nov 11:44pm publish carries the leaky
+nsw2019; republishing needs Pete.
