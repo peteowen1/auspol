@@ -14,7 +14,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
 - **OVERNIGHT 7-8 Nov, FOR PETE (needs you):** (1) MERGE PR #206 (C++ exhaust path + NSW exhaust leak fix; reviewed,
-  CI green on c15c4cbc, later commits pushed): https://github.com/peteowen1/auspol/pull/206. (2) REPUBLISH: the 7 Nov
+  CI green on head 31828ccb, 8 Nov 1:15am): https://github.com/peteowen1/auspol/pull/206. (2) REPUBLISH: the 7 Nov
   11:44pm publish carries a LEAK (NSW exhaust read the target election's own flow row; worth nsw2019 -0.0064 and
   nsw2023 -0.0004 seat log loss). Leak-free rebuild ready, unpublished (snapshot `20261108-0037-d8f94948-from6`):
   AEF-7 0.2567 (was 0.2566), 35 elections 0.3215 (was 0.3213); TCP same seats 3.66 vs AEF 3.73. Line:
