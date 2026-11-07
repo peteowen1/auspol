@@ -1152,9 +1152,9 @@ if (identical(Sys.getenv("AUSPOL_XGB_SURGE", "0"), "1")) {
 # to OTH's rate, the same convention derive_tpp() already uses for an
 # unlisted minor party; majors get 0 (no rate is ever given for them, and
 # they are essentially never excluded early enough for it to matter).
-# R-ENGINE ONLY -- src/seat_sim_core.cpp has no exhaustion path, and
-# simulate_seat_contests() refuses engine="cpp" with nonzero exhaust rather
-# than silently ignoring it, so this must force engine="r" explicitly.
+# BOTH ENGINES since 7 Nov 2026: src/seat_sim_core.cpp applies exhaustion
+# byte-identically to the R loop, so this no longer forces engine="r" (which
+# cost 134 -> 859 s on nsw2019 at 20k). AUSPOL_SIM_ENGINE=r still forces it.
 .exhaust_on <- identical(Sys.getenv("AUSPOL_NSW_EXHAUST", "1"), "1")   # shipped "1" 7 Nov 2026
 EXHAUST_ARG <- 0
 SIM_ENGINE <- "auto"
@@ -1163,11 +1163,11 @@ if (.exhaust_on) {
     flows_for(load_preference_flows(), year = TO, region = "nsw", estimate = FALSE, quiet = TRUE),
     error = function(e) { cat(sprintf("BN0x! preference flows unavailable for nsw%d: %s\n", TO, conditionMessage(e))); NULL })
   # REFUSE RATHER THAN QUIETLY DO NOTHING. Falling through here would leave
-  # EXHAUST_ARG at 0 and SIM_ENGINE at "auto", which resolves to the cpp
-  # engine -- the one with no exhaustion path at all. A run that explicitly
-  # asked for exhaustion would then produce output identical to the flag being
-  # off, behind a single log line. That is this repo's own "an experiment that
-  # never ran looks exactly like an experiment with no effect" trap.
+  # EXHAUST_ARG at 0: a run that asked for exhaustion would produce output
+  # identical to the flag being off, behind a single log line. That is this
+  # repo's own "an experiment that never ran looks exactly like an experiment
+  # with no effect" trap. (No flows at all is a load failure; no RATES in the
+  # flows is old data, handled below.)
   if (is.null(.flows_nsw))
     stop("AUSPOL_NSW_EXHAUST=1 but no preference flows for nsw", TO,
          " -- refusing to run with exhaustion silently disabled")
@@ -1196,7 +1196,6 @@ if (.exhaust_on) {
     EXHAUST_ARG <- 0
     cat(sprintf("BN0x! nsw%d has no exhaust rates (source rows predate the column): exhaustion NOT modelled for this pair\n", TO))
   } else {
-    SIM_ENGINE <- "r"
     cat(sprintf("BN0x  exhaust ON for nsw%d: %s\n", TO,
                 paste(sprintf("%s=%.1f%%", names(EXHAUST_ARG), EXHAUST_ARG), collapse = " ")))
   }

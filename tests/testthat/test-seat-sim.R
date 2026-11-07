@@ -78,15 +78,33 @@ test_that("exhaust = 0 (the default) reproduces the previous behaviour exactly",
   expect_identical(omitted, explicit0)
 })
 
-test_that("engine = \"cpp\" refuses a nonzero exhaust rather than silently ignoring it", {
-  sh <- matrix(c(38, 40, 22), nrow = 1,
-               dimnames = list("seat1", c("ALP","LNP","GRN")))
-  expect_error(
-    simulate_seat_contests(sh, fake_matrix(), party_sd = c(ALP=0,LNP=0,GRN=0),
-                           seat_sd = 0, n_sims = 1, engine = "cpp",
-                           exhaust = c(GRN = 40)),
-    "no exhaustion path"
-  )
+# The C++ engine applies exhaustion since 7 Nov 2026 (it used to refuse it, which forced the
+# ~7x slower R loop on every NSW run). Identity with the R loop is the contract.
+test_that("engine = \"cpp\" applies exhaust byte-identically to the R loop", {
+  sh <- matrix(c(38, 34, 16, 12, 30, 41, 22, 7), nrow = 2, byrow = TRUE,
+               dimnames = list(c("s1", "s2"), c("ALP", "LNP", "GRN", "ONP")))
+  args <- list(shares = sh, matrix = fake_matrix(),
+               party_sd = c(ALP = 2, LNP = 2, GRN = 2, ONP = 2), seat_sd = 2,
+               n_sims = 400, seed = 11, exhaust = c(GRN = 39.7, ONP = 60.4, ALP = 0, LNP = 0))
+  r_eng <- do.call(simulate_seat_contests, c(args, list(engine = "r")))
+  c_eng <- do.call(simulate_seat_contests, c(args, list(engine = "cpp")))
+  expect_identical(c_eng$win_prob, r_eng$win_prob)
+  expect_identical(c_eng$tcp_share, r_eng$tcp_share)
+  expect_identical(c_eng$tcp_winner, r_eng$tcp_winner)
+  expect_identical(c_eng$engine, "cpp")
+  expect_identical(c_eng$totals, r_eng$totals)
+})
+
+test_that("engine = \"cpp\" exhaust actually changes the count (not silently ignored)", {
+  sh <- matrix(c(38, 34, 16, 12), nrow = 1,
+               dimnames = list("s1", c("ALP", "LNP", "GRN", "ONP")))
+  args <- list(shares = sh, matrix = fake_matrix(),
+               party_sd = c(ALP = 0, LNP = 0, GRN = 0, ONP = 0), seat_sd = 0,
+               n_sims = 5, seed = 3, engine = "cpp")
+  off <- do.call(simulate_seat_contests, args)
+  on  <- do.call(simulate_seat_contests, c(args, list(exhaust = c(GRN = 50, ONP = 50, ALP = 0, LNP = 0))))
+  expect_identical(on$engine, "cpp")
+  expect_false(identical(off$tcp_share, on$tcp_share))
 })
 
 test_that("a minor party CAN win a seat outright", {

@@ -271,11 +271,8 @@ Zero reproduces the previous behaviour exactly.}
 further preference and are dropped from the count rather than
 redistributed, under optional preferential voting. Length 1 (same rate
 for every party), or a named vector by party class with an unnamed
-element as the default for any class not listed. \strong{R-engine only}:
-\code{src/seat_sim_core.cpp} has no exhaustion path, so a nonzero value forces
-\code{engine = "r"} automatically under \code{"auto"}, and is refused outright if
-\code{engine = "cpp"} is requested explicitly -- silently ignoring it would be
-exactly the failure mode this repo's own \code{CLAUDE.md} exists to catch.
+element as the default for any class not listed. Both engines apply it
+(\code{src/seat_sim_core.cpp} since 7 Nov 2026, byte-identical to the R loop).
 Zero (the default) reproduces the previous behaviour exactly. Real for
 NSW (and Queensland before 2016): fitted from the anchor's own
 preference-estimates.csv, e.g. nsw2023 GRN 39.7\%, ONP 71.1\%, OTH 61.2\% --
