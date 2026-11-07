@@ -33,12 +33,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   seats, `reviews/tcp-mae-vs-aef-2026-11-07.md`), and 5 new nsw2023 seats (Badgerys Creek, Kellyville, Leppington,
   Wahroonga, Winston Hills) missing from `aef7-final-two-and-tcp-reference.csv` though their NSWEC pages are cached.
   Needs a rebuild from the NSW stage, then Pete's stage-9 publish.
-- OPEN 7 Nov 8:40pm, LIVE BUG from the NSW exhaust ship (PR #203): nsw2011 and nsw2015 have NO exhaust rates (every
-  rate 0.0; their flow rows predate the column), so with the switch on by default the harness stops at its all-zero
-  guard (`backtest_candidate_nsw.R:1194`) and a full rebuild fails there. Fix queued: no rates -> run without
-  exhaustion with a loud `BN0x!` line (2011/2015 stay as before today); borrowing 2019 rates would leak. Live
-  Victoria and the daily run never read the NSW harness. Completing the data: real 2011/2015 rates need those
-  years' NSWEC distribution-of-preferences pages (only SG1901/SG2301 are cached).
+- OPEN 7 Nov, NSW exhaust bug on nsw2011/2015 (shipped in PR #203): FIXED ON DEV (73259004, reviewed), NOT YET ON MAIN
+  -- PR after the NSW rebuild. Their flow rows predate the exhaust column, so the all-zero guard stopped both and the
+  9:13pm rebuild failed at stage 6. Now: no rates -> no exhaustion, `BN0x!` line; byte-identical to the switch off on
+  2 of 2. Completing the data: real 2011/2015 rates need those years' NSWEC distribution-of-preferences pages (only
+  SG1901/SG2301 are cached).
 - OPEN 7 Nov, SPEED: exhaustion forces the R simulator (`src/seat_sim_core.cpp` has no exhaust path). Deciding run at
   20k: nsw2019 134 s -> 859 s, nsw2023 59 s -> 1,040 s, so every rebuild now pays ~28 min more on NSW (rebuild
   stage 6 nsw2023 took ~44 min). The R engine applies it as one multiply on `pot` per transfer
