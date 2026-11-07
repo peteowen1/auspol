@@ -61,8 +61,13 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
                    NumericMatrix eq = NumericMatrix(0, 0),
                    bool za = false,
                    LogicalMatrix absent = LogicalMatrix(0, 0),
-                   bool surge_level = false) {
+                   bool surge_level = false,
+                   NumericVector exhaust_by = NumericVector::create()) {
   const int nseat = shares.nrow(), K = shares.ncol();
+  // OPTIONAL-PREFERENTIAL EXHAUSTION (R/seat_sim.R EXHAUST_BY, ported 7 Nov 2026): percent of
+  // an excluded candidate's votes that reach nobody. One multiply on `pot` per transfer, at the
+  // same four places and in the same order as the R loop, so the two engines stay byte-identical.
+  const bool has_ex = exhaust_by.size() == K;
   // PER-SEAT CONDITIONAL OVERRIDE, sparse. The shared cell_mat is dense over
   // the key space but has no seat dimension; a per-seat dense table would be
   // nseat * (K+1) * 2^K * K doubles, which is why this is a hash instead.
@@ -300,7 +305,8 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
           for (size_t t = 1; t < alive.size(); ++t) if (v[alive[t]] < v[alive[from_pos]]) from_pos = t;
           const int from = alive[from_pos];
           if (jal && jv < v[from]) {
-            const double pot = jv;
+            double pot = jv;
+            if (has_ex && exhaust_by[L] > 0) pot = pot * (1 - exhaust_by[L] / 100);
             jv = 0; jal = false;
             others.clear();
             for (size_t t = 0; t < alive.size(); ++t) if (alive[t] != L) others.push_back(alive[t]);
@@ -308,7 +314,8 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
             v[L] = v[L] + split_f * pot;
             for (size_t t = 0; t < others.size(); ++t) v[others[t]] = v[others[t]] + ((1 - split_f) * pot) * p[t];
           } else if (jal && from == L) {
-            const double pot = v[L];
+            double pot = v[L];
+            if (has_ex && exhaust_by[L] > 0) pot = pot * (1 - exhaust_by[L] / 100);
             others.clear();
             for (size_t t = 0; t < alive.size(); ++t) if (alive[t] != L) others.push_back(alive[t]);
             split_flow(i, L, others);
@@ -316,7 +323,8 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
             v[L] = jv + split_f * pot;
             jv = 0; jal = false;
           } else {
-            const double pot = v[from];
+            double pot = v[from];
+            if (has_ex && exhaust_by[from] > 0) pot = pot * (1 - exhaust_by[from] / 100);
             alive.erase(alive.begin() + from_pos);
             split_flow(i, from, alive);
             std::vector<double> add(alive.size());
@@ -363,7 +371,8 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
         int from_pos = 0;
         for (size_t t = 1; t < alive.size(); ++t) if (v[alive[t]] < v[alive[from_pos]]) from_pos = t;
         const int from = alive[from_pos];
-        const double pot = v[from];
+        double pot = v[from];
+        if (has_ex && exhaust_by[from] > 0) pot = pot * (1 - exhaust_by[from] / 100);
         alive.erase(alive.begin() + from_pos);
         double mask = 0.0;
         for (size_t t = 0; t < alive.size(); ++t) mask += std::ldexp(1.0, alive[t]);

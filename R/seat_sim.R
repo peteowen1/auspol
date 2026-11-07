@@ -225,11 +225,8 @@
 #'   further preference and are dropped from the count rather than
 #'   redistributed, under optional preferential voting. Length 1 (same rate
 #'   for every party), or a named vector by party class with an unnamed
-#'   element as the default for any class not listed. **R-engine only**:
-#'   `src/seat_sim_core.cpp` has no exhaustion path, so a nonzero value forces
-#'   `engine = "r"` automatically under `"auto"`, and is refused outright if
-#'   `engine = "cpp"` is requested explicitly -- silently ignoring it would be
-#'   exactly the failure mode this repo's own `CLAUDE.md` exists to catch.
+#'   element as the default for any class not listed. Both engines apply it
+#'   (`src/seat_sim_core.cpp` since 7 Nov 2026, byte-identical to the R loop).
 #'   Zero (the default) reproduces the previous behaviour exactly. Real for
 #'   NSW (and Queensland before 2016): fitted from the anchor's own
 #'   preference-estimates.csv, e.g. nsw2023 GRN 39.7%, ONP 71.1%, OTH 61.2% --
@@ -1252,23 +1249,18 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   # "auto" reads AUSPOL_SIM_ENGINE (published_flags.R carries the shipped
   # value, "cpp" since the full-scale proof on 2026-09-07); AUSPOL_SIM_ENGINE=r
   # forces the reference loop, which is how the identity is re-proven.
-  # `exhaust` (optional-preferential exhaustion, added 2026-09-13 for NSW) is
-  # R-engine only -- src/seat_sim_core.cpp has no exhaustion path at all, and
-  # WOULD SILENTLY IGNORE a nonzero value if this fell through to cpp, exactly
-  # the class of failure this repo's own CLAUDE.md exists to catch. Any
-  # nonzero exhaust forces "auto" to "r"; an explicit engine = "cpp" with
-  # nonzero exhaust is refused outright rather than silently dropped.
+  # `exhaust` (optional-preferential exhaustion, added 2026-09-13 for NSW) was
+  # R-engine only until 7 Nov 2026, when src/seat_sim_core.cpp got the same
+  # multiply on `pot` at the same four places (EXHAUST_BY, passed below as
+  # exhaust_by). The two engines are byte-identical with exhaustion on
+  # (tests/testthat/test-seat-sim.R and test-coalition-split.R), so it no longer forces "r".
   has_exhaust <- any(as.numeric(exhaust) != 0)
   if (engine == "auto") engine <- if (!identical(Sys.getenv("AUSPOL_SIM_ENGINE", "cpp"), "r") &&
                                       is.null(party_draws) && dense_cells &&
-                                      shrink_k == 0 && !has_exhaust) "cpp" else "r"
+                                      shrink_k == 0) "cpp" else "r"
   use_cpp <- engine == "cpp"
   if (use_cpp && (!is.null(party_draws) || !dense_cells)) {
     stop("engine = \"cpp\" cannot take party_draws, or this many parties; use engine = \"r\"")
-  }
-  if (use_cpp && has_exhaust) {
-    stop("engine = \"cpp\" has no exhaustion path (src/seat_sim_core.cpp); ",
-         "use engine = \"r\", or exhaust = 0 to use cpp without it")
   }
   if (use_cpp) {
     # DENSE TABLES for the compiled core: one row per (from, alive-set) key,
@@ -1407,7 +1399,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                           as.numeric(fallback_flow_sd), as.numeric(ov_sd), isTRUE(keep_fp),
                           has_bo, bo_p, bo_q,
                           has_split, as.integer(split_cls), split_r, as.numeric(split_fv),
-                          has_eq, eq, za, absent_m, isTRUE(surge_level))
+                          has_eq, eq, za, absent_m, isTRUE(surge_level),
+                          if (has_exhaust) as.numeric(EXHAUST_BY) else numeric(0))
     wins[] <- core$wins; totals[] <- core$totals
     tcp_winner[] <- parties[core$tcp_w]; tcp_runnerup[] <- parties[core$tcp_r]
     tcp_share[] <- core$tcp_share
