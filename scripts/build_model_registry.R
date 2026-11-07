@@ -1024,6 +1024,7 @@ CLASSIFY <- list(
   AUSPOL_NSW_EXHAUST = "HARNESS-ONLY, SHIPPED \"1\" 7 Nov 2026: NSW harness only (optional-preferential exhaustion in the seat simulation; plans/prereg-nsw-exhaust-tcp-2026-11-07.md). The only optional-preferential election in the backtests; live Victoria is compulsory preferential.",
   AUSPOL_NSW_EXHAUST_TF = "HARNESS-ONLY, SHIPPED \"1\" 8 Nov 2026 (leak fix): NSW harness reads exhaust rates only from elections before the target; \"0\" is the 7 Nov read of the target year's own row.",
   AUSPOL_NSW_EXHAUST_SRC = "HARNESS-ONLY ARM, \"anchor\" (not shipped): \"measured\" reads NSW exhaust rates measured from NSWEC DOP pages (scripts/build_nsw_exhaust_measured.R); plans/prereg-nsw-exhaust-measured-2026-11-08.md.",
+  AUSPOL_NSW_EXHAUST_MEAS_MAJORS = "HARNESS-ONLY EXPLORATORY, \"1\": under AUSPOL_NSW_EXHAUST_SRC=measured, \"0\" keeps the majors' exhaust at 0 (8 Nov diagnostic).",
   AUSPOL_NT_TRANSFER = "HARNESS-ONLY, NT: forces candidate transfer on/off; empty (published) keeps it tied to the slope mode.",
   AUSPOL_PARTY_SD = paste(
     "HARNESSES (all): the flat 1.5-point party sd. Live passes the same 1.5 as a literal (CONSTANTS, 'flat statewide",

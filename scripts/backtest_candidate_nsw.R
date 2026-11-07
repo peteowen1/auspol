@@ -1218,6 +1218,9 @@ if (.exhaust_on) {
       .mr <- setNames(.ms$rate, .ms$cls)
       .pick <- function(k) if (!is.na(.mr[k])) unname(.mr[k]) else if (!is.na(.mr["OTH_RIGHT"])) unname(.mr["OTH_RIGHT"]) else unname(.mr["OTH"])
       EXHAUST_ARG <- vapply(c("ALP", "LNP", "GRN", "ONP", "OTH_RIGHT", "OTH", "IND"), .pick, 0)
+      # EXPLORATORY (8 Nov, not preregistered): "0" keeps the majors at 0, as the anchor does, to
+      # see whether their measured exhaust is what cost nsw2023 in the refused screen.
+      if (identical(Sys.getenv("AUSPOL_NSW_EXHAUST_MEAS_MAJORS", "1"), "0")) EXHAUST_ARG[c("ALP", "LNP")] <- 0
       cat(sprintf("BN0m  nsw%d exhaust rates MEASURED from %s (%s)\n", TO, .src,
                   paste(sprintf("%s=%.1f%%", names(EXHAUST_ARG), EXHAUST_ARG), collapse = " ")))
     }
