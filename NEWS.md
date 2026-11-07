@@ -1,3 +1,7 @@
+# auspol 0.4.146
+
+- **The compiled seat simulator now handles NSW exhaustion**, so NSW backtests no longer fall back to the slower R loop (nsw2019 859 s, nsw2023 1,040 s at 20k simulations; about 28 minutes per rebuild). Byte-identical to the R loop with and without the Coalition split. No forecast number changes.
+
 # auspol 0.4.145
 
 - **The AEF-7 ledger's two-candidate (TCP) error now scores both models on the same seats** (Pete, 7 Nov): each side's margin for the pairing that actually happened, wherever both have one. Ours 3.654 vs AE Forecasts 3.727 over 667 seats. The old figure, where each side counted only seats its own top pick got right (ours 610, AEF 600), stays as `tcp_mae_pick` (3.616 vs 3.635).
