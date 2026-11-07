@@ -1141,7 +1141,7 @@ if (identical(Sys.getenv("AUSPOL_XGB_SURGE", "0"), "1")) {
     surge_mu_arg <- .xs$surge_mu; surge_sd_arg <- .xs$surge_sd
   }
 }
-# OPTIONAL-PREFERENTIAL EXHAUSTION, off by default (AUSPOL_NSW_EXHAUST=1).
+# OPTIONAL-PREFERENTIAL EXHAUSTION, on by default since 7 Nov 2026 (AUSPOL_NSW_EXHAUST="1"; "0" turns it off).
 # NSW is optional preferential; neither seat simulator engine could
 # previously represent a ballot carrying no further preference at all --
 # distribute_preferences() and simulate_seat_contests()'s R loop both always
