@@ -18,11 +18,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   11:44pm publish carries a LEAK (NSW exhaust read the target election's own flow row; worth nsw2019 -0.0064 and
   nsw2023 -0.0004 seat log loss). Leak-free rebuild ready, unpublished (snapshot `20261108-0037-d8f94948-from6`):
   AEF-7 0.2567 (was 0.2566), 35 elections 0.3215 (was 0.3213); TCP same seats 3.66 vs AEF 3.73. Line:
-  `! AUSPOL_REBUILD_FROM=9 AUSPOL_PUBLISH=1 bash scripts/rebuild_forecasts.sh`. (3) DECIDE: measured NSW exhaust for
-  minor parties (`AUSPOL_NSW_EXHAUST_SRC=measured AUSPOL_NSW_EXHAUST_MEAS_MAJORS=0`, post-hoc). 20k: seat log loss
-  better on both (pooled -0.0034, SE 0.0027; nsw2019 -0.0061) and nsw2019 TCP -0.605, but nsw2023 TCP +0.019 (SE
-  0.014) fails its 1-SE guard. My recommendation: ship (the guard miss is 0.02 points; the gain is nsw2019, which
-  otherwise gets no exhaustion at all). `plans/prereg-nsw-exhaust-measured-minors-2026-11-08.md` RESULT.
+  `! AUSPOL_REBUILD_FROM=9 AUSPOL_PUBLISH=1 bash scripts/rebuild_forecasts.sh`. (3) Measured NSW exhaust for minor parties SHIPPED 8 Nov morning (Pete: "Ship"; DECISIONS).
 - **Status 7 Nov 5pm.** Rebuild on 49f19560 PUBLISHED 4:19pm by Pete (AEF-7 0.2572 vs AEF 0.2825; 35 elections 0.3216);
   carries `AUSPOL_HTV_TABLE="researched"` and `AUSPOL_LEADER_BEFORE_BLEND="1"`. PR #202 merged. The next daily forecast
   run is the first on the new shipped models: read its conclusion.

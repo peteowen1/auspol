@@ -36,3 +36,5 @@ Seat log loss pooled 0.2277 -> 0.2238 (-0.0039, SE 0.0029). TCP MAE matched seat
   1 SE). Marginal seats: nsw2019 -0.845, nsw2023 -0.022.
 - Verdict under the clauses as written: REFUSED on the nsw2023 TCP guard. The split goes to Pete (standing rule:
   a clause refusing a headline-positive result is his call). Not shipped.
+
+**SHIPPED 8 Nov 2026 morning, Pete: "Ship", over the nsw2023 TCP guard (+0.019, SE 0.014, 1.4 SE against a 1-SE limit).** Override recorded here; the clause above is unedited.

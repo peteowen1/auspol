@@ -1197,13 +1197,13 @@ if (.exhaust_on) {
   EXHAUST_ARG <- c(ALP = 0, LNP = 0,
                    GRN = .rate_of("GRN"), ONP = .rate_of("ONP"),
                    OTH_RIGHT = .rate_of("SFF"), OTH = .oth_ex, IND = .oth_ex)
-  # MEASURED RATES (AUSPOL_NSW_EXHAUST_SRC=measured, an ARM, 8 Nov 2026;
+  # MEASURED RATES (AUSPOL_NSW_EXHAUST_SRC="measured", SHIPPED 8 Nov 2026 with _MEAS_MAJORS="0";
   # plans/prereg-nsw-exhaust-measured-2026-11-08.md): replace the anchor's rates with the share
   # exhausted at each exclusion, by excluded class, from NSWEC's own DOP pages
   # (scripts/build_nsw_exhaust_measured.R), from the latest NSW election BEFORE the target.
   # Includes the majors (the anchor gives them 0). A class the source year lacks takes OTH_RIGHT
   # (One Nation did not stand in 2015), then OTH. No earlier measured year: no exhaustion.
-  if (identical(Sys.getenv("AUSPOL_NSW_EXHAUST_SRC", "anchor"), "measured")) {
+  if (identical(Sys.getenv("AUSPOL_NSW_EXHAUST_SRC", "measured"), "measured")) {
     .mf <- file.path("output", "nsw-exhaust-measured.csv")
     if (!file.exists(.mf)) stop("AUSPOL_NSW_EXHAUST_SRC=measured but ", .mf, " is missing -- run scripts/build_nsw_exhaust_measured.R")
     .m <- data.table::fread(.mf)
@@ -1220,7 +1220,7 @@ if (.exhaust_on) {
       EXHAUST_ARG <- vapply(c("ALP", "LNP", "GRN", "ONP", "OTH_RIGHT", "OTH", "IND"), .pick, 0)
       # EXPLORATORY (8 Nov, not preregistered): "0" keeps the majors at 0, as the anchor does, to
       # see whether their measured exhaust is what cost nsw2023 in the refused screen.
-      if (identical(Sys.getenv("AUSPOL_NSW_EXHAUST_MEAS_MAJORS", "1"), "0")) EXHAUST_ARG[c("ALP", "LNP")] <- 0
+      if (identical(Sys.getenv("AUSPOL_NSW_EXHAUST_MEAS_MAJORS", "0"), "0")) EXHAUST_ARG[c("ALP", "LNP")] <- 0
       cat(sprintf("BN0m  nsw%d exhaust rates MEASURED from %s (%s)\n", TO, .src,
                   paste(sprintf("%s=%.1f%%", names(EXHAUST_ARG), EXHAUST_ARG), collapse = " ")))
     }
