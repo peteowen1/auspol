@@ -1158,10 +1158,23 @@ if (identical(Sys.getenv("AUSPOL_XGB_SURGE", "0"), "1")) {
 .exhaust_on <- identical(Sys.getenv("AUSPOL_NSW_EXHAUST", "1"), "1")   # shipped "1" 7 Nov 2026
 EXHAUST_ARG <- 0
 SIM_ENGINE <- "auto"
+# TIME-FORWARD RATES (AUSPOL_NSW_EXHAUST_TF, shipped "1" 8 Nov 2026). The anchor file's row for
+# the target year is that election's own row, which every other reader in this repo excludes
+# (R/forecast_mode.R:147 "a later flow estimate would be a leak"; R/seat_poll_joint.R:60 keeps
+# only elections dated before the target). Until 8 Nov this read year = TO, so nsw2023 used the
+# nsw2023 row (ONP 71.1) and nsw2019 the nsw2019 row. "1": only rows from NSW elections before
+# the target (nsw2023 -> the 2019 rates; nsw2019 -> 2015, which has no exhaust column, so none).
+# "0": the old read, kept to measure what the leak was worth.
+.exhaust_tf <- !identical(Sys.getenv("AUSPOL_NSW_EXHAUST_TF", "1"), "0")
 if (.exhaust_on) {
+  .pf_all <- load_preference_flows()
+  if (.exhaust_tf) .pf_all <- .pf_all[which(elections_before(paste0(.pf_all$region, .pf_all$year), TGT))]
   .flows_nsw <- tryCatch(
-    flows_for(load_preference_flows(), year = TO, region = "nsw", estimate = FALSE, quiet = TRUE),
+    flows_for(.pf_all, year = TO, region = "nsw", estimate = FALSE, quiet = TRUE),
     error = function(e) { cat(sprintf("BN0x! preference flows unavailable for nsw%d: %s\n", TO, conditionMessage(e))); NULL })
+  if (!is.null(.flows_nsw))
+    cat(sprintf("BN0t  nsw%d exhaust rates from %s row(s) (time-forward %s)\n", TO,
+                paste(sort(unique(.flows_nsw$flow_year)), collapse = "/"), if (.exhaust_tf) "on" else "OFF"))
   # REFUSE RATHER THAN QUIETLY DO NOTHING. Falling through here would leave
   # EXHAUST_ARG at 0: a run that asked for exhaustion would produce output
   # identical to the flag being off, behind a single log line. That is this
