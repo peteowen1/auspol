@@ -46,6 +46,9 @@ for (p in PAIRS) {
   x[, `:=`(e_b = abs(t_b - act), e_a = abs(t_a - act), marg_b = abs(t_b - 50) < 6)]
   cat(sprintf("\n== %s: %d seats with a real final two; ours matches it: base %d, arm %d; AEF %d\n",
               p, nrow(x), sum(x$ok_b), sum(x$ok_a), sum(x$ok_aef)))
+  .drop <- setdiff(b$seat, x$seat)
+  if (length(.drop)) cat(sprintf("   %d of our seats have no real final two in the reference, not scored: %s\n",
+                                 length(.drop), paste(.drop, collapse = ", ")))
   chg <- x[ok_b != ok_a, .(seat, real = paste(w, l), base = paste(o1_b, o2_b), arm = paste(o1_a, o2_a))]
   if (nrow(chg)) { cat("final-two set changes:\n"); print(chg) }
   sets <- list(both = x[ok_b & ok_a])
@@ -71,7 +74,7 @@ for (p in PAIRS) {
   fav <- x[ok_b & ok_a & ((t_b > 50) != (t_a > 50)), .N]
   cat(sprintf("favourite flips (on matched seats): %d\n", fav))
   sb <- fread(file.path(BASE, p, "sharedetail.csv")); sa <- fread(file.path(ARM, p, "sharedetail.csv"))
-  cat(sprintf("mean |ALP primary miss|: base %.3f, arm %.3f\n",
+  cat(sprintf("per-SEAT mean |ALP primary miss| (not the statewide guard-4 figure): base %.3f, arm %.3f\n",
               sb[party == "ALP", mean(abs(pred_share - actual_share), na.rm = TRUE)],
               sa[party == "ALP", mean(abs(pred_share - actual_share), na.rm = TRUE)]))
 }
