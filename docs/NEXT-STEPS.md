@@ -28,16 +28,14 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `reviews/aef7-gap-and-sal-screen-2026-11-07.md` section 1). Refits take 73 s with `AUSPOL_MC_ROUNDS_FROM`.
 - ANSWERED 7 Nov, nothing to ship: where we lose to AEF on AEF-7 (IND/GRN widening refused, salience bias weak,
   by-election weight 0.5 stands). `reviews/aef7-gap-and-sal-screen-2026-11-07.md` section 2.
-- OPEN 7 Nov, TCP error vs AEF (Pete): NSW exhaustion SHIPPED 7 Nov (`plans/prereg-nsw-exhaust-tcp-2026-11-07.md`); with it
-  common seats ours 3.585 vs AEF 3.593 (n 583, screen estimate), headline 3.636 vs 3.635. Left: fed2025 (+0.73 over 130
-  seats, `reviews/tcp-mae-vs-aef-2026-11-07.md`), and 5 new nsw2023 seats (Badgerys Creek, Kellyville, Leppington,
-  Wahroonga, Winston Hills) missing from `aef7-final-two-and-tcp-reference.csv` though their NSWEC pages are cached.
-  Needs a rebuild from the NSW stage, then Pete's stage-9 publish.
-- OPEN 7 Nov, NSW exhaust bug on nsw2011/2015 (shipped in PR #203): FIXED ON DEV (73259004, reviewed), NOT YET ON MAIN
-  -- PR after the NSW rebuild. Their flow rows predate the exhaust column, so the all-zero guard stopped both and the
-  9:13pm rebuild failed at stage 6. Now: no rates -> no exhaustion, `BN0x!` line; byte-identical to the switch off on
-  2 of 2. Completing the data: real 2011/2015 rates need those years' NSWEC distribution-of-preferences pages (only
-  SG1901/SG2301 are cached).
+- OPEN 7 Nov, TCP error vs AEF (Pete): NSW exhaustion SHIPPED + PUBLISHED 7 Nov 11:25pm (`plans/prereg-nsw-exhaust-tcp-2026-11-07.md`;
+  AEF-7 seat log loss 0.2566, 35 elections 0.3213). Ledger TCP headline now scores both sides on the SAME seats (each
+  side's margin for the real pairing): ours 3.654 vs AEF 3.727 (n 667), goal met; the old #1-pick figure (3.616 vs
+  3.635) is kept as `tcp_mae_pick`. 10 seats new at the nsw2023/wa2025 redistributions added to the reference.
+  Ledger page needs a stage-9 republish to show it. Left: fed2025 (+0.73 over 130 seats, `reviews/tcp-mae-vs-aef-2026-11-07.md`).
+- OPEN 7 Nov, nsw2011/2015 exhaust: the shipped switch's all-zero guard broke full rebuilds; FIXED (PR #204, published).
+  Those pairs run without exhaustion and say so (`BN0x!`). Completing the data: real 2011/2015 rates need those years'
+  NSWEC distribution-of-preferences pages (only SG1901/SG2301 are cached).
 - OPEN 7 Nov, SPEED: exhaustion forces the R simulator (`src/seat_sim_core.cpp` has no exhaust path). Deciding run at
   20k: nsw2019 134 s -> 859 s, nsw2023 59 s -> 1,040 s, so every rebuild now pays ~28 min more on NSW (rebuild
   stage 6 nsw2023 took ~44 min). The R engine applies it as one multiply on `pot` per transfer
