@@ -1,3 +1,8 @@
+# auspol 0.4.145
+
+- **The AEF-7 ledger's two-candidate (TCP) error now scores both models on the same seats** (Pete, 7 Nov): each side's margin for the pairing that actually happened, wherever both have one. Ours 3.654 vs AE Forecasts 3.727 over 667 seats. The old figure, where each side counted only seats its own top pick got right (ours 610, AEF 600), stays as `tcp_mae_pick` (3.616 vs 3.635).
+- The TCP reference gains 10 seats new at the 2023 NSW and 2025 WA redistributions, from the commissions' own counts.
+
 # auspol 0.4.144
 
 - Fixed: with `AUSPOL_NSW_EXHAUST` on, a full rebuild stopped at nsw2015 and nsw2011, whose preference data carry no exhaust rates. Those elections now run without exhaustion, with a `BN0x!` warning, exactly as before 0.4.143. Rebuilt 7 Nov 10:30pm: AEF-7 seat log loss 0.2566 (AE Forecasts 0.2825); 35 elections 0.3213; AEF-7 TCP error on common seats 3.587 vs 3.593.
