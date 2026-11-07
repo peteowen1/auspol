@@ -290,6 +290,11 @@ run_unit <- function(task) {
     # recoverable from per-seat probabilities (seats are correlated). Not used in scoring.
     to_f <- pick1("-totals")
     if (!is.na(to_f)) file.copy(to_f, file.path(task$dir, "totals.csv"), overwrite = TRUE)
+    # and the two-candidate scenarios (seat, f1, f2, freq, f1_tcp_pct), for TCP-error
+    # arms (docs/reviews/tcp-mae-vs-aef-2026-11-07.md). Not used in scoring; a baseline
+    # cached before 7 Nov 2026 lacks it.
+    tc_f <- pick1("-ourtcp")
+    if (!is.na(tc_f)) file.copy(tc_f, file.path(task$dir, "ourtcp.csv"), overwrite = TRUE)
   }
   unlink(new)   # the scratch output stays small and a later run cannot pick up this one's files
   secs <- as.numeric(difftime(Sys.time(), t0, units = "secs"))

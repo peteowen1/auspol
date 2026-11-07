@@ -1141,7 +1141,7 @@ if (identical(Sys.getenv("AUSPOL_XGB_SURGE", "0"), "1")) {
     surge_mu_arg <- .xs$surge_mu; surge_sd_arg <- .xs$surge_sd
   }
 }
-# OPTIONAL-PREFERENTIAL EXHAUSTION, off by default (AUSPOL_NSW_EXHAUST=1).
+# OPTIONAL-PREFERENTIAL EXHAUSTION, on by default since 7 Nov 2026 (AUSPOL_NSW_EXHAUST="1"; "0" turns it off).
 # NSW is optional preferential; neither seat simulator engine could
 # previously represent a ballot carrying no further preference at all --
 # distribute_preferences() and simulate_seat_contests()'s R loop both always
@@ -1155,7 +1155,7 @@ if (identical(Sys.getenv("AUSPOL_XGB_SURGE", "0"), "1")) {
 # R-ENGINE ONLY -- src/seat_sim_core.cpp has no exhaustion path, and
 # simulate_seat_contests() refuses engine="cpp" with nonzero exhaust rather
 # than silently ignoring it, so this must force engine="r" explicitly.
-.exhaust_on <- identical(Sys.getenv("AUSPOL_NSW_EXHAUST", "0"), "1")
+.exhaust_on <- identical(Sys.getenv("AUSPOL_NSW_EXHAUST", "1"), "1")   # shipped "1" 7 Nov 2026
 EXHAUST_ARG <- 0
 SIM_ENGINE <- "auto"
 if (.exhaust_on) {
@@ -1178,7 +1178,10 @@ if (.exhaust_on) {
   # them here (the anchor files them as IND -- see CLAUDE.md's note on that
   # mismatch, which is why this reads from our own class, not the anchor's).
   .rate_of <- function(p) { r <- .flows_nsw[party == p, exhaust]; if (length(r)) r[1] else .oth_ex }
-  EXHAUST_ARG <- c(ALP = 0, LNP = 0, NAT = 0,
+  # No NAT entry: the Nationals are inside LNP in `shares`, and since 83964fdd
+  # simulate_seat_contests() refuses a name that is not a column (found 7 Nov,
+  # when this arm was first run after that guard landed).
+  EXHAUST_ARG <- c(ALP = 0, LNP = 0,
                    GRN = .rate_of("GRN"), ONP = .rate_of("ONP"),
                    OTH_RIGHT = .rate_of("SFF"), OTH = .oth_ex, IND = .oth_ex)
   # AND REFUSE AN ALL-ZERO RATE SET. load_preference_flows() collapses a

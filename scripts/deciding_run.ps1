@@ -16,7 +16,7 @@
 #   params.json  what was asked           log.txt      everything the run printed
 #   results.txt  the Q0..Q9 verdict lines started.txt  worker pid, parent pid, time
 #   DONE or FAILED   marker file, written last; its content is the exit code and time (and why)
-#   cache/<key>/<election>/{allprobs,sharedetail}.csv  per-seat outputs, kept for clause scorers
+#   cache/<key>/<election>/{allprobs,sharedetail,ourtcp,totals}.csv  per-seat outputs, kept for clause scorers
 #   PENDING      scheduled, not started: past its time, the task never ran (logged off, asleep)
 #   RUNNING      started; with no DONE/FAILED and no live worker pid (started.txt), it was killed
 # The next session reads every folder's marker, not only the newest DONE one. DONE also requires
@@ -101,7 +101,8 @@ if ($Worker) {
     # per-seat probabilities, and results.txt has only the pooled lines. Plain files, so a Copy is safe.
     $cacheSrc = Join-Path $p.QuickDir "cache"
     if (Test-Path $cacheSrc) {
-      Get-ChildItem $cacheSrc -Recurse -File -Include allprobs.csv, sharedetail.csv | ForEach-Object {
+      # ourtcp.csv too (score_tcp_arm.R): the 7 Nov NSW-exhaust deciding run lost its TCP scenarios here.
+      Get-ChildItem $cacheSrc -Recurse -File -Include allprobs.csv, sharedetail.csv, ourtcp.csv, totals.csv | ForEach-Object {
         $rel = $_.FullName.Substring($cacheSrc.Length).TrimStart('\', '/')
         $dst = Join-Path (Join-Path $RunDir "cache") $rel
         New-Item -ItemType Directory -Force (Split-Path -Parent $dst) | Out-Null
