@@ -53,3 +53,12 @@ primary NOT met. AEF-7 subset (fed2022 + fed2025, 301 seats) -0.0061 (SE 0.0030)
 TCP MAE, ALP v LNP matched seats: fed2022 2.617 -> 2.494 (-0.123, SE 0.062), fed2025 5.078 -> 4.959 (-0.119, SE
 0.053), better than the research proxy. Reading: the margins sharpen, but in the three older elections the
 shifted flows move win probabilities the wrong way. Not shipped; the AEF-7 split goes to Pete. Built, off.
+
+## Amendment 2: per-seat precision shrinkage (Pete, 8 Nov, after the screen; criteria above unchanged)
+
+Pete asked whether the term is shrunk. It was only globally (w ~0.35 pulls every miss 65% toward zero). Per his
+rule, a seat whose miss was measured on few minor-party votes is noisier and must be pulled harder. Variant B:
+shift `w_T * n/(n + k_T) * r_{T-1}`, n = the seat's minor-party share at T-1 (percent), with (w_T, k_T) fitted
+together on earlier pairs only (least squares, k over a grid 0-60). Same metrics and guards as above; judged on
+the same five elections. If B is not better than the refused arm A, Pete's "ship" stands for A.
+
