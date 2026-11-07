@@ -48,7 +48,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   noise), with C2's 17 Oct loss that is two refusals of "widen IND/GRN": the losses are wrong centres on winners we
   gave 2-30%. (b) unpolled IND by salience (`jump`, every row, SE on election): +0.8 zero, +1.4 low, +2.3 mid (SE 1.3,
   118 cells), +1.8 top 15% (SE 1.75): weak. (c) Ipswich West: by-election half blend (`AUSPOL_BYELECTION_PRIOR=blend`,
-  fixed 0.5, never fitted) took LNP base 21.1 -> 37.2, xgb 45.0, actual 33.5. (d) fed2022 direct IND polls +3.2 low,
+  fixed 0.5, never fitted) took LNP base 21.1 -> 37.2, xgb 45.0, actual 33.5. CHECKED 7 Nov: on 34 both-major
+  by-elections in 12 elections (68 ALP/LNP cells, residual after the non-by-election seats' swing) the fitted weight
+  is 0.62 (jackknife SE 0.11 over seats), MAE minimum at 0.5 (4.86; 0.75 gives 5.18); no gap-to-election trend
+  (0.54 under 12 months, 0.87 over 24). 0.5 stands, no prereg. Ipswich West's extra +7.8 is the xgb layer, one seat. (d) fed2022 direct IND polls +3.2 low,
   we stayed +10.6 low (7 cells). Scripts: session scratchpad `aefgap/a1-a7.R` (not kept).
 - OPEN, blocked on the item above: `AUSPOL_POLL_SERIES_CLASS=name` (SA-Best, Katter, UAP, FF classed by full name). 20k on 7 pairs a tie
   (-0.0028, SE 0.0038); sa2018 +0.037 of which Morphett +0.031. `plans/prereg-poll-series-class-2026-11-06.md`, last section.
