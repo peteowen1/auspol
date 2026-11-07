@@ -9,6 +9,10 @@
 # Also fits, for every target election, the time-forward weight w_T: the slope of d_E on d_{E-1}
 # (same seat name) over every pair of consecutive federal elections BEFORE T.
 # Writes output/seat-flow-persistence.csv (seat tendencies) and output/seat-flow-persistence-w.csv.
+# FROZEN INPUT (8 Nov 2026): the shipped term must measure each seat's miss against the model
+# WITHOUT persistence, so these tables were built once from the pre-ship stage-6 run
+# (a25ac7a-g49f1956) and are tracked in git. Rerun only deliberately: after the ship, the newest
+# ourtcp files include the persistence shift and would change what r means. Not in the rebuild.
 # Emits SFP codes.
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
@@ -59,17 +63,23 @@ fwrite(x, "output/seat-flow-persistence.csv")
 el <- sort(unique(x$election)); el <- el[order(as.numeric(vapply(el, function(e) as.numeric(election_dates()[[e]]), 0)))]
 pairs <- rbindlist(lapply(seq_along(el)[-1], function(i) {
   # the TERM: our miss (r), not the raw tendency (d) -- prereg amendment
-  a <- x[election == el[i - 1] & is.finite(r), .(seat, d_prev = r)]; b <- x[election == el[i] & is.finite(r), .(seat, d_now = r)]
+  a <- x[election == el[i - 1] & is.finite(r), .(seat, d_prev = r, n_prev = others)]; b <- x[election == el[i] & is.finite(r), .(seat, d_now = r)]
   m <- merge(a, b, by = "seat"); if (!nrow(m)) return(NULL); m[, `:=`(prev = el[i - 1], now = el[i])]
 }))
 targets <- c(el, "fed2028")
 wt <- rbindlist(lapply(targets, function(t) {
   tr <- pairs[elections_before(now, t)]
-  if (nrow(tr) < 30) return(data.table(target = t, w = NA_real_, n = nrow(tr), cor = NA_real_))
+  if (nrow(tr) < 30) return(data.table(target = t, w = NA_real_, n = nrow(tr), cor = NA_real_, k = NA_real_, w2 = NA_real_))
   fit <- lm(d_now ~ 0 + d_prev, data = tr)
-  data.table(target = t, w = unname(coef(fit)[1]), n = nrow(tr), cor = cor(tr$d_now, tr$d_prev))
+  # PER-SEAT PRECISION SHRINKAGE (prereg amendment 2): shift = w2 * n/(n+k) * r_prev, n = the seat's
+  # minor-party share last time. (w2, k) jointly by least squares on the same earlier pairs, k on a grid.
+  ks <- seq(0, 60, by = 1)
+  sse <- vapply(ks, function(k) { z <- tr$d_prev * tr$n_prev / (tr$n_prev + k); b <- sum(z * tr$d_now) / sum(z^2); sum((tr$d_now - b * z)^2) }, 0)
+  kb <- ks[which.min(sse)]; z <- tr$d_prev * tr$n_prev / (tr$n_prev + kb)
+  data.table(target = t, w = unname(coef(fit)[1]), n = nrow(tr), cor = cor(tr$d_now, tr$d_prev),
+             k = kb, w2 = sum(z * tr$d_now) / sum(z^2))
 }))
 cat("SFP3 time-forward weight w_T (slope of a seat's tendency on its previous one, earlier pairs only):\n")
-print(wt[, .(target, w = round(w, 3), n, cor = round(cor, 3))])
+print(wt[, .(target, w = round(w, 3), n, cor = round(cor, 3), k, w2 = round(w2, 3))])
 fwrite(wt, "output/seat-flow-persistence-w.csv")
 cat("SFP4 wrote output/seat-flow-persistence.csv and -w.csv\n")

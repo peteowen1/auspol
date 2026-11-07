@@ -62,3 +62,12 @@ shift `w_T * n/(n + k_T) * r_{T-1}`, n = the seat's minor-party share at T-1 (pe
 together on earlier pairs only (least squares, k over a grid 0-60). Same metrics and guards as above; judged on
 the same five elections. If B is not better than the refused arm A, Pete's "ship" stands for A.
 
+**Variant B screen (8 Nov ~11am; baseline `163170270058`, arm `c05d232e9606`): not better than A.** (w2, k) per target:
+fed2013 2.681/60 (k at the grid edge: unidentified on 138 pairs), fed2016 1.449/35, fed2019 0.787/18, fed2022 0.688/13,
+fed2025 0.438/4. Seat log loss change: fed2013 +0.0056, fed2016 +0.0025, fed2019 +0.0054, fed2022 -0.0040, fed2025 -0.0095;
+pooled +0.0000 (SE 0.0029) against A's -0.0004; AEF-7 subset -0.0067 (SE 0.0027). Noisy seats were not what hurt the older
+elections. Per the amendment, Pete's "ship" stands for A.
+
+**SHIPPED A, 8 Nov 2026, Pete: "ship" (override of the screen refusal).** `AUSPOL_SEAT_FLOW_PERSIST="1"`, shrink variant off.
+The inputs (`output/seat-flow-persistence.csv`, `-w.csv`) are frozen in git at the pre-ship model, so the term keeps meaning
+"miss against the model without persistence".

@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (311 switches from `published_flags.R`, 7 entry points)
+## Switch parity (312 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -245,6 +245,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_SEAT_CONTEXT_MARGIN` | NO | NO | NO | NO | NO | NO | NO | xgb_primary_override.R |
 | `AUSPOL_SEAT_CONTEXT_SOPH` | NO | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_SEAT_FLOW_PERSIST` | NO | yes | NO | NO | NO | NO | NO |  |
+| `AUSPOL_SEAT_FLOW_PERSIST_SHRINK` | NO | NO | NO | NO | NO | NO | NO | seat_flow_persist.R |
 | `AUSPOL_SEAT_POLL_ALLPOLLS` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
 | `AUSPOL_SEAT_POLL_BLEND` | yes | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
 | `AUSPOL_SEAT_POLL_COALITION_DEDUP` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
@@ -532,7 +533,8 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_SEAT_CONTEXT_FILL`** (**shipped, fitting-time switch (reaches harnesses via the artifact)**): FITTING-TIME. SHIPPED 2026-09-28 as v46: fills incumbent party / retiring member from output/seat-context.csv when the xgb training table is built (scripts/fit_xgb_primary_v6.R); baked into the trained model, no harness or live read.
 - **`AUSPOL_SEAT_CONTEXT_MARGIN`** (intentional / dead experiment): ARM, not shipped (default 0; phase 2 of plans/prereg-seat-context-complete-2026-09-28.md). Read in scripts/fit_xgb_primary_v6.R (training) and R/xgb_primary_override.R (the 'all' mode, live). Off, so nothing differs by entry point.
 - **`AUSPOL_SEAT_CONTEXT_SOPH`** (**shipped, fitting-time switch (reaches harnesses via the artifact)**): FITTING-TIME ARM (0): fills the first-term-member flag (soph_cand) from output/seat-context.csv where the seat file has none, in scripts/fit_xgb_primary_v6.R; baked into the trained model. Live reads the vic2026 seat file, which has the flag. plans/prereg-first-term-fill-2026-10-20.md
-- **`AUSPOL_SEAT_FLOW_PERSIST`** (intentional / dead experiment): HARNESS-ONLY ARM, off: federal harness only this round (R/seat_flow_persist.R); plans/prereg-seat-flow-persistence-2026-11-08.md.
+- **`AUSPOL_SEAT_FLOW_PERSIST`** (intentional / dead experiment): HARNESS-ONLY, SHIPPED "1" 8 Nov 2026 (Pete override): federal harness only (R/seat_flow_persist.R); inputs frozen in git; plans/prereg-seat-flow-persistence-2026-11-08.md.
+- **`AUSPOL_SEAT_FLOW_PERSIST_SHRINK`** (intentional / dead experiment): HARNESS-ONLY, off: per-seat precision shrinkage n/(n+k) for AUSPOL_SEAT_FLOW_PERSIST (prereg amendment 2).
 - **`AUSPOL_SEAT_POLL_ALLPOLLS`** (**adopted, shared-function wiring**): SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 2
 - **`AUSPOL_SEAT_POLL_BLEND`** (**adopted, shared-function wiring**): SHIPPED (1), UNIVERSAL via R/: read inside seat_poll_blend_apply() (R/seat_poll_blend.R); fit_seats_full.R also reads it directly. The harness 'yes' cells were comments.
 - **`AUSPOL_SEAT_POLL_COALITION_DEDUP`** (**adopted, shared-function wiring**): SHIPPED 2026-10-07 (data fix). Read in .read_seat_polls_file() in R/seat_poll_blend.R, which all six harnesses and fit_seats_full.R reach through the seat-poll blend; the weight fit and the blend see the same polls.
@@ -672,8 +674,8 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR4  every AUSPOL_* switch read in code (414) is registered (294) or listed as not a model switch (120).
+MR4  every AUSPOL_* switch read in code (415) is registered (295) or listed as not a model switch (120).
 
 
 
-MR2  every non-universal switch (280 of 311) has a recorded classification.
+MR2  every non-universal switch (281 of 312) has a recorded classification.
