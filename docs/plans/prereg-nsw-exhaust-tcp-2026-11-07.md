@@ -59,4 +59,39 @@ arm hurt it.
 
 ## RESULT
 
-(not yet run)
+**Screen, 7 Nov 7:20pm** (1,000 sims, `quick_arm.R`, code ta1bc4f4; run once before
+`dfd991ee`, both arm runs died on `exhaust names no party in shares: NAT`, fixed by dropping
+the NAT entry, rate 0, from the harness). Baseline cache `ae3bb06e516f`, arm `a455afe21c3f`;
+scored with `scripts/score_tcp_arm.R`.
+
+TCP mean absolute error, points, lower is better (diff = arm - base, SE over seats):
+
+| pair | set | n | base | arm | diff | SE |
+|---|---|---|---|---|---|---|
+| nsw2023 | **ours + AEF match real (primary)** | 79 | 4.906 | 4.561 | **-0.345** | 0.171 |
+| nsw2023 | ALP v LNP | 65 | 5.059 | 4.735 | -0.324 | 0.199 |
+| nsw2023 | marginal (base margin < 6) | 27 | 3.863 | 3.796 | -0.067 | 0.337 |
+| nsw2019 | ours match real | 83 | 4.166 | 3.606 | -0.560 | 0.138 |
+| nsw2019 | ALP v LNP | 72 | 4.025 | 3.413 | -0.612 | 0.155 |
+| nsw2019 | marginal | 22 | 4.875 | 4.090 | -0.785 | 0.238 |
+
+Slope of actual on predicted ALP TCP (1 = right width): nsw2023 1.412 -> 1.268 (predicted
+1.27), nsw2019 1.111 -> 1.015. Favourite flips: 4 (nsw2023), 3 (nsw2019). Final-two set
+changes: Heffron and Sydney (nsw2023), Lismore (nsw2019, arm now right).
+
+- Primary: PASS in the screen (-0.345, 2.0 SE).
+- Guard 1 (seat log loss): BETTER, nsw2023 0.1870 -> 0.1840, nsw2019 0.2711 -> 0.2647; pooled
+  0.2290 -> 0.2243 (SE 0.0017).
+- Guard 2 (marginal seats): both improve.
+- Guard 3 (non-NSW byte-identical): by construction, `AUSPOL_NSW_EXHAUST` is read only by
+  `scripts/backtest_candidate_nsw.R` (grep of R/ and scripts/).
+- Guard 4: PASS outright. 0 of 1,302 predicted primary shares moved.
+
+**Finding: `AUSPOL_ANCHOR_EXHAUST` is inert in what ships.** The live recipe does not anchor
+the level (`R/forecast_mode.R:371`, `LR1 ... level NOT anchored` in every run log), and
+Victoria's flows carry no exhaust (`scripts/fit_seats_full.R:1827`). The whole effect is the
+simulation's exhaustion. The "pulls Labor down" concern was about anchoring and does not apply.
+
+**Amendment (7 Nov, after the screen, visible):** the deciding run covers nsw2019 and nsw2023
+only, not all 22. Guard 3 holds by construction (above), and rerunning 20 untouched elections
+cannot change them.
