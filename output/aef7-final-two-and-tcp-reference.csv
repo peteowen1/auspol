@@ -302,6 +302,7 @@ pair,seat,f1,f2,f2cp,fsrc,aef_tcp_f1,aef_tcp_f2,aef_tcp_pct,aef_tcp_scenario_fre
 "fed2025","Wright","LNP","ALP",58,"official","ALP","LNP",39.2,0.673,32.1,46.5
 "nsw2023","Albury","LNP","ALP",66.3,"official","ALP","LNP",38.7,0.97,29,49
 "nsw2023","Auburn","ALP","LNP",74,"official","ALP","LNP",71,0.972,57.6,81.3
+"nsw2023","Badgerys Creek","LNP","ALP",60.5,"official",NA,NA,NA,NA,NA,NA
 "nsw2023","Ballina","GRN","LNP",57.7,"official","LNP","GRN",41.2,0.641,27.2,55.3
 "nsw2023","Balmain","GRN","ALP",51.8,"official","ALP","GRN",41.1,0.909,22.2,67.4
 "nsw2023","Bankstown","ALP","LNP",70.3,"official","ALP","LNP",73.9,0.938,64.3,81.3
@@ -337,10 +338,12 @@ pair,seat,f1,f2,f2cp,fsrc,aef_tcp_f1,aef_tcp_f2,aef_tcp_pct,aef_tcp_scenario_fre
 "nsw2023","Holsworthy","LNP","ALP",50.4,"official","ALP","LNP",49.5,0.989,38.6,59.9
 "nsw2023","Hornsby","LNP","ALP",58,"official","ALP","LNP",39.1,0.811,29.8,49.3
 "nsw2023","Keira","ALP","LNP",74.2,"official","ALP","LNP",72.3,0.872,62.6,79.8
+"nsw2023","Kellyville","LNP","ALP",61,"official",NA,NA,NA,NA,NA,NA
 "nsw2023","Kiama","IND","ALP",50.8,"official","ALP","IND",39.8,0.697,26.1,61.1
 "nsw2023","Kogarah","ALP","LNP",68.3,"official","ALP","LNP",56.5,0.977,42.5,69.4
 "nsw2023","Lake Macquarie","IND","ALP",74.1,"official","ALP","IND",34.7,0.964,20.7,52.5
 "nsw2023","Lane Cove","LNP","ALP",55.5,"official","ALP","LNP",41.6,0.705,31.9,51.9
+"nsw2023","Leppington","ALP","LNP",58.9,"official",NA,NA,NA,NA,NA,NA
 "nsw2023","Lismore","ALP","LNP",65,"official","ALP","LNP",57.8,0.712,47.6,66.9
 "nsw2023","Liverpool","ALP","LNP",58.4,"official","ALP","LNP",70,0.977,59.4,78.5
 "nsw2023","Londonderry","ALP","LNP",63.7,"official","ALP","LNP",58.4,1,47.5,68.1
@@ -382,9 +385,11 @@ pair,seat,f1,f2,f2cp,fsrc,aef_tcp_f1,aef_tcp_f2,aef_tcp_pct,aef_tcp_scenario_fre
 "nsw2023","Upper Hunter","LNP","ALP",53.8,"official","ALP","LNP",53.6,0.942,42.6,63.8
 "nsw2023","Vaucluse","LNP","IND",62.9,"official","ALP","LNP",35.7,0.55,27.1,45.9
 "nsw2023","Wagga Wagga","IND","LNP",72.4,"official","LNP","IND",35.8,0.883,16.6,53.9
+"nsw2023","Wahroonga","LNP","ALP",60.6,"official",NA,NA,NA,NA,NA,NA
 "nsw2023","Wakehurst","IND","LNP",54.5,"official","LNP","IND",51.2,0.738,29.6,74.9
 "nsw2023","Wallsend","ALP","LNP",81.8,"official","ALP","LNP",78.8,0.822,70.5,84.9
 "nsw2023","Willoughby","LNP","IND",52.6,"official","LNP","IND",53.4,0.654,28.6,74.9
+"nsw2023","Winston Hills","LNP","ALP",51.8,"official",NA,NA,NA,NA,NA,NA
 "nsw2023","Wollondilly","IND","LNP",51.5,"official","LNP","IND",51.4,0.517,19.7,70.8
 "nsw2023","Wollongong","ALP","LNP",74.3,"official","ALP","LNP",76,0.941,67,82.9
 "nsw2023","Wyong","ALP","LNP",69.8,"official","ALP","LNP",70.5,0.996,60.6,78.6
@@ -613,6 +618,7 @@ pair,seat,f1,f2,f2cp,fsrc,aef_tcp_f1,aef_tcp_f2,aef_tcp_pct,aef_tcp_scenario_fre
 "wa2025","Bassendean","ALP","IND",65.7,"official","ALP","LNP",69.8,0.718,60.2,77
 "wa2025","Bateman","ALP","LNP",53.3,"official","ALP","LNP",43.1,0.899,33,53.4
 "wa2025","Belmont","ALP","LNP",69.3,"official","ALP","LNP",66.4,0.963,56.4,74.6
+"wa2025","Bibra Lake","ALP","GRN",64.2,"official",NA,NA,NA,NA,NA,NA
 "wa2025","Bicton","ALP","LNP",59.3,"official","ALP","LNP",51.3,0.988,40.5,61.3
 "wa2025","Bunbury","ALP","LNP",57.1,"official","ALP","LNP",57.7,0.961,42.9,70.7
 "wa2025","Butler","ALP","LNP",64.7,"official","ALP","LNP",70.2,0.945,60.8,77.8
@@ -628,6 +634,7 @@ pair,seat,f1,f2,f2cp,fsrc,aef_tcp_f1,aef_tcp_f2,aef_tcp_pct,aef_tcp_scenario_fre
 "wa2025","Forrestfield","ALP","LNP",54.1,"official","ALP","LNP",58.5,0.974,47.9,67.8
 "wa2025","Fremantle","ALP","IND",50.9,"official","ALP","GRN",55.5,0.574,37.2,71.6
 "wa2025","Geraldton","LNP","ALP",64.1,"official","ALP","LNP",45.5,0.579,34.1,56.9
+"wa2025","Girrawheen","ALP","LNP",71.3,"official",NA,NA,NA,NA,NA,NA
 "wa2025","Hillarys","ALP","LNP",60.1,"official","ALP","LNP",55.2,0.998,44.3,64.9
 "wa2025","Jandakot","ALP","LNP",56.4,"official","ALP","LNP",51.5,0.993,40.5,61.5
 "wa2025","Joondalup","ALP","LNP",56.3,"official","ALP","LNP",60.8,0.967,50.3,69.8
@@ -640,16 +647,19 @@ pair,seat,f1,f2,f2cp,fsrc,aef_tcp_f1,aef_tcp_f2,aef_tcp_pct,aef_tcp_scenario_fre
 "wa2025","Mandurah","ALP","LNP",59.5,"official","ALP","LNP",61,0.995,46.9,73.1
 "wa2025","Maylands","ALP","LNP",72.4,"official","ALP","LNP",65.7,0.83,56.1,73.5
 "wa2025","Midland","ALP","LNP",60.9,"official","ALP","LNP",62.6,0.911,52.3,71.4
+"wa2025","Mindarie","ALP","LNP",61.3,"official",NA,NA,NA,NA,NA,NA
 "wa2025","Morley","ALP","LNP",62,"official","ALP","LNP",64.7,0.97,54.5,73.1
 "wa2025","Mount Lawley","ALP","LNP",60.7,"official","ALP","LNP",56,0.955,45.4,65.6
 "wa2025","Murray-Wellington","LNP","ALP",51.7,"official","ALP","LNP",52.3,0.95,40.9,63.1
 "wa2025","Nedlands","LNP","ALP",52.7,"official","ALP","LNP",39.6,0.728,30,49.7
+"wa2025","Oakford","ALP","LNP",61.9,"official",NA,NA,NA,NA,NA,NA
 "wa2025","Perth","ALP","LNP",71,"official","ALP","LNP",65.7,0.867,55.5,73.8
 "wa2025","Pilbara","ALP","LNP",50.6,"official","ALP","LNP",51.9,0.655,40,63
 "wa2025","Riverton","ALP","LNP",54.2,"official","ALP","LNP",47.5,0.975,36.9,57.7
 "wa2025","Rockingham","ALP","LNP",61.8,"official","ALP","LNP",67.6,0.977,55.7,77.1
 "wa2025","Roe",NA,NA,NA,"intra-coalition-excluded","LNP","LNP",47.3,0.472,29.1,67.9
 "wa2025","Scarborough","ALP","LNP",55,"official","ALP","LNP",45.6,0.995,35.1,55.9
+"wa2025","Secret Harbour","ALP","LNP",61.5,"official",NA,NA,NA,NA,NA,NA
 "wa2025","South Perth","ALP","LNP",51.6,"official","ALP","LNP",46.3,0.94,36,56.4
 "wa2025","Southern River","ALP","LNP",73.3,"official","ALP","LNP",70.7,0.973,61.3,78.2
 "wa2025","Swan Hills","ALP","LNP",58.4,"official","ALP","LNP",62.9,0.984,52.5,71.7
