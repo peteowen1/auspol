@@ -237,9 +237,23 @@ our_tcp_hit  <- SEATS[!is.na(our_tcp_pct) & pair_matches(our_tcp_f1, our_tcp_f2,
 aef_tcp_hit  <- SEATS[!is.na(aef_tcp_pct) & pair_matches(aef_tcp_f1, aef_tcp_f2, f1, f2)]
 our_tcp_hit[, our_actual_share := actual_share_of(our_tcp_f1, f1, f2, f2cp)]
 aef_tcp_hit[, aef_actual_share := actual_share_of(aef_tcp_f1, f1, f2, f2cp)]
-tcp_mae <- list(
+# The #1-pick version: each side scored only where its OWN top pairing was right, so the two
+# sides are scored on different seats (610 vs 600 on 7 Nov) and the side that gets more
+# hard three-way seats right looks worse. Kept as tcp_mae_pick, no longer the headline.
+tcp_mae_pick <- list(
   our = mean(abs(our_tcp_hit$our_tcp_pct - our_tcp_hit$our_actual_share)), our_n = nrow(our_tcp_hit),
   aef = mean(abs(aef_tcp_hit$aef_tcp_pct - aef_tcp_hit$aef_actual_share)), aef_n = nrow(aef_tcp_hit))
+# HEADLINE (Pete, 7 Nov): SAME SEATS. Each side's margin for the pairing that ACTUALLY happened
+# (build_aef7_tcp_actual.R reads every simulated pairing, not just the top one), scored only
+# where both sides have one. 657 of 660 on 7 Nov: AEF never simulated Cessnock 2023 ALP v ONP.
+.tcpc <- SEATS[is.finite(our_tcp_pred_pct) & is.finite(our_tcp_actual_share) &
+               is.finite(aef_tcp_pred_pct) & is.finite(aef_tcp_actual_share)]
+tcp_mae <- list(
+  our = mean(abs(.tcpc$our_tcp_pred_pct - .tcpc$our_tcp_actual_share)), our_n = nrow(.tcpc),
+  aef = mean(abs(.tcpc$aef_tcp_pred_pct - .tcpc$aef_tcp_actual_share)), aef_n = nrow(.tcpc),
+  method = "same seats; each side's margin for the real pairing")
+cat(sprintf("AEFL12 TCP MAE same seats, real pairing: ours %.3f vs AEF %.3f (n=%d) | #1-pick version ours %.3f (n=%d) vs AEF %.3f (n=%d)\n",
+            tcp_mae$our, tcp_mae$aef, tcp_mae$our_n, tcp_mae_pick$our, tcp_mae_pick$our_n, tcp_mae_pick$aef, tcp_mae_pick$aef_n))
 
 
 # WEIGHTED PRIMARY RMSE, every party in every seat, weighted by that party's
@@ -316,7 +330,8 @@ summary_stats <- list(
   primary_rmse = list(our = primary_rmse$our, aef = primary_rmse$aef, n = primary_rmse$n),
   primary_wrmse = primary_wrmse,
   primary_wrmse_unmatched = if (exists("primary_wrmse_unmatched")) primary_wrmse_unmatched else NULL,
-  tcp_mae = tcp_mae,
+  tcp_mae = tcp_mae,             # same seats, real pairing (headline since 7 Nov 2026)
+  tcp_mae_pick = tcp_mae_pick,   # the old headline: each side's #1 pick, its own seats
   accuracy = list(our = mean(SEATS$correct), aef = mean(SEATS$aef_p_win >= 0.5), n = nrow(SEATS)))
 
 write(toJSON(summary_stats, auto_unbox = TRUE, digits = 4), file.path(OUT, "aef7-ledger-summary.json"))

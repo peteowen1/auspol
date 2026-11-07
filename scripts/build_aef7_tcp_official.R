@@ -164,6 +164,19 @@ n_before <- ref[pair %in% c("nsw2023", "qld2024", "wa2025") & fsrc == "derived",
 ref[official, on = c("pair", "seat"), `:=`(f1 = i.f1, f2 = i.f2, f2cp = i.f2cp, fsrc = i.fsrc)]
 n_after <- ref[pair %in% c("nsw2023", "qld2024", "wa2025") & fsrc == "derived", .N]
 
+# ADD seats the reference never had a row for. The join above only upgrades
+# existing rows, so the five nsw2023 seats created at the 2021 redistribution
+# (Badgerys Creek, Kellyville, Leppington, Wahroonga, Winston Hills) stayed
+# absent and every TCP metric scored 87 of 93 nsw2023 seats (found 7 Nov 2026
+# by score_tcp_arm.R). AEF's columns stay NA here; build_aef_tcp.R owns those.
+.new <- official[!ref, on = c("pair", "seat")]
+if (nrow(.new)) {
+  cat(sprintf("OFF2 adding %d seat(s) the reference had no row for: %s\n", nrow(.new),
+              paste(sprintf("%s/%s", .new$pair, .new$seat), collapse = ", ")))
+  ref <- rbind(ref, .new[, .(pair, seat, f1, f2, f2cp, fsrc)], fill = TRUE)
+  setorder(ref, pair, seat)
+}
+
 cat(sprintf("OFF2 nsw2023/qld2024/wa2025 'derived' rows: %d before, %d after (%d upgraded to official)\n",
             n_before, n_after, n_before - n_after))
 cat("OFF3 fsrc breakdown after merge:\n")

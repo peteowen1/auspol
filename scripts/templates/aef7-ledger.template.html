@@ -903,10 +903,12 @@ function overall(){
      our: tcpScoreable.length ? tcpLL(tcpScoreable,"our_tcp_actual_freq") : null,
      aef: tcpScoreable.length ? tcpLL(tcpScoreable,"aef_tcp_actual_freq") : null,
      n: tcpScoreable.length, lower:true, fmt:v=>v.toFixed(4)},
-    {lab:"TCP MAE (on the real pairing, whether or not it was the #1 pick)",
-     our: (()=>{const rs=tcpErrRows(SEATS,"our_tcp_actual_err"); return rs.length?mean(rs,"our_tcp_actual_err"):null;})(),
-     aef: (()=>{const rs=tcpErrRows(SEATS,"aef_tcp_actual_err"); return rs.length?mean(rs,"aef_tcp_actual_err"):null;})(),
-     n: `${tcpErrRows(SEATS,"our_tcp_actual_err").length} ours / ${tcpErrRows(SEATS,"aef_tcp_actual_err").length} AEF`,
+    // SAME SEATS for both sides (Pete, 7 Nov): each side's margin for the pairing that actually
+    // happened, scored only where BOTH have one, so neither is judged on seats the other skips.
+    {lab:"TCP MAE (same seats: each side's margin for the real pairing, whether or not it was the #1 pick)",
+     our: (()=>{const rs=SEATS.filter(r=>r.our_tcp_actual_err!=null && r.aef_tcp_actual_err!=null); return rs.length?mean(rs,"our_tcp_actual_err"):null;})(),
+     aef: (()=>{const rs=SEATS.filter(r=>r.our_tcp_actual_err!=null && r.aef_tcp_actual_err!=null); return rs.length?mean(rs,"aef_tcp_actual_err"):null;})(),
+     n: `${SEATS.filter(r=>r.our_tcp_actual_err!=null && r.aef_tcp_actual_err!=null).length} seats`,
      lower:true, fmt:v=>v.toFixed(2)},
   ];
   el.innerHTML = stats.map(s=>{
