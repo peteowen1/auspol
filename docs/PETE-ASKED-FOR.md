@@ -33,6 +33,13 @@ moved verbatim 2026-10-24. Every row below still has something open.
 
 ---
 
+## 2026-11-07
+
+| Request | Status |
+|---|---|
+| Where we lose to AEF on AEF-7: seat polls, salience, calibration and bias for independents, Greens and the confident wrong major seats; what is fixable | **ANSWERED in chat 7 Nov, nothing to ship.** Widening IND/GRN contests refused (proxy, and C2 17 Oct); salience bias on unpolled IND weak (+2.3 mid band, SE 1.3); by-election weight fitted 0.62 (SE 0.11), 0.5 stands. NEXT-STEPS item "AEF-7 gap diagnosis". |
+| Spin up an agent to get our two-candidate-preferred MAE (3.68, n 610) below AEF's (3.63, n 600) | **IN PROGRESS.** Opus research agent, read-only, launched 7 Nov ~4:45pm; report to `reviews/tcp-mae-vs-aef-2026-11-07.md` with a recommended first arm. |
+
 ## 2026-11-06
 
 | Request | Status |
