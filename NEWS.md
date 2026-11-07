@@ -1,3 +1,7 @@
+# auspol 0.4.144
+
+- Fixed: with `AUSPOL_NSW_EXHAUST` on, a full rebuild stopped at nsw2015 and nsw2011, whose preference data carry no exhaust rates. Those elections now run without exhaustion, with a `BN0x!` warning, exactly as before 0.4.143. Rebuilt 7 Nov 10:30pm: AEF-7 seat log loss 0.2566 (AE Forecasts 0.2825); 35 elections 0.3213; AEF-7 TCP error on common seats 3.587 vs 3.593.
+
 # auspol 0.4.143
 
 - **NSW optional-preferential exhaustion in the seat simulation ships** (`AUSPOL_NSW_EXHAUST="1"`, Pete, 7 Nov). Minor-party ballots can now stop before reaching either finalist, so NSW final-two margins are no longer too narrow (actual on predicted slope, nsw2023 1.41 -> 1.27). Screen: nsw2023 TCP mean absolute error -0.345 (SE 0.171, 79 seats), nsw2019 -0.560; 20k: seat log loss on both NSW pairs 0.2618 -> 0.2566 (SE 0.0006). NSW harness only; no primary vote moves. `AUSPOL_ANCHOR_EXHAUST` stays off: inert under the shipped recipe. `docs/plans/prereg-nsw-exhaust-tcp-2026-11-07.md`.
