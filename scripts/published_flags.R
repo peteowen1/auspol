@@ -847,6 +847,7 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_NSW_EXHAUST_TF      = "1",          # SHIPPED 8 Nov 2026 (leak fix): NSW exhaust rates only from elections BEFORE the target (nsw2023 -> 2019 rates; nsw2019 -> none). "0" reads the target year's own row, as 7 Nov did.
   AUSPOL_NSW_EXHAUST_SRC     = "measured",   # SHIPPED 8 Nov 2026 (Pete, over a 1.4-SE nsw2023 TCP guard miss; plans/prereg-nsw-exhaust-measured-minors-2026-11-08.md): NSW exhaust rates from NSWEC's own DOP pages (output/nsw-exhaust-measured.csv, built in rebuild stage 6), latest election before the target. "anchor" is the old source.
   AUSPOL_NSW_EXHAUST_MEAS_MAJORS = "0",      # SHIPPED 8 Nov 2026 with the line above: Labor/Coalition exhaust stays 0 (measured majors' rates hurt nsw2023). "1" uses them.
+  AUSPOL_SEAT_FLOW_PERSIST   = "0",          # ARM, not shipped (plans/prereg-seat-flow-persistence-2026-11-08.md): federal harness; each seat's last-election flow miss times a time-forward weight (R/seat_flow_persist.R).
   AUSPOL_NT_TRANSFER         = "",           # nt harness: forces candidate transfer on/off; empty keeps it coupled to the slope mode.
   AUSPOL_PARTY_SD            = "1.5",        # every harness: flat party sd fed to the simulation (CONSTANTS, "flat statewide reference, harnesses").
   AUSPOL_REENTRY_SD_K        = "0",          # every harness: re-entry sd widening, off.

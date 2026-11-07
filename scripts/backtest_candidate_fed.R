@@ -1930,6 +1930,11 @@ for (X in out_all) {
   # card order for this election (R/htv_flow.R, external/reference/htv/liberal-alp-grn-order.csv).
   .htv_ov <- if (identical(Sys.getenv("AUSPOL_HTV_FLOW", "0"), "1")) tryCatch(htv_flow_override(.xgb_flow_ov, X$fm, sprintf("fed%d", K$to), rownames(X$shares)),
     error = function(e) { cat(sprintf("HTV9! how-to-vote override FAILED, flow rows unchanged: %s\n", conditionMessage(e))); .xgb_flow_ov }) else .xgb_flow_ov
+  # SEAT FLOW PERSISTENCE (AUSPOL_SEAT_FLOW_PERSIST, an ARM, 8 Nov 2026; R/seat_flow_persist.R,
+  # plans/prereg-seat-flow-persistence-2026-11-08.md): each seat's last-election flow miss, times a
+  # time-forward weight. No tryCatch: an arm that failed must not run as if it were off.
+  if (identical(Sys.getenv("AUSPOL_SEAT_FLOW_PERSIST", "0"), "1"))
+    .htv_ov <- seat_flow_persist_override(.htv_ov, X$fm, sprintf("fed%d", K$to), sprintf("fed%d", K$from), rownames(X$shares))
   # BREAKOUT MIXTURE (AUSPOL_BREAKOUT_MIX, R/breakout_mix.R): NULLs when off.
   .bo <- breakout_mix_args(sprintf("fed%d", K$to), X$shares)
   .imx <- ind_mixture_surge(sprintf("fed%d", K$to), rownames(X$shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BF1N")

@@ -1025,6 +1025,7 @@ CLASSIFY <- list(
   AUSPOL_NSW_EXHAUST_TF = "HARNESS-ONLY, SHIPPED \"1\" 8 Nov 2026 (leak fix): NSW harness reads exhaust rates only from elections before the target; \"0\" is the 7 Nov read of the target year's own row.",
   AUSPOL_NSW_EXHAUST_SRC = "HARNESS-ONLY, SHIPPED \"measured\" 8 Nov 2026 (Pete): NSW exhaust rates from NSWEC DOP pages (scripts/build_nsw_exhaust_measured.R, run in rebuild stage 6); plans/prereg-nsw-exhaust-measured-minors-2026-11-08.md.",
   AUSPOL_NSW_EXHAUST_MEAS_MAJORS = "HARNESS-ONLY, SHIPPED \"0\" 8 Nov 2026 with AUSPOL_NSW_EXHAUST_SRC=measured: majors' exhaust stays 0.",
+  AUSPOL_SEAT_FLOW_PERSIST = "HARNESS-ONLY ARM, off: federal harness only this round (R/seat_flow_persist.R); plans/prereg-seat-flow-persistence-2026-11-08.md.",
   AUSPOL_NT_TRANSFER = "HARNESS-ONLY, NT: forces candidate transfer on/off; empty (published) keeps it tied to the slope mode.",
   AUSPOL_PARTY_SD = paste(
     "HARNESSES (all): the flat 1.5-point party sd. Live passes the same 1.5 as a literal (CONSTANTS, 'flat statewide",
