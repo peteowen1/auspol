@@ -1253,7 +1253,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   # R-engine only until 7 Nov 2026, when src/seat_sim_core.cpp got the same
   # multiply on `pot` at the same four places (EXHAUST_BY, passed below as
   # exhaust_by). The two engines are byte-identical with exhaustion on
-  # (tests/testthat/test-seat-sim-exhaust-cpp.R), so it no longer forces "r".
+  # (tests/testthat/test-seat-sim.R and test-coalition-split.R), so it no longer forces "r".
   has_exhaust <- any(as.numeric(exhaust) != 0)
   if (engine == "auto") engine <- if (!identical(Sys.getenv("AUSPOL_SIM_ENGINE", "cpp"), "r") &&
                                       is.null(party_draws) && dense_cells &&
