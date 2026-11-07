@@ -1198,10 +1198,11 @@ if (.exhaust_on) {
                    GRN = .rate_of("GRN"), ONP = .rate_of("ONP"),
                    OTH_RIGHT = .rate_of("SFF"), OTH = .oth_ex, IND = .oth_ex)
   # MEASURED RATES (AUSPOL_NSW_EXHAUST_SRC="measured", SHIPPED 8 Nov 2026 with _MEAS_MAJORS="0";
-  # plans/prereg-nsw-exhaust-measured-2026-11-08.md): replace the anchor's rates with the share
+  # plans/prereg-nsw-exhaust-measured-minors-2026-11-08.md): replace the anchor's rates with the share
   # exhausted at each exclusion, by excluded class, from NSWEC's own DOP pages
   # (scripts/build_nsw_exhaust_measured.R), from the latest NSW election BEFORE the target.
-  # Includes the majors (the anchor gives them 0). A class the source year lacks takes OTH_RIGHT
+  # Majors' measured rates exist but are NOT used by default (_MEAS_MAJORS="0" below; using them
+  # was refused, plans/prereg-nsw-exhaust-measured-2026-11-08.md). A class the source year lacks takes OTH_RIGHT
   # (One Nation did not stand in 2015), then OTH. No earlier measured year: no exhaustion.
   if (identical(Sys.getenv("AUSPOL_NSW_EXHAUST_SRC", "measured"), "measured")) {
     .mf <- file.path("output", "nsw-exhaust-measured.csv")
@@ -1218,8 +1219,8 @@ if (.exhaust_on) {
       .mr <- setNames(.ms$rate, .ms$cls)
       .pick <- function(k) if (!is.na(.mr[k])) unname(.mr[k]) else if (!is.na(.mr["OTH_RIGHT"])) unname(.mr["OTH_RIGHT"]) else unname(.mr["OTH"])
       EXHAUST_ARG <- vapply(c("ALP", "LNP", "GRN", "ONP", "OTH_RIGHT", "OTH", "IND"), .pick, 0)
-      # EXPLORATORY (8 Nov, not preregistered): "0" keeps the majors at 0, as the anchor does, to
-      # see whether their measured exhaust is what cost nsw2023 in the refused screen.
+      # Majors at 0, as the anchor has them (shipped "0" 8 Nov; "1" uses their measured rates,
+      # which cost nsw2023 in the refused all-classes screen).
       if (identical(Sys.getenv("AUSPOL_NSW_EXHAUST_MEAS_MAJORS", "0"), "0")) EXHAUST_ARG[c("ALP", "LNP")] <- 0
       cat(sprintf("BN0m  nsw%d exhaust rates MEASURED from %s (%s)\n", TO, .src,
                   paste(sprintf("%s=%.1f%%", names(EXHAUST_ARG), EXHAUST_ARG), collapse = " ")))
