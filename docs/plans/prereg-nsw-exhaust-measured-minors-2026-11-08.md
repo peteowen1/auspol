@@ -28,4 +28,11 @@ Seat log loss pooled 0.2277 -> 0.2238 (-0.0039, SE 0.0029). TCP MAE matched seat
 
 ## RESULT
 
-(deciding run not yet run)
+**Deciding run, 8 Nov ~1:05am (20k, `deciding-runs/20261108-0049-nsw-meas-minors`, code tf894ccf).**
+- Primary: PASS. Pooled seat log loss 0.2597 -> 0.2563 (-0.0034, SE 0.0027); nsw2019 0.3344 -> 0.3283, nsw2023
+  0.1849 -> 0.1842 (neither worse: guard passes). 0 of 1,302 primary cells moved.
+- TCP MAE (matched seats): nsw2019 4.180 -> 3.575 (-0.605, SE 0.142; slope 1.113 -> 1.017); nsw2023 4.533 ->
+  4.552 (+0.019, SE 0.014); **ours+AEF set 4.629 -> 4.649, +0.019 (SE 0.014): 1.4 SE worse, GUARD FAILS** (limit
+  1 SE). Marginal seats: nsw2019 -0.845, nsw2023 -0.022.
+- Verdict under the clauses as written: REFUSED on the nsw2023 TCP guard. The split goes to Pete (standing rule:
+  a clause refusing a headline-positive result is his call). Not shipped.
