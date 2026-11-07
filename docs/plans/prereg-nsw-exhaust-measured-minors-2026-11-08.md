@@ -1,4 +1,4 @@
-# Pre-registration: measured NSW exhaust, minor parties only (2026-11-08, ~1:35am)
+# Pre-registration: measured NSW exhaust, minor parties only (2026-11-08, ~12:45am)
 
 **Post-hoc, and said so.** This variant was found AFTER the refused screen of
 `plans/prereg-nsw-exhaust-measured-2026-11-08.md`: there, measured rates for every class helped nsw2019 and

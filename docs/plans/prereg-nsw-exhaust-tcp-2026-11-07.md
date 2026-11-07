@@ -114,7 +114,7 @@ is better): common seats (n 583) ours 3.6225 -> 3.5851, AEF 3.5925; headline our
 **-0.346 (SE 0.172): PASS**; ALP v LNP -0.314; marginal -0.072; slope 1.412 -> 1.268. nsw2019
 (n 83) 4.180 -> 3.608, -0.572 (SE 0.139); slope 1.113 -> 1.017. Matches the screen.
 
-**LEAK FOUND AND FIXED, 8 Nov ~12:40am (visible addition; everything above unedited).** The harness
+**LEAK FOUND AND FIXED, 8 Nov ~12:20am (visible addition; everything above unedited).** The harness
 read exhaust rates at `year = TO`: the target election's own row of the anchor flow file, which every
 other reader excludes. Fixed by `AUSPOL_NSW_EXHAUST_TF="1"` (rows from elections before the target only:
 nsw2023 gets the 2019 rates, nsw2019 gets none because 2015 has no exhaust column). Re-measured at 1k
