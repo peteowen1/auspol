@@ -245,7 +245,8 @@ tcp_mae_pick <- list(
   aef = mean(abs(aef_tcp_hit$aef_tcp_pct - aef_tcp_hit$aef_actual_share)), aef_n = nrow(aef_tcp_hit))
 # HEADLINE (Pete, 7 Nov): SAME SEATS. Each side's margin for the pairing that ACTUALLY happened
 # (build_aef7_tcp_actual.R reads every simulated pairing, not just the top one), scored only
-# where both sides have one. 657 of 660 on 7 Nov: AEF never simulated Cessnock 2023 ALP v ONP.
+# where both sides have one. 667 of 670 on 7 Nov: Cessnock 2023 (AEF never simulated ALP v ONP),
+# and Port Macquarie 2023 / Roe 2025 (two Coalition finalists, no class-level TCP).
 .tcpc <- SEATS[is.finite(our_tcp_pred_pct) & is.finite(our_tcp_actual_share) &
                is.finite(aef_tcp_pred_pct) & is.finite(aef_tcp_actual_share)]
 tcp_mae <- list(

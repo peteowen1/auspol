@@ -42,6 +42,11 @@ cat(sprintf("CR2 all elections: A %.4f  B %.4f  per-election mean d %+.4f (SE %.
             mean(x$ll_a), mean(x$ll_b), mean(per$d), sd(per$d) / sqrt(nrow(per)), sum(per$d < 0), nrow(per)))
 for (d in c(A, B)) {
   s <- jsonlite::fromJSON(file.path(d, "aef7-ledger-summary.json"))
-  cat(sprintf("CR3 %s ledger: log loss %.4f  wRMSE %.3f  TCP MAE %.3f  accuracy %.4f\n",
-              basename(d), s$seat_logloss$our, s$primary_wrmse$our, s$tcp_mae$our, s$accuracy$our))
+  # tcp_mae changed meaning on 7 Nov 2026 (same seats, real pairing); older snapshots hold the
+  # #1-pick version, which newer ones keep as tcp_mae_pick. Print the #1-pick figure for both so
+  # A and B compare one metric, and the same-seat one only where both have it.
+  .pick <- if (!is.null(s$tcp_mae_pick)) s$tcp_mae_pick$our else s$tcp_mae$our
+  .same <- if (!is.null(s$tcp_mae$method)) sprintf("%.3f", s$tcp_mae$our) else "n/a"
+  cat(sprintf("CR3 %s ledger: log loss %.4f  wRMSE %.3f  TCP MAE #1-pick %.3f, same-seat %s  accuracy %.4f\n",
+              basename(d), s$seat_logloss$our, s$primary_wrmse$our, .pick, .same, s$accuracy$our))
 }
