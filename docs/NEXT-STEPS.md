@@ -42,6 +42,14 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   sal recovers part of it; neither beats what ships. sal has no route to the forecast that helps (class split refused 6 Nov).
   Refits are 73 s now with `AUSPOL_MC_ROUNDS_FROM=<earlier oof csv>` (7dd04a82; exact on the same features). The per-candidate model gives a newcomer independent the generic 4-8% beside a sitting member
   (Jones 4.8 vs 12.1, Holmes-Ross 4.3 vs 14.6, Leonard 7.6 vs 17.1). Table in the walkthrough doc.
+- OPEN 7 Nov, AEF-7 gap diagnosis (Pete: where we lose to AEF; we lead 0.2572 vs 0.2825, lose fed2022/fed2025, IND +2.4
+  and GRN +1.5 summed log loss). Proxies, all 35 elections, published-predictions.csv of 12:16pm: (a) flattening win
+  probs in IND/GRN contests REFUSED as a lead (IND AEF-7 worse at every temperature, 2 of 7; GRN -0.02, 10 of 22, in
+  noise), with C2's 17 Oct loss that is two refusals of "widen IND/GRN": the losses are wrong centres on winners we
+  gave 2-30%. (b) unpolled IND by salience (`jump`, every row, SE on election): +0.8 zero, +1.4 low, +2.3 mid (SE 1.3,
+  118 cells), +1.8 top 15% (SE 1.75): weak. (c) Ipswich West: by-election half blend (`AUSPOL_BYELECTION_PRIOR=blend`,
+  fixed 0.5, never fitted) took LNP base 21.1 -> 37.2, xgb 45.0, actual 33.5. (d) fed2022 direct IND polls +3.2 low,
+  we stayed +10.6 low (7 cells). Scripts: session scratchpad `aefgap/a1-a7.R` (not kept).
 - OPEN, blocked on the item above: `AUSPOL_POLL_SERIES_CLASS=name` (SA-Best, Katter, UAP, FF classed by full name). 20k on 7 pairs a tie
   (-0.0028, SE 0.0038); sa2018 +0.037 of which Morphett +0.031. `plans/prereg-poll-series-class-2026-11-06.md`, last section.
 - **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** History, DONE list and replay evidence:
