@@ -258,13 +258,9 @@ weighting by track record, seat-poll precision blend, typical-vote independent m
   draw per simulation per flow, sized time-forward and shrunk. Liberal-to-ON varies 54-85% by election.
 - OPEN re-score Richmond/Footscray/Brunswick/Preston/Pascoe Vale 2022 after AUSPOL_LEVEL_RECENT; shrink the
   person-rule slope toward the ratio carry (Pete, 2026-10-11).
-- OPEN miss-table seats traced but not fixed: Malvern 2022 (O'Brien under-called in base_pred), Bankstown 2023 (xgb
-  cut ALP 55.8 -> 49.8). Traced 16 Oct (Sonnet): **4 of 5 are the seat-poll blend** (`seat_poll_blend_apply`,
-  R/seat_poll_blend.R:909; weight from `seat_poll_weight()` at :738) pulling ONE poll at a fitted weight ~0.87 (Parkes 2022, New England 2022, Dawson 2022,
-  McMahon 2025). Poll "Others" lumps land in one class (`.seat_poll_known_class_map` :1341 splits only when
-  ONP/OTH_RIGHT >= half the lump). Traeger 2024 separate (Katter's falling trend carried flat; leader bonus +3.0).
-  Already refused: public-only sources (2026-10-07), precision-scaled blend (2026-10-09). Untried: splitting a poll's
-  "Others" lump by our own class expectations; a weight per election rather than one pooled weight.
+- CLOSED 8 Nov, SUPERSEDED by arm H (18 Oct): the miss-table seats traced 16 Oct to the seat-poll blend (Parkes, New
+  England, Dawson 2022, McMahon 2025, Malvern 2022, Bankstown 2023) are now all called right at 0.93-0.99, level with AEF;
+  their "untried" Others-lump split shipped as `AUSPOL_SEAT_POLL_SPLIT_ALL="1"`. Primaries still 2-6 points low.
 - OPEN speed (`reviews/fast-iter-profile-2026-10-11.md`): read-set cache keys for defectors, personal prior vote,
   departed slope, salience (~25 s of a 54 s vic run); seat-poll memo keys on every switch.
 
