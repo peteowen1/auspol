@@ -190,7 +190,7 @@ cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f
 .arm_fingerprint <- local({
   e <- Sys.getenv()
   e <- e[grepl("^AUSPOL_", names(e)) & nzchar(e)]
-  e <- e[!names(e) %in% c("AUSPOL_OUT_SUFFIX")]
+  e <- e[!names(e) %in% c("AUSPOL_OUT_SUFFIX", "AUSPOL_STAGE6_START")]   # STAGE6_START is a timestamp: hashing it made every rebuild tag unique, so reuse_check could never match one
   if (!length(e)) "" else {
     s <- paste(sort(paste0(names(e), "=", e)), collapse = ";")
     # md5 of the whole string. The weighted character sum this replaced put nearby settings within a few hundred of
