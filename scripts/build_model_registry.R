@@ -1027,6 +1027,7 @@ CLASSIFY <- list(
   AUSPOL_NSW_EXHAUST_MEAS_MAJORS = "HARNESS-ONLY, SHIPPED \"0\" 8 Nov 2026 with AUSPOL_NSW_EXHAUST_SRC=measured: majors' exhaust stays 0.",
   AUSPOL_SEAT_FLOW_PERSIST = "HARNESS-ONLY, SHIPPED \"1\" 8 Nov 2026 (Pete override): federal harness only (R/seat_flow_persist.R); inputs frozen in git; plans/prereg-seat-flow-persistence-2026-11-08.md.",
   AUSPOL_SEAT_FLOW_PERSIST_SHRINK = "HARNESS-ONLY, off: per-seat precision shrinkage n/(n+k) for AUSPOL_SEAT_FLOW_PERSIST (prereg amendment 2).",
+  AUSPOL_BYELECTION_RESULTS = "DATA PATH, \"\" = the shipped by-election table; a path points the two readers at another copy (screens of a data completion).",
   AUSPOL_NT_TRANSFER = "HARNESS-ONLY, NT: forces candidate transfer on/off; empty (published) keeps it tied to the slope mode.",
   AUSPOL_PARTY_SD = paste(
     "HARNESSES (all): the flat 1.5-point party sd. Live passes the same 1.5 as a literal (CONSTANTS, 'flat statewide",

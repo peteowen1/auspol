@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (312 switches from `published_flags.R`, 7 entry points)
+## Switch parity (313 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -54,6 +54,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_BYELECTION_FILL` | NO | NO | NO | NO | NO | NO | NO | byelection_prior.R |
 | `AUSPOL_BYELECTION_MP` | NO | NO | NO | NO | NO | NO | NO | byelection_prior.R, candidate_returns.R |
 | `AUSPOL_BYELECTION_PRIOR` | yes | yes | yes | yes | yes | yes | yes | byelection_prior.R |
+| `AUSPOL_BYELECTION_RESULTS` | NO | NO | NO | NO | NO | NO | NO | byelection_prior.R, new_ind_shrink.R |
 | `AUSPOL_CENSUS_FILE` | NO | NO | NO | NO | NO | NO | NO | demographic_residual.R |
 | `AUSPOL_CLASS_CONSERVE` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R |
 | `AUSPOL_CLASS_SPLIT` | NO | NO | NO | NO | NO | NO | NO | class_split.R |
@@ -368,6 +369,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_BYELEC_LEVEL`** (**adopted, shared-function wiring**): SHIPPED 2026-10-05 (Pete override of the 2-SE clause). Read in R/candidate_returns.R (a non-major by-election winner is credited the median next-election share); R/cross_seat_vote.R carries a comment that this switch owns those rows. Reaches every harness and fit_seats_full.R through candidate_returns().
 - **`AUSPOL_BYELECTION_FILL`** (intentional / dead experiment): REFUSED 2026-09-30 (docs/plans/prereg-byelection-fill-2026-09-30.md): only Lyne improved, xgb error +0.01. Default 0, read only as an argument default in R/byelection_prior.R, so a refused experiment with no reason to be wired anywhere.
 - **`AUSPOL_BYELECTION_MP`** (**adopted, shared-function wiring**): SHIPPED 2026-09-19 (plans/prereg-byelection-mp-2026-09-19.md). Read inside R/candidate_returns.R at the top of candidate_returns(): a by-election winner (external/reference/byelections/byelection-winners.csv) is the sitting member for every identity test. Reaches all six harnesses and fit_seats_full.R through that function.
+- **`AUSPOL_BYELECTION_RESULTS`** (intentional / dead experiment): DATA PATH, "" = the shipped by-election table; a path points the two readers at another copy (screens of a data completion).
 - **`AUSPOL_CENSUS_FILE`** (intentional / dead experiment): DIAGNOSTIC 2026-10-13: alternative census-features table via census_features_path() (R/demographic_residual.R), read by every demographic correction -- universal in practice; published empty.
 - **`AUSPOL_CLASS_CONSERVE`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: read by class_conserve_on() inside zero_unnominated() (R/nomination_zero.R), which every harness and fit_seats_full.R (zero_unnominated_live) reach. plans/prereg-partial-contest-2026-10-19.md
 - **`AUSPOL_CLASS_SPLIT`** (intentional / dead experiment): UNIVERSAL via R/: read inside class_split_args() (R/class_split.R) through coalition_split_args(), which every harness (six + NT) and fit_seats_full.R call. EXPERIMENT, default 0 (plans/prereg-class-split-2026-11-06.md); no vic2026 per-candidate predictions yet, so the live forecast would get no class split even at 1.
@@ -674,8 +676,8 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR4  every AUSPOL_* switch read in code (415) is registered (295) or listed as not a model switch (120).
+MR4  every AUSPOL_* switch read in code (416) is registered (296) or listed as not a model switch (120).
 
 
 
-MR2  every non-universal switch (281 of 312) has a recorded classification.
+MR2  every non-universal switch (282 of 313) has a recorded classification.

@@ -4,13 +4,12 @@
 \alias{byelection_table}
 \title{Read the by-election results table}
 \usage{
-byelection_table(
-  path = file.path("external", "reference", "byelections", "byelection-results.csv")
-)
+byelection_table(path = NULL)
 }
 \arguments{
 \item{path}{CSV with columns region, seat, date, candidate, party_raw,
-votes, pct, source.}
+votes, pct, source. \code{NULL} (the default) reads \code{AUSPOL_BYELECTION_RESULTS}
+when set, else \code{external/reference/byelections/byelection-results.csv}.}
 }
 \value{
 data.table with an added \code{party} class column, or NULL when absent.

@@ -130,6 +130,9 @@ not zeroing. Wikipedia needs its own refresh (`parse_wikipedia_candidates.py`).
 
 ## E. November procedure: switching on nomination zeroing (v61, published forecast)
 
+Steps 1 and 4 in one command (8 Nov 2026): `bash scripts/nomination_day.sh <Candidates xml>`; `--dry-run <any VEC Candidates xml>`
+runs the same chain in a scratch folder (`output/nomination-day-logs/dry`). It stops before steps 2-3.
+
 `fit_seats_full.R` zeroes parties with no candidate (and sends their share by
 preference flows) ONLY when `AUSPOL_NOM_LIVE=1`. The default `auto` never does,
 because the vic2026 list in `output/candidacies.csv` is provisional (Wikipedia,

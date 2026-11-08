@@ -849,6 +849,7 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_NSW_EXHAUST_MEAS_MAJORS = "0",      # SHIPPED 8 Nov 2026 with the line above: Labor/Coalition exhaust stays 0 (measured majors' rates hurt nsw2023). "1" uses them.
   AUSPOL_SEAT_FLOW_PERSIST   = "1",          # SHIPPED 8 Nov 2026 (Pete, override of a screen refusal: pooled fed2013-25 -0.0004, SE 0.0026; AEF-7 -0.0061; fed2013/16/19 worse): federal harness, each seat's last flow miss x time-forward w (R/seat_flow_persist.R). Inputs FROZEN in git (output/seat-flow-persistence*.csv).
   AUSPOL_SEAT_FLOW_PERSIST_SHRINK = "0",     # variant B of the arm above (prereg amendment 2): per-seat precision shrinkage n/(n+k).
+  AUSPOL_BYELECTION_RESULTS  = "",           # "" = external/reference/byelections/byelection-results.csv; a path screens another copy (R/byelection_prior.R, R/new_ind_shrink.R).
   AUSPOL_NT_TRANSFER         = "",           # nt harness: forces candidate transfer on/off; empty keeps it coupled to the slope mode.
   AUSPOL_PARTY_SD            = "1.5",        # every harness: flat party sd fed to the simulation (CONSTANTS, "flat statewide reference, harnesses").
   AUSPOL_REENTRY_SD_K        = "0",          # every harness: re-entry sd widening, off.
