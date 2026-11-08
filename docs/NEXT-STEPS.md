@@ -23,7 +23,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
 - OPEN (review 8 Nov, pre-existing classifier): `classify_party("Independent Liberal")` returns LNP (5 by-election
   rows: Werriwa 2005 x2, South-West Coast 2015, Perth 2018, Enfield 2019, Melbourne 2012), while "Ind. Climate
-  Sceptics" goes to OTH; an "Independent X" label is an independent. BUILT 8 Nov on branch `indlib-1108` (`51780a7f`,
+  Sceptics" goes to OTH; an "Independent X" label is an independent. BUILT + REVIEWED (0 Important) 8 Nov on branch `indlib-1108` (`51780a7f`,
   worktree `C:\dev\auspol-indlib`): 7 labels move to IND, test proven. MERGE ONLY AFTER the 10 Nov nominations build:
   it moves sa2022 Taylor (Kuhlmann) in `candidacies.csv`, which BC11 refuses. SCREENED 8 Nov (1k sims, 8 elections,
   relabelled copy of the by-election table via `AUSPOL_BYELECTION_RESULTS`): shares on 27 moved cells -60% squared error
@@ -48,7 +48,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   Low priority, pre-existing: `fit_nsw.R`/`fit_federal.R`/`fit_vic.R` read same-year flow rows; they feed no backtest.
   OPEN, pre-existing (review 8 Nov): `AUSPOL_REBUILD_ONLY` reuse (`reuse_check()`, `rebuild_forecasts.sh`) checks file age, not
   flags, so after a switch flip a rebuild that skips the affected harness silently reuses its old-config results.
-  BUILT 8 Nov, branch `reuse-flags-1108` (`84968fd8`, worktree `C:\dev\auspol-reuse`): reuse requires the fingerprint
+  BUILT + REVIEWED 8 Nov (2 rounds, 0 Important; tests 5028 passed on 84968fd8; fix eb0a628f drops all run-control
+  vars, `^AUSPOL_REBUILD_` etc., from the fingerprint), branch `reuse-flags-1108`, worktree `C:\dev\auspol-reuse`. Before
+  merging: `check_like_ci.R` on eb0a628f (its R CMD check was cut short by low memory 8 Nov). Reuse requires the fingerprint
   `scripts/expected_arm_tag.R` computes; `AUSPOL_STAGE6_START` (a timestamp) left the fingerprint, which had made every
   rebuild's tag unique. Proven on fake files (old code reused a stale file). Merge after the 2am rebuild; the first
   REBUILD_ONLY after it reuses nothing (old tags). OPEN, same area: `apply_upset_floor.R` fits only files newer than
