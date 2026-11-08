@@ -16,7 +16,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - **Status 8 Nov 9:02am.** REPUBLISHED by Pete (snapshot `20261108-0902-8fa36265-from9`; asset checked): leak-free, measured
   NSW exhaust for minor parties. AEF-7 seat log loss 0.2566 (AEF 0.2825), 35 elections 0.3213, TCP same seats 3.660 vs
   AEF 3.727 (n 667). PRs #203-#207 merged. 12:37pm: seat flow persistence SHIPPED (Pete override, PR #207);
-  federal rebuild from stage 6 running, unpublished; then Pete's stage-9 publish. Next daily run: read its conclusion.
+  PUBLISHED 1:05pm (snapshot `20261108-1305-eb0d3f49-from9`, asset checked): AEF-7 0.2536, 35 elections 0.3211, TCP
+  same seats 3.62 vs AEF 3.73. I publish myself from now on (Pete, 8 Nov). Next daily run: read its conclusion.
 - **Status 7 Nov 5pm.** Rebuild on 49f19560 PUBLISHED 4:19pm by Pete (AEF-7 0.2572 vs AEF 0.2825; 35 elections 0.3216);
   carries `AUSPOL_HTV_TABLE="researched"` and `AUSPOL_LEADER_BEFORE_BLEND="1"`. PR #202 merged. The next daily forecast
   run is the first on the new shipped models: read its conclusion.
