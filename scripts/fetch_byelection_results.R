@@ -7,7 +7,9 @@
 #
 # Raw page per by-election, exactly as received, under external/reference/byelections/raw/ (fetched once; a later
 # run re-parses the cache). Page title guessed as "<year> <seat> state by-election" (federal: "<year> <seat>
-# by-election"), else Wikipedia's search. Parses the first wikitable whose header has Candidate/Party and Votes.
+# by-election"), else Wikipedia's search. Of the wikitables whose header has Candidate/Party and Votes, takes the
+# one naming the infobox's elected member with the most candidates (see parse_page); refuses a page with several
+# such tables and none naming the winner.
 # Refuses a page whose parsed % do not sum to 95-105 or that has fewer than 2 candidates. Writes
 # external/reference/byelections/byelection-results-supplement.csv (every parsed row, with page title and status)
 # Emits BYR codes.
@@ -53,10 +55,16 @@ parse_page <- function(f) {
   # THE BY-ELECTION'S table, not the previous general election's. Many pages show the earlier election's
   # results first (8 Nov review: Secret Harbour 2026 parsed as Labor-led 2025 figures; Mulka 2026 as the
   # earlier "Independent hold"). The infobox names the "Elected Member": keep only tables that list that
-  # surname among their candidates, and of those take the LAST (the by-election result follows the background).
+  # person among their candidates, and of those take the one with the most candidates (ties: the later one).
+  # The infobox glues the surname to the party ("Ed SmeltNT Labor", "Paul FletcherLiberal"), so split a
+  # lower-to-upper join before tokenising, or only the given name ever matches (round-2 review: Nightcliff 2026).
   txt <- gsub("\\s+", " ", html_text2(doc))
   em <- regmatches(txt, regexpr("Elected (Member|MLA|MP|MHA|MHR|member) ([^ ]+ ){1,4}", txt))   # NT pages say "Elected MLA"
-  win_tok <- if (length(em)) { w <- strsplit(trimws(sub("^Elected [A-Za-z]+ ", "", em)), " ")[[1]]; w <- head(w[nzchar(w) & grepl("^[A-Z]", w)], 3); toupper(w[nchar(w) > 2]) } else character(0)
+  win_tok <- if (length(em)) {
+    w <- strsplit(trimws(gsub("([a-z])([A-Z])", "\\1 \\2", sub("^Elected [A-Za-z]+ ", "", em))), " ")[[1]]
+    w <- head(w[nzchar(w) & grepl("^[A-Z][a-z]", w)], 2)   # given name + surname; skip party codes like "NT"
+    toupper(w[nchar(w) >= 2 & !toupper(w) %in% c("THE", "LABOR", "LIBERAL", "NATIONAL", "GREENS", "INDEPENDENT")])
+  } else character(0)
   found <- list()
   for (tb in html_elements(doc, "table.wikitable")) {
     t <- tryCatch(html_table(tb, fill = TRUE), error = function(e) NULL)
@@ -89,7 +97,8 @@ parse_page <- function(f) {
     # Frome 2009 after exclusions, also names the winner and sums to 100); ties go to the later table.
     if (any(has_w)) { ix <- which(has_w); nr <- vapply(found[ix], nrow, 1L); o <- found[[max(ix[nr == max(nr)])]]; attr(o, "pick") <- "winner-named"; return(o) }
   }
-  o <- found[[1]]; attr(o, "pick") <- if (length(found) > 1) "first of several, no winner match" else "only table"; o
+  if (length(found) > 1 && length(win_tok)) return(structure(list(), class = "byr_ambiguous"))   # several tables, none names the winner: refuse
+  o <- found[[1]]; attr(o, "pick") <- if (length(found) > 1) "first of several, no winner in the infobox" else "only table"; o
 }
 
 res <- list(); status <- list()
@@ -105,6 +114,7 @@ for (i in seq_len(nrow(todo))) {
   } else if (file.exists(paste0(rawf, ".title"))) title <- readLines(paste0(rawf, ".title"), warn = FALSE)[1]
   p <- tryCatch(parse_page(rawf), error = function(e) NULL)
   if (is.null(p)) { status[[i]] <- data.table(region = x$region, seat = x$seat, date = x$date, status = "no results table"); next }
+  if (inherits(p, "byr_ambiguous")) { status[[i]] <- data.table(region = x$region, seat = x$seat, date = x$date, status = "several tables, none names the winner"); next }
   tot <- sum(p$pct, na.rm = TRUE)
   st <- if (tot < 95 || tot > 105) sprintf("pct sums to %.1f", tot) else "ok"
   status[[i]] <- data.table(region = x$region, seat = x$seat, date = x$date, status = st, n = nrow(p), title = title, pick = attr(p, "pick"))
