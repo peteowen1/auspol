@@ -15,7 +15,9 @@ suppressMessages(library(data.table)); suppressMessages(library(rvest)); suppres
 RAW <- file.path("external", "reference", "byelections", "raw"); dir.create(RAW, recursive = TRUE, showWarnings = FALSE)
 UA <- "auspol-research/1.0 (election forecast backtests; contact via github.com/peteowen1/auspol)"
 w <- fread(file.path("external", "reference", "byelections", "byelection-winners.csv"))
-r <- fread(file.path("external", "reference", "byelections", "byelection-results.csv"))
+# --base=<csv>: decide what is missing against another copy (e.g. the table before a merge) to re-parse those pages.
+.ba <- sub("^--base=", "", grep("^--base=", commandArgs(trailingOnly = TRUE), value = TRUE))
+r <- fread(if (length(.ba)) .ba else file.path("external", "reference", "byelections", "byelection-results.csv"))
 key <- function(d) paste(d$region, d$seat, d$date)
 todo <- w[!key(w) %in% key(r)]
 cat(sprintf("BYR0 %d by-elections in the winners table, %d without results rows\n", nrow(w), nrow(todo)))
@@ -48,6 +50,14 @@ page_for <- function(region, seat, yr) {
 num <- function(x) suppressWarnings(as.numeric(gsub("[^0-9.]", "", x)))
 parse_page <- function(f) {
   doc <- read_html(f, encoding = "UTF-8")
+  # THE BY-ELECTION'S table, not the previous general election's. Many pages show the earlier election's
+  # results first (8 Nov review: Secret Harbour 2026 parsed as Labor-led 2025 figures; Mulka 2026 as the
+  # earlier "Independent hold"). The infobox names the "Elected Member": keep only tables that list that
+  # surname among their candidates, and of those take the LAST (the by-election result follows the background).
+  txt <- gsub("\\s+", " ", html_text2(doc))
+  em <- regmatches(txt, regexpr("Elected (Member|MLA|MP|MHA|MHR|member) ([^ ]+ ){1,4}", txt))   # NT pages say "Elected MLA"
+  win_tok <- if (length(em)) { w <- strsplit(trimws(sub("^Elected [A-Za-z]+ ", "", em)), " ")[[1]]; w <- head(w[nzchar(w) & grepl("^[A-Z]", w)], 3); toupper(w[nchar(w) > 2]) } else character(0)
+  found <- list()
   for (tb in html_elements(doc, "table.wikitable")) {
     t <- tryCatch(html_table(tb, fill = TRUE), error = function(e) NULL)
     if (is.null(t) || !nrow(t)) next
@@ -69,9 +79,16 @@ parse_page <- function(f) {
                       votes = num(t[[vi]]), pct = if (!is.na(pc)) num(t[[pc]]) else NA_real_)
     out <- out[is.finite(votes) & votes > 0 & nzchar(candidate) &
                !grepl("total|formal|informal|turnout|two-candidate|two-party|registered|swing|hold|gain", tolower(paste(candidate, party_raw)))]
-    if (nrow(out) >= 2) { if (anyNA(out$pct)) out[, pct := round(100 * votes / sum(votes), 2)]; return(out) }
+    if (nrow(out) >= 2) { if (anyNA(out$pct)) out[, pct := round(100 * votes / sum(votes), 2)]; found[[length(found) + 1L]] <- out }
   }
-  NULL
+  if (!length(found)) return(NULL)
+  if (length(win_tok)) {
+    has_w <- vapply(found, function(o) any(vapply(win_tok, function(k) any(grepl(k, toupper(o$candidate), fixed = TRUE)), logical(1))), logical(1))
+    # among tables naming the winner, FIRST PREFERENCES are the one with the most candidates (a later count stage, e.g.
+    # Frome 2009 after exclusions, also names the winner and sums to 100); ties go to the later table.
+    if (any(has_w)) { ix <- which(has_w); nr <- vapply(found[ix], nrow, 1L); o <- found[[max(ix[nr == max(nr)])]]; attr(o, "pick") <- "winner-named"; return(o) }
+  }
+  o <- found[[1]]; attr(o, "pick") <- if (length(found) > 1) "first of several, no winner match" else "only table"; o
 }
 
 res <- list(); status <- list()
@@ -89,7 +106,7 @@ for (i in seq_len(nrow(todo))) {
   if (is.null(p)) { status[[i]] <- data.table(region = x$region, seat = x$seat, date = x$date, status = "no results table"); next }
   tot <- sum(p$pct, na.rm = TRUE)
   st <- if (tot < 95 || tot > 105) sprintf("pct sums to %.1f", tot) else "ok"
-  status[[i]] <- data.table(region = x$region, seat = x$seat, date = x$date, status = st, n = nrow(p), title = title)
+  status[[i]] <- data.table(region = x$region, seat = x$seat, date = x$date, status = st, n = nrow(p), title = title, pick = attr(p, "pick"))
   res[[i]] <- p[, `:=`(region = x$region, seat = x$seat, date = x$date, source = paste0("https://en.wikipedia.org/wiki/", gsub(" ", "_", title)), status = st)]
 }
 S <- rbindlist(status, fill = TRUE); R <- rbindlist(res, fill = TRUE)

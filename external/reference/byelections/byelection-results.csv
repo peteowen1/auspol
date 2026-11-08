@@ -558,15 +558,18 @@ fed,Perth,2018-07-28,Colin Scott,Sustainable Australia,774,1.33,https://en.wikip
 fed,Perth,2018-07-28,Tony Robinson,Liberty Alliance,682,1.18,https://en.wikipedia.org/wiki/2018_Perth_by-election
 fed,Perth,2018-07-28,Barry Mason,Citizens Electoral Council,596,1.03,https://en.wikipedia.org/wiki/2018_Perth_by-election
 fed,Perth,2018-07-28,Gabriel Harfouche,People's Party,222,0.38,https://en.wikipedia.org/wiki/2018_Perth_by-election
-fed,Farrer,2026-05-09,Sussan Ley,Liberal,44743,43.41,https://en.wikipedia.org/wiki/2026_Farrer_by-election
-fed,Farrer,2026-05-09,Michelle Milthorpe,Independent,20567,19.96,https://en.wikipedia.org/wiki/2026_Farrer_by-election
-fed,Farrer,2026-05-09,Glen Hyde,Labor,15551,15.09,https://en.wikipedia.org/wiki/2026_Farrer_by-election
-fed,Farrer,2026-05-09,Emma Hicks,One Nation,6803,6.6,https://en.wikipedia.org/wiki/2026_Farrer_by-election
-fed,Farrer,2026-05-09,Richard Hendrie,Greens,5085,4.93,https://en.wikipedia.org/wiki/2026_Farrer_by-election
-fed,Farrer,2026-05-09,Peter Sinclair,"Shooters, Fishers, Farmers",3577,3.47,https://en.wikipedia.org/wiki/2026_Farrer_by-election
-fed,Farrer,2026-05-09,Tanya Hargraves,Trumpet of Patriots,2441,2.37,https://en.wikipedia.org/wiki/2026_Farrer_by-election
-fed,Farrer,2026-05-09,Rebecca Scriven,Family First,2218,2.15,https://en.wikipedia.org/wiki/2026_Farrer_by-election
-fed,Farrer,2026-05-09,David O'Reilly,People First,2078,2.02,https://en.wikipedia.org/wiki/2026_Farrer_by-election
+fed,Farrer,2026-05-09,David Farley,One Nation,40042,39.53,https://en.wikipedia.org/wiki/2026_Farrer_by-election
+fed,Farrer,2026-05-09,Michelle Milthorpe,Independent,28442,28.08,https://en.wikipedia.org/wiki/2026_Farrer_by-election
+fed,Farrer,2026-05-09,Raissa Butkowski,Liberal,12572,12.41,https://en.wikipedia.org/wiki/2026_Farrer_by-election
+fed,Farrer,2026-05-09,Brad Robertson,National,9901,9.78,https://en.wikipedia.org/wiki/2026_Farrer_by-election
+fed,Farrer,2026-05-09,Aimee Lee Pearson,Legalise Cannabis,2357,2.33,https://en.wikipedia.org/wiki/2026_Farrer_by-election
+fed,Farrer,2026-05-09,Richard August Hendrie,Greens,2346,2.32,https://en.wikipedia.org/wiki/2026_Farrer_by-election
+fed,Farrer,2026-05-09,Peter Sinclair,"Shooters, Fishers, Farmers",1981,1.96,https://en.wikipedia.org/wiki/2026_Farrer_by-election
+fed,Farrer,2026-05-09,Rebecca Scriven,Family First,1234,1.22,https://en.wikipedia.org/wiki/2026_Farrer_by-election
+fed,Farrer,2026-05-09,Gary Jean Pappin,Independent,790,0.78,https://en.wikipedia.org/wiki/2026_Farrer_by-election
+fed,Farrer,2026-05-09,Jamie Bonnefin,People First,705,0.7,https://en.wikipedia.org/wiki/2026_Farrer_by-election
+fed,Farrer,2026-05-09,Lucas James Ellis,Sustainable Australia,595,0.59,https://en.wikipedia.org/wiki/2026_Farrer_by-election
+fed,Farrer,2026-05-09,Roger Woodward,Independent,321,0.32,https://en.wikipedia.org/wiki/2026_Farrer_by-election
 nsw,Dubbo,2004-11-20,Dawn Fardell,Independent,19511,50.56,https://en.wikipedia.org/wiki/2004_Dubbo_state_by-election
 nsw,Dubbo,2004-11-20,Jen Cowley,National,16365,42.41,https://en.wikipedia.org/wiki/2004_Dubbo_state_by-election
 nsw,Dubbo,2004-11-20,Terrance Loughlin,Greens,1390,3.6,https://en.wikipedia.org/wiki/2004_Dubbo_state_by-election
@@ -643,12 +646,10 @@ nsw,Clarence,2011-11-19,Wade Walker,Independent,979,2.3,https://en.wikipedia.org
 nsw,Clarence,2011-11-19,Bethany Camac,Christian Democrats,832,1.9,https://en.wikipedia.org/wiki/2011_Clarence_state_by-election
 nsw,Clarence,2011-11-19,Kolo Toure,Independent,372,0.9,https://en.wikipedia.org/wiki/2011_Clarence_state_by-election
 nsw,Clarence,2011-11-19,David Robinson,Democrats,272,0.6,https://en.wikipedia.org/wiki/2011_Clarence_state_by-election
-nsw,Heffron,2012-08-25,Kristina Keneally,Labor,18870,41.2,https://en.wikipedia.org/wiki/2012_Heffron_state_by-election
-nsw,Heffron,2012-08-25,Patrice Pandeleos,Liberal,15226,33.3,https://en.wikipedia.org/wiki/2012_Heffron_state_by-election
-nsw,Heffron,2012-08-25,Mehreen Faruqi,Greens,8681,19,https://en.wikipedia.org/wiki/2012_Heffron_state_by-election
-nsw,Heffron,2012-08-25,John Forster,Independent,1865,4.1,https://en.wikipedia.org/wiki/2012_Heffron_state_by-election
-nsw,Heffron,2012-08-25,Katalin Ferrier,Christian Democrats,871,1.9,https://en.wikipedia.org/wiki/2012_Heffron_state_by-election
-nsw,Heffron,2012-08-25,Trevor Rowe,,254,0.6,https://en.wikipedia.org/wiki/2012_Heffron_state_by-election
+nsw,Heffron,2012-08-25,Ron Hoenig,Labor,20501,58.9,https://en.wikipedia.org/wiki/2012_Heffron_state_by-election
+nsw,Heffron,2012-08-25,Mehreen Faruqi,Greens,8122,23.3,https://en.wikipedia.org/wiki/2012_Heffron_state_by-election
+nsw,Heffron,2012-08-25,Drew Simmons,Democrats,3749,10.8,https://en.wikipedia.org/wiki/2012_Heffron_state_by-election
+nsw,Heffron,2012-08-25,Robyn Peebles,Christian Democrats,2442,7,https://en.wikipedia.org/wiki/2012_Heffron_state_by-election
 nsw,Sydney,2012-10-27,Alex Greenwich,Independent,17687,47.3,https://en.wikipedia.org/wiki/2012_Sydney_state_by-election
 nsw,Sydney,2012-10-27,Shayne Mallard,Liberal,11543,30.9,https://en.wikipedia.org/wiki/2012_Sydney_state_by-election
 nsw,Sydney,2012-10-27,Chris Harris,Greens,6616,17.7,https://en.wikipedia.org/wiki/2012_Sydney_state_by-election
@@ -748,17 +749,16 @@ nt,Fannie Bay,2022-08-20,Jonathan Parry,Greens,699,19.9,https://en.wikipedia.org
 nt,Fannie Bay,2022-08-20,Leah Potter,Independent,103,2.9,https://en.wikipedia.org/wiki/2022_Fannie_Bay_by-election
 nt,Fannie Bay,2022-08-20,Raj Samson Rajwin,Independent,84,2.4,https://en.wikipedia.org/wiki/2022_Fannie_Bay_by-election
 nt,Fannie Bay,2022-08-20,George Mamouzellos,Independent,30,0.9,https://en.wikipedia.org/wiki/2022_Fannie_Bay_by-election
-nt,Arafura,2023-03-18,Lawrence Costa,Labor,1269,49,https://en.wikipedia.org/wiki/2023_Arafura_by-election
-nt,Arafura,2023-03-18,Gibson Illortaminni,Country Liberal,1041,40.2,https://en.wikipedia.org/wiki/2023_Arafura_by-election
-nt,Arafura,2023-03-18,Tristan Mungatopi,Independent,199,7.7,https://en.wikipedia.org/wiki/2023_Arafura_by-election
-nt,Arafura,2023-03-18,George Laughton,Territory Alliance,82,3.2,https://en.wikipedia.org/wiki/2023_Arafura_by-election
+nt,Arafura,2023-03-18,Manuel Brown,Labor,2038,66.7,https://en.wikipedia.org/wiki/2023_Arafura_by-election
+nt,Arafura,2023-03-18,Leslie Tungatalum,Country Liberal,897,29.4,https://en.wikipedia.org/wiki/2023_Arafura_by-election
+nt,Arafura,2023-03-18,Alan Middleton,Federation,120,3.9,https://en.wikipedia.org/wiki/2023_Arafura_by-election
 nt,Nightcliff,2026-03-07,Natasha Fyles,Labor,1467,32.8,https://en.wikipedia.org/wiki/2026_Nightcliff_by-election
 nt,Nightcliff,2026-03-07,Helen Secretary,Country Liberal,1060,23.7,https://en.wikipedia.org/wiki/2026_Nightcliff_by-election
 nt,Nightcliff,2026-03-07,Kat McNamara,Greens,981,22,https://en.wikipedia.org/wiki/2026_Nightcliff_by-election
 nt,Nightcliff,2026-03-07,Mililma May,Independent,858,19.2,https://en.wikipedia.org/wiki/2026_Nightcliff_by-election
 nt,Nightcliff,2026-03-07,George Mamouzellos,Independent,102,2.3,https://en.wikipedia.org/wiki/2026_Nightcliff_by-election
-nt,Mulka,2026-09-12,Yingiya Mark Guyula,Independent,2299,75.2,https://en.wikipedia.org/wiki/2026_Mulka_by-election
-nt,Mulka,2026-09-12,Allen Fanning,Country Liberal,758,24.8,https://en.wikipedia.org/wiki/2026_Mulka_by-election
+nt,Mulka,2026-09-12,Yiwarr McGrath,Labor,1960,77.3,https://en.wikipedia.org/wiki/2026_Mulka_by-election
+nt,Mulka,2026-09-12,Andrew Blamey,Independent,574,22.7,https://en.wikipedia.org/wiki/2026_Mulka_by-election
 qld,Chatsworth,2005-08-20,Michael Caltabiano,Liberal,12572,48.28,https://en.wikipedia.org/wiki/2005_Chatsworth_state_by-election
 qld,Chatsworth,2005-08-20,Chris Forrester,Labor,11076,42.54,https://en.wikipedia.org/wiki/2005_Chatsworth_state_by-election
 qld,Chatsworth,2005-08-20,Elissa Jenkins,Greens,1880,7.22,https://en.wikipedia.org/wiki/2005_Chatsworth_state_by-election
@@ -809,17 +809,22 @@ qld,Toowoomba South,2016-07-16,Alexandra Todd,Family First,2019,7.2,https://en.w
 qld,Toowoomba South,2016-07-16,Ken Gover,Greens,1519,5.42,https://en.wikipedia.org/wiki/2016_Toowoomba_South_state_by-election
 qld,Toowoomba South,2016-07-16,Ken Elliott,Katter's Australian,1188,4.24,https://en.wikipedia.org/wiki/2016_Toowoomba_South_state_by-election
 qld,Toowoomba South,2016-07-16,Rob Berry,Independent,486,1.73,https://en.wikipedia.org/wiki/2016_Toowoomba_South_state_by-election
-qld,Hinchinbrook,2025-11-29,Nick Dametto,Katter's Australian,15351,46.42,https://en.wikipedia.org/wiki/2025_Hinchinbrook_state_by-election
-qld,Hinchinbrook,2025-11-29,Annette Swaine,Liberal National,9331,28.22,https://en.wikipedia.org/wiki/2025_Hinchinbrook_state_by-election
-qld,Hinchinbrook,2025-11-29,Ina Pryor,Labor,4639,14.03,https://en.wikipedia.org/wiki/2025_Hinchinbrook_state_by-election
-qld,Hinchinbrook,2025-11-29,Ric Daubert,One Nation,1523,4.6,https://en.wikipedia.org/wiki/2025_Hinchinbrook_state_by-election
-qld,Hinchinbrook,2025-11-29,Kevin Wheatley,Legalise Cannabis,1181,3.57,https://en.wikipedia.org/wiki/2025_Hinchinbrook_state_by-election
-qld,Hinchinbrook,2025-11-29,Jon Kowski,Greens,1044,3.16,https://en.wikipedia.org/wiki/2025_Hinchinbrook_state_by-election
-qld,Stafford,2026-05-16,Jimmy Sullivan,Labor,13856,38.77,https://en.wikipedia.org/wiki/2026_Stafford_state_by-election
-qld,Stafford,2026-05-16,Fiona Hammond,Liberal National,13605,38.06,https://en.wikipedia.org/wiki/2026_Stafford_state_by-election
-qld,Stafford,2026-05-16,Jess Lane,Greens,6456,18.06,https://en.wikipedia.org/wiki/2026_Stafford_state_by-election
-qld,Stafford,2026-05-16,Stuart Andrews,One Nation,1134,3.17,https://en.wikipedia.org/wiki/2026_Stafford_state_by-election
-qld,Stafford,2026-05-16,Alan Denaro,Family First,692,1.94,https://en.wikipedia.org/wiki/2026_Stafford_state_by-election
+qld,Hinchinbrook,2025-11-29,Wayde Chiesa,Liberal National,12271,41.23,https://en.wikipedia.org/wiki/2025_Hinchinbrook_state_by-election
+qld,Hinchinbrook,2025-11-29,Mark Molachino,Katter's Australian,8964,30.12,https://en.wikipedia.org/wiki/2025_Hinchinbrook_state_by-election
+qld,Hinchinbrook,2025-11-29,Luke Sleep,One Nation,4011,13.48,https://en.wikipedia.org/wiki/2025_Hinchinbrook_state_by-election
+qld,Hinchinbrook,2025-11-29,Maurie Soars,Labor,2490,8.37,https://en.wikipedia.org/wiki/2025_Hinchinbrook_state_by-election
+qld,Hinchinbrook,2025-11-29,Aiden Creagh,Greens,1046,3.51,https://en.wikipedia.org/wiki/2025_Hinchinbrook_state_by-election
+qld,Hinchinbrook,2025-11-29,Amanda Nickson,Family First,646,2.17,https://en.wikipedia.org/wiki/2025_Hinchinbrook_state_by-election
+qld,Hinchinbrook,2025-11-29,Steven Clare,Independent,333,1.12,https://en.wikipedia.org/wiki/2025_Hinchinbrook_state_by-election
+qld,Stafford,2026-05-16,Fiona Hammond,Liberal National,13146,40.34,https://en.wikipedia.org/wiki/2026_Stafford_state_by-election
+qld,Stafford,2026-05-16,Luke Richmond,Labor,10034,30.79,https://en.wikipedia.org/wiki/2026_Stafford_state_by-election
+qld,Stafford,2026-05-16,Jess Lane,Greens,4777,14.66,https://en.wikipedia.org/wiki/2026_Stafford_state_by-election
+qld,Stafford,2026-05-16,Liam Parry,Independent,1244,3.82,https://en.wikipedia.org/wiki/2026_Stafford_state_by-election
+qld,Stafford,2026-05-16,Jacqueline Verne,Legalise Cannabis,960,2.95,https://en.wikipedia.org/wiki/2026_Stafford_state_by-election
+qld,Stafford,2026-05-16,Alan Denaro,Family First,767,2.35,https://en.wikipedia.org/wiki/2026_Stafford_state_by-election
+qld,Stafford,2026-05-16,Lucy O’Brien,Animal Justice,680,2.09,https://en.wikipedia.org/wiki/2026_Stafford_state_by-election
+qld,Stafford,2026-05-16,Damian Smart,Independent,612,1.88,https://en.wikipedia.org/wiki/2026_Stafford_state_by-election
+qld,Stafford,2026-05-16,Daniel Selff,Libertarian,370,1.14,https://en.wikipedia.org/wiki/2026_Stafford_state_by-election
 sa,Frome,2009-01-17,Terry Boylan,Liberal,7576,39.24,https://en.wikipedia.org/wiki/2009_Frome_state_by-election
 sa,Frome,2009-01-17,John Rohde,Labor,5041,26.11,https://en.wikipedia.org/wiki/2009_Frome_state_by-election
 sa,Frome,2009-01-17,Geoff Brock,Independent Your Voice,4557,23.6,https://en.wikipedia.org/wiki/2009_Frome_state_by-election
@@ -1047,16 +1052,28 @@ wa,North West Central,2022-09-17,Peter Dunne,Independent,55,1.1,https://en.wikip
 wa,North West Central,2022-09-17,Peter Baker,Small Business,55,1.1,https://en.wikipedia.org/wiki/2022_North_West_Central_state_by-election
 wa,North West Central,2022-09-17,Tony Stokes,Independent,44,0.9,https://en.wikipedia.org/wiki/2022_North_West_Central_state_by-election
 wa,North West Central,2022-09-17,Jake McCoull,Liberal Democrats,42,0.8,https://en.wikipedia.org/wiki/2022_North_West_Central_state_by-election
-wa,Rockingham,2023-07-29,Mark McGowan,Labor,19661,82.8,https://en.wikipedia.org/wiki/2023_Rockingham_state_by-election
-wa,Rockingham,2023-07-29,Michael McClure,Liberal,2322,9.8,https://en.wikipedia.org/wiki/2023_Rockingham_state_by-election
-wa,Rockingham,2023-07-29,Breanna Morgan,Greens,753,3.2,https://en.wikipedia.org/wiki/2023_Rockingham_state_by-election
-wa,Rockingham,2023-07-29,Geoff George,One Nation,489,2.1,https://en.wikipedia.org/wiki/2023_Rockingham_state_by-election
-wa,Rockingham,2023-07-29,Tom Hawkins,No Mandatory Vaccination,383,1.6,https://en.wikipedia.org/wiki/2023_Rockingham_state_by-election
-wa,Rockingham,2023-07-29,William Lofts,Liberal Democrats,151,0.6,https://en.wikipedia.org/wiki/2023_Rockingham_state_by-election
-wa,Secret Harbour,2026-08-29,Paul Papalia,Labor,12876,46.5,https://en.wikipedia.org/wiki/2026_Secret_Harbour_state_by-election
-wa,Secret Harbour,2026-08-29,Mark Jones,Liberal,6913,25,https://en.wikipedia.org/wiki/2026_Secret_Harbour_state_by-election
-wa,Secret Harbour,2026-08-29,Tamsyn Heynes,Greens,2439,8.8,https://en.wikipedia.org/wiki/2026_Secret_Harbour_state_by-election
-wa,Secret Harbour,2026-08-29,Liam Hall,One Nation,2332,8.4,https://en.wikipedia.org/wiki/2026_Secret_Harbour_state_by-election
-wa,Secret Harbour,2026-08-29,Jim Matters,Legalise Cannabis,1623,5.9,https://en.wikipedia.org/wiki/2026_Secret_Harbour_state_by-election
-wa,Secret Harbour,2026-08-29,Robert Burdett,Christians,755,2.7,https://en.wikipedia.org/wiki/2026_Secret_Harbour_state_by-election
-wa,Secret Harbour,2026-08-29,Elizabeth Storer,Animal Justice,723,2.6,https://en.wikipedia.org/wiki/2026_Secret_Harbour_state_by-election
+wa,Rockingham,2023-07-29,Magenta Marshall,Labor,10791,49.33,https://en.wikipedia.org/wiki/2023_Rockingham_state_by-election
+wa,Rockingham,2023-07-29,Peter Hudson,Liberal,3868,17.73,https://en.wikipedia.org/wiki/2023_Rockingham_state_by-election
+wa,Rockingham,2023-07-29,Hayley Edwards,Independent,3488,15.95,https://en.wikipedia.org/wiki/2023_Rockingham_state_by-election
+wa,Rockingham,2023-07-29,Rae Cottam,Legalise Cannabis,1487,6.8,https://en.wikipedia.org/wiki/2023_Rockingham_state_by-election
+wa,Rockingham,2023-07-29,Madeleine De Jong,Greens,1081,4.94,https://en.wikipedia.org/wiki/2023_Rockingham_state_by-election
+wa,Rockingham,2023-07-29,Mike Crichton,Christians,534,2.44,https://en.wikipedia.org/wiki/2023_Rockingham_state_by-election
+wa,Rockingham,2023-07-29,Janetia Knapp,Western Australia,262,1.2,https://en.wikipedia.org/wiki/2023_Rockingham_state_by-election
+wa,Rockingham,2023-07-29,Clive Gallety,Independent,193,0.88,https://en.wikipedia.org/wiki/2023_Rockingham_state_by-election
+wa,Rockingham,2023-07-29,Peter Dunne,Independent,170,0.78,https://en.wikipedia.org/wiki/2023_Rockingham_state_by-election
+wa,Secret Harbour,2026-08-29,Luke Herdegen,One Nation,10862,39.12,https://en.wikipedia.org/wiki/2026_Secret_Harbour_state_by-election
+wa,Secret Harbour,2026-08-29,Georgia Tree,Labor,6698,24.12,https://en.wikipedia.org/wiki/2026_Secret_Harbour_state_by-election
+wa,Secret Harbour,2026-08-29,Ryan Robertson,Liberal,4777,17.2,https://en.wikipedia.org/wiki/2026_Secret_Harbour_state_by-election
+wa,Secret Harbour,2026-08-29,Rhi Davies,Greens,2154,7.76,https://en.wikipedia.org/wiki/2026_Secret_Harbour_state_by-election
+wa,Secret Harbour,2026-08-29,Craig Buchanan,Legalise Cannabis,1037,3.73,https://en.wikipedia.org/wiki/2026_Secret_Harbour_state_by-election
+wa,Secret Harbour,2026-08-29,Neil Jensen,Animal Justice,506,1.82,https://en.wikipedia.org/wiki/2026_Secret_Harbour_state_by-election
+wa,Secret Harbour,2026-08-29,Robert Burdett,Christians,469,1.69,https://en.wikipedia.org/wiki/2026_Secret_Harbour_state_by-election
+wa,Secret Harbour,2026-08-29,Jayne Palmer,Independent,278,1,https://en.wikipedia.org/wiki/2026_Secret_Harbour_state_by-election
+wa,Secret Harbour,2026-08-29,Matthew Barton,Libertarian,229,0.82,https://en.wikipedia.org/wiki/2026_Secret_Harbour_state_by-election
+wa,Secret Harbour,2026-08-29,Anthony Fels,Western Australia,182,0.66,https://en.wikipedia.org/wiki/2026_Secret_Harbour_state_by-election
+wa,Secret Harbour,2026-08-29,Tim Hamilton,"Shooters, Fishers, Farmers",136,0.49,https://en.wikipedia.org/wiki/2026_Secret_Harbour_state_by-election
+wa,Secret Harbour,2026-08-29,Paul Howard,Independent,116,0.42,https://en.wikipedia.org/wiki/2026_Secret_Harbour_state_by-election
+wa,Secret Harbour,2026-08-29,Brett Murrell,Independent,106,0.38,https://en.wikipedia.org/wiki/2026_Secret_Harbour_state_by-election
+wa,Secret Harbour,2026-08-29,Teresa van Lieshout,Independent,102,0.37,https://en.wikipedia.org/wiki/2026_Secret_Harbour_state_by-election
+wa,Secret Harbour,2026-08-29,Paul Gullan,Independent,60,0.22,https://en.wikipedia.org/wiki/2026_Secret_Harbour_state_by-election
+wa,Secret Harbour,2026-08-29,Peter Dunne,Independent,57,0.21,https://en.wikipedia.org/wiki/2026_Secret_Harbour_state_by-election
