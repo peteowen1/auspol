@@ -101,6 +101,8 @@ if ("--merge" %in% commandArgs(trailingOnly = TRUE)) {
   add <- R[status == "ok", .(region, seat, date, candidate, party_raw, votes, pct, source)]
   m <- rbind(r, add, fill = TRUE)
   stopifnot(!anyDuplicated(m[, paste(region, seat, date, candidate)]))
-  fwrite(m, file.path("external", "reference", "byelections", "byelection-results.csv"))
+  # APPEND, never rewrite: a full fwrite reformats existing rows (1.60 -> 1.6), a 53-line diff of no change (8 Nov).
+  setcolorder(add, names(r))
+  fwrite(add, file.path("external", "reference", "byelections", "byelection-results.csv"), append = TRUE)
   cat(sprintf("BYR4 merged %d rows (%d by-elections) into byelection-results.csv: %d -> %d rows\n", nrow(add), uniqueN(add[, paste(region, seat, date)]), nrow(r), nrow(m)))
 }
