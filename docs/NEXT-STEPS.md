@@ -16,7 +16,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - **Status 8 Nov 7:30pm.** LIVE: publish of 1:05pm (snapshot `20261108-1305-eb0d3f49-from9`): AEF-7 seat log loss 0.2536
   (AEF 0.2825), 35 elections 0.3211, TCP same seats 3.62 vs AEF 3.73 (n 667). PRs #202-#208 merged; dev = main. I publish
   myself (Pete, 8 Nov). NEXT SESSION FIRST: the 2am full rebuild from stage 1 (`deciding-runs/20261108-1914-rebuild/`,
-  commit 1d3709e9, carries the completed by-election table, PR #208; screen said 35 elections -0.0040): read its marker,
+  commit 1d3709e9; 8 Nov 9:45pm only 2.3 GB free, kernel pools 6.2 GB, Pete chose to leave it, so FAILED "missed its window"
+  is expected: then `powershell.exe -File scripts\scheduled_rebuild.ps1 -Now` in the day; carries the completed by-election table, PR #208; screen said 35 elections -0.0040): read its marker,
   compare the scoreboard with 0.3211 / 0.2536, publish if clean, verify the uploaded `aef7-ledger.html`. Then read the
   daily run's conclusion. OPEN: VEC feed access (Pete's chase) for 10 Nov (`scripts/nomination_day.sh`, dry-run tested).
   Memory sits at 2-7 GB; Claude Code's low-memory stop kills background shells, not detached jobs. Run
