@@ -13,13 +13,14 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   9 Nov, condition One Nation's anchor/blend on how many seats it stands in; (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 8 Nov 1:05pm.** PUBLISHED (snapshot `20261108-1305-eb0d3f49-from9`, asset checked): AEF-7 seat log loss 0.2536
-  (AEF 0.2825), 35 elections 0.3211, TCP same seats 3.62 vs AEF 3.73 (n 667). PRs #202-#207 merged; I publish myself from
-  now on (Pete, 8 Nov). Read the next daily run's conclusion. OPEN: VEC feed access (Pete's chase), needed for 10 Nov.
+- **Status 8 Nov 7:30pm.** LIVE: publish of 1:05pm (snapshot `20261108-1305-eb0d3f49-from9`): AEF-7 seat log loss 0.2536
+  (AEF 0.2825), 35 elections 0.3211, TCP same seats 3.62 vs AEF 3.73 (n 667). PRs #202-#208 merged; dev = main. I publish
+  myself (Pete, 8 Nov). NEXT SESSION FIRST: the 2am full rebuild from stage 1 (`deciding-runs/20261108-1914-rebuild/`,
+  commit 1d3709e9, carries the completed by-election table, PR #208; screen said 35 elections -0.0040): read its marker,
+  compare the scoreboard with 0.3211 / 0.2536, publish if clean, verify the uploaded `aef7-ledger.html`. Then read the
+  daily run's conclusion. OPEN: VEC feed access (Pete's chase) for 10 Nov (`scripts/nomination_day.sh`, dry-run tested).
   Memory sits at 2-7 GB; Claude Code's low-memory stop kills background shells, not detached jobs. Run
   `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
-- IN FLIGHT 8 Nov 7pm: by-election table COMPLETED and shipping (DECISIONS 2026-11-08): PR, then full rebuild from stage 1
-  (scheduled 2am), then publish. Merredin 2001 has no Wikipedia page.
 - OPEN (review 8 Nov, pre-existing classifier): `classify_party("Independent Liberal")` returns LNP (5 by-election
   rows: Werriwa 2005 x2, South-West Coast 2015, Perth 2018, Enfield 2019, Melbourne 2012), while "Ind. Climate
   Sceptics" goes to OTH; an "Independent X" label is an independent. Fix in `R/parties.R` with a test; screen it.
