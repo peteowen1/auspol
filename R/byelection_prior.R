@@ -14,13 +14,16 @@
 # is on, which fills the absent major back in (18 of 54 by-elections skip a
 # major, four of them live Victorian seats).
 
+# AUSPOL_BYELECTION_RESULTS: a screen points this (and R/new_ind_shrink.R) at another copy of the table; "" = the shipped file.
 #' Read the by-election results table
 #'
 #' @param path CSV with columns region, seat, date, candidate, party_raw,
-#'   votes, pct, source.
+#'   votes, pct, source. `NULL` (the default) reads `AUSPOL_BYELECTION_RESULTS`
+#'   when set, else `external/reference/byelections/byelection-results.csv`.
 #' @return data.table with an added `party` class column, or NULL when absent.
 #' @export
-byelection_table <- function(path = file.path("external", "reference", "byelections", "byelection-results.csv")) {
+byelection_table <- function(path = NULL) {
+  if (is.null(path)) { path <- Sys.getenv("AUSPOL_BYELECTION_RESULTS", ""); if (!nzchar(path)) path <- file.path("external", "reference", "byelections", "byelection-results.csv") }
   if (!file.exists(path)) { cat(sprintf("BF0b! by-election table missing at %s -- AUSPOL_BYELECTION_PRIOR does NOTHING this run\n", path)); return(NULL) }
   d <- data.table::fread(path, showProgress = FALSE)
   need <- c("region", "seat", "date", "party_raw", "pct")

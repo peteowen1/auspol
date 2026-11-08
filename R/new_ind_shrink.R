@@ -79,7 +79,8 @@ post_xgb_switches <- function() {
 .ni_byelection_people <- function(byelection = NULL) {
   tab <- byelection
   if (is.null(tab)) {
-    f <- file.path(pkg_root(), "external", "reference", "byelections", "byelection-results.csv")
+    f <- Sys.getenv("AUSPOL_BYELECTION_RESULTS", "")
+    if (!nzchar(f)) f <- file.path(pkg_root(), "external", "reference", "byelections", "byelection-results.csv")
     if (!file.exists(f)) {
       cat("NI1! by-election table missing: by-election candidates are NOT excluded from the cell set\n")
       return(data.table::data.table(region = character(0), date = as.Date(character(0)), pkey = character(0)))
