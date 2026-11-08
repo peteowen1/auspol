@@ -78,7 +78,8 @@ parse_page <- function(f) {
     out <- data.table(candidate = trimws(as.character(t[[ci]])), party_raw = if (!is.na(pcol)) trimws(as.character(t[[pcol]])) else NA_character_,
                       votes = num(t[[vi]]), pct = if (!is.na(pc)) num(t[[pc]]) else NA_real_)
     out <- out[is.finite(votes) & votes > 0 & nzchar(candidate) &
-               !grepl("total|formal|informal|turnout|two-candidate|two-party|registered|swing|hold|gain", tolower(paste(candidate, party_raw)))]
+               # whole summary labels only: a bare substring dropped any candidate named Holden or Gainsford (review, 8 Nov)
+               !grepl("^(total|formal|informal|turnout|registered|swing)\\b|two-candidate|two-party|\\b(hold|gain from)\\b", tolower(paste(candidate, party_raw)), perl = TRUE)]   # perl: TRE has no \b
     if (nrow(out) >= 2) { if (anyNA(out$pct)) out[, pct := round(100 * votes / sum(votes), 2)]; found[[length(found) + 1L]] <- out }
   }
   if (!length(found)) return(NULL)
