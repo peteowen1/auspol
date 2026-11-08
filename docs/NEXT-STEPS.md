@@ -23,7 +23,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
 - OPEN (review 8 Nov, pre-existing classifier): `classify_party("Independent Liberal")` returns LNP (5 by-election
   rows: Werriwa 2005 x2, South-West Coast 2015, Perth 2018, Enfield 2019, Melbourne 2012), while "Ind. Climate
-  Sceptics" goes to OTH; an "Independent X" label is an independent. Fix in `R/parties.R` with a test; screen it.
+  Sceptics" goes to OTH; an "Independent X" label is an independent. BUILT 8 Nov on branch `indlib-1108` (`51780a7f`,
+  worktree `C:\dev\auspol-indlib`): 7 labels move to IND, test proven. MERGE ONLY AFTER the 10 Nov nominations build:
+  it moves sa2022 Taylor (Kuhlmann) in `candidacies.csv`, which BC11 refuses. SCREENED 8 Nov (1k sims, 8 elections,
+  relabelled copy of the by-election table via `AUSPOL_BYELECTION_RESULTS`): shares on 27 moved cells -60% squared error
+  (SE 244 on 457); Liberal primary now right where the Liberals skipped the by-election (Melbourne vic2014 15.7 -> 23.7 v
+  24.1, Perth fed2019 24.2 -> 36.7 v 37.4, Werriwa, Enfield); seat log loss +0.0011 (SE 0.0011), all Melbourne 2014
+  (GRN won, 0.169 -> 0.069) and Perth 2019. Ship-on-correctness question put to Pete 8 Nov.
 - CLOSED FOR NOW (Pete 6 Nov; built, off, reopen only with a new design walk): class split `AUSPOL_CLASS_SPLIT`, refused
   twice (DECISIONS 2026-11-06; `plans/prereg-class-split-2026-11-06.md`). Pre-existing, open, display only: a final two of
   one class (LNP|LNP, IND|IND) leaves the second side empty in the TCP tables (`R/tcp_scenarios.R` setdiff, `fit_seats_full.R:2166`).
@@ -239,8 +245,8 @@ weighting by track record, seat-poll precision blend, typical-vote independent m
   and #895, "The leaders" in `politics/_forecast-body.qmd`.)
 - CORRECTED 5 Nov: the breakdowns did NOT stop. BludgerTrack still publishes them (refetched 5 Nov, newest fieldwork
   25 Oct, raw `external/reference/polls/pollbludger/raw/bludgertrack/fed2028-current-2026-11-05.xml`; branch
-  `fed-breakdowns-trend-1105` builds the union, 704 polls). OPEN, small: feed BludgerTrack's state rows into
-  `output/fed-state-breakdowns.csv` so the shipped blend stops decaying (FK3 trips ~20 Nov). Wikipedia's part: deleted the sub-national
+  `fed-breakdowns-trend-1105` builds the union, 704 polls). Feeding BludgerTrack's rows into the blend was REFUSED by
+  Pete 5 Nov (DECISIONS; `--with-bt`, off), so the blend's federal share is decaying by choice; FK3 (~20 Nov) only warns. Wikipedia's part: deleted the sub-national
   sections from the fed2028 page on 24 Oct (revision 1381724607, "excessive detail"; checked 5 Nov). The last
   pre-deletion revision (1381712590, saved as `raw/fed2028_opinion-oldid1381712590.html`) parses to the same 471 polls
   as ours, so nothing was added after 6 Oct either. Adding `fed2028_opinion` to the CI fetch would lose rows (PM2!).
