@@ -48,6 +48,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   Low priority, pre-existing: `fit_nsw.R`/`fit_federal.R`/`fit_vic.R` read same-year flow rows; they feed no backtest.
   OPEN, pre-existing (review 8 Nov): `AUSPOL_REBUILD_ONLY` reuse (`reuse_check()`, `rebuild_forecasts.sh`) checks file age, not
   flags, so after a switch flip a rebuild that skips the affected harness silently reuses its old-config results.
+  BUILT 8 Nov, branch `reuse-flags-1108` (`84968fd8`, worktree `C:\dev\auspol-reuse`): reuse requires the fingerprint
+  `scripts/expected_arm_tag.R` computes; `AUSPOL_STAGE6_START` (a timestamp) left the fingerprint, which had made every
+  rebuild's tag unique. Proven on fake files (old code reused a stale file). Merge after the 2am rebuild; the first
+  REBUILD_ONLY after it reuses nothing (old tags). OPEN, same area: `apply_upset_floor.R` fits only files newer than
+  `AUSPOL_STAGE6_START`, so under REBUILD_ONLY the upset-floor fit drops every reused election.
 - OPEN, blocked on the item above: `AUSPOL_POLL_SERIES_CLASS=name` (SA-Best, Katter, UAP, FF classed by full name). 20k on 7 pairs a tie
   (-0.0028, SE 0.0038); sa2018 +0.037 of which Morphett +0.031. `plans/prereg-poll-series-class-2026-11-06.md`, last section.
 - **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** History, DONE list and replay evidence:
