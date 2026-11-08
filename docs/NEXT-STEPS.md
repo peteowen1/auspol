@@ -20,6 +20,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
 - IN FLIGHT 8 Nov 7pm: by-election table COMPLETED and shipping (DECISIONS 2026-11-08): PR, then full rebuild from stage 1
   (scheduled 2am), then publish. Merredin 2001 has no Wikipedia page.
+- OPEN (review 8 Nov, pre-existing classifier): `classify_party("Independent Liberal")` returns LNP (5 by-election
+  rows: Werriwa 2005 x2, South-West Coast 2015, Perth 2018, Enfield 2019, Melbourne 2012), while "Ind. Climate
+  Sceptics" goes to OTH; an "Independent X" label is an independent. Fix in `R/parties.R` with a test; screen it.
 - CLOSED FOR NOW (Pete 6 Nov; built, off, reopen only with a new design walk): class split `AUSPOL_CLASS_SPLIT`, refused
   twice (DECISIONS 2026-11-06; `plans/prereg-class-split-2026-11-06.md`). Pre-existing, open, display only: a final two of
   one class (LNP|LNP, IND|IND) leaves the second side empty in the TCP tables (`R/tcp_scenarios.R` setdiff, `fit_seats_full.R:2166`).
