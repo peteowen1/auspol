@@ -307,7 +307,10 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
 
 ## Dated, cannot move
 
-- **9 November 2026, 12 noon: nominations close; the VEC's Candidates set-up file lands Tue 10 Nov.** PREPPED
+- **9 November 2026, 12 noon: nominations close; the VEC's Candidates set-up file lands Tue 10 Nov.** ONE COMMAND (8 Nov):
+  `bash scripts/nomination_day.sh <State2026MediaFileCandidatesV2.xml>` (fetch, build, trial forecast with zeroing on, NZL lines;
+  stops before the upload and the `AUSPOL_NOM_LIVE` flip). Dry run on the 2022 list passed 8 Nov. It opens BC11 for the queued
+  vic2006 winners fix (vic2006 459 rows, vic2010 75 historic_elected, sa2026 8) and fails if anything else moves. PREPPED
   30 Oct: `scripts/fetch_vec_candidates.R --file=<State2026MediaFileCandidatesV2.xml> --year=2026` then
   `build_candidacies.R` (`docs/PIPELINE.md` section E; proven on the 2022 file, 731 of 731 matched with the same
   class; dry run of the build and of `AUSPOL_NOM_LIVE=1` passed on a stand-in list; Daily Eight item on 10 Nov).
