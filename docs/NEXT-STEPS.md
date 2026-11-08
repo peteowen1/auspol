@@ -15,7 +15,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
 - **Status 8 Nov 9:02am.** REPUBLISHED by Pete (snapshot `20261108-0902-8fa36265-from9`; asset checked): leak-free, measured
   NSW exhaust for minor parties. AEF-7 seat log loss 0.2566 (AEF 0.2825), 35 elections 0.3213, TCP same seats 3.660 vs
-  AEF 3.727 (n 667). PRs #203-#206 merged. Next daily forecast run: read its conclusion.
+  AEF 3.727 (n 667). PRs #203-#207 merged. 12:37pm: seat flow persistence SHIPPED (Pete override, PR #207);
+  federal rebuild from stage 6 running, unpublished; then Pete's stage-9 publish. Next daily run: read its conclusion.
 - **Status 7 Nov 5pm.** Rebuild on 49f19560 PUBLISHED 4:19pm by Pete (AEF-7 0.2572 vs AEF 0.2825; 35 elections 0.3216);
   carries `AUSPOL_HTV_TABLE="researched"` and `AUSPOL_LEADER_BEFORE_BLEND="1"`. PR #202 merged. The next daily forecast
   run is the first on the new shipped models: read its conclusion.
@@ -36,7 +37,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (PR #206): C++ engine applies exhaust (NSW stage 6 ~65 -> 11 min); exhaust rates made time-forward (leak fix,
   `AUSPOL_NSW_EXHAUST_TF`). nsw2011/2015/2019 now get no exhaustion from the anchor (no earlier rates); measured rates
   from NSWEC's pages (`scripts/build_nsw_exhaust_measured.R`, all 2015/2019/2023 pages ARE cached) are the off arm
-  `AUSPOL_NSW_EXHAUST_SRC=measured` (+ `_MEAS_MAJORS=0`). Left: fed2025 (+0.73 over 130 seats, `reviews/tcp-mae-vs-aef-2026-11-07.md`).
+  `AUSPOL_NSW_EXHAUST_SRC=measured` (+ `_MEAS_MAJORS=0`), SHIPPED 8 Nov. fed2025: seat flow persistence SHIPPED 8 Nov
+  (`plans/prereg-seat-flow-persistence-2026-11-08.md`; fed2022/25 TCP -0.12 each, older federal worse). Its inputs are
+  FROZEN in git; states not built (need state TCP histories).
   Low priority, pre-existing: `fit_nsw.R`/`fit_federal.R`/`fit_vic.R` read same-year flow rows; they feed no backtest.
   OPEN, pre-existing (review 8 Nov): `AUSPOL_REBUILD_ONLY` reuse (`reuse_check()`, `rebuild_forecasts.sh`) checks file age, not
   flags, so after a switch flip a rebuild that skips the affected harness silently reuses its old-config results.
