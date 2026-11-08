@@ -1,3 +1,8 @@
+# auspol (unreleased)
+
+- **By-election results completed**: 77 by-elections that had no candidate rows (24 changed hands; Frome 2009, whose sitting member Geoff Brock was forecast at 2.8% in 2010, actual 37.7) now come from Wikipedia (`scripts/fetch_byelection_results.R`, raw pages kept, each page checked against its declared winner). Screen, 35 elections: seat log loss 0.3031 -> 0.2991 (-0.0040, SE 0.0028); sa2010 -0.155, nt2024 -0.125; leave-one-election-out worst -0.0015. `AUSPOL_BYELECTION_RESULTS` points the readers at another copy for screens.
+- The data registry lists every `external/reference/` folder (33, was 12).
+
 # auspol 0.4.147
 
 - **Seat flow persistence in the federal backtests** (`AUSPOL_SEAT_FLOW_PERSIST="1"`; Pete, 8 Nov, over a screen refusal): each seat's Labor-vs-Coalition transfers shift by a time-forward weight (~0.35-0.45) times how far its flow beat or missed our prediction last election. Screen: fed2022/fed2025 seat log loss -0.0031/-0.0092 and TCP error about -0.12 each; fed2013/16/19 worse; pooled -0.0004 (SE 0.0026). Inputs frozen in git. A per-seat shrinkage variant was screened and was not better.

@@ -18,10 +18,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   now on (Pete, 8 Nov). Read the next daily run's conclusion. OPEN: VEC feed access (Pete's chase), needed for 10 Nov.
   Memory sits at 2-7 GB; Claude Code's low-memory stop kills background shells, not detached jobs. Run
   `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
-- IN FLIGHT 8 Nov 6pm: by-election table COMPLETED on dev (77 of 78 missing by-elections, 595 rows, from Wikipedia via
-  `scripts/fetch_byelection_results.R`; Frome 2009's sitting member Brock was forecast at 2.8% for want of it). First
-  screen -0.0034 (SE 0.0027) used 8 wrongly parsed pages (fixed after review); re-screen running. Then PR, full rebuild
-  from stage 1 (scheduled 2am), publish. Merredin 2001 has no Wikipedia page.
+- IN FLIGHT 8 Nov 7pm: by-election table COMPLETED and shipping (DECISIONS 2026-11-08): PR, then full rebuild from stage 1
+  (scheduled 2am), then publish. Merredin 2001 has no Wikipedia page.
 - CLOSED FOR NOW (Pete 6 Nov; built, off, reopen only with a new design walk): class split `AUSPOL_CLASS_SPLIT`, refused
   twice (DECISIONS 2026-11-06; `plans/prereg-class-split-2026-11-06.md`). Pre-existing, open, display only: a final two of
   one class (LNP|LNP, IND|IND) leaves the second side empty in the TCP tables (`R/tcp_scenarios.R` setdiff, `fit_seats_full.R:2166`).
