@@ -30,8 +30,6 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - OPEN: the newcomer-independent under-call (the per-candidate model gives a newcomer the generic 4-8% beside a sitting
   member). `AUSPOL_MC_EXTRA=sal` has no route to the forecast that helps (screened 7 Nov; DECISIONS 2026-11-07;
   `reviews/aef7-gap-and-sal-screen-2026-11-07.md` section 1). Refits take 73 s with `AUSPOL_MC_ROUNDS_FROM`.
-- ANSWERED 7 Nov, nothing to ship: where we lose to AEF on AEF-7 (IND/GRN widening refused, salience bias weak,
-  by-election weight 0.5 stands). `reviews/aef7-gap-and-sal-screen-2026-11-07.md` section 2.
 - OPEN 7-8 Nov, TCP error vs AEF (Pete): NSW exhaustion SHIPPED (`plans/prereg-nsw-exhaust-tcp-2026-11-07.md`); ledger
   TCP headline scores both sides on the SAME seats: 3.654 vs AEF 3.727 (n 667), goal met (PR #205). 8 Nov on dev
   (PR #206): C++ engine applies exhaust (NSW stage 6 ~65 -> 11 min); exhaust rates made time-forward (leak fix,
@@ -209,8 +207,6 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   surge flag, sa2018 IND (SA-Best, +13.9 actual) was "surging" from its own result; read the surge arms first.
 - OPEN wa2017 / wa2013 regressions: Hillarys and Churchlands traced in SEAT-REGISTRY; Lib/Nat two-candidate part SHIPPED
   17 Oct. The WA 2017 swing-seat lift is now traced in NEEDS PETE ("OPEN from the 30 Oct walks", 4 Nov).
-- CLOSED 8 Nov (Pete asked for it per party, with shrinkage): a per-state statewide level correction does not carry forward.
-  DECISIONS 2026-11-08.
 - OPEN NT seat layer: over-confidence fixed by the size spread (20k: nt2016 0.80, nt2020 0.65, nt2024 1.07, from
   0.99/0.81/1.41); still weak, and new parties start at zero share.
 - OPEN qld2017: One Nation / Katter seats given ~0 (emergence); qld2012 Katter polled inside Others.
@@ -264,9 +260,6 @@ weighting by track record, seat-poll precision blend, typical-vote independent m
   draw per simulation per flow, sized time-forward and shrunk. Liberal-to-ON varies 54-85% by election.
 - OPEN re-score Richmond/Footscray/Brunswick/Preston/Pascoe Vale 2022 after AUSPOL_LEVEL_RECENT; shrink the
   person-rule slope toward the ratio carry (Pete, 2026-10-11).
-- CLOSED 8 Nov, SUPERSEDED by arm H (18 Oct): the miss-table seats traced 16 Oct to the seat-poll blend (Parkes, New
-  England, Dawson 2022, McMahon 2025, Malvern 2022, Bankstown 2023) are now all called right at 0.93-0.99, level with AEF;
-  their "untried" Others-lump split shipped as `AUSPOL_SEAT_POLL_SPLIT_ALL="1"`. Primaries still 2-6 points low.
 - OPEN speed (`reviews/fast-iter-profile-2026-10-11.md`): read-set cache keys for defectors, personal prior vote,
   departed slope, salience (~25 s of a 54 s vic run); seat-poll memo keys on every switch.
 
@@ -376,8 +369,6 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
 - **Teal/independent under-call** (Curtin, Goldstein, Mackellar, Wakehurst):
   PARKED by Pete. Overall we lead AEF on independents (36 winners: 16.7 vs
   19.7 log loss). Wave term blocked (`reviews/wave-term-blocked-2026-09-07.md`).
-- **Final-two flow for excluded-party cells** (roadmap item 3): DEMOTED,
-  the TCP gap is item (0) (audit review). Calibration by band: DONE.
 - Smaller known limits: intra-Coalition seats have no TCP class (2 of 660, AEF has the
   same limit; zero vic2026 seats affected today); Orange/Wagga `own_prev_pcv` NA for
   by-election winners (needs a feature, fallback fill refused); the statewide
@@ -425,4 +416,5 @@ Still open:
 
 ## Awaiting Pete
 
-Nothing (departed-rate answered 29 Oct, census 27 Oct; DECISIONS).
+Three walks, no decisions (departed-rate answered 29 Oct, census 27 Oct; DECISIONS): Box Hill / Ashwood / Glen
+Waverley (`reviews/boxhill-trace-2026-11-01.md`), Morwell (F18 walk 1, prediction 3), wa2017 and fed2019 (item (0)).
