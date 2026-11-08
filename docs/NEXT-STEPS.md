@@ -13,14 +13,15 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   9 Nov, condition One Nation's anchor/blend on how many seats it stands in; (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 9 Nov 10am.** LIVE: publish of 8 Nov 1:05pm (snapshot `20261108-1305-eb0d3f49-from9`): AEF-7 seat log loss 0.2536
-  (AEF 0.2825), 35 elections 0.3211, TCP same seats 3.62 vs AEF 3.73 (n 667). I publish myself (Pete, 8 Nov). The 2am
-  rebuild (`deciding-runs/20261108-1914-rebuild/`) started 6:00am and FAILED at stage 1: nsw2019 had a measured One Nation
-  exhaust rate but no ONP column (stage 1 runs `AUSPOL_ONP_NEWSEAT_RULE=0`). Fixed `e2e186f6` (drop rates for classes with no
-  column, `BN0c`); stage 1 then passed. IN FLIGHT: `deciding-runs/20261109-0854-rebuild/` (from stage 1, commit e2e186f6;
-  carries the completed by-election table, PR #208; screen said 35 elections -0.0040): read its marker, compare the
-  scoreboard with 0.3211 / 0.2536, publish if clean, verify the uploaded `aef7-ledger.html`, read the daily run's
-  conclusion. OPEN: VEC feed access: no reply in Gmail since the 28 Oct terms email; chase drafted 9 Nov for Pete to send.
+- **Status 9 Nov 10:50am.** LIVE: published 9 Nov 10:45am (snapshot `20261109-1042-ed393456-from7`, stage 6 at code
+  640e3de): 35 elections seat log loss 0.3163 (was 0.3211; n 2,931), AEF-7 0.2525 (was 0.2536; AEF 0.2825, n 681),
+  primary RMSE 4.660 vs AEF 5.711 (n 2,700), TCP 3.62 vs AEF 3.73 (n 667). First full rebuild with the completed
+  by-election table, measured NSW exhaust and seat flow persistence. It needed two fixes, both on dev and NOT yet
+  reviewed together for a PR: `e2e186f6` (stage 1 died at nsw2019: a measured ONP exhaust rate with no ONP column;
+  reviewed, 0 Important; take the nit, restrict the drop to ONP) and `ed393456` (stage 7: `fit_spread_by_composition.R`
+  diverged from the default start on 8 of 37 targets; retries from `fit_own()`'s start; vic2026 IND term 0.235 -> 0.192,
+  mostly the new data). I publish myself (Pete, 8 Nov). Read the first forecast run after 10:45am.
+  OPEN: VEC feed access: no reply in Gmail since the 28 Oct terms email; chase drafted 9 Nov for Pete to send.
   10 Nov: `scripts/nomination_day.sh` (dry-run tested). After the rebuild: fix `published_flags.R:805` comment
   (IND_GAP_RESTAND says "built not screened"; refused 30 Oct).
   Memory sits at 2-7 GB; Claude Code's low-memory stop kills background shells, not detached jobs. Run
