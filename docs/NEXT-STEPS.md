@@ -203,10 +203,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   surge flag, sa2018 IND (SA-Best, +13.9 actual) was "surging" from its own result; read the surge arms first.
 - OPEN wa2017 / wa2013 regressions: Hillarys and Churchlands traced in SEAT-REGISTRY; Lib/Nat two-candidate part SHIPPED
   17 Oct. The WA 2017 swing-seat lift is now traced in NEEDS PETE ("OPEN from the 30 Oct walks", 4 Nov).
-- OPEN (finding 17 Oct, not acted on): WA's Coalition over-call is a statewide LEVEL miss, not seat-level. Mean
-  Coalition primary error (ours - actual) in one-candidate seats: NT +3.61 (SE 1.08), WA +2.46 (0.34), Qld +0.98,
-  NSW +0.45, fed +0.05, SA -0.82, Vic -0.87; WA by election 6 of 7 positive (wa2005 +4.68, wa2001 +3.42, wa2017
-  +3.27). A jurisdiction bias in the level model is the lead; `screen_level_share.R` first.
+- OPEN, RE-MEASURED 8 Nov on current code (`output/statewide-forecast-audit-8nov.csv`; the default-named audit file is
+  from 20 Sep): the day-before statewide Coalition miss repeats by jurisdiction (fed 6 of 7 under, nsw 4 of 4 under, vic 3
+  of 4 under, wa 5 of 7 over). A correction carried from earlier same-jurisdiction elections (mean / (n+1)) cuts the
+  Coalition's mean |miss| 1.73 -> 1.51 (26 elections) but makes Labor 2.35 -> 2.66 and Greens 0.86 -> 0.99 worse, so a
+  Coalition-only term would be chosen after seeing the answer. Not built; needs a reason the Coalition alone carries a
+  jurisdiction bias (Pete).
 - OPEN NT seat layer: over-confidence fixed by the size spread (20k: nt2016 0.80, nt2020 0.65, nt2024 1.07, from
   0.99/0.81/1.41); still weak, and new parties start at zero share.
 - OPEN qld2017: One Nation / Katter seats given ~0 (emergence); qld2012 Katter polled inside Others.
