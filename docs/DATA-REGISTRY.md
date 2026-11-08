@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-11-05 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-11-08 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
@@ -122,30 +122,72 @@ cannot pass as a working one.
 
 ## Raw commission downloads (`external/reference/`)
 
+- **abc/** -- 820 files, 887.6 MB
+  - e.g. fed2022/adel.html, fed2022/asto.html, fed2022/ball.html, fed2022/bank.html
+- **abc-vic2026/** -- 6 files, 1.5 MB
+  - e.g. abc-candidates-20261003.csv, candidates-20261003.html, candidates-nextdata-20261003.json, candidates-parsed-20261003.csv
+- **abs/** -- 1712 files, 1045.1 MB
+  - e.g. raw/2006/bcp-cgia/CED_2004/ACT/CED_ACT_B01.csv, raw/2006/bcp-cgia/CED_2004/ACT/CED_ACT_B02.csv, raw/2006/bcp-cgia/CED_2004/ACT/CED_ACT_B03.csv, raw/2006/bcp-cgia/CED_2004/ACT/CED_ACT_B04_A.csv
+- **act/** -- 41 files, 185.4 MB
+  - e.g. raw/2008/BallotPaperVersions.txt, raw/2008/BrindabellaTotal.txt, raw/2008/Candidates.txt, raw/2008/Electorates.txt
 - **aec/** -- 2459 files, 2085.8 MB
   - e.g. booths/fed2016-NSW.csv, booths/fed2016-QLD.csv, booths/fed2016-VIC.csv, booths/fed2019-QLD.csv
-- **vec/** -- 3713 files, 443.9 MB
-  - e.g. 2006/vc/fpv-albertpark.html, 2006/vc/fpv-altona.html, 2006/vc/fpv-ballarateast.html, 2006/vc/fpv-ballaratwest.html
-- **nsw/** -- 5889 files, 81.0 MB
-  - e.g. byelections/SB1602-orange-fp.html, byelections/SB1801-wagga-wagga-fp.html, council/2008/lgeindex.html, council/2008/pages/result.Albury.html
-- **ecsa/** -- 492 files, 76.6 MB. **1 ZERO-BYTE: ha-2018-03-17.json**
-  - e.g. 2018/Adelaide.html, 2018/Adelaide2.html, 2018/Badcoe.html, 2018/Badcoe2.html
-- **ecq/** -- 1660 files, 141.2 MB
-  - e.g. council/2008/aurukunshire/councillor_summary.html, council/2008/aurukunshire/mayoral_summary.html, council/2008/balonneshire/councillor_summary.html, council/2008/balonneshire/mayoral_summary.html
-- **waec/** -- 2307 files, 63.7 MB
-  - e.g. app.html, app.min.js, config-loader.js, config.json
-- **trends/** -- 5557 files, 3.6 MB
-  - e.g. 2019_anch2_Adrian_Wone_Susie_Beveridge_Will_Landers_Ammar_Khan.rds, 2019_anch2_Bill_Chandler_Susan_Moylan_Dave_Blake_Tim_Bohm.rds, 2019_anch2_Robert_Oakeshott_Helen_Haines_Zali_Steggall_Kerryn_Phelps.rds, 2019_anch2_Trevor_Jones_Colin_Butland_David_Norman_Thor_Prohaska.rds
-- **boundaries/** -- 85 files, 849.9 MB
-  - e.g. AEC-2025-esri.zip, AEC_2025/AUS_ELB_region.dbf, AEC_2025/AUS_ELB_region.prj, AEC_2025/AUS_ELB_region.shp
-- **census/** -- 24 files, 86.7 MB
-  - e.g. 2016_GCP_CED_AUS.zip, 2016_GCP_SED_NSW.zip, 2016_GCP_SED_NT.zip, 2016_GCP_SED_QLD.zip
-- **correspondences/** -- 31 files, 1.6 MB
-  - e.g. abs-sed/CG_CED_2016_CED_2021.csv, abs-sed/CG_SED_2016_SED_2021.csv, abs-sed/CG_SED_2021_SED_2022.csv, abs-sed/CG_SED_2022_SED_2024.csv
 - **aef/** -- 17 files, 4.8 MB
   - e.g. 2022fed-results.json, 2022fed-summary.json, 2022sa-results.json, 2022sa-summary.json
-- **polls/** -- 4092 files, 493.6 MB. **1 ZERO-BYTE: crosstabs-ambiguous.txt**
+- **anchor-corrections/** -- 1 files, 345 B
+  - e.g. prior-results.csv
+- **anchor-supplement/** -- 5 files, 12 KB
+  - e.g. election-cycles-extra.csv, poll-data-act.csv, poll-data-nt.csv, poll-data-tas.csv
+- **benchmarks/** -- 236 files, 55.9 MB
+  - e.g. vic2026-extra/2026-10-24/betfair/markets-1.240828208-113207.json, vic2026-extra/2026-10-24/manifest.tsv, vic2026-extra/2026-10-24/sportsbet/event-10277242-markets-113206.json, vic2026-extra/2026-10-24/sportsbet/event-10952080-markets-113206.json
+- **boundaries/** -- 85 files, 849.9 MB
+  - e.g. AEC-2025-esri.zip, AEC_2025/AUS_ELB_region.dbf, AEC_2025/AUS_ELB_region.prj, AEC_2025/AUS_ELB_region.shp
+- **byelections/** -- 593 files, 140.2 MB
+  - e.g. byelection-results-supplement.csv, byelection-results.csv, byelection-winner-names-verified-2026-10-26.csv, byelection-winner-names.csv
+- **census/** -- 24 files, 86.7 MB
+  - e.g. 2016_GCP_CED_AUS.zip, 2016_GCP_SED_NSW.zip, 2016_GCP_SED_NT.zip, 2016_GCP_SED_QLD.zip
+- **climate200/** -- 1 files, 11 KB
+  - e.g. endorsements.csv
+- **correspondences/** -- 31 files, 1.6 MB
+  - e.g. abs-sed/CG_CED_2016_CED_2021.csv, abs-sed/CG_SED_2016_SED_2021.csv, abs-sed/CG_SED_2021_SED_2022.csv, abs-sed/CG_SED_2022_SED_2024.csv
+- **council/** -- 2 files, 394 KB
+  - e.g. mayors.csv, nsw-self-run.csv
+- **defectors/** -- 1 files, 14 KB
+  - e.g. defector-exit-reasons.csv
+- **ecq/** -- 1660 files, 141.2 MB
+  - e.g. council/2008/aurukunshire/councillor_summary.html, council/2008/aurukunshire/mayoral_summary.html, council/2008/balonneshire/councillor_summary.html, council/2008/balonneshire/mayoral_summary.html
+- **ecsa/** -- 492 files, 76.6 MB. **1 ZERO-BYTE: ha-2018-03-17.json**
+  - e.g. 2018/Adelaide.html, 2018/Adelaide2.html, 2018/Badcoe.html, 2018/Badcoe2.html
+- **elections-act/** -- 24 files, 54.2 MB
+  - e.g. raw/2020/BallotPaperVersions.txt, raw/2020/BrindabellaTotal.txt, raw/2020/Candidates.txt, raw/2020/DataDescriptions.pdf
+- **historical-odds/** -- 34 files, 784 KB
+  - e.g. afe2025/betr_electorate_data.json, afe2025/betr_wide.csv, afe2025/market_odds.json, afe2025/sportsbet_wide.csv
+- **htv/** -- 79 files, 20.5 MB
+  - e.g. coalition-card-order-researched.csv, liberal-alp-grn-order.csv, raw/fed2007/vee-how-to-vote-2007.html, raw/fed2010/andrewnorton-2010-08-16.html
+- **leaders/** -- 2 files, 66 KB
+  - e.g. leaders-supplement.csv, leaders.csv
+- **nsw/** -- 5889 files, 81.0 MB
+  - e.g. byelections/SB1602-orange-fp.html, byelections/SB1801-wagga-wagga-fp.html, council/2008/lgeindex.html, council/2008/pages/result.Albury.html
+- **nswec/** -- 1049 files, 139.3 MB
+  - e.g. media-feed/election-results-feed.html, media-feed/nswec-state-and-local-election-media-feeds.pdf, raw/2011/fp/Albury.htm, raw/2011/fp/Auburn.htm
+- **ntec/** -- 98 files, 9.2 MB
+  - e.g. raw/2012_la_general_election.pdf, raw/2012_la_general_election.txt, raw/2012_la_general_election_raw.txt, raw/div/2016-arafura.html
+- **polls/** -- 4094 files, 498.0 MB. **1 ZERO-BYTE: crosstabs-ambiguous.txt**
   - e.g. act-polls-handkeyed.csv, archive/archive_vs_ae_pairs.csv, archive/fed_archive_polls.csv, archive/morgan_rows.csv
+- **retirements/** -- 57 files, 29.5 MB
+  - e.g. raw/fed2004.html, raw/fed2004_candidates.html, raw/fed2004_members.html, raw/fed2007.html
+- **successors/** -- 1649 files, 102.6 MB
+  - e.g. abc-guide-bios-offline.csv, abc-guide-bios.csv, abc-guide-raw/_cache/listing_fed2007_abc_net_au_elections_federal_2007_guide.json, abc-guide-raw/_cache/listing_fed2010_abc_net_au_elections_federal_2010_guide.json
+- **tas/** -- 26 files, 2.5 MB
+  - e.g. raw/tec/2018/2018-Bass-first-prefs-by-polling-places.xlsx, raw/tec/2018/2018-Braddon-first-prefs-by-polling-places.xlsx, raw/tec/2018/2018-Denison-first-prefs-by-polling-places.xlsx, raw/tec/2018/2018-Franklin-first-prefs-by-polling-places.xlsx
+- **trends/** -- 5557 files, 3.6 MB
+  - e.g. 2019_anch2_Adrian_Wone_Susie_Beveridge_Will_Landers_Ammar_Khan.rds, 2019_anch2_Bill_Chandler_Susan_Moylan_Dave_Blake_Tim_Bohm.rds, 2019_anch2_Robert_Oakeshott_Helen_Haines_Zali_Steggall_Kerryn_Phelps.rds, 2019_anch2_Trevor_Jones_Colin_Butland_David_Norman_Thor_Prohaska.rds
+- **vec/** -- 3713 files, 443.9 MB
+  - e.g. 2006/vc/fpv-albertpark.html, 2006/vc/fpv-altona.html, 2006/vc/fpv-ballarateast.html, 2006/vc/fpv-ballaratwest.html
+- **waec/** -- 2307 files, 63.7 MB
+  - e.g. app.html, app.min.js, config-loader.js, config.json
+- **wikipedia/** -- 34 files, 4.9 MB
+  - e.g. leaders/fed2007.wikitext, leaders/fed2010.wikitext, leaders/fed2013.wikitext, leaders/fed2016.wikitext
 
 ## Candidate-level corpus (`output/candidacies.csv`)
 

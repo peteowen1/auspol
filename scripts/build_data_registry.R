@@ -64,8 +64,9 @@ if (nrow(e)) {
 
 # ---- raw commission downloads ----------------------------------------------
 L <- c(L, "## Raw commission downloads (`external/reference/`)\n")
-for (d in c("aec", "vec", "nsw", "ecsa", "ecq", "waec", "trends",
-            "boundaries", "census", "correspondences", "aef", "polls")) {
+# EVERY folder, not a hand-kept list: byelections/, htv/ and others were added after the list was written and
+# never appeared, which is the "we don't have it" failure this registry exists to stop (8 Nov 2026).
+for (d in sort(basename(list.dirs(file.path("external", "reference"), recursive = FALSE)))) {
   p <- file.path("external", "reference", d)
   if (!dir.exists(p)) next
   f <- list.files(p, recursive = TRUE)
