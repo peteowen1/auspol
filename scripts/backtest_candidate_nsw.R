@@ -1239,8 +1239,9 @@ if (.exhaust_on) {
   # silently), and the measured rates always name ONP. nsw2019 has no ONP column until
   # the xgb layer adds one, so the stage-1 base_pred pass of the 9 Nov 2026 rebuild died
   # here ("exhaust names no party in `shares`: ONP"); stage-6 screens never saw it.
+  # ONP ONLY: any other missing name (a renamed class in the lists above) still reaches the engine's stop().
   if (!is.null(names(EXHAUST_ARG))) {
-    .no_col <- setdiff(names(EXHAUST_ARG), colnames(shares))
+    .no_col <- intersect(setdiff(names(EXHAUST_ARG), colnames(shares)), "ONP")
     if (length(.no_col)) {
       cat(sprintf("BN0c  nsw%d: exhaust rate dropped for class(es) with no column in shares: %s\n",
                   TO, paste(.no_col, collapse = ", ")))
