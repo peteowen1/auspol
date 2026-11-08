@@ -29,7 +29,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   relabelled copy of the by-election table via `AUSPOL_BYELECTION_RESULTS`): shares on 27 moved cells -60% squared error
   (SE 244 on 457); Liberal primary now right where the Liberals skipped the by-election (Melbourne vic2014 15.7 -> 23.7 v
   24.1, Perth fed2019 24.2 -> 36.7 v 37.4, Werriwa, Enfield); seat log loss +0.0011 (SE 0.0011), all Melbourne 2014
-  (GRN won, 0.169 -> 0.069) and Perth 2019. Ship-on-correctness question put to Pete 8 Nov.
+  (GRN won, 0.169 -> 0.069) and Perth 2019. SHIP on correctness (Pete, 8 Nov): after the 10 Nov build, review gate,
+  `check_like_ci.R`, merge, rebuild with `AUSPOL_CAND_ALLOW_OTHER_CHANGE=1` for the sa2022 Taylor row only.
 - CLOSED FOR NOW (Pete 6 Nov; built, off, reopen only with a new design walk): class split `AUSPOL_CLASS_SPLIT`, refused
   twice (DECISIONS 2026-11-06; `plans/prereg-class-split-2026-11-06.md`). Pre-existing, open, display only: a final two of
   one class (LNP|LNP, IND|IND) leaves the second side empty in the TCP tables (`R/tcp_scenarios.R` setdiff, `fit_seats_full.R:2166`).
