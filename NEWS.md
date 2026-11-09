@@ -1,3 +1,7 @@
+# auspol 0.4.151
+
+- **First-time independents with a pre-election signal get a lift** (`AUSPOL_NEW_IND_LIFT="1"`; Pete, 9 Nov, "Ship it"). A first-time sole independent with Climate 200 money, a Voices endorsement or a council seat gets +2.4 to +5.1 points (vic2026 +3.73), fitted time-forward on how far earlier elections' published calls fell short, as the last share step everywhere. Deciding run, 20k sims, 35 elections: squared share error on the cells it moves -790 (SE 687), seat log loss +0.0000, AEF-7 -0.0001. Live: Ringwood and Williamstown councillors ~3.5 -> ~7%, no seat changes hands. Sharedetail carries the pre-lift share so the lift never refits on its own correction. The signal-split new-independent shrink (`AUSPOL_NEW_IND_SHRINK_SIGNAL`, `_CAP`) was refused twice and stays off.
+
 # auspol 0.4.149
 
 - **Two rebuild crashes fixed** (9 Nov, the first full rebuild with the completed by-election table, measured NSW exhaust and seat flow persistence). Stage 1: the NSW harness drops One Nation's measured exhaust rate when One Nation has no column (nsw2019 before the One Nation new-seat rule), printing `BN0c`; any other missing class still stops. Stage 7: `fit_spread_by_composition.R` retries a Gamma fit that overflows from the default start (8 of 37 targets) from the error-ratio start and names them in `CMP2`. Published the same day: 35 elections seat log loss 0.3211 -> 0.3163 (n 2,931), AEF-7 0.2536 -> 0.2525 (AEF 0.2825).
