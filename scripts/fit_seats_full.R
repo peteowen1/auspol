@@ -1684,7 +1684,7 @@ cat(sprintf("DS3b salience point estimate applied to %d (seat,party) cells%s%s\n
 # run. plans/prereg-nomination-zero-2026-10-03.md
 .nz_before <- shares
 shares <- tryCatch(zero_unnominated_live(shares, fm, TGT, prior = PREV), error = function(e) {
-  if (nom_zero_requested()) stop(conditionMessage(e), call. = FALSE)
+  if (nom_zero_requested(TGT)) stop(conditionMessage(e), call. = FALSE)
   cat(sprintf("NZL!! nomination zeroing FAILED (%s) -- shares WITHOUT it\n", conditionMessage(e)))
   .nz_before
 })

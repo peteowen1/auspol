@@ -13,17 +13,18 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   9 Nov, condition One Nation's anchor/blend on how many seats it stands in; (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 9 Nov 10:50am.** LIVE: published 9 Nov 10:45am (snapshot `20261109-1042-ed393456-from7`, stage 6 at code
-  640e3de): 35 elections seat log loss 0.3163 (was 0.3211; n 2,931), AEF-7 0.2525 (was 0.2536; AEF 0.2825, n 681),
-  primary RMSE 4.660 vs AEF 5.711 (n 2,700), TCP 3.62 vs AEF 3.73 (n 667). First full rebuild with the completed
-  by-election table, measured NSW exhaust and seat flow persistence. It needed two fixes, both reviewed (0 Important)
-  and merged to main 9 Nov 11:27am in PR #209: `e2e186f6`/`1964fc0d` (stage 1 died at nsw2019: a measured ONP exhaust
-  rate with no ONP column; the drop is ONP only) and `ed393456` (stage 7: `fit_spread_by_composition.R` diverged from
-  the default start on 8 of 37 targets; retries from the error-ratio start; vic2026 IND term 0.235 -> 0.192, mostly the
-  new data). I publish myself (Pete, 8 Nov). Forecast run dispatched 9 Nov 12:53pm (run 42547940724) to put the
-  10:45am models on the site; read its conclusion.
+- **Status 10 Nov 12:30am.** LIVE: published 9 Nov 9:50pm (rebuild `deciding-runs/20261109-2044-rebuild`, code 5063439f, the
+  first-timer lift on): 35 elections seat log loss 0.3160 (n 2,931), AEF-7 0.2529 (AEF 0.2825, n 681), primary 4.649 vs AEF
+  5.711 (n 2,700). PR #211 merged 9:51pm; forecast run 42604304599 succeeded. I publish myself (Pete, 8 Nov).
   OPEN: VEC feed access: no reply in Gmail since the 28 Oct terms email; chase SENT 9 Nov 1:12pm (same thread); wait for a reply.
-  10 Nov: `scripts/nomination_day.sh` (dry-run tested).
+- NEEDS PETE (merge only) 10 Nov 1:30am: nomination GATE, PR #212 (https://github.com/peteowen1/auspol/pull/212). Pete said "Open
+  it tonight"; overnight rule holds the merge to main for him. DONE: VEC list from its district pages (734 in 88, matches the VEC
+  spreadsheet), `AUSPOL_NOM_LIVE="vic2026"` (election-scoped), reviewed (0 Important, nits fixed), check_like_ci clean;
+  full rebuild `deciding-runs/20261109-2314-rebuild` PUBLISHED 1:10am (35 elections 0.3168, AEF-7 0.2520 vs AEF 0.2825; release
+  candidacies.csv = 734 `vec` rows; seat-poll table has Pakenham). Forecast run 42631557706 (main, gate still off there).
+  AFTER MERGE: `gh workflow run forecast.yaml --ref main`; check Mildura (no IND), the 32 zeroed IND seats, NSW 2027 page built.
+  Pakenham DemosAU/TKR seat poll hand-keyed (fieldwork date UNCONFIRMED; delete the rows when seat_polls.csv carries it).
+  Then: indlib-1108 (worktree `C:/dev/auspol-indlib`), the ITG booths build (`build-booths-2026.py`, needs the feed XML).
   Memory sits at 2-7 GB; Claude Code's low-memory stop kills background shells, not detached jobs. Run
   `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
 - OPEN (review 8 Nov, pre-existing classifier): `classify_party("Independent Liberal")` returns LNP (5 by-election
@@ -42,11 +43,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - IN FLIGHT 9 Nov (Pete chose the levers): first-time-independent under-call. Six levers mapped in
   `reviews/newcomer-independents-walk-2026-11-09.md` (last section). Lever 1 REFUSED twice, stays off
   (`AUSPOL_NEW_IND_SHRINK_SIGNAL`, `_SIGNAL_CAP`; `plans/prereg-new-ind-shrink-signal-2026-11-09.md`: capped -68 SE 76;
-  uncapped 35-election log loss +0.0022, the base-level factor double counts the trees). Lever 2 BUILT OFF, SCREENING:
-  `AUSPOL_NEW_IND_LIFT` (0a816ba5, `R/new_ind_lift.R`; prereg `plans/prereg-new-ind-lift-2026-11-09.md`), additive
-  +2.4 to +5.1 points fitted on earlier PUBLISHED shares; quick_arm all 35 at 1k launched 6:20pm, log
-  `output/quick-arm-newind-lift-1109.log`. Ship blocker named in the prereg: sharedetail must carry the pre-lift share
-  first. Next levers: spread signal term, council data gaps (no Qld 2008/2014, SA pre-2018). OPEN for Pete: betting odds as an input (he
+  uncapped 35-election log loss +0.0022, the base-level factor double counts the trees). Lever 2 SHIPPED 9 Nov (PR #211, published 9:50pm): `AUSPOL_NEW_IND_LIFT=1` (`R/new_ind_lift.R`; prereg `plans/prereg-new-ind-lift-2026-11-09.md`), additive +2.4 to +5.1 points fitted on earlier PUBLISHED shares (pre-lift column `ours_prelift`); 20k: sq err -790 SE 687, log loss +0.0000. Live: Ringwood, Williamstown ~3.5 -> ~7. Next levers: spread signal term, council data gaps (no Qld 2008/2014, SA pre-2018). OPEN for Pete: betting odds as an input (he
   leans no; four elections of odds on disk). Seat-poll weight for new INDs PARKED (vic2026 has one seat poll).
   Background: 70 of 649 single first-timers took 15%+
   and we gave them about a third of it (Mackellar 18.6 v 38.1, Shepparton vic2014 7.0 v 35.2); 442 took under 5%, so no
@@ -64,14 +61,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   Low priority, pre-existing: `fit_nsw.R`/`fit_federal.R`/`fit_vic.R` read same-year flow rows; they feed no backtest.
   OPEN, pre-existing (review 8 Nov): `AUSPOL_REBUILD_ONLY` reuse (`reuse_check()`, `rebuild_forecasts.sh`) checks file age, not
   flags, so after a switch flip a rebuild that skips the affected harness silently reuses its old-config results.
-  BUILT + REVIEWED 8 Nov (2 rounds, 0 Important; tests 5028 passed on 84968fd8; fix eb0a628f drops all run-control
-  vars, `^AUSPOL_REBUILD_` etc., from the fingerprint). MERGED to dev 9 Nov (6387d45b; `check_like_ci.R` OK, 5028
-  passed, 0 failed); next PR to main carries it. Worktree `C:\dev\auspol-reuse` can go. Reuse requires the fingerprint
-  `scripts/expected_arm_tag.R` computes; `AUSPOL_STAGE6_START` (a timestamp) left the fingerprint, which had made every
-  rebuild's tag unique. Proven on fake files (old code reused a stale file). Merge after the 2am rebuild; the first
-  REBUILD_ONLY after it reuses nothing (old tags). OPEN, same area: `apply_upset_floor.R` fits only files newer than
+  FIXED, on main since PR #211 (9 Nov): the fingerprint drops run-control vars (eb0a628f); the first REBUILD_ONLY after
+  it reuses nothing (old tags). OPEN, same area: `apply_upset_floor.R` fits only files newer than
   `AUSPOL_STAGE6_START`, so under REBUILD_ONLY the upset-floor fit drops every reused election.
-- OPEN, blocked on the item above: `AUSPOL_POLL_SERIES_CLASS=name` (SA-Best, Katter, UAP, FF classed by full name). 20k on 7 pairs a tie
+- OPEN, unblocked 9 Nov (reuse fix on main): `AUSPOL_POLL_SERIES_CLASS=name` (SA-Best, Katter, UAP, FF classed by full name). 20k on 7 pairs a tie
   (-0.0028, SE 0.0038); sa2018 +0.037 of which Morphett +0.031. `plans/prereg-poll-series-class-2026-11-06.md`, last section.
 - **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** History, DONE list and replay evidence:
   `backlog/journal-2026-11-05-election-night.md` (moved verbatim 6 Nov); plan `plans/election-night-booth-model.md`. Runbook:

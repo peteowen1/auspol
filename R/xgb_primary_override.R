@@ -324,7 +324,7 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   # uses). Before it loads, every class is assumed to stand everywhere (stands_i 1, level_contested = level_pred),
   # which is what the live forecast assumes today. prereg-contest-features-2026-10-20.md.
   if (identical(Sys.getenv("AUSPOL_XGB_CONTEST", "0"), "1")) {
-    nom <- if (identical(Sys.getenv("AUSPOL_NOM_LIVE", "auto"), "1"))
+    nom <- if (nom_live_on(target_election))
       live_nominations(seats, election = target_election, prior = prev_election)$target else NULL
     if (is.null(nom) || !nrow(nom)) {
       rows[, stands_i := 1L]
@@ -628,7 +628,7 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   # nomination list (AUSPOL_NOM_LIVE=1); without it nothing moves. plans/prereg-contest-base-2026-10-20.md.
   if (identical(Sys.getenv("AUSPOL_CONTEST_BASE", "0"), "1")) {
     .lab <- paste0(region, year)
-    .nom <- if (identical(Sys.getenv("AUSPOL_NOM_LIVE", "auto"), "1"))
+    .nom <- if (nom_live_on(target_election))
       live_nominations(seats, election = target_election, prior = prev_election)$target else NULL
     if (is.null(.nom) || !nrow(.nom)) {
       cat(sprintf("CB2  %s: contest base ON, no confirmed nomination list: nothing moved\n", .lab))

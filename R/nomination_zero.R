@@ -165,9 +165,33 @@ NOM_CLASS_WARN_RATIO <- 0.8
 #' way of not applying it is an error (a typo such as `true` or `"1 "` included),
 #' because a forecast that silently runs without the zeroing Pete asked for is
 #' the failure this guards against. `auto` keeps the quiet no-op.
+#' @param election `NULL` (any target), or an election label: then TRUE only when zeroing is on for that
+#'   election ([nom_live_on()]).
 #' @return logical(1)
 #' @export
-nom_zero_requested <- function() !Sys.getenv("AUSPOL_NOM_LIVE", "auto") %in% c("0", "auto")
+nom_zero_requested <- function(election = NULL) {
+  if (!is.null(election)) return(nom_live_on(election))
+  !Sys.getenv("AUSPOL_NOM_LIVE", "vic2026") %in% c("0", "auto")
+}
+
+#' Is live nomination zeroing on for this election?
+#'
+#' `AUSPOL_NOM_LIVE` is `"0"` or `"auto"` (off), `"1"` (on for every target), or one or more election labels
+#' separated by commas (`"vic2026"`: on for that election only). The labels form exists because the Victorian list
+#' closed on 9 Nov 2026 while the NSW 2027 forecast, run by the same script in the same workflow, has no final list
+#' and would stop on the completeness floor under `"1"`. Anything else is an error.
+#' @param election Election label, e.g. `"vic2026"`.
+#' @return logical(1)
+#' @export
+nom_live_on <- function(election) {
+  mode <- Sys.getenv("AUSPOL_NOM_LIVE", "vic2026")
+  if (mode %in% c("0", "auto")) return(FALSE)
+  if (identical(mode, "1")) return(TRUE)
+  toks <- trimws(strsplit(mode, ",", fixed = TRUE)[[1]])
+  if (!length(toks) || !all(grepl("^[a-z]+[0-9]{4}$", toks)))
+    .nz_stop(sprintf("AUSPOL_NOM_LIVE='%s' is not recognised (use 0, auto, 1 or election labels such as vic2026); refusing to run without the zeroing that was asked for", mode))
+  election %in% toks
+}
 
 .nz_stop <- function(...) stop("NZL!! ", ..., call. = FALSE)
 
@@ -207,19 +231,19 @@ nom_zero_requested <- function() !Sys.getenv("AUSPOL_NOM_LIVE", "auto") %in% c("
 live_nominations <- function(seats, election = "vic2026", prior = "vic2022", corpus = NULL,
                              closes = NOM_GATE_DATE, today = Sys.Date(), min_ratio = 0.85,
                              major = c("ALP", "LNP")) {
-  mode <- Sys.getenv("AUSPOL_NOM_LIVE", "auto")
+  mode <- Sys.getenv("AUSPOL_NOM_LIVE", "vic2026")
   if (identical(mode, "0")) return(list(target = NULL, reason = "AUSPOL_NOM_LIVE=0"))
   if (identical(mode, "auto"))
     return(list(target = NULL, reason = "provisional list, set AUSPOL_NOM_LIVE=1 after loading the VEC final list"))
-  if (!identical(mode, "1"))
-    .nz_stop(sprintf("AUSPOL_NOM_LIVE='%s' is not recognised (use 0, auto or 1); refusing to run without the zeroing that was asked for", mode))
+  if (!nom_live_on(election))   # also refuses an unrecognised value
+    return(list(target = NULL, reason = sprintf("AUSPOL_NOM_LIVE=%s: not live for %s (provisional list)", mode, election)))
   C <- corpus
   if (is.null(C)) {
     # AUSPOL_NOM_LIVE_FILE: test-only, points this reader alone at another list (F18 walk, prereg Amendment 1).
     f <- Sys.getenv("AUSPOL_NOM_LIVE_FILE", "")
     if (nzchar(f)) cat(sprintf("NZL! nomination list read from AUSPOL_NOM_LIVE_FILE=%s, not output/candidacies.csv\n", f))
     else f <- file.path("output", "candidacies.csv")
-    if (!file.exists(f)) .nz_stop(sprintf("AUSPOL_NOM_LIVE=1 but %s is missing", f))
+    if (!file.exists(f)) .nz_stop(sprintf("AUSPOL_NOM_LIVE on but %s is missing", f))
     C <- data.table::fread(f, showProgress = FALSE, select = c("election", "seat", "party"))
   }
   C <- data.table::as.data.table(C)
@@ -230,8 +254,8 @@ live_nominations <- function(seats, election = "vic2026", prior = "vic2022", cor
   mask_prv <- !is.na(elec) & elec == prior & !is.na(C$party)
   now <- C[mask_now]
   prv <- C[mask_prv]
-  if (!nrow(now)) .nz_stop(sprintf("AUSPOL_NOM_LIVE=1 but the corpus has no %s candidacies", election))
-  if (!nrow(prv)) .nz_stop(sprintf("AUSPOL_NOM_LIVE=1 but the corpus has no %s candidacies to size completeness against", prior))
+  if (!nrow(now)) .nz_stop(sprintf("AUSPOL_NOM_LIVE on but the corpus has no %s candidacies", election))
+  if (!nrow(prv)) .nz_stop(sprintf("AUSPOL_NOM_LIVE on but the corpus has no %s candidacies to size completeness against", prior))
   # HARD CHECK: overall count against the previous election.
   ratio <- nrow(now) / nrow(prv)
   if (ratio < min_ratio)
@@ -243,7 +267,7 @@ live_nominations <- function(seats, election = "vic2026", prior = "vic2022", cor
   now_seats <- normalise_seat(now$seat)
   warns <- character(0)
   if (today < closes)
-    warns <- c(warns, sprintf("AUSPOL_NOM_LIVE=1 set on %s, before %s: nominations may not have closed", format(today), format(closes)))
+    warns <- c(warns, sprintf("AUSPOL_NOM_LIVE turned on %s, before %s: nominations may not have closed", format(today), format(closes)))
   show <- function(g) paste0(paste(utils::head(g, 8), collapse = ", "), if (length(g) > 8) ", ..." else "")
   missing_seats <- setdiff(ns, now_seats)
   for (cl in major) {
@@ -388,7 +412,7 @@ zero_unnominated_live <- function(shares, flows, label = "vic2026", prior = "vic
     # Zeroing was asked for (we are past the gate, so AUSPOL_NOM_LIVE=1) but the
     # mode switch turns it off: contradictory, so stop. Only HERE, not in
     # zero_unnominated(), whose AUSPOL_NOM_ZERO=0 is the harnesses' legitimate off switch.
-    .nz_stop(sprintf("AUSPOL_NOM_LIVE=1 asked for nomination zeroing but AUSPOL_NOM_ZERO='%s' is not 1 or 2 (it would turn zeroing off); set AUSPOL_NOM_ZERO=1 or 2, or AUSPOL_NOM_LIVE=0",
+    .nz_stop(sprintf("AUSPOL_NOM_LIVE on asked for nomination zeroing but AUSPOL_NOM_ZERO='%s' is not 1 or 2 (it would turn zeroing off); set AUSPOL_NOM_ZERO=1 or 2, or AUSPOL_NOM_LIVE=0",
                      zmode))
   }
   out <- zero_unnominated(shares, nm$target, label, code = code, flows = flows)

@@ -3,6 +3,8 @@
 #
 #   bash scripts/nomination_day.sh <path to State2026MediaFileCandidatesV2.xml>            the real run
 #   bash scripts/nomination_day.sh --dry-run <any VEC Candidates xml, e.g. the 2022 one>   scratch only
+#   bash scripts/nomination_day.sh [--dry-run] --web[=<saved pages folder>]               the VEC website's district
+#     pages instead of the media-feed XML (9 Nov 2026: list published, feed access not granted); fetch_vec_candidates_web.R
 #
 # 1. fetch_vec_candidates.R: keeps the XML as received, writes vec-candidates-2026.csv (VC1!-VC9 refuse bad files)
 # 2. build_candidacies.R: vic2026 rows from the VEC list (BC10v names/class changes, BC11 guards other years)
@@ -18,7 +20,9 @@ set -euo pipefail
 DRY=0
 if [ "${1:-}" = "--dry-run" ]; then DRY=1; shift; fi
 XML="${1:-}"
-[ -n "$XML" ] && [ -f "$XML" ] || { echo "usage: bash scripts/nomination_day.sh [--dry-run] <Candidates xml>"; exit 1; }
+WEB=0; WEB_FROM=""
+case "$XML" in --web) WEB=1 ;; --web=*) WEB=1; WEB_FROM="${XML#--web=}" ;; esac
+[ "$WEB" = 1 ] || { [ -n "$XML" ] && [ -f "$XML" ]; } || { echo "usage: bash scripts/nomination_day.sh [--dry-run] <Candidates xml> | --web[=<saved folder>]"; exit 1; }
 LOG=output/nomination-day-logs; mkdir -p "$LOG"
 R() { powershell.exe -Command "Rscript $*"; }   # arrow segfaults under Git Bash R
 
@@ -30,12 +34,16 @@ if [ "$DRY" = 1 ]; then
   export AUSPOL_VEC_CANDIDATES="$S/vec-candidates-2026.csv" AUSPOL_CAND_OUT="$S/candidacies.csv" AUSPOL_NOM_LIVE_FILE="$S/candidacies.csv"
   OUTDIR="$S"; echo "NOM0 DRY RUN: scratch $S (output/candidacies.csv untouched)"
 else
-  OUTDIR="external/reference/vec/2026"; echo "NOM0 REAL RUN on $XML"
+  OUTDIR="external/reference/vec/2026"; echo "NOM0 REAL RUN on ${XML}"
 fi
 
 echo "== 1. VEC candidates"
-R "scripts/fetch_vec_candidates.R '--file=$XML' --year=2026 '--out=$OUTDIR'" 2>&1 | tee "$LOG/1-fetch.log" | grep -E "^VC" || true
-grep -q "^VC[0-9]*!" "$LOG/1-fetch.log" && { echo "NOM1!! the fetcher refused or warned -- see $LOG/1-fetch.log"; exit 1; }
+if [ "$WEB" = 1 ]; then
+  R "scripts/fetch_vec_candidates_web.R --year=2026 '--out=$OUTDIR'${WEB_FROM:+ '--from=$WEB_FROM'}" 2>&1 | tee "$LOG/1-fetch.log" | grep -E "^VW" || true
+else
+  R "scripts/fetch_vec_candidates.R '--file=$XML' --year=2026 '--out=$OUTDIR'" 2>&1 | tee "$LOG/1-fetch.log" | grep -E "^VC" || true
+fi
+grep -qE "^V[CW][0-9]*!|^Error" "$LOG/1-fetch.log" && { echo "NOM1!! the fetcher refused or warned -- see $LOG/1-fetch.log"; exit 1; }
 [ -f "$OUTDIR/vec-candidates-2026.csv" ] || { echo "NOM1!! no vec-candidates-2026.csv written"; exit 1; }
 
 echo "== 2. build candidacies"
@@ -67,4 +75,4 @@ R "scripts/fit_seats_full.R" > "$LOG/3-forecast.log" 2>&1 || { echo "NOM3!! tria
 grep -E "^NZL" "$LOG/3-forecast.log" || echo "NOM3! no NZL lines in the trial forecast log -- zeroing may not have run"
 echo
 echo "NOM9 done. Read the NZL lines above (majors with no candidate, classes under 80% of vic2022's seats)."
-[ "$DRY" = 1 ] && echo "NOM9 dry run: nothing to upload." || echo "NOM9 next (manual): upload output/candidacies.csv to shipped-models, set AUSPOL_NOM_LIVE=\"1\" in published_flags.R, commit, rebuild/publish."
+[ "$DRY" = 1 ] && echo "NOM9 dry run: nothing to upload." || echo "NOM9 next (manual): upload output/candidacies.csv to shipped-models, set AUSPOL_NOM_LIVE=\"vic2026\" in published_flags.R, commit, rebuild/publish."

@@ -167,7 +167,7 @@ test_that("live: =1 before the nomination-close date warns loudly but does not b
   withr::local_envvar(AUSPOL_NOM_LIVE = "1", AUSPOL_NOM_ZERO = "2")
   fx <- .live_fixture(); sh <- .live_shares(fx$seats)
   early <- .nz_run(sh, fx$corpus, today = as.Date("2026-11-09"))
-  expect_match(early$txt, "WARNING AUSPOL_NOM_LIVE=1 set on 2026-11-09, before 2026-11-10")
+  expect_match(early$txt, "WARNING AUSPOL_NOM_LIVE turned on 2026-11-09, before 2026-11-10")
   expect_equal(unname(early$out["Narracan", "GRN"]), 0)
   late <- .nz_run(sh, fx$corpus, today = as.Date("2026-11-10"))
   expect_false(grepl("before 2026-11-10", late$txt, fixed = TRUE))
@@ -186,7 +186,7 @@ test_that("live: AUSPOL_NOM_LIVE=1 with AUSPOL_NOM_ZERO off (0, or any non-1/2) 
   fx <- .live_fixture(); sh <- .live_shares(fx$seats)
   for (z in c("0", "3", "off")) {
     withr::local_envvar(AUSPOL_NOM_LIVE = "1", AUSPOL_NOM_ZERO = z)
-    expect_match(.nz_err(sh, fx$corpus), "NZL!! AUSPOL_NOM_LIVE=1 asked for nomination zeroing but AUSPOL_NOM_ZERO", fixed = FALSE, info = z)
+    expect_match(.nz_err(sh, fx$corpus), "NZL!! AUSPOL_NOM_LIVE on asked for nomination zeroing but AUSPOL_NOM_ZERO", fixed = FALSE, info = z)
   }
 })
 
@@ -414,4 +414,25 @@ test_that("fit_seats_full.R zeroes before the trees (pre-xgb call) AND after the
   expect_lt(pre, tree); expect_lt(tree, sal); expect_lt(sal, post)
   # the pre-xgb cells join the final-write assertion
   expect_true(any(grepl("rbind(.nz_cells, .nzp_cells)", l, fixed = TRUE)))
+})
+
+test_that("AUSPOL_NOM_LIVE takes election labels, so one target can go live while another stays provisional", {
+  withr::local_envvar(AUSPOL_NOM_LIVE = "vic2026")
+  expect_true(nom_live_on("vic2026"))
+  expect_false(nom_live_on("nsw2027"))
+  expect_true(nom_zero_requested("vic2026"))
+  expect_false(nom_zero_requested("nsw2027"))
+  r <- live_nominations(c("A", "B"), election = "nsw2027", prior = "nsw2023")
+  expect_null(r$target)
+  expect_match(r$reason, "not live for nsw2027")
+  withr::local_envvar(AUSPOL_NOM_LIVE = "vic2026, nsw2027")
+  expect_true(nom_live_on("nsw2027"))
+  withr::local_envvar(AUSPOL_NOM_LIVE = "1")
+  expect_true(nom_live_on("nsw2027"))
+  for (bad in c("true", "vic", "vic2026;nsw2027")) {
+    withr::local_envvar(AUSPOL_NOM_LIVE = bad)
+    expect_error(nom_live_on("vic2026"), "not recognised")
+  }
+  withr::local_envvar(AUSPOL_NOM_LIVE = "auto")
+  expect_false(nom_live_on("vic2026"))
 })

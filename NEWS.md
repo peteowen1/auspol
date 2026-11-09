@@ -1,3 +1,7 @@
+# auspol 0.4.152
+
+- **The VEC's final candidate list is live for Victoria** (`AUSPOL_NOM_LIVE="vic2026"`; Pete, 9 Nov). 734 Lower House candidates loaded from the VEC's district pages (`scripts/fetch_vec_candidates_web.R`, checked against the VEC's all-candidates spreadsheet), and classes with no candidate in a seat are zeroed (32 independent and 8 minor-right cells; Ali Cupper did not nominate in Mildura). The switch now takes election labels, so the NSW 2027 forecast keeps its provisional list. Also a hand-keyed DemosAU/TKR Pakenham seat poll.
+
 # auspol 0.4.151
 
 - **First-time independents with a pre-election signal get a lift** (`AUSPOL_NEW_IND_LIFT="1"`; Pete, 9 Nov, "Ship it"). A first-time sole independent with Climate 200 money, a Voices endorsement or a council seat gets +2.4 to +5.1 points (vic2026 +3.73), fitted time-forward on how far earlier elections' published calls fell short, as the last share step everywhere. Deciding run, 20k sims, 35 elections: squared share error on the cells it moves -790 (SE 687), seat log loss +0.0000, AEF-7 -0.0001. Live: Ringwood and Williamstown councillors ~3.5 -> ~7%, no seat changes hands. Sharedetail carries the pre-lift share so the lift never refits on its own correction. The signal-split new-independent shrink (`AUSPOL_NEW_IND_SHRINK_SIGNAL`, `_CAP`) was refused twice and stays off.
