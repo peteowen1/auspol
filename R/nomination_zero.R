@@ -433,16 +433,17 @@ zero_unnominated_live <- function(shares, flows, label = "vic2026", prior = "vic
 
 #' Is the live pre-xgb nomination zero on? (`AUSPOL_NOM_ZERO_PRE_XGB`)
 #'
-#' `"0"` (default, published): off. `"1"`: the published forecast ALSO runs
+#' `"1"` (default, published since 10 Nov 2026): the published forecast ALSO runs
 #' [zero_unnominated_live()] on the base just before the xgb trees, so the trees'
 #' `base_pred` / `base_margin` has the same exact zeros and flow-redistributed
 #' share the training base has (stage 1 of `rebuild_forecasts.sh` writes its
 #' sharedetail after the harnesses' nomination zero). Audit F18,
-#' plans/prereg-nom-zero-pre-xgb-2026-10-25.md. Anything else is an error.
+#' plans/prereg-nom-zero-pre-xgb-2026-10-25.md. `"0"`: off, the base reaches the
+#' trees unzeroed and only the post-xgb zero applies. Anything else is an error.
 #' @return `"0"` or `"1"`.
 #' @export
 nom_zero_pre_xgb_mode <- function() {
-  m <- Sys.getenv("AUSPOL_NOM_ZERO_PRE_XGB", "0")
+  m <- Sys.getenv("AUSPOL_NOM_ZERO_PRE_XGB", "1")
   if (!m %in% c("0", "1"))
     stop(sprintf("NZP1!! AUSPOL_NOM_ZERO_PRE_XGB='%s' is not '0' or '1'", m), call. = FALSE)
   m

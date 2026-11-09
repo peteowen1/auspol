@@ -1574,7 +1574,7 @@ if (!identical(level_conserve_mode(), "0")) {
 # run, so a forecast asked to conserve the level is never published without it. Off, the call returns at once.
 shares <- level_conserve_apply(shares, .lc_level, TGT, stage = "base", target = .lc_target,
                                held = if (.departed_hold) HELD else NULL)
-# AUSPOL_NOM_ZERO_PRE_XGB (default "0"; audit F18, plans/prereg-nom-zero-pre-xgb-2026-10-25.md): the trees were
+# AUSPOL_NOM_ZERO_PRE_XGB (default "1" since 10 Nov 2026; audit F18, plans/prereg-nom-zero-pre-xgb-2026-10-25.md): the trees were
 # trained on a base_pred that already had non-standing classes zeroed and their share sent by flows (stage 1's
 # harness sharedetail is written after the harnesses' zero). "1" gives the live base_margin the same zeros, with
 # the same function and flow matrix as the post-xgb call below, which stays as the final guard (the trees write a

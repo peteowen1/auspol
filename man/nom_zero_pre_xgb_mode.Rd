@@ -10,10 +10,11 @@ nom_zero_pre_xgb_mode()
 \code{"0"} or \code{"1"}.
 }
 \description{
-\code{"0"} (default, published): off. \code{"1"}: the published forecast ALSO runs
+\code{"1"} (default, published since 10 Nov 2026): the published forecast ALSO runs
 \code{\link[=zero_unnominated_live]{zero_unnominated_live()}} on the base just before the xgb trees, so the trees'
 \code{base_pred} / \code{base_margin} has the same exact zeros and flow-redistributed
 share the training base has (stage 1 of \code{rebuild_forecasts.sh} writes its
 sharedetail after the harnesses' nomination zero). Audit F18,
-plans/prereg-nom-zero-pre-xgb-2026-10-25.md. Anything else is an error.
+plans/prereg-nom-zero-pre-xgb-2026-10-25.md. \code{"0"}: off, the base reaches the
+trees unzeroed and only the post-xgb zero applies. Anything else is an error.
 }
