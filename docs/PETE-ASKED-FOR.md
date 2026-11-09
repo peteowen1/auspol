@@ -219,3 +219,4 @@ waiting for R"; Claude in the auspol session did not see these requests firsthan
 **OPEN (audit 24 Oct):** 2021, 2016, 2011 and 2006 built (`scripts/build_census_features_vintage.R`,
 `docs/reviews/census-vintage-build-2026-10-13.md`). 2001 is absent: no bulk data pack, so wa2001 and
 wa2005 carry no census on purpose.
+| **9 Nov: first-time independents -- "where in our forecast pipeline we can make adjustments" for seat polls, Climate 200, Voices, councillors, search (and "how much influence does each have ... how much bias reduction and calibration can we still get")** | **IN FLIGHT.** Answered in chat with the influence (SHAP) and bias tables and a six-lever map (`docs/reviews/newcomer-independents-walk-2026-11-09.md`). Lever 1 (signal-aware new-IND shrink, `AUSPOL_NEW_IND_SHRINK_SIGNAL`) built off, screening. Betting odds as an input: asked, he leans no, NOT decided. |
