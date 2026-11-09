@@ -1,6 +1,6 @@
 # Model registry
 
-**Generated 2026-11-09 by `scripts/build_model_registry.R`. Do not hand-edit** --
+**Generated 2026-11-10 by `scripts/build_model_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate whenever a switch is added to
 `published_flags.R` or a harness's wiring changes.
 
@@ -489,7 +489,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_NOM_LIVE_FILE`** (intentional / dead experiment): TEST ONLY (""), 2026-10-29: the file live_nominations() (R/nomination_zero.R) reads instead of output/candidacies.csv, for the F18 walk on a synthetic list. Read inside R/, so 'NO' in the entry-point columns is the grep, not a gap.
 - **`AUSPOL_NOM_ZERO`** (**adopted, shared-function wiring**): SHIPPED v61 2026-10-03 (mode 2). All six harnesses read it. fit_seats_full.R does not name it, by design: the published run uses AUSPOL_NOM_LIVE for the same zeroing (R/nomination_zero.R) once the real nomination list exists.
 - **`AUSPOL_NOM_ZERO_ORDER`** (**adopted, shared-function wiring**): SHIPPED 2026-10-04 ('late', Pete overriding the R2 refusal). Read in R/nomination_zero.R and named by all six harnesses; per published_flags.R, fit_seats_full.R already zeroes after the last step that can write a share back, so the switch does not apply to it.
-- **`AUSPOL_NOM_ZERO_PRE_XGB`** (intentional / dead experiment): ARM (audit F18, plans/prereg-nom-zero-pre-xgb-2026-10-25.md), LIVE-ONLY by design: fit_seats_full.R zeroes non-standing classes before xgb_primary_predict_live() as well as after it. The harnesses need no switch: their stage-1 base (what the trees train on) already carries the zero, and their backtest override substitutes cached predictions. A no-op until AUSPOL_NOM_LIVE=1.
+- **`AUSPOL_NOM_ZERO_PRE_XGB`** (**adopted, shared-function wiring**): SHIPPED 2026-11-10 (audit F18, plans/prereg-nom-zero-pre-xgb-2026-10-25.md, walk 2), LIVE-ONLY by design: fit_seats_full.R zeroes non-standing classes before xgb_primary_predict_live() as well as after it. The harnesses need no switch: their stage-1 base (what the trees train on) already carries the zero, and their backtest override substitutes cached predictions. A no-op until AUSPOL_NOM_LIVE=1.
 - **`AUSPOL_NOTIONAL`** (**adopted, shared-function wiring**): SHIPPED (2) and FEDERAL-BACKTEST-ONLY by design: the redistribution-adjusted (notional) prior only exists where build_notional_baselines.R has a table (federal). State harnesses have no notional table to read, so 'no' there is a data fact, not a parity gap. docs/reviews/notional-prior-redistribution-2026-09-13.md
 - **`AUSPOL_NSW_EST_FLOOR`** (**shipped, fitting-time switch (reaches harnesses via the artifact)**): FITTING-TIME: read by scripts/fit_nsw.R (run_all.R), a min_n floor in the NSW estimation (CONSTANTS); no harness or live read.
 - **`AUSPOL_NSW_EXHAUST`** (intentional / dead experiment): HARNESS-ONLY, SHIPPED "1" 7 Nov 2026: NSW harness only (optional-preferential exhaustion in the seat simulation; plans/prereg-nsw-exhaust-tcp-2026-11-07.md). The only optional-preferential election in the backtests; live Victoria is compulsory preferential.

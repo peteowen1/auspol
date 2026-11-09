@@ -851,7 +851,7 @@ CLASSIFY <- list(
     "per published_flags.R, fit_seats_full.R already zeroes after the last step that can write a share back, so the switch does",
     "not apply to it."),
   AUSPOL_NOM_ZERO_PRE_XGB = paste(
-    "ARM (audit F18, plans/prereg-nom-zero-pre-xgb-2026-10-25.md), LIVE-ONLY by design: fit_seats_full.R zeroes non-standing classes",
+    "SHIPPED 2026-11-10 (audit F18, plans/prereg-nom-zero-pre-xgb-2026-10-25.md, walk 2), LIVE-ONLY by design: fit_seats_full.R zeroes non-standing classes",
     "before xgb_primary_predict_live() as well as after it. The harnesses need no switch: their stage-1 base (what the trees train on)",
     "already carries the zero, and their backtest override substitutes cached predictions. A no-op until AUSPOL_NOM_LIVE=1."),
   AUSPOL_OTHERS_SCALE = paste(

@@ -330,14 +330,23 @@ test_that("zero_unnominated_asat uses the flow matrix when one is given", {
   list(out = out, txt = txt)
 }
 
-test_that("pre-xgb zero: off (default) returns the base byte-identical and says so, even with the list open", {
-  withr::local_envvar(AUSPOL_NOM_LIVE = "1", AUSPOL_NOM_ZERO = "2", AUSPOL_NOM_ZERO_PRE_XGB = NA)
+test_that("pre-xgb zero: off returns the base byte-identical and says so, even with the list open", {
+  withr::local_envvar(AUSPOL_NOM_LIVE = "1", AUSPOL_NOM_ZERO = "2", AUSPOL_NOM_ZERO_PRE_XGB = "0")
   fx <- .live_fixture(); sh <- .live_shares(fx$seats)
   r <- .nzp_run(sh, fx$corpus)
   expect_identical(r$out, sh)
   expect_match(r$txt, "NZP1  vic2026: pre-xgb nomination zero OFF", fixed = TRUE)
-  withr::local_envvar(AUSPOL_NOM_ZERO_PRE_XGB = "0")
-  expect_identical(.nzp_run(sh, fx$corpus)$out, sh)
+})
+
+test_that("pre-xgb zero: unset is on (shipped 10 Nov 2026), the same as '1'", {
+  withr::local_envvar(AUSPOL_NOM_ZERO_PRE_XGB = NA)
+  expect_identical(nom_zero_pre_xgb_mode(), "1")
+  withr::local_envvar(AUSPOL_NOM_LIVE = "1", AUSPOL_NOM_ZERO = "2")
+  fx <- .live_fixture(); sh <- .live_shares(fx$seats)
+  unset <- .nzp_run(sh, fx$corpus)$out
+  withr::local_envvar(AUSPOL_NOM_ZERO_PRE_XGB = "1")
+  expect_identical(unset, .nzp_run(sh, fx$corpus)$out)
+  expect_false(identical(unset, sh))
 })
 
 test_that("pre-xgb zero: on gives exactly what the post-xgb live zero gives, and counts the cells", {

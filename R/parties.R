@@ -54,6 +54,18 @@ classify_party <- function(name, code = NULL) {
   # OTH_RIGHT (found 2026-10-25; Pete chose OTH_RIGHT). Name and code both.
   set(cd == "LDP" | n == "ldp", "OTH_RIGHT")
 
+  # A label that STARTS with "Independent" or "Ind." is an independent with a
+  # descriptor, not the party named after it. "Independent Liberal" (8
+  # by-election rows: Werriwa 2005 x2, Perth 2018, Enfield 2019, Melbourne 2012,
+  # South-West Coast 2015) reached the "liberal" rule below and was filed as
+  # the Coalition; "Independent Liberal Democrat" (Redcliffe 2014) went
+  # OTH_RIGHT, "Ind. Climate Sceptics" (Higgins, Bradfield 2009) OTH, and SA's
+  # ballot label "Independent People Animals Freedom" (Taylor 2022) OTH_RIGHT.
+  # Found 2026-11-08 in review of the by-election table. Requires whitespace
+  # after the word, so "Indigenous ..." and "Independents ..." are not caught
+  # here.
+  set(grepl("^(independent|ind[.]?)\\s", n), "IND")
+
   # Centre Alliance / Nick Xenophon Team / SA-BEST function as a community
   # independent rather than a bloc party -- Mayo has returned Rebekha Sharkie
   # under this banner in 2016, 2019, 2022 and 2025, and it fits none of

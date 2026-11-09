@@ -157,3 +157,26 @@ VEC final list (from 10 November).
 **Pete, 2026-10-29, on the Morwell walk:** F18's version is the more plausible (OTH 1.2, not 12.1; One Nation's
 vote goes mostly to LNP, Labor and the Greens). So F18 goes to walk 2 on the VEC final list as the likely default;
 it is NOT switched on yet. Walk 2's predictions 1-4 still have to hold on the real list.
+
+## Walk 2 RESULT (2026-11-10, the VEC final list, seed 42, code a133b9d1; both arms exit 0, 7:46-7:58am)
+
+The real `output/candidacies.csv` (734 vic2026 candidacies from the VEC district pages, 100% of vic2022), the
+published config (`AUSPOL_NOM_LIVE=vic2026`). Seats per class now/vic2022: ALP 88/87, GRN 88/87, IND 56/69, LNP
+88/87, ONP 88/4, OTH 88/87, OTH_RIGHT 80/87. A scheduled rebuild (stage 1) started at 7:48, during arm A; prediction
+1 coming out at exactly 0 is the evidence that arm B read the same inputs.
+
+1. **PASS.** The 47 seats with nothing zeroed: max |A - B| 0 over every cell.
+2. **PASS.** A's post-xgb NZL: 40 cells zeroed (IND 32, OTH_RIGHT 8). B's pre-xgb NZP2: the same 40 (142.4 points;
+   freed share by flows 39 conditional, 1 pooled). B's post-xgb guard then zeroed 21 cells the trees revived on a
+   zero base (IND 13, OTH_RIGHT 8); no stop. (43 cells are 0 in both arms: 3 IND cells were already 0.)
+3. **FINDING, one seat.** 40 of 41 affected seats (98%) moved under 1 point on every standing cell; next largest
+   South-West Coast 0.96, Sandringham 0.90, Morwell 0.71. Mildura moved 3.95, over the 3-point cap: Ali Cupper
+   (IND, sitting) is not on the VEC list, freeing 15.8. A (zero after the trees, freed share by flows): ALP 4.5,
+   GRN 6.1, LNP 46.3, ONP 36.3, OTH 2.2, OTH_RIGHT 4.6. B (trees see the zero): ALP 2.9, GRN 7.3, LNP 50.2, ONP
+   34.8, OTH 0.4, OTH_RIGHT 4.3. Same shape as Morwell in walk 1: flows give OTH and ALP a share the trees do not.
+   To walk with Pete.
+4. **PASS.** No favourite changed. Largest win-probability moves: Mildura LNP 0.868 -> 0.952 (ONP 0.132 -> 0.048),
+   Morwell ONP 0.551 -> 0.502, Point Cook ALP 0.617 -> 0.635. Expected seats: LNP 39.99 -> 40.12, ONP 14.70 -> 14.57.
+
+Under the decision rule, F18 ships `"1"` once Pete has seen the Mildura walk. Walk files are in the session
+scratchpad (`f18walk2/`); output/S7-BREACH.txt restored to its pre-walk copy.
