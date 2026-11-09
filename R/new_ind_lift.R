@@ -13,14 +13,14 @@
 
 #' The validated `AUSPOL_NEW_IND_LIFT` switch
 #'
-#' `"0"` (default) off; `"1"` adds the fitted lift to first-time sole independents with a
-#' pre-election signal ([new_ind_lift_fit()]). Anything else is an error.
+#' `"1"` (default, shipped 9 Nov) adds the fitted lift to first-time sole independents with a
+#' pre-election signal ([new_ind_lift_fit()]); `"0"` off. Anything else is an error.
 #'
 #' @return `"0"` or `"1"`.
 #' @export
 new_ind_lift_mode <- function() {
-  m <- Sys.getenv("AUSPOL_NEW_IND_LIFT", "0")
-  if (!nzchar(m)) m <- "0"
+  m <- Sys.getenv("AUSPOL_NEW_IND_LIFT", "1")
+  if (!nzchar(m)) m <- "1"
   if (!m %in% c("0", "1"))
     stop("AUSPOL_NEW_IND_LIFT must be \"0\" or \"1\"; got \"", m, "\"", call. = FALSE)
   m

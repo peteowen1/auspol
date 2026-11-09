@@ -10,6 +10,6 @@ new_ind_lift_mode()
 \code{"0"} or \code{"1"}.
 }
 \description{
-\code{"0"} (default) off; \code{"1"} adds the fitted lift to first-time sole independents with a
-pre-election signal (\code{\link[=new_ind_lift_fit]{new_ind_lift_fit()}}). Anything else is an error.
+\code{"1"} (default, shipped 9 Nov) adds the fitted lift to first-time sole independents with a
+pre-election signal (\code{\link[=new_ind_lift_fit]{new_ind_lift_fit()}}); \code{"0"} off. Anything else is an error.
 }

@@ -984,7 +984,7 @@ for (K in PAIRS) {
   shares <- zero_unnominated_at("late", shares, fb, sprintf("vic%d", K$to), flows = fm)
   .nz_cells <- nomination_zeroed_cells(.nz_pre, shares)
   shares <- level_conserve_apply(shares, sb, sprintf("vic%d", K$to), stage = "final", target = fb, held = HELD)  # AUSPOL_LEVEL_CONSERVE "final"/"both": after the last nomination zero
-  if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")) shares <- new_ind_lift_apply(shares, sprintf("vic%d", K$to), code = "BV1L")  # AUSPOL_NEW_IND_LIFT (off): signal first-timers get the lift fitted on earlier PUBLISHED shares; last share step, xgb layer only. R/new_ind_lift.R.
+  if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")) shares <- new_ind_lift_apply(shares, sprintf("vic%d", K$to), code = "BV1L")  # AUSPOL_NEW_IND_LIFT (shipped 9 Nov): signal first-timers get the lift fitted on earlier PUBLISHED shares; last share step, xgb layer only. R/new_ind_lift.R.
   NIL_LOG <- attr(shares, "new_ind_lift")  # NULL when the lift is off; sharedetail then has no pred_share_prelift
   # ARM H, docs/plans/prereg-reentry-flatratio-variance-2026-09-08.md. Widens
   # the SIMULATED uncertainty, not the point estimate, for cells that fell

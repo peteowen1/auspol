@@ -1696,11 +1696,11 @@ shares <- tryCatch(zero_unnominated_live(shares, fm, TGT, prior = PREV), error =
 # Not wrapped either: with the switch on, a failure stops the run.
 shares <- level_conserve_apply(shares, .lc_level, TGT, stage = "final", target = .lc_target,
                                held = if (.departed_hold) HELD else NULL)
-# AUSPOL_NEW_IND_LIFT (off; plans/prereg-new-ind-lift-2026-11-09.md): signal first-timers get the lift fitted on
+# AUSPOL_NEW_IND_LIFT (shipped 9 Nov; plans/prereg-new-ind-lift-2026-11-09.md): signal first-timers get the lift fitted on
 # earlier elections' PUBLISHED shares. Last share step, the same point as every harness. R/new_ind_lift.R.
-.nil <- .try("new_ind_lift", new_ind_lift_apply(shares, TGT, code = "BV1L"))
+.nil <- .try("new_ind_lift", new_ind_lift_apply(shares, TGT, code = "FS1L"))
 if (!is.null(.nil)) shares <- .nil else if (!identical(new_ind_lift_mode(), "0"))
-  cat(sprintf("BV1L!! new_ind_lift_apply() FAILED%s -- the signal first-timer lift is NOT applied to this forecast\n",
+  cat(sprintf("FS1L!! new_ind_lift_apply() FAILED%s -- the signal first-timer lift is NOT applied to this forecast\n",
               .reason("new_ind_lift")))
 .trace("final point forecast")
 cvf <- function(x) stats::sd(x) / mean(x)
