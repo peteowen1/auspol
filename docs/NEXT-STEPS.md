@@ -17,14 +17,15 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   first-timer lift on): 35 elections seat log loss 0.3160 (n 2,931), AEF-7 0.2529 (AEF 0.2825, n 681), primary 4.649 vs AEF
   5.711 (n 2,700). PR #211 merged 9:51pm; forecast run 42604304599 succeeded. I publish myself (Pete, 8 Nov).
   OPEN: VEC feed access: no reply in Gmail since the 28 Oct terms email; chase SENT 9 Nov 1:12pm (same thread); wait for a reply.
-- NEEDS PETE (merge only) 10 Nov 1:30am: nomination GATE, PR #212 (https://github.com/peteowen1/auspol/pull/212). Pete said "Open
-  it tonight"; overnight rule holds the merge to main for him. DONE: VEC list from its district pages (734 in 88, matches the VEC
-  spreadsheet), `AUSPOL_NOM_LIVE="vic2026"` (election-scoped), reviewed (0 Important, nits fixed), check_like_ci clean;
-  full rebuild `deciding-runs/20261109-2314-rebuild` PUBLISHED 1:10am (35 elections 0.3168, AEF-7 0.2520 vs AEF 0.2825; release
-  candidacies.csv = 734 `vec` rows; seat-poll table has Pakenham). Forecast run 42631557706 (main, gate still off there).
-  AFTER MERGE: `gh workflow run forecast.yaml --ref main`; check Mildura (no IND), the 32 zeroed IND seats, NSW 2027 page built.
-  Pakenham DemosAU/TKR seat poll hand-keyed (fieldwork date UNCONFIRMED; delete the rows when seat_polls.csv carries it).
-  Then: indlib-1108 (worktree `C:/dev/auspol-indlib`), the ITG booths build (`build-booths-2026.py`, needs the feed XML).
+- DONE 10 Nov 7:11am: nomination GATE live. PR #212 merged; forecast run 42690596134 succeeded 7:46am: 40 cells zeroed (IND
+  32, OTH_RIGHT 8), Mildura IND 0, no favourite changed, NSW 2027 files rebuilt. Pakenham DemosAU/TKR seat poll hand-keyed
+  (fieldwork date UNCONFIRMED; delete the rows when seat_polls.csv carries it).
+- IN FLIGHT 10 Nov: indlib-1108 merged to dev (a133b9d1; reviewed 0 Important, check_like_ci clean; candidacies moves 1 row,
+  sa2022 Taylor OTH_RIGHT -> IND). Rebuild `deciding-runs/20261110-0734-rebuild` started 7:48am; check, then publish + PR.
+- NEEDS PETE: F18 walk 2 DONE 10 Nov (`plans/prereg-nom-zero-pre-xgb-2026-10-25.md`, Walk 2 RESULT): predictions 1, 2, 4
+  PASS; 3 a finding in Mildura only (3.95 points; LNP 46.3 -> 50.2, OTH 2.2 -> 0.4). Ships `AUSPOL_NOM_ZERO_PRE_XGB="1"`
+  once Pete has seen Mildura. (The walk ran without refresh_local_poll_inputs.sh; both arms read the same polls.)
+- WAITING: the ITG booths build (`build-booths-2026.py`) needs the feed's polling-locations XML; VEC feed access unanswered.
   Memory sits at 2-7 GB; Claude Code's low-memory stop kills background shells, not detached jobs. Run
   `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
 - OPEN (review 8 Nov, pre-existing classifier): `classify_party("Independent Liberal")` returns LNP (5 by-election
@@ -84,8 +85,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `sa_ratio` quantile map in `fit_seats_full.R`); Hastings/Cranbourne recheck after nominations; re-entry inflated
   bases (other classes over-called -2.9, SE 0.84; Narracan Greens is the live case).
 
-- F16 `AUSPOL_ROW_SHIFT_EXACT` NOT PASSED 29 Oct (DECISIONS). OPEN: F18 `AUSPOL_NOM_ZERO_PRE_XGB` (off): walk 1 done
-  29 Oct (predictions 1, 2, 4 pass; 3 a finding in Morwell, to walk with Pete); walk 2 on the VEC final list. Dead-party
+- F16 `AUSPOL_ROW_SHIFT_EXACT` NOT PASSED 29 Oct (DECISIONS). OPEN: F18 `AUSPOL_NOM_ZERO_PRE_XGB` (off): walks 1 (29 Oct)
+  and 2 (10 Nov, real list) done; walk 2's Mildura finding waits for Pete (top of file). Dead-party
   `AUSPOL_LEVEL_DEAD_PARTY` (337f4cd) PARKED: its screen says not worth it; do not merge.
 - F8 RN is dead (arm N worse). F8 arm N's netting costs 579 s per harness run: cache it to disk before any rerun.
   (Departed arm B `mean`: DEAD, departed-origin closed 27 Oct. Width A0/A1: see the pipeline-audit section.)
