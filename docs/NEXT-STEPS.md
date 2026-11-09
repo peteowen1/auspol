@@ -22,7 +22,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   the default start on 8 of 37 targets; retries from the error-ratio start; vic2026 IND term 0.235 -> 0.192, mostly the
   new data). I publish myself (Pete, 8 Nov). Forecast run dispatched 9 Nov 12:53pm (run 42547940724) to put the
   10:45am models on the site; read its conclusion.
-  OPEN: VEC feed access: no reply in Gmail since the 28 Oct terms email; chase drafted 9 Nov for Pete to send.
+  OPEN: VEC feed access: no reply in Gmail since the 28 Oct terms email; chase SENT 9 Nov 1:12pm (same thread); wait for a reply.
   10 Nov: `scripts/nomination_day.sh` (dry-run tested).
   Memory sits at 2-7 GB; Claude Code's low-memory stop kills background shells, not detached jobs. Run
   `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
