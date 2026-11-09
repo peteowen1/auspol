@@ -26,6 +26,18 @@ test_that("independents are their own class, however recorded", {
   expect_equal(classify_party("Independent"), "IND")
 })
 
+test_that("an 'Independent X' label is an independent, not party X", {
+  expect_equal(classify_party("Independent Liberal"), "IND")
+  expect_equal(classify_party("Independent Labor"), "IND")
+  expect_equal(classify_party("Independent Liberal Democrat"), "IND")
+  expect_equal(classify_party("Ind. Climate Sceptics"), "IND")
+  expect_equal(classify_party("Independent People Animals Freedom"), "IND")
+  # Only a leading descriptor: the parties themselves are unchanged.
+  expect_equal(classify_party("Liberal"), "LNP")
+  expect_equal(classify_party("Liberal Democrats"), "OTH_RIGHT")
+  expect_equal(classify_party("Indigenous-Aboriginal Party"), classify_party("Aboriginal Party"))
+})
+
 test_that("the minor right is separated from the general minor field", {
   expect_equal(classify_party("Family First Victoria"), "OTH_RIGHT")
   expect_equal(classify_party("Freedom Party of Victoria"), "OTH_RIGHT")
