@@ -23,7 +23,20 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   new data). I publish myself (Pete, 8 Nov). Forecast run dispatched 9 Nov 12:53pm (run 42547940724) to put the
   10:45am models on the site; read its conclusion.
   OPEN: VEC feed access: no reply in Gmail since the 28 Oct terms email; chase SENT 9 Nov 1:12pm (same thread); wait for a reply.
-- NEEDS PETE 9 Nov 10:35pm: VEC final list LOADED LOCALLY from the VEC website (`scripts/fetch_vec_candidates_web.R`, `bash scripts/nomination_day.sh --web`; feed access still pending): 734 candidates in 88 districts, matches the VEC spreadsheet; output/candidacies.csv rebuilt; trial forecast (-nomtrial) zeroed 32 IND and 8 OTH_RIGHT cells; Ali Cupper (Mildura IND) did not nominate. NOT live until Pete opens the gate: upload candidacies.csv to shipped-models, AUSPOL_NOM_LIVE="1", rebuild/publish (the vic2006/vic2010/sa2026 corpus fixes ride with it).
+- IN FLIGHT 9 Nov 11:21pm: nomination GATE OPENED (Pete: "Open it tonight"). VEC final list from its district pages
+  (`scripts/fetch_vec_candidates_web.R`, 734 in 88, matches the VEC spreadsheet; raw `external/reference/vec/2026/web/20261109-2230/`);
+  `AUSPOL_NOM_LIVE="vic2026"` (election-scoped, `nom_live_on()`; NSW 2027 stays provisional) on dev 597c9e26, reviewed (0 Important).
+  Full rebuild running in this checkout: `deciding-runs/20261109-2314-rebuild`. Ali Cupper (Mildura IND) did not nominate.
+  **ORDER: publish BEFORE merging** -- main with the gate on and the release's provisional candidacies.csv (500 < 85% of
+  vic2022's 731) would stop the daily forecast (NZL!! list too small). Morning, in order:
+  1. Marker DONE; read `deciding-runs/20261109-2314-rebuild/log.txt` tail (PA5 log loss, AEFL5) and `grep -h "^NZL" output/rebuild-forecasts-logs/*`.
+  2. Publish: `powershell.exe -Command 'Rscript scripts/promote_rebuild.R'` then `... scripts/publish_shipped_release.R`;
+     check the release's `candidacies.csv` has 734 vic2026 rows with source `vec`.
+  3. Review nits (after the rebuild, it reads these files): `published_flags.R:580` comment ("ONLY when set to 1"); NZL!! messages
+     saying `AUSPOL_NOM_LIVE=1` (`R/nomination_zero.R`). check_like_ci, push.
+  4. PR dev -> main, CI conclusion, `gh pr merge N --merge`; NEWS entry with the hook's version bump.
+  5. `gh workflow run forecast.yaml --ref main`; on success check Mildura (no IND) and the NSW 2027 page still built.
+  Then: indlib-1108 (worktree `C:/dev/auspol-indlib`), and the ITG booths build (`build-booths-2026.py`, needs the feed XML).
   10 Nov: `scripts/nomination_day.sh` (dry-run tested).
   Memory sits at 2-7 GB; Claude Code's low-memory stop kills background shells, not detached jobs. Run
   `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
