@@ -125,3 +125,20 @@ Data sources: odds are Pete's own Sportsbet scrapes (20 May 2022 in `external/re
 `seat-polls/seat_polls.csv`, via `output/ind-model-eval-preds.csv` (`scripts/eval_ind_model.R`, 9 Oct). Climate 200,
 Voices: `R/endorsement_features.R`. Councillor: the council-results features. Search: `surge_h` (campaign search interest).
 UNVERIFIED: whether the councillor field is complete (Bolton, Noosa 2017, reads 0).
+
+## Before building `AUSPOL_NEWIND_SEATPOLL`: what the polls are (added 9 Nov)
+
+The "poll 5+ above us" group above mixed poll types. `seat_poll_shares(e, by_type = TRUE)`, IND class, joined to the
+first-timers: 13 DIRECT polls (named-candidate polls, not MRP) in 4 elections (fed2016, fed2022, nsw2023, fed2025).
+Several of the earlier figures (Cowper 17.0, Page 15.0) were YouGov 2022 MRP "OTH" columns, which the shipped blend
+rightly does not treat as a measure of the independent ("demographic MRP, not local-candidate aware",
+`seat-polls/mrp_candidates.csv`).
+
+On the 13 direct polls: mean ours 15.6, poll 22.1, actual 21.4 (under-call: ours +5.8, poll -0.6). RMSE ours 9.42, poll
+10.62, but one poll carries that (McMahon fed2025: 41.0 against 9.8 actual); without it, poll 6.4 against ours 9.8 on 12
+(computed by hand from the printed rows). fed2022's direct polls sat well above our published number (Goldstein 33.8 v
+23.2, Curtin 29.3 v 21.2, Mackellar 23.9 v 18.6); fed2025's mostly matched it.
+
+Live: `output/seat-poll-blend-vic2026.csv` (9 Nov 10:44am) holds ONE seat poll (Hawthorn, LNP 41). Its IND weight
+is 0.527 (raw 0.893 on 33 cells, shrunk back toward the pooled 0.525). So a new-independent weight changes nothing in the
+published vic2026 forecast unless a Victorian seat poll naming an independent is published before 28 Nov.
