@@ -167,7 +167,7 @@ test_that("live: =1 before the nomination-close date warns loudly but does not b
   withr::local_envvar(AUSPOL_NOM_LIVE = "1", AUSPOL_NOM_ZERO = "2")
   fx <- .live_fixture(); sh <- .live_shares(fx$seats)
   early <- .nz_run(sh, fx$corpus, today = as.Date("2026-11-09"))
-  expect_match(early$txt, "WARNING AUSPOL_NOM_LIVE=1 set on 2026-11-09, before 2026-11-10")
+  expect_match(early$txt, "WARNING AUSPOL_NOM_LIVE turned on 2026-11-09, before 2026-11-10")
   expect_equal(unname(early$out["Narracan", "GRN"]), 0)
   late <- .nz_run(sh, fx$corpus, today = as.Date("2026-11-10"))
   expect_false(grepl("before 2026-11-10", late$txt, fixed = TRUE))
@@ -186,7 +186,7 @@ test_that("live: AUSPOL_NOM_LIVE=1 with AUSPOL_NOM_ZERO off (0, or any non-1/2) 
   fx <- .live_fixture(); sh <- .live_shares(fx$seats)
   for (z in c("0", "3", "off")) {
     withr::local_envvar(AUSPOL_NOM_LIVE = "1", AUSPOL_NOM_ZERO = z)
-    expect_match(.nz_err(sh, fx$corpus), "NZL!! AUSPOL_NOM_LIVE=1 asked for nomination zeroing but AUSPOL_NOM_ZERO", fixed = FALSE, info = z)
+    expect_match(.nz_err(sh, fx$corpus), "NZL!! AUSPOL_NOM_LIVE on asked for nomination zeroing but AUSPOL_NOM_ZERO", fixed = FALSE, info = z)
   }
 })
 

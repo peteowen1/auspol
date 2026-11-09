@@ -243,7 +243,7 @@ live_nominations <- function(seats, election = "vic2026", prior = "vic2022", cor
     f <- Sys.getenv("AUSPOL_NOM_LIVE_FILE", "")
     if (nzchar(f)) cat(sprintf("NZL! nomination list read from AUSPOL_NOM_LIVE_FILE=%s, not output/candidacies.csv\n", f))
     else f <- file.path("output", "candidacies.csv")
-    if (!file.exists(f)) .nz_stop(sprintf("AUSPOL_NOM_LIVE=1 but %s is missing", f))
+    if (!file.exists(f)) .nz_stop(sprintf("AUSPOL_NOM_LIVE on but %s is missing", f))
     C <- data.table::fread(f, showProgress = FALSE, select = c("election", "seat", "party"))
   }
   C <- data.table::as.data.table(C)
@@ -254,8 +254,8 @@ live_nominations <- function(seats, election = "vic2026", prior = "vic2022", cor
   mask_prv <- !is.na(elec) & elec == prior & !is.na(C$party)
   now <- C[mask_now]
   prv <- C[mask_prv]
-  if (!nrow(now)) .nz_stop(sprintf("AUSPOL_NOM_LIVE=1 but the corpus has no %s candidacies", election))
-  if (!nrow(prv)) .nz_stop(sprintf("AUSPOL_NOM_LIVE=1 but the corpus has no %s candidacies to size completeness against", prior))
+  if (!nrow(now)) .nz_stop(sprintf("AUSPOL_NOM_LIVE on but the corpus has no %s candidacies", election))
+  if (!nrow(prv)) .nz_stop(sprintf("AUSPOL_NOM_LIVE on but the corpus has no %s candidacies to size completeness against", prior))
   # HARD CHECK: overall count against the previous election.
   ratio <- nrow(now) / nrow(prv)
   if (ratio < min_ratio)
@@ -267,7 +267,7 @@ live_nominations <- function(seats, election = "vic2026", prior = "vic2022", cor
   now_seats <- normalise_seat(now$seat)
   warns <- character(0)
   if (today < closes)
-    warns <- c(warns, sprintf("AUSPOL_NOM_LIVE=1 set on %s, before %s: nominations may not have closed", format(today), format(closes)))
+    warns <- c(warns, sprintf("AUSPOL_NOM_LIVE turned on %s, before %s: nominations may not have closed", format(today), format(closes)))
   show <- function(g) paste0(paste(utils::head(g, 8), collapse = ", "), if (length(g) > 8) ", ..." else "")
   missing_seats <- setdiff(ns, now_seats)
   for (cl in major) {
@@ -412,7 +412,7 @@ zero_unnominated_live <- function(shares, flows, label = "vic2026", prior = "vic
     # Zeroing was asked for (we are past the gate, so AUSPOL_NOM_LIVE=1) but the
     # mode switch turns it off: contradictory, so stop. Only HERE, not in
     # zero_unnominated(), whose AUSPOL_NOM_ZERO=0 is the harnesses' legitimate off switch.
-    .nz_stop(sprintf("AUSPOL_NOM_LIVE=1 asked for nomination zeroing but AUSPOL_NOM_ZERO='%s' is not 1 or 2 (it would turn zeroing off); set AUSPOL_NOM_ZERO=1 or 2, or AUSPOL_NOM_LIVE=0",
+    .nz_stop(sprintf("AUSPOL_NOM_LIVE on asked for nomination zeroing but AUSPOL_NOM_ZERO='%s' is not 1 or 2 (it would turn zeroing off); set AUSPOL_NOM_ZERO=1 or 2, or AUSPOL_NOM_LIVE=0",
                      zmode))
   }
   out <- zero_unnominated(shares, nm$target, label, code = code, flows = flows)
