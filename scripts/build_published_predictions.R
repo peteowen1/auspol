@@ -31,7 +31,10 @@ sd <- rbindlist(lapply(pairs, function(pr) {
   if (is.null(x)) stop("PP1! ", pr, ": no sharedetail file for the scored run")
   if ("xgb_primary_on" %in% names(x) && any(x$xgb_primary_on != 1))
     stop("PP1! ", pr, ": sharedetail has xgb_primary_on != 1 -- a base_pred-only stage-1 run, not the published model")
-  x[, .(pair = pr, seat, party, ours = pred_share, actual = actual_share)]
+  # ours_prelift: the share before AUSPOL_NEW_IND_LIFT (R/new_ind_lift.R), which the lift's own fit reads so it
+  # never learns from its own correction. Equal to ours when the run had the lift off.
+  pl <- if ("pred_share_prelift" %in% names(x)) x$pred_share_prelift else x$pred_share
+  x[, .(pair = pr, seat, party, ours = pred_share, ours_prelift = pl, actual = actual_share)]
 }))
 ap <- rbindlist(lapply(pairs, function(pr) {
   x <- run_table(pr, "allprobs")

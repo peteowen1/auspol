@@ -37,7 +37,7 @@ class_split_transfers <- function(dir = file.path("external", "elections"),
 #'
 #' For every seat of `target_election` where a minor class has two or more
 #' candidates in the per-candidate predictions, the junior fraction
-#' `r = second-largest prediction / sum of the class's predictions`. Its
+#' r, the second-largest prediction divided by the sum of the class's predictions. Its
 #' spread is the root mean squared error of that fraction against the actual
 #' one over EARLIER elections' seats, and `f` (the share of an excluded
 #' same-class candidate's votes that reach the other) comes from earlier

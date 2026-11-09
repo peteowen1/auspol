@@ -180,6 +180,44 @@ new_ind_cells <- function(target, corpus = NULL, byelection = NULL, prior_max = 
   out
 }
 
+#' The validated `AUSPOL_NEW_IND_SHRINK_SIGNAL` switch
+#'
+#' `"0"` (default) one factor for every new-independent cell; `"1"` fits and applies a separate factor to
+#' cells WITH a pre-election signal (Climate 200 funding, a Voices endorsement, elected councillor or mayor)
+#' and cells without one (docs/plans/prereg-new-ind-shrink-signal-2026-11-09.md). Anything else is an error.
+#'
+#' @return `"0"` or `"1"`.
+#' @export
+new_ind_signal_mode <- function() {
+  m <- Sys.getenv("AUSPOL_NEW_IND_SHRINK_SIGNAL", "0")
+  if (!nzchar(m)) m <- "0"
+  if (!m %in% c("0", "1"))
+    stop("AUSPOL_NEW_IND_SHRINK_SIGNAL must be \"0\" or \"1\"; got \"", m, "\"", call. = FALSE)
+  m
+}
+
+# The signal columns, all known before polling day (R/endorsement_features.R, R/council_features.R).
+.NI_SIGNAL_COLS <- c("c200", "voices", "council_elected", "council_mayor")
+
+.ni_read_features <- function() {
+  f <- out_path("xgb-primary-v6-features.csv")
+  if (!file.exists(f))
+    stop("new_ind_fit() needs ", f, " (the stage-1 base_pred and actuals)", call. = FALSE)
+  data.table::fread(f, select = c("pair", "seat", "party", "actual_share", "base_pred", .NI_SIGNAL_COLS),
+                    showProgress = FALSE)
+}
+
+# TRUE where a row carries any signal. A missing signal column is an error, not "no signal": a group fit
+# that silently put every cell in "plain" would be the unsplit fit under a new name.
+.ni_signal <- function(FT) {
+  miss <- setdiff(.NI_SIGNAL_COLS, names(FT))
+  if (length(miss)) stop("AUSPOL_NEW_IND_SHRINK_SIGNAL needs feature column(s): ", paste(miss, collapse = ", "), call. = FALSE)
+  m <- vapply(.NI_SIGNAL_COLS, function(v) { x <- suppressWarnings(as.numeric(FT[[v]])); is.finite(x) & x > 0 },
+              logical(nrow(FT)))
+  if (is.null(dim(m))) m <- matrix(m, nrow = nrow(FT))
+  rowSums(m) > 0
+}
+
 # Cluster-robust SE of a ratio-of-sums k = sum(a)/sum(b), clustered by election.
 # Returns c(k, se, G). With fewer than two elections the clustered SE is not
 # estimable; the cell-level (n/(n-1)) SE is returned with G = 1 and the caller
@@ -222,23 +260,27 @@ new_ind_cells <- function(target, corpus = NULL, byelection = NULL, prior_max = 
 #'   pooling).
 #' @param prior_max Passed to [new_ind_cells()].
 #' @param code,quiet Logging.
+#' @param group `NULL` fits every cell; `"signal"` or `"plain"` fits only the cells with or without a
+#'   pre-election signal (`AUSPOL_NEW_IND_SHRINK_SIGNAL`).
+#' @param cap `NULL` reads `AUSPOL_NEW_IND_SHRINK_CAP`; `TRUE` bounds the factor at 1, `FALSE` lets it rise.
 #' @return A list: `factor` (for the target's jurisdiction), `table` (one row
 #'   per jurisdiction: `region, n, n_el, k, se, w, factor`), `pooled`, `tau2`,
 #'   `train` (the cells used).
 #' @export
 new_ind_fit <- function(target, corpus = NULL, byelection = NULL, features = NULL,
-                        tau2 = NULL, prior_max = 10, code = "NI1", quiet = FALSE) {
+                        tau2 = NULL, prior_max = 10, code = "NI1", quiet = FALSE, group = NULL,
+                        cap = NULL) {
   C <- .ni_read_corpus(corpus)
-  if (is.null(features)) {
-    f <- out_path("xgb-primary-v6-features.csv")
-    if (!file.exists(f))
-      stop("new_ind_fit() needs ", f, " (the stage-1 base_pred and actuals)", call. = FALSE)
-    features <- data.table::fread(f, select = c("pair", "seat", "party", "actual_share", "base_pred"),
-                                  showProgress = FALSE)
-  }
+  if (is.null(features)) features <- .ni_read_features()
   FT <- data.table::as.data.table(features)
   FT <- FT[FT$party == "IND", ]
   FT[, skey := normalise_seat(seat)]
+  # AUSPOL_NEW_IND_SHRINK_SIGNAL: fit on one signal group only ("signal" or "plain", .ni_signal()).
+  if (!is.null(group)) {
+    if (!group %in% c("signal", "plain")) stop("new_ind_fit(): group must be \"signal\" or \"plain\"", call. = FALSE)
+    sg <- .ni_signal(FT)
+    FT <- FT[if (group == "signal") sg else !sg, ]
+  }
   trg_region <- sub("[0-9]{4}$", "", target)
   pairs <- unique(FT$pair)
   pairs <- pairs[elections_before(pairs, target)]
@@ -285,7 +327,9 @@ new_ind_fit <- function(target, corpus = NULL, byelection = NULL, features = NUL
   # AUSPOL_NEW_IND_SHRINK_CAP: "1" bounds the factor to [0, 1] (only ever lowers a cell); "0" lets
   # it rise where earlier elections under-called these candidates (federal and NSW: k ~1.5). Pete,
   # 2026-10-06: a one-sided cap keeps only the half of a fix that helps.
-  .hi <- if (identical(Sys.getenv("AUSPOL_NEW_IND_SHRINK_CAP", "1"), "0")) Inf else 1
+  # `cap` (TRUE/FALSE) overrides the switch: AUSPOL_NEW_IND_SHRINK_SIGNAL_CAP sets it for the signal group alone.
+  if (is.null(cap)) cap <- !identical(Sys.getenv("AUSPOL_NEW_IND_SHRINK_CAP", "1"), "0")
+  .hi <- if (isTRUE(cap)) 1 else Inf
   tb$factor <- pmin(.hi, pmax(0, pool[["k"]] + tb$w * (tb$k - pool[["k"]])))
   fac <- if (trg_region %in% tb$region) tb$factor[tb$region == trg_region]
          else pmin(.hi, pmax(0, pool[["k"]]))
@@ -332,25 +376,41 @@ new_ind_shrink_apply <- function(shares, target, code = "NI1", ...) {
   a <- list(...)
   cells <- do.call(new_ind_cells, c(list(target, code = code),
                                     a[intersect(names(a), c("corpus", "byelection", "prior_max"))]))
-  fit <- do.call(new_ind_fit, c(list(target, code = code),
-                                a[intersect(names(a), c("corpus", "byelection", "features", "tau2", "prior_max"))]))
-  f <- fit$factor
-  ri <- match(cells$skey, normalise_seat(rownames(shares)))
-  ri <- ri[!is.na(ri)]
+  fa <- a[intersect(names(a), c("corpus", "byelection", "features", "tau2", "prior_max"))]
+  split <- identical(new_ind_signal_mode(), "1")
+  if (split) {
+    # The target's own signals come from the feature builders (the stage-1 feature table has no live rows).
+    keys <- data.table::data.table(pair = target, seat = cells$seat, party = "IND")
+    sk <- council_features(endorsement_features(keys))
+    cells_sig <- .ni_signal(sk)
+    # AUSPOL_NEW_IND_SHRINK_SIGNAL_CAP: "1" (default) holds the signal group at 1 like every cell; "0" lets it rise
+    # to its own fitted factor (prereg-new-ind-shrink-signal-2026-11-09.md, Amendment 1). The plain group keeps
+    # AUSPOL_NEW_IND_SHRINK_CAP.
+    scap <- Sys.getenv("AUSPOL_NEW_IND_SHRINK_SIGNAL_CAP", "1")
+    if (!scap %in% c("0", "1")) stop("AUSPOL_NEW_IND_SHRINK_SIGNAL_CAP must be \"0\" or \"1\"; got \"", scap, "\"", call. = FALSE)
+    fs <- do.call(new_ind_fit, c(list(target, code = paste0(code, "s"), group = "signal", cap = scap == "1"), fa))$factor
+    fp <- do.call(new_ind_fit, c(list(target, code = paste0(code, "p"), group = "plain"), fa))$factor
+    fcell <- ifelse(cells_sig, fs, fp)
+    cat(sprintf("%s  AUSPOL_NEW_IND_SHRINK_SIGNAL=1 for %s: factor %.3f on %d signal cell(s), %.3f on %d plain cell(s)\n",
+                code, target, fs, sum(cells_sig), fp, sum(!cells_sig)))
+  } else {
+    fcell <- rep(do.call(new_ind_fit, c(list(target, code = code), fa))$factor, nrow(cells))
+  }
+  rm_ <- match(cells$skey, normalise_seat(rownames(shares)))
   ci <- match("IND", colnames(shares))
-  ri <- ri[shares[ri, ci] > 0]
   out <- shares
-  log <- data.frame(seat = character(0), base_old = numeric(0), base_new = numeric(0))
-  for (i in ri) {
-    old <- shares[i, ci]; new <- f * old; tot <- sum(shares[i, ])
+  log <- data.frame(seat = character(0), base_old = numeric(0), base_new = numeric(0), factor = numeric(0))
+  for (j in which(!is.na(rm_))) {
+    i <- rm_[j]; old <- shares[i, ci]
+    if (!(old > 0)) next
+    f <- fcell[j]; new <- f * old; tot <- sum(shares[i, ])
     if (tot - old <= 0) next
     out[i, ] <- shares[i, ] * (tot - new) / (tot - old)
     out[i, ci] <- new
-    log <- rbind(log, data.frame(seat = rownames(shares)[i], base_old = old, base_new = new))
+    log <- rbind(log, data.frame(seat = rownames(shares)[i], base_old = old, base_new = new, factor = f))
   }
-  log$factor <- rep(f, nrow(log))
-  cat(sprintf("%s  new-independent shrink for %s: factor %.3f applied to %d of %d cell(s) in the share matrix\n",
-              code, target, f, nrow(log), nrow(cells)))
+  cat(sprintf("%s  new-independent shrink for %s: factor %s applied to %d of %d cell(s) in the share matrix\n",
+              code, target, paste(sprintf("%.3f", sort(unique(fcell))), collapse = "/"), nrow(log), nrow(cells)))
   if (nrow(log)) {
     o <- utils::head(order(-(log$base_old - log$base_new)), 5L)
     for (j in o) cat(sprintf("%s    %-22s IND %6.2f -> %6.2f\n", code, log$seat[j], log$base_old[j], log$base_new[j]))

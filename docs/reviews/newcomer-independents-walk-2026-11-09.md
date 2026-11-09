@@ -1,0 +1,168 @@
+# First-time independents: the walk-through (9 Nov 2026)
+
+For the model-design walk with Pete (CLAUDE.md: walk real rows before building). Read-only; nothing rerun.
+Numbers: `output/published-predictions.csv` (the published path, 9 Nov 10:42am rebuild) and the main model's inputs in
+`output/xgb-primary-v6-features.csv` (9 Nov 9:07am). Independent share is the seat's whole IND class; "first-timer" means
+no earlier candidacy in that jurisdiction in `output/candidacies.csv` and not the sitting member (matched on surname and
+first initial; spot-checked, not audited; the matcher wrongly kept Woollard wa2005 and Xenophon sa2018).
+
+## Correction to the 6 Nov line
+
+"A newcomer independent gets the generic 4-8%" came from the per-candidate side model (`scripts/fit_minor_candidates.R`,
+`pred_xgb`). That number reaches a seat only through the class split (`R/class_split.R`, `AUSPOL_CLASS_SPLIT`), which is
+OFF (refused 6 Nov). The published seat number comes from the main model, and it gave Spender 26.9, Ryan 25.5, Daniel 23.2.
+
+## The size of it
+
+649 seats where the only independent was a first-timer. Our published IND share, by what they actually got:
+
+| Actual IND share | Seats | Our mean predicted share |
+|---|---|---|
+| under 5% | 442 | 3.5 |
+| 5-10% | 103 | 5.4 |
+| 10-15% | 34 | 6.1 |
+| 15-25% | 47 | 10.9 |
+| 25% and over | 23 | 15.7 |
+
+So 70 of 649 (11%) took 15% or more, and we gave those 70 about a third of what they got. The 442 that took under 5%
+are why a blanket lift is wrong: it would over-call two thirds of the rows to fix a tenth.
+
+## Six seats
+
+Shares in %. AEF is AE Forecasts' independent share where we have it. Model inputs, plain words:
+`base_pred` is the pre-xgb swing baseline for the IND class; `seat_prev` the IND share in this seat last time (any
+candidate); `voices` a local "Voices of" endorsement; `c200` Climate 200 funding; `search` the campaign search-interest
+score (`surge_h`); `council` an elected local councillor.
+
+| Seat | Candidate | Ours | AEF | Actual | Won | What the model knew |
+|---|---|---|---|---|---|---|
+| Shepparton, vic2014 | Suzanna Sheed (+1 other IND) | 7.0 | - | 35.2 | yes, at 0% | base 5.3, seat_prev 3.6, no voices/c200, search 0.04 |
+| Mackellar, fed2022 | Sophie Scamps | 18.6 | 23.0 | 38.1 | yes, at 9% | base 8.7, seat_prev 12.2, voices 1, c200 1, search 0.13 |
+| Pittwater, nsw2023 | Jacqui Scruby | 22.7 | 26.5 | 35.9 | no (lost narrowly) | base 8.7, seat_prev 2.2, c200 1, search 0.07 |
+| Cowper, fed2022 | Caz Heise | 4.6 | 14.2 | 26.3 | no | base 9.9, seat_prev 25.9 (Oakeshott 2019), c200 1, search 0.07 |
+| Condamine, qld2012 | Shane White | 20.3 | - | 2.2 | no | base 17.8, seat_prev 26.5 (a different IND), nothing else |
+| Deakin, fed2025 | Jess Ness | 12.0 | - | 7.1 | no | base 4.2, seat_prev 1.3, voices 1, c200 1, search 0.06 |
+
+- **Shepparton is the Victorian case and the hardest.** Nothing on file said she was coming: no endorsement, low search,
+  3.6% independent vote last time. Whatever signal there was (local campaign, the Nationals-Liberal contest) is not a
+  feature we have.
+- **Mackellar had every flag** (Voices, Climate 200, the highest search score of the six) and still got half her vote.
+  The flags move the number; they do not move it far enough.
+- **Cowper and Condamine are mirror images.** Both seats had a big independent vote last time from a different person.
+  The model cut Cowper to 4.6 (Heise got 26.3; AEF 14.2) and carried most of Condamine (White got 2.2). Whether the
+  seat's last independent vote transfers to a new independent is decided by the same input both ways.
+- **Deakin is the over-call** from the same flags that under-called Mackellar: Voices plus Climate 200 at 12.0, actual 7.1.
+- UNVERIFIED (not checked against a pre-election source): who the earlier independents in Cowper and Condamine were,
+  and Scruby's margin. `council` is 0 for all six; Sandy Bolton (Noosa 2017, 7.2 against 34.4) was a Noosa councillor
+  from memory, so the council field may be missing some.
+
+## Questions for Pete
+
+1. Is the target the 70 big ones (seat log loss on seats a first-timer won or came close in), with all 35 elections as
+   the do-no-harm guard?
+2. Which signal do you trust to tell Mackellar from Deakin before the vote: endorsement and funding, search interest,
+   seat polls, or the bookmakers' odds (`docs/DATA-REGISTRY.md` lists what is captured)?
+
+## Which signal separates them: seat polls against bookmakers (added 9 Nov, Pete: "Go")
+
+Federal 2022 and 2025 only (the two elections with both seat polls and saved odds): 59 seats where the only independent
+was a first-timer, 14 of whom took 15% or more. Odds: Sportsbet 20 May 2022 (`petes-2022-scrapes/2022-05-20_sb_afe22.rds`,
+`win_prob`) and 23 Apr 2025 (`afe2025/sportsbet_wide.csv`, 1/odds normalised over the seat), both before polling day.
+Seat polls: the `seat_poll` column of `output/ind-model-eval-preds.csv` (9 Oct). AUC: the chance a random 15%+ seat
+ranks above a random one under 15% (0.5 is a coin flip, 1.0 perfect). With 14 positives each AUC carries roughly 0.03-0.04
+of noise, so the gaps below are about one standard error, not a proven ranking.
+
+| Signal | Seats | 15%+ | AUC |
+|---|---|---|---|
+| Market independent win probability | 58 | 14 | 0.966 |
+| Our published share | 59 | 14 | 0.925 |
+| Search interest (`surge_h`) | 59 | 14 | 0.899 |
+| Voices + Climate 200 | 59 | 14 | 0.887 |
+| Seat poll independent share | 35 | 12 | 0.859 |
+
+The level is the bigger story. Win probability, ours against the market, for the 2022 winners:
+Goldstein 0.38 v 0.70, Wentworth 0.32 v 0.48, Mackellar 0.09 v 0.39, Curtin 0.32 v 0.35, North Sydney 0.07 v 0.31. The
+seat polls under-called them too (Mackellar poll 23.4, actual 38.1; Goldstein 30.7 v 34.5), and they already reach the
+published number through the seat-poll blend, so more seat-poll weight would not have found Scamps.
+
+Odds on disk: fed2022, fed2025, sa2022, qld2020 (`external/reference/historical-odds/`), and vic2026 live
+(`vic2026-extra/`, Sportsbet and Betfair). DECISIONS 2026-10-26 kept odds out for "no archived history to backtest";
+these four elections are that history (they were used in `reviews/backtest-vs-bookmakers-2026-10-24.md`, which also
+found the bookmakers beat us on seats with prominent independents). `AUSPOL_NEWIND_SEATPOLL` from the same decision was
+never built. CORRECTED below: where a poll sat 5+ points above us, the under-call was +8.6 (n 8), so moving toward the poll does help even though the polls ran low themselves.
+
+## How much each signal moves the number now, and what bias is left (added 9 Nov)
+
+Pete: "how much influence does each of these have in the models at the moment and how much bias reduction and
+calibration can we still get from them". 580 first-time single independents with a time-forward as-at model (31
+elections; `output/xgb-primary-asat/<election>{,-m2,-m3}.ubj`, SHAP averaged over the three; the final model was not used,
+since it was trained on these rows). Points of IND share.
+
+Where the number comes from, means for the 69 who took 15%+ against the 511 who did not:
+baseline 8.5 / 4.4 -> xgb 10.4 / 4.5 -> published 12.4 / 4.2 -> actual 22.7 / 3.9.
+
+Mean SHAP on the 69 big ones (what each signal adds inside xgb): Climate 200 +1.35, `jump` +0.53, councillor fields +0.29
+together, recipient seat +0.17, last time's IND vote +0.14, Voices +0.13, search (`surge_h`) -0.08. Seat polls are not an xgb
+input; they enter after it, in the seat-poll blend.
+
+Bias left (actual minus published; SE in brackets):
+
+| Group | Seats | Ours | Actual | Under-call |
+|---|---|---|---|---|
+| All first-timers | 580 | 5.2 | 6.1 | +0.9 (0.2) |
+| Climate 200 funded | 23 | 14.7 | 19.6 | +4.9 (1.7) |
+| Voices endorsed | 14 | 14.7 | 20.4 | +5.7 (1.9) |
+| Councillor or mayor | 53 | 6.7 | 10.5 | +3.8 (0.9) |
+| Search interest, top third | 135 | 8.0 | 9.6 | +1.6 (0.6) |
+| Seat poll 5+ points above us | 8 | 11.9 | 20.5 | +8.6 (2.9) |
+| Seat poll within 5 of us | 26 | 8.5 | 10.5 | +2.0 (1.1) |
+
+Win calibration on the same 580: we expected 4.2 first-timer wins and 9 happened (p_win under 0.02: 0.5 expected, 1 won;
+0.02-0.10: 0.8, 3; 0.10-0.30: 0.9, 1; 0.30-0.60: 2.0, 4).
+
+Data sources: odds are Pete's own Sportsbet scrapes (20 May 2022 in `external/reference/historical-odds/petes-2022-scrapes/`;
+23 Apr 2025 from `C:/dev/afe2025`, copied to `historical-odds/afe2025/`). Seat polls: `seat_poll_shares()` over
+`seat-polls/seat_polls.csv`, via `output/ind-model-eval-preds.csv` (`scripts/eval_ind_model.R`, 9 Oct). Climate 200,
+Voices: `R/endorsement_features.R`. Councillor: the council-results features. Search: `surge_h` (campaign search interest).
+UNVERIFIED: whether the councillor field is complete (Bolton, Noosa 2017, reads 0).
+
+## Before building `AUSPOL_NEWIND_SEATPOLL`: what the polls are (added 9 Nov)
+
+The "poll 5+ above us" group above mixed poll types. `seat_poll_shares(e, by_type = TRUE)`, IND class, joined to the
+first-timers: 13 DIRECT polls (named-candidate polls, not MRP) in 4 elections (fed2016, fed2022, nsw2023, fed2025).
+Several of the earlier figures (Cowper 17.0, Page 15.0) were YouGov 2022 MRP "OTH" columns, which the shipped blend
+rightly does not treat as a measure of the independent ("demographic MRP, not local-candidate aware",
+`seat-polls/mrp_candidates.csv`).
+
+On the 13 direct polls: mean ours 15.6, poll 22.1, actual 21.4 (under-call: ours +5.8, poll -0.6). RMSE ours 9.42, poll
+10.62, but one poll carries that (McMahon fed2025: 41.0 against 9.8 actual); without it, poll 6.4 against ours 9.8 on 12
+(computed by hand from the printed rows). fed2022's direct polls sat well above our published number (Goldstein 33.8 v
+23.2, Curtin 29.3 v 21.2, Mackellar 23.9 v 18.6); fed2025's mostly matched it.
+
+Live: `output/seat-poll-blend-vic2026.csv` (9 Nov 10:44am) holds ONE seat poll (Hawthorn, LNP 41). Its IND weight
+is 0.527 (raw 0.893 on 33 cells, shrunk back toward the pooled 0.525). So a new-independent weight changes nothing in the
+published vic2026 forecast unless a Victorian seat poll naming an independent is published before 28 Nov.
+
+## Where the pipeline could act on these signals (added 9 Nov; Pete: "figure out where in our forecast pipeline we can make adjustments")
+
+Big first-timers (n 69) by stage: baseline 8.5 -> xgb 10.4 -> published 12.4 -> actual 22.7. The shortfall is made at
+the baseline and xgb stages; the post-xgb steps add about 2 points net.
+
+1. **`AUSPOL_NEW_IND_SHRINK` (shipped 6 Oct, post-xgb) is signal-blind and acts in Victoria only.** `new_ind_fit()` per
+   target (computed 9 Nov): pooled factor 1.21-1.31 everywhere (first-timers UNDER-called at baseline by 20-30%), but
+   `AUSPOL_NEW_IND_SHRINK_CAP=1` caps it at 1, so it changes nothing outside Victoria and cuts every Victorian
+   first-timer's baseline by 0.822 (vic2022) / 0.826 (vic2026, live), Climate 200, Voices and councillors included.
+   The CAP=0 arm has been pending since 6 Oct.
+2. **xgb under-learns rare flags.** Climate 200 is on 4% of rows and Voices 2.4%; SHAP on the big ones +1.35 and +0.13
+   against gaps of +4.9 and +5.7. A post-xgb, time-forward, shrunk correction by signal group would close what the
+   trees leave (the shape of `AUSPOL_IND_TYPICAL`, built off 9 Oct, which replaces the cell with the typical vote for
+   its signals rather than correcting it).
+3. **Baseline (`dev_slope()`).** None of these signals reaches `base_pred`; CLAUDE.md's rule is to test a fix in both
+   layers.
+4. **Seat-poll blend.** Direct polls of first-timers beat us on 12 of 13 seats (section above); no live effect while
+   vic2026 has one seat poll.
+5. **Win chance (spread).** We expected 4.2 first-timer wins and 9 happened: the composition spread
+   (`fit_spread_by_composition.R`) has no signal term, so a Climate 200 independent gets the same upside as a nameless one.
+6. **Data.** Council history misses whole election years (no Qld 2008/2014, so Noosa's 2014 councillors, Bolton among
+   them, are missing; SA before 2018; NT none; `council_coverage` False for nsw2007, qld2009, sa2006-2018, vic2006,
+   wa before 2008). Bolton reads as "stood and lost" (her 2016 mayoral run), which the model treats as a negative.

@@ -128,3 +128,62 @@ test_that("post_xgb_switches lists every active post-xgb switch", {
   withr::local_envvar(AUSPOL_DEPARTED_SUCCESSOR = "1")
   expect_true("AUSPOL_DEPARTED_SUCCESSOR" %in% names(post_xgb_switches()))
 })
+
+test_that("AUSPOL_NEW_IND_SHRINK_SIGNAL fits each signal group on its own cells and applies each its own factor", {
+  withr::local_envvar(AUSPOL_NEW_IND_SHRINK = "1", AUSPOL_TIME_FORWARD_FITS = "1")
+  C <- data.table::as.data.table(rbind(.ni_election("vic2014", 4), .ni_election("vic2018", 4), .ni_election("vic2022", 4)))
+  be <- data.frame(region = character(0), date = character(0), candidate = character(0))
+  # vic2018: A1, A2 carry a signal (actual 8 on base 8 -> k 1), A3, A4 none (actual 2 on base 8 -> k 0.25)
+  FT <- data.frame(pair = "vic2018", seat = paste0("A", 1:4), party = "IND", actual_share = c(8, 8, 2, 2),
+                   base_pred = 8, c200 = c(1, 0, 0, 0), voices = 0, council_elected = c(0, 1, 0, NA), council_mayor = 0)
+  q <- function(...) { o <- NULL; utils::capture.output(o <- new_ind_fit("vic2022", corpus = C, byelection = be, features = FT, tau2 = 0, ...)); o }
+  expect_equal(q()$factor, 0.625)                        # (8 + 8 + 2 + 2) / 32, one factor
+  expect_equal(q(group = "signal")$factor, 1)
+  expect_equal(q(group = "plain")$factor, 0.25)          # an NA council column is "no signal", not an error
+  expect_equal(nrow(q(group = "signal")$train), 2L)
+  expect_error(q(group = "other"), "group must be")
+  # a feature table without the signal columns must refuse, never put every cell in "plain"
+  expect_error(utils::capture.output(new_ind_fit("vic2022", corpus = C, byelection = be, features = FT[, 1:5], tau2 = 0,
+                                                 group = "plain")), "needs feature column")
+  # apply: the target's own signals come from the feature builders; A1 has one, A2 does not
+  local_mocked_bindings(endorsement_features = function(keys, tab = NULL) { k <- data.table::copy(data.table::as.data.table(keys))
+                          k[, `:=`(c200 = as.numeric(seat == "A1"), voices = 0)]; k },
+                        council_features = function(keys, hist = NULL) { k <- data.table::copy(keys)
+                          k[, `:=`(council_elected = 0, council_mayor = 0)]; k })
+  m <- matrix(c(50, 40, 10, 50, 40, 10), 2, byrow = TRUE, dimnames = list(c("A1", "A2"), c("ALP", "LNP", "IND")))
+  withr::local_envvar(AUSPOL_NEW_IND_SHRINK_SIGNAL = "1")
+  out <- utils::capture.output(r <- new_ind_shrink_apply(m, "vic2022", corpus = C, byelection = be, features = FT, tau2 = 0))
+  expect_equal(r["A1", "IND"], 10)                       # signal cell: factor 1
+  expect_equal(r["A2", "IND"], 2.5)                      # plain cell: factor 0.25
+  expect_equal(unname(rowSums(r)), unname(rowSums(m)))
+  expect_true(any(grepl("1.000 on 1 signal cell", out)))
+  withr::local_envvar(AUSPOL_NEW_IND_SHRINK_SIGNAL = "0")
+  out <- utils::capture.output(r0 <- new_ind_shrink_apply(m, "vic2022", corpus = C, byelection = be, features = FT, tau2 = 0))
+  expect_equal(unname(r0[, "IND"]), c(6.25, 6.25))       # off: the one factor everywhere
+  withr::local_envvar(AUSPOL_NEW_IND_SHRINK_SIGNAL = "yes")
+  expect_error(new_ind_signal_mode(), "must be")
+})
+
+test_that("AUSPOL_NEW_IND_SHRINK_SIGNAL_CAP=0 lets only the signal group rise above 1", {
+  withr::local_envvar(AUSPOL_NEW_IND_SHRINK = "1", AUSPOL_TIME_FORWARD_FITS = "1", AUSPOL_NEW_IND_SHRINK_SIGNAL = "1")
+  C <- data.table::as.data.table(rbind(.ni_election("vic2014", 4), .ni_election("vic2018", 4), .ni_election("vic2022", 4)))
+  be <- data.frame(region = character(0), date = character(0), candidate = character(0))
+  # signal cells: actual 16 on base 8 (k 2); plain cells: actual 12 on base 8 (k 1.5, capped to 1)
+  FT <- data.frame(pair = "vic2018", seat = paste0("A", 1:4), party = "IND", actual_share = c(16, 16, 12, 12),
+                   base_pred = 8, c200 = c(1, 1, 0, 0), voices = 0, council_elected = 0, council_mayor = 0)
+  local_mocked_bindings(endorsement_features = function(keys, tab = NULL) { k <- data.table::copy(data.table::as.data.table(keys))
+                          k[, `:=`(c200 = as.numeric(seat == "A1"), voices = 0)]; k },
+                        council_features = function(keys, hist = NULL) { k <- data.table::copy(keys)
+                          k[, `:=`(council_elected = 0, council_mayor = 0)]; k })
+  m <- matrix(c(50, 40, 10, 50, 40, 10), 2, byrow = TRUE, dimnames = list(c("A1", "A2"), c("ALP", "LNP", "IND")))
+  run <- function() { r <- NULL; utils::capture.output(r <- new_ind_shrink_apply(m, "vic2022", corpus = C, byelection = be, features = FT, tau2 = 0)); r }
+  withr::local_envvar(AUSPOL_NEW_IND_SHRINK_SIGNAL_CAP = "1")
+  expect_equal(unname(run()[, "IND"]), c(10, 10))          # both capped at 1
+  withr::local_envvar(AUSPOL_NEW_IND_SHRINK_SIGNAL_CAP = "0")
+  r <- run()
+  expect_equal(r["A1", "IND"], 20)                         # signal cell rises to k 2
+  expect_equal(r["A2", "IND"], 10)                         # plain cell still capped
+  expect_equal(unname(rowSums(r)), unname(rowSums(m)))
+  withr::local_envvar(AUSPOL_NEW_IND_SHRINK_SIGNAL_CAP = "x")
+  expect_error(run(), "SIGNAL_CAP must be")
+})

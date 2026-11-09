@@ -1096,6 +1096,8 @@ nom_zero_save_flows(fm, TGT)   # the as-at forecasts table zeroes with this same
 shares <- zero_unnominated_at("late", shares, fp_tgt, TGT, flows = fm)
 .nz_cells <- nomination_zeroed_cells(.nz_pre, shares)
 shares <- level_conserve_apply(shares, state_tgt, TGT, stage = "final", target = fp_tgt, held = HELD)  # AUSPOL_LEVEL_CONSERVE "final"/"both": after the last nomination zero
+if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")) shares <- new_ind_lift_apply(shares, TGT, code = "BT1L")  # AUSPOL_NEW_IND_LIFT (shipped 9 Nov): signal first-timers get the lift fitted on earlier PUBLISHED shares; last share step, xgb layer only. R/new_ind_lift.R.
+NIL_LOG <- attr(shares, "new_ind_lift")  # NULL when the lift is off; sharedetail then has no pred_share_prelift
   # ARM H, docs/plans/prereg-reentry-flatratio-variance-2026-09-08.md. Widens
   # the SIMULATED uncertainty, not the point estimate, for cells that fell
   # back to the flat re-entry ratio -- point-shrinkage was tried and refused
@@ -1349,7 +1351,7 @@ cat(sprintf("BT4  winner accuracy: %d of %d (%.1f%%)\n",
 cat(sprintf("BT5  Brier (on the party that won): %.4f\n", mean((1 - res$p)^2)))
 eps <- 1e-6
 nom_zero_assert_late(shares, .nz_cells)  # "late" order only: a zeroed cell must still be 0 at the write
-.rr <- seat_share_rmse(shares, fp_tgt)  # the second metric: point-estimate seat-share RMSE vs actual
+.rr <- seat_share_rmse(shares, fp_tgt, prelift = NIL_LOG)  # the second metric: point-estimate seat-share RMSE vs actual
 cat(sprintf("BT5r  seat-share RMSE %.3f | MAE %.3f | by class %s | %d seats%s\n", .rr$rmse, .rr$mae,
             paste(sprintf("%s=%.2f", names(.rr$by_class), .rr$by_class), collapse = " "),
             .rr$n_seats, if (.rr$n_dropped) sprintf(" (%d unmatched dropped)", .rr$n_dropped) else ""))

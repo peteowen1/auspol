@@ -219,7 +219,8 @@ jobs:
           set -euo pipefail
           for f in xgb-primary-v6-final.model xgb-primary-v6-final-cols.json \
                    xgb-flows-v1-final.model xgb-flows-v1-final-cols.json \
-                   xgb-flows-v1-features.csv xgb-primary-v6-features.csv candidacies.csv; do
+                   xgb-flows-v1-features.csv xgb-primary-v6-features.csv candidacies.csv \
+                   published-predictions.csv; do
             gh release download shipped-models -p "$f" -D output --clobber
           done
           # Seed-ensemble members (AUSPOL_XGB_ENSEMBLE): the manifest is optional

@@ -28,7 +28,7 @@ election has no per-candidate predictions).
 \description{
 For every seat of \code{target_election} where a minor class has two or more
 candidates in the per-candidate predictions, the junior fraction
-\verb{r = second-largest prediction / sum of the class's predictions}. Its
+r, the second-largest prediction divided by the sum of the class's predictions. Its
 spread is the root mean squared error of that fraction against the actual
 one over EARLIER elections' seats, and \code{f} (the share of an excluded
 same-class candidate's votes that reach the other) comes from earlier

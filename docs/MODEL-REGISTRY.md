@@ -1,6 +1,6 @@
 # Model registry
 
-**Generated 2026-11-08 by `scripts/build_model_registry.R`. Do not hand-edit** --
+**Generated 2026-11-09 by `scripts/build_model_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate whenever a switch is added to
 `published_flags.R` or a harness's wiring changes.
 
@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (313 switches from `published_flags.R`, 7 entry points)
+## Switch parity (316 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -183,8 +183,11 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_MP_SLOPE_TF` | NO | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_N_SIMS` | yes | yes | yes | yes | yes | yes | yes |  |
 | `AUSPOL_NB_TARGET` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_NEW_IND_LIFT` | NO | NO | NO | NO | NO | NO | NO | new_ind_lift.R |
 | `AUSPOL_NEW_IND_SHRINK` | NO | NO | NO | NO | NO | NO | NO | ind_mixture.R, ind_typical.R, new_ind_shrink.R |
 | `AUSPOL_NEW_IND_SHRINK_CAP` | NO | NO | NO | NO | NO | NO | NO | new_ind_shrink.R |
+| `AUSPOL_NEW_IND_SHRINK_SIGNAL` | NO | NO | NO | NO | NO | NO | NO | new_ind_shrink.R |
+| `AUSPOL_NEW_IND_SHRINK_SIGNAL_CAP` | NO | NO | NO | NO | NO | NO | NO | new_ind_shrink.R |
 | `AUSPOL_NIGHT_DUMP` | NO | yes | yes | yes | yes | yes | yes |  |
 | `AUSPOL_NIGHT_REPLAY_FRAC` | NO | NO | NO | NO | NO | yes | NO | night_update.R |
 | `AUSPOL_NIGHT_TCP` | NO | NO | NO | NO | NO | yes | NO |  |
@@ -474,8 +477,11 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_MP_SLOPE_GRN`** (intentional / dead experiment): HARNESS-ONLY, off (all seven harnesses): '1' keeps a Greens member slope. Live drops the Greens row with no switch (fit_seats_full.R MP tier), which is the same behaviour as the published 0.
 - **`AUSPOL_MP_SLOPE_TF`** (**adopted, shared-function wiring**): SHIPPED (1) 2026-10-14, FIT-TIME: read by scripts/fit_mp_slope.R, which writes output/mp-slope-by-target.csv (rebuild stage 0); harnesses and live read the table, not the switch.
 - **`AUSPOL_NB_TARGET`** (intentional / dead experiment): NOT A MODEL SWITCH: an argument to scripts/build_notional_baselines.R (which federal election year to build notional post-redistribution baselines for). Reads NO everywhere by construction; listed in published_flags.R only as documentation of how to rebuild the notional table.
+- **`AUSPOL_NEW_IND_LIFT`** (**adopted, shared-function wiring**): SHIPPED (1) 2026-11-09 (deciding-runs/20261109-1858-newind-lift; plans/prereg-new-ind-lift-2026-11-09.md), UNIVERSAL via R/: read by new_ind_lift_mode() (R/new_ind_lift.R), called as the last share step in all seven harnesses (xgb layer only) and fit_seats_full.R.
 - **`AUSPOL_NEW_IND_SHRINK`** (**adopted, shared-function wiring**): SHIPPED (1) 2026-10-06, UNIVERSAL via R/: read by new_ind_mode() (R/new_ind_shrink.R, also ind_mixture.R/ind_typical.R), which all seven entry points reach. The old 'yes' cells were comments.
 - **`AUSPOL_NEW_IND_SHRINK_CAP`** (**adopted, shared-function wiring**): SHIPPED (default 1 = cap the new-independent factor at 1); the '0' arm is pending. Read inside R/new_ind_shrink.R, which all six harnesses and fit_seats_full.R call, so the harness grep cannot see it.
+- **`AUSPOL_NEW_IND_SHRINK_SIGNAL`** (intentional / dead experiment): REFUSED ARM (0) 2026-11-09 (plans/prereg-new-ind-shrink-signal-2026-11-09.md), UNIVERSAL via R/: read by new_ind_signal_mode() inside new_ind_shrink_apply() (R/new_ind_shrink.R), which all seven entry points reach.
+- **`AUSPOL_NEW_IND_SHRINK_SIGNAL_CAP`** (intentional / dead experiment): REFUSED ARM (1) 2026-11-09 (same prereg, Amendment 1), UNIVERSAL via R/: read inside new_ind_shrink_apply() (R/new_ind_shrink.R) only when AUSPOL_NEW_IND_SHRINK_SIGNAL=1.
 - **`AUSPOL_NIGHT_DUMP`** (intentional / dead experiment): REPLAY TOOLING (issue #160): read by the Victorian harness only, to save state for scripts/night_replay.R; no number changes.
 - **`AUSPOL_NIGHT_REPLAY_FRAC`** (intentional / dead experiment): REPLAY ONLY (issue #153): read in R/night_update.R from the Victorian harness's replay path; election night itself runs R/night_runner.R, not the harness, so no other entry point reads it.
 - **`AUSPOL_NIGHT_TCP`** (intentional / dead experiment): REPLAY ONLY (issue #161): Victorian harness, with AUSPOL_NIGHT_REPLAY_FRAC set; inert otherwise.
@@ -676,8 +682,8 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR4  every AUSPOL_* switch read in code (416) is registered (296) or listed as not a model switch (120).
+MR4  every AUSPOL_* switch read in code (419) is registered (299) or listed as not a model switch (120).
 
 
 
-MR2  every non-universal switch (282 of 313) has a recorded classification.
+MR2  every non-universal switch (285 of 316) has a recorded classification.
