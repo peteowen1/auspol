@@ -76,3 +76,21 @@ Named in advance:
   flopped (Deakin 2025: Voices + Climate 200, ours 12.0, actual 7.1) is the failure to look for; the changed-cell
   squared error (clause 1) is where it shows.
 - A pass here goes to the 20k deciding run before shipping, as above.
+
+### Amendment 1 result (quick_arm, 1,000 sims, all 35, 9 Nov 4:57pm, code 0732f6e8): REFUSED, stays off
+
+Log `output/quick-arm-newind-signalcap-1109.log`. 659 cells changed in 22 elections.
+
+1. PRIMARY: changed-cell squared error 13,626.7 -> 13,525.4 (-101.3), SE 766.9: FAIL.
+2. GUARD: 35-election seat log loss 0.3005 -> 0.3027 (+0.0022, SE 0.0018): FAILS (worse by more than 1 SE).
+3. GUARD: AEF-7 0.2522 -> 0.2608 (+0.0087, SE 0.0075): FAILS.
+4. DISQUALIFIER: vic2018 +0.0015, vic2014 -0.0002, vic2022 -0.0006: does not fire.
+
+Worst elections: nsw2023 +0.0523, fed2025 +0.0118, sa2022 +0.0096; best fed2022 -0.0045. The overshoot named in
+advance is what happened. It lifted cells the trees had already called well: Lane Cove 19.0 -> 34.5 (actual 20.4),
+Vaucluse 21.3 -> 32.8 (17.1), Grey 16.0 -> 26.4 (17.5), Hammond 11.6 -> 25.7 (15.7). It also helped where we were
+short: Pittwater 22.7 -> 31.8 (35.9), Bean 20.3 -> 28.3 (26.4), Blaxland 4.1 -> 9.0 (18.8).
+
+Lesson for the next lever: a factor fitted on `base_pred` double counts, because the trees already add their own
+signal correction on top of the base. Any lift for signal cells has to be fitted on what the model publishes (after
+the trees), not on the base.
