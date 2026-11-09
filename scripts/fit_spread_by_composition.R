@@ -44,7 +44,18 @@ fit_one <- function(tr) {
   tr[, lfc := lf - stats::median(lf)]
   live <- sc[vapply(sc, function(k) stats::var(tr[[k]]) > 0, TRUE)]
   fo <- stats::as.formula(paste("e2 ~ lfc", if (length(live)) paste("+", paste(live, collapse = " + ")), "+ offset(log(sdm2))"))
-  f <- stats::glm(fo, family = stats::Gamma(link = "log"), data = tr, control = stats::glm.control(maxit = 100))
+  # Default start first, so every target that fits from it is unchanged. IRLS can overflow from the default
+  # start ("NA/NaN/Inf in 'x'"): it did on 9 Nov 2026 after the completed by-election table, killing rebuild
+  # stage 7. Then retry from the overall error ratio with every slope 0 (fit_own()'s start below), and SAY SO.
+  # A fit that fails from both starts still stops: this table ships (AUSPOL_COMPOSITION_SD).
+  f <- tryCatch(stats::glm(fo, family = stats::Gamma(link = "log"), data = tr, control = stats::glm.control(maxit = 100)),
+                error = function(e) NULL)
+  if (is.null(f) || !isTRUE(f$converged)) {
+    f <- stats::glm(fo, family = stats::Gamma(link = "log"), data = tr,
+                    start = c(log(mean(tr$e2 / tr$sdm2)), rep(0, length(live) + 1L)), control = stats::glm.control(maxit = 100))
+    if (!isTRUE(f$converged)) stop("CMP5! composition fit did not converge from either start (", nrow(tr), " cells)")
+    .retried <<- c(.retried, .cur_target)
+  }
   X <- stats::model.matrix(f); r <- stats::residuals(f, type = "working") * f$weights
   bread <- solve(crossprod(X * sqrt(f$weights)))
   meat <- Reduce(`+`, lapply(split(seq_len(nrow(X)), tr$pair), function(i) tcrossprod(colSums(X[i, , drop = FALSE] * r[i]))))
@@ -61,8 +72,10 @@ fit_one <- function(tr) {
 }
 
 targets <- unique(c(pb$pair, "vic2026", "nsw2027", "fed2028"))
+.retried <- character(0); .cur_target <- NA_character_
 res <- rbindlist(lapply(targets, function(tg) {
   tday <- as.Date(unname(ed[tg])); if (is.na(tday)) return(NULL)
+  .cur_target <<- tg
   tr <- S[S$day < tday]
   if (uniqueN(tr$pair) < 3L || nrow(tr) < 500L)
     return(data.table(target = tg, class = CLS, b = 0, se = NA_real_, w = 0, n_cells = nrow(tr), n_pairs = uniqueN(tr$pair)))
@@ -75,7 +88,8 @@ res <- rbindlist(lapply(targets, function(tg) {
 show <- dcast(res[, list(target, n_pairs, class, f = round(exp(pmax(0, w * b) / 2), 3))], target + n_pairs ~ class, value.var = "f")
 print(show[order(n_pairs)], nrows = 60)
 fwrite(res, file.path(OUT, "spread-by-composition.csv"))
-cat(sprintf("CMP2  wrote output/spread-by-composition.csv (%d targets x %d classes)\n", uniqueN(res$target), length(CLS)))
+cat(sprintf("CMP2  wrote output/spread-by-composition.csv (%d targets x %d classes); %d target(s) needed the fallback start%s\n",
+            uniqueN(res$target), length(CLS), length(.retried), if (length(.retried)) paste0(": ", paste(.retried, collapse = ", ")) else ""))
 
 # ---- Arm C2 (AUSPOL_COMPOSITION_SD=own; prereg amendment 1): each non-major class's OWN cells only ----------
 # Gamma GLM of e2 on class-c cells: offset log sdm^2, centred log size, and the class's own share per 10 points.
