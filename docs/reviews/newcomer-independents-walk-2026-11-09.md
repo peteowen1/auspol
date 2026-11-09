@@ -89,4 +89,39 @@ Odds on disk: fed2022, fed2025, sa2022, qld2020 (`external/reference/historical-
 (`vic2026-extra/`, Sportsbet and Betfair). DECISIONS 2026-10-26 kept odds out for "no archived history to backtest";
 these four elections are that history (they were used in `reviews/backtest-vs-bookmakers-2026-10-24.md`, which also
 found the bookmakers beat us on seats with prominent independents). `AUSPOL_NEWIND_SEATPOLL` from the same decision was
-never built; this table says it would not have helped the 2022 cases.
+never built. CORRECTED below: where a poll sat 5+ points above us, the under-call was +8.6 (n 8), so moving toward the poll does help even though the polls ran low themselves.
+
+## How much each signal moves the number now, and what bias is left (added 9 Nov)
+
+Pete: "how much influence does each of these have in the models at the moment and how much bias reduction and
+calibration can we still get from them". 580 first-time single independents with a time-forward as-at model (31
+elections; `output/xgb-primary-asat/<election>{,-m2,-m3}.ubj`, SHAP averaged over the three; the final model was not used,
+since it was trained on these rows). Points of IND share.
+
+Where the number comes from, means for the 69 who took 15%+ against the 511 who did not:
+baseline 8.5 / 4.4 -> xgb 10.4 / 4.5 -> published 12.4 / 4.2 -> actual 22.7 / 3.9.
+
+Mean SHAP on the 69 big ones (what each signal adds inside xgb): Climate 200 +1.35, `jump` +0.53, councillor fields +0.29
+together, recipient seat +0.17, last time's IND vote +0.14, Voices +0.13, search (`surge_h`) -0.08. Seat polls are not an xgb
+input; they enter after it, in the seat-poll blend.
+
+Bias left (actual minus published; SE in brackets):
+
+| Group | Seats | Ours | Actual | Under-call |
+|---|---|---|---|---|
+| All first-timers | 580 | 5.2 | 6.1 | +0.9 (0.2) |
+| Climate 200 funded | 23 | 14.7 | 19.6 | +4.9 (1.7) |
+| Voices endorsed | 14 | 14.7 | 20.4 | +5.7 (1.9) |
+| Councillor or mayor | 53 | 6.7 | 10.5 | +3.8 (0.9) |
+| Search interest, top third | 135 | 8.0 | 9.6 | +1.6 (0.6) |
+| Seat poll 5+ points above us | 8 | 11.9 | 20.5 | +8.6 (2.9) |
+| Seat poll within 5 of us | 26 | 8.5 | 10.5 | +2.0 (1.1) |
+
+Win calibration on the same 580: we expected 4.2 first-timer wins and 9 happened (p_win under 0.02: 0.5 expected, 1 won;
+0.02-0.10: 0.8, 3; 0.10-0.30: 0.9, 1; 0.30-0.60: 2.0, 4).
+
+Data sources: odds are Pete's own Sportsbet scrapes (20 May 2022 in `external/reference/historical-odds/petes-2022-scrapes/`;
+23 Apr 2025 from `C:/dev/afe2025`, copied to `historical-odds/afe2025/`). Seat polls: `seat_poll_shares()` over
+`seat-polls/seat_polls.csv`, via `output/ind-model-eval-preds.csv` (`scripts/eval_ind_model.R`, 9 Oct). Climate 200,
+Voices: `R/endorsement_features.R`. Councillor: the council-results features. Search: `surge_h` (campaign search interest).
+UNVERIFIED: whether the councillor field is complete (Bolton, Noosa 2017, reads 0).
