@@ -40,3 +40,22 @@ Named in advance, so they cannot be invented after the result:
   rather than from sparing signal ones, that is still this arm's mechanism and is reported as such, split by group.
 - The signal group's own k is 1.8-2.8 everywhere, and the cap holds it at 1. Raising it (`AUSPOL_NEW_IND_SHRINK_CAP=0`
   for the signal group) is a separate arm, not this one.
+
+## Result, screen (quick_arm, 1,000 sims, all 35, 9 Nov 4:17pm, code e8525f31): PRIMARY FAILS, stays off
+
+Log `output/quick-arm-newind-signal-1109.log`. 329 of 19,616 cells changed, in 6 elections; 29 byte-identical.
+
+1. PRIMARY: changed-cell squared error 4,633.4 -> 4,565.3 (-68.0, -1%), SE 75.9: FAIL (needs more than 2 SE).
+2. GUARD: 35-election seat log loss 0.3005 -> 0.3005 (+0.0000): holds.
+3. GUARD: AEF-7 0.2522 -> 0.2522: holds.
+4. DISQUALIFIER: vic2014 -0.0004, vic2018 +0.0005, vic2022 +0.0001: does not fire.
+
+Per election (squared-error change on changed cells; seat log loss change): vic2018 -59.1, +0.0005; vic2014 -28.2,
+-0.0004; vic2022 +2.0, +0.0001; qld2015 +23.6, -0.0001; nt2020 -6.2, +0.0004; nt2024 0. Largest share move 1.82 points.
+Not named in advance: qld2015 and the NT pairs moved too, where the no-signal fit fell below 1 once the signal cells
+left it.
+
+Why so small: the arm only stops a cut of at most 17% on the few Victorian signal cells (base level, before the
+trees), and cuts the no-signal ones harder, where the trees and the post-xgb steps already land near the actual.
+It cannot raise anyone: the signal group's own k (1.8-2.8) is held at 1 by the cap. Raising it is the separate arm
+named above.
