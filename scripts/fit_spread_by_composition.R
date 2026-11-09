@@ -53,7 +53,7 @@ fit_one <- function(tr) {
   if (is.null(f) || !isTRUE(f$converged)) {
     f <- stats::glm(fo, family = stats::Gamma(link = "log"), data = tr,
                     start = c(log(mean(tr$e2 / tr$sdm2)), rep(0, length(live) + 1L)), control = stats::glm.control(maxit = 100))
-    if (!isTRUE(f$converged)) stop("CMP1! composition fit did not converge from either start (", nrow(tr), " cells)")
+    if (!isTRUE(f$converged)) stop("CMP5! composition fit did not converge from either start (", nrow(tr), " cells)")
     .retried <<- c(.retried, .cur_target)
   }
   X <- stats::model.matrix(f); r <- stats::residuals(f, type = "working") * f$weights
