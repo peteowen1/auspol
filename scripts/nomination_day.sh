@@ -75,4 +75,4 @@ R "scripts/fit_seats_full.R" > "$LOG/3-forecast.log" 2>&1 || { echo "NOM3!! tria
 grep -E "^NZL" "$LOG/3-forecast.log" || echo "NOM3! no NZL lines in the trial forecast log -- zeroing may not have run"
 echo
 echo "NOM9 done. Read the NZL lines above (majors with no candidate, classes under 80% of vic2022's seats)."
-[ "$DRY" = 1 ] && echo "NOM9 dry run: nothing to upload." || echo "NOM9 next (manual): upload output/candidacies.csv to shipped-models, set AUSPOL_NOM_LIVE=\"1\" in published_flags.R, commit, rebuild/publish."
+[ "$DRY" = 1 ] && echo "NOM9 dry run: nothing to upload." || echo "NOM9 next (manual): upload output/candidacies.csv to shipped-models, set AUSPOL_NOM_LIVE=\"vic2026\" in published_flags.R, commit, rebuild/publish."

@@ -4,7 +4,11 @@
 \alias{nom_zero_requested}
 \title{Has someone asked for live nomination zeroing?}
 \usage{
-nom_zero_requested()
+nom_zero_requested(election = NULL)
+}
+\arguments{
+\item{election}{\code{NULL} (any target), or an election label: then TRUE only when zeroing is on for that
+election (\code{\link[=nom_live_on]{nom_live_on()}}).}
 }
 \value{
 logical(1)

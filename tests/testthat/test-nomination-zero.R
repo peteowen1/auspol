@@ -415,3 +415,24 @@ test_that("fit_seats_full.R zeroes before the trees (pre-xgb call) AND after the
   # the pre-xgb cells join the final-write assertion
   expect_true(any(grepl("rbind(.nz_cells, .nzp_cells)", l, fixed = TRUE)))
 })
+
+test_that("AUSPOL_NOM_LIVE takes election labels, so one target can go live while another stays provisional", {
+  withr::local_envvar(AUSPOL_NOM_LIVE = "vic2026")
+  expect_true(nom_live_on("vic2026"))
+  expect_false(nom_live_on("nsw2027"))
+  expect_true(nom_zero_requested("vic2026"))
+  expect_false(nom_zero_requested("nsw2027"))
+  r <- live_nominations(c("A", "B"), election = "nsw2027", prior = "nsw2023")
+  expect_null(r$target)
+  expect_match(r$reason, "not live for nsw2027")
+  withr::local_envvar(AUSPOL_NOM_LIVE = "vic2026, nsw2027")
+  expect_true(nom_live_on("nsw2027"))
+  withr::local_envvar(AUSPOL_NOM_LIVE = "1")
+  expect_true(nom_live_on("nsw2027"))
+  for (bad in c("true", "vic", "vic2026;nsw2027")) {
+    withr::local_envvar(AUSPOL_NOM_LIVE = bad)
+    expect_error(nom_live_on("vic2026"), "not recognised")
+  }
+  withr::local_envvar(AUSPOL_NOM_LIVE = "auto")
+  expect_false(nom_live_on("vic2026"))
+})

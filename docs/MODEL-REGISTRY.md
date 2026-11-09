@@ -191,7 +191,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_NIGHT_DUMP` | NO | yes | yes | yes | yes | yes | yes |  |
 | `AUSPOL_NIGHT_REPLAY_FRAC` | NO | NO | NO | NO | NO | yes | NO | night_update.R |
 | `AUSPOL_NIGHT_TCP` | NO | NO | NO | NO | NO | yes | NO |  |
-| `AUSPOL_NOM_LIVE` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R, xgb_primary_override.R |
+| `AUSPOL_NOM_LIVE` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R |
 | `AUSPOL_NOM_LIVE_FILE` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R |
 | `AUSPOL_NOM_ZERO` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R |
 | `AUSPOL_NOM_ZERO_ORDER` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R |
