@@ -110,3 +110,17 @@ writes `pred_share_prelift` into sharedetail only when the lift is on (lift off:
 sims, arm sharedetail Flinders IND 11.10 published, 7.96 pre-lift (the baseline's 7.96), Hammond 14.76 / 11.62; the
 baseline file has no new column. Same squared-error change as the screen (-188.4). Tests in
 `tests/testthat/test-new-ind-lift.R`.
+
+## Result, deciding run (20,000 sims, all 35, 9 Nov 8:18pm, code 13d88c25, `deciding-runs/20261109-1858-newind-lift`): PASSES
+
+Same as the screen. 404 cells changed in 19 elections.
+
+1. PRIMARY: 9,770.2 -> 8,980.5 (-789.7), SE 686.8 = 1.15 SE (quick_arm's own label says FAIL at its default 2 SE; this
+   prereg's bar is 1 SE, set before the run for the reason above). Without fed2022 (-481.1): -308.6. PASSES.
+2. GUARD: 35-election seat log loss 0.3083 -> 0.3084 (+0.0000, SE 0.0010): holds.
+3. GUARD: AEF-7 0.2530 -> 0.2528 (-0.0001, SE 0.0044): holds.
+4. DISQUALIFIER: worst fed2025 +0.0106, nsw2023 +0.0070; vic2022 -0.0017: does not fire.
+
+Live vic2026 (published shares in `output/seat-shares-vic-2026.csv`): two signal first-timers, both councillors,
+Ringwood (Prue Cutts) IND 3.4 -> ~7.1 and Williamstown (Tony Briffa) 3.8 -> ~7.5 at shift +3.73. No seat changes
+hands.
