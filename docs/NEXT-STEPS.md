@@ -23,6 +23,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   new data). I publish myself (Pete, 8 Nov). Forecast run dispatched 9 Nov 12:53pm (run 42547940724) to put the
   10:45am models on the site; read its conclusion.
   OPEN: VEC feed access: no reply in Gmail since the 28 Oct terms email; chase SENT 9 Nov 1:12pm (same thread); wait for a reply.
+- NEEDS PETE 9 Nov 10:35pm: VEC final list LOADED LOCALLY from the VEC website (`scripts/fetch_vec_candidates_web.R`, `bash scripts/nomination_day.sh --web`; feed access still pending): 734 candidates in 88 districts, matches the VEC spreadsheet; output/candidacies.csv rebuilt; trial forecast (-nomtrial) zeroed 32 IND and 8 OTH_RIGHT cells; Ali Cupper (Mildura IND) did not nominate. NOT live until Pete opens the gate: upload candidacies.csv to shipped-models, AUSPOL_NOM_LIVE="1", rebuild/publish (the vic2006/vic2010/sa2026 corpus fixes ride with it).
   10 Nov: `scripts/nomination_day.sh` (dry-run tested).
   Memory sits at 2-7 GB; Claude Code's low-memory stop kills background shells, not detached jobs. Run
   `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
