@@ -262,12 +262,14 @@ new_ind_signal_mode <- function() {
 #' @param code,quiet Logging.
 #' @param group `NULL` fits every cell; `"signal"` or `"plain"` fits only the cells with or without a
 #'   pre-election signal (`AUSPOL_NEW_IND_SHRINK_SIGNAL`).
+#' @param cap `NULL` reads `AUSPOL_NEW_IND_SHRINK_CAP`; `TRUE` bounds the factor at 1, `FALSE` lets it rise.
 #' @return A list: `factor` (for the target's jurisdiction), `table` (one row
 #'   per jurisdiction: `region, n, n_el, k, se, w, factor`), `pooled`, `tau2`,
 #'   `train` (the cells used).
 #' @export
 new_ind_fit <- function(target, corpus = NULL, byelection = NULL, features = NULL,
-                        tau2 = NULL, prior_max = 10, code = "NI1", quiet = FALSE, group = NULL) {
+                        tau2 = NULL, prior_max = 10, code = "NI1", quiet = FALSE, group = NULL,
+                        cap = NULL) {
   C <- .ni_read_corpus(corpus)
   if (is.null(features)) features <- .ni_read_features()
   FT <- data.table::as.data.table(features)
@@ -325,7 +327,9 @@ new_ind_fit <- function(target, corpus = NULL, byelection = NULL, features = NUL
   # AUSPOL_NEW_IND_SHRINK_CAP: "1" bounds the factor to [0, 1] (only ever lowers a cell); "0" lets
   # it rise where earlier elections under-called these candidates (federal and NSW: k ~1.5). Pete,
   # 2026-10-06: a one-sided cap keeps only the half of a fix that helps.
-  .hi <- if (identical(Sys.getenv("AUSPOL_NEW_IND_SHRINK_CAP", "1"), "0")) Inf else 1
+  # `cap` (TRUE/FALSE) overrides the switch: AUSPOL_NEW_IND_SHRINK_SIGNAL_CAP sets it for the signal group alone.
+  if (is.null(cap)) cap <- !identical(Sys.getenv("AUSPOL_NEW_IND_SHRINK_CAP", "1"), "0")
+  .hi <- if (isTRUE(cap)) 1 else Inf
   tb$factor <- pmin(.hi, pmax(0, pool[["k"]] + tb$w * (tb$k - pool[["k"]])))
   fac <- if (trg_region %in% tb$region) tb$factor[tb$region == trg_region]
          else pmin(.hi, pmax(0, pool[["k"]]))
@@ -379,7 +383,12 @@ new_ind_shrink_apply <- function(shares, target, code = "NI1", ...) {
     keys <- data.table::data.table(pair = target, seat = cells$seat, party = "IND")
     sk <- council_features(endorsement_features(keys))
     cells_sig <- .ni_signal(sk)
-    fs <- do.call(new_ind_fit, c(list(target, code = paste0(code, "s"), group = "signal"), fa))$factor
+    # AUSPOL_NEW_IND_SHRINK_SIGNAL_CAP: "1" (default) holds the signal group at 1 like every cell; "0" lets it rise
+    # to its own fitted factor (prereg-new-ind-shrink-signal-2026-11-09.md, Amendment 1). The plain group keeps
+    # AUSPOL_NEW_IND_SHRINK_CAP.
+    scap <- Sys.getenv("AUSPOL_NEW_IND_SHRINK_SIGNAL_CAP", "1")
+    if (!scap %in% c("0", "1")) stop("AUSPOL_NEW_IND_SHRINK_SIGNAL_CAP must be \"0\" or \"1\"; got \"", scap, "\"", call. = FALSE)
+    fs <- do.call(new_ind_fit, c(list(target, code = paste0(code, "s"), group = "signal", cap = scap == "1"), fa))$factor
     fp <- do.call(new_ind_fit, c(list(target, code = paste0(code, "p"), group = "plain"), fa))$factor
     fcell <- ifelse(cells_sig, fs, fp)
     cat(sprintf("%s  AUSPOL_NEW_IND_SHRINK_SIGNAL=1 for %s: factor %.3f on %d signal cell(s), %.3f on %d plain cell(s)\n",
