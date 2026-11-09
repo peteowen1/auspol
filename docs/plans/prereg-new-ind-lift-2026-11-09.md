@@ -73,3 +73,30 @@ Ship (to the 20k run) if 1 passes, 2 and 3 hold and 4 does not fire; otherwise o
 - Search interest stays out of the signal list for the same reason as the shrink prereg (no cut-off that is not fitted).
 - Not added to `post_xgb_switches()`: the lift runs after `xgb_primary_override()` records its reference, and is gated
   to `AUSPOL_XGB_PRIMARY=1`, so it can never enter a stage-1 base.
+
+## Result, screen (quick_arm, 1,000 sims, all 35, 9 Nov 6:56pm, code 0a816ba5): PASSES, goes to the 20k deciding run
+
+Log `output/quick-arm-newind-lift-1109.log`. 404 of 19,616 cells changed (the lifted cells and the classes that gave
+up share), in 19 elections; 16 byte-identical. Largest share move 5.08 points.
+
+1. PRIMARY: changed-cell squared error 9,768.9 -> 8,979.1 (-789.8, -8%), SE 686.9 = 1.15 SE: passes the 1 SE bar.
+   Leave-one-election-out: the largest gain is fed2022 -481.0; without it -308.8, still below zero. PASSES.
+2. GUARD: 35-election seat log loss 0.3005 -> 0.3006 (+0.0001, SE 0.0009): holds.
+3. GUARD: AEF-7 0.2522 -> 0.2522 (+0.0001, SE 0.0043): holds.
+4. DISQUALIFIER: worst single election fed2025 +0.0106 (bar 0.02); vic2022 -0.0023 (bar +0.005): does not fire.
+
+Seat log loss per election: fed2022 -0.0136, vic2022 -0.0023, qld2020 -0.0007; fed2025 +0.0106, nsw2023 +0.0073,
+vic2018 +0.0009; the rest within 0.0005. Squared error: fed2022 -481, nsw2019 -256, sa2022 -188, vic2010 -177; vic2022
++234, fed2016 +131, fed2025 +98, vic2018 +93.
+
+Where the win chance moved most (independent share before -> after, actual; independent win chance):
+- fed2025: Forrest 18.4 -> 22.8 (18.3), 0.22 -> 0.57, lost; Grey 16.0 -> 20.4 (17.5), 0.10 -> 0.28, lost; Fisher
+  0.09 -> 0.27, lost; Bean 20.3 -> 24.7 (26.4), Fremantle 17.6 -> 22.0 (23.0), closer on share, both lost.
+- nsw2023: Wakehurst 29.0 -> 33.5 (35.9), 0.42 -> 0.70, WON; Pittwater 22.7 -> 27.2 (35.9), 0.23 -> 0.55, lost
+  narrowly; Vaucluse 21.3 -> 25.8 (17.1), 0.15 -> 0.43, lost; Lane Cove 0.06 -> 0.23, lost.
+- fed2022: Curtin 0.35 -> 0.54 and Goldstein 0.43 -> 0.62, both WON; North Sydney, Mackellar up, both WON.
+- vic2022: Hawthorn 13.7 -> 18.8 (20.0); Caulfield 11.2 -> 16.2 (6.5) and Bellarine 10.7 -> 15.8 (4.6), the
+  councillors named in advance.
+
+The gain is in share error; seat log loss is a wash (2022's teal wins paid for 2025's and 2023's near misses). Before
+shipping, the ship blocker above (a pre-lift share column the fit reads) is still required.
