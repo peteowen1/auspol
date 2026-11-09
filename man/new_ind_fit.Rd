@@ -13,7 +13,8 @@ new_ind_fit(
   prior_max = 10,
   code = "NI1",
   quiet = FALSE,
-  group = NULL
+  group = NULL,
+  cap = NULL
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ pooling).}
 
 \item{group}{\code{NULL} fits every cell; \code{"signal"} or \code{"plain"} fits only the cells with or without a
 pre-election signal (\code{AUSPOL_NEW_IND_SHRINK_SIGNAL}).}
+
+\item{cap}{\code{NULL} reads \code{AUSPOL_NEW_IND_SHRINK_CAP}; \code{TRUE} bounds the factor at 1, \code{FALSE} lets it rise.}
 }
 \value{
 A list: \code{factor} (for the target's jurisdiction), \code{table} (one row
