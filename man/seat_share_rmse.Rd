@@ -4,7 +4,7 @@
 \alias{seat_share_rmse}
 \title{Root-mean-square error of a seat-by-class vote-share point estimate}
 \usage{
-seat_share_rmse(shares, actual_votes)
+seat_share_rmse(shares, actual_votes, prelift = NULL)
 }
 \arguments{
 \item{shares}{Numeric matrix, seats in rows (named) and party classes in
@@ -13,6 +13,11 @@ columns (named), percentages summing to ~100 per row.}
 \item{actual_votes}{A data frame with \code{seat}, \code{party} and \code{votes} for the
 election being predicted; aggregated here, so candidate-level rows are
 fine.}
+
+\item{prelift}{\code{NULL} (the lift is off: no extra column), or the \code{"new_ind_lift"} log of
+\code{\link[=new_ind_lift_apply]{new_ind_lift_apply()}} (\code{seat}, \code{old}): \code{detail} then carries \code{pred_share_prelift}, the IND
+share before the lift (equal to \code{pred_share} everywhere else), so the next fit learns from the
+uncorrected forecast (\verb{plans/prereg-new-ind-lift-2026-11-09.md}, ship blocker).}
 }
 \value{
 A list: \code{rmse} over every seat-class cell, \code{mae}, \code{by_class} (a

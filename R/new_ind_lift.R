@@ -30,7 +30,14 @@ new_ind_lift_mode <- function() {
   f <- out_path("published-predictions.csv")
   if (!file.exists(f))
     stop("new_ind_lift_fit() needs ", f, " (scripts/build_published_predictions.R)", call. = FALSE)
-  data.table::fread(f, select = c("pair", "seat", "party", "ours"), showProgress = FALSE)
+  # ours_prelift (scripts/build_published_predictions.R) is the share before this lift; a file from a run with the
+  # lift on that lacked it would teach the fit its own correction, so it is used whenever present.
+  hdr <- names(data.table::fread(f, nrows = 0L, showProgress = FALSE))
+  if ("ours_prelift" %in% hdr) {
+    P <- data.table::fread(f, select = c("pair", "seat", "party", "ours_prelift"), showProgress = FALSE)
+    data.table::setnames(P, "ours_prelift", "ours")
+    P
+  } else data.table::fread(f, select = c("pair", "seat", "party", "ours"), showProgress = FALSE)
 }
 
 # Mean of u with a cluster-robust SE, clustered by election. c(m, se, G). One election: the

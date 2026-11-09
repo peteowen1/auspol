@@ -25,8 +25,12 @@
 #'   it already writes, rather than recomputing this function's `pred`/`act`
 #'   matrices a second time to get at them -- see
 #'   `docs/reviews/rmse-persistence-2026-09-09.md`.
+#' @param prelift `NULL` (the lift is off: no extra column), or the `"new_ind_lift"` log of
+#'   [new_ind_lift_apply()] (`seat`, `old`): `detail` then carries `pred_share_prelift`, the IND
+#'   share before the lift (equal to `pred_share` everywhere else), so the next fit learns from the
+#'   uncorrected forecast (`plans/prereg-new-ind-lift-2026-11-09.md`, ship blocker).
 #' @export
-seat_share_rmse <- function(shares, actual_votes) {
+seat_share_rmse <- function(shares, actual_votes, prelift = NULL) {
   stopifnot(is.matrix(shares), !is.null(rownames(shares)), !is.null(colnames(shares)))
   A <- data.table::as.data.table(actual_votes)
   need <- c("seat", "party", "votes")
@@ -53,6 +57,13 @@ seat_share_rmse <- function(shares, actual_votes) {
     party = rep(cls, each = length(seats)),
     pred_share = as.vector(pred),
     actual_share = as.vector(act))
+  if (!is.null(prelift)) {
+    pl <- data.table::as.data.table(prelift)
+    if (anyDuplicated(pl$seat)) stop("seat_share_rmse(): prelift names a seat twice", call. = FALSE)
+    detail[, pred_share_prelift := pred_share]
+    hit <- detail$party == "IND" & detail$seat %in% pl$seat
+    detail$pred_share_prelift[hit] <- pl$old[match(detail$seat[hit], pl$seat)]
+  }
   list(rmse = sqrt(mean(d^2)), mae = mean(abs(d)),
        by_class = sqrt(colMeans(d^2)), n_seats = length(seats), n_dropped = n_dropped,
        detail = detail)

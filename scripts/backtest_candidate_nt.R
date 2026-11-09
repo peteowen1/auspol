@@ -733,6 +733,7 @@ for (K in PAIRS) {
   .nz_cells <- nomination_zeroed_cells(.nz_pre, shares)
   shares <- level_conserve_apply(shares, sb, el_to, stage = "final", target = fb, held = HELD)  # AUSPOL_LEVEL_CONSERVE "final"/"both": after the last nomination zero
   if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")) shares <- new_ind_lift_apply(shares, el_to, code = "BNT1L")  # AUSPOL_NEW_IND_LIFT (off): signal first-timers get the lift fitted on earlier PUBLISHED shares; last share step, xgb layer only. R/new_ind_lift.R.
+  NIL_LOG <- attr(shares, "new_ind_lift")  # NULL when the lift is off; sharedetail then has no pred_share_prelift
   # DIAGNOSTIC DUMP, off unless asked. Writes the projected primary the model
   # actually simulates from, so a seat can be inspected without reconstructing
   # the pipeline by hand and getting it subtly wrong.
@@ -920,7 +921,7 @@ for (K in PAIRS) {
   sl <- if (length(unique(z$y)) > 1)
     coef(glm(y ~ lo, data = z, family = binomial()))[["lo"]] else NA_real_
   nom_zero_assert_late(shares, .nz_cells)  # "late" order only: a zeroed cell must still be 0 at the write
-  .rr <- seat_share_rmse(shares, fb)  # the second metric: point-estimate seat-share RMSE vs actual
+  .rr <- seat_share_rmse(shares, fb, prelift = NIL_LOG)  # the second metric: point-estimate seat-share RMSE vs actual
   share_detail[[length(share_detail) + 1L]] <-
     data.table::as.data.table(.rr$detail)[, pair := el_to]
   cat(sprintf("BNT2r  seat-share RMSE %.3f | MAE %.3f | by class %s | %d seats%s\n", .rr$rmse, .rr$mae,

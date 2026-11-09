@@ -49,3 +49,23 @@ test_that("the lift is the mean published residual of earlier signal cells, and 
   withr::local_envvar(AUSPOL_NEW_IND_LIFT = "2")
   expect_error(new_ind_lift_mode(), "must be")
 })
+
+test_that("the scorer writes the pre-lift share, and the fit reads it in place of the lifted one", {
+  m <- matrix(c(50, 40, 10, 45, 41, 14), 2, byrow = TRUE, dimnames = list(c("A1", "A2"), c("ALP", "LNP", "IND")))
+  av <- data.frame(seat = rep(c("A1", "A2"), each = 3), party = rep(c("ALP", "LNP", "IND"), 2), votes = c(50, 40, 10, 45, 40, 15))
+  expect_false("pred_share_prelift" %in% names(seat_share_rmse(m, av)$detail))          # lift off: format unchanged
+  d <- seat_share_rmse(m, av, prelift = data.frame(seat = "A2", old = 10, new = 14, shift = 4))$detail
+  expect_equal(d$pred_share_prelift[d$seat == "A2" & d$party == "IND"], 10)
+  expect_equal(d$pred_share_prelift[d$party != "IND" | d$seat != "A2"], d$pred_share[d$party != "IND" | d$seat != "A2"])
+  expect_error(seat_share_rmse(m, av, prelift = data.frame(seat = c("A2", "A2"), old = 1)), "twice")
+  # reader: ours_prelift wins when the file has it
+  root <- withr::local_tempdir()
+  writeLines("Package: x", file.path(root, "DESCRIPTION")); dir.create(file.path(root, "output"))
+  withr::local_options(auspol.root = root)
+  data.table::fwrite(data.frame(pair = "vic2018", seat = "A1", party = "IND", ours = 14, ours_prelift = 10),
+                     file.path(root, "output", "published-predictions.csv"))
+  expect_equal(auspol:::.nl_read_published()$ours, 10)
+  data.table::fwrite(data.frame(pair = "vic2018", seat = "A1", party = "IND", ours = 14),
+                     file.path(root, "output", "published-predictions.csv"))
+  expect_equal(auspol:::.nl_read_published()$ours, 14)
+})

@@ -100,3 +100,13 @@ Where the win chance moved most (independent share before -> after, actual; inde
 
 The gain is in share error; seat log loss is a wash (2022's teal wins paid for 2025's and 2023's near misses). Before
 shipping, the ship blocker above (a pre-lift share column the fit reads) is still required.
+
+### Ship blocker BUILT (9 Nov, 7:10pm, while the deciding run runs from its 13d88c25 snapshot)
+
+Each harness keeps the lift's log (`NIL_LOG`, fed `X$nil_log`) and passes it to `seat_share_rmse(prelift =)`, which
+writes `pred_share_prelift` into sharedetail only when the lift is on (lift off: format byte-unchanged).
+`build_published_predictions.R` carries it as `ours_prelift` (= `ours` for runs with the lift off), and
+`.nl_read_published()` fits on `ours_prelift` whenever the file has it. Checked on real input: quick_arm sa2022 at 200
+sims, arm sharedetail Flinders IND 11.10 published, 7.96 pre-lift (the baseline's 7.96), Hammond 14.76 / 11.62; the
+baseline file has no new column. Same squared-error change as the screen (-188.4). Tests in
+`tests/testthat/test-new-ind-lift.R`.
