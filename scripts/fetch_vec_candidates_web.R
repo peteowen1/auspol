@@ -102,7 +102,7 @@ if (file.exists(xl)) {
   if (!setequal(k1, k2)) stop("VW8! pages and spreadsheet disagree. Only on pages: ", paste(head(setdiff(k1, k2), 8), collapse = "; "),
                               " | only in spreadsheet: ", paste(head(setdiff(k2, k1), 8), collapse = "; "))
   cat("VW8  pages and spreadsheet list the same candidates in every district\n")
-} else cat("VW8! no all-candidates spreadsheet linked: completeness NOT cross-checked\n")
+} else stop("VW8! no all-candidates spreadsheet linked or saved: completeness cannot be cross-checked, so nothing is written")
 
 cat(sprintf("VW9  %d independents; parties: %s\n", sum(rows$independent == "yes"),
             paste(sprintf("%s %d", names(sort(table(rows$registered_name), decreasing = TRUE)), sort(table(rows$registered_name), decreasing = TRUE)), collapse = "; ")))
