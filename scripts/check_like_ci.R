@@ -66,8 +66,10 @@ if (.skip_tests) {
 cat("=== running the suite with NO anchor data ===\n")
 cat("auspol.root =", empty, "\n\n")
 
+.t_tests0 <- Sys.time()
 res <- testthat::test_dir("tests/testthat", stop_on_failure = FALSE,
                           reporter = testthat::SummaryReporter$new())
+cat(sprintf("\n=== suite took %.0f s ===\n", as.numeric(difftime(Sys.time(), .t_tests0, units = "secs"))))
 
 df <- as.data.frame(res)
 n_fail <- sum(df$failed) + sum(df$error)
@@ -249,11 +251,14 @@ if (!is.null(.fp) && !"--force-check" %in% .args && length(.last) && identical(.
                       paste(utils::head(.fp$files[!.ok], 5), collapse = ", "), call. = FALSE)
   file.copy(".Rbuildignore", .src)
   cat(sprintf("checking a clean copy of %d files in %s\n", length(.fp$files), .src))
+  .t_check0 <- Sys.time()
   res <- rcmdcheck::rcmdcheck(path = .src, args = c("--no-manual", "--as-cran"),
                               build_args = "--no-manual",
                               error_on = "warning", quiet = TRUE)
-  cat(sprintf("errors %d   warnings %d   notes %d\n",
-              length(res$errors), length(res$warnings), length(res$notes)))
+  cat(sprintf("errors %d   warnings %d   notes %d   (R CMD check %.0f s, of which the tests %s)\n",
+              length(res$errors), length(res$warnings), length(res$notes),
+              as.numeric(difftime(Sys.time(), .t_check0, units = "secs")),
+              if (length(res$test_output)) "ran again inside it" else "did not run"))
   if (length(res$notes)) {
     # Notes do not fail CI today, but they are how a warning starts: an
     # undefined global is a note until the same slip lands somewhere check
