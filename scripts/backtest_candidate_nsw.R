@@ -1234,6 +1234,21 @@ if (.exhaust_on) {
   # left "auto": identical to the switch off, i.e. those pairs exactly as before the
   # ship) and SAY SO. Borrowing 2019's rates would leak a later election into an
   # earlier backtest; real 2011/2015 rates need those years' NSWEC DOP pages.
+  # A CLASS WITH NO COLUMN HAS NO VOTES TO EXHAUST, so its rate is dropped, and said.
+  # simulate_seat_contests() refuses a name that is not a column (a typo must not pass
+  # silently), and the measured rates always name ONP. nsw2019 has no ONP column until
+  # the xgb layer adds one, so the stage-1 base_pred pass of the 9 Nov 2026 rebuild died
+  # here ("exhaust names no party in `shares`: ONP"); stage-6 screens never saw it.
+  # ONP ONLY: any other missing name (a renamed class in the lists above) still reaches the engine's stop().
+  if (!is.null(names(EXHAUST_ARG))) {
+    .no_col <- intersect(setdiff(names(EXHAUST_ARG), colnames(shares)), "ONP")
+    if (length(.no_col)) {
+      cat(sprintf("BN0c  nsw%d: exhaust rate dropped for class(es) with no column in shares: %s\n",
+                  TO, paste(.no_col, collapse = ", ")))
+      EXHAUST_ARG <- EXHAUST_ARG[intersect(names(EXHAUST_ARG), colnames(shares))]
+      if (!length(EXHAUST_ARG)) EXHAUST_ARG <- 0
+    }
+  }
   if (all(EXHAUST_ARG == 0)) {
     EXHAUST_ARG <- 0
     cat(sprintf("BN0x! nsw%d has no exhaust rates (source rows predate the column): exhaustion NOT modelled for this pair\n", TO))

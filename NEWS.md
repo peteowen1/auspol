@@ -1,3 +1,7 @@
+# auspol 0.4.149
+
+- **Two rebuild crashes fixed** (9 Nov, the first full rebuild with the completed by-election table, measured NSW exhaust and seat flow persistence). Stage 1: the NSW harness drops One Nation's measured exhaust rate when One Nation has no column (nsw2019 before the One Nation new-seat rule), printing `BN0c`; any other missing class still stops. Stage 7: `fit_spread_by_composition.R` retries a Gamma fit that overflows from the default start (8 of 37 targets) from the error-ratio start and names them in `CMP2`. Published the same day: 35 elections seat log loss 0.3211 -> 0.3163 (n 2,931), AEF-7 0.2536 -> 0.2525 (AEF 0.2825).
+
 # auspol 0.4.148
 
 - **By-election results completed**: 77 by-elections that had no candidate rows (24 changed hands; Frome 2009, whose sitting member Geoff Brock was forecast at 2.8% in 2010, actual 37.7) now come from Wikipedia (`scripts/fetch_byelection_results.R`, raw pages kept, each page checked against its declared winner). Screen, 35 elections: seat log loss 0.3031 -> 0.2991 (-0.0040, SE 0.0028); sa2010 -0.155, nt2024 -0.125; leave-one-election-out worst -0.0015. `AUSPOL_BYELECTION_RESULTS` points the readers at another copy for screens.
