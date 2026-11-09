@@ -20,11 +20,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - DONE 10 Nov 7:11am: nomination GATE live. PR #212 merged; forecast run 42690596134 succeeded 7:46am: 40 cells zeroed (IND
   32, OTH_RIGHT 8), Mildura IND 0, no favourite changed, NSW 2027 files rebuilt. Pakenham DemosAU/TKR seat poll hand-keyed
   (fieldwork date UNCONFIRMED; delete the rows when seat_polls.csv carries it).
-- IN FLIGHT 10 Nov: indlib-1108 merged to dev (a133b9d1; reviewed 0 Important, check_like_ci clean; candidacies moves 1 row,
-  sa2022 Taylor OTH_RIGHT -> IND). Rebuild `deciding-runs/20261110-0734-rebuild` started 7:48am; check, then publish + PR.
-- NEEDS PETE: F18 walk 2 DONE 10 Nov (`plans/prereg-nom-zero-pre-xgb-2026-10-25.md`, Walk 2 RESULT): predictions 1, 2, 4
-  PASS; 3 a finding in Mildura only (3.95 points; LNP 46.3 -> 50.2, OTH 2.2 -> 0.4). Ships `AUSPOL_NOM_ZERO_PRE_XGB="1"`
-  once Pete has seen Mildura. (The walk ran without refresh_local_poll_inputs.sh; both arms read the same polls.)
+- DONE 10 Nov 9:33am: indlib-1108 (sa2022 Taylor OTH_RIGHT -> IND, plus 8 "Independent Liberal" by-election rows) rebuilt
+  (`deciding-runs/20261110-0734-rebuild`) and PUBLISHED: 35 elections 0.3166 (was 0.3168, n 2,931), AEF-7 0.2524 (was
+  0.2520; AEF 0.2825, n 681). Release candidacies.csv checked (734 `vec`, Taylor IND).
+- SHIPPING 10 Nov: F18 `AUSPOL_NOM_ZERO_PRE_XGB="1"` (Pete: "Switch it on" after walk 2, `plans/prereg-nom-zero-pre-xgb-2026-10-25.md`;
+  Mildura LNP 46.3 -> 50.2). Reviewed 0 Important; live-only, no rebuild. PR dev -> main with indlib, then forecast run.
 - WAITING: the ITG booths build (`build-booths-2026.py`) needs the feed's polling-locations XML; VEC feed access unanswered.
   Memory sits at 2-7 GB; Claude Code's low-memory stop kills background shells, not detached jobs. Run
   `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
