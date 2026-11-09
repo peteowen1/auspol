@@ -163,7 +163,7 @@ stopifnot(is.finite(SHRINK), SHRINK >= 0, SHRINK < 1)
 .arm_fingerprint <- local({
   e <- Sys.getenv()
   e <- e[grepl("^AUSPOL_", names(e)) & nzchar(e)]
-  e <- e[!names(e) %in% c("AUSPOL_OUT_SUFFIX")]
+  e <- e[!names(e) %in% c("AUSPOL_OUT_SUFFIX", "AUSPOL_STAGE6_START", "AUSPOL_STAGE1_SIMS", "AUSPOL_PUBLISH") & !grepl("^AUSPOL_REBUILD_", names(e))]   # run control, read only by rebuild_forecasts.sh: hashing it (STAGE6_START is a timestamp, REBUILD_ONLY is set on every reuse run) made a reuse run unable to match the files it reuses
   if (!length(e)) "" else {
     s <- paste(sort(paste0(names(e), "=", e)), collapse = ";")
     # md5 of the whole string. The weighted character sum this replaced put nearby settings within a few hundred of

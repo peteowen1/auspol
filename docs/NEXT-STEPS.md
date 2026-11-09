@@ -16,14 +16,14 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - **Status 9 Nov 10:50am.** LIVE: published 9 Nov 10:45am (snapshot `20261109-1042-ed393456-from7`, stage 6 at code
   640e3de): 35 elections seat log loss 0.3163 (was 0.3211; n 2,931), AEF-7 0.2525 (was 0.2536; AEF 0.2825, n 681),
   primary RMSE 4.660 vs AEF 5.711 (n 2,700), TCP 3.62 vs AEF 3.73 (n 667). First full rebuild with the completed
-  by-election table, measured NSW exhaust and seat flow persistence. It needed two fixes, both on dev and NOT yet
-  reviewed together for a PR: `e2e186f6` (stage 1 died at nsw2019: a measured ONP exhaust rate with no ONP column;
-  reviewed, 0 Important; take the nit, restrict the drop to ONP) and `ed393456` (stage 7: `fit_spread_by_composition.R`
-  diverged from the default start on 8 of 37 targets; retries from `fit_own()`'s start; vic2026 IND term 0.235 -> 0.192,
-  mostly the new data). I publish myself (Pete, 8 Nov). Read the first forecast run after 10:45am.
-  OPEN: VEC feed access: no reply in Gmail since the 28 Oct terms email; chase drafted 9 Nov for Pete to send.
-  10 Nov: `scripts/nomination_day.sh` (dry-run tested). After the rebuild: fix `published_flags.R:805` comment
-  (IND_GAP_RESTAND says "built not screened"; refused 30 Oct).
+  by-election table, measured NSW exhaust and seat flow persistence. It needed two fixes, both reviewed (0 Important)
+  and merged to main 9 Nov 11:27am in PR #209: `e2e186f6`/`1964fc0d` (stage 1 died at nsw2019: a measured ONP exhaust
+  rate with no ONP column; the drop is ONP only) and `ed393456` (stage 7: `fit_spread_by_composition.R` diverged from
+  the default start on 8 of 37 targets; retries from the error-ratio start; vic2026 IND term 0.235 -> 0.192, mostly the
+  new data). I publish myself (Pete, 8 Nov). Forecast run dispatched 9 Nov 12:53pm (run 42547940724) to put the
+  10:45am models on the site; read its conclusion.
+  OPEN: VEC feed access: no reply in Gmail since the 28 Oct terms email; chase SENT 9 Nov 1:12pm (same thread); wait for a reply.
+  10 Nov: `scripts/nomination_day.sh` (dry-run tested).
   Memory sits at 2-7 GB; Claude Code's low-memory stop kills background shells, not detached jobs. Run
   `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
 - OPEN (review 8 Nov, pre-existing classifier): `classify_party("Independent Liberal")` returns LNP (5 by-election
@@ -54,8 +54,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   OPEN, pre-existing (review 8 Nov): `AUSPOL_REBUILD_ONLY` reuse (`reuse_check()`, `rebuild_forecasts.sh`) checks file age, not
   flags, so after a switch flip a rebuild that skips the affected harness silently reuses its old-config results.
   BUILT + REVIEWED 8 Nov (2 rounds, 0 Important; tests 5028 passed on 84968fd8; fix eb0a628f drops all run-control
-  vars, `^AUSPOL_REBUILD_` etc., from the fingerprint), branch `reuse-flags-1108`, worktree `C:\dev\auspol-reuse`. Before
-  merging: `check_like_ci.R` on eb0a628f (its R CMD check was cut short by low memory 8 Nov). Reuse requires the fingerprint
+  vars, `^AUSPOL_REBUILD_` etc., from the fingerprint). MERGED to dev 9 Nov (6387d45b; `check_like_ci.R` OK, 5028
+  passed, 0 failed); next PR to main carries it. Worktree `C:\dev\auspol-reuse` can go. Reuse requires the fingerprint
   `scripts/expected_arm_tag.R` computes; `AUSPOL_STAGE6_START` (a timestamp) left the fingerprint, which had made every
   rebuild's tag unique. Proven on fake files (old code reused a stale file). Merge after the 2am rebuild; the first
   REBUILD_ONLY after it reuses nothing (old tags). OPEN, same area: `apply_upset_floor.R` fits only files newer than

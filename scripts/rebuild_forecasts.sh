@@ -136,7 +136,7 @@ run6() {  # $1 = XGB_PRIMARY value, $2 = log tag -- all 23 pairs across the six 
   if [ -n "${AUSPOL_REBUILD_ONLY:-}" ] && [ "$2" = "s6" ]; then
     local keep=() s
     for s in "${specs[@]}"; do
-      if [[ ",${AUSPOL_REBUILD_ONLY}," == *",${s%%:*},"* ]]; then keep+=("$s"); else reuse_check "$s"; fi
+      if [[ ",${AUSPOL_REBUILD_ONLY}," == *",${s%%:*},"* ]]; then keep+=("$s"); else reuse_check "$s" "$1"; fi
     done
     specs=("${keep[@]}")
     echo "   AUSPOL_REBUILD_ONLY=${AUSPOL_REBUILD_ONLY}: running ${#specs[@]} of ${n_specs} backtest runs, reusing the rest"
@@ -146,10 +146,17 @@ run6() {  # $1 = XGB_PRIMARY value, $2 = log tag -- all 23 pairs across the six 
 # A SKIPPED backtest must already have a full-sims, xgb-layer result newer
 # than this baseline's as-at predictions (stage 4), or stage 7 would pool a
 # result from a different model with nothing to say so. Refuse instead.
-reuse_check() {  # $1 = "harness[:ENV=year]"
-  local h="${1%%:*}" yr="" pat f
-  [[ "$1" == *=* ]] && yr="${1##*=}"
+# It must also carry the arm fingerprint THIS configuration would write: age alone
+# let a result from before a published_flags.R switch flip be reused and pooled
+# (review, 8 Nov 2026). scripts/expected_arm_tag.R evaluates the harness's own
+# fingerprint block under the current environment.
+reuse_check() {  # $1 = "harness[:ENV=year]", $2 = AUSPOL_XGB_PRIMARY for this pass
+  local h="${1%%:*}" yr="" pat f envs="" tag
+  if [[ "$1" == *=* ]]; then yr="${1##*=}"; envs="${1#*:}"; fi
+  tag=$(AUSPOL_XGB_PRIMARY="$2" Rscript scripts/expected_arm_tag.R "$h" $envs) || { echo "!! AUSPOL_REBUILD_ONLY: expected_arm_tag.R failed for ${1}"; exit 1; }
+  [ -n "$tag" ] || { echo "!! AUSPOL_REBUILD_ONLY: empty arm fingerprint for ${1} (no AUSPOL_* set?)"; exit 1; }
   case "$h" in nsw|qld) pat="backtest-${h}${yr}-sharedetail-" ;; *) pat="backtest-${h}-sharedetail-" ;; esac
+  pat="${pat}*${tag}-g"
   # SA's file names carry no election, so sa2022 and sa2026 would both match
   # the newest SA file: take the newest whose own pair column is the one wanted.
   f=""
@@ -158,7 +165,7 @@ reuse_check() {  # $1 = "harness[:ENV=year]"
     if [ -z "$yr" ] || [ "$(sed -n 2p "$c" | awk -F, '{print $5}' | tr -d '"\r')" = "${h}${yr}" ]; then f="$c"; break; fi
   done
   if [ -z "$f" ] || [ ! "$f" -nt output/xgb-primary-asat-predictions.csv ] || ! sed -n 2p "$f" | grep -qE ',1\s*$'; then
-    echo "!! AUSPOL_REBUILD_ONLY: cannot reuse ${1}: newest result '${f:-none}' is missing, older than this baseline's as-at predictions, or not an xgb-layer run -- run it too"
+    echo "!! AUSPOL_REBUILD_ONLY: cannot reuse ${1}: newest result with this configuration's fingerprint (${tag}) '${f:-none}' is missing, older than this baseline's as-at predictions, or not an xgb-layer run -- run it too"
     exit 1
   fi
   echo "   reusing ${1}: $(basename "$f")"
