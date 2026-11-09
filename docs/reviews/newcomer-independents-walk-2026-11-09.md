@@ -62,3 +62,31 @@ score (`surge_h`); `council` an elected local councillor.
    the do-no-harm guard?
 2. Which signal do you trust to tell Mackellar from Deakin before the vote: endorsement and funding, search interest,
    seat polls, or the bookmakers' odds (`docs/DATA-REGISTRY.md` lists what is captured)?
+
+## Which signal separates them: seat polls against bookmakers (added 9 Nov, Pete: "Go")
+
+Federal 2022 and 2025 only (the two elections with both seat polls and saved odds): 59 seats where the only independent
+was a first-timer, 14 of whom took 15% or more. Odds: Sportsbet 20 May 2022 (`petes-2022-scrapes/2022-05-20_sb_afe22.rds`,
+`win_prob`) and 23 Apr 2025 (`afe2025/sportsbet_wide.csv`, 1/odds normalised over the seat), both before polling day.
+Seat polls: the `seat_poll` column of `output/ind-model-eval-preds.csv` (9 Oct). AUC: the chance a random 15%+ seat
+ranks above a random one under 15% (0.5 is a coin flip, 1.0 perfect). With 14 positives each AUC carries roughly 0.03-0.04
+of noise, so the gaps below are about one standard error, not a proven ranking.
+
+| Signal | Seats | 15%+ | AUC |
+|---|---|---|---|
+| Market independent win probability | 58 | 14 | 0.966 |
+| Our published share | 59 | 14 | 0.925 |
+| Search interest (`surge_h`) | 59 | 14 | 0.899 |
+| Voices + Climate 200 | 59 | 14 | 0.887 |
+| Seat poll independent share | 35 | 12 | 0.859 |
+
+The level is the bigger story. Win probability, ours against the market, for the 2022 winners:
+Goldstein 0.38 v 0.70, Wentworth 0.32 v 0.48, Mackellar 0.09 v 0.39, Curtin 0.32 v 0.35, North Sydney 0.07 v 0.31. The
+seat polls under-called them too (Mackellar poll 23.4, actual 38.1; Goldstein 30.7 v 34.5), and they already reach the
+published number through the seat-poll blend, so more seat-poll weight would not have found Scamps.
+
+Odds on disk: fed2022, fed2025, sa2022, qld2020 (`external/reference/historical-odds/`), and vic2026 live
+(`vic2026-extra/`, Sportsbet and Betfair). DECISIONS 2026-10-26 kept odds out for "no archived history to backtest";
+these four elections are that history (they were used in `reviews/backtest-vs-bookmakers-2026-10-24.md`, which also
+found the bookmakers beat us on seats with prominent independents). `AUSPOL_NEWIND_SEATPOLL` from the same decision was
+never built; this table says it would not have helped the 2022 cases.
