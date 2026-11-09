@@ -42,11 +42,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - IN FLIGHT 9 Nov (Pete chose the levers): first-time-independent under-call. Six levers mapped in
   `reviews/newcomer-independents-walk-2026-11-09.md` (last section). Lever 1 REFUSED twice, stays off
   (`AUSPOL_NEW_IND_SHRINK_SIGNAL`, `_SIGNAL_CAP`; `plans/prereg-new-ind-shrink-signal-2026-11-09.md`: capped -68 SE 76;
-  uncapped 35-election log loss +0.0022, the base-level factor double counts the trees). Lever 2 BUILT OFF, SCREENING:
-  `AUSPOL_NEW_IND_LIFT` (0a816ba5, `R/new_ind_lift.R`; prereg `plans/prereg-new-ind-lift-2026-11-09.md`), additive
-  +2.4 to +5.1 points fitted on earlier PUBLISHED shares; quick_arm all 35 at 1k launched 6:20pm, log
-  `output/quick-arm-newind-lift-1109.log`. Ship blocker named in the prereg: sharedetail must carry the pre-lift share
-  first. Next levers: spread signal term, council data gaps (no Qld 2008/2014, SA pre-2018). OPEN for Pete: betting odds as an input (he
+  uncapped 35-election log loss +0.0022, the base-level factor double counts the trees). Lever 2 SHIPPED 9 Nov (PR #211, published 9:50pm): `AUSPOL_NEW_IND_LIFT=1` (`R/new_ind_lift.R`; prereg `plans/prereg-new-ind-lift-2026-11-09.md`), additive +2.4 to +5.1 points fitted on earlier PUBLISHED shares (pre-lift column `ours_prelift`); 20k: sq err -790 SE 687, log loss +0.0000. Live: Ringwood, Williamstown ~3.5 -> ~7. Next levers: spread signal term, council data gaps (no Qld 2008/2014, SA pre-2018). OPEN for Pete: betting odds as an input (he
   leans no; four elections of odds on disk). Seat-poll weight for new INDs PARKED (vic2026 has one seat poll).
   Background: 70 of 649 single first-timers took 15%+
   and we gave them about a third of it (Mackellar 18.6 v 38.1, Shepparton vic2014 7.0 v 35.2); 442 took under 5%, so no
