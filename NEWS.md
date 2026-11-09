@@ -1,3 +1,8 @@
+# auspol 0.4.153
+
+- **Seats lose a non-standing party before the trees as well as after** (`AUSPOL_NOM_ZERO_PRE_XGB="1"`, audit F18; Pete, 10 Nov, "Switch it on"). The trees were trained on a base with absent parties already zeroed and their share sent by flows; the live base now matches. Walk 2 on the VEC final list: the 47 seats with nothing zeroed are unchanged to the last digit, 40 of 41 affected seats move under 1 point, no favourite changes. Mildura (Ali Cupper not standing) moves most: LNP 46.3 -> 50.2, ONP 36.3 -> 34.8, OTH 2.2 -> 0.4.
+- **An "Independent X" ballot label is an independent, not party X** (`classify_party()`). "Independent Liberal" by-election candidates were filed as the Coalition; in the candidate corpus one row moves (sa2022 Taylor, "Independent People Animals Freedom", minor right -> independent).
+
 # auspol 0.4.152
 
 - **The VEC's final candidate list is live for Victoria** (`AUSPOL_NOM_LIVE="vic2026"`; Pete, 9 Nov). 734 Lower House candidates loaded from the VEC's district pages (`scripts/fetch_vec_candidates_web.R`, checked against the VEC's all-candidates spreadsheet), and classes with no candidate in a seat are zeroed (32 independent and 8 minor-right cells; Ali Cupper did not nominate in Mildura). The switch now takes election labels, so the NSW 2027 forecast keeps its provisional list. Also a hand-keyed DemosAU/TKR Pakenham seat poll.
