@@ -142,3 +142,27 @@ On the 13 direct polls: mean ours 15.6, poll 22.1, actual 21.4 (under-call: ours
 Live: `output/seat-poll-blend-vic2026.csv` (9 Nov 10:44am) holds ONE seat poll (Hawthorn, LNP 41). Its IND weight
 is 0.527 (raw 0.893 on 33 cells, shrunk back toward the pooled 0.525). So a new-independent weight changes nothing in the
 published vic2026 forecast unless a Victorian seat poll naming an independent is published before 28 Nov.
+
+## Where the pipeline could act on these signals (added 9 Nov; Pete: "figure out where in our forecast pipeline we can make adjustments")
+
+Big first-timers (n 69) by stage: baseline 8.5 -> xgb 10.4 -> published 12.4 -> actual 22.7. The shortfall is made at
+the baseline and xgb stages; the post-xgb steps add about 2 points net.
+
+1. **`AUSPOL_NEW_IND_SHRINK` (shipped 6 Oct, post-xgb) is signal-blind and acts in Victoria only.** `new_ind_fit()` per
+   target (computed 9 Nov): pooled factor 1.21-1.31 everywhere (first-timers UNDER-called at baseline by 20-30%), but
+   `AUSPOL_NEW_IND_SHRINK_CAP=1` caps it at 1, so it changes nothing outside Victoria and cuts every Victorian
+   first-timer's baseline by 0.822 (vic2022) / 0.826 (vic2026, live), Climate 200, Voices and councillors included.
+   The CAP=0 arm has been pending since 6 Oct.
+2. **xgb under-learns rare flags.** Climate 200 is on 4% of rows and Voices 2.4%; SHAP on the big ones +1.35 and +0.13
+   against gaps of +4.9 and +5.7. A post-xgb, time-forward, shrunk correction by signal group would close what the
+   trees leave (the shape of `AUSPOL_IND_TYPICAL`, built off 9 Oct, which replaces the cell with the typical vote for
+   its signals rather than correcting it).
+3. **Baseline (`dev_slope()`).** None of these signals reaches `base_pred`; CLAUDE.md's rule is to test a fix in both
+   layers.
+4. **Seat-poll blend.** Direct polls of first-timers beat us on 12 of 13 seats (section above); no live effect while
+   vic2026 has one seat poll.
+5. **Win chance (spread).** We expected 4.2 first-timer wins and 9 happened: the composition spread
+   (`fit_spread_by_composition.R`) has no signal term, so a Climate 200 independent gets the same upside as a nameless one.
+6. **Data.** Council history misses whole election years (no Qld 2008/2014, so Noosa's 2014 councillors, Bolton among
+   them, are missing; SA before 2018; NT none; `council_coverage` False for nsw2007, qld2009, sa2006-2018, vic2006,
+   wa before 2008). Bolton reads as "stood and lost" (her 2016 mayoral run), which the model treats as a negative.
