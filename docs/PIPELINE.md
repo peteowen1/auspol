@@ -143,7 +143,7 @@ Steps 1 and 4 in one command (8 Nov 2026): `bash scripts/nomination_day.sh <Cand
 runs the same chain in a scratch folder (`output/nomination-day-logs/dry`). It stops before steps 2-3.
 
 `fit_seats_full.R` zeroes parties with no candidate (and sends their share by
-preference flows) ONLY when `AUSPOL_NOM_LIVE=1`. The default `auto` never does,
+preference flows) ONLY when `AUSPOL_NOM_LIVE` is `1` or names the election (published: `vic2026`). `auto` never does,
 because the vic2026 list in `output/candidacies.csv` is provisional (Wikipedia,
 379 candidacies against vic2022's 731) until nominations close at noon on
 9 November 2026. Once the VEC publishes the final list:
