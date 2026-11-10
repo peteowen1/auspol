@@ -67,7 +67,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   1. SharePoint live-feed fetch (VEC access details due 4 Nov, chase 7 Nov); the Actions backup's live source waits on it.
   2. BLOCKED on the feed (item 1 gives the XML): in ITG `politics/night-maps/`, `python -I build-booths-2026.py <State2026MediaFilePollingLocationsV2.xml>`, commit
      `booths-vic2026.json`; check the popup at 390/1280 px and the 38 Narracan-only 2018 names against the 2026 polling places.
-  3. Navbar link; the "called" rule (99% with 10% counted is a placeholder).
+  3. Navbar link. "Called" rule TESTED 10 Nov on the 7 simulated replays (`reviews/night-called-rule-2026-11-10.md`):
+     keep 0.99 with 10% counted; its 3 wrong calls (Melbourne, Monash 2025; Mirani 2024) survive any threshold, so the
+     fix is the final-pair defect below. OPEN: confirm on the real fed2022/fed2025/vic2022 nights (heavy R runs).
   4. 25 Nov trial (no 2CP): with real 2026 centre names, compare each counted early centre with its own 2022 upper-house lean,
      re-test `--early-partial=1` (off; it made the approximated replay worse), and take the expected early total from the
      VEC's published attendance. Upper-house model designed, not built (`plans/upper-house-night-model.md`).
