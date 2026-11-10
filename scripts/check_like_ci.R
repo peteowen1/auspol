@@ -225,7 +225,9 @@ cat("OK: no fitting script's default disagrees with what published_flags.R ships
 .args <- commandArgs(trailingOnly = TRUE)
 .fp <- if (!"--tests-only" %in% .args) .pkg_fingerprint() else NULL
 .last <- if (file.exists(.fp_file)) readLines(.fp_file, warn = FALSE) else character(0)
-if (!is.null(.fp) && !"--force-check" %in% .args && length(.last) && identical(.last[1], .fp$hash)) {
+# --with-check-tests bypasses the skip as well: the recorded clean check was most likely a --no-tests one, so an
+# unchanged fingerprint says nothing about the tests inside the check (review of 803f6956, 10 Nov).
+if (!is.null(.fp) && !any(c("--force-check", "--with-check-tests") %in% .args) && length(.last) && identical(.last[1], .fp$hash)) {
   cat(sprintf("\n=== R CMD check SKIPPED: the %d files the package build includes are byte-identical to the last clean check (%s, %s). --force-check runs it anyway. ===\n",
               .fp$n, substr(.fp$hash, 1, 10), if (length(.last) > 1) .last[2] else "?"))
   cat("\nOK: package checks clean the way CI checks it (unchanged since the last clean check).\n")
@@ -263,17 +265,17 @@ if (!is.null(.fp) && !"--force-check" %in% .args && length(.last) && identical(.
   cat(sprintf("errors %d   warnings %d   notes %d   (R CMD check %.0f s, of which the tests %s)\n",
               length(res$errors), length(res$warnings), length(res$notes),
               as.numeric(difftime(Sys.time(), .t_check0, units = "secs")),
-              if (length(res$test_output)) "ran again inside it" else if (.check_tests) "DID NOT RUN (asked for)" else "skipped, --no-tests"))
+              if (length(res$test_output)) "ran inside it" else if (.check_tests) "DID NOT RUN (asked for)" else "skipped, --no-tests"))
   if (.check_tests && !length(res$test_output)) stop("check_like_ci: --with-check-tests was given but the check ran no tests", call. = FALSE)
   # The suite's own tally inside the check, and how many tests skipped for want of the anchor clone: if these
   # match half one's, the check's copy of the suite also ran with no anchor data (NEXT-STEPS speed item, 10 Nov).
   .tout <- unlist(res$test_output, use.names = FALSE)
   if (.check_tests) {
-  .tally <- grep("\\[ FAIL [0-9]+ \\| WARN [0-9]+ \\| SKIP [0-9]+ \\| PASS [0-9]+ \\]", .tout, value = TRUE)
-  .tally <- regmatches(.tally, regexpr("\\[ FAIL [^]]*\\]", .tally))
-  cat(sprintf("tests inside the check: %s; anchor-clone skips %d\n",
-              if (length(.tally)) .tally[length(.tally)] else "no tally line found",
-              sum(lengths(regmatches(.tout, gregexpr("anchor data clone not present", .tout, fixed = TRUE))))))
+    .tally <- grep("\\[ FAIL [0-9]+ \\| WARN [0-9]+ \\| SKIP [0-9]+ \\| PASS [0-9]+ \\]", .tout, value = TRUE)
+    .tally <- regmatches(.tally, regexpr("\\[ FAIL [^]]*\\]", .tally))
+    cat(sprintf("tests inside the check: %s; anchor-clone skips %d\n",
+                if (length(.tally)) .tally[length(.tally)] else "no tally line found",
+                sum(lengths(regmatches(.tout, gregexpr("anchor data clone not present", .tout, fixed = TRUE))))))
   }
   if (length(res$notes)) {
     # Notes do not fail CI today, but they are how a warning starts: an
