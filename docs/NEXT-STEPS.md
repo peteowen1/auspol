@@ -100,10 +100,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   time-forward "seat polls under-call new independents" term (5 of 10 polled new independents under-called by
   9-22 points: Mayo, Warringah, Kooyong, Mackellar, Mount Gambier). Seat polls already reach new independents:
   mean miss 23.4 before the blend, 11.6 published, 10 seats (Wakehurst published 30.0, not 13.7).
-- OPEN, NIGHT MODEL (before 28 Nov). `pair_r` FAILED its prereg 11 Nov (pooled +0.00014, SE 0.00101; vic2022 +0.0055;
-  RESULT in `plans/prereg-night-pair-trust-2026-11-11.md`), stays off. Monash never moved: no pair draws to copy from
-  (`R/night_update.R:372`). Pete to decide whether a version that builds pair draws from the count itself gets a new prereg.
-  Still: trace Mirani qld2024 (flows). History: `backlog/journal-2026-11-11-queue-history.md`.
+- IN FLIGHT, NIGHT MODEL (before 28 Nov). `pair_r` v1 FAILED (pooled +0.00014, SE 0.00101). Pete chose v2 (11 Nov):
+  `pair_cal` (b51c09e0, off), prereg `plans/prereg-night-pair-cal-2026-11-11.md`. Detached job
+  `deciding-runs/20261111-0900-night-pair-cal/` (base, fits, v1, v2 on three real nights; ETA ~11:30am 11 Nov); done when
+  `results-cal.txt` is read against the prereg. Found on the way: the federal replay dropped every pair the AEC later
+  blanked (Monash among 15/21 seats), fixed 59dff525; earlier federal night numbers (the called-rule test) ran on the old filter.
+  Still: trace Mirani qld2024 (flows); per-step writes in the replays (a killed 18-min replay leaves nothing).
+  History: `backlog/journal-2026-11-11-queue-history.md`.
   Also open: statewide draws shrink by the national mean counted, not the seat's; projection sd floors at 0.26;
   `--tcp-own-fp` built, OFF (needs flow uncertainty in the draws; `plans/prereg-flow-sd-2026-10-31.md` REFUSED).
 - OPEN, FLOW MEANS in non-classic contests (31 Oct, Melbourne/Monash fed2025): Liberal -> Labor-over-Greens is 60.4 in
