@@ -14,6 +14,15 @@ test_that("seat-poll memo key changes with any AUSPOL_* variable and with the ar
   expect_identical(k0, .seat_poll_memo_key("vic2022", 90, TRUE, FALSE, FALSE))
 })
 
+test_that("a long environment cannot push the memo key past R's 10,000-byte variable-name limit", {
+  # 11 Nov: a deciding run's env and scratch paths made the raw key too long for assign(); all 70 runs died.
+  withr::local_options(auspol.seat_poll_memo = TRUE)
+  withr::local_envvar(AUSPOL_LONG_TEST_VALUE = strrep("x", 12000))
+  k <- .seat_poll_memo_key("vic2022", 90, TRUE, FALSE, FALSE)
+  expect_lt(nchar(k), 100)
+  expect_identical(.seat_poll_memoised(k, function() data.table::data.table(x = 1))$x, 1)
+})
+
 test_that("the seat-poll file memo sees a rewritten file and replays printed lines on a hit", {
   withr::local_envvar(AUSPOL_SEAT_POLL_HANDKEYED = "0")
   withr::local_options(auspol.seat_poll_memo = TRUE)
