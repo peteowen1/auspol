@@ -252,21 +252,29 @@ if (!is.null(.fp) && !"--force-check" %in% .args && length(.last) && identical(.
   file.copy(".Rbuildignore", .src)
   cat(sprintf("checking a clean copy of %d files in %s\n", length(.fp$files), .src))
   .t_check0 <- Sys.time()
-  res <- rcmdcheck::rcmdcheck(path = .src, args = c("--no-manual", "--as-cran"),
+  # --no-tests (Pete, 10 Nov 2026): half one already ran the whole suite with no anchor data, and the check's copy is
+  # a SUBSET of it (10 Nov --force-check: 5,083 passed outside, 4,964 inside, FAIL 0 both), so running it again cost
+  # ~3 of the check's 9 minutes and could find nothing half one had not. CI still runs the tests inside its check;
+  # pass --with-check-tests to do the same here (e.g. when a failure might appear only against the INSTALLED package).
+  .check_tests <- "--with-check-tests" %in% .args
+  res <- rcmdcheck::rcmdcheck(path = .src, args = c("--no-manual", "--as-cran", if (!.check_tests) "--no-tests"),
                               build_args = "--no-manual",
                               error_on = "warning", quiet = TRUE)
   cat(sprintf("errors %d   warnings %d   notes %d   (R CMD check %.0f s, of which the tests %s)\n",
               length(res$errors), length(res$warnings), length(res$notes),
               as.numeric(difftime(Sys.time(), .t_check0, units = "secs")),
-              if (length(res$test_output)) "ran again inside it" else "did not run"))
+              if (length(res$test_output)) "ran again inside it" else if (.check_tests) "DID NOT RUN (asked for)" else "skipped, --no-tests"))
+  if (.check_tests && !length(res$test_output)) stop("check_like_ci: --with-check-tests was given but the check ran no tests", call. = FALSE)
   # The suite's own tally inside the check, and how many tests skipped for want of the anchor clone: if these
   # match half one's, the check's copy of the suite also ran with no anchor data (NEXT-STEPS speed item, 10 Nov).
   .tout <- unlist(res$test_output, use.names = FALSE)
+  if (.check_tests) {
   .tally <- grep("\\[ FAIL [0-9]+ \\| WARN [0-9]+ \\| SKIP [0-9]+ \\| PASS [0-9]+ \\]", .tout, value = TRUE)
   .tally <- regmatches(.tally, regexpr("\\[ FAIL [^]]*\\]", .tally))
   cat(sprintf("tests inside the check: %s; anchor-clone skips %d\n",
               if (length(.tally)) .tally[length(.tally)] else "no tally line found",
               sum(lengths(regmatches(.tout, gregexpr("anchor data clone not present", .tout, fixed = TRUE))))))
+  }
   if (length(res$notes)) {
     # Notes do not fail CI today, but they are how a warning starts: an
     # undefined global is a note until the same slip lands somewhere check
