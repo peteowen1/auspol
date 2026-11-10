@@ -380,6 +380,10 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
   covariance pools every era; WA has no surge-v2 hazard.
 
 ## Harness and pipeline hygiene
+- OPEN (speed, 10 Nov) `check_like_ci.R` full run ~10 min: tests 159 s (5,091 passed), `R CMD check` ~7 min, which runs the
+  SAME suite again. Passing `--no-tests` to rcmdcheck when the test half ran clean in the same call would save ~2.5 min per
+  full check (2-3 a day). UNCONFIRMED: that check's test run is anchor-free like the first half (the clean copy has no
+  `external/`, but a test could still reach `C:/dev/auspol`); prove it before dropping it. Timing lines added 10 Nov.
 - OPEN (speed, CORRECTED 6 Nov 12:40pm) stage 4 (`fit_xgb_primary_asat.R`) 1,664 s for 31 models on a full retrain. The "287 s before"
   I compared it with was `driver.log` of 19 SEP (22 elections, ensemble 1); not the kernel leak. Cost per model grows with the corpus:
   `xgb.cv` uses ONE FOLD PER EARLIER ELECTION (sa2026: 34 folds, 401 rounds, 142 s; sa2010: 4 folds, 1 s), times `AUSPOL_XGB_ENSEMBLE=3`

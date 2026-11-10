@@ -130,11 +130,20 @@ not zeroing. Wikipedia needs its own refresh (`parse_wikipedia_candidates.py`).
 
 ## E. November procedure: switching on nomination zeroing (v61, published forecast)
 
+**DONE for vic2026, 9-10 Nov 2026.** The VEC posted the final list on its district pages on 9 Nov, while the
+media-feed XML below needs feed access the VEC had not granted. So step 1 ran from the website instead:
+`bash scripts/nomination_day.sh --web` (`scripts/fetch_vec_candidates_web.R`: 734 candidates in 88 districts,
+checked against the VEC's all-candidates spreadsheet; raw pages under `external/reference/vec/2026/web/`). Step 3
+set `AUSPOL_NOM_LIVE="vic2026"`, not `"1"`: the switch takes election labels, so NSW 2027 (same script, provisional
+list) stays shut (`nom_live_on()`, `R/nomination_zero.R`). Published 1:10am 10 Nov, PR #212 merged 7:11am; F18
+(`AUSPOL_NOM_ZERO_PRE_XGB="1"`) followed, PR #213. When the XML does arrive, rerun step 1 with it: it overwrites the
+web copy, and the two must agree on names, order and parties. The steps below are the procedure for that refresh.
+
 Steps 1 and 4 in one command (8 Nov 2026): `bash scripts/nomination_day.sh <Candidates xml>`; `--dry-run <any VEC Candidates xml>`
 runs the same chain in a scratch folder (`output/nomination-day-logs/dry`). It stops before steps 2-3.
 
 `fit_seats_full.R` zeroes parties with no candidate (and sends their share by
-preference flows) ONLY when `AUSPOL_NOM_LIVE=1`. The default `auto` never does,
+preference flows) ONLY when `AUSPOL_NOM_LIVE` is `1` or names the election (published: `vic2026`). `auto` never does,
 because the vic2026 list in `output/candidacies.csv` is provisional (Wikipedia,
 379 candidacies against vic2022's 731) until nominations close at noon on
 9 November 2026. Once the VEC publishes the final list:
