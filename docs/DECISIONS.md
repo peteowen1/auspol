@@ -4,6 +4,55 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-11-10 Standing notes moved out of NEXT-STEPS.md (queue audit: nothing a session could tick off).** Wording
+  kept as it stood in the queue; reopen any of them by moving it back with a trigger.
+  - F16 `AUSPOL_ROW_SHIFT_EXACT` NOT PASSED 29 Oct (DECISIONS). F18 `AUSPOL_NOM_ZERO_PRE_XGB` SHIPPED 10 Nov (DECISIONS).
+    Dead-party `AUSPOL_LEVEL_DEAD_PARTY` (337f4cd) PARKED: its screen says not worth it; do not merge.
+  - F8 RN is dead (arm N worse). F8 arm N's netting costs 579 s per harness run: cache it to disk before any rerun.
+    (Departed arm B `mean`: DEAD, departed-origin closed 27 Oct. Width A0/A1: see the pipeline-audit section.)
+  - OPEN (review nit, 30 Oct, not blocking): the shipped MP-slope pool's tau^2 is inflated where one OTH_RIGHT member
+    slope of -23.1 (n 1, se ~11) enters the DerSimonian-Laird sum: qld2015, sa2014, vic2014 get tau^2 ~0.57 (0 at most
+    targets), so IND there keeps w 0.99 instead of pooling (`output/mp-slope-pooled.csv`; `R/mp_slope_pool.R:79-83`).
+    The all-35 screen ran on this table. CORRECTED 5 Nov: not a variance artifact (sigma is already pooled); the one
+    OTH_RIGHT seat sat almost on the statewide level, so its slope blows up (-23.1, z ~2.2) and supplies 4.6 of Q 5.4.
+    Visible effect: the n-1 GRN member keeps w 0.63 (1.23 vs mu 0.92). A fix is a choice (robust tau^2, or no ratio for
+    seats near the level), PARKED: live vic2026 unaffected (tau^2 0), old targets only, needs its own screen.
+  - MEASURED, PARKED per-class level bias (17 Oct, scratchpad levelcorr.R): statewide level over-predicts the Greens in
+    23 of 35 elections (formal-weighted -0.73); all-class time-forward correction loses (1.402 -> 1.426), GRN alone
+    helps slightly (prereg-poll-level-centring arm C, never run). Revisit GRN alone when more elections are in.
+  - OPEN (hazard for arms, not live) pooled-fits audit 2026-10-16 (`reviews/pooled-fits-inventory-2026-10-13.md` and
+    after): LEAVE-ONE-OUT but OFF at published flags, so any arm switching them on measures a leaked number:
+    `fit_xgb_primary_sd.R:108` (`AUSPOL_XGB_PRIMARY_SD`), `fit_flow_drift.R` (`AUSPOL_FLOW_CELL_SD`),
+    `fit_insurgency_risk.R:33` (`AUSPOL_INSURGENCY_SHRINK`), `party_positions(exclude=)` in `R/reentry_prior.R:288`,
+    `xgb-primary-v6-oof-predictions.csv` (static-cache arm). (`state_swing_adjustment()`, dead code: DELETED 25 Oct on
+    Pete's yes, DECISIONS.)
+  - OPEN SEAT-REGISTRY entries for the new worst seats (DATA/MODEL/POLL registries: regenerated 4 Nov, `f453b62b`, `14f55eba`).
+  - CORRECTED 5 Nov: the breakdowns did NOT stop. BludgerTrack still publishes them (refetched 5 Nov, newest fieldwork
+    25 Oct, raw `external/reference/polls/pollbludger/raw/bludgertrack/fed2028-current-2026-11-05.xml`; branch
+    `fed-breakdowns-trend-1105` builds the union, 704 polls). Feeding BludgerTrack's rows into the blend was REFUSED by
+    Pete 5 Nov (DECISIONS; `--with-bt`, off), so the blend's federal share is decaying by choice; FK3 (~20 Nov) only warns. Wikipedia's part: deleted the sub-national
+    sections from the fed2028 page on 24 Oct (revision 1381724607, "excessive detail"; checked 5 Nov). The last
+    pre-deletion revision (1381712590, saved as `raw/fed2028_opinion-oldid1381712590.html`) parses to the same 471 polls
+    as ours, so nothing was added after 6 Oct either. Adding `fed2028_opinion` to the CI fetch would lose rows (PM2!).
+    `build_fed_state_breakdowns.R` now refuses to write fewer or older polls than on disk (FK2!, proven on a broken
+    input). Live effect: the blend's federal share (`AUSPOL_LEVEL_FED_R` 0.15) decays with no new data; FK3 (45 days)
+    would trip ~20 Nov.
+  - **Demographic axis**: real (permutation control) but one coefficient is an
+    order of magnitude too small; a level interaction needs its own prereg.
+    Parked by Pete.
+  - **`base_margin` scoped arm** (away from ALP, or to sa2026/wa2021-shaped
+    cases): the full form refused at seat level (+0.004) despite primary gains.
+  - **Time-forward fits still use `min_n` cliffs**: `R/split_slope.R:395,416` sit in `fit_conditional_slopes()`,
+    which the shipped config never calls (`AUSPOL_FIT_SLOPES=0`). `fit_major_departed_slope()` no longer has its 40-seat cliff (`AUSPOL_DEPARTED_POOL` SHIPPED 6 Nov; DECISIONS). The
+    `fit_conditional_slopes()` cliffs above remain, in unshipped code.
+  - **Teal/independent under-call** (Curtin, Goldstein, Mackellar, Wakehurst):
+    PARKED by Pete. Overall we lead AEF on independents (36 winners: 16.7 vs
+    19.7 log loss). Wave term blocked (`reviews/wave-term-blocked-2026-09-07.md`).
+  - Smaller known limits: intra-Coalition seats have no TCP class (2 of 660, AEF has the
+    same limit; zero vic2026 seats affected today); Orange/Wagga `own_prev_pcv` NA for
+    by-election winners (needs a feature, fallback fill refused); the statewide
+    covariance pools every era; WA has no surge-v2 hazard.
+  - GDELT parked (needs a GCP project); Census 2006/2001 have no bulk pack.
 - **2026-11-10 Queue audit closures.** "Move off AE (b)": the language-model extraction of Poll Bludger posts WAS built
   (`AUSPOL_POLL_PB`, 45df5117; `reviews/pb-llm-extraction-2026-10-13.md`), so the item is done. Moved here from the queue
   as a standing not-doing: the in-browser simulator (~40 h); the 2.5-point knots already feel live; revisit if Pete wants
