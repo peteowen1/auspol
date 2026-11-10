@@ -227,3 +227,32 @@ print(v[seat %in% show, .(seat, senate_pct = round(senate, 2), ours = round(ours
 cat(sprintf("\nacross all 88: ridge minus ours, mean %.2f, sd %.2f, biggest +%.1f (%s), biggest -%.1f (%s)\n",
             mean(v$ridge - v$ours), sd(v$ridge - v$ours), max(v$ridge - v$ours), v$seat[which.max(v$ridge - v$ours)],
             -min(v$ridge - v$ours), v$seat[which.min(v$ridge - v$ours)]))
+
+# ---- 5. Gradient-boosted trees for Victoria 2026, beside ours and ridge ------------------------------------------
+# Same 11 inputs and settings as section 3, ratio target (actual / L). Two fits: all 5 elections, and the two surge
+# elections only. Rounds by xgb.cv with one fold per training election and early stopping. Held at the live level
+# like the other columns (each rescaled so its seat mean is L_vic).
+cv26b <- cens[pair == "vic2026", .(seat, edu_25plus_pct, over55_pct, indig_pct)]
+v <- merge(v, cv26b, by = "seat", all.x = TRUE)
+if (!"prev_onp" %in% names(v)) v[, prev_onp := 0]
+v[is.na(prev_onp), prev_onp := 0]
+xgb_fit_vic <- function(dd) {
+  dtr <- xgb.DMatrix(as.matrix(dd[, feat_all, with = FALSE]), label = dd$r)
+  folds <- lapply(unique(dd$el), function(e) which(dd$el == e))
+  cv <- xgb.cv(params = pars, data = dtr, nrounds = 2000, folds = folds, early_stopping_rounds = 50, verbose = 0)
+  nr <- cv$early_stop$best_iteration
+  m <- xgb.train(params = pars, data = dtr, nrounds = nr, verbose = 0)
+  p <- predict(m, xgb.DMatrix(as.matrix(v[, feat_all, with = FALSE]))) * L_vic
+  list(p = p * L_vic / mean(p), rounds = nr)
+}
+set.seed(42)
+x5 <- xgb_fit_vic(d)
+x2 <- xgb_fit_vic(d[el %in% surge])
+v[, `:=`(xgb_all5 = x5$p, xgb_surge = x2$p)]
+cat(sprintf("\ntrees for Victoria: all 5 elections %d rounds (%d rows); surges only %d rounds (%d rows)\n",
+            x5$rounds, nrow(d), x2$rounds, nrow(d[el %in% surge])))
+cat("Victoria 2026, One Nation primary % by seat (every model column holds the same statewide level):\n")
+print(v[seat %in% show, .(seat, senate_pct = round(senate, 2), ours = round(ours, 1), ridge = round(ridge, 1),
+                          xgb_all5 = round(xgb_all5, 1), xgb_surge = round(xgb_surge, 1))][order(-ours)])
+for (cc in c("ridge", "xgb_all5", "xgb_surge"))
+  cat(sprintf("  %-10s minus ours over 88 seats: sd %.2f, correlation with ours %.3f\n", cc, sd(v[[cc]] - v$ours), cor(v[[cc]], v$ours)))
