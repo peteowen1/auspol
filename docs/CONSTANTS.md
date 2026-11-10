@@ -711,6 +711,7 @@ Replay-only until the 2026 feed arrives; none is read by the published forecast.
 | early-vote report position | "last" (default) or "interleaved" U(0.3, 1.0) of the way through the booths | `.night_order(early =)` | the 2026 feed; each early centre is its own booth |
 | vote-type gap shrinkage `gap_k` | off by default; 5 chosen (k = 20 tried: 75% counted 0.0712 vs 0.0750) | `night_booth_update(gap_k =)` | more replays (other states) |
 | VEC pair minimum | 0.20 of draws | `night_apply_tcp(pair_min =)` | set by judgement; check on a replay with VEC first-pair errors |
+| commission night-pair reliability `pair_r` (ARM, off) | NULL (off). When set: Beta prior mean 0.95, weight 50 seats, updated time-forward with earlier nights' pairs right (fed2022 148/151, vic2022 82/87, fed2025 136/150), giving 0.950 / 0.973 / 0.964 / live 0.944 | `night_apply_tcp(pair_r =)`, `night_run_update(tcp_pair_r =)`, replay `--pair-r=` | the counts are data; the prior (0.95, 50) is judgement and only decides fed2022. Replaces `pair_min` when set. `plans/prereg-night-pair-trust-2026-11-11.md` |
 | flow SE below 3 counted booths | 0.25 | `night_tcp_obs()` | judgement (a flow share's plausible range) |
 | flow SE floor | 0.02 | `night_tcp_obs()` | judgement |
 | new-candidate sd multiplier | 1 (off): 1.5 and 2 were slightly worse on 2022 (few new candidates; One Nation 2026 untestable) | `night_booth_update(new_sd_mult =)` | a replay with a new party (SA 2026) |

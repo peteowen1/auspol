@@ -485,11 +485,14 @@ night_expected_votes <- function(enrolment, prev, basis = c("night", "final")) {
 #'   `docs/reviews/night-replay-real-feed-2026-10-31.md`.
 #' @param tcp_own_fp Passed to [night_apply_tcp()] as `own_fp`: `TRUE` reads each draw's implied flow from its own
 #'   primaries (simulated with `keep_fp = TRUE`). `FALSE` (default) until measured on the real-night replays.
+#' @param tcp_pair_r Passed to [night_apply_tcp()] as `pair_r`: `NULL` (default, unchanged) or the commission's
+#'   night-pair reliability (`docs/plans/prereg-night-pair-trust-2026-11-11.md`).
 #' @return List: `sim`, `nu` (the update), `shares`, `sd`, `matched` (seats in both state and feed),
 #'   `n_updated`.
 #' @export
 night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "table", "expected"), expected = NULL, sims = NULL, use_tcp = TRUE,
-                             lean = NULL, early_frac = NULL, surge_fade = TRUE, tcp_center = "median", tcp_flow_floor = 0.01, tcp_own_fp = FALSE) {
+                             lean = NULL, early_frac = NULL, surge_fade = TRUE, tcp_center = "median", tcp_flow_floor = 0.01, tcp_own_fp = FALSE,
+                             tcp_pair_r = NULL) {
   total <- match.arg(total)
   if (!is.numeric(tcp_flow_floor) || length(tcp_flow_floor) != 1L || !is.finite(tcp_flow_floor) || tcp_flow_floor < 0)
     stop("NW17! tcp_flow_floor must be one finite number >= 0 (got ", paste(format(tcp_flow_floor), collapse = ", "), ")", call. = FALSE)
@@ -522,7 +525,7 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
   if (use_tcp && nu$n_updated > 0L && nrow(conv$tcp)) {
     obs <- night_tcp_obs(conv$tcp, conv$live, nu$units, shares)
     n_tcp <- nrow(obs)
-    sim <- night_apply_tcp(sim, obs, center = tcp_center, flow_sd_floor = tcp_flow_floor, own_fp = tcp_own_fp)
+    sim <- night_apply_tcp(sim, obs, center = tcp_center, flow_sd_floor = tcp_flow_floor, own_fp = tcp_own_fp, pair_r = tcp_pair_r)
   }
   list(sim = sim, nu = nu, shares = shares, sd = sdo, matched = matched, n_updated = nu$n_updated, n_tcp = n_tcp)
 }

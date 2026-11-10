@@ -309,11 +309,23 @@ night_tcp_obs <- function(tcp, fp, units, post) {
 #'   shifts each draw by its own remainder. With the counted primaries, a draw whose primaries sit far
 #'   from the count reads as an impossible flow (Wentworth fed2022 surge draws: 1.05) and skews the
 #'   centre. `FALSE` (default) is unchanged. Stops (NX11) if `TRUE` and `sim$fp_draws` is missing.
+#' @param pair_r `NULL` (default, unchanged) or the commission's night-pair reliability in (0, 1): the
+#'   share of seats whose counted pair turns out to be the real final two. With it set, `pair_min` no
+#'   longer applies, and the counted pair is evidence about WHICH two are in the final count: with `p`
+#'   the share of draws holding that pair, its posterior is `q = p r / (p r + (1 - p)(1 - r))`, and a
+#'   share `(q - p) / (1 - p)` of the other draws (an evenly spaced subset) takes the outcome of a
+#'   corrected pair draw (cycled in order). Monash fed2025: the AEC counted Labor v Liberal, the real
+#'   final two, while most draws had the independent in it, so the count was thrown away and the seat
+#'   ended at independent 0.99 (`docs/plans/prereg-night-pair-trust-2026-11-11.md`).
 #' @return `sim`, updated, with attribute `night_tcp`: one row per observed seat (pair share
-#'   of draws, prior and posterior mean of a's share, draws changed, `flag`).
+#'   of draws, prior and posterior mean of a's share, draws changed, `flag`; with `pair_r`, also
+#'   `pair_post` (q) and `moved`, the other draws given a pair draw's outcome).
 #' @export
-night_apply_tcp <- function(sim, obs, pair_min = 0.2, center = c("mean", "median"), flow_sd_floor = 0.01, own_fp = FALSE) {
+night_apply_tcp <- function(sim, obs, pair_min = 0.2, center = c("mean", "median"), flow_sd_floor = 0.01, own_fp = FALSE,
+                            pair_r = NULL) {
   center <- match.arg(center)
+  if (!is.null(pair_r) && (!is.numeric(pair_r) || length(pair_r) != 1L || !is.finite(pair_r) || pair_r <= 0 || pair_r >= 1))
+    stop("NX12! pair_r must be NULL or one number strictly between 0 and 1 (got ", paste(format(pair_r), collapse = ", "), ")", call. = FALSE)
   if (isTRUE(own_fp) && is.null(sim$fp_draws))
     stop("NX11! own_fp = TRUE needs sim$fp_draws: simulate with keep_fp = TRUE", call. = FALSE)
   if (is.null(obs) || !nrow(obs)) return(sim)
@@ -321,6 +333,35 @@ night_apply_tcp <- function(sim, obs, pair_min = 0.2, center = c("mean", "median
   if (is.null(seats)) stop("NX5! sim$tcp_winner has no seat names: cannot match the VEC's 2CP to seats", call. = FALSE)
   n <- nrow(sim$tcp_winner); parties <- colnames(sim$totals)
   wp <- sim$win_prob; rep <- list()
+  # Move draws `rows` of seat column j from count winners oldW to newW: totals (only where the old party holds
+  # a seat in that draw: after the shrink toss the credited winner can differ from the count winner, and an
+  # unmatched increment would double count) and win_prob (renormalised to the seat's total before the move).
+  move_draws <- function(rows, oldW, newW, s) {
+    ch <- which(newW != oldW)
+    for (d in ch) {
+      i_old <- match(oldW[d], parties); i_new <- match(newW[d], parties); r <- rows[d]
+      if (is.na(i_old) || is.na(i_new)) stop("NX13! party ", oldW[d], " or ", newW[d], " not in sim$totals", call. = FALSE)
+      if (sim$totals[r, i_old] > 0) {
+        sim$totals[r, i_old] <<- sim$totals[r, i_old] - 1L
+        sim$totals[r, i_new] <<- sim$totals[r, i_new] + 1L
+      }
+    }
+    if (length(ch)) {
+      delta <- table(factor(newW[ch], parties)) - table(factor(oldW[ch], parties))
+      tot_before <- sum(wp$prob[wp$seat == s])
+      for (p in parties[delta != 0]) {
+        row <- which(wp$seat == s & wp$party == p)
+        if (length(row)) wp$prob[row] <<- max(0, wp$prob[row] + delta[[p]] / n)
+        else wp <<- rbind(wp, data.frame(seat = s, party = p, prob = max(0, delta[[p]] / n), stringsAsFactors = FALSE))
+      }
+      # The deltas move COUNT winners, but win_prob counts the CREDITED winner, which the shrink toss can make differ;
+      # a flip into a party already credited in that draw (or out of one that was not) left the seat summing above 1
+      # (Finniss sa2026 replay, 1.003; review 2026-10-30). Keep the seat's total where it was.
+      rows_s <- which(wp$seat == s); tot_after <- sum(wp$prob[rows_s])
+      if (tot_after > 0) wp$prob[rows_s] <<- wp$prob[rows_s] * tot_before / tot_after
+    }
+    length(ch)
+  }
   for (k in seq_len(nrow(obs))) {
     s <- obs$seat[k]; a <- obs$a[k]; b <- obs$b[k]
     raw_k <- if ("raw_share_a" %in% names(obs)) obs$raw_share_a[k] else NA_real_   # raw counted 2CP share of a, not the flow projection
@@ -328,7 +369,7 @@ night_apply_tcp <- function(sim, obs, pair_min = 0.2, center = c("mean", "median
     W <- sim$tcp_winner[, j]; R <- sim$tcp_runnerup[, j]
     hit <- which((W == a & R == b) | (W == b & R == a))
     frac_pair <- length(hit) / n
-    if (frac_pair < pair_min || length(hit) < 2L) {
+    if ((is.null(pair_r) && frac_pair < pair_min) || length(hit) < 2L) {
       rep[[k]] <- data.table::data.table(seat = s, a = a, b = b, pair_share = frac_pair, prior_a = NA_real_,
                                          post_a = NA_real_, obs_a = obs$share_a[k], raw_a = raw_k, changed = 0L, flag = TRUE)
       next
@@ -358,38 +399,33 @@ night_apply_tcp <- function(sim, obs, pair_min = 0.2, center = c("mean", "median
     na <- pmin(1, pmax(0, pa + (cm$mean - fm) * rest))
     cm <- list(mean = mean(na))
     newW <- ifelse(na > 0.5, a, b); oldW <- W[hit]
-    ch <- which(newW != oldW)
-    for (d in ch) {
-      i_old <- match(oldW[d], parties); i_new <- match(newW[d], parties); r <- hit[d]
-      # Move a seat from old to new in this draw ONLY if old holds one: after the shrink toss the
-      # credited winner can differ from the count winner, and an unmatched increment would double count.
-      if (sim$totals[r, i_old] > 0) {
-        sim$totals[r, i_old] <- sim$totals[r, i_old] - 1L
-        sim$totals[r, i_new] <- sim$totals[r, i_new] + 1L
-      }
-    }
-    if (length(ch)) {
-      delta <- table(factor(newW[ch], parties)) - table(factor(oldW[ch], parties))
-      tot_before <- sum(wp$prob[wp$seat == s])
-      for (p in parties[delta != 0]) {
-        row <- which(wp$seat == s & wp$party == p)
-        if (length(row)) wp$prob[row] <- max(0, wp$prob[row] + delta[[p]] / n)
-        else wp <- rbind(wp, data.frame(seat = s, party = p, prob = max(0, delta[[p]] / n), stringsAsFactors = FALSE))
-      }
-      # The deltas move COUNT winners, but win_prob counts the CREDITED winner, which the shrink toss can make differ;
-      # a flip into a party already credited in that draw (or out of one that was not) left the seat summing above 1
-      # (Finniss sa2026 replay, 1.003; review 2026-10-30). Keep the seat's total where it was.
-      rows_s <- which(wp$seat == s); tot_after <- sum(wp$prob[rows_s])
-      if (tot_after > 0) wp$prob[rows_s] <- wp$prob[rows_s] * tot_before / tot_after
-    }
+    n_ch <- move_draws(hit, oldW, newW, s)
     sim$tcp_winner[hit, j] <- newW
     sim$tcp_runnerup[hit, j] <- ifelse(newW == a, b, a)
     sim$tcp_share[hit, j] <- ifelse(newW == a, na, 1 - na)
+    q <- NA_real_; n_mv <- 0L
+    if (!is.null(pair_r) && length(hit) < n) {
+      # The counted pair is evidence about which two are in the final count (pair right in ~95% of seats).
+      q <- frac_pair * pair_r / (frac_pair * pair_r + (1 - frac_pair) * (1 - pair_r))
+      oth <- setdiff(seq_len(n), hit)
+      n_mv <- as.integer(round(length(oth) * (q - frac_pair) / (1 - frac_pair)))
+      if (n_mv > 0L) {
+        mv <- oth[unique(round(seq(1, length(oth), length.out = n_mv)))]
+        donor <- hit[(seq_along(mv) - 1L) %% length(hit) + 1L]
+        oldM <- sim$tcp_winner[mv, j]; newM <- sim$tcp_winner[donor, j]
+        n_ch <- n_ch + move_draws(mv, oldM, newM, s)
+        sim$tcp_winner[mv, j] <- newM
+        sim$tcp_runnerup[mv, j] <- sim$tcp_runnerup[donor, j]
+        sim$tcp_share[mv, j] <- sim$tcp_share[donor, j]
+        n_mv <- length(mv)
+      }
+    }
     rep[[k]] <- data.table::data.table(seat = s, a = a, b = b, pair_share = frac_pair, prior_a = pm,
-                                       post_a = cm$mean, obs_a = obs$share_a[k], raw_a = raw_k, changed = length(ch), flag = FALSE)
+                                       post_a = cm$mean, obs_a = obs$share_a[k], raw_a = raw_k, changed = n_ch, flag = FALSE)
+    if (!is.null(pair_r)) rep[[k]][, `:=`(pair_post = q, moved = n_mv)]
   }
   sim$win_prob <- wp[wp$prob > 0, ]
-  attr(sim, "night_tcp") <- data.table::rbindlist(rep)
+  attr(sim, "night_tcp") <- data.table::rbindlist(rep, fill = TRUE)
   sim
 }
 
