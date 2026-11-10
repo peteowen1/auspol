@@ -45,13 +45,24 @@ cat(sprintf("NRF1 %s: %d seats in state, %d places with a night return, %d place
             label, surge_fade, tcp_center, tcp_floor)); cat(sprintf("NRF1 tcp-own-fp %s, pair-r %s\n", own_fp, if (is.null(pair_r)) "off" else format(pair_r)))
 miss <- setdiff(unique(pp$division), seats); if (length(miss)) cat("NRF1 feed divisions not in the state:", paste(miss, collapse = ", "), "\n")
 
-# the pair on screen per division per snapshot; usable when not withdrawn and equal to the final pair
+# The pair on screen per division per snapshot. Usable while it is on screen and not flagged maverick AT THAT
+# SNAPSHOT, and only when it is the DECLARED final pair: the booth two-candidate votes (Tc) exist for that pair
+# alone, so a night pair the commission got wrong cannot be replayed (a data limit, not a model choice).
+# Until 11 Nov this compared with the feed's LAST snapshot instead. A pair the AEC flagged maverick and blanked
+# later in the night then counted as "never usable", so Monash fed2025 (Labor v Liberal on screen 6:01-8:37pm,
+# the declared pair) lost its count all night, as did 15 of 151 fed2022 and 21 of 150 fed2025 divisions.
 D[, ts := tsec(snapshot_time)]
-fin <- D[D$ts == max(D$ts), list(division, final_pair = tcp_pair_ids)]
-D <- merge(D, fin, by = "division")
-D[, pair_ok := !is.na(tcp_pair_ids) & nzchar(tcp_pair_ids) & tcp_pair_ids == final_pair & !(tolower(as.character(tcp_maverick)) %in% "true")]
+pair_key <- function(x) vapply(strsplit(ifelse(is.na(x), "", x), " v ", fixed = TRUE), function(z) paste(sort(trimws(z)), collapse = " v "), "")
+dec <- Tc[, list(dec_pair = paste(sort(unique(trimws(candidate))), collapse = " v ")), by = list(division = district)]
+D <- merge(D, dec, by = "division", all.x = TRUE)
+D[, night_key := pair_key(tcp_pair)]
+D[, pair_ok := nzchar(night_key) & !is.na(dec_pair) & night_key == dec_pair & !(tolower(as.character(tcp_maverick)) %in% "true")]
+pk <- D[nzchar(night_key), list(ever_shown = TRUE, ever_ok = any(pair_ok)), by = division]
+cat(sprintf("NRF0 %s: %d divisions showed a pair; %d usable at some point; %d never (pair not the declared one)\n",
+            pair_lbl, nrow(pk), sum(pk$ever_ok), sum(!pk$ever_ok)))
+if (!sum(pk$ever_ok)) stop("NRF0! no division's night pair matched its declared pair: check the name formats in Tc and the feed")
 
-summ <- list(); seat_rows <- list()
+summ <- list(); seat_rows <- list(); tcp_rows_out <- list()
 for (k in seq_along(at)) {
   T0 <- at[k]
   rep_pp <- pp[pp$t_fp <= T0, list(district = division, unit = polling_place)]
@@ -76,6 +87,7 @@ for (k in seq_along(at)) {
     wentworth_ind = round(sum(wp$prob[wp$seat == "Wentworth" & wp$party == "IND"]), 4),
     wentworth_counted = round(100 * unname(cnt["Wentworth"]), 1))
   wp[, time := tm[k]]; seat_rows[[length(seat_rows) + 1]] <- wp
+  nt <- attr(r$sim, "night_tcp"); if (!is.null(nt) && nrow(nt)) tcp_rows_out[[length(tcp_rows_out) + 1]] <- data.table::as.data.table(nt)[, time := tm[k]]   # per-seat pair share, prior/posterior (pair_r v2 trace)
   s <- summ[[length(summ)]]
   cat(sprintf("NRF3 %s places %d (%d seats, mean counted %.1f%%, 2CP %d) | ALP %.1f (%g-%g) P(maj) %.3f | log loss %.4f, right %d/%d | Wentworth IND %.3f at %.1f%%\n",
               s$time, s$places, s$seats_reporting, s$mean_counted, s$tcp_seats, s$alp_exp, s$alp_lo, s$alp_hi, s$p_alp_majority,
@@ -83,6 +95,7 @@ for (k in seq_along(at)) {
 }
 S <- rbindlist(summ); fwrite(S, file.path(out_dir, sprintf("%s-%s-summary.csv", pair_lbl, label)))
 fwrite(rbindlist(seat_rows), file.path(out_dir, sprintf("%s-%s-seats.csv", pair_lbl, label)))
+if (length(tcp_rows_out)) fwrite(rbindlist(tcp_rows_out, fill = TRUE), file.path(out_dir, sprintf("%s-%s-tcp.csv", pair_lbl, label)))
 call_at <- function(p) { ok <- p >= 0.99; i <- which(vapply(seq_along(ok), function(j) all(ok[j:length(ok)]), logical(1))); if (length(i)) S$time[min(i)] else "never" }
 cat(sprintf("NRF4 %s %s: Labor majority called (>= 0.99 and stays) at %s | Labor largest at %s | Wentworth IND at %s\n",
             pair_lbl, label, call_at(S$p_alp_majority), call_at(S$p_alp_largest), call_at(S$wentworth_ind)))

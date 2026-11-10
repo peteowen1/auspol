@@ -42,7 +42,7 @@ seats <- rownames(st$shares)
 cat(sprintf("NRV1 %s: %d seats in state, %d snapshots %s to %s, %d sims; label %s (surge-fade %s, tcp-center %s, tcp-flow-floor %s); %d winners to score\n",
             pair_lbl, length(seats), length(files), stamp[1], stamp[length(stamp)], nrow(st$swd), label, surge_fade, tcp_center, tcp_floor, nrow(win))); cat(sprintf("NRV1 tcp-own-fp %s, pair-r %s\n", own_fp, if (is.null(pair_r)) "off" else format(pair_r)))
 
-summ <- list(); seat_rows <- list()
+summ <- list(); seat_rows <- list(); tcp_rows_out <- list()
 for (k in seq_along(files)) {
   feed <- vec_feed_read_lh(files[k])
   conv <- suppressMessages(night_booth_table(feed, lk, pl))
@@ -61,12 +61,14 @@ for (k in seq_along(files)) {
                   p_alp_majority = round(mean(alp >= 45), 4), p_alp_largest = round(mean(alp > apply(oth, 1, max)), 4),
                   log_loss = round(mean(-log(pmax(sc$prob, 1e-6))), 4), right = sum(sc$prob > 0.5), n = nrow(sc))
   summ[[k]] <- s; wp[, time := tm]; seat_rows[[k]] <- wp
+  nt <- attr(r$sim, "night_tcp"); if (!is.null(nt) && nrow(nt)) tcp_rows_out[[length(tcp_rows_out) + 1]] <- data.table::as.data.table(nt)[, time := tm]   # per-seat pair share, prior/posterior (pair_r v2 trace)
   cat(sprintf("NRV2 %s seats updated %d (mean counted %.1f%%, 2CP %d) | ALP %.1f (%g-%g) P(maj) %.3f P(largest) %.3f | log loss %.4f, right %d/%d\n",
               s$time, s$seats_updated, s$mean_counted, s$tcp_seats, s$alp_exp, s$alp_lo, s$alp_hi, s$p_alp_majority, s$p_alp_largest,
               s$log_loss, s$right, s$n))
 }
 S <- rbindlist(summ); fwrite(S, file.path(out_dir, sprintf("%s-%s-summary.csv", pair_lbl, label)))
 W <- rbindlist(seat_rows); fwrite(W, file.path(out_dir, sprintf("%s-%s-seats.csv", pair_lbl, label)))
+if (length(tcp_rows_out)) fwrite(rbindlist(tcp_rows_out, fill = TRUE), file.path(out_dir, sprintf("%s-%s-tcp.csv", pair_lbl, label)))
 if (nrow(S) && all(S$n == 0)) stop("NRV3! no winners scored: vic2022 rows missing from output/published-predictions.csv")
 call_at <- function(p) { i <- which(vapply(seq_along(p), function(j) all(p[j:length(p)] >= 0.99), logical(1))); if (length(i)) S$time[min(i)] else "never" }
 last <- W[W$time == S$time[nrow(S)]]; sc <- merge(win, last, by = c("seat", "party"), all.x = TRUE); sc[is.na(prob), prob := 0]
