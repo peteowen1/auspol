@@ -4,6 +4,9 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-11-10 Local check skips the tests inside R CMD check (Pete: go).** `check_like_ci.R` passes `--no-tests`;
+  the in-check copy was a subset of half one (4,964 vs 5,083 passed, FAIL 0 both). Full forced check 559 s -> 396 s.
+  CI unchanged; `--with-check-tests` restores them (and bypasses the unchanged-package skip). Merge 8c7cbcf9.
 - **2026-11-10 vic2026 gets its own minor-party bucket split from the VEC list (Pete: "Ship it").** Was the vic2022
   mix (`FST1!` fallback); now IND 0.27, OTH_RIGHT 0.24, OTH 0.50. Walk on the live forecast: 0 favourites changed, max
   win-probability move 0.4 points (Ashwood ALP), max share move 0.23 (Kew LNP). Built by `rebuild_forecasts.sh`

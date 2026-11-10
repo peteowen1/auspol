@@ -16,6 +16,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - **Status 10 Nov 1pm.** LIVE on main (PRs #212, #213, #216 merged; dev = main): VEC final list (734, `AUSPOL_NOM_LIVE="vic2026"`),
   F18 pre-xgb zero on, "Independent X" labels IND. Published 9:33am (`deciding-runs/20261110-0734-rebuild`): 35 elections
   0.3166 (n 2,931), AEF-7 0.2524 (AEF 0.2825, n 681). Forecast run 42715038021 success. 10 Nov benchmark capture committed.
+  2:09pm: vic2026 live bucket split published (PR #217; CI run 42746530160 logs `FST1 vic2026 ... IND 0.27, OTH_RIGHT 0.24,
+  OTH 0.50`; released seat probabilities within 0.001 of the local walk, 0 of 88 favourites differ).
 - OPEN (blocked): VEC feed access, chase sent 9 Nov 1:12pm, no reply. Done when the feed XML arrives: rerun
   `fetch_vec_candidates.R` on it (must match the web list), then the ITG booths build (`C:/dev/inthegame-blog/politics/night-maps/build-booths-2026.py`).
 - OPEN: Pakenham DemosAU/TKR rows in `hand_keyed_primaries.csv` (fieldwork date UNCONFIRMED). Done when `seat_polls.csv`
@@ -348,9 +350,6 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
   covariance pools every era; WA has no surge-v2 hazard.
 
 ## Harness and pipeline hygiene
-- OPEN (speed) `check_like_ci.R` runs the suite twice (159 s alone, again inside `R CMD check`). Code read: no test reaches the
-  checkout (`pkg_root()` only); `scripts/` is build-ignored, so the check's copy runs LESS. Done when: branch `ci-check-skips`
-  run with `--force-check` (memory free) prints the in-check tally; then decide on `--no-tests`.
 - OPEN (speed, CORRECTED 6 Nov 12:40pm) stage 4 (`fit_xgb_primary_asat.R`) 1,664 s for 31 models on a full retrain. The "287 s before"
   I compared it with was `driver.log` of 19 SEP (22 elections, ensemble 1); not the kernel leak. Cost per model grows with the corpus:
   `xgb.cv` uses ONE FOLD PER EARLIER ELECTION (sa2026: 34 folds, 401 rounds, 142 s; sa2010: 4 folds, 1 s), times `AUSPOL_XGB_ENSEMBLE=3`
