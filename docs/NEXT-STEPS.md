@@ -56,6 +56,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   already mixed in place) and refresh a rerun file's raw copy when it is older than `AUSPOL_STAGE6_START`.
 - OPEN, unblocked 9 Nov (reuse fix on main): `AUSPOL_POLL_SERIES_CLASS=name` (SA-Best, Katter, UAP, FF classed by full name). 20k on 7 pairs a tie
   (-0.0028, SE 0.0038); sa2018 +0.037 of which Morphett +0.031. `plans/prereg-poll-series-class-2026-11-06.md`, last section.
+  Pete 10 Nov 11:10pm: "Run all 35". Deciding run scheduled 11:20pm (code 049ebc10, 20k, all pairs):
+  `deciding-runs/20261110-2310-poll-series-class-all35/`. Done when its DONE marker is read and the prereg's standard
+  rule applied; ship (published_flags "name" + inline default) only on a pass.
 - **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** History, DONE list and replay evidence:
   `backlog/journal-2026-11-05-election-night.md` (moved verbatim 6 Nov); plan `plans/election-night-booth-model.md`. Runbook:
   `gh release download forecast-latest -p night-state-vic-2026.rds -D output`, then `night_runner.R --state=output/night-state-vic-2026.rds
