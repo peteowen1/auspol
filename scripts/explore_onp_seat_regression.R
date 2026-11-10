@@ -170,3 +170,60 @@ mfull <- xgb.train(params = pars, data = xgb.DMatrix(as.matrix(dfull[, ..feat_al
 imp <- xgb.importance(model = mfull)
 cat("\nfeature importance, trees on all 308 rows, 300 rounds (gain share; descriptive only, not a test):\n")
 print(imp[, .(Feature, gain = round(Gain, 3))])
+
+# ---- 4. Surge elections only: qld2017 <-> sa2026, then what Victoria 2026 would get ------------------------------
+# Victoria is a One Nation surge (statewide 21.5 in the live forecast). The two past surges in the panel are qld2017
+# (L 20.8) and sa2026 (L 22.5). Each is predicted from a model fitted on the other alone, so n is 61 or 47 rows per fit:
+# trees are fragile at that size, so a ridge regression (shrunk toward zero, penalty chosen by 10-fold CV inside the
+# training election) is the main contender, beside plain Senate-only.
+suppressPackageStartupMessages(library(glmnet))
+surge <- c("qld2017", "sa2026")
+feat_lin <- c("sen_r", "yr12_pct", "under35_pct", "born_os_pct", "lang_other_pct", "prev_grn", "prev_othright")
+ds <- d[el %in% surge & complete.cases(d[, c("r", feat_lin), with = FALSE])]
+cat(sprintf("\n=== surge elections only, each predicted from the other (RMSE, points of One Nation primary; lower is better) ===\n"))
+fit_ridge <- function(tr) {
+  set.seed(42)
+  cv.glmnet(as.matrix(tr[, feat_lin, with = FALSE]), tr$r, alpha = 0, nfolds = 10, standardize = TRUE)
+}
+for (x in surge) {
+  tr <- ds[el != x]; te <- ds[el == x]
+  p_sen <- predict(lm(r ~ sen_r, data = tr), newdata = te) * te$L
+  p_all <- predict(lm(as.formula(paste("r ~", paste(feat_lin, collapse = " + "))), data = tr), newdata = te) * te$L
+  rg <- fit_ridge(tr)
+  p_rdg <- as.numeric(predict(rg, as.matrix(te[, feat_lin, with = FALSE]), s = "lambda.min")) * te$L
+  cat(sprintf("  predict %s from %s (train n %d, test n %d): Senate only %.2f | linear all %d inputs %.2f | ridge %.2f\n",
+              x, setdiff(surge, x), nrow(tr), nrow(te), rmse(te$actual - p_sen), length(feat_lin),
+              rmse(te$actual - p_all), rmse(te$actual - p_rdg)))
+}
+
+# Victoria 2026: the same inputs, fitted on BOTH surge elections, applied to the 88 districts at the live level.
+vs <- fread("output/senate-onp-vic2026.csv")
+Ls_vic <- sum(vs$senate * vs$votes) / sum(vs$votes)
+sas <- fread("output/senate-onp-sa2026.csv")
+cat(sprintf("\nstatewide Senate One Nation %%, vote-weighted over seats: Vic 2025 %.2f; SA check %.2f (panel says %.2f)\n",
+            Ls_vic, sum(sas$senate * sas$votes) / sum(sas$votes), d[el == "sa2026", Ls[1]]))
+pv <- pub[pair == "vic2022" & party %in% c("GRN", "OTH_RIGHT", "ONP"), .(v = sum(actual)), by = .(seat, party)]
+pv <- dcast(pv, seat ~ party, value.var = "v", fill = 0)
+setnames(pv, c("GRN", "OTH_RIGHT", "ONP"), c("prev_grn", "prev_othright", "prev_onp"), skip_absent = TRUE)
+cv26 <- cens[pair == "vic2026", .(seat, yr12_pct, under35_pct, born_os_pct = 100 - born_aus_pct, lang_other_pct)]
+v <- merge(merge(vs[, .(seat, senate)], cv26, by = "seat"), pv, by = "seat", all.x = TRUE)
+v[is.na(prev_grn), prev_grn := 0][is.na(prev_othright), prev_othright := 0]
+v[, sen_r := senate / Ls_vic]
+L_vic <- 21.5343056750065   # live statewide One Nation level, output/statewide-level-vic-2026*.csv, 10 Nov
+ours26 <- fread(Sys.getenv("AUSPOL_SHARES_FILE", "output/seat-shares-vic-2026.csv"))[, .(seat, ours = ONP)]
+v <- merge(v, ours26, by = "seat", all.x = TRUE)
+cat(sprintf("Victorian districts with every input: %d of 88\n", sum(complete.cases(v[, feat_lin, with = FALSE]))))
+rg_all  <- fit_ridge(ds)
+sen_all <- lm(r ~ sen_r, data = ds)
+v[, `:=`(senate_only = predict(sen_all, newdata = v) * L_vic,
+         ridge = as.numeric(predict(rg_all, as.matrix(v[, feat_lin, with = FALSE]), s = "lambda.min")) * L_vic)]
+# Hold the statewide level fixed, as the forecast does: rescale each column so its seat mean is L_vic.
+for (cc in c("senate_only", "ridge")) v[, (cc) := get(cc) * L_vic / mean(get(cc))]
+cat("ridge coefficients (per point of input, on the ratio scale actual/L):\n"); print(round(as.matrix(coef(rg_all, s = "lambda.min")), 4))
+show <- c("Box Hill", "Ashwood", "Glen Waverley", "Hastings", "Cranbourne", "Morwell", "Kew", "Richmond")
+cat("\nVictoria 2026, One Nation primary % by seat (ours = published forecast; the other two hold the same statewide level):\n")
+print(v[seat %in% show, .(seat, senate_pct = round(senate, 2), ours = round(ours, 1), senate_only = round(senate_only, 1),
+                          ridge = round(ridge, 1), ridge_minus_ours = round(ridge - ours, 1))][order(-ours)])
+cat(sprintf("\nacross all 88: ridge minus ours, mean %.2f, sd %.2f, biggest +%.1f (%s), biggest -%.1f (%s)\n",
+            mean(v$ridge - v$ours), sd(v$ridge - v$ours), max(v$ridge - v$ours), v$seat[which.max(v$ridge - v$ours)],
+            -min(v$ridge - v$ours), v$seat[which.min(v$ridge - v$ours)]))
