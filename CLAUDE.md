@@ -26,7 +26,7 @@ includes is byte-identical to the last clean check (fingerprint in
 push that touches only `scripts/`, docs or workflows costs the tests alone.
 
 The slow half runs `R CMD check --no-tests` (the suite already ran, and the check's copy is a subset);
-`--with-check-tests` also runs them inside the check, as CI does.
+`--with-check-tests` also runs them inside the check, as CI does, and bypasses the unchanged-package skip.
 
 `--tests-only` skips the slow half while iterating. **Never before any push
 to a branch that has an open PR** — not just before opening one. Three CI
