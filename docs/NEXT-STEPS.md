@@ -9,8 +9,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 ## NEEDS PETE
 
 - CLOSED 4 Nov, NOT SHIPPING (told Pete): poll weighting by type, company and age. All six arms refused on 38
-  elections (`plans/prereg-poll-lean-2026-11-02.md`; DECISIONS 2026-11-04). OPEN triggers: (a) after nominations close
-  9 Nov, condition One Nation's anchor/blend on how many seats it stands in; (b) after vic2026, re-test sponsor lean
+  elections (`plans/prereg-poll-lean-2026-11-02.md`; DECISIONS 2026-11-04). OPEN triggers: (a) TRIGGER FIRED 10 Nov
+  (VEC list live), question put to Pete: condition One Nation's anchor/blend on how many seats it stands in; (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
 - **Status 10 Nov 1pm.** LIVE on main (PRs #212, #213, #216 merged; dev = main): VEC final list (734, `AUSPOL_NOM_LIVE="vic2026"`),
@@ -57,7 +57,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   --ref=output/booths-vic2026-ref.csv --council-lean=output/council-fp-2022.csv`. Live page https://inthegame.blog/politics/live
   (find my seat live, #166 closed 5 Nov). OPEN, in order:
   1. SharePoint live-feed fetch (VEC access details due 4 Nov, chase 7 Nov); the Actions backup's live source waits on it.
-  2. 10 Nov: in ITG `politics/night-maps/`, `python -I build-booths-2026.py <State2026MediaFilePollingLocationsV2.xml>`, commit
+  2. BLOCKED on the feed (item 1 gives the XML): in ITG `politics/night-maps/`, `python -I build-booths-2026.py <State2026MediaFilePollingLocationsV2.xml>`, commit
      `booths-vic2026.json`; check the popup at 390/1280 px and the 38 Narracan-only 2018 names against the 2026 polling places.
   3. Navbar link; the "called" rule (99% with 10% counted is a placeholder).
   4. 25 Nov trial (no 2CP): with real 2026 centre names, compare each counted early centre with its own 2022 upper-house lean,
@@ -69,9 +69,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `sa_ratio` quantile map in `fit_seats_full.R`); Hastings/Cranbourne recheck after nominations; re-entry inflated
   bases (other classes over-called -2.9, SE 0.84; Narracan Greens is the live case).
 
-- F16 `AUSPOL_ROW_SHIFT_EXACT` NOT PASSED 29 Oct (DECISIONS). OPEN: F18 `AUSPOL_NOM_ZERO_PRE_XGB` (off): walks 1 (29 Oct)
-  and 2 (10 Nov, real list) done; walk 2's Mildura finding waits for Pete (top of file). Dead-party
-  `AUSPOL_LEVEL_DEAD_PARTY` (337f4cd) PARKED: its screen says not worth it; do not merge.
+- F16 `AUSPOL_ROW_SHIFT_EXACT` NOT PASSED 29 Oct (DECISIONS). F18 `AUSPOL_NOM_ZERO_PRE_XGB` SHIPPED 10 Nov (DECISIONS).
+  Dead-party `AUSPOL_LEVEL_DEAD_PARTY` (337f4cd) PARKED: its screen says not worth it; do not merge.
 - F8 RN is dead (arm N worse). F8 arm N's netting costs 579 s per harness run: cache it to disk before any rerun.
   (Departed arm B `mean`: DEAD, departed-origin closed 27 Oct. Width A0/A1: see the pipeline-audit section.)
 
@@ -147,7 +146,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   far above us; Benambra (a NEW independent succeeding Hawkins).
 
 - OPEN (bucket split, SHIPPED 6 Nov; DECISIONS): `minor-class-shares-resid-v2.csv` is built in `rebuild_forecasts.sh` (cached when
-  current). Still open: give it vic2026 rows after nominations (`FST1!`), then v3 as its own screen. `backlog/overnight-2026-11-04.md` item 3.
+  current). Still open, UNBLOCKED 10 Nov (VEC list live; file has 0 vic2026 rows): give it vic2026 rows (`FST1!`), then v3 as its own screen. `backlog/overnight-2026-11-04.md` item 3.
 
 ## 2026-10-18 pipeline audit (READ FIRST; `reviews/pipeline-overwrite-audit-2026-10-18.md`, Sonnet, read-only)
 
@@ -278,27 +277,14 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
 
 ## Dated, cannot move
 
-- **9 November 2026, 12 noon: nominations close; the VEC's Candidates set-up file lands Tue 10 Nov.** ONE COMMAND (8 Nov):
-  `bash scripts/nomination_day.sh <State2026MediaFileCandidatesV2.xml>` (fetch, build, trial forecast with zeroing on, NZL lines;
-  stops before the upload and the `AUSPOL_NOM_LIVE` flip). Dry run on the 2022 list passed 8 Nov. It opens BC11 for the queued
-  vic2006 winners fix (vic2006 459 rows, vic2010 75 historic_elected, sa2026 8) and fails if anything else moves. PREPPED
-  30 Oct: `scripts/fetch_vec_candidates.R --file=<State2026MediaFileCandidatesV2.xml> --year=2026` then
-  `build_candidacies.R` (`docs/PIPELINE.md` section E; proven on the 2022 file, 731 of 731 matched with the same
-  class; dry run of the build and of `AUSPOL_NOM_LIVE=1` passed on a stand-in list; Daily Eight item on 10 Nov).
-  Then `build_candidacies.R` writes vic2026 rows so
-  `candidate_returns(vic2022, vic2026)` and the flow model's `dest_same`
-  features go live; rerun the three salience scripts named in
-  `published_flags.R` (`victoria_salience_dryrun.R` proves the path on
-  vic2022); revisit candidate-count weighting once counts are facts.
+- Nominations DONE 10 Nov (VEC final list live, DECISIONS 2026-11-10). OPEN leftovers, NOT CHECKED 10 Nov: rerun the
+  three salience scripts named in `published_flags.R` on the real list; revisit candidate-count weighting now counts are facts.
 - **The day Liberal how-to-vote cards are published**: add
   `vic2026,ALL,<TRUE/FALSE>,<source>` to
   `external/reference/htv/liberal-alp-grn-order.csv` (~8 points of 2CP in
   inner-Melbourne ALP-v-GRN seats). Until then `AUSPOL_HTV_CARD_P=0.67` mixes both cards (31 Oct; see FLOW MEANS above).
-- **Nomination-day procedure**: `docs/PIPELINE.md` section D. Upload `candidacies.csv` to the `shipped-models`
-  release (CI downloads it from there), then set `AUSPOL_NOM_LIVE` to "1" in `published_flags.R`. The gate is
-  MANUAL by Pete's choice and never opens on date alone. Also wire the live candidate split into
-  `fit_seats_full.R` (`fit_minor_candidates.R` on vic2026 rows; v44's bucket split is backtest-only).
-- **10 Nov, after the VEC list (NEEDS PETE before it reaches the forecast)**: per-candidate predictions for vic2026,
+- **OPEN, NEEDS PETE (asked 10 Nov), unblocked by the VEC list**: per-candidate predictions for vic2026 (the live
+  candidate split, `fit_minor_candidates.R` on vic2026 rows; v44's bucket split is backtest-only),
   `AUSPOL_MC_LIVE=vic2026` (`PIPELINE.md` E step 5; built and checked 6 Nov on the pre-nomination list). Wiring them into
   the live bucket split changes the published path (a vic2026 row in the shipped file + `forecast.yaml` fetching it).
 - SHIPPED 6 Nov evening (Pete, correctness on a tie; `AUSPOL_HTV_TABLE="researched"`; in the 7 Nov rebuild). Still OPEN: fill the 15 UNKNOWNs; an OPEN-card third state. Was: researched Coalition card order, `external/reference/htv/coalition-card-order-researched.csv`
@@ -397,8 +383,8 @@ table on the blog page, To Do reminders (9 Nov, HTV row, VEC email).
   absent-vote rows change. SCREENED 5 Nov (1,000 sims, baselines on old vs rebuilt inputs via AUSPOL_QUICK_SRC_OUTPUT,
   output/ untouched): vic2010 seat log loss 0.2281 -> 0.2335 (+0.0054, seat SE 0.0021, WORSE; Gippsland East: Ingram now
   flagged sitting, lost; Ballarat West, Brunswick not traced), sa2026 0.2368 -> 0.2364. KEPT (Pete, 5 Nov: correct data;
-  the backtest trees are frozen as-at models trained before the fix). It lands with the 10 Nov nominations rebuild.
-  OPEN: re-measure vic2010 after the next full rebuild retrains the trees.
+  the backtest trees are frozen as-at models trained before the fix). LANDED in the 10 Nov 7:34am rebuild (sitting IND
+  members in `mp-slope-by-class.csv` 84 -> 87). OPEN: re-measure vic2010 after the next full rebuild retrains the trees.
 
 Still open:
 - Federal results as a correlated signal for state seat lean: needs
