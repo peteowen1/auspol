@@ -13,19 +13,14 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (10 Nov: One Nation stands in all 88 seats, so no seat-count conditioning applies; recheck for nsw2027's list); (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 10 Nov 1pm.** LIVE on main (PRs #212, #213, #216 merged; dev = main): VEC final list (734, `AUSPOL_NOM_LIVE="vic2026"`),
-  F18 pre-xgb zero on, "Independent X" labels IND. Published 9:33am (`deciding-runs/20261110-0734-rebuild`): 35 elections
-  0.3166 (n 2,931), AEF-7 0.2524 (AEF 0.2825, n 681). Forecast run 42715038021 success. 10 Nov benchmark capture committed.
-  2:09pm: vic2026 live bucket split published (PR #217; CI run 42746530160 logs `FST1 vic2026 ... IND 0.27, OTH_RIGHT 0.24,
-  OTH 0.50`; released seat probabilities within 0.001 of the local walk, 0 of 88 favourites differ).
-- OPEN (blocked): VEC feed access, chase sent 9 Nov 1:12pm, no reply. Done when the feed XML arrives: rerun
+- **Status 11 Nov 12:45am.** Published forecast = main as of PR #217 (10 Nov; 35 elections 0.3166, n 2,931; AEF-7
+  0.2524 vs AEF 0.2825, n 681). dev is ahead of main by pair_r (off), deciding_run log fix, ONP exploratory scripts;
+  dev CI red 0e621c04..636da0e2 (stale Rd), fixed bc92483d. Running: night-pair replay; 6am: poll-series retry.
+- OPEN (blocked): VEC feed access, chase sent 9 Nov 1:12pm, no reply (Gmail + Hotmail checked 11 Nov 12:35am). Done when the feed XML arrives: rerun
   `fetch_vec_candidates.R` on it (must match the web list), then the ITG booths build (`C:/dev/inthegame-blog/politics/night-maps/build-booths-2026.py`).
 - OPEN: Pakenham DemosAU/TKR rows in `hand_keyed_primaries.csv` (fieldwork date UNCONFIRMED). Done when `seat_polls.csv`
   carries the poll: delete the hand-keyed rows.
-- Memory sits at 2-7 GB (another verse's backtests share the machine); Claude Code's low-memory stop kills background
-  shells, not detached jobs. Run `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
-- CLOSED FOR NOW (Pete 6 Nov; built, off, reopen only with a new design walk): class split `AUSPOL_CLASS_SPLIT`, refused
-  twice (DECISIONS 2026-11-06; `plans/prereg-class-split-2026-11-06.md`). Pre-existing, open, display only: a final two of
+- OPEN, display only (class split itself closed, DECISIONS 2026-11-06): a final two of
   one class (LNP|LNP, IND|IND) leaves the second side empty in the TCP tables (`R/tcp_scenarios.R` setdiff, `fit_seats_full.R:2166`).
 - IN FLIGHT 9 Nov (Pete chose the levers): first-time-independent under-call. Six levers mapped in
   `reviews/newcomer-independents-walk-2026-11-09.md` (last section). Lever 1 REFUSED twice, stays off
@@ -62,12 +57,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `gh release download forecast-latest -p night-state-vic-2026.rds -D output`, then `night_runner.R --state=output/night-state-vic-2026.rds
   --ref=output/booths-vic2026-ref.csv --council-lean=output/council-fp-2022.csv`. Live page https://inthegame.blog/politics/live
   (find my seat live, #166 closed 5 Nov). OPEN, in order:
-  1. SharePoint live-feed fetch (VEC access details due 4 Nov, chase 7 Nov); the Actions backup's live source waits on it.
+  1. SharePoint live-feed fetch: same blocker as the VEC feed item above (no reply to the 9 Nov chase); the Actions backup's live source waits on it.
   2. BLOCKED on the feed (item 1 gives the XML): in ITG `politics/night-maps/`, `python -I build-booths-2026.py <State2026MediaFilePollingLocationsV2.xml>`, commit
      `booths-vic2026.json`; check the popup at 390/1280 px and the 38 Narracan-only 2018 names against the 2026 polling places.
   3. Navbar link. "Called" rule TESTED 10 Nov on the 7 simulated replays (`reviews/night-called-rule-2026-11-10.md`):
      keep 0.99 with 10% counted; its 3 wrong calls (Melbourne, Monash 2025; Mirani 2024) survive any threshold, so the
-     fix is the final-pair defect below. OPEN: confirm on the real fed2022/fed2025/vic2022 nights (heavy R runs).
+     fix is the final-pair defect below. OPEN: confirm on the real fed2022/fed2025/vic2022 nights: RUNNING in the night-pair job (NIGHT MODEL item below).
   4. 25 Nov trial (no 2CP): with real 2026 centre names, compare each counted early centre with its own 2022 upper-house lean,
      re-test `--early-partial=1` (off; it made the approximated replay worse), and take the expected early total from the
      VEC's published attendance. Upper-house model designed, not built (`plans/upper-house-night-model.md`).
@@ -94,7 +89,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
     the leader re-stands but no own vote showed in the base (first Corio fed2007, Kiama nsw2023), with the harness discounts.
     (4 Nov: where "52" came from is not recorded in the walk review or its rows file; rebuild the definition first.)
     Shepparton is a true re-stand (Sheed 29.4 in 2022, VEC). Prereg `plans/prereg-ind-gap-restand-2026-10-25.md` (on dev).
-  - `prereg-offbranches-1025` `ee80497`: preregs for XGB_CLASS_JUR_CAL (merges clean), OTHERS_SCALE_JUR
+  - `prereg-offbranches-1025` (`91bd2019` as of 11 Nov): preregs for XGB_CLASS_JUR_CAL (merges clean), OTHERS_SCALE_JUR
     (identical to the refused pooled arm at every AEF-7 target on cached history), SALIENCE_STATE (needs two as-at
     retrains; blanks for fed/WA/vic2026 rows are a jurisdiction marker risk). (Departed-rate refit: built and NOT shown
     5 Nov, DECISIONS. Federal breakdowns in the trend: tied, left off 5 Nov, DECISIONS.)
@@ -202,8 +197,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## 2026-10-11 to 2026-10-12: still open (collapsed 15 Oct)
 
-**ORDER still matters: publish a rebuild (AUSPOL_PUBLISH=1) BEFORE merging to main**
-whenever a change adds a file `forecast.yaml` downloads. Refused, built and off (do not rerun without a new idea):
+Run-order and memory notes moved to `docs/PIPELINE.md` section F (11 Nov). Refused, built and off (do not rerun without a new idea):
 leader ratings as a model input, trend-replaces-blend, poll-level centring, the two-way person rule, statewide poll
 weighting by track record, seat-poll precision blend, typical-vote independent models.
 
@@ -224,13 +218,6 @@ weighting by track record, seat-poll precision blend, typical-vote independent m
   person-rule slope toward the ratio carry (Pete, 2026-10-11).
 - OPEN speed (`reviews/fast-iter-profile-2026-10-11.md`): read-set cache keys for defectors, personal prior vote,
   departed slope, salience (~25 s of a 54 s vic run); seat-poll memo keys on every switch.
-
-**Running jobs when memory is short:** Claude Code reaps background shells below ~4 GB available. Run stage 6
-harness by harness in the foreground, then `AUSPOL_REBUILD_FROM=7`; `AUSPOL_REBUILD_SLOTS=1` caps parallelism. A
-full rebuild outlives the session when started with `Start-Process "C:\Program Files\Git\bin\bash.exe"` (not
-`bash.exe` from PATH in PowerShell, which is WSL's).
-
-Tools: misses via `scripts/biggest_misses.R` / skill `biggest-misses` (never `forecasts.csv`).
 
 ## 2026-10-07 to 2026-10-08: archived handoffs
 
