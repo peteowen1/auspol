@@ -116,3 +116,57 @@ cat("\npooled spec 4, in-sample coefficients:\n"); print(summary(pooled)$coeffic
 
 cat("\nRead: compare each spec with spec 0 (the Senate vote rescaled to the state level, closest to what ships). The pooled leave-one-ELECTION-out block is the test that matters for a new election such as vic2026. In-sample",
     "coefficients are for direction only; the RMSEs above are the test.\n")
+
+# ---- 3. The strongest version: gradient-boosted trees, every census column, leave-one-ELECTION-out ----------------
+# Target is the seat's One Nation vote RELATIVE to the statewide level (actual / L), and the Senate input is relative
+# too (senate / Ls). Raw L and Ls are left out on purpose: they are constant within an election, so a tree would use
+# them as a label for which election a row came from (CLAUDE.md, "a column constant within a subgroup").
+# The prediction in points is then (predicted ratio) x L. Rounds are chosen inside each training set by xgb.cv with
+# one fold per training election and early stopping, so the held-out election never picks its own settings.
+# xgboost handles missing census, so this block uses all 308 seats as well as the 264 with every input.
+suppressPackageStartupMessages(library(xgboost))
+d[, `:=`(r = actual / L, sen_r = senate / Ls)]
+feat_all <- c("sen_r", "yr12_pct", "edu_25plus_pct", "under35_pct", "over55_pct", "born_os_pct", "lang_other_pct",
+              "indig_pct", "prev_grn", "prev_othright", "prev_onp")
+pars <- list(objective = "reg:squarederror", max_depth = 3, eta = 0.03, min_child_weight = 5, subsample = 0.8,
+             colsample_bynode = 0.8, nthread = 2, seed = 42)
+xgb_loeo <- function(dd, feats) {
+  out <- numeric(nrow(dd)); els <- unique(dd$el); rounds <- integer(0)
+  for (x in els) {
+    tr <- which(dd$el != x); te <- which(dd$el == x)
+    dtr <- xgb.DMatrix(as.matrix(dd[tr, ..feats]), label = dd$r[tr])
+    tr_el <- dd$el[tr]
+    folds <- lapply(unique(tr_el), function(e) which(tr_el == e))
+    cv <- xgb.cv(params = pars, data = dtr, nrounds = 2000, folds = folds, early_stopping_rounds = 50, verbose = 0)
+    nr <- cv$early_stop$best_iteration; rounds <- c(rounds, nr)
+    m <- xgb.train(params = pars, data = dtr, nrounds = nr, verbose = 0)
+    out[te] <- predict(m, xgb.DMatrix(as.matrix(dd[te, ..feats]))) * dd$L[te]
+  }
+  list(pred = out, rounds = rounds)
+}
+lin_loeo <- function(dd, f) {
+  out <- numeric(nrow(dd))
+  for (x in unique(dd$el)) { tr <- dd$el != x; out[!tr] <- predict(lm(f, data = dd[tr]), newdata = dd[!tr]) * dd$L[!tr] }
+  out
+}
+set.seed(42)
+cat("\n=== gradient-boosted trees vs linear, leave-one-ELECTION-out RMSE (points of One Nation primary; lower is better) ===\n")
+for (subset in c("all seats", "seats with every census input")) {
+  dd <- if (subset == "all seats") copy(d) else d[complete.cases(d[, ..feat_all])]
+  lin <- lin_loeo(dd, r ~ sen_r)
+  xs  <- xgb_loeo(dd, "sen_r")
+  xa  <- xgb_loeo(dd, feat_all)
+  cat(sprintf("\n  %s: n %d seat-elections in %d elections\n", subset, nrow(dd), uniqueN(dd$el)))
+  cat(sprintf("    %-44s RMSE %.2f\n", "linear, Senate only (ratio form)", rmse(dd$actual - lin)))
+  cat(sprintf("    %-44s RMSE %.2f   (rounds per held-out election: %s)\n", "trees, Senate only",
+              rmse(dd$actual - xs$pred), paste(xs$rounds, collapse = " ")))
+  cat(sprintf("    %-44s RMSE %.2f   (rounds: %s)\n", sprintf("trees, all %d inputs", length(feat_all)),
+              rmse(dd$actual - xa$pred), paste(xa$rounds, collapse = " ")))
+  per <- dd[, .(n = .N, lin = rmse(actual - lin[.I]), trees_all = rmse(actual - xa$pred[.I])), by = el]
+  cat("    per held-out election (RMSE, points):\n"); print(per[, .(el, n, lin = round(lin, 2), trees_all = round(trees_all, 2))])
+}
+dfull <- copy(d)
+mfull <- xgb.train(params = pars, data = xgb.DMatrix(as.matrix(dfull[, ..feat_all]), label = dfull$r), nrounds = 300, verbose = 0)
+imp <- xgb.importance(model = mfull)
+cat("\nfeature importance, trees on all 308 rows, 300 rounds (gain share; descriptive only, not a test):\n")
+print(imp[, .(Feature, gain = round(Gain, 3))])
