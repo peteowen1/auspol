@@ -265,9 +265,28 @@ if at_least 1; then
   if [ -z "$mc_why" ] && { [ "${AUSPOL_SEED:-42}" != "42" ] || [ -n "${AUSPOL_MC_ARM:-}" ] || [ "${AUSPOL_MC_FORCE:-0}" = "1" ]; }; then
     mc_why="AUSPOL_SEED/AUSPOL_MC_ARM/AUSPOL_MC_FORCE set"
   fi
+  # LIVE ELECTION ROW (Pete, 10 Nov 2026, walked on the VEC final list: no favourite changed, max win-probability move
+  # 0.4 points). The file also predicts vic2026 from its nominated candidates, so the live forecast splits the unpolled
+  # bucket by the 2026 field instead of falling back to vic2022's mix (FST1!). Every earlier election's rows are
+  # byte-identical to an ordinary run (checked 10 Nov). Set inline here, not in published_flags.R: only this script
+  # reads it, and a published value would enter every harness's arm fingerprint. After 28 Nov, once vic2026 has votes in
+  # candidacies.csv, fit_minor_candidates.R stops with MC0! "already has votes": set MC_LIVE_EL to "" (or the next
+  # election) then. Only the class-shares file is promoted; the -live oof file stays suffixed (its reader,
+  # AUSPOL_CLASS_SPLIT, is off).
+  MC_LIVE_EL="vic2026"
+  if [ -z "$mc_why" ] && [ -n "$MC_LIVE_EL" ] && ! grep -q "^$MC_LIVE_EL," "$MC_OUT"; then
+    mc_why="no $MC_LIVE_EL row in $MC_OUT"
+  fi
   if [ -n "$mc_why" ]; then
     echo "   bucket split file: rebuilding ($mc_why)"
-    AUSPOL_MC_OWN_RULE=v2 Rscript scripts/fit_minor_candidates.R > "$LOG/s0_minor_cand.log" 2>&1 || { echo "!! fit_minor_candidates.R (v2) failed -- see $LOG/s0_minor_cand.log"; exit 1; }
+    if [ -n "$MC_LIVE_EL" ]; then
+      AUSPOL_MC_OWN_RULE=v2 AUSPOL_MC_LIVE="$MC_LIVE_EL" Rscript scripts/fit_minor_candidates.R > "$LOG/s0_minor_cand.log" 2>&1 || { echo "!! fit_minor_candidates.R (v2, live $MC_LIVE_EL) failed -- see $LOG/s0_minor_cand.log"; exit 1; }
+      MC_LIVE_OUT=output/minor-class-shares-resid-v2-live.csv
+      grep -q "^$MC_LIVE_EL," "$MC_LIVE_OUT" || { echo "!! $MC_LIVE_OUT has no $MC_LIVE_EL row"; exit 1; }
+      cp "$MC_LIVE_OUT" "$MC_OUT" && echo "   bucket split file: promoted $MC_LIVE_OUT (with $MC_LIVE_EL) to $MC_OUT"
+    else
+      AUSPOL_MC_OWN_RULE=v2 Rscript scripts/fit_minor_candidates.R > "$LOG/s0_minor_cand.log" 2>&1 || { echo "!! fit_minor_candidates.R (v2) failed -- see $LOG/s0_minor_cand.log"; exit 1; }
+    fi
   else
     echo "   bucket split file: current, not rebuilt (newer than everything it reads)"
   fi
