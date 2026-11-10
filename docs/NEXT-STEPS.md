@@ -108,7 +108,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   mean miss 23.4 before the blend, 11.6 published, 10 seats (Wakehurst published 30.0, not 13.7).
 - OPEN, NIGHT MODEL (before 28 Nov). DONE 31 Oct: surge fade ON, flow floor 0.01, median ON, surge mixture OFF;
   surge-off replays settle it (Wentworth 2022 called 7:45pm with no patch; median within 0.001 on all three nights).
-  Still wrong: draws with a different final pair are never corrected (Melbourne and Monash 2025); statewide draws
+  Still wrong: draws with a different final pair are never corrected (Monash 2025; traced 10 Nov, fix proposed, not
+  built: `reviews/night-final-pair-2026-11-10.md`; Melbourne 2025 is the AEC's own pair being wrong); statewide draws
   shrink by the national mean counted, not the seat's; projection sd floors at 0.26.
   Fix 2 (`--tcp-own-fp`, each draw's flow from its own primaries) built, OFF: mixed on three nights; needs flow
   uncertainty in the draws, and `plans/prereg-flow-sd-2026-10-31.md` REFUSED that 31 Oct.
