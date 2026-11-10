@@ -4,6 +4,15 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-11-10 One Nation seat spread unchanged before 28 Nov (walk of Box Hill, Ashwood, Glen Waverley with Pete).**
+  Senate-rank spread vs seat regressions, out of sample: Senate alone 3.44 points RMSE (308 seat-elections, 5 elections),
+  trees on 11 inputs 3.23, gaining only on qld2017 and worse on qld2020/qld2024/nsw2023. On Victoria all three
+  alternatives sit within ~2 points of ours in the eastern seats (Box Hill 9.7 ours vs 11.0-11.6). Box Hill's gap to the
+  bookmakers is the proportional fill, not One Nation's share. `scripts/explore_onp_seat_regression.R` (de7e7071).
+- **2026-11-10 Preston: One Nation disendorsed Franco Guardiani (ABC, 10 Nov); he stays on the ballot as One Nation. No
+  change.** We have One Nation at 16.7% there and Labor at 0.964 to win (Greens 0.026); a cut to his vote moves no
+  seat call. The model has no column for disendorsement or scandal (`R/candidate_returns.R:729`).
+
 - **2026-11-10 Standing notes moved out of NEXT-STEPS.md (queue audit: nothing a session could tick off).** Wording
   kept as it stood in the queue; reopen any of them by moving it back with a trigger.
   - F16 `AUSPOL_ROW_SHIFT_EXACT` NOT PASSED 29 Oct (DECISIONS). F18 `AUSPOL_NOM_ZERO_PRE_XGB` SHIPPED 10 Nov (DECISIONS).

@@ -110,7 +110,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   how-to-vote cards as a flow input: DONE (`AUSPOL_HTV_FLOW`; `AUSPOL_HTV_CARD_P=0.67` mixes both Liberal cards for
   vic2026; `AUSPOL_HTV_RECENCY_HL` SHIPPED 1 Nov). The card-day row is under "Dated, cannot move".
   Box Hill (our ALP 0.86 vs Sportsbet 0.25) traced to the proportional One Nation fill: `reviews/boxhill-trace-2026-11-01.md`,
-  to walk with Pete (Box Hill, Ashwood, Glen Waverley).
+  walked with Pete 10 Nov: no change to the One Nation spread (DECISIONS 2026-11-10); the fill itself stays open here.
   Evidence: `reviews/night-replay-real-feed-2026-10-31.md`, `reviews/night-replay-fed-2026-10-30.md`.
 - OPEN, REPLAY METHOD: federal and vic2022 replay on real nights (`scripts/night_replay_feed.R`,
   `scripts/night_replay_vec.R`); the other state replays are still simulated (one block per seat, clock = 6pm + 4h x
@@ -343,5 +343,5 @@ Still open:
 
 ## Awaiting Pete
 
-Three walks, no decisions (departed-rate answered 29 Oct, census 27 Oct; DECISIONS): Box Hill / Ashwood / Glen
-Waverley (`reviews/boxhill-trace-2026-11-01.md`), Morwell (F18 walk 1, prediction 3), wa2017 and fed2019 (item (0)).
+Two walks, no decisions (departed-rate answered 29 Oct, census 27 Oct, Box Hill / Ashwood / Glen Waverley 10 Nov;
+DECISIONS): Morwell (F18 walk 1, prediction 3), wa2017 and fed2019 (item (0)).
