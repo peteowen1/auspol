@@ -13,31 +13,15 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   9 Nov, condition One Nation's anchor/blend on how many seats it stands in; (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 10 Nov 12:30am.** LIVE: published 9 Nov 9:50pm (rebuild `deciding-runs/20261109-2044-rebuild`, code 5063439f, the
-  first-timer lift on): 35 elections seat log loss 0.3160 (n 2,931), AEF-7 0.2529 (AEF 0.2825, n 681), primary 4.649 vs AEF
-  5.711 (n 2,700). PR #211 merged 9:51pm; forecast run 42604304599 succeeded. I publish myself (Pete, 8 Nov).
-  OPEN: VEC feed access: no reply in Gmail since the 28 Oct terms email; chase SENT 9 Nov 1:12pm (same thread); wait for a reply.
-- DONE 10 Nov 7:11am: nomination GATE live. PR #212 merged; forecast run 42690596134 succeeded 7:46am: 40 cells zeroed (IND
-  32, OTH_RIGHT 8), Mildura IND 0, no favourite changed, NSW 2027 files rebuilt. Pakenham DemosAU/TKR seat poll hand-keyed
-  (fieldwork date UNCONFIRMED; delete the rows when seat_polls.csv carries it).
-- DONE 10 Nov 9:33am: indlib-1108 (sa2022 Taylor OTH_RIGHT -> IND, plus 8 "Independent Liberal" by-election rows) rebuilt
-  (`deciding-runs/20261110-0734-rebuild`) and PUBLISHED: 35 elections 0.3166 (was 0.3168, n 2,931), AEF-7 0.2524 (was
-  0.2520; AEF 0.2825, n 681). Release candidacies.csv checked (734 `vec`, Taylor IND).
-- SHIPPING 10 Nov: F18 `AUSPOL_NOM_ZERO_PRE_XGB="1"` (Pete: "Switch it on" after walk 2, `plans/prereg-nom-zero-pre-xgb-2026-10-25.md`;
-  Mildura LNP 46.3 -> 50.2). Reviewed 0 Important; live-only, no rebuild. PR dev -> main with indlib, then forecast run.
-- WAITING: the ITG booths build (`build-booths-2026.py`) needs the feed's polling-locations XML; VEC feed access unanswered.
-  Memory sits at 2-7 GB; Claude Code's low-memory stop kills background shells, not detached jobs. Run
-  `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
-- OPEN (review 8 Nov, pre-existing classifier): `classify_party("Independent Liberal")` returns LNP (5 by-election
-  rows: Werriwa 2005 x2, South-West Coast 2015, Perth 2018, Enfield 2019, Melbourne 2012), while "Ind. Climate
-  Sceptics" goes to OTH; an "Independent X" label is an independent. BUILT + REVIEWED (0 Important) 8 Nov on branch `indlib-1108` (`51780a7f`,
-  worktree `C:\dev\auspol-indlib`): 7 labels move to IND, test proven. MERGE ONLY AFTER the 10 Nov nominations build:
-  it moves sa2022 Taylor (Kuhlmann) in `candidacies.csv`, which BC11 refuses. SCREENED 8 Nov (1k sims, 8 elections,
-  relabelled copy of the by-election table via `AUSPOL_BYELECTION_RESULTS`): shares on 27 moved cells -60% squared error
-  (SE 244 on 457); Liberal primary now right where the Liberals skipped the by-election (Melbourne vic2014 15.7 -> 23.7 v
-  24.1, Perth fed2019 24.2 -> 36.7 v 37.4, Werriwa, Enfield); seat log loss +0.0011 (SE 0.0011), all Melbourne 2014
-  (GRN won, 0.169 -> 0.069) and Perth 2019. SHIP on correctness (Pete, 8 Nov): after the 10 Nov build, review gate,
-  `check_like_ci.R`, merge, rebuild with `AUSPOL_CAND_ALLOW_OTHER_CHANGE=1` for the sa2022 Taylor row only.
+- **Status 10 Nov 1pm.** LIVE on main (PRs #212, #213, #216 merged; dev = main): VEC final list (734, `AUSPOL_NOM_LIVE="vic2026"`),
+  F18 pre-xgb zero on, "Independent X" labels IND. Published 9:33am (`deciding-runs/20261110-0734-rebuild`): 35 elections
+  0.3166 (n 2,931), AEF-7 0.2524 (AEF 0.2825, n 681). Forecast run 42715038021 success. 10 Nov benchmark capture committed.
+- OPEN (blocked): VEC feed access, chase sent 9 Nov 1:12pm, no reply. Done when the feed XML arrives: rerun
+  `fetch_vec_candidates.R` on it (must match the web list), then the ITG booths build (`C:/dev/inthegame-blog/politics/night-maps/build-booths-2026.py`).
+- OPEN: Pakenham DemosAU/TKR rows in `hand_keyed_primaries.csv` (fieldwork date UNCONFIRMED). Done when `seat_polls.csv`
+  carries the poll: delete the hand-keyed rows.
+- Memory sits at 2-7 GB (another verse's backtests share the machine); Claude Code's low-memory stop kills background
+  shells, not detached jobs. Run `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
 - CLOSED FOR NOW (Pete 6 Nov; built, off, reopen only with a new design walk): class split `AUSPOL_CLASS_SPLIT`, refused
   twice (DECISIONS 2026-11-06; `plans/prereg-class-split-2026-11-06.md`). Pre-existing, open, display only: a final two of
   one class (LNP|LNP, IND|IND) leaves the second side empty in the TCP tables (`R/tcp_scenarios.R` setdiff, `fit_seats_full.R:2166`).
@@ -380,10 +364,9 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
   covariance pools every era; WA has no surge-v2 hazard.
 
 ## Harness and pipeline hygiene
-- OPEN (speed, 10 Nov) `check_like_ci.R` full run ~10 min: tests 159 s (5,091 passed), `R CMD check` ~7 min, which runs the
-  SAME suite again. Passing `--no-tests` to rcmdcheck when the test half ran clean in the same call would save ~2.5 min per
-  full check (2-3 a day). UNCONFIRMED: that check's test run is anchor-free like the first half (the clean copy has no
-  `external/`, but a test could still reach `C:/dev/auspol`); prove it before dropping it. Timing lines added 10 Nov.
+- OPEN (speed) `check_like_ci.R` runs the suite twice (159 s alone, again inside `R CMD check`). Code read: no test reaches the
+  checkout (`pkg_root()` only); `scripts/` is build-ignored, so the check's copy runs LESS. Done when: branch `ci-check-skips`
+  run with `--force-check` (memory free) prints the in-check tally; then decide on `--no-tests`.
 - OPEN (speed, CORRECTED 6 Nov 12:40pm) stage 4 (`fit_xgb_primary_asat.R`) 1,664 s for 31 models on a full retrain. The "287 s before"
   I compared it with was `driver.log` of 19 SEP (22 elections, ensemble 1); not the kernel leak. Cost per model grows with the corpus:
   `xgb.cv` uses ONE FOLD PER EARLIER ELECTION (sa2026: 34 folds, 401 rounds, 142 s; sa2010: 4 folds, 1 s), times `AUSPOL_XGB_ENSEMBLE=3`
