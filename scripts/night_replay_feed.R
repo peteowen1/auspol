@@ -25,6 +25,7 @@ label <- flag("label", "base")
 surge_fade <- !identical(flag("surge-fade", "1"), "0"); tcp_center <- flag("tcp-center", "median")
 tcp_floor <- as.numeric(flag("tcp-flow-floor", "0.01")); own_fp <- identical(flag("tcp-own-fp", "0"), "1")
 pair_r <- flag("pair-r", NULL); if (!is.null(pair_r)) pair_r <- as.numeric(pair_r)   # prereg-night-pair-trust-2026-11-11
+pair_cal <- flag("pair-cal", NULL); if (!is.null(pair_cal)) pair_cal <- as.numeric(strsplit(pair_cal, ",")[[1]])   # c(alpha,beta), prereg-night-pair-cal-2026-11-11
 day <- as.Date(c(`2022` = "2022-05-21", `2025` = "2025-05-03")[[as.character(yr)]])
 tm <- strsplit(flag("times", paste(c(sprintf("%02d:%02d", rep(18:23, each = 4), c(0, 15, 30, 45)), "24:00", "25:00", "26:00", "27:00"), collapse = ",")), ",")[[1]]
 at <- vapply(tm, function(x) { p <- as.integer(strsplit(x, ":")[[1]]); as.numeric(as.POSIXct(day, tz = "UTC") + p[1] * 3600 + p[2] * 60) }, numeric(1))
@@ -42,7 +43,7 @@ B[, t_tcp := tsec(tcp_first_seen)]
 pp <- B[!grepl("^declaration", classification) & !is.na(t_fp)]
 cat(sprintf("NRF1 %s: %d seats in state, %d places with a night return, %d places in the booth table; %d sims; label %s (surge-fade %s, tcp-center %s, tcp-flow-floor %s)\n",
             pair_lbl, length(seats), nrow(pp), nrow(L[L$booth_type == "ordinary", list(1), by = list(district, booth)]), nrow(st$swd),
-            label, surge_fade, tcp_center, tcp_floor)); cat(sprintf("NRF1 tcp-own-fp %s, pair-r %s\n", own_fp, if (is.null(pair_r)) "off" else format(pair_r)))
+            label, surge_fade, tcp_center, tcp_floor)); cat(sprintf("NRF1 tcp-own-fp %s, pair-r %s, pair-cal %s\n", own_fp, if (is.null(pair_r)) "off" else format(pair_r), if (is.null(pair_cal)) "off" else paste(format(pair_cal), collapse = ",")))
 miss <- setdiff(unique(pp$division), seats); if (length(miss)) cat("NRF1 feed divisions not in the state:", paste(miss, collapse = ", "), "\n")
 
 # The pair on screen per division per snapshot. Usable while it is on screen and not flagged maverick AT THAT
@@ -73,7 +74,7 @@ for (k in seq_along(at)) {
   tcp_rows <- merge(Tc, tb, by = c("district", "booth"))
   conv <- list(live = L, counted = rep_pp, tcp = tcp_rows)
   r <- night_run_update(st, conv, R, gap_k = 5, total = "projected", use_tcp = nrow(tcp_rows) > 0,
-                        surge_fade = surge_fade, tcp_center = tcp_center, tcp_flow_floor = tcp_floor, tcp_own_fp = own_fp, tcp_pair_r = pair_r)
+                        surge_fade = surge_fade, tcp_center = tcp_center, tcp_flow_floor = tcp_floor, tcp_own_fp = own_fp, tcp_pair_r = pair_r, tcp_pair_cal = pair_cal)
   tot <- r$sim$totals; alp <- tot[, "ALP"]
   oth <- tot[, setdiff(colnames(tot), "ALP"), drop = FALSE]
   wp <- as.data.table(r$sim$win_prob)
@@ -88,6 +89,15 @@ for (k in seq_along(at)) {
     wentworth_counted = round(100 * unname(cnt["Wentworth"]), 1))
   wp[, time := tm[k]]; seat_rows[[length(seat_rows) + 1]] <- wp
   nt <- attr(r$sim, "night_tcp"); if (!is.null(nt) && nrow(nt)) tcp_rows_out[[length(tcp_rows_out) + 1]] <- data.table::as.data.table(nt)[, time := tm[k]]   # per-seat pair share, prior/posterior (pair_r v2 trace)
+  # Pairs on screen that are NOT the declared pair: no booth votes, so no update, but their share of draws is
+  # the negative half of the pair_cal calibration (prereg-night-pair-cal-2026-11-11).
+  wr <- dk[nzchar(night_key) & !is.na(dec_pair) & night_key != dec_pair & !(tolower(as.character(tcp_maverick)) %in% "true") & division %in% colnames(r$sim$tcp_winner)]
+  if (nrow(wr)) {
+    ca <- classify_party(wr$tcp1_party); cb <- classify_party(wr$tcp2_party)
+    pw <- vapply(seq_len(nrow(wr)), function(i) { tw <- r$sim$tcp_winner[, wr$division[i]]; tr <- r$sim$tcp_runnerup[, wr$division[i]]
+      mean((tw == ca[i] & tr == cb[i]) | (tw == cb[i] & tr == ca[i])) }, numeric(1))
+    tcp_rows_out[[length(tcp_rows_out) + 1]] <- data.table(seat = wr$division, a = ca, b = cb, pair_share = pw, wrong_pair = TRUE, time = tm[k])
+  }
   s <- summ[[length(summ)]]
   cat(sprintf("NRF3 %s places %d (%d seats, mean counted %.1f%%, 2CP %d) | ALP %.1f (%g-%g) P(maj) %.3f | log loss %.4f, right %d/%d | Wentworth IND %.3f at %.1f%%\n",
               s$time, s$places, s$seats_reporting, s$mean_counted, s$tcp_seats, s$alp_exp, s$alp_lo, s$alp_hi, s$p_alp_majority,

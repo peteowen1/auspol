@@ -317,15 +317,26 @@ night_tcp_obs <- function(tcp, fp, units, post) {
 #'   corrected pair draw (cycled in order). Monash fed2025: the AEC counted Labor v Liberal, the real
 #'   final two, while most draws had the independent in it, so the count was thrown away and the seat
 #'   ended at independent 0.99 (`docs/plans/prereg-night-pair-trust-2026-11-11.md`).
+#' @param pair_cal `NULL` (default, unchanged) or `c(alpha, beta)`: the calibrated version of `pair_r`
+#'   (`docs/plans/prereg-night-pair-cal-2026-11-11.md`). The counted pair's probability of being the final two is
+#'   `q = plogis(alpha + beta * qlogis(p_s))`, `p_s = (h + 0.5) / (n + 1)` with `h` the draws holding it, so a pair
+#'   the model gives almost no draws can still be believed (`beta < 1`: the model's pair share is over-confident;
+#'   `beta = 1, alpha = qlogis(r)` is `pair_r`'s rule). The other draws moved onto the pair are BUILT from the count,
+#'   not copied: a's share `fp_a + f * rest`, `f` at evenly spaced normal quantiles around the corrected flow (or the
+#'   count's own flow when fewer than 2 draws hold the pair) with sd `obs$flow_se` (floored at `flow_sd_floor`).
+#'   `pair_min` and the fewer-than-2-draws skip do not apply. Cannot be combined with `pair_r`.
 #' @return `sim`, updated, with attribute `night_tcp`: one row per observed seat (pair share
-#'   of draws, prior and posterior mean of a's share, draws changed, `flag`; with `pair_r`, also
-#'   `pair_post` (q) and `moved`, the other draws given a pair draw's outcome).
+#'   of draws, prior and posterior mean of a's share, draws changed, `flag`; with `pair_r` or `pair_cal`, also
+#'   `pair_post` (q) and `moved`, the other draws given the counted pair).
 #' @export
 night_apply_tcp <- function(sim, obs, pair_min = 0.2, center = c("mean", "median"), flow_sd_floor = 0.01, own_fp = FALSE,
-                            pair_r = NULL) {
+                            pair_r = NULL, pair_cal = NULL) {
   center <- match.arg(center)
   if (!is.null(pair_r) && (!is.numeric(pair_r) || length(pair_r) != 1L || !is.finite(pair_r) || pair_r <= 0 || pair_r >= 1))
     stop("NX12! pair_r must be NULL or one number strictly between 0 and 1 (got ", paste(format(pair_r), collapse = ", "), ")", call. = FALSE)
+  if (!is.null(pair_cal) && (!is.numeric(pair_cal) || length(pair_cal) != 2L || !all(is.finite(pair_cal))))
+    stop("NX14! pair_cal must be NULL or c(alpha, beta), two finite numbers (got ", paste(format(pair_cal), collapse = ", "), ")", call. = FALSE)
+  if (!is.null(pair_r) && !is.null(pair_cal)) stop("NX14! set pair_r or pair_cal, not both", call. = FALSE)
   if (isTRUE(own_fp) && is.null(sim$fp_draws))
     stop("NX11! own_fp = TRUE needs sim$fp_draws: simulate with keep_fp = TRUE", call. = FALSE)
   if (is.null(obs) || !nrow(obs)) return(sim)
@@ -362,6 +373,26 @@ night_apply_tcp <- function(sim, obs, pair_min = 0.2, center = c("mean", "median
     }
     length(ch)
   }
+  # pair_cal: give a share (q - p)/(1 - p) of the draws NOT holding the counted pair that pair as their final two,
+  # with a's share built from the count (fp_a + flow * rest), the flow at evenly spaced normal quantiles of
+  # N(fmu, flow_se) so no random numbers are drawn. q <= p moves nothing (v2 never takes draws OFF the pair).
+  build_pair_draws <- function(hit, q, p, fmu, s, j, a, b, k, rest) {
+    none <- list(changed = 0L, moved = 0L)
+    if (!is.finite(q) || !is.finite(fmu) || q <= p || length(hit) >= n) return(none)
+    oth <- setdiff(seq_len(n), hit)
+    n_mv <- as.integer(round(length(oth) * (q - p) / (1 - p)))
+    if (n_mv <= 0L) return(none)
+    mv <- oth[unique(round(seq(1, length(oth), length.out = n_mv)))]
+    fsd <- obs$flow_se[k]; if (!is.finite(fsd)) fsd <- 0; fsd <- max(fsd, flow_sd_floor)
+    f <- fmu + fsd * stats::qnorm((seq_along(mv) - 0.5) / length(mv))
+    sa <- pmin(1, pmax(0, obs$fp_a[k] / 100 + f * rest))
+    newW <- ifelse(sa > 0.5, a, b); oldW <- sim$tcp_winner[mv, j]
+    ch <- move_draws(mv, oldW, newW, s)
+    sim$tcp_winner[mv, j] <<- newW
+    sim$tcp_runnerup[mv, j] <<- ifelse(newW == a, b, a)
+    sim$tcp_share[mv, j] <<- ifelse(newW == a, sa, 1 - sa)
+    list(changed = ch, moved = length(mv))
+  }
   for (k in seq_len(nrow(obs))) {
     s <- obs$seat[k]; a <- obs$a[k]; b <- obs$b[k]
     raw_k <- if ("raw_share_a" %in% names(obs)) obs$raw_share_a[k] else NA_real_   # raw counted 2CP share of a, not the flow projection
@@ -369,7 +400,18 @@ night_apply_tcp <- function(sim, obs, pair_min = 0.2, center = c("mean", "median
     W <- sim$tcp_winner[, j]; R <- sim$tcp_runnerup[, j]
     hit <- which((W == a & R == b) | (W == b & R == a))
     frac_pair <- length(hit) / n
-    if ((is.null(pair_r) && frac_pair < pair_min) || length(hit) < 2L) {
+    cal_on <- !is.null(pair_cal)
+    if (cal_on && length(hit) < 2L) {
+      # pair_cal: too few pair draws to correct, so build the pair's draws from the count alone
+      q <- stats::plogis(pair_cal[1] + pair_cal[2] * stats::qlogis((length(hit) + 0.5) / (n + 1)))
+      rest <- (100 - obs$fp_a[k] - obs$fp_b[k]) / 100; if (!is.finite(rest) || rest <= 0.005) rest <- 0.005
+      mv_out <- build_pair_draws(hit, q, frac_pair, obs$flow[k], s, j, a, b, k, rest)
+      rep[[k]] <- data.table::data.table(seat = s, a = a, b = b, pair_share = frac_pair, prior_a = NA_real_,
+                                         post_a = NA_real_, obs_a = obs$share_a[k], raw_a = raw_k, changed = mv_out$changed,
+                                         flag = FALSE, pair_post = q, moved = mv_out$moved)
+      next
+    }
+    if ((!cal_on && is.null(pair_r) && frac_pair < pair_min) || length(hit) < 2L) {
       rep[[k]] <- data.table::data.table(seat = s, a = a, b = b, pair_share = frac_pair, prior_a = NA_real_,
                                          post_a = NA_real_, obs_a = obs$share_a[k], raw_a = raw_k, changed = 0L, flag = TRUE)
       next
@@ -396,6 +438,7 @@ night_apply_tcp <- function(sim, obs, pair_min = 0.2, center = c("mean", "median
     # and the shift then drags every other draw across 50% (Spender 0.996 -> 0.302 at 97% counted).
     fm <- if (center == "median") stats::median(fi) else mean(fi); fsd <- max(stats::sd(fi), flow_sd_floor)
     cm <- combine_prior_projection(fm, obs$flow[k], fsd, obs$flow_se[k])
+    flow_post <- cm$mean                                        # kept for pair_cal: cm is overwritten below
     na <- pmin(1, pmax(0, pa + (cm$mean - fm) * rest))
     cm <- list(mean = mean(na))
     newW <- ifelse(na > 0.5, a, b); oldW <- W[hit]
@@ -404,6 +447,12 @@ night_apply_tcp <- function(sim, obs, pair_min = 0.2, center = c("mean", "median
     sim$tcp_runnerup[hit, j] <- ifelse(newW == a, b, a)
     sim$tcp_share[hit, j] <- ifelse(newW == a, na, 1 - na)
     q <- NA_real_; n_mv <- 0L
+    if (cal_on && length(hit) < n) {
+      q <- stats::plogis(pair_cal[1] + pair_cal[2] * stats::qlogis((length(hit) + 0.5) / (n + 1)))
+      rest_c <- (100 - obs$fp_a[k] - obs$fp_b[k]) / 100; if (!is.finite(rest_c) || rest_c <= 0.005) rest_c <- 0.005
+      mv_out <- build_pair_draws(hit, q, frac_pair, flow_post, s, j, a, b, k, rest_c)
+      n_ch <- n_ch + mv_out$changed; n_mv <- mv_out$moved
+    }
     if (!is.null(pair_r) && length(hit) < n) {
       # The counted pair is evidence about which two are in the final count (pair right in ~95% of seats).
       q <- frac_pair * pair_r / (frac_pair * pair_r + (1 - frac_pair) * (1 - pair_r))
@@ -422,7 +471,7 @@ night_apply_tcp <- function(sim, obs, pair_min = 0.2, center = c("mean", "median
     }
     rep[[k]] <- data.table::data.table(seat = s, a = a, b = b, pair_share = frac_pair, prior_a = pm,
                                        post_a = cm$mean, obs_a = obs$share_a[k], raw_a = raw_k, changed = n_ch, flag = FALSE)
-    if (!is.null(pair_r)) rep[[k]][, `:=`(pair_post = q, moved = n_mv)]
+    if (!is.null(pair_r) || cal_on) rep[[k]][, `:=`(pair_post = q, moved = n_mv)]
   }
   sim$win_prob <- wp[wp$prob > 0, ]
   attr(sim, "night_tcp") <- data.table::rbindlist(rep, fill = TRUE)

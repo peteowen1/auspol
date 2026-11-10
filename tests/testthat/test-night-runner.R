@@ -434,6 +434,38 @@ test_that("pair_r: a counted pair held by few draws moves the other draws onto i
   expect_error(night_apply_tcp(mk(), obs, pair_r = 1), "NX12")
 })
 
+test_that("pair_cal: a counted pair NO draw holds still moves draws, built from the count (Monash fed2025 v2)", {
+  # 20 draws, none with the counted Labor v Liberal pair: all independent v Liberal, independent wins
+  n <- 20L
+  mk <- function() list(totals = cbind(ALP = rep(0L, n), LNP = rep(0L, n), IND = rep(1L, n)),
+                        win_prob = data.frame(seat = "Monash", party = "IND", prob = 1),
+                        tcp_winner = matrix("IND", n, 1, dimnames = list(NULL, "Monash")),
+                        tcp_runnerup = matrix("LNP", n, 1, dimnames = list(NULL, "Monash")),
+                        tcp_share = matrix(.55, n, 1, dimnames = list(NULL, "Monash")))
+  # count: Labor 30, Liberal 40, flow to Labor 0.4 -> Labor 0.30 + 0.4 * 0.30 = 0.42 of the pair: the Liberal wins it
+  obs <- data.table::data.table(seat = "Monash", a = "ALP", b = "LNP", share_a = 0.42, raw_share_a = 0.43,
+                                fp_a = 30, fp_b = 40, flow = 0.4, flow_se = 0.02)
+  expect_equal(attr(night_apply_tcp(mk(), obs, pair_r = 0.95), "night_tcp")$flag, TRUE)    # v1 cannot act here
+  cal <- c(qlogis(0.95), 0.5)
+  q <- plogis(cal[1] + cal[2] * qlogis(0.5 / (n + 1)))                                       # 0.748
+  on <- night_apply_tcp(mk(), obs, pair_cal = cal)
+  rp <- attr(on, "night_tcp")
+  expect_false(rp$flag); expect_equal(rp$pair_post, q); expect_equal(rp$moved, as.integer(round(n * q)))
+  expect_equal(on$win_prob$prob[on$win_prob$party == "LNP"], round(n * q) / n)
+  expect_equal(sum(on$win_prob$prob), 1)
+  expect_equal(unname(rowSums(on$totals)), rep(1, n))
+  moved <- on$tcp_winner[, 1] == "LNP"
+  expect_true(all(on$tcp_runnerup[moved, 1] == "ALP"))
+  expect_true(all(abs(on$tcp_share[moved, 1] - 0.58) < 0.03))                               # Liberal's share of the pair, from the count
+  # beta = 1, alpha = qlogis(r) is v1's posterior: same q as pair_r would give on the same p_s
+  q1 <- attr(night_apply_tcp(mk(), obs, pair_cal = c(qlogis(0.95), 1)), "night_tcp")$pair_post
+  ps <- 0.5 / (n + 1); expect_equal(q1, ps * .95 / (ps * .95 + (1 - ps) * .05))
+  expect_error(night_apply_tcp(mk(), obs, pair_cal = 0.5), "NX14")
+  expect_error(night_apply_tcp(mk(), obs, pair_cal = cal, pair_r = 0.9), "NX14")
+  # NULL leaves today's behaviour exactly
+  expect_identical(night_apply_tcp(mk(), obs), night_apply_tcp(mk(), obs, pair_cal = NULL))
+})
+
 test_that("per-booth results for the map: reported ordinary booths only, four first-preference classes, final two when posted", {
   dt <- data.table::data.table
   conv <- list(

@@ -19,7 +19,8 @@ night_run_update(
   tcp_center = "median",
   tcp_flow_floor = 0.01,
   tcp_own_fp = FALSE,
-  tcp_pair_r = NULL
+  tcp_pair_r = NULL,
+  tcp_pair_cal = NULL
 )
 }
 \arguments{
@@ -61,6 +62,9 @@ primaries (simulated with \code{keep_fp = TRUE}). \code{FALSE} (default) until m
 
 \item{tcp_pair_r}{Passed to \code{\link[=night_apply_tcp]{night_apply_tcp()}} as \code{pair_r}: \code{NULL} (default, unchanged) or the commission's
 night-pair reliability (\verb{docs/plans/prereg-night-pair-trust-2026-11-11.md}).}
+
+\item{tcp_pair_cal}{Passed to \code{\link[=night_apply_tcp]{night_apply_tcp()}} as \code{pair_cal}: \code{NULL} (default, unchanged) or \code{c(alpha, beta)},
+the calibrated pair prior (\verb{docs/plans/prereg-night-pair-cal-2026-11-11.md}).}
 }
 \value{
 List: \code{sim}, \code{nu} (the update), \code{shares}, \code{sd}, \code{matched} (seats in both state and feed),
