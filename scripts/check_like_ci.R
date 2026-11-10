@@ -259,6 +259,14 @@ if (!is.null(.fp) && !"--force-check" %in% .args && length(.last) && identical(.
               length(res$errors), length(res$warnings), length(res$notes),
               as.numeric(difftime(Sys.time(), .t_check0, units = "secs")),
               if (length(res$test_output)) "ran again inside it" else "did not run"))
+  # The suite's own tally inside the check, and how many tests skipped for want of the anchor clone: if these
+  # match half one's, the check's copy of the suite also ran with no anchor data (NEXT-STEPS speed item, 10 Nov).
+  .tout <- unlist(res$test_output, use.names = FALSE)
+  .tally <- grep("\\[ FAIL [0-9]+ \\| WARN [0-9]+ \\| SKIP [0-9]+ \\| PASS [0-9]+ \\]", .tout, value = TRUE)
+  .tally <- regmatches(.tally, regexpr("\\[ FAIL [^]]*\\]", .tally))
+  cat(sprintf("tests inside the check: %s; anchor-clone skips %d\n",
+              if (length(.tally)) .tally[length(.tally)] else "no tally line found",
+              sum(lengths(regmatches(.tout, gregexpr("anchor data clone not present", .tout, fixed = TRUE))))))
   if (length(res$notes)) {
     # Notes do not fail CI today, but they are how a warning starts: an
     # undefined global is a note until the same slip lands somewhere check
