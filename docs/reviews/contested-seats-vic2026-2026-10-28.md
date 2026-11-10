@@ -104,3 +104,27 @@ Per seat:
 3. One Nation spread sensitivity (Eureka and Narracan: Senate ranks near the top).
 4. After 9 Nov: recheck Hastings and Cranbourne with real candidates.
 5. Re-entry inflated-base measurement (Narracan Greens is the live case; small effect on winners).
+
+## Recheck after nominations (10 Nov 2026)
+
+The 28 Oct question was whether the bookmakers priced a weak or absent One Nation candidate. They did not need to:
+One Nation stands in both seats (VEC final list, `output/candidacies.csv`), with first-time candidates who have no earlier
+candidacy in the corpus (matched by surname across every election): Peter Angelico (Hastings), Andrew Hirst (Cranbourne).
+So the disagreement is model against market, not a nomination artefact.
+
+Win probabilities, 10 Nov (ours from the 2:09pm published forecast; bookmakers margin-removed, `docs/benchmarks/vic2026/2026-11-10/`):
+
+| Seat | Ours | Bookmakers | AE Forecasts | Our primaries |
+|---|---|---|---|---|
+| Hastings | ONP 0.60, LNP 0.39 | LNP fav 0.65 (ONP 3.25 TAB) | LNP 0.79, ONP 0.12 | ONP 30.9, LNP 29.3, ALP 23.7 |
+| Cranbourne | ALP 0.63, ONP 0.32 | ONP fav 0.46 (ONP 2.00 SB, ALP 2.45 TAB) | LNP 0.47, ALP 0.41, ONP 0.12 | ALP 35.2, ONP 26.0, LNP 20.1 |
+
+On 28 Oct: Hastings ONP 0.62 (now 0.60), Cranbourne ONP 0.22 (now 0.32).
+
+What sets One Nation's share in both seats is unchanged: the statewide level times the Senate-rank ratio. The Senate
+One Nation keys are 6.60 in Hastings (rank 15 of 88) and 5.52 in Cranbourne (rank 22). The names change nothing in the model,
+because it has no candidate-quality term for a first-timer. The one nomination effect is that Hastings has no minor-right
+candidate this time (7.4 points across three in 2022), so that class is zeroed and its vote goes by flows.
+
+Verdict: no defect found, no change. This leans against the bookmakers in both directions, as in the 28 Oct reading. In
+sa2026 our One Nation win probabilities were calibrated and we under-called the vote. Item closed.

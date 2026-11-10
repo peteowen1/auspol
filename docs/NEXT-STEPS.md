@@ -68,7 +68,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   Dated: the Esri key (basemaps + geocoding, pay-as-you-go off) expires 27/10/2027.
 - OPEN, from the 28 Oct contested-seat research (evidence and the value-odds page, which does not refresh:
   `reviews/needs-pete-evidence-2026-11-08.md`): One Nation spread pooling (needs code; spread fixed to SA 2026 by the
-  `sa_ratio` quantile map in `fit_seats_full.R`); Hastings/Cranbourne recheck after nominations; re-entry inflated
+  `sa_ratio` quantile map in `fit_seats_full.R`); Hastings/Cranbourne recheck DONE 10 Nov (no change; `reviews/contested-seats-vic2026-2026-10-28.md` last section); re-entry inflated
   bases (other classes over-called -2.9, SE 0.84; Narracan Greens is the live case).
 
 - F16 `AUSPOL_ROW_SHIFT_EXACT` NOT PASSED 29 Oct (DECISIONS). F18 `AUSPOL_NOM_ZERO_PRE_XGB` SHIPPED 10 Nov (DECISIONS).
