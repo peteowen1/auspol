@@ -184,7 +184,11 @@ because the vic2026 list in `output/candidacies.csv` is provisional (Wikipedia,
    value, missing `candidacies.csv`, no vic2026 rows, no vic2022 baseline, or
    fewer than 85% of vic2022's candidacies (a load error). The run also checks, at
    the final write, that no zeroed cell was revived by a later step.
-5. Optional, NOT in the published path (Pete decides): per-candidate predictions for vic2026 from the final list.
+5. SHIPPED 10 Nov 2026 (Pete, after a walk: no favourite changed, max win-probability move 0.4 points): per-candidate
+   predictions for vic2026 from the final list now split the live unpolled bucket. `rebuild_forecasts.sh` runs the
+   command below itself (`MC_LIVE_EL="vic2026"`) and copies the `-live` class-shares file over the shipped
+   `output/minor-class-shares-resid-v2.csv`, which is tracked in git, so CI reads it from the checkout. After the
+   election, set `MC_LIVE_EL` to "" (the fit stops with `MC0!` once vic2026 has votes). The history below is how it was built.
 
    ```
    AUSPOL_MC_OWN_RULE=v2 AUSPOL_MC_LIVE=vic2026 Rscript scripts/fit_minor_candidates.R
