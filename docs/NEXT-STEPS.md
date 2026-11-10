@@ -179,8 +179,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## Open from 17 Oct
 
-- OPEN, bigger than composition spread C (parked, `reviews/composition-spread-2026-10-17.md`) or the refused error
-  distribution E (`AUSPOL_ERROR_DIST`), and the place to try width + tails together: errors are HEAVY-TAILED everywhere (0.57% of non-IND-seat cells miss by 4+ sim
+- OPEN, bigger than composition spread C (parked, `reviews/composition-spread-2026-10-17.md`) or error distribution E
+  (`AUSPOL_ERROR_DIST`, refused then SHIPPED 17 Oct on Pete's override; see "NSW variance" under Model, open), and the place to try width + tails together: errors are HEAVY-TAILED everywhere (0.57% of non-IND-seat cells miss by 4+ sim
   sds, ~100x a bell curve; kurtosis 20). A fat-tailed per-cell error (fitted time-forward) is the general fix for
   floor seats. NB the seat-poll form of it (arm T, mixture on model error) was REFUSED 19 Oct (-0.0004, SE 0.0052).
 - MEASURED, PARKED per-class level bias (17 Oct, scratchpad levelcorr.R): statewide level over-predicts the Greens in
@@ -223,8 +223,6 @@ whenever a change adds a file `forecast.yaml` downloads. Refused, built and off 
 leader ratings as a model input, trend-replaces-blend, poll-level centring, the two-way person rule, statewide poll
 weighting by track record, seat-poll precision blend, typical-vote independent models.
 
-- OPEN move off AE (`reviews/ae-dependence-audit-2026-10-13.md`): (b) language-model extraction of the Poll Bludger
-  posts, the stronger version, not tried.
 - OPEN leader ratings: drift from months out needs horizon scoring. (The blog chart is DONE: inthegame-blog PRs #890
   and #895, "The leaders" in `politics/_forecast-body.qmd`.)
 - CORRECTED 5 Nov: the breakdowns did NOT stop. BludgerTrack still publishes them (refetched 5 Nov, newest fieldwork
@@ -269,8 +267,8 @@ Verbatim in `backlog/journal-2026-10-07-to-10-08.md`. Still OPEN from them:
   Camenzuli (IND) published 29.0, actual 9.8: ONE poll, Compass Polling 8 Apr 2025 (opt-in SMS link, n=1,003, IND 41);
   base_pred 6.0 and xgb 4.9 were both under, so the 29 is the seat-poll step (AUSPOL_SEAT_POLL_IND_MAP). Polls are
   classified by method (`reviews/seat-poll-methods-2026-10-18.md`); the weight prereg is PARKED 5 Nov with "Seat polls:
-  PARKED" under Model, open. Dirty raw pollster labels do not reach the model (checked 23 Oct).
-- Not doing, by decision: the in-browser simulator (~40 h); the 2.5-point knots already feel live. Revisit if Pete wants two sliders at once.
+  PARKED" under Model, open. Dirty raw pollster labels do not reach the model (checked 23 Oct). McMahon itself is called
+  right since 8 Nov (Others-lump split, arm H, DECISIONS 2026-11-08); the weight question stands.
 
 ## 2026-09-27 to 2026-10-05: archived sessions
 
@@ -356,7 +354,8 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
   training. Its skip-if-current cache only helps when base_pred is unchanged, which a model change never is. Options, each a model
   change needing a screen: cap CV at ~5 grouped folds (est. ~5x faster on late targets; changes nrounds), or fit targets in parallel
   processes (memory). Stage 3 (533 s) not yet broken down the same way; time it from its own log before guessing again.
-- Both branches below RECREATED 25 Oct on Pete's yes (local only, not pushed).
+- Both branches below RECREATED 25 Oct on Pete's yes; by 10 Nov both refs were gone again (commits unreferenced), so
+  RECREATED again 10 Nov at b21fb774 / ae91f62f (local only, not pushed).
 - Branch `fed-timing-resume-fixed` (b21fb77, unmerged, NOT through the review gate or `check_like_ci`): fixes
   the federal `PARTY_COR` loop leak (a full fed run simulates every pair with the LAST pair's matrix; dormant
   at published defaults because `AUSPOL_FORECAST_MODE=1` skips the matrix; live for fed with FORECAST_MODE=0),

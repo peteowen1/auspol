@@ -4,6 +4,10 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-11-10 Queue audit closures.** "Move off AE (b)": the language-model extraction of Poll Bludger posts WAS built
+  (`AUSPOL_POLL_PB`, 45df5117; `reviews/pb-llm-extraction-2026-10-13.md`), so the item is done. Moved here from the queue
+  as a standing not-doing: the in-browser simulator (~40 h); the 2.5-point knots already feel live; revisit if Pete wants
+  two sliders at once.
 - **2026-11-10 Local check skips the tests inside R CMD check (Pete: go).** `check_like_ci.R` passes `--no-tests`;
   the in-check copy was a subset of half one (4,964 vs 5,083 passed, FAIL 0 both). Full forced check 559 s -> 396 s.
   CI unchanged; `--with-check-tests` restores them (and bypasses the unchanged-package skip). Merge 8c7cbcf9.
