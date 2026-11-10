@@ -102,7 +102,8 @@ if ($Worker) {
     $cacheSrc = Join-Path $p.QuickDir "cache"
     if (Test-Path $cacheSrc) {
       # ourtcp.csv too (score_tcp_arm.R): the 7 Nov NSW-exhaust deciding run lost its TCP scenarios here.
-      Get-ChildItem $cacheSrc -Recurse -File -Include allprobs.csv, sharedetail.csv, ourtcp.csv, totals.csv | ForEach-Object {
+      # run.log too: on 11 Nov all 70 harness runs FAILED and --clean deleted every log, so the error was unrecoverable.
+      Get-ChildItem $cacheSrc -Recurse -File -Include allprobs.csv, sharedetail.csv, ourtcp.csv, totals.csv, run.log | ForEach-Object {
         $rel = $_.FullName.Substring($cacheSrc.Length).TrimStart('\', '/')
         $dst = Join-Path (Join-Path $RunDir "cache") $rel
         New-Item -ItemType Directory -Force (Split-Path -Parent $dst) | Out-Null
