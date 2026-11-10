@@ -349,8 +349,10 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
 
 ## Harness and pipeline hygiene
 - OPEN (speed) `check_like_ci.R` runs the suite twice (159 s alone, again inside `R CMD check`). Code read: no test reaches the
-  checkout (`pkg_root()` only); `scripts/` is build-ignored, so the check's copy runs LESS. Done when: branch `ci-check-skips`
-  run with `--force-check` (memory free) prints the in-check tally; then decide on `--no-tests`.
+  checkout (`pkg_root()` only); `scripts/` is build-ignored, so the check's copy runs LESS. Branch `ci-check-skips` (d3ac3394)
+  RAN 10 Nov `--force-check`, exit 0: outside suite 5,083 passed / 50 skipped (178 s); inside the check FAIL 0, PASS 4,964,
+  SKIP 74 (anchor-clone skips 1), so the in-check copy is a subset. NEEDS PETE: `--no-tests` on the local check only (CI keeps
+  its tests), ~3 of the 9 minutes saved; then the branch goes through review and into dev.
 - OPEN (speed, CORRECTED 6 Nov 12:40pm) stage 4 (`fit_xgb_primary_asat.R`) 1,664 s for 31 models on a full retrain. The "287 s before"
   I compared it with was `driver.log` of 19 SEP (22 elections, ensemble 1); not the kernel leak. Cost per model grows with the corpus:
   `xgb.cv` uses ONE FOLD PER EARLIER ELECTION (sa2026: 34 folds, 401 rounds, 142 s; sa2010: 4 folds, 1 s), times `AUSPOL_XGB_ENSEMBLE=3`
