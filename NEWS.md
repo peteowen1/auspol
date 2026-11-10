@@ -1,3 +1,7 @@
+# auspol 0.4.154
+
+- **Victoria's small-party vote is split by the 2026 field, not 2022's mix** (Pete, 10 Nov, "Ship it"). The per-candidate minor-party model now also predicts vic2026 from the VEC's final list, so the unpolled bucket splits IND 0.27, minor right 0.24, other 0.50 instead of falling back to vic2022's ratio. `rebuild_forecasts.sh` builds it (`MC_LIVE_EL`); every earlier election is unchanged. Walk on the live forecast: no favourite changes, the biggest win-probability move is 0.4 points (Ashwood), the biggest share move 0.23 points (Kew Liberal).
+
 # auspol 0.4.153
 
 - **Seats lose a non-standing party before the trees as well as after** (`AUSPOL_NOM_ZERO_PRE_XGB="1"`, audit F18; Pete, 10 Nov, "Switch it on"). The trees were trained on a base with absent parties already zeroed and their share sent by flows; the live base now matches. Walk 2 on the VEC final list: the 47 seats with nothing zeroed are unchanged to the last digit, 40 of 41 affected seats move under 1 point, no favourite changes. Mildura (Ali Cupper not standing) moves most: LNP 46.3 -> 50.2, ONP 36.3 -> 34.8, OTH 2.2 -> 0.4.
