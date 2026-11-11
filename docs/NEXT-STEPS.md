@@ -115,7 +115,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (2) IN FLIGHT: Pete chose by-candidate booth reference (11 Nov). `cand_ref` built OFF (7f921437), both-ways job
   `deciding-runs/20261111-night-cand-ref/` (started 3:30pm 11 Nov, ~1.5 h); done when `results.txt` is read against
   `plans/prereg-night-candidate-ref-2026-11-11.md`. To use it LIVE: `night_booth_table()` must carry candidate names. Replays now write
-  every step and take `--resume=1` (9300e7df).
+  every step and take `--resume=1` (9300e7df). OPEN, small: the partial files are keyed by night and label only, so a
+  resume with the same label and different flags would mix configurations; put a fingerprint of the flags in them
+  (review 11 Nov). Not while a replay job is running: the scripts are re-read mid-run.
   History: `backlog/journal-2026-11-11-queue-history.md`.
   Also open: statewide draws shrink by the national mean counted, not the seat's; projection sd floors at 0.26;
   `--tcp-own-fp` built, OFF (needs flow uncertainty in the draws; `plans/prereg-flow-sd-2026-10-31.md` REFUSED).
