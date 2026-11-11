@@ -71,7 +71,7 @@ if (anyDuplicated(slug(firms))) stop("PPG3! two pollster names give the same pag
 fam <- function(x) { k <- tolower(x); k <- sub("/.*$", "", k); k <- sub(" research$", "", k); k <- sub("[0-9]+$", "", k)
   ifelse(grepl("morgan", k), "morgan", trimws(k)) }
 span <- polls[, list(first = min(date), last = max(date)), by = firm]
-fam_links <- function(fm) { o <- setdiff(firms[fam(firms) == fam(fm)], fm); if (length(o)) slug(o) else character(0) }
+fam_links <- function(fm) { o <- setdiff(firms[fam(firms) == fam(fm)], fm); I(if (length(o)) slug(o) else character(0)) }   # I(): a one-item list stays a list under auto_unbox
 fam_note <- function(fm) {
   o <- setdiff(firms[fam(firms) == fam(fm)], fm); if (!length(o)) return(NULL)
   rng <- function(f) { i <- match(f, span$firm); if (is.na(i)) "no polls on file" else sprintf("%s to %s", format(span$first[i], "%b %Y"), format(span$last[i], "%b %Y")) }
