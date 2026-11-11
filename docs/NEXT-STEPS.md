@@ -30,19 +30,14 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   reference and its turnout fell to the state rate; `.night_seat_names()` now puts every input's names into the model's.
   Checked on all 88 districts with the 2022 pages under the live 2026 configuration (87 updated; Narracan has no 2022 page); (4) DONE 11 Nov: dress rehearsal of fetcher + loop on the live Nepean pages (found and fixed: the loop never saw website snapshots; the website candidate list has no enrolment, now `external/reference/vec/2026/enrolment/enrolment-2026.csv`, pass it as --enrolment); (5) the ITG booths build
   (`C:/dev/inthegame-blog/politics/night-maps/build-booths-2026.py`) also assumed the feed.
-- OPEN, night website (ITG review nit, 11 Nov): a failed page fetch leaves no DONE, so the loop keeps the old snapshot and
-  logs only "no new snapshot"; a long VEC outage looks like a quiet count. Done when `scripts/night_loop.R` warns once the
-  newest DONE is more than N minutes old.
-- OPEN, anchor data error (found 11 Nov by build_party_pages.R's check): `external/aus-polling-analyser/analysis/Data/eventual-results.csv`
-  swaps Labor and the Coalition for NSW 2007 (`ALP FP 36.99`, `LNP FP 38.98`; the commission's count, and our candidacies, say
-  Labor 38.98). The other 37 elections agree to 0.03 points. It is a third-party file: correct it on load
-  (`R/fundamentals.R`'s `load_eventual_results()`, beside the WA 1993 duplicate fix), then check which fits read
-  nsw2007's first preferences and rerun what moves. Done when the loader corrects it and the affected screens are rerun.
-- OPEN, replay evidence (found 11 Nov): `output/booths-vic2018.csv` spells 25 of 87 districts unlike the seats ("Albertpark",
-  "South Westcoast"), and the replay scripts pass it to `night_run_update()` without `.night_seat_names()`, so in every vic2022
-  replay those seats' declaration votes (early, postal, absent) had no reference (ordinary booths still matched by unique name).
-  The live night is fixed (night_cycle); the replays are not. Done when the replays apply the same names, vic2022 is rerun, and
-  pair_cal / cand_ref / the called rule are rescored on it (each used vic2022 as one of its nights).
+- IN FLIGHT 12 Nov, replay evidence: the replays now apply `.night_seat_names()` (264cc306; vic2018's "Albertpark" etc. had
+  left 25 of 87 seats' declaration votes without a reference in every vic2022 replay). Rerun running:
+  `deciding-runs/20261112-vic2022-names/` (real base + pair_cal, simulated base + cand_ref copy). Done when its DONE is read
+  and pair_cal / cand_ref / the called rule are rescored against the 11 Nov vic2022 numbers.
+- OPEN for Pete (ITG, 12 Nov): pollster pages list "Lighthouse" (one poll, 26 Oct 2026) and "Lighthouse/Growth
+  Intelligence Centre" (one poll, 25 Oct) as two method versions a day apart: likely one firm under two source labels, and
+  the "method changed" note is then false. No forecast effect (under 3 polls, both use the pooled house effect).
+  "Lonergan" 2013-16 vs "Lonergan Research" 2022 is filed the same way, method change unconfirmed. Done when Pete says merge or leave.
 - OPEN: Pakenham DemosAU/TKR rows in `hand_keyed_primaries.csv` (fieldwork date UNCONFIRMED). Done when `seat_polls.csv`
   carries the poll: delete the hand-keyed rows.
 - OPEN, display only (class split itself closed, DECISIONS 2026-11-06): a final two of

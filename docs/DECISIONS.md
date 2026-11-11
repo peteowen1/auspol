@@ -4,6 +4,12 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-11-12 The anchor's NSW 2007 Labor/Coalition swap is corrected on load; it never reached the forecast.**
+  `load_eventual_results()` applies `EVENTUAL_RESULT_FIXES` (ER1; `AUSPOL_EVENTUAL_FIXES`, shipped "1"). Screen with the
+  fix off vs on, all 35 elections, 1,000 sims: byte-identical in 35 of 35 (the switch printed in all 42 harness runs each
+  way). Why: every forecast fit of the statewide fundamentals uses the `@TPP` target, which the file has right; the only
+  per-party fit (`build_level_components.R`) feeds the retired `fit_xgb_primary_v6.R`. It corrects displayed figures
+  (pollster final-poll errors, scorecard, party pages).
 - **2026-11-12 Poll columns by full party name (`AUSPOL_POLL_SERIES_CLASS=name`) NOT SHIPPED (Pete, 12 Nov).** All 35
   elections at 20,000 sims: seat-winner log loss 0.3089 -> 0.3114, +0.0025 (SE 0.0016, worse by more than 1 SE), share
   squared error on 6,807 moved cells +15%; AEF-7 a tie (-0.0009, SE 0.0031). Worst sa2018 +0.076, fed2013 +0.016,
