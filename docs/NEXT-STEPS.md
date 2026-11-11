@@ -22,7 +22,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   layout differs from 2022 (`fetch_booths_vic2022.R` parse_vc fails FB3 on the Nepean 2026 by-election pages: name and
   party in one header cell, Ordinary / Early / Declaration sections, totals at the top); booth rows, early, postal,
   absent and candidate names are all there. UNCONFIRMED: whether those pages fill in DURING the night (no archived
-  mid-count capture; LIFE holds a 2-question draft email for Pete to send). Fallback if not: district-level totals.
+  mid-count capture; draft email to the VEC in Pete's Gmail, unsent, 11 Nov: asks whether those pages fill in booth by booth on the night and the polling interval; treat as unknown until Pete passes the answer on). Fallback if not: district-level totals.
   The ITG booths build (`C:/dev/inthegame-blog/politics/night-maps/build-booths-2026.py`) also assumed the feed.
 - OPEN: Pakenham DemosAU/TKR rows in `hand_keyed_primaries.csv` (fieldwork date UNCONFIRMED). Done when `seat_polls.csv`
   carries the poll: delete the hand-keyed rows.
