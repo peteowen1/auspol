@@ -37,7 +37,9 @@ fam_of <- function(cls, raw) {
   out[l] <- "liberal"
   out[l & grepl("national|^nat|^np$|^nats$", r)] <- "nationals"
   out[l & grepl("liberal national|^lnp$|^lnq$", r)] <- "lnp"
-  out[l & grepl("country liberal", r)] <- "clp"
+  # The CLP's federal labels vary by year: "CLP-The Territory Party" (fed2004), "C.L.P." (fed2007),
+  # "Country Liberals (NT)" (fed2010-19), "NT CLP" (fed2022-25). PTY2 checks every one lands here.
+  out[l & grepl("country liberal|c\\.l\\.p|\\bclp\\b", r)] <- "clp"
   out
 }
 FAM <- data.table(fam = c("labor", "liberal", "nationals", "lnp", "clp", "greens", "one-nation"),
@@ -49,6 +51,16 @@ JUR <- data.table(region = c("fed", "nsw", "vic", "qld", "sa", "wa", "nt"),
                   prefix = c("Federal", "NSW", "Victorian", "Queensland", "SA", "WA", "NT"))
 done[, fam := fam_of(party, party_raw)]
 cat("PTY2 LNP-class candidates by party name:\n"); print(done[party == "LNP", .N, by = fam])
+# The Coalition side in the Northern Territory is the CLP and nowhere else is: a label the regex misses
+# silently files a CLP member as a Liberal (Solomon fed2004 did, review 12 Nov).
+nt_seat <- done$region == "nt" | (done$region == "fed" & done$seat %in% c("Solomon", "Lingiari", "Northern Territory"))
+lnp_cls <- done$party == "LNP"
+is_clp <- done$fam == "clp"
+mis_nt <- done[lnp_cls & nt_seat & !is_clp]
+mis_out <- done[is_clp & !nt_seat]
+cat(sprintf("PTY2 CLP: %d Northern Territory Coalition candidacies, %d not filed as CLP, %d CLP outside the Territory\n",
+            sum(lnp_cls & nt_seat), nrow(mis_nt), nrow(mis_out)))
+if (nrow(mis_nt) || nrow(mis_out)) stop("PTY2! CLP filing wrong: ", paste(head(c(mis_nt[, paste(election, seat, party_raw)], mis_out[, paste(election, seat, party_raw)]), 6), collapse = "; "))
 
 # ---- per election and party: first preferences and seats --------------------------------------------------------
 el <- done[, .(region = region[1], year = year[1], seats_total = uniqueN(seat), formal = sum(votes)), by = election]
