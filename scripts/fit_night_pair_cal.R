@@ -21,20 +21,26 @@ tmin <- function(x) vapply(strsplit(x, ":", fixed = TRUE), function(z) as.numeri
 
 rows <- list()
 for (nt in nights) {
-  f <- file.path(dir, sprintf("%s-%s-tcp.csv", nt, label))
+  fed <- startsWith(nt, "fed")
+  # federal: the replay's pairs file (every on-screen pair, right or wrong, same information level, y = final two by
+  # class); vic: the observations file (the VEC shows a pair only once it has votes), y from the declared pair
+  f <- file.path(dir, sprintf("%s-%s-%s.csv", nt, label, if (fed) "pairs" else "tcp"))
   if (!file.exists(f)) stop("NPC1! missing ", f)
   d <- fread(f)
-  if (!"wrong_pair" %in% names(d)) d[, wrong_pair := FALSE]
-  d[is.na(wrong_pair), wrong_pair := FALSE]
   d[, tm := tmin(time)]
   d <- d[order(seat, tm)][, .SD[1L], by = seat]
-  if (startsWith(nt, "fed")) {
-    d[, y := as.integer(!wrong_pair)]
+  if (fed) {
+    if (!"declared" %in% names(d)) stop("NPC1! ", f, " has no `declared` column (made by a replay older than the pairs fix?)")
+    d[, y := as.integer(declared)]
   } else {
-    bt <- fread(sprintf("output/booths/%s-booth-tcp.csv", nt), select = c("district", "party_raw"))
-    dec <- unique(bt)[, list(dec = paste(sort(unique(classify_party(party_raw))), collapse = "|")), by = district]
+    bt <- unique(fread(sprintf("output/booths/%s-booth-tcp.csv", nt), select = c("district", "candidate", "party_raw")))
+    # two candidates per district; sort their classes WITHOUT unique(), so a final two of one class (IND v IND) stays two
+    dec <- bt[, list(dec = paste(sort(classify_party(party_raw)), collapse = "|"), n_cand = .N), by = district]
+    if (any(dec$n_cand != 2L)) stop("NPC2! ", nt, " declared pairs without exactly 2 candidates: ", paste(dec$district[dec$n_cand != 2L], collapse = ", "))
     d <- merge(d, dec, by.x = "seat", by.y = "district", all.x = TRUE)
-    nodec <- sum(is.na(d$dec)); if (nodec) cat(sprintf("NPC2 %s: %d seat(s) with no declared pair, dropped: %s\n", nt, nodec, paste(d$seat[is.na(d$dec)], collapse = ", ")))
+    nodec <- sum(is.na(d$dec))
+    if (nodec) cat(sprintf("NPC2 %s: %d seat(s) with no declared pair, dropped: %s\n", nt, nodec, paste(d$seat[is.na(d$dec)], collapse = ", ")))
+    if (nodec > 3) stop("NPC2! ", nt, ": ", nodec, " seats have no declared pair: check district names against the booth file")
     d <- d[!is.na(dec)]
     d[, y := as.integer(paste(pmin(a, b), pmax(a, b), sep = "|") == dec)]
   }
@@ -44,6 +50,9 @@ for (nt in nights) {
   rows[[nt]] <- d[, list(night, seat, a, b, pair_share, y, time)]
 }
 D <- rbindlist(rows)
+if (!nrow(D)) stop("NPC3! no rows to fit")
+if (sum(D$y == 0) == 0) stop("NPC3! no wrong pairs (y = 0) in ", paste(nights, collapse = "+"), ": the fit would only return the prior")
+if (all(D$pair_share[D$y == 0] == 0)) stop("NPC3! every wrong pair has share exactly 0: party classes not mapped? (the 11 Nov code-as-name bug)")
 D[, x := qlogis((pair_share * n + 0.5) / (n + 1))]
 a0 <- qlogis(r)
 nll <- function(th) { q <- plogis(th[1] + th[2] * D$x); q <- pmin(pmax(q, 1e-12), 1 - 1e-12)

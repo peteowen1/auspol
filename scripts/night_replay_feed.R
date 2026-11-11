@@ -56,6 +56,9 @@ D[, ts := tsec(snapshot_time)]
 pair_key <- function(x) vapply(strsplit(ifelse(is.na(x), "", x), " v ", fixed = TRUE), function(z) paste(sort(trimws(z)), collapse = " v "), "")
 dec <- Tc[, list(dec_pair = paste(sort(unique(trimws(candidate))), collapse = " v ")), by = list(division = district)]
 D <- merge(D, dec, by = "division", all.x = TRUE)
+dec_cls <- unique(Tc[, list(division = district, candidate, cls = classify_party(party_raw))])[,
+  list(dec_cls = paste(sort(cls), collapse = "|"), n_cand = .N), by = division]
+if (any(dec_cls$n_cand != 2L)) stop("NRF5! declared pair without exactly 2 candidates: ", paste(dec_cls$division[dec_cls$n_cand != 2L], collapse = ", "))
 D[, night_key := pair_key(tcp_pair)]
 D[, pair_ok := nzchar(night_key) & !is.na(dec_pair) & night_key == dec_pair & !(tolower(as.character(tcp_maverick)) %in% "true")]
 pk <- D[nzchar(night_key), list(ever_shown = TRUE, ever_ok = any(pair_ok)), by = division]
@@ -63,7 +66,7 @@ cat(sprintf("NRF0 %s: %d divisions showed a pair; %d usable at some point; %d ne
             pair_lbl, nrow(pk), sum(pk$ever_ok), sum(!pk$ever_ok)))
 if (!sum(pk$ever_ok)) stop("NRF0! no division's night pair matched its declared pair: check the name formats in Tc and the feed")
 
-summ <- list(); seat_rows <- list(); tcp_rows_out <- list()
+summ <- list(); seat_rows <- list(); tcp_rows_out <- list(); pairs_out <- list()
 for (k in seq_along(at)) {
   T0 <- at[k]
   rep_pp <- pp[pp$t_fp <= T0, list(district = division, unit = polling_place)]
@@ -89,14 +92,30 @@ for (k in seq_along(at)) {
     wentworth_counted = round(100 * unname(cnt["Wentworth"]), 1))
   wp[, time := tm[k]]; seat_rows[[length(seat_rows) + 1]] <- wp
   nt <- attr(r$sim, "night_tcp"); if (!is.null(nt) && nrow(nt)) tcp_rows_out[[length(tcp_rows_out) + 1]] <- data.table::as.data.table(nt)[, time := tm[k]]   # per-seat pair share, prior/posterior (pair_r v2 trace)
-  # Pairs on screen that are NOT the declared pair: no booth votes, so no update, but their share of draws is
-  # the negative half of the pair_cal calibration (prereg-night-pair-cal-2026-11-11).
-  wr <- dk[nzchar(night_key) & !is.na(dec_pair) & night_key != dec_pair & !(tolower(as.character(tcp_maverick)) %in% "true") & division %in% colnames(r$sim$tcp_winner)]
-  if (nrow(wr)) {
-    ca <- classify_party(wr$tcp1_party); cb <- classify_party(wr$tcp2_party)
-    pw <- vapply(seq_len(nrow(wr)), function(i) { tw <- r$sim$tcp_winner[, wr$division[i]]; tr <- r$sim$tcp_runnerup[, wr$division[i]]
+  # EVERY pair on screen (not maverick at this snapshot), right or wrong, at the same information level: its share
+  # of the draws and whether it is the declared pair. The calibration data for pair_cal (prereg-night-pair-cal-
+  # 2026-11-11). The feed's tcp*_party are commission CODES, so they go through classify_party(code =); the three
+  # codes it does not know take the class of their full party name. (Review 11 Nov: passed as names they all fell
+  # to OTH, so a wrong ALP v LP pair read as OTH v OTH with ~0 draws.)
+  on_scr <- dk[nzchar(night_key) & !(tolower(as.character(tcp_maverick)) %in% "true") & division %in% colnames(r$sim$tcp_winner)]
+  if (nrow(on_scr)) {
+    full <- c(KAP = "Katter's Australian Party (KAP)", CLP = "Country Liberals (NT)", XEN = "Centre Alliance")
+    cls_of <- function(cd) { cd <- ifelse(is.na(cd), "", trimws(cd))
+      known <- c("", "ALP", "ALP1", "LP", "LNP", "NP", "LNQ", "NAT", "NATS", "LIB", "GRN", "GVIC", "TG", "ON", "PHON", "ONP", names(full))
+      bad <- setdiff(unique(cd), known); if (length(bad)) stop("NRF5! feed party code(s) with no class: ", paste(bad, collapse = ", "))
+      classify_party(ifelse(cd %in% names(full), full[cd], ""), code = ifelse(cd %in% names(full), "", cd)) }
+    ca <- cls_of(on_scr$tcp1_party); cb <- cls_of(on_scr$tcp2_party)
+    same <- ca == cb
+    if (any(same)) cat(sprintf("NRF5 %s: %d on-screen pair(s) of one class, left out of the pairs file: %s\n", tm[k], sum(same),
+                               paste(on_scr$division[same], collapse = ", ")))
+    pw <- vapply(seq_len(nrow(on_scr)), function(i) { tw <- r$sim$tcp_winner[, on_scr$division[i]]; tr <- r$sim$tcp_runnerup[, on_scr$division[i]]
       mean((tw == ca[i] & tr == cb[i]) | (tw == cb[i] & tr == ca[i])) }, numeric(1))
-    tcp_rows_out[[length(tcp_rows_out) + 1]] <- data.table(seat = wr$division, a = ca, b = cb, pair_share = pw, wrong_pair = TRUE, time = tm[k])
+    # declared = the model's question: is this the final two BY CLASS (Bendigo 2025 counted Labor v Liberal, final two
+    # Labor v Nationals: both LNP, so right for the model). declared_cand keeps the candidate-level match.
+    dcl <- dec_cls$dec_cls[match(on_scr$division, dec_cls$division)]
+    pairs_out[[length(pairs_out) + 1]] <- data.table(seat = on_scr$division, a = ca, b = cb, pair_share = pw,
+                                                     declared = !is.na(dcl) & paste(pmin(ca, cb), pmax(ca, cb), sep = "|") == dcl,
+                                                     declared_cand = !is.na(on_scr$dec_pair) & on_scr$night_key == on_scr$dec_pair, time = tm[k])[!same]
   }
   s <- summ[[length(summ)]]
   cat(sprintf("NRF3 %s places %d (%d seats, mean counted %.1f%%, 2CP %d) | ALP %.1f (%g-%g) P(maj) %.3f | log loss %.4f, right %d/%d | Wentworth IND %.3f at %.1f%%\n",
@@ -106,6 +125,10 @@ for (k in seq_along(at)) {
 S <- rbindlist(summ); fwrite(S, file.path(out_dir, sprintf("%s-%s-summary.csv", pair_lbl, label)))
 fwrite(rbindlist(seat_rows), file.path(out_dir, sprintf("%s-%s-seats.csv", pair_lbl, label)))
 if (length(tcp_rows_out)) fwrite(rbindlist(tcp_rows_out, fill = TRUE), file.path(out_dir, sprintf("%s-%s-tcp.csv", pair_lbl, label)))
+if (length(pairs_out)) { PO <- rbindlist(pairs_out)
+  cat(sprintf("NRF6 pairs file: %d rows, %d seats, %d wrong (not the declared pair); median share right %.3f, wrong %.3f\n", nrow(PO),
+              uniqueN(PO$seat), PO[declared == FALSE, uniqueN(seat)], median(PO$pair_share[PO$declared]), median(PO$pair_share[!PO$declared])))
+  fwrite(PO, file.path(out_dir, sprintf("%s-%s-pairs.csv", pair_lbl, label))) }
 call_at <- function(p) { ok <- p >= 0.99; i <- which(vapply(seq_along(ok), function(j) all(ok[j:length(ok)]), logical(1))); if (length(i)) S$time[min(i)] else "never" }
 cat(sprintf("NRF4 %s %s: Labor majority called (>= 0.99 and stays) at %s | Labor largest at %s | Wentworth IND at %s\n",
             pair_lbl, label, call_at(S$p_alp_majority), call_at(S$p_alp_largest), call_at(S$wentworth_ind)))

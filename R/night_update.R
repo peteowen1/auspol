@@ -384,7 +384,10 @@ night_apply_tcp <- function(sim, obs, pair_min = 0.2, center = c("mean", "median
     if (n_mv <= 0L) return(none)
     mv <- oth[unique(round(seq(1, length(oth), length.out = n_mv)))]
     fsd <- obs$flow_se[k]; if (!is.finite(fsd)) fsd <- 0; fsd <- max(fsd, flow_sd_floor)
-    f <- fmu + fsd * stats::qnorm((seq_along(mv) - 0.5) / length(mv))
+    # quantiles in a fixed per-seat order (a sine hash of draw rank and seat column, no RNG): in index order every
+    # seat would give its lowest flow to the same draws, tying the moved draws' outcomes across seats (review 11 Nov)
+    perm <- order((sin(seq_along(mv) * 12.9898 + j * 78.233) * 43758.5453) %% 1)
+    f <- fmu + fsd * stats::qnorm((perm - 0.5) / length(mv))
     sa <- pmin(1, pmax(0, obs$fp_a[k] / 100 + f * rest))
     newW <- ifelse(sa > 0.5, a, b); oldW <- sim$tcp_winner[mv, j]
     ch <- move_draws(mv, oldW, newW, s)
