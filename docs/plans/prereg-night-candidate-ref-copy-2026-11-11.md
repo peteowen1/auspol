@@ -35,3 +35,29 @@ and vic2022 simulated, checked in the job before anything else; otherwise every 
 - Unacceptable: any seat summing above 1; vic2022 not byte-identical.
 - Outcome: PASS means "kept as an option for the live night, Pete decides"; it does NOT become the live default from
   these replays alone (see Honesty above). FAIL closes it.
+
+## RESULT (11 Nov 2026, 6:02pm): PASS, kept as an option (off); Pete decides on the live night
+
+Run: `deciding-runs/20261111-night-cand-ref-copy/` (code f5f28acf). Base reused from `20261111-night-cand-ref/` after
+the off path on the new code reproduced it exactly (qld2024 and vic2022 simulated, 7 of 7 files each).
+
+Night-average seat-winner log loss, copy minus base (lower is better):
+
+| election | targets | all seats (sim) | targets (sim) | all seats (real) | targets (real) |
+|---|---|---|---|---|---|
+| fed2022 | 4 | +0.0000 | +0.0001 | -0.0000 | -0.0004 |
+| fed2025 | 8 | -0.0013 | -0.0246 | -0.0001 | -0.0023 |
+| nsw2023 | 7 | +0.0005 | +0.0023 | | |
+| qld2024 | 2 | -0.0083 | -0.3845 | | |
+| sa2026 | 4 | -0.0001 | -0.0010 | | |
+| wa2025 | 4 | +0.0000 | +0.0006 | | |
+| vic2022 | 0 | 0 (identical) | | | |
+
+PRIMARY: simulated -0.0328 (SE 0.0272, 29 targets); real -0.0017 (SE 0.0016, 12 targets). No election worse by more
+than 0.002 (worst nsw2023 +0.0005, Kiama +0.015). Mirani LNP at half count 0.509 -> 0.596 (holds). Monash simulated
+-0.198 (holds; the move version was +1.99). No seat above 1. **PASS.**
+
+Read with: both primary falls are about 1 SE; the gain is Mirani and Monash, everything else within +-0.02. The design
+was chosen after the move run, on the same 29 seats, so this says the copy version avoids the move version's damage
+and helps the two seats it was aimed at; it is not out-of-sample evidence. Mirani is still called wrong at full count.
+Live use needs candidate names in the night booth table (the VEC website pages carry them; `scripts/vec_web_booths.R`).

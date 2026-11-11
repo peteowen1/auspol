@@ -114,10 +114,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   booth 2CP files) as OTH, so the counted pair was never matched (qld2024 half-count log loss 0.2296 -> 0.1668).
   (2) `cand_ref` (by-candidate booth reference, Pete's choice) FAILED its prereg 11 Nov and stays OFF (7f921437):
   Monash 2025 got worse (moving Broadbent's Liberal votes left the new Liberal with no reference). Mirani still wrong at
-  full count. Pete chose the COPY version (keep the party's reference, add the candidate's own): built
-  `cand_ref = "copy"` (f5f28acf, off); job `deciding-runs/20261111-night-cand-ref-copy/` (started 5:05pm 11 Nov,
-  ~6:15pm); done when `results.txt` is read against `plans/prereg-night-candidate-ref-copy-2026-11-11.md`. A pass
-  is weak evidence (design chosen after the move run) and does not make it the live default. Replays now write
+  full count. The COPY version (Pete's choice) PASSED 11 Nov (sim -0.033, real -0.0017, both ~1 SE;
+  Mirani and Monash carry it), kept OFF as an option: weak evidence (design chosen after the move run). Live use needs
+  candidate names in the night booth table. Pete to decide whether the 28 Nov night runs with it. Replays now write
   every step and take `--resume=1` (9300e7df). OPEN, small: the partial files are keyed by night and label only, so a
   resume with the same label and different flags would mix configurations; put a fingerprint of the flags in them
   (review 11 Nov). Not while a replay job is running: the scripts are re-read mid-run.
