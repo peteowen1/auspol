@@ -386,11 +386,28 @@ night_seat_swing_safe <- function(booths, ref) {
 #' @param allow `TRUE` to report the mismatch instead of stopping.
 #' @export
 night_check_coverage <- function(seats, feed_districts, allow = FALSE) {
+  # NB: names are first put through .night_seat_names(); without it the VEC's "South-West Coast" never matched the
+  # model's "South West Coast" and this stopped every live cycle (found 11 Nov 2026; the replays ran with allow).
   miss <- setdiff(seats, feed_districts); extra <- setdiff(feed_districts, seats)
   if ((length(miss) || length(extra)) && !isTRUE(allow))
     stop(sprintf("NW7! seats and feed districts differ: %d state seat(s) not in the feed (%s); %d feed district(s) not in the state (%s)",
                  length(miss), paste(utils::head(miss, 6), collapse = ", "), length(extra), paste(utils::head(extra, 6), collapse = ", ")), call. = FALSE)
   invisible(list(missing = miss, extra = extra))
+}
+
+#' Put commission district names into the model's seat names
+#'
+#' Matches on letters only, case-blind, with any " District" suffix removed: the VEC writes "South-West Coast", the
+#' model's seats (and the reference table) "South West Coast". A name that matches no seat is returned unchanged, so
+#' [night_check_coverage()] still stops on it.
+#' @param x Character: district names as the commission writes them.
+#' @param seats Character: the model's seat names (`rownames(state$shares)`).
+#' @return `x` with every matchable name replaced by its seat name.
+#' @keywords internal
+.night_seat_names <- function(x, seats) {
+  k <- function(v) gsub("[^a-z]", "", tolower(sub(" District$", "", v)))
+  ks <- k(seats); if (anyDuplicated(ks)) stop("NW22! two seats share a name once punctuation is ignored: ", paste(seats[duplicated(ks)], collapse = ", "), call. = FALSE)
+  i <- match(k(x), ks); out <- x; out[!is.na(i)] <- seats[i[!is.na(i)]]; out
 }
 
 #' Refuse a snapshot that is older than the one the last published JSON came from (NW8)
@@ -723,6 +740,19 @@ night_cycle <- function(cfg) {
     if (is.null(cache$ref)) cache$ref <- if (is.character(cfg$ref)) data.table::fread(cfg$ref, showProgress = FALSE) else cfg$ref
     if (is.null(cache$base) && !is.null(cfg$base_json)) cache$base <- jsonlite::fromJSON(cfg$base_json, simplifyVector = FALSE)
     stamp_t("load")
+    # every commission district name into the model's seat names (.night_seat_names: "South-West Coast")
+    seats <- rownames(cache$st$shares)
+    # ... and the reference table's, once: booths-vic2026-ref.csv writes "South West Coast" (booths-vic2018.csv even
+    # "Albertpark"), and match_booth_units() joins declaration votes on the exact district name, so that seat's early,
+    # postal and absent votes had no reference and its turnout fell to the state rate (11 Nov 2026).
+    if (!isTRUE(cache$ref_named) && "district" %in% names(cache$ref)) { cache$ref <- data.table::as.data.table(cache$ref); cache$ref$district <- .night_seat_names(cache$ref$district, seats)
+      bad <- setdiff(unique(cache$ref$district), seats)
+      if (length(bad)) message("NW22  reference-table districts matching no seat (left as they are): ", paste(utils::head(bad, 8), collapse = ", "))
+      cache$ref_named <- TRUE }
+    if (web) { webp$fp$district <- .night_seat_names(webp$fp$district, seats)
+      if (!is.null(webp$tcp)) webp$tcp$district <- .night_seat_names(webp$tcp$district, seats)
+    } else { feed$contests$district <- .night_seat_names(feed$contests$district, seats)
+      if (!is.null(cache$places) && !isTRUE(cache$places_named)) { cache$places$district <- .night_seat_names(cache$places$district, seats); cache$places_named <- TRUE } }
     if (web) {
       # Voting centres not yet on the page need a placeholder so they are projected: the reference table's ordinary
       # booths (last election's centres, on this year's districts), unless a 2026 list is given (cfg$places, district, booth).
@@ -730,6 +760,10 @@ night_cycle <- function(cfg) {
         cache$web_places <- if (!is.null(cfg$places)) data.table::fread(cfg$places, showProgress = FALSE)[, c("district", "booth")] else {
           message("NW21  no --places list: unreported voting centres are taken from the reference table's ordinary booths")
           unique(cache$ref[cache$ref$booth_type == "ordinary", c("district", "booth")]) }
+        cache$web_places$district <- .night_seat_names(cache$web_places$district, seats)
+        # a district with no listed centre would read 100% counted the moment its first centre reports (as NW10 on the feed)
+        miss <- setdiff(seats, cache$web_places$district)
+        if (length(miss) && !isTRUE(cfg$allow_unmatched)) stop(sprintf("NW10! %d seat(s) have no voting centre in the places list (%s)", length(miss), paste(utils::head(miss, 8), collapse = ", ")), call. = FALSE)
       }
       conv <- vec_web_booth_table(webp$fp, webp$tcp, places = cache$web_places)
     } else conv <- night_booth_table(feed, cache$lookup, cache$places)
@@ -743,12 +777,14 @@ night_cycle <- function(cfg) {
       enr <- if (web) {   # the website pages carry no enrolment: from cfg$enrolment (district, enrolment), e.g. the VEC candidate file
         if (is.null(cfg$enrolment)) stop("NW9! source_type web needs cfg$enrolment (district, enrolment) for the expected-votes denominator", call. = FALSE)
         if (is.null(cache$enrolment)) { e <- unique(data.table::fread(cfg$enrolment, showProgress = FALSE)[, c("district", "enrolment")])
-          e[, district := sub(" District$", "", district)]
+          e[, district := .night_seat_names(district, seats)]
           if (anyDuplicated(e$district)) stop("NW9! ", cfg$enrolment, " gives a district two enrolments", call. = FALSE)
           # the VEC website candidate list has an enrolment column that is EMPTY for every district (dress rehearsal,
           # 11 Nov 2026): every seat then fell back to the over-stating projected denominator. Use
           # external/reference/vec/2026/enrolment/enrolment-2026.csv (scripts/build_vec_enrolment_2026.R).
           if (!any(is.finite(e$enrolment) & e$enrolment > 0)) stop("NW9! ", cfg$enrolment, " has no usable enrolment figures (all empty or zero)", call. = FALSE)
+          miss <- setdiff(seats, e$district[is.finite(e$enrolment) & e$enrolment > 0])
+          if (length(miss) && !isTRUE(cfg$allow_unmatched)) stop(sprintf("NW9! %d seat(s) have no enrolment in %s (%s)", length(miss), cfg$enrolment, paste(utils::head(miss, 8), collapse = ", ")), call. = FALSE)
           cache$enrolment <- stats::setNames(e$enrolment, e$district) }
         cache$enrolment
       } else stats::setNames(feed$contests$enrolment, sub(" District$", "", feed$contests$district))

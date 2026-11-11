@@ -53,6 +53,13 @@ test_that("night_web_latest takes the newest finished snapshot and night_web_rea
   expect_error(night_web_read(b), "VWB7!")
 })
 
+test_that(".night_seat_names puts the VEC's district names into the model's seat names", {
+  seats <- c("South West Coast", "Nepean", "Narre Warren South")
+  expect_identical(.night_seat_names(c("South-West Coast", "Nepean District", "NARRE WARREN SOUTH"), seats), seats)
+  expect_identical(.night_seat_names("Atlantis", seats), "Atlantis")                 # unchanged, so NW7 still stops
+  expect_error(.night_seat_names("x", c("South West Coast", "South-West Coast")), "NW22!")
+})
+
 test_that("the live night uses cand_ref copy on the website source and off on the feed unless told", {
   expect_identical(.night_cand_ref_cfg(NULL, TRUE), "copy")
   expect_false(.night_cand_ref_cfg(NULL, FALSE))

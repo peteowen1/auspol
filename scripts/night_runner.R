@@ -5,8 +5,8 @@
 #     --out=<forecast-night.json> [--base-json=<published forecast json>] [--turnout=<output/council-district-stats-YYYY.csv of the previous election>] [--council-lean=<output/council-fp-YYYY.csv of the previous election: booth lean for parties new to a seat>] [--gap_k=5] [--tcp=1] [--allow-stub=0] [--allow-unmatched=0] [--allow-projected=0]
 #
 # THE VEC WEBSITE INSTEAD OF THE FEED (the VEC refused the feed, 11 Nov 2026): --source-type=web --source=<folder of
-# snapshot folders from scripts/fetch_vec_web_snapshot.R> --enrolment=external/reference/vec/2026/vec-candidates-2026.csv
-# [--places=<district,booth CSV of 2026 voting centres; default the reference table's ordinary booths>]. --setup is
+# snapshot folders from scripts/fetch_vec_web_snapshot.R> --enrolment=external/reference/vec/2026/enrolment/enrolment-2026.csv
+# --places=external/reference/vec/2026/voting-locations/places-2026.csv (scripts/build_vec_places_2026.R; without it, the reference table's ordinary booths). --setup is
 # then not read. --cand-ref=copy is the default on the website (off on the feed); --cand-ref=off turns it off.
 # --state is the afternoon forecast saved with AUSPOL_NIGHT_DUMP (scripts/night_replay.R header);
 # --ref is the booth table of the election BEFORE the one being counted (the state's `from`).

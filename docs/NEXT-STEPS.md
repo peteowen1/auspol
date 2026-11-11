@@ -20,12 +20,22 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   BUILT 11 Nov: `R/vec_web.R` (page parser, 2026 + 2022 layouts; booth table identical to the feed path on vic2022's
   final count, every booth cell), `scripts/fetch_vec_web_snapshot.R` (index page -> each district's two voting-centre
   pages -> stamped folder + manifest + DONE; tested on the live Nepean pages), `night_cycle(source_type = "web")` with
-  `--source-type=web --enrolment=external/reference/vec/2026/vec-candidates-2026.csv`, `cand_ref = "copy"` by default
+  `--source-type=web --enrolment=external/reference/vec/2026/enrolment/enrolment-2026.csv --places=external/reference/vec/2026/voting-locations/places-2026.csv`, `cand_ref = "copy"` by default
   there (Pete). End to end on 2022's pages: 87 districts published, ~65 s a cycle (parse 21 s, simulate 35 s).
   STILL OPEN: (1) the 2026 results index URL is only known on the night (the fetcher takes --index); (2) whether the
-  pages fill in during the count (draft question in Pete's Gmail, unsent); (3) a 2026 voting-centre list for --places
-  (default: last election's booths); (4) DONE 11 Nov: dress rehearsal of fetcher + loop on the live Nepean pages (found and fixed: the loop never saw website snapshots; the website candidate list has no enrolment, now `external/reference/vec/2026/enrolment/enrolment-2026.csv`, pass it as --enrolment); (5) the ITG booths build
+  pages fill in during the count (draft question in Pete's Gmail, unsent); (3) DONE 11 Nov: the 2026 voting-centre list, `scripts/build_vec_places_2026.R` from the VEC venues spreadsheet
+  (1,851 election-day centres, est. 1,603,331 ordinary votes; 310 early centres). Re-download the spreadsheet the week of the
+  election (it changes: Change Log sheet) and rerun. Only 61 of 200 guest joint centres (JVC) match a 2022 booth name: if one
+  never gets its own results row it stays a small uncounted placeholder. Same day, found and fixed: the night never matched
+  "South-West Coast" (model, website) to "South West Coast" (`booths-vic2026-ref.csv`), so that seat's declaration votes had no
+  reference and its turnout fell to the state rate; `.night_seat_names()` now puts every input's names into the model's.
+  Checked on all 88 districts with the 2022 pages under the live 2026 configuration (87 updated; Narracan has no 2022 page); (4) DONE 11 Nov: dress rehearsal of fetcher + loop on the live Nepean pages (found and fixed: the loop never saw website snapshots; the website candidate list has no enrolment, now `external/reference/vec/2026/enrolment/enrolment-2026.csv`, pass it as --enrolment); (5) the ITG booths build
   (`C:/dev/inthegame-blog/politics/night-maps/build-booths-2026.py`) also assumed the feed.
+- OPEN, replay evidence (found 11 Nov): `output/booths-vic2018.csv` spells 25 of 87 districts unlike the seats ("Albertpark",
+  "South Westcoast"), and the replay scripts pass it to `night_run_update()` without `.night_seat_names()`, so in every vic2022
+  replay those seats' declaration votes (early, postal, absent) had no reference (ordinary booths still matched by unique name).
+  The live night is fixed (night_cycle); the replays are not. Done when the replays apply the same names, vic2022 is rerun, and
+  pair_cal / cand_ref / the called rule are rescored on it (each used vic2022 as one of its nights).
 - OPEN: Pakenham DemosAU/TKR rows in `hand_keyed_primaries.csv` (fieldwork date UNCONFIRMED). Done when `seat_polls.csv`
   carries the poll: delete the hand-keyed rows.
 - OPEN, display only (class split itself closed, DECISIONS 2026-11-06): a final two of
