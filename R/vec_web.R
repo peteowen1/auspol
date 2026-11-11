@@ -24,7 +24,8 @@
 #' @param district District name (no " District").
 #' @return `district, booth, booth_type, candidate, party, votes`: one row per candidate per voting centre
 #'   (`booth_type` "ordinary"; "early" for an early voting centre row) and per declaration type (`booth` `NA`). A page
-#'   with no rows yet and a total of nothing parses to zero rows. Stops (VWB1) on a truncated page or an unknown layout,
+#'   with nothing counted yet (no rows, a total of nothing or none) gives one zero-vote row per candidate with
+#'   `booth_type` "none", which [vec_web_booth_table()] uses for the candidates only. Stops (VWB1) on a truncated page or an unknown layout,
 #'   and (VWB2) when the parsed rows do not sum to the page's own total.
 #' @export
 vec_web_parse <- function(path, district) {
@@ -44,11 +45,12 @@ vec_web_parse <- function(path, district) {
     cands <- vapply(hdr[cc], function(p) p[1], ""); parties <- vapply(hdr[cc], function(p) if (length(p) >= 2) p[2] else "", "")
     body <- cells[-1]
     # the 2023 variant (Narracan supplementary) puts the parties in a second header row with an empty first cell
-    r2 <- cells[[2]]
+    r2 <- if (length(cells) >= 2) cells[[2]] else list()   # a header-only page (nothing counted yet)
     if (!any(nzchar(parties)) && length(r2) >= max(cc) && !length(r2[[1]])) {
       parties <- vapply(r2[cc], function(p) if (length(p)) p[1] else "", ""); body <- cells[-(1:2)]
     }
   } else {
+    if (length(cells) < 2) stop("VWB1! ", district, " ", basename(path), ": the 2022 layout needs a candidate row and a party row", call. = FALSE)
     nm <- vapply(cells[[1]], function(p) if (length(p)) p[1] else "", ""); pt <- vapply(cells[[2]], function(p) if (length(p)) p[1] else "", "")
     cc <- which(nzchar(nm)); cc <- cc[cc > 1]; cands <- nm[cc]; parties <- pt[cc]
     body <- cells[-(1:2)]
@@ -77,13 +79,13 @@ vec_web_parse <- function(path, district) {
     else if (identical(section, "early")) { out[[length(out) + 1]] <- rec(cl, first(cl), "early"); have_early <- TRUE }
     else message("VWB3  ", district, " ", basename(path), ": row '", first(cl), "' outside a known section, skipped")
   }
-  empty <- data.table::data.table(district = character(), booth = character(), booth_type = character(), candidate = character(),
-                                  party = character(), votes = integer())
-  if (is.null(tot)) stop("VWB2! ", district, " ", basename(path), ": no total row", call. = FALSE)
   if (!length(out)) {
-    if (any(tot > 0, na.rm = TRUE)) stop("VWB2! ", district, " ", basename(path), ": no rows but the page total is ", paste(tot, collapse = ","), call. = FALSE)
-    return(empty)
+    if (!is.null(tot) && any(tot > 0, na.rm = TRUE)) stop("VWB2! ", district, " ", basename(path), ": no rows but the page total is ", paste(tot, collapse = ","), call. = FALSE)
+    # nothing counted yet: one zero-vote "none" row per candidate, so the district keeps its candidates and gets its
+    # placeholders in vec_web_booth_table() (zero rows stopped the whole state's cycle on NW7, ITG review 11 Nov 2026)
+    return(data.table::data.table(district = district, booth = NA_character_, booth_type = "none", candidate = cands, party = parties, votes = 0L))
   }
+  if (is.null(tot)) stop("VWB2! ", district, " ", basename(path), ": no total row", call. = FALSE)
   d <- data.table::rbindlist(out); d[, district := district]
   sums <- vapply(cands, function(c0) sum(d$votes[d$candidate == c0], na.rm = TRUE), numeric(1))
   if (!isTRUE(all(sums == tot, na.rm = TRUE)) || (anyNA(tot) && any(sums > 0)))
@@ -106,10 +108,13 @@ vec_web_booth_table <- function(fp, tcp = NULL, places = NULL, include_late = FA
   fp <- data.table::as.data.table(fp)
   if (!nrow(fp)) stop("VWB5! no first-preference rows", call. = FALSE)
   live <- data.table::copy(fp)
+  # every district's candidates, including one with nothing counted yet (vec_web_parse's "none" rows), which then
+  # gets placeholders like any other; the "none" rows themselves are not units
+  first_c <- live[!duplicated(live$district), list(district, candidate, party)]
+  live <- live[live$booth_type != "none"]
   live[is.na(booth), booth := paste0("(district ", booth_type, ")")]
   live[is.na(votes), votes := 0L]
   n_placeholder <- 0L; n_unlisted <- 0L
-  first_c <- live[!duplicated(live$district), list(district, candidate, party)]
   if (!is.null(places) && nrow(places)) {
     pl <- unique(data.table::as.data.table(places)[, list(district, booth)])
     ob <- unique(live[live$booth_type == "ordinary", list(district, booth)])
@@ -133,7 +138,7 @@ vec_web_booth_table <- function(fp, tcp = NULL, places = NULL, include_late = FA
   tc <- data.table::data.table(district = character(), booth = character(), vote_type = character(), candidate = character(),
                                party_raw = character(), votes = numeric())
   if (!is.null(tcp) && nrow(tcp)) {
-    t2 <- data.table::as.data.table(tcp)
+    t2 <- data.table::as.data.table(tcp); t2 <- t2[t2$booth_type != "none"]
     fpp <- unique(fp[, list(district, candidate, party_fp = party)])
     if (anyDuplicated(fpp[, list(district, candidate)])) stop("VWB4! a candidate name appears twice in one district's first preferences", call. = FALSE)
     t2 <- merge(t2, fpp, by = c("district", "candidate"), all.x = TRUE, sort = FALSE)

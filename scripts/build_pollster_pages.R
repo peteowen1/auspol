@@ -13,7 +13,7 @@
 # plus `method`: how pollsters enter the model, in plain words. Nothing here changes the model.
 #
 #   Rscript scripts/build_pollster_pages.R
-# Check codes PPG1-PPG4.
+# Check codes PPG1-PPG5.
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages({ library(data.table); library(jsonlite) })
@@ -79,7 +79,8 @@ fam_note <- function(fm) {
           paste(sprintf("%s (%s)", o, vapply(o, rng, "")), collapse = "; "), fm, rng(fm))
 }
 pages <- lapply(firms, function(fm) {
-  st <- card[card$firm == fm]; fi <- acc[acc$firm == fm][order(-year)]; cy <- byc[byc$firm == fm][order(-year)]
+  st <- card[card$firm == fm]; if (nrow(st) > 1L) stop("PPG5! two scorecard rows merge to one pollster name: ", fm)
+  fi <- acc[acc$firm == fm][order(-year)]; cy <- byc[byc$firm == fm][order(-year)]
   pl <- polls[polls$firm == fm][order(-date)]; lv <- live[live$firm == fm]
   live_txt <- lapply(LIVE, function(el) {
     x <- lv[lv$election == el]

@@ -36,6 +36,23 @@ test_that("vec_web_parse stops on a truncated page and on totals that do not add
   expect_error(vec_web_parse(tf, "Nepean"), "VWB2!")
 })
 
+test_that("a district with nothing counted yet keeps its candidates and gets placeholders (one empty page must not stop the state)", {
+  tf <- tempfile(fileext = ".html"); on.exit(unlink(tf))
+  h <- paste(readLines(fx("fp"), warn = FALSE), collapse = "\n")
+  # the 2026 layout cut to its header row: the table's first <tr> kept, every later row dropped
+  tb <- regmatches(h, regexpr("(?s)<table.*?</table>", h, perl = TRUE))
+  first_tr <- regmatches(tb, regexpr("(?s)<tr.*?</tr>", tb, perl = TRUE))
+  writeLines(sub(tb, sub("(?s)(<table[^>]*>).*$", paste0("\\1", first_tr, "</table>"), tb, perl = TRUE), h, fixed = TRUE), tf)
+  e <- vec_web_parse(tf, "Nepean")
+  expect_equal(nrow(e), 8L); expect_true(all(e$booth_type == "none")); expect_equal(sum(e$votes), 0L)
+  fp <- rbind(vec_web_parse(fx("fp"), "Nepean"), data.table::copy(e)[, district := "Empty"])
+  w <- suppressMessages(vec_web_booth_table(fp, places = data.table::data.table(district = "Empty", booth = c("A", "B"))))
+  expect_true("Empty" %in% w$live$district)                                  # so night_check_coverage sees it
+  expect_false(any(w$live$booth_type == "none"))
+  expect_setequal(w$live$booth[w$live$district == "Empty" & w$live$booth_type == "ordinary"], c("A", "B"))
+  expect_false(any(w$counted$district == "Empty"))                           # nothing counted there
+})
+
 test_that("night_web_latest takes the newest finished snapshot and night_web_read reads it", {
   root <- tempfile(); on.exit(unlink(root, recursive = TRUE))
   mk <- function(stamp, done = TRUE) { d <- file.path(root, stamp); dir.create(d, recursive = TRUE)
