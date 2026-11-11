@@ -94,3 +94,13 @@ himself stood and lost), Davenport +0.231, Elder +0.149, Kavel +0.126.
 
 Reading: the class fix is not the problem in sa2018; the defector's carried personal vote is. Worth a look at how a sitting member
 who loses preselection and runs as IND keeps his vote (`docs/plans/prereg-defector-pooling-2026-09-09.md`) before deciding this switch.
+
+## DECIDING RUN RESULT (all 35 elections, 20,000 sims, code t6602e46 at 89dda002; run 11 Nov 11pm, read 12 Nov)
+
+- Primary, pooled seat-winner log loss, 2,931 seats: 0.3089 -> 0.3114, +0.0025 (SE 0.0016, clustered on election): WORSE by more than 1 SE.
+- Share squared error on 6,807 changed cells (14 of 35 elections moved; 21 byte-identical): +15% (SE 8%).
+- AEF-7 ledger subset, 681 seats: 0.2523 -> 0.2514, -0.0009 (SE 0.0031): within 1 SE.
+- Per election (log loss change): sa2018 +0.0756, fed2013 +0.0158, vic2022 +0.0158, qld2017 +0.0116, fed2016 +0.0085,
+  fed2019 +0.0083, qld2015 +0.0035, nsw2023 +0.0014; wa2017 -0.0015, qld2024 -0.0022, fed2025 -0.0048, vic2014 -0.0069,
+  fed2022 -0.0082, sa2010 -0.0132.
+- Standard rule: worse by more than 1 SE, to Pete with the split. Pete, 12 Nov: do not ship. `AUSPOL_POLL_SERIES_CLASS` stays "code".

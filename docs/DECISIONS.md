@@ -4,6 +4,11 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-11-12 Poll columns by full party name (`AUSPOL_POLL_SERIES_CLASS=name`) NOT SHIPPED (Pete, 12 Nov).** All 35
+  elections at 20,000 sims: seat-winner log loss 0.3089 -> 0.3114, +0.0025 (SE 0.0016, worse by more than 1 SE), share
+  squared error on 6,807 moved cells +15%; AEF-7 a tie (-0.0009, SE 0.0031). Worst sa2018 +0.076, fed2013 +0.016,
+  vic2022 +0.016. Stays "code". `deciding-runs/20261111-0747-poll-series-class-all35-r2/results.txt`;
+  `plans/prereg-poll-series-class-2026-11-06.md` RESULT.
 - **2026-11-10 One Nation seat spread unchanged before 28 Nov (walk of Box Hill, Ashwood, Glen Waverley with Pete).**
   Senate-rank spread vs seat regressions, out of sample: Senate alone 3.44 points RMSE (308 seat-elections, 5 elections),
   trees on 11 inputs 3.23, gaining only on qld2017 and worse on qld2020/qld2024/nsw2023. On Victoria all three

@@ -69,7 +69,10 @@ STAGES <- list(
   list(f = "scripts/build_page.R",     what = "public page",             slow = FALSE),
   # The forecast as one JSON document + a history row, for the ITG page
   # (release-as-data-bus). Reads fit_seats_full.R's outputs only.
-  list(f = "scripts/build_forecast_json.R", what = "forecast JSON",       slow = FALSE)
+  list(f = "scripts/build_forecast_json.R", what = "forecast JSON",       slow = FALSE),
+  # One page per party and jurisdiction for the ITG site; after the forecast JSON, whose seat totals it reads.
+  # Optional: a stop here must not fail the run.
+  list(f = "scripts/build_party_pages.R", what = "party pages",           slow = FALSE, target = FALSE)
 )
 
 run <- function(stage) {

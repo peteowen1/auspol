@@ -554,6 +554,10 @@ jobs:
           if [ -s output/pollster-pages.json ]; then
             wrangler r2 object put "inthegame-data/auspol/pollster-pages.json" --file output/pollster-pages.json --content-type application/json --cache-control "public, max-age=300" --remote && echo "OK pollster-pages.json" || echo "::warning::pollster-pages.json upload failed"
           else echo "::warning::no output/pollster-pages.json -- the pollster pages keep yesterday's data"; fi
+          # Per-party pages (scripts/build_party_pages.R): optional, the same way.
+          if [ -s output/party-pages.json ]; then
+            wrangler r2 object put "inthegame-data/auspol/party-pages.json" --file output/party-pages.json --content-type application/json --cache-control "public, max-age=300" --remote && echo "OK party-pages.json" || echo "::warning::party-pages.json upload failed"
+          else echo "::warning::no output/party-pages.json -- the party pages keep yesterday's data"; fi
       - name: Keep a dated copy of the forecast on R2 (as-at history)
         # inthegame-blog#610: the live files above are overwritten every day, so
         # this keeps auspol/history/forecast-vic2026-<date>.json and
