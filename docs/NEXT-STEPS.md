@@ -16,8 +16,14 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - **Status 11 Nov 12:45am.** Published forecast = main as of PR #217 (10 Nov; 35 elections 0.3166, n 2,931; AEF-7
   0.2524 vs AEF 0.2825, n 681). dev is ahead of main by pair_r (off), deciding_run log fix, ONP exploratory scripts;
   dev CI red 0e621c04..636da0e2 (stale Rd), fixed bc92483d. Running: night-pair replay; 6am: poll-series retry.
-- OPEN (blocked): VEC feed access, chase sent 9 Nov 1:12pm, no reply (Gmail + Hotmail checked 11 Nov 12:35am). Done when the feed XML arrives: rerun
-  `fetch_vec_candidates.R` on it (must match the web list), then the ITG booths build (`C:/dev/inthegame-blog/politics/night-maps/build-booths-2026.py`).
+- OPEN, NIGHT SOURCE (before 28 Nov): the VEC REFUSED the results feed (email 11 Nov 10:24am: "monitor the VEC website";
+  official files on request in early 2027). Plan: a website reader for each district's two "results by voting centre"
+  pages (first prefs + 2CP), polled through the night, producing the table `night_booth_table()` makes. The 2026 page
+  layout differs from 2022 (`fetch_booths_vic2022.R` parse_vc fails FB3 on the Nepean 2026 by-election pages: name and
+  party in one header cell, Ordinary / Early / Declaration sections, totals at the top); booth rows, early, postal,
+  absent and candidate names are all there. UNCONFIRMED: whether those pages fill in DURING the night (no archived
+  mid-count capture; LIFE holds a 2-question draft email for Pete to send). Fallback if not: district-level totals.
+  The ITG booths build (`C:/dev/inthegame-blog/politics/night-maps/build-booths-2026.py`) also assumed the feed.
 - OPEN: Pakenham DemosAU/TKR rows in `hand_keyed_primaries.csv` (fieldwork date UNCONFIRMED). Done when `seat_polls.csv`
   carries the poll: delete the hand-keyed rows.
 - OPEN, display only (class split itself closed, DECISIONS 2026-11-06): a final two of
