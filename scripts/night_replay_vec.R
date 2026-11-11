@@ -42,6 +42,14 @@ if (is.null(lk)) stop("NRV1! no Candidates XML in ", setup, " (the folder must h
 P <- fread("output/published-predictions.csv"); keep_p <- P$pair == pair_lbl; P <- P[keep_p]
 win <- P[P$won == TRUE, list(seat, party)]
 seats <- rownames(st$shares)
+# Every input's district names into the model's seats, as night_cycle() does on the live night: booths-vic2018.csv
+# spells 25 of 87 districts its own way ("Albertpark", "South Westcoast"), so before 12 Nov 2026 those seats'
+# early, postal and absent votes had no reference in every vic2022 replay.
+nm0 <- unique(ref$district); ref$district <- .night_seat_names(ref$district, seats)
+if (!is.null(pl) && "district" %in% names(pl)) pl$district <- .night_seat_names(pl$district, seats)
+if ("district" %in% names(turn)) turn$district <- .night_seat_names(turn$district, seats)
+cat(sprintf("NRV5 reference districts renamed to seat names: %d of %d; matching no seat: %s\n",
+            sum(!nm0 %in% seats), length(nm0), paste(setdiff(unique(ref$district), seats), collapse = ", ")))
 cat(sprintf("NRV1 %s: %d seats in state, %d snapshots %s to %s, %d sims; label %s (surge-fade %s, tcp-center %s, tcp-flow-floor %s); %d winners to score\n",
             pair_lbl, length(seats), length(files), stamp[1], stamp[length(stamp)], nrow(st$swd), label, surge_fade, tcp_center, tcp_floor, nrow(win))); cat(sprintf("NRV1 tcp-own-fp %s, cand-ref %s, pair-r %s, pair-cal %s\n", own_fp, cand_ref, if (is.null(pair_r)) "off" else format(pair_r), if (is.null(pair_cal)) "off" else paste(format(pair_cal), collapse = ",")))
 
@@ -54,7 +62,8 @@ for (k in seq_along(files)) {
   if (substr(stamp[k], 1, 8) > "20221126") tm <- sprintf("%d:%s", 24L + as.integer(substr(stamp[k], 10, 11)), substr(stamp[k], 12, 13))
   if (tm %in% ck$done) next
   feed <- vec_feed_read_lh(files[k])
-  conv <- suppressMessages(night_booth_table(feed, lk, pl))
+  feed$contests$district <- .night_seat_names(feed$contests$district, seats)
+  conv <-suppressMessages(night_booth_table(feed, lk, pl))
   enr <- stats::setNames(feed$contests$enrolment, sub(" District$", "", feed$contests$district))
   expected <- night_expected_votes(enr, night_turnout_table(turn, ref), "night")
   r <- night_run_update(st, conv, ref, gap_k = 5, total = "expected", expected = expected, use_tcp = TRUE,

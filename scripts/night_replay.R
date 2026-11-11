@@ -29,7 +29,11 @@ bl <- file.path("output", sprintf("booths-vic%d.csv", st$to)); br <- file.path("
 bt <- file.path("output", "booths", sprintf("vic%d-booth-tcp.csv", st$to))
 for (f in c(bl, br, if (use_tcp) bt)) if (!file.exists(f)) stop("NRP1! missing ", f)
 L <- fread(bl, showProgress = FALSE); R <- fread(br, showProgress = FALSE); Tc <- if (use_tcp) fread(bt, showProgress = FALSE) else NULL
-cat(sprintf("NRP1  %s: %d seats (%d scored), %d sims, 2CP %s, fractions %s\n", st$pair, nrow(st$shares), length(st$keep), sims,
+# booth tables' district names into the state's seat names, as night_cycle() does live ("Albertpark", 12 Nov 2026)
+for (nm in c("L", "R", "Tc")) { d <- get(nm); if (!is.null(d) && "district" %in% names(d)) { d$district <- .night_seat_names(d$district, rownames(st$shares)); assign(nm, d) } }
+cat(sprintf("NRP5  booth districts matching no seat: live %s; previous %s\n",
+            paste(setdiff(unique(L$district), rownames(st$shares)), collapse = ", "), paste(setdiff(unique(R$district), rownames(st$shares)), collapse = ", ")))
+cat(sprintf("NRP1 %s: %d seats (%d scored), %d sims, 2CP %s, fractions %s\n", st$pair, nrow(st$shares), length(st$keep), sims,
             if (use_tcp) "ON" else "off", paste(fracs, collapse = ",")))
 
 run_one <- function(fr) {
