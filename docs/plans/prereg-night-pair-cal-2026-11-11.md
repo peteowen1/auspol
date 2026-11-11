@@ -67,3 +67,43 @@ on the same replay; it is not up for shipping again.
   above 1.
 - Reported, not decisive: v1 against base on the fixed replay; end-of-night seats wrong; Albert Park and Hawthorn
   vic2022 (v1's two worst seats, +0.27 and +0.15) under v2.
+
+## RESULT (11 Nov 2026, 1:13pm): PASS, shipped as the live night default
+
+Run: `deciding-runs/20261111-1130-night-pair-cal-r2/` (code 3340acbf; the first job, `20261111-0900-night-pair-cal/`,
+is VOID for v2: its fits used wrong-pair rows whose party codes were classified as names, so every wrong pair read as
+share 0). 20,000 sims, same seeds, fixed replay, scored by `scripts/score_night_pair_replays.R <dir> cal 19:00,20:00`.
+
+Time-forward fits (alpha, beta): fed2022 2.944, 1 (prior means); vic2022 0.980, 0.584 (fed2022: 151 seats, 14 wrong);
+fed2025 1.068, 0.638 (fed2022 + vic2022: 238 seats, 19 wrong). The fit trusts a shown pair LESS than v1 at middling p
+(fed2025: p 0.5 -> q 0.74, v1 0.96), because the model's wrong pairs often sat near evens (fed2022 median 0.585).
+
+Night-average seat-winner log loss, v2 minus base (lower is better; SE clustered on seat):
+
+| night | seats | base | v2 | diff | SE |
+|---|---|---|---|---|---|
+| fed2022 | 151 | 0.07440 | 0.07241 | -0.00199 | 0.00106 |
+| fed2025 | 150 | 0.14282 | 0.13865 | -0.00417 | 0.00351 |
+| vic2022 | 88 | 0.06287 | 0.06568 | +0.00281 | 0.00168 |
+| pooled | 389 | | | **-0.00175** | 0.00147 |
+| pooled without Monash | 388 | | | -0.00041 | 0.00061 |
+
+Clauses: pooled falls TRUE; no night worse by > 0.005 TRUE (vic2022 +0.0028); Monash Liberal above base at 7pm
+(0.061 vs 0.026) and 8pm (0.046 vs 0.006) TRUE; without-Monash not worse by > 0.002 TRUE; no seat above 1 TRUE (max
+1.000000). **PASS.**
+
+Read with: the pooled gain is 1.2 SE and mostly Monash (-0.52 on that seat; without it -0.00041, 0.7 SE). Monash still
+ends near 0.005 for the Liberal: v2 moves only ~3% of draws when the model gave the pair ~0. vic2022 is worse
+because the VEC's wrong pairs get some trust: Albert Park +0.132 (VEC showed ALP v GRN; the model had the pair at
+0.03 by 9pm and v2 still moved 4,311 draws; ALP's chance dipped 0.24 at 9pm, 0.989 at the end), Hawthorn +0.064.
+End-of-night seats wrong unchanged (2 / 5 / 1).
+
+Reported, not decisive: v1 on the fixed replay pooled -0.00147 (SE 0.00166) but FAILS the night clause. Largest
+|win prob change| where the base leader was above 0.9: fed2022 0.082 (Macnamara), fed2025 0.093 (Monash), vic2022
+0.236 (Albert Park). Melbourne fed2025 untestable (wrong night pair, no booth TCP).
+
+Lapse, recorded: the fitted values were to go into `docs/CONSTANTS.md` before the arm ran; they were written after.
+
+Shipped: `night_cycle()` runs at `.NIGHT_PAIR_CAL` = 0.945244, 0.681490 (fitted on all three nights, 388 seats, 33
+wrong, r 0.944), `--tcp-pair-cal=off` for the old cliff. `night_run_update()`'s own default stays NULL, so the replays
+keep a base arm.

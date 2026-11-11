@@ -631,6 +631,23 @@ night_publish_json <- function(doc, out_file, min_seats = 1L) {
   out_file
 }
 
+# The calibrated night-pair prior the live night runs at (docs/plans/prereg-night-pair-cal-2026-11-11.md, PASSED on the
+# three real-night replays 11 Nov, deciding-runs/20261111-1130-night-pair-cal-r2/). Fitted by scripts/fit_night_pair_cal.R
+# on fed2022 + vic2022 + fed2025 (388 seats with a shown pair, 33 wrong), r 0.944; docs/CONSTANTS.md. Refit after any
+# new real night.
+.NIGHT_PAIR_CAL <- c(0.945244, 0.681490)
+
+# cfg$tcp_pair_cal: NULL or "fitted" -> .NIGHT_PAIR_CAL; "off" -> NULL (the pair_min cliff); "alpha,beta" or a
+# length-2 numeric -> that pair.
+.night_pair_cal_cfg <- function(x) {
+  if (is.null(x) || identical(x, "fitted")) return(.NIGHT_PAIR_CAL)
+  if (identical(x, "off")) return(NULL)
+  v <- if (is.character(x)) suppressWarnings(as.numeric(strsplit(x, ",", fixed = TRUE)[[1]])) else as.numeric(x)
+  if (length(v) != 2L || any(!is.finite(v)))
+    stop("NW19! tcp_pair_cal must be \"fitted\", \"off\" or \"alpha,beta\" (got ", paste(format(x), collapse = ","), ")", call. = FALSE)
+  v
+}
+
 #' One election-night cycle
 #'
 #' @param cfg List: `source`, `archive`, `setup`, `state` (RDS path or already-read list), `ref` (booth CSV path),
@@ -638,6 +655,8 @@ night_publish_json <- function(doc, out_file, min_seats = 1L) {
 #'   `turnout` (previous-election `council-district-stats-<year>.csv`, for its enrolment; turnout comes from the `ref` Assembly table; without it the cycle falls
 #'   back to the over-confident projected one and says so), `allow_unmatched` (NW7 and NW10 off; sample-vs-vic2022 test only), `allow_projected` (accept the over-confident
 #'   projected denominator when `turnout` is missing; otherwise NW9 stops the cycle),
+#'   `tcp_pair_cal` (`"fitted"` by default: the calibrated night-pair prior, `docs/plans/prereg-night-pair-cal-2026-11-11.md`;
+#'   `"off"` for the old 0.2 pair cliff; or `"alpha,beta"`),
 #'   `last_stamp` (skip when the newest snapshot has this stamp), `cache` (environment for the state and lookup).
 #' @return List: `status` ("ok", "no_new" or "failed"), `stamp`, `timings` (seconds per step), `message`, `summary`.
 #' @export
@@ -716,7 +735,7 @@ night_cycle <- function(cfg) {
                             sims = cfg$sims, use_tcp = !isFALSE(cfg$use_tcp), lean = cache$lean, early_frac = ef,
                             surge_fade = !isFALSE(cfg$surge_fade), tcp_center = if (is.null(cfg$tcp_center)) "median" else cfg$tcp_center,
                             tcp_flow_floor = if (is.null(cfg$tcp_flow_floor)) 0.01 else cfg$tcp_flow_floor,
-                            tcp_own_fp = isTRUE(cfg$tcp_own_fp)); stamp_t("update_simulate")
+                            tcp_own_fp = isTRUE(cfg$tcp_own_fp), tcp_pair_cal = .night_pair_cal_cfg(cfg$tcp_pair_cal)); stamp_t("update_simulate")
     res$denominator <- denom; res$n_placeholder <- conv$n_placeholder_booths; res$n_unlisted <- conv$n_unlisted_booths
     if (length(res$nu$fallback_projected)) message("NW12  ", length(res$nu$fallback_projected), " seat(s) fell back to the projected denominator (no usable expected votes): ", paste(res$nu$fallback_projected, collapse = ", "))
     bk <- night_booth_results_safe(conv, cache$ref)

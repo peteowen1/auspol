@@ -624,3 +624,13 @@ test_that("rows spliced in from an older election give the booth swing only, not
   ref$ref_year[1] <- NA
   expect_error(night_turnout_table(stats, ref), "NW18!")
 })
+
+test_that("the live night cycle runs at the fitted pair_cal unless told otherwise", {
+  expect_identical(.night_pair_cal_cfg(NULL), .NIGHT_PAIR_CAL)
+  expect_identical(.night_pair_cal_cfg("fitted"), .NIGHT_PAIR_CAL)
+  expect_null(.night_pair_cal_cfg("off"))
+  expect_equal(.night_pair_cal_cfg("1.5,0.7"), c(1.5, 0.7))
+  expect_error(.night_pair_cal_cfg("1.5"), "NW19!")
+  expect_error(.night_pair_cal_cfg("a,b"), "NW19!")
+  expect_length(.NIGHT_PAIR_CAL, 2L)
+})
