@@ -12,6 +12,11 @@ night_cycle(cfg)
 \code{turnout} (previous-election \verb{council-district-stats-<year>.csv}, for its enrolment; turnout comes from the \code{ref} Assembly table; without it the cycle falls
 back to the over-confident projected one and says so), \code{allow_unmatched} (NW7 and NW10 off; sample-vs-vic2022 test only), \code{allow_projected} (accept the over-confident
 projected denominator when \code{turnout} is missing; otherwise NW9 stops the cycle),
+\code{source_type} (\code{"web"}: \code{source} holds VEC website snapshot folders, \code{\link[=night_web_latest]{night_web_latest()}}; with it \code{enrolment}
+(CSV \verb{district, enrolment}), optional \code{places} (CSV \verb{district, booth} of this year's voting centres; default the
+reference table's ordinary booths); anything else: the VEC feed),
+\code{cand_ref} (\code{"copy"} by default on the website source, off on the feed; \code{"off"}, \code{"copy"}, \code{"move"}:
+\code{\link[=night_booth_update]{night_booth_update()}}),
 \code{tcp_pair_cal} (\code{"fitted"} by default: the calibrated night-pair prior, \verb{docs/plans/prereg-night-pair-cal-2026-11-11.md};
 \code{"off"} for the old 0.2 pair cliff; or \code{"alpha,beta"}),
 \code{last_stamp} (skip when the newest snapshot has this stamp), \code{cache} (environment for the state and lookup).}

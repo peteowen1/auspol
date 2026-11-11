@@ -4,7 +4,7 @@
 # read each district's two "results by voting centre" pages instead: first preferences and the two-candidate count.
 # vec_web_parse() reads one page (the 2026 layout, and the 2022 one so the path can be checked against the 2022 feed);
 # vec_web_booth_table() turns a set of parsed pages into exactly the list night_booth_table() makes from the feed.
-# Check codes VWB1-VWB6.
+# Check codes VWB1-VWB5 and VWB7 (VWB6 is scripts/vec_web_booths.R's summary line).
 
 .vw_cells <- function(r) {
   cc <- regmatches(r, gregexpr("(?s)<t[hd][^>]*>.*?</t[hd]>", r, perl = TRUE))[[1]]
@@ -146,4 +146,37 @@ vec_web_booth_table <- function(fp, tcp = NULL, places = NULL, include_late = FA
     tc <- t2[, list(district, booth, vote_type = booth_type, candidate, party_raw = party_fp, votes)]
   }
   list(live = live[], counted = counted[], tcp = tc[], unmapped = character(), n_placeholder_booths = n_placeholder, n_unlisted_booths = n_unlisted)
+}
+
+#' Newest complete website snapshot
+#'
+#' A website snapshot is a folder `<source>/<YYYYMMDD_HHMMSS>/` written by `scripts/fetch_vec_web_snapshot.R`: one
+#' first-preference and one two-candidate page per district, `manifest.csv` (`district, fp, tcp`), and a `DONE` marker
+#' written last, so a folder still being fetched is never read.
+#' @param source Folder holding the snapshot folders.
+#' @return Path of the newest folder with a `DONE` marker, or `NA`.
+#' @export
+night_web_latest <- function(source) {
+  d <- list.dirs(source, recursive = FALSE, full.names = TRUE)
+  d <- d[grepl("^[0-9]{8}_[0-9]{6}$", basename(d)) & file.exists(file.path(d, "DONE"))]
+  if (!length(d)) NA_character_ else d[order(basename(d), decreasing = TRUE)][1]
+}
+
+#' Read a website snapshot into first-preference and two-candidate rows
+#'
+#' @param snap A snapshot folder ([night_web_latest()]).
+#' @return List: `fp`, `tcp` ([vec_web_parse()] rows over every district in the manifest), `districts`.
+#'   Stops (VWB7) on a missing manifest or page; a page that fails its own checks stops the cycle too (VWB1, VWB2),
+#'   so a half-parsed snapshot is never published.
+#' @export
+night_web_read <- function(snap) {
+  mf <- file.path(snap, "manifest.csv")
+  if (!file.exists(mf)) stop("VWB7! no manifest.csv in ", snap, call. = FALSE)
+  m <- data.table::fread(mf, showProgress = FALSE)
+  if (!nrow(m) || !all(c("district", "fp", "tcp") %in% names(m))) stop("VWB7! ", mf, " needs district, fp, tcp and at least one row", call. = FALSE)
+  miss <- c(m$fp, m$tcp)[!file.exists(file.path(snap, c(m$fp, m$tcp)))]
+  if (length(miss)) stop("VWB7! ", length(miss), " page(s) listed in the manifest are missing: ", paste(utils::head(miss, 4), collapse = ", "), call. = FALSE)
+  fp <- data.table::rbindlist(lapply(seq_len(nrow(m)), function(i) vec_web_parse(file.path(snap, m$fp[i]), m$district[i])))
+  tcp <- data.table::rbindlist(lapply(seq_len(nrow(m)), function(i) vec_web_parse(file.path(snap, m$tcp[i]), m$district[i])))
+  list(fp = fp, tcp = tcp, districts = m$district)
 }
