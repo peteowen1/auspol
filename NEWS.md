@@ -1,3 +1,8 @@
+# auspol 0.4.156
+
+- **Party pages**: `scripts/build_party_pages.R` writes each party's record by jurisdiction and election (seats, first preferences, backtest and live numbers; state branches are separate parties). The forecast run uploads `party-pages.json` for inthegame.blog. Every federal Country Liberal label is filed as CLP (Solomon 2004 had counted as a Liberal win), with a check that fails if one is not.
+- **Poll columns by full party name refused** (`AUSPOL_POLL_SERIES_CLASS` stays `"code"`; Pete, 12 Nov): all 35 elections, seat log loss +0.0025 (SE 0.0016), share error +15%.
+
 # auspol 0.4.155
 
 - **Election night reads the VEC results website** (the VEC refused the live feed, 11 Nov). `R/vec_web.R` parses each district's "results by voting centre" pages, `scripts/fetch_vec_web_snapshot.R` saves them, and `night_cycle(source_type = "web")` runs on them; on 2022's final count the booth tables match the feed path cell for cell. 2026 enrolment and voting centres come from the VEC's own files (`scripts/build_vec_enrolment_2026.R`, `scripts/build_vec_places_2026.R`), and every input's district names now match the model's seats ("South-West Coast").
