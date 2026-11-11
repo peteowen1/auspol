@@ -61,8 +61,12 @@ vw_parse <- function(f, district) {
       out[[length(out) + 1]] <- data.table(booth = first(cl), booth_type = section, candidate = cands, party = parties, votes = val(cl))
     else cat(sprintf("VWB2  %s %s: row '%s' outside a known section, skipped\n", district, basename(f), first(cl)))
   }
-  d <- rbindlist(out); d[, district := district]
   if (is.null(tot)) stop("VWB2! ", district, " ", basename(f), ": no total row")
+  if (!length(out)) {   # an empty count (before 6pm): no booth rows yet; fine only while the page's own total is nothing
+    if (any(tot > 0, na.rm = TRUE)) stop("VWB2! ", district, " ", basename(f), ": no booth rows but the page total is ", paste(tot, collapse = ","))
+    return(data.table(district = character(), booth = character(), booth_type = character(), candidate = character(), party = character(), votes = integer()))
+  }
+  d <- rbindlist(out); d[, district := district]
   ours <- d[, list(v = sum(votes, na.rm = TRUE)), by = candidate][match(cands, candidate)]$v
   if (!isTRUE(all(ours == tot, na.rm = TRUE)) || anyNA(tot) && any(ours > 0))
     stop("VWB2! ", district, " ", basename(f), ": parsed totals ", paste(ours, collapse = ","), " vs page ", paste(tot, collapse = ","))

@@ -221,7 +221,8 @@ test_that("a bare code given as the NAME is read as that code (booth two-candida
   expect_equal(classify_party("KAP"), classify_party("Katter's Australian Party (KAP)"))
   expect_equal(classify_party("SAB"), classify_party("SA-BEST"))
   # CLP stays ambiguous (Country Liberal NT / Country Labor NSW): not read as a code
-  expect_identical(classify_party("CLP"), classify_party("CLP", ""))
+  # bare "CLP" still goes through the NT name rule (LNP) exactly as before, not through the new code path
+  expect_equal(classify_party("CLP"), "LNP")
   # a supplied code still wins over the name
   expect_equal(classify_party("LNP", "ALP"), "ALP")
   # full names are untouched
