@@ -45,3 +45,40 @@ The live VEC booth table (`night_booth_table()`) carries no candidate names, so 
 real-night replay (it stops with NX15). vic2022 has 0 targets, so nothing is lost for the test: the real-night
 replays are fed2022 and fed2025 only, and vic2022 stays the byte-identity check on the simulated replay. Shipping to
 the live vic2026 night would first need candidate names in `night_booth_table()` (the VEC feed has them).
+
+## RESULT (11 Nov 2026): FAIL, `cand_ref` stays off
+
+Run: `deciding-runs/20261111-night-cand-ref/` (code 7f921437; scored by `scripts/score_night_cand_ref.R`). Relabelled
+per election, as the replays printed: fed2022 4, fed2025 8, nsw2023 7, qld2024 2, sa2026 4, wa2025 4, vic2022 0.
+
+Simulated replays (1,000 sims, fractions 0.05 to 1), night-average seat-winner log loss, cand_ref minus base (lower
+is better):
+
+| election | seats | targets | all seats | targets | largest non-target change |
+|---|---|---|---|---|---|
+| fed2022 | 151 | 4 | +0.0000 | +0.0003 | 0.0003 |
+| fed2025 | 150 | 8 | **+0.0130** | +0.2437 | 0.0016 |
+| nsw2023 | 93 | 7 | +0.0004 | +0.0004 | 0.0344 |
+| qld2024 | 93 | 2 | -0.0070 | -0.3255 | 0 |
+| sa2026 | 47 | 4 | -0.0004 | -0.0042 | 0 |
+| wa2025 | 59 | 4 | -0.0008 | -0.0123 | 0.0031 |
+| vic2022 | 88 | 0 | 0 | none | 0 (byte-identical, as required) |
+
+PRIMARY simulated (29 targets): +0.0426 (SE 0.0730). REAL-NIGHT: +0.2429 (SE 0.2434, 12 targets; fed2022 all seats +0.0000, fed2025 all seats +0.0194, both 20,000 sims at the live
+pair_cal). Monash again carries it: +2.92 (base 4.55 already at the floor much of the night); Moore -0.005, Calare -0.001.
+
+Clauses: primary falls FALSE; no election worse by > 0.002 FALSE (fed2025 +0.0130); Mirani known answer FAILS as
+written (LNP at fraction 1: 0.006 both ways); no seat above 1 TRUE; vic2022 identical TRUE. **FAIL.**
+
+Read with:
+- Monash fed2025 (+1.99) carries the failure. Relabelling Broadbent's 2022 Liberal votes as his new independent class
+  leaves the Liberal class with no reference of its own, so the new Liberal candidate is projected from almost
+  nothing: at 5% counted, Liberal first preferences 11.2 with the switch against 31.7 without (actual 31.8). Base
+  already called Monash wrong (Liberal 0.024 at 5%); the switch pushed it to the floor. By full count both agree.
+- Helped: Mirani -0.65, Kalgoorlie -0.05, Moore -0.04, MacKillop -0.02.
+- The Mirani known answer was set at fraction 1, where the switch cannot act any more (every unit counted on the
+  standard-name 2CP file); it moves at half count (LNP 0.509 -> 0.578 in the 11 Nov smoke test). The arm runs; the
+  known answer was the wrong one to register. Recorded, not used to pass anything.
+- Lesson for any next version: COPY, not move. The old class keeps its reference and the returning candidate brings
+  their own pattern as well. That design is chosen after seeing these results, so it needs its own prereg and a
+  held-out test (all 29 targets here are now seen); not built.

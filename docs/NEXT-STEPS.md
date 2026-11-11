@@ -112,9 +112,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   blanked (Monash among 15/21 seats), fixed 59dff525; earlier federal night numbers (the called-rule test) ran on the old filter.
   Mirani qld2024 traced 11 Nov: (1) FIXED, classify_party() filed bare codes (LNP/ALP/LIB/KAP in the qld/sa/vic2006-10
   booth 2CP files) as OTH, so the counted pair was never matched (qld2024 half-count log loss 0.2296 -> 0.1668).
-  (2) IN FLIGHT: Pete chose by-candidate booth reference (11 Nov). `cand_ref` built OFF (7f921437), both-ways job
-  `deciding-runs/20261111-night-cand-ref/` (started 3:30pm 11 Nov, ~1.5 h); done when `results.txt` is read against
-  `plans/prereg-night-candidate-ref-2026-11-11.md`. To use it LIVE: `night_booth_table()` must carry candidate names. Replays now write
+  (2) `cand_ref` (by-candidate booth reference, Pete's choice) FAILED its prereg 11 Nov and stays OFF (7f921437):
+  Monash 2025 got worse (moving Broadbent's Liberal votes left the new Liberal with no reference). Mirani still wrong at
+  full count. Possible next version, NOT built: copy the candidate's pattern, keep the party's reference (Pete to decide). Replays now write
   every step and take `--resume=1` (9300e7df). OPEN, small: the partial files are keyed by night and label only, so a
   resume with the same label and different flags would mix configurations; put a fingerprint of the flags in them
   (review 11 Nov). Not while a replay job is running: the scripts are re-read mid-run.
