@@ -26,7 +26,9 @@ say <- function(...) { l <- paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "  "
 last_ok <- NULL; fails <- 0L; last_try <- NULL; cycles <- 0L
 say("loop start: every ", every, "s, source ", cfg$source)
 repeat {
-  newest <- night_snapshot_stamp(night_fetch_snapshot(cfg$source))
+  # the website source's snapshots are folders (night_web_latest()); the feed's are files (night_fetch_snapshot()).
+  # Before 11 Nov 2026 this read the feed only, so a --source-type=web loop waited forever (dress rehearsal).
+  newest <- night_snapshot_stamp(if (identical(cfg$source_type, "web")) night_web_latest(cfg$source) else night_fetch_snapshot(cfg$source))
   skip <- identical(newest, last_ok) || (identical(newest, last_try) && fails >= retries)
   if (!is.na(newest) && !skip) {
     r <- tryCatch(night_cycle(cfg), error = function(e) list(status = "failed", stamp = newest, summary = paste("FAILED (uncaught):", conditionMessage(e))))

@@ -745,6 +745,10 @@ night_cycle <- function(cfg) {
         if (is.null(cache$enrolment)) { e <- unique(data.table::fread(cfg$enrolment, showProgress = FALSE)[, c("district", "enrolment")])
           e[, district := sub(" District$", "", district)]
           if (anyDuplicated(e$district)) stop("NW9! ", cfg$enrolment, " gives a district two enrolments", call. = FALSE)
+          # the VEC website candidate list has an enrolment column that is EMPTY for every district (dress rehearsal,
+          # 11 Nov 2026): every seat then fell back to the over-stating projected denominator. Use
+          # external/reference/vec/2026/enrolment/enrolment-2026.csv (scripts/build_vec_enrolment_2026.R).
+          if (!any(is.finite(e$enrolment) & e$enrolment > 0)) stop("NW9! ", cfg$enrolment, " has no usable enrolment figures (all empty or zero)", call. = FALSE)
           cache$enrolment <- stats::setNames(e$enrolment, e$district) }
         cache$enrolment
       } else stats::setNames(feed$contests$enrolment, sub(" District$", "", feed$contests$district))
