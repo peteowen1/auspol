@@ -104,7 +104,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   live night default, 11 Nov (prereg RESULT in `plans/prereg-night-pair-cal-2026-11-11.md`). Monash still ends wrong
   (Liberal ~0.005): the next lever is the model's own pair prior, not trust in the AEC. Found on the way: the federal replay dropped every pair the AEC later
   blanked (Monash among 15/21 seats), fixed 59dff525; earlier federal night numbers (the called-rule test) ran on the old filter.
-  Still: trace Mirani qld2024 (flows). Replays now write every step and take `--resume=1` (9300e7df).
+  Mirani qld2024 traced 11 Nov: (1) FIXED, classify_party() filed bare codes (LNP/ALP/LIB/KAP in the qld/sa/vic2006-10
+  booth 2CP files) as OTH, so the counted pair was never matched (qld2024 half-count log loss 0.2296 -> 0.1668).
+  (2) OPEN, needs Pete: still wrong at full count (LNP 0.008) because the late postal/absent votes, 57.8% LNP, are
+  projected from a vote-type gap learned by party CLASS, and Andrew went ONP 2020 -> KAP 2024. Replays now write
+  every step and take `--resume=1` (9300e7df).
   History: `backlog/journal-2026-11-11-queue-history.md`.
   Also open: statewide draws shrink by the national mean counted, not the seat's; projection sd floors at 0.26;
   `--tcp-own-fp` built, OFF (needs flow uncertainty in the draws; `plans/prereg-flow-sd-2026-10-31.md` REFUSED).

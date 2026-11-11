@@ -26,6 +26,16 @@ classify_party <- function(name, code = NULL) {
   n <- tolower(trimws(ifelse(is.na(name), "", name)))
   cd <- if (is.null(code)) rep("", length(n)) else toupper(trimws(ifelse(is.na(code), "", code)))
   if (length(cd) != length(n)) stop("code must be the same length as name")
+  # A NAME that is exactly one of the unambiguous codes below is read as that code. Several booth two-candidate
+  # files store the commission's code in party_raw ("LNP", "ALP", "LIB", "KAP", "IND"; qld2020/2024, sa2018-2026,
+  # vic2006/2010), and every reader passed it as a name, so "LNP" fell through every name rule to OTH: the night
+  # model then never matched Mirani's counted pair (found 11 Nov 2026). Only where no code was given, and never
+  # "CLP" (Country Liberal in the NT, Country Labor in NSW), which is not in the list.
+  bare <- toupper(trimws(ifelse(is.na(name), "", name)))
+  .codes <- c("ALP", "ALP1", "LP", "LNP", "NP", "LNQ", "NAT", "NATS", "LIB", "GRN", "GVIC", "TG", "ON", "PHON", "ONP",
+              "IND", "SFF", "DLP", "KAP", "SAB")
+  use_name <- !nzchar(cd) & bare %in% .codes
+  cd[use_name] <- bare[use_name]
 
   out <- rep(NA_character_, length(n))
   set <- function(idx, cls) out[is.na(out) & idx] <<- cls
@@ -42,6 +52,10 @@ classify_party <- function(name, code = NULL) {
   # jurisdiction, which is why "CLP" above is deliberately excluded.
   set(cd == "IND", "IND")
   set(cd == "SFF", "OTH_RIGHT")
+  # Katter's Australian Party and SA-BEST: the ECQ and ECSA two-candidate files give only these codes. Same classes
+  # their full names already take below ("katter" -> OTH_RIGHT; "sa-best" -> IND).
+  set(cd == "KAP", "OTH_RIGHT")
+  set(cd == "SAB", "IND")
   # "DLP" means the Democratic Labour Party everywhere it appears and is not
   # ambiguous the way "CLP" is, so it is safe here -- and it is needed here,
   # because the NAME rule below was reached first for three federal elections.
