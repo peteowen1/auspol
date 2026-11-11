@@ -74,9 +74,9 @@ fp_now_sum <- sum(vapply(fp_now, `[[`, 0, "m"))
 
 card_f <- file.path("output", "pollster-scorecard.csv")
 scorecard <- if (file.exists(card_f)) {
-  card <- fread(card_f, showProgress = FALSE)[order(-n_polls)][seq_len(min(12L, .N))]
+  card <- fread(card_f, showProgress = FALSE)[order(-n_polls)]   # every pollster (was the top 12; Pete, 11 Nov 2026)
   card[, .(firm, polls = n_polls, lean = round(lean_pts, 2), noise = round(noise_factor, 2),
-           elections, mae = round(final_mae, 2))]
+           elections, mae = round(final_mae, 2), slug = gsub("^-|-$", "", gsub("[^a-z0-9]+", "-", tolower(firm))))]
 } else { cat("TP3  no output/pollster-scorecard.csv: scorecard omitted (the page hides that table)\n"); NULL }
 
 fr <- suppressWarnings(tryCatch(check_poll_freshness(REGION, strict = FALSE), error = function(e) NULL))

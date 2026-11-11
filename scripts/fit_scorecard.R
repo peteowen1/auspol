@@ -33,7 +33,7 @@ pri_all <- load_prior_results()
 REGIONS <- c("fed", "nsw", "vic", "qld")
 
 # ---- Fit every polled cycle so house effects can be pooled ----
-fits_by_cycle <- list()
+fits_by_cycle <- list(); cycle_lab <- list()
 n_eligible <- 0L
 fit_errors <- character(0)
 for (rg in REGIONS) {
@@ -57,7 +57,7 @@ for (rg in REGIONS) {
                                      sprintf("%s %d: %s", rg, y, conditionMessage(e)))
                     NULL
                   })
-    if (!is.null(f)) fits_by_cycle[[length(fits_by_cycle) + 1L]] <- f
+    if (!is.null(f)) { fits_by_cycle[[length(fits_by_cycle) + 1L]] <- f; cycle_lab[[length(fits_by_cycle)]] <- c(rg, y) }
   }
 }
 cat(sprintf("=== fitted %d of %d eligible cycles across %s ===\n",
@@ -159,5 +159,18 @@ cat(sprintf("\n%d of %d firms sit below the binomial floor.\n",
 
 fwrite(herd, "output/pollster-herding.csv")
 fwrite(card, "output/pollster-scorecard.csv")
+# Each pollster's Labor house effect in EVERY fitted cycle (the scorecard keeps only the poll-weighted average), for the
+# per-pollster pages (Pete, 11 Nov 2026). "(other firms)" is the pooled effect of firms with fewer than 3 polls in a cycle.
+by_cycle <- rbindlist(lapply(seq_along(fits_by_cycle), function(i) {
+  he <- fits_by_cycle[[i]][["ALP"]]$house_effects
+  if (is.null(he) || !nrow(he)) return(NULL)
+  data.table(region = cycle_lab[[i]][1], year = as.integer(cycle_lab[[i]][2]), firm = he$firm,
+             effect_pts = round(he$effect_pts, 3), n_polls = he$n_polls)
+}))
+if (!nrow(by_cycle) || uniqueN(by_cycle[, list(region, year)]) != length(fits_by_cycle))
+  stop("PLC1! lean by cycle: ", uniqueN(by_cycle[, list(region, year)]), " cycles written, ", length(fits_by_cycle), " fitted")
+fwrite(by_cycle, "output/pollster-lean-by-cycle.csv")
+cat(sprintf("PLC1 wrote output/pollster-lean-by-cycle.csv: %d rows, %d cycles, %d firms\n", nrow(by_cycle),
+            uniqueN(by_cycle[, list(region, year)]), uniqueN(by_cycle$firm)))
 fwrite(accuracy, "output/pollster-accuracy.csv")
 cat("\nWrote output/pollster-scorecard.csv and pollster-accuracy.csv\n")

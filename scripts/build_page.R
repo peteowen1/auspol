@@ -425,7 +425,7 @@ if (all(present)) {
 }
 
 card <- fread("output/pollster-scorecard.csv")
-card <- card[order(-n_polls)][1:12]
+card <- card[order(-n_polls)]   # every pollster (was the top 12 by polls, which hid DemosAU; Pete, 11 Nov 2026)
 
 # TP4 (same check as build_trend_page_data.R): the five first-preference shares the page shows add to 100.0 +/- 0.1.
 fp_now_vic <- fp_now_normalised(tr, c("LNP", "ALP", "ONP", "GRN", "OTH"))
@@ -494,7 +494,8 @@ out <- list(
                 sd = round(sd_err_loo, 2))],
   scorecard = card[, .(firm, polls = n_polls, lean = round(lean_pts, 2),
                        noise = round(noise_factor, 2), elections,
-                       mae = round(final_mae, 2))],
+                       mae = round(final_mae, 2),
+                       slug = gsub("^-|-$", "", gsub("[^a-z0-9]+", "-", tolower(firm))))],   # page address, as build_pollster_pages.R
   # preferred premier and leader satisfaction, display only (R/leader_ratings.R)
   # NA, not NULL, when the table is missing: this toJSON() writes NULL as {} (truthy in the page's JS) and NA as null
   leaders = { ld <- leader_page_data("vic2026"); if (is.null(ld)) NA else ld }
