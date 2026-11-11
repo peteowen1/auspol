@@ -101,8 +101,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   9-22 points: Mayo, Warringah, Kooyong, Mackellar, Mount Gambier). Seat polls already reach new independents:
   mean miss 23.4 before the blend, 11.6 published, 10 seats (Wakehurst published 30.0, not 13.7).
 - IN FLIGHT, NIGHT MODEL (before 28 Nov). `pair_r` v1 FAILED (pooled +0.00014, SE 0.00101). Pete chose v2 (11 Nov):
-  `pair_cal` (b51c09e0, off), prereg `plans/prereg-night-pair-cal-2026-11-11.md`. Detached job
-  `deciding-runs/20261111-0900-night-pair-cal/` (base, fits, v1, v2 on three real nights; ETA ~11:30am 11 Nov); done when
+  `pair_cal` (b51c09e0, off), prereg `plans/prereg-night-pair-cal-2026-11-11.md`. The first job's v2 arms are VOID
+  (fitted on wrong-pair rows classified from AEC codes; review fixes 3340acbf). Rerun: detached job
+  `deciding-runs/20261111-1130-night-pair-cal-r2/` (started 11:43am 11 Nov, ETA ~1pm); done when
   `results-cal.txt` is read against the prereg. Found on the way: the federal replay dropped every pair the AEC later
   blanked (Monash among 15/21 seats), fixed 59dff525; earlier federal night numbers (the called-rule test) ran on the old filter.
   Still: trace Mirani qld2024 (flows); per-step writes in the replays (a killed 18-min replay leaves nothing).
