@@ -1,3 +1,9 @@
+# auspol 0.4.155
+
+- **Election night reads the VEC results website** (the VEC refused the live feed, 11 Nov). `R/vec_web.R` parses each district's "results by voting centre" pages, `scripts/fetch_vec_web_snapshot.R` saves them, and `night_cycle(source_type = "web")` runs on them; on 2022's final count the booth tables match the feed path cell for cell. 2026 enrolment and voting centres come from the VEC's own files (`scripts/build_vec_enrolment_2026.R`, `scripts/build_vec_places_2026.R`), and every input's district names now match the model's seats ("South-West Coast").
+- **The night trusts the commission's counted pair by a calibrated amount** (`pair_cal`, prereg PASS on three real nights), and on the website a returning candidate's own previous booth votes join their class's reference (`cand_ref = "copy"`, Pete's choice for 28 Nov).
+- **Pollster pages**: `scripts/build_pollster_pages.R` writes each pollster's history, stats and what the published trend does with its polls; the forecast run uploads `pollster-pages.json` for inthegame.blog.
+
 # auspol 0.4.154
 
 - **Victoria's small-party vote is split by the 2026 field, not 2022's mix** (Pete, 10 Nov, "Ship it"). The per-candidate minor-party model now also predicts vic2026 from the VEC's final list, so the unpolled bucket splits IND 0.27, minor right 0.24, other 0.50 instead of falling back to vic2022's ratio. `rebuild_forecasts.sh` builds it (`MC_LIVE_EL`); every earlier election is unchanged. Walk on the live forecast: no favourite changes, the biggest win-probability move is 0.4 points (Ashwood), the biggest share move 0.23 points (Kew Liberal).

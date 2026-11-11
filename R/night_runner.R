@@ -386,11 +386,28 @@ night_seat_swing_safe <- function(booths, ref) {
 #' @param allow `TRUE` to report the mismatch instead of stopping.
 #' @export
 night_check_coverage <- function(seats, feed_districts, allow = FALSE) {
+  # NB: names are first put through .night_seat_names(); without it the VEC's "South-West Coast" never matched the
+  # model's "South West Coast" and this stopped every live cycle (found 11 Nov 2026; the replays ran with allow).
   miss <- setdiff(seats, feed_districts); extra <- setdiff(feed_districts, seats)
   if ((length(miss) || length(extra)) && !isTRUE(allow))
     stop(sprintf("NW7! seats and feed districts differ: %d state seat(s) not in the feed (%s); %d feed district(s) not in the state (%s)",
                  length(miss), paste(utils::head(miss, 6), collapse = ", "), length(extra), paste(utils::head(extra, 6), collapse = ", ")), call. = FALSE)
   invisible(list(missing = miss, extra = extra))
+}
+
+#' Put commission district names into the model's seat names
+#'
+#' Matches on letters only, case-blind, with any " District" suffix removed: the VEC writes "South-West Coast", the
+#' model's seats (and the reference table) "South West Coast". A name that matches no seat is returned unchanged, so
+#' [night_check_coverage()] still stops on it.
+#' @param x Character: district names as the commission writes them.
+#' @param seats Character: the model's seat names (`rownames(state$shares)`).
+#' @return `x` with every matchable name replaced by its seat name.
+#' @keywords internal
+.night_seat_names <- function(x, seats) {
+  k <- function(v) gsub("[^a-z]", "", tolower(sub(" District$", "", v)))
+  ks <- k(seats); if (anyDuplicated(ks)) stop("NW22! two seats share a name once punctuation is ignored: ", paste(seats[duplicated(ks)], collapse = ", "), call. = FALSE)
+  i <- match(k(x), ks); out <- x; out[!is.na(i)] <- seats[i[!is.na(i)]]; out
 }
 
 #' Refuse a snapshot that is older than the one the last published JSON came from (NW8)
@@ -485,11 +502,18 @@ night_expected_votes <- function(enrolment, prev, basis = c("night", "final")) {
 #'   `docs/reviews/night-replay-real-feed-2026-10-31.md`.
 #' @param tcp_own_fp Passed to [night_apply_tcp()] as `own_fp`: `TRUE` reads each draw's implied flow from its own
 #'   primaries (simulated with `keep_fp = TRUE`). `FALSE` (default) until measured on the real-night replays.
+#' @param tcp_pair_r Passed to [night_apply_tcp()] as `pair_r`: `NULL` (default, unchanged) or the commission's
+#'   night-pair reliability (`docs/plans/prereg-night-pair-trust-2026-11-11.md`).
+#' @param tcp_pair_cal Passed to [night_apply_tcp()] as `pair_cal`: `NULL` (default, unchanged) or `c(alpha, beta)`,
+#'   the calibrated pair prior (`docs/plans/prereg-night-pair-cal-2026-11-11.md`).
+#' @param cand_ref Passed to [night_booth_update()]: `FALSE` (default, unchanged) or `TRUE`, a returning candidate's
+#'   previous votes as their current class's booth reference (`docs/plans/prereg-night-candidate-ref-2026-11-11.md`).
 #' @return List: `sim`, `nu` (the update), `shares`, `sd`, `matched` (seats in both state and feed),
 #'   `n_updated`.
 #' @export
 night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "table", "expected"), expected = NULL, sims = NULL, use_tcp = TRUE,
-                             lean = NULL, early_frac = NULL, surge_fade = TRUE, tcp_center = "median", tcp_flow_floor = 0.01, tcp_own_fp = FALSE) {
+                             lean = NULL, early_frac = NULL, surge_fade = TRUE, tcp_center = "median", tcp_flow_floor = 0.01, tcp_own_fp = FALSE,
+                             tcp_pair_r = NULL, tcp_pair_cal = NULL, cand_ref = FALSE) {
   total <- match.arg(total)
   if (!is.numeric(tcp_flow_floor) || length(tcp_flow_floor) != 1L || !is.finite(tcp_flow_floor) || tcp_flow_floor < 0)
     stop("NW17! tcp_flow_floor must be one finite number >= 0 (got ", paste(format(tcp_flow_floor), collapse = ", "), ")", call. = FALSE)
@@ -500,7 +524,7 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
   shares <- st$shares; sdo <- st$sdo; swd <- st$swd
   nu <- night_booth_update(shares, night_prior_sd(shares, st$level_sd, st$level_mult, sdo), 1, conv$live, ref,
                            gap_k = gap_k, reported = conv$counted, total = total, expected = expected, lean = lean,
-                           early_frac = early_frac)
+                           early_frac = early_frac, cand_ref = cand_ref)
   if (nu$n_updated > 0L) {
     shares <- nu$shares; sdo <- nu$sd; swd <- night_shrink_draws(swd, 1 - nu$resolved)
   }
@@ -522,7 +546,7 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
   if (use_tcp && nu$n_updated > 0L && nrow(conv$tcp)) {
     obs <- night_tcp_obs(conv$tcp, conv$live, nu$units, shares)
     n_tcp <- nrow(obs)
-    sim <- night_apply_tcp(sim, obs, center = tcp_center, flow_sd_floor = tcp_flow_floor, own_fp = tcp_own_fp)
+    sim <- night_apply_tcp(sim, obs, center = tcp_center, flow_sd_floor = tcp_flow_floor, own_fp = tcp_own_fp, pair_r = tcp_pair_r, pair_cal = tcp_pair_cal)
   }
   list(sim = sim, nu = nu, shares = shares, sd = sdo, matched = matched, n_updated = nu$n_updated, n_tcp = n_tcp)
 }
@@ -626,6 +650,32 @@ night_publish_json <- function(doc, out_file, min_seats = 1L) {
   out_file
 }
 
+# The calibrated night-pair prior the live night runs at (docs/plans/prereg-night-pair-cal-2026-11-11.md, PASSED on the
+# three real-night replays 11 Nov, deciding-runs/20261111-1130-night-pair-cal-r2/). Fitted by scripts/fit_night_pair_cal.R
+# on fed2022 + vic2022 + fed2025 (388 seats with a shown pair, 33 wrong), r 0.944; docs/CONSTANTS.md. Refit after any
+# new real night.
+.NIGHT_PAIR_CAL <- c(0.945244, 0.681490)
+
+# cfg$tcp_pair_cal: NULL or "fitted" -> .NIGHT_PAIR_CAL; "off" -> NULL (the pair_min cliff); "alpha,beta" or a
+# length-2 numeric -> that pair.
+.night_pair_cal_cfg <- function(x) {
+  if (is.null(x) || identical(x, "fitted")) return(.NIGHT_PAIR_CAL)
+  if (identical(x, "off")) return(NULL)
+  v <- if (is.character(x)) suppressWarnings(as.numeric(strsplit(x, ",", fixed = TRUE)[[1]])) else as.numeric(x)
+  if (length(v) != 2L || any(!is.finite(v)))
+    stop("NW19! tcp_pair_cal must be \"fitted\", \"off\" or \"alpha,beta\" (got ", paste(format(x), collapse = ","), ")", call. = FALSE)
+  v
+}
+
+# cfg$cand_ref: NULL -> "copy" on the website source (Pete, 11 Nov 2026: on for the 28 Nov night; the website pages
+# carry candidate names, the feed table does not) and off on the feed; "off" -> FALSE; "copy" / "move" as given.
+.night_cand_ref_cfg <- function(x, web) {
+  if (is.null(x)) return(if (isTRUE(web)) "copy" else FALSE)
+  if (identical(x, "off") || isFALSE(x)) return(FALSE)
+  if (identical(x, "copy") || identical(x, "move")) return(x)
+  stop("NW20! cand_ref must be \"off\", \"copy\" or \"move\" (got ", paste(format(x), collapse = ","), ")", call. = FALSE)
+}
+
 #' One election-night cycle
 #'
 #' @param cfg List: `source`, `archive`, `setup`, `state` (RDS path or already-read list), `ref` (booth CSV path),
@@ -633,6 +683,13 @@ night_publish_json <- function(doc, out_file, min_seats = 1L) {
 #'   `turnout` (previous-election `council-district-stats-<year>.csv`, for its enrolment; turnout comes from the `ref` Assembly table; without it the cycle falls
 #'   back to the over-confident projected one and says so), `allow_unmatched` (NW7 and NW10 off; sample-vs-vic2022 test only), `allow_projected` (accept the over-confident
 #'   projected denominator when `turnout` is missing; otherwise NW9 stops the cycle),
+#'   `source_type` (`"web"`: `source` holds VEC website snapshot folders, [night_web_latest()]; with it `enrolment`
+#'   (CSV `district, enrolment`), optional `places` (CSV `district, booth` of this year's voting centres; default the
+#'   reference table's ordinary booths); anything else: the VEC feed),
+#'   `cand_ref` (`"copy"` by default on the website source, off on the feed; `"off"`, `"copy"`, `"move"`:
+#'   [night_booth_update()]),
+#'   `tcp_pair_cal` (`"fitted"` by default: the calibrated night-pair prior, `docs/plans/prereg-night-pair-cal-2026-11-11.md`;
+#'   `"off"` for the old 0.2 pair cliff; or `"alpha,beta"`),
 #'   `last_stamp` (skip when the newest snapshot has this stamp), `cache` (environment for the state and lookup).
 #' @return List: `status` ("ok", "no_new" or "failed"), `stamp`, `timings` (seconds per step), `message`, `summary`.
 #' @export
@@ -641,18 +698,27 @@ night_cycle <- function(cfg) {
   cache <- if (is.null(cfg$cache)) new.env() else cfg$cache
   fail <- function(e, stamp = NA_character_) list(status = "failed", stamp = stamp, timings = tm, message = conditionMessage(e),
                                                    summary = sprintf("FAILED %s: %s", stamp, conditionMessage(e)))
-  snap <- night_fetch_snapshot(cfg$source); stamp_t("fetch")
+  # source_type "web": the VEC results website (the VEC refused the feed, 11 Nov 2026). `source` then holds snapshot
+  # folders written by scripts/fetch_vec_web_snapshot.R (night_web_latest()), already raw on disk, so not re-archived.
+  web <- identical(cfg$source_type, "web")
+  snap <- if (web) night_web_latest(cfg$source) else night_fetch_snapshot(cfg$source); stamp_t("fetch")
   if (is.na(snap)) return(list(status = "failed", stamp = NA_character_, timings = tm, message = "NW5! no snapshot in source",
                                summary = "FAILED: NW5! no snapshot in source"))
   stamp <- night_snapshot_stamp(snap)
   if (!is.null(cfg$last_stamp) && identical(stamp, cfg$last_stamp)) return(list(status = "no_new", stamp = stamp, timings = tm, message = "", summary = paste("no new snapshot after", stamp)))
   tryCatch({
-    arch <- night_archive_snapshot(snap, cfg$archive); stamp_t("archive")
-    feed <- vec_feed_read_lh(arch$path); stamp_t("parse")
-    night_check_feed(feed)
+    feed <- NULL; webp <- NULL
+    if (web) {
+      arch <- list(path = snap, new = TRUE); stamp_t("archive")
+      webp <- night_web_read(snap); stamp_t("parse")
+    } else {
+      arch <- night_archive_snapshot(snap, cfg$archive); stamp_t("archive")
+      feed <- vec_feed_read_lh(arch$path); stamp_t("parse")
+      night_check_feed(feed)
+    }
     if (identical(night_check_fresh(stamp, cfg$out), "same"))
       return(list(status = "no_new", stamp = stamp, timings = tm, message = "", summary = paste("snapshot", stamp, "is already published")))
-    if (!isTRUE(cache$places_done)) {
+    if (!web && !isTRUE(cache$places_done)) {
       pl <- night_polling_places(cfg$setup)
       if (is.null(pl)) {
         if (!isTRUE(cfg$allow_stub)) stop("NW6! no *PollingLocations*.xml set-up file in ", cfg$setup, ": unreported booths cannot be known, so counted share would read 100%", call. = FALSE)
@@ -661,7 +727,7 @@ night_cycle <- function(cfg) {
       }
       cache$places <- pl; cache$places_done <- TRUE
     }
-    if (is.null(cache$lookup)) {
+    if (!web && is.null(cache$lookup)) {
       lk <- night_party_lookup(cfg$setup)
       if (is.null(lk)) {
         if (!isTRUE(cfg$allow_stub)) stop("NW3! no *Candidates*.xml set-up file in ", cfg$setup, " (party names unknown); pass allow_stub only to exercise the pipeline", call. = FALSE)
@@ -674,14 +740,54 @@ night_cycle <- function(cfg) {
     if (is.null(cache$ref)) cache$ref <- if (is.character(cfg$ref)) data.table::fread(cfg$ref, showProgress = FALSE) else cfg$ref
     if (is.null(cache$base) && !is.null(cfg$base_json)) cache$base <- jsonlite::fromJSON(cfg$base_json, simplifyVector = FALSE)
     stamp_t("load")
-    conv <- night_booth_table(feed, cache$lookup, cache$places); stamp_t("convert")
+    # every commission district name into the model's seat names (.night_seat_names: "South-West Coast")
+    seats <- rownames(cache$st$shares)
+    # ... and the reference table's, once: booths-vic2026-ref.csv writes "South West Coast" (booths-vic2018.csv even
+    # "Albertpark"), and match_booth_units() joins declaration votes on the exact district name, so that seat's early,
+    # postal and absent votes had no reference and its turnout fell to the state rate (11 Nov 2026).
+    if (!isTRUE(cache$ref_named) && "district" %in% names(cache$ref)) { cache$ref <- data.table::as.data.table(cache$ref); cache$ref$district <- .night_seat_names(cache$ref$district, seats)
+      bad <- setdiff(unique(cache$ref$district), seats)
+      if (length(bad)) message("NW22  reference-table districts matching no seat (left as they are): ", paste(utils::head(bad, 8), collapse = ", "))
+      cache$ref_named <- TRUE }
+    if (web) { webp$fp$district <- .night_seat_names(webp$fp$district, seats)
+      if (!is.null(webp$tcp)) webp$tcp$district <- .night_seat_names(webp$tcp$district, seats)
+    } else { feed$contests$district <- .night_seat_names(feed$contests$district, seats)
+      if (!is.null(cache$places) && !isTRUE(cache$places_named)) { cache$places$district <- .night_seat_names(cache$places$district, seats); cache$places_named <- TRUE } }
+    if (web) {
+      # Voting centres not yet on the page need a placeholder so they are projected: the reference table's ordinary
+      # booths (last election's centres, on this year's districts), unless a 2026 list is given (cfg$places, district, booth).
+      if (is.null(cache$web_places)) {
+        cache$web_places <- if (!is.null(cfg$places)) data.table::fread(cfg$places, showProgress = FALSE)[, c("district", "booth")] else {
+          message("NW21  no --places list: unreported voting centres are taken from the reference table's ordinary booths")
+          unique(cache$ref[cache$ref$booth_type == "ordinary", c("district", "booth")]) }
+        cache$web_places$district <- .night_seat_names(cache$web_places$district, seats)
+        # a district with no listed centre would read 100% counted the moment its first centre reports (as NW10 on the feed)
+        miss <- setdiff(seats, cache$web_places$district)
+        if (length(miss) && !isTRUE(cfg$allow_unmatched)) stop(sprintf("NW10! %d seat(s) have no voting centre in the places list (%s)", length(miss), paste(utils::head(miss, 8), collapse = ", ")), call. = FALSE)
+      }
+      conv <- vec_web_booth_table(webp$fp, webp$tcp, places = cache$web_places)
+    } else conv <- night_booth_table(feed, cache$lookup, cache$places)
+    stamp_t("convert")
     night_check_coverage(rownames(cache$st$shares), conv$live$district, cfg$allow_unmatched)
-    if (!is.null(cache$places)) night_check_places(rownames(cache$st$shares), cache$places, cfg$allow_unmatched)
+    if (!web && !is.null(cache$places)) night_check_places(rownames(cache$st$shares), cache$places, cfg$allow_unmatched)
     if (length(conv$unmapped)) message("NW3  affiliation ids with no name: ", paste(conv$unmapped, collapse = ", "))
     expected <- NULL; denom <- "projected"
     if (!is.null(cfg$turnout)) {
       if (is.null(cache$turnout)) cache$turnout <- data.table::fread(cfg$turnout, showProgress = FALSE)
-      enr <- stats::setNames(feed$contests$enrolment, sub(" District$", "", feed$contests$district))
+      enr <- if (web) {   # the website pages carry no enrolment: from cfg$enrolment (district, enrolment), e.g. the VEC candidate file
+        if (is.null(cfg$enrolment)) stop("NW9! source_type web needs cfg$enrolment (district, enrolment) for the expected-votes denominator", call. = FALSE)
+        if (is.null(cache$enrolment)) { e <- unique(data.table::fread(cfg$enrolment, showProgress = FALSE)[, c("district", "enrolment")])
+          e[, district := .night_seat_names(district, seats)]
+          if (anyDuplicated(e$district)) stop("NW9! ", cfg$enrolment, " gives a district two enrolments", call. = FALSE)
+          # the VEC website candidate list has an enrolment column that is EMPTY for every district (dress rehearsal,
+          # 11 Nov 2026): every seat then fell back to the over-stating projected denominator. Use
+          # external/reference/vec/2026/enrolment/enrolment-2026.csv (scripts/build_vec_enrolment_2026.R).
+          if (!any(is.finite(e$enrolment) & e$enrolment > 0)) stop("NW9! ", cfg$enrolment, " has no usable enrolment figures (all empty or zero)", call. = FALSE)
+          miss <- setdiff(seats, e$district[is.finite(e$enrolment) & e$enrolment > 0])
+          if (length(miss) && !isTRUE(cfg$allow_unmatched)) stop(sprintf("NW9! %d seat(s) have no enrolment in %s (%s)", length(miss), cfg$enrolment, paste(utils::head(miss, 8), collapse = ", ")), call. = FALSE)
+          cache$enrolment <- stats::setNames(e$enrolment, e$district) }
+        cache$enrolment
+      } else stats::setNames(feed$contests$enrolment, sub(" District$", "", feed$contests$district))
       expected <- night_expected_votes(enr, night_turnout_table(cache$turnout, cache$ref), "night"); denom <- "expected"
     } else if (!isTRUE(cfg$allow_projected)) {
       stop("NW9! no turnout file: the live counted share would fall back to previous-election booth sizes, which over-states it (vic2022 check: 56.5% vs 33.8%). Pass --turnout, or --allow-projected=1 to accept that", call. = FALSE)
@@ -711,7 +817,8 @@ night_cycle <- function(cfg) {
                             sims = cfg$sims, use_tcp = !isFALSE(cfg$use_tcp), lean = cache$lean, early_frac = ef,
                             surge_fade = !isFALSE(cfg$surge_fade), tcp_center = if (is.null(cfg$tcp_center)) "median" else cfg$tcp_center,
                             tcp_flow_floor = if (is.null(cfg$tcp_flow_floor)) 0.01 else cfg$tcp_flow_floor,
-                            tcp_own_fp = isTRUE(cfg$tcp_own_fp)); stamp_t("update_simulate")
+                            tcp_own_fp = isTRUE(cfg$tcp_own_fp), tcp_pair_cal = .night_pair_cal_cfg(cfg$tcp_pair_cal),
+                            cand_ref = .night_cand_ref_cfg(cfg$cand_ref, web)); stamp_t("update_simulate")
     res$denominator <- denom; res$n_placeholder <- conv$n_placeholder_booths; res$n_unlisted <- conv$n_unlisted_booths
     if (length(res$nu$fallback_projected)) message("NW12  ", length(res$nu$fallback_projected), " seat(s) fell back to the projected denominator (no usable expected votes): ", paste(res$nu$fallback_projected, collapse = ", "))
     bk <- night_booth_results_safe(conv, cache$ref)

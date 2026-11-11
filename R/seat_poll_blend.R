@@ -70,9 +70,13 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
              if (postxgb_resid_net_on()) .port_input_files() else character(0),
              extra)
   fi <- file.info(files, extra_cols = FALSE)
-  paste(election, days, by_type, by_poll, .raw, pkg_root(),
-        paste(names(env), env, sep = "=", collapse = "|"),
-        paste(files, format(as.numeric(fi$mtime), digits = 15), fi$size, collapse = "|"), sep = "#")
+  # Hashed: the key is used as a variable name in .seat_poll_memo, and R caps those at 10,000 bytes. Every
+  # AUSPOL_* variable plus full paths under a deciding run's scratch dir passed that, and all 70 harness runs
+  # of the 11 Nov poll-series retry died on "variable names are limited to 10000 bytes".
+  digest::digest(paste(election, days, by_type, by_poll, .raw, pkg_root(),
+                       paste(names(env), env, sep = "=", collapse = "|"),
+                       paste(files, format(as.numeric(fi$mtime), digits = 15), fi$size, collapse = "|"), sep = "#"),
+                 algo = "sha256", serialize = FALSE)
 }
 
 #' @keywords internal

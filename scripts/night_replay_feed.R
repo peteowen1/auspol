@@ -4,7 +4,8 @@
 # two-candidate counts of those places only where the pair on screen at T was the final pair and not withdrawn.
 #
 #   Rscript scripts/night_replay_feed.R --state=<state-fed2022.rds> [--out=<dir>] [--times=18:00,...] [--surge-fade=1]
-#       [--tcp-center=median] [--tcp-flow-floor=0.01] [--label=base]
+#       [--tcp-center=median] [--tcp-flow-floor=0.01] [--label=base] [--resume=1] [--stop-after=<n steps, testing>]
+# Every step rewrites <out>/<night>-<label>-*.partial.csv; --resume=1 picks up a killed run (night_replay_checkpoint.R).
 #
 # Simplifications (say them in every result): a reported place carries its FINAL count, not its first-night figure;
 # declaration votes (postal, absent, provisional, declaration pre-poll) are never counted on the night here (the AEC
@@ -24,6 +25,9 @@ label <- flag("label", "base")
 # defaults = the live runner's since 2026-10-31; the as-shipped-before arm is --surge-fade=0 --tcp-center=mean --tcp-flow-floor=0.01
 surge_fade <- !identical(flag("surge-fade", "1"), "0"); tcp_center <- flag("tcp-center", "median")
 tcp_floor <- as.numeric(flag("tcp-flow-floor", "0.01")); own_fp <- identical(flag("tcp-own-fp", "0"), "1")
+pair_r <- flag("pair-r", NULL); if (!is.null(pair_r)) pair_r <- as.numeric(pair_r)   # prereg-night-pair-trust-2026-11-11
+cand_ref <- local({ v <- flag("cand-ref", "0"); if (v == "1") TRUE else if (v %in% c("move", "copy")) v else if (v == "0") FALSE else stop("--cand-ref must be 0, 1, move or copy") })   # prereg-night-candidate-ref(-copy)-2026-11-11
+pair_cal <- flag("pair-cal", NULL); if (!is.null(pair_cal)) pair_cal <- as.numeric(strsplit(pair_cal, ",")[[1]])   # c(alpha,beta), prereg-night-pair-cal-2026-11-11
 day <- as.Date(c(`2022` = "2022-05-21", `2025` = "2025-05-03")[[as.character(yr)]])
 tm <- strsplit(flag("times", paste(c(sprintf("%02d:%02d", rep(18:23, each = 4), c(0, 15, 30, 45)), "24:00", "25:00", "26:00", "27:00"), collapse = ",")), ",")[[1]]
 at <- vapply(tm, function(x) { p <- as.integer(strsplit(x, ":")[[1]]); as.numeric(as.POSIXct(day, tz = "UTC") + p[1] * 3600 + p[2] * 60) }, numeric(1))
@@ -41,17 +45,35 @@ B[, t_tcp := tsec(tcp_first_seen)]
 pp <- B[!grepl("^declaration", classification) & !is.na(t_fp)]
 cat(sprintf("NRF1 %s: %d seats in state, %d places with a night return, %d places in the booth table; %d sims; label %s (surge-fade %s, tcp-center %s, tcp-flow-floor %s)\n",
             pair_lbl, length(seats), nrow(pp), nrow(L[L$booth_type == "ordinary", list(1), by = list(district, booth)]), nrow(st$swd),
-            label, surge_fade, tcp_center, tcp_floor)); cat(sprintf("NRF1 tcp-own-fp %s\n", own_fp))
+            label, surge_fade, tcp_center, tcp_floor)); cat(sprintf("NRF1 tcp-own-fp %s, cand-ref %s, pair-r %s, pair-cal %s\n", own_fp, cand_ref, if (is.null(pair_r)) "off" else format(pair_r), if (is.null(pair_cal)) "off" else paste(format(pair_cal), collapse = ",")))
 miss <- setdiff(unique(pp$division), seats); if (length(miss)) cat("NRF1 feed divisions not in the state:", paste(miss, collapse = ", "), "\n")
 
-# the pair on screen per division per snapshot; usable when not withdrawn and equal to the final pair
+# The pair on screen per division per snapshot. Usable while it is on screen and not flagged maverick AT THAT
+# SNAPSHOT, and only when it is the DECLARED final pair: the booth two-candidate votes (Tc) exist for that pair
+# alone, so a night pair the commission got wrong cannot be replayed (a data limit, not a model choice).
+# Until 11 Nov this compared with the feed's LAST snapshot instead. A pair the AEC flagged maverick and blanked
+# later in the night then counted as "never usable", so Monash fed2025 (Labor v Liberal on screen 6:01-8:37pm,
+# the declared pair) lost its count all night, as did 15 of 151 fed2022 and 21 of 150 fed2025 divisions.
 D[, ts := tsec(snapshot_time)]
-fin <- D[D$ts == max(D$ts), list(division, final_pair = tcp_pair_ids)]
-D <- merge(D, fin, by = "division")
-D[, pair_ok := !is.na(tcp_pair_ids) & nzchar(tcp_pair_ids) & tcp_pair_ids == final_pair & !(tolower(as.character(tcp_maverick)) %in% "true")]
+pair_key <- function(x) vapply(strsplit(ifelse(is.na(x), "", x), " v ", fixed = TRUE), function(z) paste(sort(trimws(z)), collapse = " v "), "")
+dec <- Tc[, list(dec_pair = paste(sort(unique(trimws(candidate))), collapse = " v ")), by = list(division = district)]
+D <- merge(D, dec, by = "division", all.x = TRUE)
+dec_cls <- unique(Tc[, list(division = district, candidate, cls = classify_party(party_raw))])[,
+  list(dec_cls = paste(sort(cls), collapse = "|"), n_cand = .N), by = division]
+if (any(dec_cls$n_cand != 2L)) stop("NRF5! declared pair without exactly 2 candidates: ", paste(dec_cls$division[dec_cls$n_cand != 2L], collapse = ", "))
+D[, night_key := pair_key(tcp_pair)]
+D[, pair_ok := nzchar(night_key) & !is.na(dec_pair) & night_key == dec_pair & !(tolower(as.character(tcp_maverick)) %in% "true")]
+pk <- D[nzchar(night_key), list(ever_shown = TRUE, ever_ok = any(pair_ok)), by = division]
+cat(sprintf("NRF0 %s: %d divisions showed a pair; %d usable at some point; %d never (pair not the declared one)\n",
+            pair_lbl, nrow(pk), sum(pk$ever_ok), sum(!pk$ever_ok)))
+if (!sum(pk$ever_ok)) stop("NRF0! no division's night pair matched its declared pair: check the name formats in Tc and the feed")
 
-summ <- list(); seat_rows <- list()
+source("scripts/night_replay_checkpoint.R")   # per-step partial files; --resume=1 skips the times already done
+ck_prefix <- sprintf("%s-%s", pair_lbl, label); ck_kinds <- c("summary", "seats", "tcp", "pairs")
+ck <- ckpt_load(out_dir, ck_prefix, ck_kinds, resume = identical(flag("resume", "0"), "1"))
+summ <- ck$rows$summary; seat_rows <- ck$rows$seats; tcp_rows_out <- ck$rows$tcp; pairs_out <- ck$rows$pairs
 for (k in seq_along(at)) {
+  if (tm[k] %in% ck$done) next
   T0 <- at[k]
   rep_pp <- pp[pp$t_fp <= T0, list(district = division, unit = polling_place)]
   if (!nrow(rep_pp)) { cat(sprintf("NRF2 %s: nothing reported yet\n", tm[k])); next }
@@ -61,7 +83,7 @@ for (k in seq_along(at)) {
   tcp_rows <- merge(Tc, tb, by = c("district", "booth"))
   conv <- list(live = L, counted = rep_pp, tcp = tcp_rows)
   r <- night_run_update(st, conv, R, gap_k = 5, total = "projected", use_tcp = nrow(tcp_rows) > 0,
-                        surge_fade = surge_fade, tcp_center = tcp_center, tcp_flow_floor = tcp_floor, tcp_own_fp = own_fp)
+                        surge_fade = surge_fade, tcp_center = tcp_center, tcp_flow_floor = tcp_floor, tcp_own_fp = own_fp, tcp_pair_r = pair_r, tcp_pair_cal = pair_cal, cand_ref = cand_ref)
   tot <- r$sim$totals; alp <- tot[, "ALP"]
   oth <- tot[, setdiff(colnames(tot), "ALP"), drop = FALSE]
   wp <- as.data.table(r$sim$win_prob)
@@ -75,13 +97,47 @@ for (k in seq_along(at)) {
     wentworth_ind = round(sum(wp$prob[wp$seat == "Wentworth" & wp$party == "IND"]), 4),
     wentworth_counted = round(100 * unname(cnt["Wentworth"]), 1))
   wp[, time := tm[k]]; seat_rows[[length(seat_rows) + 1]] <- wp
+  nt <- attr(r$sim, "night_tcp"); if (!is.null(nt) && nrow(nt)) tcp_rows_out[[length(tcp_rows_out) + 1]] <- data.table::as.data.table(nt)[, time := tm[k]]   # per-seat pair share, prior/posterior (pair_r v2 trace)
+  # EVERY pair on screen (not maverick at this snapshot), right or wrong, at the same information level: its share
+  # of the draws and whether it is the declared pair. The calibration data for pair_cal (prereg-night-pair-cal-
+  # 2026-11-11). The feed's tcp*_party are commission CODES, so they go through classify_party(code =); the three
+  # codes it does not know take the class of their full party name. (Review 11 Nov: passed as names they all fell
+  # to OTH, so a wrong ALP v LP pair read as OTH v OTH with ~0 draws.)
+  on_scr <- dk[nzchar(night_key) & !(tolower(as.character(tcp_maverick)) %in% "true") & division %in% colnames(r$sim$tcp_winner)]
+  if (nrow(on_scr)) {
+    full <- c(KAP = "Katter's Australian Party (KAP)", CLP = "Country Liberals (NT)", XEN = "Centre Alliance")
+    cls_of <- function(cd) { cd <- ifelse(is.na(cd), "", trimws(cd))
+      known <- c("", "ALP", "ALP1", "LP", "LNP", "NP", "LNQ", "NAT", "NATS", "LIB", "GRN", "GVIC", "TG", "ON", "PHON", "ONP", names(full))
+      bad <- setdiff(unique(cd), known); if (length(bad)) stop("NRF5! feed party code(s) with no class: ", paste(bad, collapse = ", "))
+      classify_party(ifelse(cd %in% names(full), full[cd], ""), code = ifelse(cd %in% names(full), "", cd)) }
+    ca <- cls_of(on_scr$tcp1_party); cb <- cls_of(on_scr$tcp2_party)
+    same <- ca == cb
+    if (any(same)) cat(sprintf("NRF5 %s: %d on-screen pair(s) of one class, left out of the pairs file: %s\n", tm[k], sum(same),
+                               paste(on_scr$division[same], collapse = ", ")))
+    pw <- vapply(seq_len(nrow(on_scr)), function(i) { tw <- r$sim$tcp_winner[, on_scr$division[i]]; tr <- r$sim$tcp_runnerup[, on_scr$division[i]]
+      mean((tw == ca[i] & tr == cb[i]) | (tw == cb[i] & tr == ca[i])) }, numeric(1))
+    # declared = the model's question: is this the final two BY CLASS (Bendigo 2025 counted Labor v Liberal, final two
+    # Labor v Nationals: both LNP, so right for the model). declared_cand keeps the candidate-level match.
+    dcl <- dec_cls$dec_cls[match(on_scr$division, dec_cls$division)]
+    pairs_out[[length(pairs_out) + 1]] <- data.table(seat = on_scr$division, a = ca, b = cb, pair_share = pw,
+                                                     declared = !is.na(dcl) & paste(pmin(ca, cb), pmax(ca, cb), sep = "|") == dcl,
+                                                     declared_cand = !is.na(on_scr$dec_pair) & on_scr$night_key == on_scr$dec_pair, time = tm[k])[!same]
+  }
   s <- summ[[length(summ)]]
   cat(sprintf("NRF3 %s places %d (%d seats, mean counted %.1f%%, 2CP %d) | ALP %.1f (%g-%g) P(maj) %.3f | log loss %.4f, right %d/%d | Wentworth IND %.3f at %.1f%%\n",
               s$time, s$places, s$seats_reporting, s$mean_counted, s$tcp_seats, s$alp_exp, s$alp_lo, s$alp_hi, s$p_alp_majority,
               s$log_loss, s$right, s$n, s$wentworth_ind, s$wentworth_counted))
+  ckpt_save(out_dir, ck_prefix, list(summary = summ, seats = seat_rows, tcp = tcp_rows_out, pairs = pairs_out))
+  if (!is.null(flag("stop-after")) && length(summ) >= as.integer(flag("stop-after"))) { cat("NRF7 --stop-after reached: stopping with partial files only (a kill, for testing --resume)\n"); quit(save = "no", status = 0) }
 }
 S <- rbindlist(summ); fwrite(S, file.path(out_dir, sprintf("%s-%s-summary.csv", pair_lbl, label)))
 fwrite(rbindlist(seat_rows), file.path(out_dir, sprintf("%s-%s-seats.csv", pair_lbl, label)))
+if (length(tcp_rows_out)) fwrite(rbindlist(tcp_rows_out, fill = TRUE), file.path(out_dir, sprintf("%s-%s-tcp.csv", pair_lbl, label)))
+if (length(pairs_out)) { PO <- rbindlist(pairs_out)
+  cat(sprintf("NRF6 pairs file: %d rows, %d seats, %d wrong (not the declared pair); median share right %.3f, wrong %.3f\n", nrow(PO),
+              uniqueN(PO$seat), PO[declared == FALSE, uniqueN(seat)], median(PO$pair_share[PO$declared]), median(PO$pair_share[!PO$declared])))
+  fwrite(PO, file.path(out_dir, sprintf("%s-%s-pairs.csv", pair_lbl, label))) }
+ckpt_clear(out_dir, ck_prefix, ck_kinds)
 call_at <- function(p) { ok <- p >= 0.99; i <- which(vapply(seq_along(ok), function(j) all(ok[j:length(ok)]), logical(1))); if (length(i)) S$time[min(i)] else "never" }
 cat(sprintf("NRF4 %s %s: Labor majority called (>= 0.99 and stays) at %s | Labor largest at %s | Wentworth IND at %s\n",
             pair_lbl, label, call_at(S$p_alp_majority), call_at(S$p_alp_largest), call_at(S$wentworth_ind)))

@@ -199,3 +199,15 @@ because the vic2026 list in `output/candidacies.csv` is provisional (Wikipedia,
    6 Nov on the pre-nomination list: 252 minor candidates in 87 seats). Reaching the live forecast would need a
    `vic2026` row in the shipped bucket split file AND `forecast.yaml` fetching it (`bucket_split_ratio()` falls back to
    the previous election's ratio without one, `fit_seats_full.R:1497`); both change the published path.
+
+## F. Running jobs on a busy machine (moved from NEXT-STEPS 11 Nov)
+
+- Memory sits at 2-7 GB (another verse's backtests share the machine); Claude Code's low-memory stop kills background
+  shells, not detached jobs. Run `scripts/refresh_local_poll_inputs.sh` before ANY local forecast run.
+- **Running jobs when memory is short:** Claude Code reaps background shells below ~4 GB available. Run stage 6
+  harness by harness in the foreground, then `AUSPOL_REBUILD_FROM=7`; `AUSPOL_REBUILD_SLOTS=1` caps parallelism. A
+  full rebuild outlives the session when started with `Start-Process "C:\Program Files\Git\bin\bash.exe"` (not
+  `bash.exe` from PATH in PowerShell, which is WSL's).
+- **ORDER still matters: publish a rebuild (AUSPOL_PUBLISH=1) BEFORE merging to main**
+  whenever a change adds a file `forecast.yaml` downloads.
+- Tools: misses via `scripts/biggest_misses.R` / skill `biggest-misses` (never `forecasts.csv`).

@@ -107,6 +107,7 @@ NON_MODEL_SWITCHES <- c(
   AUSPOL_SA_PAIR                 = "RUN",  # backtest_candidate_sa.R
   AUSPOL_SCORE_SUFFIX            = "DIAG",  # score_wa_flows.R
   AUSPOL_SEAT_SWING_WA_FILE      = "RUN",  # seat_predictions.R, seat_swing_port.R
+  AUSPOL_SHARES_FILE             = "DIAG",  # explore_onp_seat_regression.R
   AUSPOL_SHAP_PAIR               = "DIAG",  # shap_from_cached_model.R
   AUSPOL_SHAP_PARTY              = "DIAG",  # shap_from_cached_model.R
   AUSPOL_SHAP_SEAT               = "DIAG",  # shap_from_cached_model.R

@@ -99,29 +99,72 @@ night_prior_sd <- function(shares, level_sd, level_mult = NULL, sd_override = NU
 #'   ([night_early_frac()]); passed to [project_seat_from_booths()]. `NULL` (default) is byte-identical.
 #' @param expected For `total = "expected"`: named numeric, expected final votes per seat (a seat missing or NA falls
 #'   back to `"projected"`).
+#' @param cand_ref `FALSE` (default, byte-identical): the reference is each class's previous-election votes. For a
+#'   candidate in `live` who stood in the same seat in `ref` under a different class (names matched within the seat,
+#'   letters only, case-folded): `TRUE` or `"move"` files those previous votes under their CURRENT class instead
+#'   (`docs/plans/prereg-night-candidate-ref-2026-11-11.md`, FAILED: the old class loses its history); `"copy"`
+#'   keeps them under the old class AND adds them to the current one, with each unit's reference total unchanged
+#'   (`docs/plans/prereg-night-candidate-ref-copy-2026-11-11.md`). Needs a `candidate` column in both tables.
 #' @return List: `shares` (posterior means, rows renormalised to 100), `sd` (posterior sds),
 #'   `counted` (named per-seat share of the final night vote counted), `resolved` (mean over
 #'   updated cells of 1 - posterior sd / prior sd), `n_updated` (seats with booths), `units`
-#'   (counted units per seat), `type_gap` (the pooled gaps used, or `NULL`).
+#'   (counted units per seat), `type_gap` (the pooled gaps used, or `NULL`), `n_cand_ref` (candidates relabelled
+#'   under `cand_ref`, else `NA`).
 #' @export
 night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, gap_k = NULL, early = "last", new_sd_mult = 1,
                                reported = NULL, total = c("table", "projected", "expected"), expected = NULL, lean = NULL,
-                               early_frac = NULL) {
+                               early_frac = NULL, cand_ref = FALSE) {
   total <- match.arg(total)
   stopifnot(is.numeric(new_sd_mult), length(new_sd_mult) == 1L, new_sd_mult >= 1)
   stopifnot(identical(dim(shares), dim(prior_sd)), is.finite(frac), frac >= 0, frac <= 1)
   if (!is.null(reported)) stopifnot(all(c("district", "unit") %in% names(reported)))
-  prep <- function(X) {
+  if (!(isTRUE(cand_ref) || isFALSE(cand_ref) || (is.character(cand_ref) && length(cand_ref) == 1L && cand_ref %in% c("move", "copy"))))
+    stop("NX15! cand_ref must be FALSE, TRUE / \"move\" or \"copy\"", call. = FALSE)
+  # cand_ref: a candidate who stood in the same seat at the reference election under a DIFFERENT class.
+  #   TRUE / "move" (docs/plans/prereg-night-candidate-ref-2026-11-11.md, FAILED): their previous votes are filed under
+  #     their current class INSTEAD of the old one, so the old class loses that history (Monash 2025: the new Liberal
+  #     had no reference and was projected at 11% against 32%).
+  #   "copy" (docs/plans/prereg-night-candidate-ref-copy-2026-11-11.md): the old class keeps them AND the current class
+  #     gets them too; a balancing `_COPYADJ` row of minus the copied votes keeps every unit's reference total unchanged
+  #     (no live class is ever `_COPYADJ`, so it reaches only the totals).
+  ref_mode <- if (isTRUE(cand_ref)) "move" else if (isFALSE(cand_ref)) "off" else cand_ref
+  ckey <- function(X) paste(X$district, gsub("[^a-z]", "", tolower(ifelse(is.na(X$candidate), "", X$candidate))), sep = "\r")
+  relabel <- NULL; copies <- NULL
+  if (ref_mode != "off") {
+    if (!"candidate" %in% names(live) || !"candidate" %in% names(ref)) stop("NX15! cand_ref = TRUE needs a `candidate` column in both booth tables", call. = FALSE)
+    lv <- data.table::as.data.table(live)[!is.na(candidate) & nzchar(trimws(candidate))]
+    now <- unique(data.table::data.table(k = ckey(lv), cls_now = classify_party(lv$party)))
+    if (anyDuplicated(now$k)) now <- now[!now$k %in% now$k[duplicated(now$k)]]   # one name, two classes in a seat: leave it alone
+    relabel <- now
+  }
+  n_cand_ref <- NA_integer_
+  prep <- function(X, rl = NULL) {
     X <- data.table::as.data.table(X)
     X[is.na(votes), votes := 0]
     X[, cls := classify_party(party)]
     X[, unit := ifelse(booth_type == "ordinary", booth, booth_type)]
+    if (!is.null(rl)) {
+      i <- match(ckey(X), rl$k); sw <- !is.na(i) & rl$cls_now[pmax(i, 1L)] != X$cls
+      n_cand_ref <<- data.table::uniqueN(ckey(X)[sw])
+      if (any(sw) && ref_mode == "copy") {
+        cp <- X[which(sw)]; data.table::set(cp, NULL, "cls", rl$cls_now[i[sw]])
+        copies <<- cp[, list(v = sum(votes)), by = c("district", "unit", "booth_type", "cls")]
+      } else if (any(sw)) data.table::set(X, which(sw), "cls", rl$cls_now[i[sw]])
+    }
     X[, list(v = sum(votes)), by = c("district", "unit", "booth_type", "cls")]
   }
-  Lc <- prep(live); Rc <- prep(ref)
+  Lc <- prep(live); Rc <- prep(ref, relabel)
   M <- match_booth_units(Lc, Rc)
-  Rk <- merge(Rc, M, by.x = c("district", "unit"), by.y = c("ref_district", "ref_unit"), suffixes = c(".ref", ".live"))
-  Rk <- Rk[, list(district = district.live, unit = unit.live, booth_type = booth_type.live, cls, v)]
+  to_live <- function(X) {
+    X <- merge(X, M, by.x = c("district", "unit"), by.y = c("ref_district", "ref_unit"), suffixes = c(".ref", ".live"))
+    X[, list(district = district.live, unit = unit.live, booth_type = booth_type.live, cls, v)]
+  }
+  Rk <- to_live(Rc)
+  if (!is.null(copies) && nrow(copies)) {   # "copy": the copies plus their balancing row, after the booth match (so it never sees them)
+    ck <- to_live(copies)
+    Rk <- data.table::rbindlist(list(Rk, ck, ck[, list(district, unit, booth_type, cls = "_COPYADJ", v = -v)]))
+    Rk <- Rk[, list(v = sum(v)), by = c("district", "unit", "booth_type", "cls")]
+  }
   # Upper-house booth lean (night_council_lean()), keyed to the reference election's names: moved onto this year's
   # units through the same match as the lower-house reference, so it lines up with Rk.
   Lk <- NULL
@@ -185,7 +228,7 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
   }
   list(shares = post, sd = psd, counted = counted,
        resolved = if (length(res)) mean(res) else 0, n_updated = n_up, units = units_by_seat, type_gap = type_gap,
-       fallback_projected = fallback_projected, proj_total = proj_total)
+       fallback_projected = fallback_projected, proj_total = proj_total, n_cand_ref = n_cand_ref)
 }
 
 # Pooled swing gap of each non-ordinary booth type against ordinary booths, per class, over the
@@ -309,11 +352,34 @@ night_tcp_obs <- function(tcp, fp, units, post) {
 #'   shifts each draw by its own remainder. With the counted primaries, a draw whose primaries sit far
 #'   from the count reads as an impossible flow (Wentworth fed2022 surge draws: 1.05) and skews the
 #'   centre. `FALSE` (default) is unchanged. Stops (NX11) if `TRUE` and `sim$fp_draws` is missing.
+#' @param pair_r `NULL` (default, unchanged) or the commission's night-pair reliability in (0, 1): the
+#'   share of seats whose counted pair turns out to be the real final two. With it set, `pair_min` no
+#'   longer applies, and the counted pair is evidence about WHICH two are in the final count: with `p`
+#'   the share of draws holding that pair, its posterior is `q = p r / (p r + (1 - p)(1 - r))`, and a
+#'   share `(q - p) / (1 - p)` of the other draws (an evenly spaced subset) takes the outcome of a
+#'   corrected pair draw (cycled in order). Monash fed2025: the AEC counted Labor v Liberal, the real
+#'   final two, while most draws had the independent in it, so the count was thrown away and the seat
+#'   ended at independent 0.99 (`docs/plans/prereg-night-pair-trust-2026-11-11.md`).
+#' @param pair_cal `NULL` (default, unchanged) or `c(alpha, beta)`: the calibrated version of `pair_r`
+#'   (`docs/plans/prereg-night-pair-cal-2026-11-11.md`). The counted pair's probability of being the final two is
+#'   `q = plogis(alpha + beta * qlogis(p_s))`, `p_s = (h + 0.5) / (n + 1)` with `h` the draws holding it, so a pair
+#'   the model gives almost no draws can still be believed (`beta < 1`: the model's pair share is over-confident;
+#'   `beta = 1, alpha = qlogis(r)` is `pair_r`'s rule). The other draws moved onto the pair are BUILT from the count,
+#'   not copied: a's share `fp_a + f * rest`, `f` at evenly spaced normal quantiles around the corrected flow (or the
+#'   count's own flow when fewer than 2 draws hold the pair) with sd `obs$flow_se` (floored at `flow_sd_floor`).
+#'   `pair_min` and the fewer-than-2-draws skip do not apply. Cannot be combined with `pair_r`.
 #' @return `sim`, updated, with attribute `night_tcp`: one row per observed seat (pair share
-#'   of draws, prior and posterior mean of a's share, draws changed, `flag`).
+#'   of draws, prior and posterior mean of a's share, draws changed, `flag`; with `pair_r` or `pair_cal`, also
+#'   `pair_post` (q) and `moved`, the other draws given the counted pair).
 #' @export
-night_apply_tcp <- function(sim, obs, pair_min = 0.2, center = c("mean", "median"), flow_sd_floor = 0.01, own_fp = FALSE) {
+night_apply_tcp <- function(sim, obs, pair_min = 0.2, center = c("mean", "median"), flow_sd_floor = 0.01, own_fp = FALSE,
+                            pair_r = NULL, pair_cal = NULL) {
   center <- match.arg(center)
+  if (!is.null(pair_r) && (!is.numeric(pair_r) || length(pair_r) != 1L || !is.finite(pair_r) || pair_r <= 0 || pair_r >= 1))
+    stop("NX12! pair_r must be NULL or one number strictly between 0 and 1 (got ", paste(format(pair_r), collapse = ", "), ")", call. = FALSE)
+  if (!is.null(pair_cal) && (!is.numeric(pair_cal) || length(pair_cal) != 2L || !all(is.finite(pair_cal))))
+    stop("NX14! pair_cal must be NULL or c(alpha, beta), two finite numbers (got ", paste(format(pair_cal), collapse = ", "), ")", call. = FALSE)
+  if (!is.null(pair_r) && !is.null(pair_cal)) stop("NX14! set pair_r or pair_cal, not both", call. = FALSE)
   if (isTRUE(own_fp) && is.null(sim$fp_draws))
     stop("NX11! own_fp = TRUE needs sim$fp_draws: simulate with keep_fp = TRUE", call. = FALSE)
   if (is.null(obs) || !nrow(obs)) return(sim)
@@ -321,6 +387,58 @@ night_apply_tcp <- function(sim, obs, pair_min = 0.2, center = c("mean", "median
   if (is.null(seats)) stop("NX5! sim$tcp_winner has no seat names: cannot match the VEC's 2CP to seats", call. = FALSE)
   n <- nrow(sim$tcp_winner); parties <- colnames(sim$totals)
   wp <- sim$win_prob; rep <- list()
+  # Move draws `rows` of seat column j from count winners oldW to newW: totals (only where the old party holds
+  # a seat in that draw: after the shrink toss the credited winner can differ from the count winner, and an
+  # unmatched increment would double count) and win_prob (renormalised to the seat's total before the move).
+  move_draws <- function(rows, oldW, newW, s) {
+    ch <- which(newW != oldW)
+    for (d in ch) {
+      i_old <- match(oldW[d], parties); i_new <- match(newW[d], parties); r <- rows[d]
+      if (is.na(i_old) || is.na(i_new)) stop("NX13! party ", oldW[d], " or ", newW[d], " not in sim$totals", call. = FALSE)
+      if (sim$totals[r, i_old] > 0) {
+        sim$totals[r, i_old] <<- sim$totals[r, i_old] - 1L
+        sim$totals[r, i_new] <<- sim$totals[r, i_new] + 1L
+      }
+    }
+    if (length(ch)) {
+      delta <- table(factor(newW[ch], parties)) - table(factor(oldW[ch], parties))
+      tot_before <- sum(wp$prob[wp$seat == s])
+      for (p in parties[delta != 0]) {
+        row <- which(wp$seat == s & wp$party == p)
+        if (length(row)) wp$prob[row] <<- max(0, wp$prob[row] + delta[[p]] / n)
+        else wp <<- rbind(wp, data.frame(seat = s, party = p, prob = max(0, delta[[p]] / n), stringsAsFactors = FALSE))
+      }
+      # The deltas move COUNT winners, but win_prob counts the CREDITED winner, which the shrink toss can make differ;
+      # a flip into a party already credited in that draw (or out of one that was not) left the seat summing above 1
+      # (Finniss sa2026 replay, 1.003; review 2026-10-30). Keep the seat's total where it was.
+      rows_s <- which(wp$seat == s); tot_after <- sum(wp$prob[rows_s])
+      if (tot_after > 0) wp$prob[rows_s] <<- wp$prob[rows_s] * tot_before / tot_after
+    }
+    length(ch)
+  }
+  # pair_cal: give a share (q - p)/(1 - p) of the draws NOT holding the counted pair that pair as their final two,
+  # with a's share built from the count (fp_a + flow * rest), the flow at evenly spaced normal quantiles of
+  # N(fmu, flow_se) so no random numbers are drawn. q <= p moves nothing (v2 never takes draws OFF the pair).
+  build_pair_draws <- function(hit, q, p, fmu, s, j, a, b, k, rest) {
+    none <- list(changed = 0L, moved = 0L)
+    if (!is.finite(q) || !is.finite(fmu) || q <= p || length(hit) >= n) return(none)
+    oth <- setdiff(seq_len(n), hit)
+    n_mv <- as.integer(round(length(oth) * (q - p) / (1 - p)))
+    if (n_mv <= 0L) return(none)
+    mv <- oth[unique(round(seq(1, length(oth), length.out = n_mv)))]
+    fsd <- obs$flow_se[k]; if (!is.finite(fsd)) fsd <- 0; fsd <- max(fsd, flow_sd_floor)
+    # quantiles in a fixed per-seat order (a sine hash of draw rank and seat column, no RNG): in index order every
+    # seat would give its lowest flow to the same draws, tying the moved draws' outcomes across seats (review 11 Nov)
+    perm <- order((sin(seq_along(mv) * 12.9898 + j * 78.233) * 43758.5453) %% 1)
+    f <- fmu + fsd * stats::qnorm((perm - 0.5) / length(mv))
+    sa <- pmin(1, pmax(0, obs$fp_a[k] / 100 + f * rest))
+    newW <- ifelse(sa > 0.5, a, b); oldW <- sim$tcp_winner[mv, j]
+    ch <- move_draws(mv, oldW, newW, s)
+    sim$tcp_winner[mv, j] <<- newW
+    sim$tcp_runnerup[mv, j] <<- ifelse(newW == a, b, a)
+    sim$tcp_share[mv, j] <<- ifelse(newW == a, sa, 1 - sa)
+    list(changed = ch, moved = length(mv))
+  }
   for (k in seq_len(nrow(obs))) {
     s <- obs$seat[k]; a <- obs$a[k]; b <- obs$b[k]
     raw_k <- if ("raw_share_a" %in% names(obs)) obs$raw_share_a[k] else NA_real_   # raw counted 2CP share of a, not the flow projection
@@ -328,7 +446,18 @@ night_apply_tcp <- function(sim, obs, pair_min = 0.2, center = c("mean", "median
     W <- sim$tcp_winner[, j]; R <- sim$tcp_runnerup[, j]
     hit <- which((W == a & R == b) | (W == b & R == a))
     frac_pair <- length(hit) / n
-    if (frac_pair < pair_min || length(hit) < 2L) {
+    cal_on <- !is.null(pair_cal)
+    if (cal_on && length(hit) < 2L) {
+      # pair_cal: too few pair draws to correct, so build the pair's draws from the count alone
+      q <- stats::plogis(pair_cal[1] + pair_cal[2] * stats::qlogis((length(hit) + 0.5) / (n + 1)))
+      rest <- (100 - obs$fp_a[k] - obs$fp_b[k]) / 100; if (!is.finite(rest) || rest <= 0.005) rest <- 0.005
+      mv_out <- build_pair_draws(hit, q, frac_pair, obs$flow[k], s, j, a, b, k, rest)
+      rep[[k]] <- data.table::data.table(seat = s, a = a, b = b, pair_share = frac_pair, prior_a = NA_real_,
+                                         post_a = NA_real_, obs_a = obs$share_a[k], raw_a = raw_k, changed = mv_out$changed,
+                                         flag = FALSE, pair_post = q, moved = mv_out$moved)
+      next
+    }
+    if ((!cal_on && is.null(pair_r) && frac_pair < pair_min) || length(hit) < 2L) {
       rep[[k]] <- data.table::data.table(seat = s, a = a, b = b, pair_share = frac_pair, prior_a = NA_real_,
                                          post_a = NA_real_, obs_a = obs$share_a[k], raw_a = raw_k, changed = 0L, flag = TRUE)
       next
@@ -355,41 +484,43 @@ night_apply_tcp <- function(sim, obs, pair_min = 0.2, center = c("mean", "median
     # and the shift then drags every other draw across 50% (Spender 0.996 -> 0.302 at 97% counted).
     fm <- if (center == "median") stats::median(fi) else mean(fi); fsd <- max(stats::sd(fi), flow_sd_floor)
     cm <- combine_prior_projection(fm, obs$flow[k], fsd, obs$flow_se[k])
+    flow_post <- cm$mean                                        # kept for pair_cal: cm is overwritten below
     na <- pmin(1, pmax(0, pa + (cm$mean - fm) * rest))
     cm <- list(mean = mean(na))
     newW <- ifelse(na > 0.5, a, b); oldW <- W[hit]
-    ch <- which(newW != oldW)
-    for (d in ch) {
-      i_old <- match(oldW[d], parties); i_new <- match(newW[d], parties); r <- hit[d]
-      # Move a seat from old to new in this draw ONLY if old holds one: after the shrink toss the
-      # credited winner can differ from the count winner, and an unmatched increment would double count.
-      if (sim$totals[r, i_old] > 0) {
-        sim$totals[r, i_old] <- sim$totals[r, i_old] - 1L
-        sim$totals[r, i_new] <- sim$totals[r, i_new] + 1L
-      }
-    }
-    if (length(ch)) {
-      delta <- table(factor(newW[ch], parties)) - table(factor(oldW[ch], parties))
-      tot_before <- sum(wp$prob[wp$seat == s])
-      for (p in parties[delta != 0]) {
-        row <- which(wp$seat == s & wp$party == p)
-        if (length(row)) wp$prob[row] <- max(0, wp$prob[row] + delta[[p]] / n)
-        else wp <- rbind(wp, data.frame(seat = s, party = p, prob = max(0, delta[[p]] / n), stringsAsFactors = FALSE))
-      }
-      # The deltas move COUNT winners, but win_prob counts the CREDITED winner, which the shrink toss can make differ;
-      # a flip into a party already credited in that draw (or out of one that was not) left the seat summing above 1
-      # (Finniss sa2026 replay, 1.003; review 2026-10-30). Keep the seat's total where it was.
-      rows_s <- which(wp$seat == s); tot_after <- sum(wp$prob[rows_s])
-      if (tot_after > 0) wp$prob[rows_s] <- wp$prob[rows_s] * tot_before / tot_after
-    }
+    n_ch <- move_draws(hit, oldW, newW, s)
     sim$tcp_winner[hit, j] <- newW
     sim$tcp_runnerup[hit, j] <- ifelse(newW == a, b, a)
     sim$tcp_share[hit, j] <- ifelse(newW == a, na, 1 - na)
+    q <- NA_real_; n_mv <- 0L
+    if (cal_on && length(hit) < n) {
+      q <- stats::plogis(pair_cal[1] + pair_cal[2] * stats::qlogis((length(hit) + 0.5) / (n + 1)))
+      rest_c <- (100 - obs$fp_a[k] - obs$fp_b[k]) / 100; if (!is.finite(rest_c) || rest_c <= 0.005) rest_c <- 0.005
+      mv_out <- build_pair_draws(hit, q, frac_pair, flow_post, s, j, a, b, k, rest_c)
+      n_ch <- n_ch + mv_out$changed; n_mv <- mv_out$moved
+    }
+    if (!is.null(pair_r) && length(hit) < n) {
+      # The counted pair is evidence about which two are in the final count (pair right in ~95% of seats).
+      q <- frac_pair * pair_r / (frac_pair * pair_r + (1 - frac_pair) * (1 - pair_r))
+      oth <- setdiff(seq_len(n), hit)
+      n_mv <- as.integer(round(length(oth) * (q - frac_pair) / (1 - frac_pair)))
+      if (n_mv > 0L) {
+        mv <- oth[unique(round(seq(1, length(oth), length.out = n_mv)))]
+        donor <- hit[(seq_along(mv) - 1L) %% length(hit) + 1L]
+        oldM <- sim$tcp_winner[mv, j]; newM <- sim$tcp_winner[donor, j]
+        n_ch <- n_ch + move_draws(mv, oldM, newM, s)
+        sim$tcp_winner[mv, j] <- newM
+        sim$tcp_runnerup[mv, j] <- sim$tcp_runnerup[donor, j]
+        sim$tcp_share[mv, j] <- sim$tcp_share[donor, j]
+        n_mv <- length(mv)
+      }
+    }
     rep[[k]] <- data.table::data.table(seat = s, a = a, b = b, pair_share = frac_pair, prior_a = pm,
-                                       post_a = cm$mean, obs_a = obs$share_a[k], raw_a = raw_k, changed = length(ch), flag = FALSE)
+                                       post_a = cm$mean, obs_a = obs$share_a[k], raw_a = raw_k, changed = n_ch, flag = FALSE)
+    if (!is.null(pair_r) || cal_on) rep[[k]][, `:=`(pair_post = q, moved = n_mv)]
   }
   sim$win_prob <- wp[wp$prob > 0, ]
-  attr(sim, "night_tcp") <- data.table::rbindlist(rep)
+  attr(sim, "night_tcp") <- data.table::rbindlist(rep, fill = TRUE)
   sim
 }
 

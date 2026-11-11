@@ -10,7 +10,9 @@ night_apply_tcp(
   pair_min = 0.2,
   center = c("mean", "median"),
   flow_sd_floor = 0.01,
-  own_fp = FALSE
+  own_fp = FALSE,
+  pair_r = NULL,
+  pair_cal = NULL
 )
 }
 \arguments{
@@ -32,10 +34,29 @@ against. \code{"median"} stops a minority of outlying draws (an unfaded surge) m
 shifts each draw by its own remainder. With the counted primaries, a draw whose primaries sit far
 from the count reads as an impossible flow (Wentworth fed2022 surge draws: 1.05) and skews the
 centre. \code{FALSE} (default) is unchanged. Stops (NX11) if \code{TRUE} and \code{sim$fp_draws} is missing.}
+
+\item{pair_r}{\code{NULL} (default, unchanged) or the commission's night-pair reliability in (0, 1): the
+share of seats whose counted pair turns out to be the real final two. With it set, \code{pair_min} no
+longer applies, and the counted pair is evidence about WHICH two are in the final count: with \code{p}
+the share of draws holding that pair, its posterior is \verb{q = p r / (p r + (1 - p)(1 - r))}, and a
+share \code{(q - p) / (1 - p)} of the other draws (an evenly spaced subset) takes the outcome of a
+corrected pair draw (cycled in order). Monash fed2025: the AEC counted Labor v Liberal, the real
+final two, while most draws had the independent in it, so the count was thrown away and the seat
+ended at independent 0.99 (\verb{docs/plans/prereg-night-pair-trust-2026-11-11.md}).}
+
+\item{pair_cal}{\code{NULL} (default, unchanged) or \code{c(alpha, beta)}: the calibrated version of \code{pair_r}
+(\verb{docs/plans/prereg-night-pair-cal-2026-11-11.md}). The counted pair's probability of being the final two is
+\code{q = plogis(alpha + beta * qlogis(p_s))}, \code{p_s = (h + 0.5) / (n + 1)} with \code{h} the draws holding it, so a pair
+the model gives almost no draws can still be believed (\code{beta < 1}: the model's pair share is over-confident;
+\verb{beta = 1, alpha = qlogis(r)} is \code{pair_r}'s rule). The other draws moved onto the pair are BUILT from the count,
+not copied: a's share \code{fp_a + f * rest}, \code{f} at evenly spaced normal quantiles around the corrected flow (or the
+count's own flow when fewer than 2 draws hold the pair) with sd \code{obs$flow_se} (floored at \code{flow_sd_floor}).
+\code{pair_min} and the fewer-than-2-draws skip do not apply. Cannot be combined with \code{pair_r}.}
 }
 \value{
 \code{sim}, updated, with attribute \code{night_tcp}: one row per observed seat (pair share
-of draws, prior and posterior mean of a's share, draws changed, \code{flag}).
+of draws, prior and posterior mean of a's share, draws changed, \code{flag}; with \code{pair_r} or \code{pair_cal}, also
+\code{pair_post} (q) and \code{moved}, the other draws given the counted pair).
 }
 \description{
 For each seat with an observed pair: the draws whose final two are that pair are found;

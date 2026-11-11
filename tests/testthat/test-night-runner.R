@@ -402,6 +402,70 @@ test_that("the VEC's raw counted 2CP share is carried through night_tcp_obs and 
   expect_equal(sum(out2$win_prob$prob[out2$win_prob$seat == "S1"]), 1)
 })
 
+test_that("pair_r: a counted pair held by few draws moves the other draws onto it (Monash fed2025), and NULL is unchanged", {
+  # 20 draws: 3 have the counted pair Labor v Liberal (Liberal wins), 17 an independent v Liberal (independent wins).
+  n <- 20L; hitn <- 3L
+  W <- c(rep("LNP", hitn), rep("IND", n - hitn)); R <- c(rep("ALP", hitn), rep("LNP", n - hitn))
+  tot <- cbind(ALP = 0L, LNP = as.integer(W == "LNP"), IND = as.integer(W == "IND"))
+  mk <- function() list(totals = tot, win_prob = data.frame(seat = "Monash", party = c("LNP", "IND"), prob = c(hitn, n - hitn) / n),
+                        tcp_winner = matrix(W, n, 1, dimnames = list(NULL, "Monash")),
+                        tcp_runnerup = matrix(R, n, 1, dimnames = list(NULL, "Monash")),
+                        tcp_share = matrix(c(rep(.58, hitn), rep(.55, n - hitn)), n, 1, dimnames = list(NULL, "Monash")))
+  obs <- data.table::data.table(seat = "Monash", a = "ALP", b = "LNP", share_a = 0.42, raw_share_a = 0.43,
+                                fp_a = 30, fp_b = 40, flow = 0.4, flow_se = 0.02)
+  # today: 3 of 20 (0.15) is under pair_min, so the count is ignored and the seat only flagged
+  off <- night_apply_tcp(mk(), obs, pair_min = 0.2)
+  rep0 <- attr(off, "night_tcp")
+  expect_true(rep0$flag); expect_false("pair_post" %in% names(rep0))
+  expect_equal(off$win_prob$prob[off$win_prob$party == "IND"], 17 / 20)
+  # with pair_r 0.95: q = .15 * .95 / (.15 * .95 + .85 * .05) = 0.7703, so round(17 * (q - .15) / .85) = 12 draws move
+  on <- night_apply_tcp(mk(), obs, pair_min = 0.2, pair_r = 0.95)
+  rep1 <- attr(on, "night_tcp")
+  expect_false(rep1$flag); expect_equal(rep1$moved, 12L); expect_equal(rep1$pair_post, .1425 / (.1425 + .0425))
+  expect_equal(on$win_prob$prob[on$win_prob$party == "IND"], 5 / 20)
+  expect_equal(on$win_prob$prob[on$win_prob$party == "LNP"], 15 / 20)
+  expect_equal(sum(on$win_prob$prob), 1)
+  expect_equal(unname(rowSums(on$totals)), rep(1, n))              # every draw still has exactly one seat
+  expect_equal(sum(on$tcp_winner[, 1] == "IND"), 5L)
+  # every draw already holding the counted pair: nothing to move
+  all_hit <- mk(); all_hit$tcp_winner[, 1] <- "LNP"; all_hit$tcp_runnerup[, 1] <- "ALP"
+  all_hit$totals <- cbind(ALP = 0L, LNP = 1L, IND = 0L); all_hit$win_prob <- data.frame(seat = "Monash", party = "LNP", prob = 1)
+  expect_equal(attr(night_apply_tcp(all_hit, obs, pair_r = 0.95), "night_tcp")$moved, 0L)
+  expect_error(night_apply_tcp(mk(), obs, pair_r = 1), "NX12")
+})
+
+test_that("pair_cal: a counted pair NO draw holds still moves draws, built from the count (Monash fed2025 v2)", {
+  # 20 draws, none with the counted Labor v Liberal pair: all independent v Liberal, independent wins
+  n <- 20L
+  mk <- function() list(totals = cbind(ALP = rep(0L, n), LNP = rep(0L, n), IND = rep(1L, n)),
+                        win_prob = data.frame(seat = "Monash", party = "IND", prob = 1),
+                        tcp_winner = matrix("IND", n, 1, dimnames = list(NULL, "Monash")),
+                        tcp_runnerup = matrix("LNP", n, 1, dimnames = list(NULL, "Monash")),
+                        tcp_share = matrix(.55, n, 1, dimnames = list(NULL, "Monash")))
+  # count: Labor 30, Liberal 40, flow to Labor 0.4 -> Labor 0.30 + 0.4 * 0.30 = 0.42 of the pair: the Liberal wins it
+  obs <- data.table::data.table(seat = "Monash", a = "ALP", b = "LNP", share_a = 0.42, raw_share_a = 0.43,
+                                fp_a = 30, fp_b = 40, flow = 0.4, flow_se = 0.02)
+  expect_equal(attr(night_apply_tcp(mk(), obs, pair_r = 0.95), "night_tcp")$flag, TRUE)    # v1 cannot act here
+  cal <- c(qlogis(0.95), 0.5)
+  q <- plogis(cal[1] + cal[2] * qlogis(0.5 / (n + 1)))                                       # 0.748
+  on <- night_apply_tcp(mk(), obs, pair_cal = cal)
+  rp <- attr(on, "night_tcp")
+  expect_false(rp$flag); expect_equal(rp$pair_post, q); expect_equal(rp$moved, as.integer(round(n * q)))
+  expect_equal(on$win_prob$prob[on$win_prob$party == "LNP"], round(n * q) / n)
+  expect_equal(sum(on$win_prob$prob), 1)
+  expect_equal(unname(rowSums(on$totals)), rep(1, n))
+  moved <- on$tcp_winner[, 1] == "LNP"
+  expect_true(all(on$tcp_runnerup[moved, 1] == "ALP"))
+  expect_true(all(abs(on$tcp_share[moved, 1] - 0.58) < 0.03))                               # Liberal's share of the pair, from the count
+  # beta = 1, alpha = qlogis(r) is v1's posterior: same q as pair_r would give on the same p_s
+  q1 <- attr(night_apply_tcp(mk(), obs, pair_cal = c(qlogis(0.95), 1)), "night_tcp")$pair_post
+  ps <- 0.5 / (n + 1); expect_equal(q1, ps * .95 / (ps * .95 + (1 - ps) * .05))
+  expect_error(night_apply_tcp(mk(), obs, pair_cal = 0.5), "NX14")
+  expect_error(night_apply_tcp(mk(), obs, pair_cal = cal, pair_r = 0.9), "NX14")
+  # NULL leaves today's behaviour exactly
+  expect_identical(night_apply_tcp(mk(), obs), night_apply_tcp(mk(), obs, pair_cal = NULL))
+})
+
 test_that("per-booth results for the map: reported ordinary booths only, four first-preference classes, final two when posted", {
   dt <- data.table::data.table
   conv <- list(
@@ -559,4 +623,14 @@ test_that("rows spliced in from an older election give the booth swing only, not
   expect_identical(night_turnout_table(stats, ref[, -6])$district, c("Morwell", "Narracan"))   # no ref_year: unchanged
   ref$ref_year[1] <- NA
   expect_error(night_turnout_table(stats, ref), "NW18!")
+})
+
+test_that("the live night cycle runs at the fitted pair_cal unless told otherwise", {
+  expect_identical(.night_pair_cal_cfg(NULL), .NIGHT_PAIR_CAL)
+  expect_identical(.night_pair_cal_cfg("fitted"), .NIGHT_PAIR_CAL)
+  expect_null(.night_pair_cal_cfg("off"))
+  expect_equal(.night_pair_cal_cfg("1.5,0.7"), c(1.5, 0.7))
+  expect_error(.night_pair_cal_cfg("1.5"), "NW19!")
+  expect_error(.night_pair_cal_cfg("a,b"), "NW19!")
+  expect_length(.NIGHT_PAIR_CAL, 2L)
 })

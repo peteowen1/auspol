@@ -64,6 +64,8 @@ STAGES <- list(
   # without it still gets the rest of the pipeline.
   list(f = "scripts/fit_seats_full.R", what = "seat simulation (per seat)", slow = TRUE),
   list(f = "scripts/fit_scorecard.R",  what = "pollster scorecard",      slow = FALSE),
+  # One page per pollster for the ITG site: history, stats and what the published trend does with its polls.
+  list(f = "scripts/build_pollster_pages.R", what = "pollster pages",    slow = FALSE, target = FALSE),   # optional: a stop here must not take the Victorian page down (ITG review 11 Nov)
   list(f = "scripts/build_page.R",     what = "public page",             slow = FALSE),
   # The forecast as one JSON document + a history row, for the ITG page
   # (release-as-data-bus). Reads fit_seats_full.R's outputs only.

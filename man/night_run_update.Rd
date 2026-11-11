@@ -18,7 +18,10 @@ night_run_update(
   surge_fade = TRUE,
   tcp_center = "median",
   tcp_flow_floor = 0.01,
-  tcp_own_fp = FALSE
+  tcp_own_fp = FALSE,
+  tcp_pair_r = NULL,
+  tcp_pair_cal = NULL,
+  cand_ref = FALSE
 )
 }
 \arguments{
@@ -57,6 +60,15 @@ replays (fed2022, fed2025, vic2022) and it made vic2022 worse at 10pm (Northcote
 
 \item{tcp_own_fp}{Passed to \code{\link[=night_apply_tcp]{night_apply_tcp()}} as \code{own_fp}: \code{TRUE} reads each draw's implied flow from its own
 primaries (simulated with \code{keep_fp = TRUE}). \code{FALSE} (default) until measured on the real-night replays.}
+
+\item{tcp_pair_r}{Passed to \code{\link[=night_apply_tcp]{night_apply_tcp()}} as \code{pair_r}: \code{NULL} (default, unchanged) or the commission's
+night-pair reliability (\verb{docs/plans/prereg-night-pair-trust-2026-11-11.md}).}
+
+\item{tcp_pair_cal}{Passed to \code{\link[=night_apply_tcp]{night_apply_tcp()}} as \code{pair_cal}: \code{NULL} (default, unchanged) or \code{c(alpha, beta)},
+the calibrated pair prior (\verb{docs/plans/prereg-night-pair-cal-2026-11-11.md}).}
+
+\item{cand_ref}{Passed to \code{\link[=night_booth_update]{night_booth_update()}}: \code{FALSE} (default, unchanged) or \code{TRUE}, a returning candidate's
+previous votes as their current class's booth reference (\verb{docs/plans/prereg-night-candidate-ref-2026-11-11.md}).}
 }
 \value{
 List: \code{sim}, \code{nu} (the update), \code{shares}, \code{sd}, \code{matched} (seats in both state and feed),
