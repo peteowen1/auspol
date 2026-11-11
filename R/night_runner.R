@@ -489,12 +489,14 @@ night_expected_votes <- function(enrolment, prev, basis = c("night", "final")) {
 #'   night-pair reliability (`docs/plans/prereg-night-pair-trust-2026-11-11.md`).
 #' @param tcp_pair_cal Passed to [night_apply_tcp()] as `pair_cal`: `NULL` (default, unchanged) or `c(alpha, beta)`,
 #'   the calibrated pair prior (`docs/plans/prereg-night-pair-cal-2026-11-11.md`).
+#' @param cand_ref Passed to [night_booth_update()]: `FALSE` (default, unchanged) or `TRUE`, a returning candidate's
+#'   previous votes as their current class's booth reference (`docs/plans/prereg-night-candidate-ref-2026-11-11.md`).
 #' @return List: `sim`, `nu` (the update), `shares`, `sd`, `matched` (seats in both state and feed),
 #'   `n_updated`.
 #' @export
 night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "table", "expected"), expected = NULL, sims = NULL, use_tcp = TRUE,
                              lean = NULL, early_frac = NULL, surge_fade = TRUE, tcp_center = "median", tcp_flow_floor = 0.01, tcp_own_fp = FALSE,
-                             tcp_pair_r = NULL, tcp_pair_cal = NULL) {
+                             tcp_pair_r = NULL, tcp_pair_cal = NULL, cand_ref = FALSE) {
   total <- match.arg(total)
   if (!is.numeric(tcp_flow_floor) || length(tcp_flow_floor) != 1L || !is.finite(tcp_flow_floor) || tcp_flow_floor < 0)
     stop("NW17! tcp_flow_floor must be one finite number >= 0 (got ", paste(format(tcp_flow_floor), collapse = ", "), ")", call. = FALSE)
@@ -505,7 +507,7 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
   shares <- st$shares; sdo <- st$sdo; swd <- st$swd
   nu <- night_booth_update(shares, night_prior_sd(shares, st$level_sd, st$level_mult, sdo), 1, conv$live, ref,
                            gap_k = gap_k, reported = conv$counted, total = total, expected = expected, lean = lean,
-                           early_frac = early_frac)
+                           early_frac = early_frac, cand_ref = cand_ref)
   if (nu$n_updated > 0L) {
     shares <- nu$shares; sdo <- nu$sd; swd <- night_shrink_draws(swd, 1 - nu$resolved)
   }

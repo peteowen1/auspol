@@ -99,26 +99,50 @@ night_prior_sd <- function(shares, level_sd, level_mult = NULL, sd_override = NU
 #'   ([night_early_frac()]); passed to [project_seat_from_booths()]. `NULL` (default) is byte-identical.
 #' @param expected For `total = "expected"`: named numeric, expected final votes per seat (a seat missing or NA falls
 #'   back to `"projected"`).
+#' @param cand_ref `FALSE` (default, byte-identical): the reference is each class's previous-election votes. `TRUE`:
+#'   a candidate in `live` who stood in the same seat in `ref` under a different class has those previous votes
+#'   filed under their CURRENT class first (names matched within the seat, letters only, case-folded), so their own
+#'   booth and vote-type pattern is the reference (`docs/plans/prereg-night-candidate-ref-2026-11-11.md`). Needs a
+#'   `candidate` column in both tables.
 #' @return List: `shares` (posterior means, rows renormalised to 100), `sd` (posterior sds),
 #'   `counted` (named per-seat share of the final night vote counted), `resolved` (mean over
 #'   updated cells of 1 - posterior sd / prior sd), `n_updated` (seats with booths), `units`
-#'   (counted units per seat), `type_gap` (the pooled gaps used, or `NULL`).
+#'   (counted units per seat), `type_gap` (the pooled gaps used, or `NULL`), `n_cand_ref` (candidates relabelled
+#'   under `cand_ref`, else `NA`).
 #' @export
 night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, gap_k = NULL, early = "last", new_sd_mult = 1,
                                reported = NULL, total = c("table", "projected", "expected"), expected = NULL, lean = NULL,
-                               early_frac = NULL) {
+                               early_frac = NULL, cand_ref = FALSE) {
   total <- match.arg(total)
   stopifnot(is.numeric(new_sd_mult), length(new_sd_mult) == 1L, new_sd_mult >= 1)
   stopifnot(identical(dim(shares), dim(prior_sd)), is.finite(frac), frac >= 0, frac <= 1)
   if (!is.null(reported)) stopifnot(all(c("district", "unit") %in% names(reported)))
-  prep <- function(X) {
+  if (!isTRUE(cand_ref) && !isFALSE(cand_ref)) stop("NX15! cand_ref must be TRUE or FALSE", call. = FALSE)
+  # cand_ref (docs/plans/prereg-night-candidate-ref-2026-11-11.md): a candidate who stood in the same seat at the
+  # reference election under a DIFFERENT class takes their own previous votes as their current class's reference.
+  ckey <- function(X) paste(X$district, gsub("[^a-z]", "", tolower(ifelse(is.na(X$candidate), "", X$candidate))), sep = "\r")
+  relabel <- NULL
+  if (cand_ref) {
+    if (!"candidate" %in% names(live) || !"candidate" %in% names(ref)) stop("NX15! cand_ref = TRUE needs a `candidate` column in both booth tables", call. = FALSE)
+    lv <- data.table::as.data.table(live)[!is.na(candidate) & nzchar(trimws(candidate))]
+    now <- unique(data.table::data.table(k = ckey(lv), cls_now = classify_party(lv$party)))
+    if (anyDuplicated(now$k)) now <- now[!now$k %in% now$k[duplicated(now$k)]]   # one name, two classes in a seat: leave it alone
+    relabel <- now
+  }
+  n_cand_ref <- NA_integer_
+  prep <- function(X, rl = NULL) {
     X <- data.table::as.data.table(X)
     X[is.na(votes), votes := 0]
     X[, cls := classify_party(party)]
+    if (!is.null(rl)) {
+      i <- match(ckey(X), rl$k); sw <- !is.na(i) & rl$cls_now[pmax(i, 1L)] != X$cls
+      if (any(sw)) data.table::set(X, which(sw), "cls", rl$cls_now[i[sw]])
+      n_cand_ref <<- data.table::uniqueN(ckey(X)[sw])
+    }
     X[, unit := ifelse(booth_type == "ordinary", booth, booth_type)]
     X[, list(v = sum(votes)), by = c("district", "unit", "booth_type", "cls")]
   }
-  Lc <- prep(live); Rc <- prep(ref)
+  Lc <- prep(live); Rc <- prep(ref, relabel)
   M <- match_booth_units(Lc, Rc)
   Rk <- merge(Rc, M, by.x = c("district", "unit"), by.y = c("ref_district", "ref_unit"), suffixes = c(".ref", ".live"))
   Rk <- Rk[, list(district = district.live, unit = unit.live, booth_type = booth_type.live, cls, v)]
@@ -185,7 +209,7 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
   }
   list(shares = post, sd = psd, counted = counted,
        resolved = if (length(res)) mean(res) else 0, n_updated = n_up, units = units_by_seat, type_gap = type_gap,
-       fallback_projected = fallback_projected, proj_total = proj_total)
+       fallback_projected = fallback_projected, proj_total = proj_total, n_cand_ref = n_cand_ref)
 }
 
 # Pooled swing gap of each non-ordinary booth type against ordinary booths, per class, over the

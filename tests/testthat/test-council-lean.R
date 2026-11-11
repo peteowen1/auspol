@@ -78,3 +78,30 @@ test_that("a party new to the seat is projected from booth lean plus its counted
   # a class WITH last-time votes ignores the lean entirely
   expect_identical(project_seat_from_booths(live, ref, "Moe", lean = dt(unit = "Traralgon", cls = "ALP", share = 0.9)), p0)
 })
+
+test_that("cand_ref: a returning candidate who changed party takes their own previous votes as the reference", {
+  # Mirani 2024 in miniature: Smith stood as One Nation last time (40% in the booth, 10% on postals) and now stands
+  # for Katter's party (OTH_RIGHT, which had no votes here last time). The booth is counted, the postals are not.
+  ref  <- dt(district = "S", booth = c("A", "A", "P", "P"), booth_type = c("ordinary", "ordinary", "postal", "postal"),
+             candidate = c("SMITH, Jo", "JONES, Al", "SMITH, Jo", "JONES, Al"),
+             party = c("Pauline Hanson's One Nation", "Australian Labor Party"), votes = c(400, 600, 100, 900))
+  live <- dt(district = "S", booth = c("A", "A", "P", "P"), booth_type = c("ordinary", "ordinary", "postal", "postal"),
+             candidate = c("SMITH, Jo", "JONES, Al", "SMITH, Jo", "JONES, Al"),
+             party = c("Katter's Australian Party", "Australian Labor Party"), votes = c(500, 500, 0, 0))
+  sh <- matrix(c(50, 50), 1, dimnames = list("S", c("ALP", "OTH_RIGHT"))); sd <- sh * 0 + 50
+  rep_units <- dt(district = "S", unit = "A")
+  u0 <- night_booth_update(sh, sd, 1, live, ref, reported = rep_units)
+  expect_identical(night_booth_update(sh, sd, 1, live, ref, reported = rep_units, cand_ref = FALSE)$shares, u0$shares)
+  u1 <- night_booth_update(sh, sd, 1, live, ref, reported = rep_units, cand_ref = TRUE)
+  expect_equal(u1$n_cand_ref, 1L)
+  expect_true(is.na(u0$n_cand_ref))
+  # off: no OTH_RIGHT reference, so the postals carry the booth's 50%; on: Smith's own 10% postal share + 10 swing
+  expect_lt(u1$shares["S", "OTH_RIGHT"], u0$shares["S", "OTH_RIGHT"])
+  # a candidate in the same class both times is not relabelled
+  live2 <- data.table::copy(live)[candidate == "SMITH, Jo", party := "Pauline Hanson's One Nation"]
+  sh2 <- matrix(c(50, 50), 1, dimnames = list("S", c("ALP", "ONP")))
+  expect_identical(night_booth_update(sh2, sd, 1, live2, ref, reported = rep_units, cand_ref = TRUE)$shares,
+                   night_booth_update(sh2, sd, 1, live2, ref, reported = rep_units)$shares)
+  expect_error(night_booth_update(sh, sd, 1, live[, candidate := NULL], ref, reported = rep_units, cand_ref = TRUE), "NX15!")
+  expect_error(night_booth_update(sh, sd, 1, live, ref, reported = rep_units, cand_ref = NA), "NX15!")
+})

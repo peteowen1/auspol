@@ -20,7 +20,8 @@ night_run_update(
   tcp_flow_floor = 0.01,
   tcp_own_fp = FALSE,
   tcp_pair_r = NULL,
-  tcp_pair_cal = NULL
+  tcp_pair_cal = NULL,
+  cand_ref = FALSE
 )
 }
 \arguments{
@@ -65,6 +66,9 @@ night-pair reliability (\verb{docs/plans/prereg-night-pair-trust-2026-11-11.md})
 
 \item{tcp_pair_cal}{Passed to \code{\link[=night_apply_tcp]{night_apply_tcp()}} as \code{pair_cal}: \code{NULL} (default, unchanged) or \code{c(alpha, beta)},
 the calibrated pair prior (\verb{docs/plans/prereg-night-pair-cal-2026-11-11.md}).}
+
+\item{cand_ref}{Passed to \code{\link[=night_booth_update]{night_booth_update()}}: \code{FALSE} (default, unchanged) or \code{TRUE}, a returning candidate's
+previous votes as their current class's booth reference (\verb{docs/plans/prereg-night-candidate-ref-2026-11-11.md}).}
 }
 \value{
 List: \code{sim}, \code{nu} (the update), \code{shares}, \code{sd}, \code{matched} (seats in both state and feed),

@@ -38,3 +38,10 @@ Calare Gee, Moore Goodenough), nsw2023 7 (Barwon Butler, Murray Dalton, Orange D
 - Unacceptable even if it passes: any seat's probabilities summing above 1; vic2022 not byte-identical.
 - Reported, not decisive: Monash fed2025 (Broadbent) at each time; per-target table.
 - Noise: 29 targets; SE clustered on seat. A primary fall inside 1 SE is reported as such.
+
+## Amendment (11 Nov, before any run; original text above unedited)
+
+The live VEC booth table (`night_booth_table()`) carries no candidate names, so `cand_ref` cannot run on the vic2022
+real-night replay (it stops with NX15). vic2022 has 0 targets, so nothing is lost for the test: the real-night
+replays are fed2022 and fed2025 only, and vic2022 stays the byte-identity check on the simulated replay. Shipping to
+the live vic2026 night would first need candidate names in `night_booth_table()` (the VEC feed has them).

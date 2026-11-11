@@ -24,6 +24,7 @@ fracs <- as.numeric(strsplit(flag("fracs", "0,0.05,0.1,0.25,0.5,0.75,1"), ",")[[
 out_dir <- flag("out", "output/night-replay"); dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 use_tcp <- !identical(flag("tcp", "1"), "0")
 early <- flag("early", "interleaved"); gap_k <- as.numeric(flag("gap_k", "5"))
+cand_ref <- identical(flag("cand-ref", "0"), "1")   # prereg-night-candidate-ref-2026-11-11
 surge_fade <- !identical(flag("surge-fade", "1"), "0"); tcp_center <- flag("tcp-center", "median"); tcp_floor <- as.numeric(flag("tcp-flow-floor", "0.01"))   # night fixes, on by default since 2026-10-31 (the live runner's defaults)
 base <- if (!is.null(flag("base"))) jsonlite::fromJSON(flag("base"), simplifyVector = FALSE) else NULL
 st <- readRDS(state_f); sims <- as.integer(flag("sims", st$n_sims))
@@ -35,14 +36,15 @@ br <- flag("prev", file.path("output", sprintf("booths-%s%d.csv", region, st$fro
 bt <- flag("tcp-file", file.path("output", "booths", sprintf("%s%d-booth-tcp.csv", region, st$to)))
 for (f in c(bl, br, if (use_tcp) bt)) if (!file.exists(f)) stop("NJ1! missing ", f)
 L <- fread(bl, showProgress = FALSE); R <- fread(br, showProgress = FALSE); Tc <- if (use_tcp) fread(bt, showProgress = FALSE) else NULL
-cat(sprintf("NJ1  %s: %d seats, %d sims, 2CP %s, early=%s, gap_k=%s, surge-fade=%s, tcp-center=%s, tcp-flow-floor=%s, fractions %s\n", st$pair, nrow(st$shares), sims,
-            if (use_tcp) "ON" else "off", early, gap_k, surge_fade, tcp_center, tcp_floor, paste(fracs, collapse = ",")))
+cat(sprintf("NJ1  %s: %d seats, %d sims, 2CP %s, cand-ref=%s, early=%s, gap_k=%s, surge-fade=%s, tcp-center=%s, tcp-flow-floor=%s, fractions %s\n", st$pair, nrow(st$shares), sims,
+            if (use_tcp) "ON" else "off", cand_ref, early, gap_k, surge_fade, tcp_center, tcp_floor, paste(fracs, collapse = ",")))
 
 index <- list()
 for (fr in fracs) {
   shares <- st$shares; sdo <- st$sdo; swd <- st$swd; nu <- NULL
   if (fr > 0) {
-    nu <- night_booth_update(shares, night_prior_sd(shares, st$level_sd, st$level_mult, sdo), fr, L, R, gap_k = gap_k, early = early)
+    nu <- night_booth_update(shares, night_prior_sd(shares, st$level_sd, st$level_mult, sdo), fr, L, R, gap_k = gap_k, early = early, cand_ref = cand_ref)
+    if (cand_ref && fr == fracs[fracs > 0][1]) cat(sprintf("NJ1  cand-ref: %d returning candidate(s) relabelled to their current class\n", nu$n_cand_ref))
     if (nu$n_updated == 0L) stop("NJ2! replay at ", fr, " updated no seat: booth districts do not match the saved state's seats")
     shares <- nu$shares; sdo <- nu$sd; swd <- night_shrink_draws(swd, 1 - nu$resolved)
   }
