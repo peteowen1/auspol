@@ -31,6 +31,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   reference and its turnout fell to the state rate; `.night_seat_names()` now puts every input's names into the model's.
   Checked on all 88 districts with the 2022 pages under the live 2026 configuration (87 updated; Narracan has no 2022 page); (4) DONE 11 Nov: dress rehearsal of fetcher + loop on the live Nepean pages (found and fixed: the loop never saw website snapshots; the website candidate list has no enrolment, now `external/reference/vec/2026/enrolment/enrolment-2026.csv`, pass it as --enrolment); (5) the ITG booths build
   (`C:/dev/inthegame-blog/politics/night-maps/build-booths-2026.py`) also assumed the feed.
+- OPEN, night website (ITG review nit, 11 Nov): a failed page fetch leaves no DONE, so the loop keeps the old snapshot and
+  logs only "no new snapshot"; a long VEC outage looks like a quiet count. Done when `scripts/night_loop.R` warns once the
+  newest DONE is more than N minutes old.
+- OPEN, check after the 12 Nov 4:30am forecast run (first from main with PR #219): `auspol/pollster-pages.json` on R2
+  returns 200, then tell the ITG session (it checks https://inthegame.blog/politics/pollster).
 - OPEN, replay evidence (found 11 Nov): `output/booths-vic2018.csv` spells 25 of 87 districts unlike the seats ("Albertpark",
   "South Westcoast"), and the replay scripts pass it to `night_run_update()` without `.night_seat_names()`, so in every vic2022
   replay those seats' declaration votes (early, postal, absent) had no reference (ordinary booths still matched by unique name).
