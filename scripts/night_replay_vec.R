@@ -6,7 +6,8 @@
 #   Rscript scripts/night_replay_vec.R --state=<night-state-vic2022.rds> --setup=<folder holding the 2022
 #       Candidates and PollingLocations XML, flat> [--feed=external/reference/vec/2026/feed-docs/inner22]
 #       [--out=<dir>] [--label=fixes] [--surge-fade=1] [--tcp-center=median] [--tcp-flow-floor=0.01] [--last-day=20221127]
-#       [--stamps=<comma list of snapshot stamps to run, default all>]
+#       [--stamps=<comma list of snapshot stamps to run, default all>] [--resume=1] [--stop-after=<n steps, testing>]
+# Every step rewrites <out>/vic2022-<label>-*.partial.csv; --resume=1 picks up a killed run (night_replay_checkpoint.R).
 #
 # Defaults are the live runner's (since 2026-10-31); the before-fixes arm is
 # --surge-fade=0 --tcp-center=mean --tcp-flow-floor=0.01. Snapshots are HOURLY (6:03pm, then 7pm to 2am), so a call
@@ -43,8 +44,14 @@ seats <- rownames(st$shares)
 cat(sprintf("NRV1 %s: %d seats in state, %d snapshots %s to %s, %d sims; label %s (surge-fade %s, tcp-center %s, tcp-flow-floor %s); %d winners to score\n",
             pair_lbl, length(seats), length(files), stamp[1], stamp[length(stamp)], nrow(st$swd), label, surge_fade, tcp_center, tcp_floor, nrow(win))); cat(sprintf("NRV1 tcp-own-fp %s, pair-r %s, pair-cal %s\n", own_fp, if (is.null(pair_r)) "off" else format(pair_r), if (is.null(pair_cal)) "off" else paste(format(pair_cal), collapse = ",")))
 
-summ <- list(); seat_rows <- list(); tcp_rows_out <- list()
+source("scripts/night_replay_checkpoint.R")   # per-step partial files; --resume=1 skips the times already done
+ck_prefix <- sprintf("%s-%s", pair_lbl, label); ck_kinds <- c("summary", "seats", "tcp")
+ck <- ckpt_load(out_dir, ck_prefix, ck_kinds, resume = identical(flag("resume", "0"), "1"))
+summ <- ck$rows$summary; seat_rows <- ck$rows$seats; tcp_rows_out <- ck$rows$tcp
 for (k in seq_along(files)) {
+  tm <- sprintf("%s:%s", substr(stamp[k], 10, 11), substr(stamp[k], 12, 13))
+  if (substr(stamp[k], 1, 8) > "20221126") tm <- sprintf("%d:%s", 24L + as.integer(substr(stamp[k], 10, 11)), substr(stamp[k], 12, 13))
+  if (tm %in% ck$done) next
   feed <- vec_feed_read_lh(files[k])
   conv <- suppressMessages(night_booth_table(feed, lk, pl))
   enr <- stats::setNames(feed$contests$enrolment, sub(" District$", "", feed$contests$district))
@@ -55,21 +62,22 @@ for (k in seq_along(files)) {
   wp <- as.data.table(r$sim$win_prob)
   sc <- merge(win, wp, by = c("seat", "party"), all.x = TRUE); sc[is.na(prob), prob := 0]
   cnt <- r$nu$counted[seats]; cnt[is.na(cnt)] <- 0
-  tm <- sprintf("%s:%s", substr(stamp[k], 10, 11), substr(stamp[k], 12, 13))
-  if (substr(stamp[k], 1, 8) > "20221126") tm <- sprintf("%d:%s", 24L + as.integer(substr(stamp[k], 10, 11)), substr(stamp[k], 12, 13))
   s <- data.table(time = tm, stamp = stamp[k], seats_updated = r$n_updated, mean_counted = round(100 * mean(cnt), 1), tcp_seats = r$n_tcp,
                   alp_exp = round(mean(alp), 2), alp_lo = unname(quantile(alp, 0.05)), alp_hi = unname(quantile(alp, 0.95)),
                   p_alp_majority = round(mean(alp >= 45), 4), p_alp_largest = round(mean(alp > apply(oth, 1, max)), 4),
                   log_loss = round(mean(-log(pmax(sc$prob, 1e-6))), 4), right = sum(sc$prob > 0.5), n = nrow(sc))
-  summ[[k]] <- s; wp[, time := tm]; seat_rows[[k]] <- wp
+  summ[[length(summ) + 1]] <- s; wp[, time := tm]; seat_rows[[length(seat_rows) + 1]] <- wp
   nt <- attr(r$sim, "night_tcp"); if (!is.null(nt) && nrow(nt)) tcp_rows_out[[length(tcp_rows_out) + 1]] <- data.table::as.data.table(nt)[, time := tm]   # per-seat pair share, prior/posterior (pair_r v2 trace)
   cat(sprintf("NRV2 %s seats updated %d (mean counted %.1f%%, 2CP %d) | ALP %.1f (%g-%g) P(maj) %.3f P(largest) %.3f | log loss %.4f, right %d/%d\n",
               s$time, s$seats_updated, s$mean_counted, s$tcp_seats, s$alp_exp, s$alp_lo, s$alp_hi, s$p_alp_majority, s$p_alp_largest,
               s$log_loss, s$right, s$n))
+  ckpt_save(out_dir, ck_prefix, list(summary = summ, seats = seat_rows, tcp = tcp_rows_out))
+  if (!is.null(flag("stop-after")) && length(summ) >= as.integer(flag("stop-after"))) { cat("NRV5 --stop-after reached: stopping with partial files only (a kill, for testing --resume)\n"); quit(save = "no", status = 0) }
 }
 S <- rbindlist(summ); fwrite(S, file.path(out_dir, sprintf("%s-%s-summary.csv", pair_lbl, label)))
 W <- rbindlist(seat_rows); fwrite(W, file.path(out_dir, sprintf("%s-%s-seats.csv", pair_lbl, label)))
 if (length(tcp_rows_out)) fwrite(rbindlist(tcp_rows_out, fill = TRUE), file.path(out_dir, sprintf("%s-%s-tcp.csv", pair_lbl, label)))
+ckpt_clear(out_dir, ck_prefix, ck_kinds)
 if (nrow(S) && all(S$n == 0)) stop("NRV3! no winners scored: vic2022 rows missing from output/published-predictions.csv")
 call_at <- function(p) { i <- which(vapply(seq_along(p), function(j) all(p[j:length(p)] >= 0.99), logical(1))); if (length(i)) S$time[min(i)] else "never" }
 last <- W[W$time == S$time[nrow(S)]]; sc <- merge(win, last, by = c("seat", "party"), all.x = TRUE); sc[is.na(prob), prob := 0]

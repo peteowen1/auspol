@@ -4,7 +4,8 @@
 # two-candidate counts of those places only where the pair on screen at T was the final pair and not withdrawn.
 #
 #   Rscript scripts/night_replay_feed.R --state=<state-fed2022.rds> [--out=<dir>] [--times=18:00,...] [--surge-fade=1]
-#       [--tcp-center=median] [--tcp-flow-floor=0.01] [--label=base]
+#       [--tcp-center=median] [--tcp-flow-floor=0.01] [--label=base] [--resume=1] [--stop-after=<n steps, testing>]
+# Every step rewrites <out>/<night>-<label>-*.partial.csv; --resume=1 picks up a killed run (night_replay_checkpoint.R).
 #
 # Simplifications (say them in every result): a reported place carries its FINAL count, not its first-night figure;
 # declaration votes (postal, absent, provisional, declaration pre-poll) are never counted on the night here (the AEC
@@ -66,8 +67,12 @@ cat(sprintf("NRF0 %s: %d divisions showed a pair; %d usable at some point; %d ne
             pair_lbl, nrow(pk), sum(pk$ever_ok), sum(!pk$ever_ok)))
 if (!sum(pk$ever_ok)) stop("NRF0! no division's night pair matched its declared pair: check the name formats in Tc and the feed")
 
-summ <- list(); seat_rows <- list(); tcp_rows_out <- list(); pairs_out <- list()
+source("scripts/night_replay_checkpoint.R")   # per-step partial files; --resume=1 skips the times already done
+ck_prefix <- sprintf("%s-%s", pair_lbl, label); ck_kinds <- c("summary", "seats", "tcp", "pairs")
+ck <- ckpt_load(out_dir, ck_prefix, ck_kinds, resume = identical(flag("resume", "0"), "1"))
+summ <- ck$rows$summary; seat_rows <- ck$rows$seats; tcp_rows_out <- ck$rows$tcp; pairs_out <- ck$rows$pairs
 for (k in seq_along(at)) {
+  if (tm[k] %in% ck$done) next
   T0 <- at[k]
   rep_pp <- pp[pp$t_fp <= T0, list(district = division, unit = polling_place)]
   if (!nrow(rep_pp)) { cat(sprintf("NRF2 %s: nothing reported yet\n", tm[k])); next }
@@ -121,6 +126,8 @@ for (k in seq_along(at)) {
   cat(sprintf("NRF3 %s places %d (%d seats, mean counted %.1f%%, 2CP %d) | ALP %.1f (%g-%g) P(maj) %.3f | log loss %.4f, right %d/%d | Wentworth IND %.3f at %.1f%%\n",
               s$time, s$places, s$seats_reporting, s$mean_counted, s$tcp_seats, s$alp_exp, s$alp_lo, s$alp_hi, s$p_alp_majority,
               s$log_loss, s$right, s$n, s$wentworth_ind, s$wentworth_counted))
+  ckpt_save(out_dir, ck_prefix, list(summary = summ, seats = seat_rows, tcp = tcp_rows_out, pairs = pairs_out))
+  if (!is.null(flag("stop-after")) && length(summ) >= as.integer(flag("stop-after"))) { cat("NRF7 --stop-after reached: stopping with partial files only (a kill, for testing --resume)\n"); quit(save = "no", status = 0) }
 }
 S <- rbindlist(summ); fwrite(S, file.path(out_dir, sprintf("%s-%s-summary.csv", pair_lbl, label)))
 fwrite(rbindlist(seat_rows), file.path(out_dir, sprintf("%s-%s-seats.csv", pair_lbl, label)))
@@ -129,6 +136,7 @@ if (length(pairs_out)) { PO <- rbindlist(pairs_out)
   cat(sprintf("NRF6 pairs file: %d rows, %d seats, %d wrong (not the declared pair); median share right %.3f, wrong %.3f\n", nrow(PO),
               uniqueN(PO$seat), PO[declared == FALSE, uniqueN(seat)], median(PO$pair_share[PO$declared]), median(PO$pair_share[!PO$declared])))
   fwrite(PO, file.path(out_dir, sprintf("%s-%s-pairs.csv", pair_lbl, label))) }
+ckpt_clear(out_dir, ck_prefix, ck_kinds)
 call_at <- function(p) { ok <- p >= 0.99; i <- which(vapply(seq_along(ok), function(j) all(ok[j:length(ok)]), logical(1))); if (length(i)) S$time[min(i)] else "never" }
 cat(sprintf("NRF4 %s %s: Labor majority called (>= 0.99 and stays) at %s | Labor largest at %s | Wentworth IND at %s\n",
             pair_lbl, label, call_at(S$p_alp_majority), call_at(S$p_alp_largest), call_at(S$wentworth_ind)))
