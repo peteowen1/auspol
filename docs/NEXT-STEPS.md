@@ -13,9 +13,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (10 Nov: One Nation stands in all 88 seats, so no seat-count conditioning applies; recheck for nsw2027's list); (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 11 Nov 12:45am.** Published forecast = main as of PR #217 (10 Nov; 35 elections 0.3166, n 2,931; AEF-7
-  0.2524 vs AEF 0.2825, n 681). dev is ahead of main by pair_r (off), deciding_run log fix, ONP exploratory scripts;
-  dev CI red 0e621c04..636da0e2 (stale Rd), fixed bc92483d. Running: night-pair replay; 6am: poll-series retry.
+- **Status 12 Nov.** Published forecast = main as of PR #219 (merged 11 Nov 11:12pm; 12 Nov 4:30am daily run green).
+  dev is ahead of main by the party-pages data only (c26cf08e, ca272e5a). dev and main CI green. Nothing running.
 - OPEN, NIGHT SOURCE (before 28 Nov): the VEC REFUSED the feed (11 Nov); the night now runs on the VEC WEBSITE.
   BUILT 11 Nov: `R/vec_web.R` (page parser, 2026 + 2022 layouts; booth table identical to the feed path on vic2022's
   final count, every booth cell), `scripts/fetch_vec_web_snapshot.R` (index page -> each district's two voting-centre
@@ -34,8 +33,6 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - OPEN, night website (ITG review nit, 11 Nov): a failed page fetch leaves no DONE, so the loop keeps the old snapshot and
   logs only "no new snapshot"; a long VEC outage looks like a quiet count. Done when `scripts/night_loop.R` warns once the
   newest DONE is more than N minutes old.
-- OPEN, check after the 12 Nov 4:30am forecast run (first from main with PR #219): `auspol/pollster-pages.json` on R2
-  returns 200, then tell the ITG session (it checks https://inthegame.blog/politics/pollster).
 - OPEN, anchor data error (found 11 Nov by build_party_pages.R's check): `external/aus-polling-analyser/analysis/Data/eventual-results.csv`
   swaps Labor and the Coalition for NSW 2007 (`ALP FP 36.99`, `LNP FP 38.98`; the commission's count, and our candidacies, say
   Labor 38.98). The other 37 elections agree to 0.03 points. It is a third-party file: correct it on load
@@ -77,10 +74,6 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `AUSPOL_UPSET_FLOOR="0"` (`published_flags.R:324`), so stage 6b never runs. Trigger: fix before that switch is ever
   turned on. The fix must keep reused files' raw copies (stage 6 `rm -rf output/upset-floor-raw`; reused files are
   already mixed in place) and refresh a rerun file's raw copy when it is older than `AUSPOL_STAGE6_START`.
-- OPEN, poll columns by full party name (`AUSPOL_POLL_SERIES_CLASS=name`; 7-pair 20k tie -0.0028, SE 0.0038). Pete 10 Nov: "Run all 35".
-  Two runs FAILED 11 Nov (all 70 harness runs: seat-poll memo key over R's 10,000-byte name limit; fixed 89dda002,
-  smoke nt2016 passed). RUN 3 registered for 11:00pm 11 Nov: `deciding-runs/20261111-0747-poll-series-class-all35-r2/`.
-  Done when its DONE is read and `plans/prereg-poll-series-class-2026-11-06.md` standard rule applied; ship only on a pass.
 - **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** History, DONE list and replay evidence:
   `backlog/journal-2026-11-05-election-night.md` (moved verbatim 6 Nov); plan `plans/election-night-booth-model.md`. Runbook:
   `gh release download forecast-latest -p night-state-vic-2026.rds -D output`, then `night_runner.R --state=output/night-state-vic-2026.rds
@@ -91,7 +84,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
      `booths-vic2026.json`; check the popup at 390/1280 px and the 38 Narracan-only 2018 names against the 2026 polling places.
   3. Navbar link. "Called" rule TESTED 10 Nov on the 7 simulated replays (`reviews/night-called-rule-2026-11-10.md`):
      keep 0.99 with 10% counted; its 3 wrong calls (Melbourne, Monash 2025; Mirani 2024) survive any threshold, so the
-     fix is the final-pair defect below. OPEN: confirm on the real fed2022/fed2025/vic2022 nights: RUNNING in the night-pair job (NIGHT MODEL item below).
+     fix is the final-pair defect below. OPEN: confirm on the real fed2022/fed2025/vic2022 nights, after the replay seat-names fix above (vic2022 rerun).
   4. 25 Nov trial (no 2CP): with real 2026 centre names, compare each counted early centre with its own 2022 upper-house lean,
      re-test `--early-partial=1` (off; it made the approximated replay worse), and take the expected early total from the
      VEC's published attendance. Upper-house model designed, not built (`plans/upper-house-night-model.md`).
