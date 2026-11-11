@@ -9,6 +9,10 @@ live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
   trees on 11 inputs 3.23, gaining only on qld2017 and worse on qld2020/qld2024/nsw2023. On Victoria all three
   alternatives sit within ~2 points of ours in the eastern seats (Box Hill 9.7 ours vs 11.0-11.6). Box Hill's gap to the
   bookmakers is the proportional fill, not One Nation's share. `scripts/explore_onp_seat_regression.R` (de7e7071).
+  ADDED 11 Nov (ITG review): those figures came from a join that missed 44 of 308 multi-word seats and gave them a
+  made-up 0 for previous Greens/minor right/One Nation. Rerun with the join fixed (all 308 joined, guarded by OSR0):
+  Senate alone 3.44 (unchanged), trees on 11 inputs 3.19 (was 3.23), still gaining only on qld2017 (5.27 -> 3.89) and
+  worse on qld2020 (2.65 -> 3.07) and qld2024 (2.94 -> 3.07); Box Hill ridge 11.4 vs ours 9.8. Decision unchanged.
 - **2026-11-10 Preston: One Nation disendorsed Franco Guardiani (ABC, 10 Nov); he stays on the ballot as One Nation. No
   change.** We have One Nation at 16.7% there and Labor at 0.964 to win (Greens 0.026); a cut to his vote moves no
   seat call. The model has no column for disendorsement or scandal (`R/candidate_returns.R:729`).

@@ -30,10 +30,13 @@ cat(sprintf("panel: %d seat-elections (%s)\n", nrow(panel),
             paste(sprintf("%s %d", names(table(panel$el)), table(panel$el)), collapse = ", ")))
 
 # ---- join -------------------------------------------------------------------------------------------------------
-cens[, k := tolower(seat)]
+# seat keys letters-only, as the panel's k ("mountgambier"): tolower() alone kept the spaces and 44 of 308
+# multi-word seats missed every join below, then took a made-up 0 (ITG review, 11 Nov 2026)
+key <- function(x) gsub("[^a-z]", "", tolower(x))
+cens[, k := key(seat)]
 cens_k <- cens[, .(el = pair, k, yr12_pct, edu_25plus_pct, under35_pct, over55_pct, born_os_pct = 100 - born_aus_pct,
                    lang_other_pct, indig_pct)]
-pub[, k := tolower(seat)]
+pub[, k := key(seat)]
 prev <- dcast(pub[party %in% c("GRN", "OTH_RIGHT", "ONP")], pair + k ~ party, value.var = "prev_share", fun.aggregate = sum)
 setnames(prev, c("pair", "GRN", "OTH_RIGHT", "ONP"), c("el", "prev_grn", "prev_othright", "prev_onp"), skip_absent = TRUE)
 ours <- pub[party == "ONP", .(el = pair, k, ours_onp = ours)]
@@ -41,6 +44,11 @@ ours <- pub[party == "ONP", .(el = pair, k, ours_onp = ours)]
 d <- merge(panel, cens_k, by = c("el", "k"), all.x = TRUE)
 d <- merge(d, prev, by = c("el", "k"), all.x = TRUE)
 d <- merge(d, ours, by = c("el", "k"), all.x = TRUE)
+# a seat absent from published-predictions.csv is a join miss, not a party that did not stand: stop before the 0-fill
+in_pub <- unique(pub[, .(el = pair, k)])[, hit := TRUE]
+miss <- d[!in_pub, on = c("el", "k")]
+if (nrow(miss)) stop("OSR0! ", nrow(miss), " of ", nrow(d), " seat-elections not in published-predictions.csv: ", paste(head(paste(miss$el, miss$k), 8), collapse = ", "))
+if (anyNA(d$yr12_pct)) stop("OSR0! ", sum(is.na(d$yr12_pct)), " seat-elections with no census row")
 for (v in c("prev_grn", "prev_othright", "prev_onp")) if (v %in% names(d)) d[is.na(get(v)), (v) := 0]
 
 # Coverage, so a join that silently missed is visible (a column 0% populated is the classic way this goes wrong).

@@ -100,7 +100,8 @@ End-of-night seats wrong unchanged (2 / 5 / 1).
 
 Reported, not decisive: v1 on the fixed replay pooled -0.00147 (SE 0.00166) but FAILS the night clause. Largest
 |win prob change| where the base leader was above 0.9: fed2022 0.082 (Macnamara), fed2025 0.093 (Monash), vic2022
-0.236 (Albert Park). Melbourne fed2025 untestable (wrong night pair, no booth TCP).
+0.236 (Albert Park) (ADDED 11 Nov: from `scripts/night_pair_cal_bigmoves.R`, saved after the ITG review; reproduces all
+three). Melbourne fed2025 untestable (wrong night pair, no booth TCP).
 
 Lapse, recorded: the fitted values were to go into `docs/CONSTANTS.md` before the arm ran; they were written after.
 
