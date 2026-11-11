@@ -76,6 +76,17 @@ prev_el <- el[order(region, year)][, .(election, prev = shift(election)), by = r
 pe <- merge(pe, prev_el[, .(election, prev)], by = "election")
 pe[, ran_prev := paste(prev, fam) %in% paste(pe$election, pe$fam)]; pe[ran_prev == FALSE, fp_change := NA_real_]
 
+# Seats decided at a supplementary election after a candidate died, so absent from the general election's count
+# (candidacies.csv): counted in the seats, not in the first preferences, and every party's row says so.
+# Narracan: VEC page external/reference/vec/2022/booths/narracan-supp2023-2cp.html (FARNHAM, Wayne, Liberal).
+SUPP <- data.table(election = "vic2022", seat = "Narracan", fam = "liberal",
+                   note = "Seats include Narracan, decided at a supplementary election on 28 January 2023 (a Liberal win) after a candidate died; its votes are not in the first-preference figures.")
+if (any(paste(SUPP$election, SUPP$seat) %in% paste(done$election, done$seat))) stop("PTY3! a SUPP seat is already in the general count")
+pe[SUPP, on = c("election", "fam"), seats_won := seats_won + 1L]
+n_supp <- SUPP[, .(n_s = .N), by = election]
+pe[n_supp, on = "election", seats_total := seats_total + i.n_s]
+pe <- merge(pe, SUPP[, .(supp_note = note[1]), by = election], by = "election", all.x = TRUE)
+
 # ---- government --------------------------------------------------------------------------------------------------
 coal <- c("liberal", "nationals", "lnp", "clp")
 side <- pe[, .(alp = sum(seats_won[fam == "labor"]), coal = sum(seats_won[fam %in% coal])), by = .(election, seats_total)]
@@ -159,7 +170,7 @@ parties <- lapply(seq_len(nrow(keep)), function(i) {
   els <- lapply(seq_len(nrow(rows)), function(j) { r <- rows[j]
     list(election = r$election, date = r$date, fp_pct = r$fp_pct, fp_change = nn(r$fp_change), seats_won = r$seats_won,
          seats_contested = r$seats_contested, seats_total = r$seats_total, tpp_pct = nn(r$tpp_pct),
-         formed_government = isTRUE(r$formed_government), government_note = nn(r$gov_note),
+         formed_government = isTRUE(r$formed_government), government_note = nn(r$gov_note), note = nn(r$supp_note),
          forecast = if (is.na(r$fc_seats)) NULL else list(kind = "backtest", fp_pct = r$fc_fp, expected_seats = r$fc_seats)) })
   rel <- keep[fam == k$fam & region != k$region, slug]
   list(slug = k$slug, name = k$name, jurisdiction = k$region, code = k$code, colour = k$colour, family = k$fam,
