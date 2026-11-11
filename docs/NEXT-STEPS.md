@@ -116,7 +116,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   Monash 2025 got worse (moving Broadbent's Liberal votes left the new Liberal with no reference). Mirani still wrong at
   full count. The COPY version (Pete's choice) PASSED 11 Nov (sim -0.033, real -0.0017, both ~1 SE;
   Mirani and Monash carry it), kept OFF as an option: weak evidence (design chosen after the move run). Live use needs
-  candidate names in the night booth table. Pete to decide whether the 28 Nov night runs with it. Replays now write
+  candidate names in the night booth table. Pete chose 11 Nov: ON for 28 Nov if switchers exist; they do (7 of 112
+  returning same-seat candidates changed class: Caulfield, Frankston, Lara, Laverton, Morwell, Mulgrave, Werribee).
+  To do: the live night cycle on the VEC website reader (`scripts/vec_web_booths.R` carries names) with
+  `cand_ref = "copy"` passed through `night_cycle()` cfg. Replays now write
   every step and take `--resume=1` (9300e7df). OPEN, small: the partial files are keyed by night and label only, so a
   resume with the same label and different flags would mix configurations; put a fingerprint of the flags in them
   (review 11 Nov). Not while a replay job is running: the scripts are re-read mid-run.
