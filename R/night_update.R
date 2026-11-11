@@ -99,11 +99,12 @@ night_prior_sd <- function(shares, level_sd, level_mult = NULL, sd_override = NU
 #'   ([night_early_frac()]); passed to [project_seat_from_booths()]. `NULL` (default) is byte-identical.
 #' @param expected For `total = "expected"`: named numeric, expected final votes per seat (a seat missing or NA falls
 #'   back to `"projected"`).
-#' @param cand_ref `FALSE` (default, byte-identical): the reference is each class's previous-election votes. `TRUE`:
-#'   a candidate in `live` who stood in the same seat in `ref` under a different class has those previous votes
-#'   filed under their CURRENT class first (names matched within the seat, letters only, case-folded), so their own
-#'   booth and vote-type pattern is the reference (`docs/plans/prereg-night-candidate-ref-2026-11-11.md`). Needs a
-#'   `candidate` column in both tables.
+#' @param cand_ref `FALSE` (default, byte-identical): the reference is each class's previous-election votes. For a
+#'   candidate in `live` who stood in the same seat in `ref` under a different class (names matched within the seat,
+#'   letters only, case-folded): `TRUE` or `"move"` files those previous votes under their CURRENT class instead
+#'   (`docs/plans/prereg-night-candidate-ref-2026-11-11.md`, FAILED: the old class loses its history); `"copy"`
+#'   keeps them under the old class AND adds them to the current one, with each unit's reference total unchanged
+#'   (`docs/plans/prereg-night-candidate-ref-copy-2026-11-11.md`). Needs a `candidate` column in both tables.
 #' @return List: `shares` (posterior means, rows renormalised to 100), `sd` (posterior sds),
 #'   `counted` (named per-seat share of the final night vote counted), `resolved` (mean over
 #'   updated cells of 1 - posterior sd / prior sd), `n_updated` (seats with booths), `units`
@@ -117,12 +118,19 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
   stopifnot(is.numeric(new_sd_mult), length(new_sd_mult) == 1L, new_sd_mult >= 1)
   stopifnot(identical(dim(shares), dim(prior_sd)), is.finite(frac), frac >= 0, frac <= 1)
   if (!is.null(reported)) stopifnot(all(c("district", "unit") %in% names(reported)))
-  if (!isTRUE(cand_ref) && !isFALSE(cand_ref)) stop("NX15! cand_ref must be TRUE or FALSE", call. = FALSE)
-  # cand_ref (docs/plans/prereg-night-candidate-ref-2026-11-11.md): a candidate who stood in the same seat at the
-  # reference election under a DIFFERENT class takes their own previous votes as their current class's reference.
+  if (!(isTRUE(cand_ref) || isFALSE(cand_ref) || (is.character(cand_ref) && length(cand_ref) == 1L && cand_ref %in% c("move", "copy"))))
+    stop("NX15! cand_ref must be FALSE, TRUE / \"move\" or \"copy\"", call. = FALSE)
+  # cand_ref: a candidate who stood in the same seat at the reference election under a DIFFERENT class.
+  #   TRUE / "move" (docs/plans/prereg-night-candidate-ref-2026-11-11.md, FAILED): their previous votes are filed under
+  #     their current class INSTEAD of the old one, so the old class loses that history (Monash 2025: the new Liberal
+  #     had no reference and was projected at 11% against 32%).
+  #   "copy" (docs/plans/prereg-night-candidate-ref-copy-2026-11-11.md): the old class keeps them AND the current class
+  #     gets them too; a balancing `_COPYADJ` row of minus the copied votes keeps every unit's reference total unchanged
+  #     (no live class is ever `_COPYADJ`, so it reaches only the totals).
+  ref_mode <- if (isTRUE(cand_ref)) "move" else if (isFALSE(cand_ref)) "off" else cand_ref
   ckey <- function(X) paste(X$district, gsub("[^a-z]", "", tolower(ifelse(is.na(X$candidate), "", X$candidate))), sep = "\r")
-  relabel <- NULL
-  if (cand_ref) {
+  relabel <- NULL; copies <- NULL
+  if (ref_mode != "off") {
     if (!"candidate" %in% names(live) || !"candidate" %in% names(ref)) stop("NX15! cand_ref = TRUE needs a `candidate` column in both booth tables", call. = FALSE)
     lv <- data.table::as.data.table(live)[!is.na(candidate) & nzchar(trimws(candidate))]
     now <- unique(data.table::data.table(k = ckey(lv), cls_now = classify_party(lv$party)))
@@ -134,18 +142,29 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
     X <- data.table::as.data.table(X)
     X[is.na(votes), votes := 0]
     X[, cls := classify_party(party)]
+    X[, unit := ifelse(booth_type == "ordinary", booth, booth_type)]
     if (!is.null(rl)) {
       i <- match(ckey(X), rl$k); sw <- !is.na(i) & rl$cls_now[pmax(i, 1L)] != X$cls
-      if (any(sw)) data.table::set(X, which(sw), "cls", rl$cls_now[i[sw]])
       n_cand_ref <<- data.table::uniqueN(ckey(X)[sw])
+      if (any(sw) && ref_mode == "copy") {
+        cp <- X[which(sw)]; data.table::set(cp, NULL, "cls", rl$cls_now[i[sw]])
+        copies <<- cp[, list(v = sum(votes)), by = c("district", "unit", "booth_type", "cls")]
+      } else if (any(sw)) data.table::set(X, which(sw), "cls", rl$cls_now[i[sw]])
     }
-    X[, unit := ifelse(booth_type == "ordinary", booth, booth_type)]
     X[, list(v = sum(votes)), by = c("district", "unit", "booth_type", "cls")]
   }
   Lc <- prep(live); Rc <- prep(ref, relabel)
   M <- match_booth_units(Lc, Rc)
-  Rk <- merge(Rc, M, by.x = c("district", "unit"), by.y = c("ref_district", "ref_unit"), suffixes = c(".ref", ".live"))
-  Rk <- Rk[, list(district = district.live, unit = unit.live, booth_type = booth_type.live, cls, v)]
+  to_live <- function(X) {
+    X <- merge(X, M, by.x = c("district", "unit"), by.y = c("ref_district", "ref_unit"), suffixes = c(".ref", ".live"))
+    X[, list(district = district.live, unit = unit.live, booth_type = booth_type.live, cls, v)]
+  }
+  Rk <- to_live(Rc)
+  if (!is.null(copies) && nrow(copies)) {   # "copy": the copies plus their balancing row, after the booth match (so it never sees them)
+    ck <- to_live(copies)
+    Rk <- data.table::rbindlist(list(Rk, ck, ck[, list(district, unit, booth_type, cls = "_COPYADJ", v = -v)]))
+    Rk <- Rk[, list(v = sum(v)), by = c("district", "unit", "booth_type", "cls")]
+  }
   # Upper-house booth lean (night_council_lean()), keyed to the reference election's names: moved onto this year's
   # units through the same match as the lower-house reference, so it lines up with Rk.
   Lk <- NULL

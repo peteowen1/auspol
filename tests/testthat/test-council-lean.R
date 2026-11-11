@@ -105,3 +105,24 @@ test_that("cand_ref: a returning candidate who changed party takes their own pre
   expect_error(night_booth_update(sh, sd, 1, live[, candidate := NULL], ref, reported = rep_units, cand_ref = TRUE), "NX15!")
   expect_error(night_booth_update(sh, sd, 1, live, ref, reported = rep_units, cand_ref = NA), "NX15!")
 })
+
+test_that("cand_ref = 'copy' keeps the old class's history (Monash 2025 in miniature) and the unit totals", {
+  # Broad was the Liberal last time (60% everywhere); now he is an independent and a new Liberal, Aldred, stands.
+  ref  <- dt(district = "S", booth = c("A", "A", "P", "P"), booth_type = c("ordinary", "ordinary", "postal", "postal"),
+             candidate = c("BROAD, Russ", "JONES, Al", "BROAD, Russ", "JONES, Al"),
+             party = c("Liberal", "Australian Labor Party"), votes = c(600, 400, 700, 300))
+  live <- dt(district = "S", booth = rep(c("A", "P"), each = 3), booth_type = rep(c("ordinary", "postal"), each = 3),
+             candidate = rep(c("BROAD, Russ", "JONES, Al", "ALDRED, Mary"), 2),
+             party = rep(c("", "Australian Labor Party", "Liberal"), 2), votes = c(300, 350, 350, 0, 0, 0))
+  sh <- matrix(c(33, 33, 34), 1, dimnames = list("S", c("IND", "ALP", "LNP"))); sd <- sh * 0 + 50
+  rep_units <- dt(district = "S", unit = "A")
+  off  <- night_booth_update(sh, sd, 1, live, ref, reported = rep_units)
+  mv   <- night_booth_update(sh, sd, 1, live, ref, reported = rep_units, cand_ref = "move")
+  cpy  <- night_booth_update(sh, sd, 1, live, ref, reported = rep_units, cand_ref = "copy")
+  expect_identical(night_booth_update(sh, sd, 1, live, ref, reported = rep_units, cand_ref = TRUE)$shares, mv$shares)
+  expect_equal(cpy$n_cand_ref, 1L)
+  # move strips the Liberal class of its history; copy keeps it, so the new Liberal is projected higher than under move
+  expect_gt(cpy$shares["S", "LNP"], mv$shares["S", "LNP"])
+  expect_false(identical(cpy$shares, off$shares))
+  expect_error(night_booth_update(sh, sd, 1, live, ref, reported = rep_units, cand_ref = "both"), "NX15!")
+})

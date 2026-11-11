@@ -1,7 +1,7 @@
 # Score docs/plans/prereg-night-candidate-ref-2026-11-11.md: night booth reference by candidate (cand_ref) against
 # base, both ways on the same seeds.
 #
-#   Rscript scripts/score_night_cand_ref.R <job dir>
+#   Rscript scripts/score_night_cand_ref.R <job dir> [copy]   (copy: the known answers of the copy prereg)
 #
 # <job dir>/sim/<pair>-{base,cr}/night-f*.json   simulated replays (scripts/night_replay_json.R), 6 pairs + vic2022
 # <job dir>/real/<night>-{base,cr}-seats.csv     real-night replays (night_replay_feed.R), fed2022 and fed2025
@@ -83,18 +83,30 @@ rep_block <- function(X, what) {
 }
 a <- rep_block(seat_s, "SIMULATED replays")
 b <- rep_block(R, "REAL-NIGHT replays")
-# known answer: Mirani qld2024 at fraction 1, LNP above base
-mir <- function(v) { f <- file.path(d, "sim", sprintf("qld2024-%s", v), "night-f1000.json"); if (!file.exists(f)) return(NA_real_)
+# known answers. move prereg: Mirani qld2024 LNP above base at fraction 1. copy prereg
+# (prereg-night-candidate-ref-copy-2026-11-11.md, second argument "copy"): Mirani at fraction 0.5, and Monash fed2025
+# (simulated) not worse than base by more than 0.01.
+copy_rule <- identical(commandArgs(trailingOnly = TRUE)[2], "copy")
+mir_f <- if (copy_rule) "night-f500.json" else "night-f1000.json"
+mir <- function(v) { f <- file.path(d, "sim", sprintf("qld2024-%s", v), mir_f); if (!file.exists(f)) return(NA_real_)
   j <- jsonlite::fromJSON(f, simplifyVector = FALSE); s <- Filter(function(x) x$seat == "Mirani", j$seats)[[1]]
   p <- Filter(function(x) x$party == "LNP", s$parties); if (length(p)) as.numeric(p[[1]]$win_prob) else 0 }
 mb <- mir("base"); mc <- mir("cr")
-cat(sprintf("\nNCR3 known answer, Mirani qld2024 LNP at fraction 1: base %.3f, cand_ref %.3f => %s\n", mb, mc, if (isTRUE(mc > mb)) "HOLDS" else "FAILS (arm broken)"))
+cat(sprintf("\nNCR3 known answer (%s rule), Mirani qld2024 LNP at %s: base %.3f, cand_ref %.3f => %s\n", if (copy_rule) "copy" else "move",
+            mir_f, mb, mc, if (isTRUE(mc > mb)) "HOLDS" else "FAILS"))
+mon_ok <- TRUE
+if (copy_rule) {
+  md <- seat_s[pair == "fed2025" & seat == "Monash"]$d
+  mon_ok <- length(md) == 1L && isTRUE(md <= 0.01)
+  cat(sprintf("NCR3 known answer (copy rule), Monash fed2025 simulated, copy minus base %s (limit +0.01) => %s\n",
+              if (length(md)) sprintf("%+.4f", md) else "MISSING", if (mon_ok) "HOLDS" else "FAILS"))
+}
 vic_same <- if (!is.null(a) && "vic2022" %in% a$by_p$pair) isTRUE(a$by_p[pair == "vic2022"]$nontarget_max_abs == 0) else NA
 guard <- function(z) if (is.null(z)) TRUE else all(z$by_p$all_diff <= 0.002)
 sums <- function(z) if (is.null(z)) TRUE else all(z$by_p$max_sum <= 1 + 1e-6)
 prim <- c(if (!is.null(a)) a$pr[["diff"]], if (!is.null(b)) b$pr[["diff"]])
 if (length(missing)) cat(sprintf("NCR4 INCOMPLETE: %d replay(s) missing (%s): the decision below cannot pass\n", length(missing), paste(missing, collapse = ", ")))
-rule <- !length(missing) && all(prim < 0, na.rm = TRUE) && length(na.omit(prim)) > 0 && guard(a) && guard(b) && isTRUE(mc > mb) && sums(a) && sums(b) && !isFALSE(vic_same)
+rule <- !length(missing) && all(prim < 0, na.rm = TRUE) && length(na.omit(prim)) > 0 && guard(a) && guard(b) && isTRUE(mc > mb) && mon_ok && sums(a) && sums(b) && !isFALSE(vic_same)
 cat(sprintf("NCR4 DECISION: primary falls (simulated %+.5f, real %+.5f) %s; no election worse by > 0.002 %s; Mirani %s; no seat above 1 %s; vic2022 identical %s => %s\n",
             if (!is.null(a)) a$pr[["diff"]] else NA, if (!is.null(b)) b$pr[["diff"]] else NA, all(prim < 0, na.rm = TRUE),
             guard(a) && guard(b), isTRUE(mc > mb), sums(a) && sums(b), vic_same, if (rule) "PASS" else "FAIL"))

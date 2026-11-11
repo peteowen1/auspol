@@ -67,11 +67,12 @@ each booth's lean plus its counted swing, not its unadjusted counted share (\cod
 \item{early_frac}{Optional named numeric by seat: the share of each seat's early vote counted so far
 (\code{\link[=night_early_frac]{night_early_frac()}}); passed to \code{\link[=project_seat_from_booths]{project_seat_from_booths()}}. \code{NULL} (default) is byte-identical.}
 
-\item{cand_ref}{\code{FALSE} (default, byte-identical): the reference is each class's previous-election votes. \code{TRUE}:
-a candidate in \code{live} who stood in the same seat in \code{ref} under a different class has those previous votes
-filed under their CURRENT class first (names matched within the seat, letters only, case-folded), so their own
-booth and vote-type pattern is the reference (\verb{docs/plans/prereg-night-candidate-ref-2026-11-11.md}). Needs a
-\code{candidate} column in both tables.}
+\item{cand_ref}{\code{FALSE} (default, byte-identical): the reference is each class's previous-election votes. For a
+candidate in \code{live} who stood in the same seat in \code{ref} under a different class (names matched within the seat,
+letters only, case-folded): \code{TRUE} or \code{"move"} files those previous votes under their CURRENT class instead
+(\verb{docs/plans/prereg-night-candidate-ref-2026-11-11.md}, FAILED: the old class loses its history); \code{"copy"}
+keeps them under the old class AND adds them to the current one, with each unit's reference total unchanged
+(\verb{docs/plans/prereg-night-candidate-ref-copy-2026-11-11.md}). Needs a \code{candidate} column in both tables.}
 }
 \value{
 List: \code{shares} (posterior means, rows renormalised to 100), \code{sd} (posterior sds),
