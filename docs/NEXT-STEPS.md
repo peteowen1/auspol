@@ -36,6 +36,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   newest DONE is more than N minutes old.
 - OPEN, check after the 12 Nov 4:30am forecast run (first from main with PR #219): `auspol/pollster-pages.json` on R2
   returns 200, then tell the ITG session (it checks https://inthegame.blog/politics/pollster).
+- OPEN, anchor data error (found 11 Nov by build_party_pages.R's check): `external/aus-polling-analyser/analysis/Data/eventual-results.csv`
+  swaps Labor and the Coalition for NSW 2007 (`ALP FP 36.99`, `LNP FP 38.98`; the commission's count, and our candidacies, say
+  Labor 38.98). The other 37 elections agree to 0.03 points. It is a third-party file: correct it on load
+  (`R/fundamentals.R`'s `load_eventual_results()`, beside the WA 1993 duplicate fix), then check which fits read
+  nsw2007's first preferences and rerun what moves. Done when the loader corrects it and the affected screens are rerun.
 - OPEN, replay evidence (found 11 Nov): `output/booths-vic2018.csv` spells 25 of 87 districts unlike the seats ("Albertpark",
   "South Westcoast"), and the replay scripts pass it to `night_run_update()` without `.night_seat_names()`, so in every vic2022
   replay those seats' declaration votes (early, postal, absent) had no reference (ordinary booths still matched by unique name).
