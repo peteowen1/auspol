@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-11-08 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-11-11 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
@@ -138,7 +138,7 @@ cannot pass as a working one.
   - e.g. prior-results.csv
 - **anchor-supplement/** -- 5 files, 12 KB
   - e.g. election-cycles-extra.csv, poll-data-act.csv, poll-data-nt.csv, poll-data-tas.csv
-- **benchmarks/** -- 236 files, 55.9 MB
+- **benchmarks/** -- 270 files, 69.1 MB
   - e.g. vic2026-extra/2026-10-24/betfair/markets-1.240828208-113207.json, vic2026-extra/2026-10-24/manifest.tsv, vic2026-extra/2026-10-24/sportsbet/event-10277242-markets-113206.json, vic2026-extra/2026-10-24/sportsbet/event-10952080-markets-113206.json
 - **boundaries/** -- 85 files, 849.9 MB
   - e.g. AEC-2025-esri.zip, AEC_2025/AUS_ELB_region.dbf, AEC_2025/AUS_ELB_region.prj, AEC_2025/AUS_ELB_region.shp
@@ -180,9 +180,9 @@ cannot pass as a working one.
   - e.g. abc-guide-bios-offline.csv, abc-guide-bios.csv, abc-guide-raw/_cache/listing_fed2007_abc_net_au_elections_federal_2007_guide.json, abc-guide-raw/_cache/listing_fed2010_abc_net_au_elections_federal_2010_guide.json
 - **tas/** -- 26 files, 2.5 MB
   - e.g. raw/tec/2018/2018-Bass-first-prefs-by-polling-places.xlsx, raw/tec/2018/2018-Braddon-first-prefs-by-polling-places.xlsx, raw/tec/2018/2018-Denison-first-prefs-by-polling-places.xlsx, raw/tec/2018/2018-Franklin-first-prefs-by-polling-places.xlsx
-- **trends/** -- 5557 files, 3.6 MB
+- **trends/** -- 5751 files, 3.8 MB
   - e.g. 2019_anch2_Adrian_Wone_Susie_Beveridge_Will_Landers_Ammar_Khan.rds, 2019_anch2_Bill_Chandler_Susan_Moylan_Dave_Blake_Tim_Bohm.rds, 2019_anch2_Robert_Oakeshott_Helen_Haines_Zali_Steggall_Kerryn_Phelps.rds, 2019_anch2_Trevor_Jones_Colin_Butland_David_Norman_Thor_Prohaska.rds
-- **vec/** -- 3713 files, 443.9 MB
+- **vec/** -- 3809 files, 456.7 MB
   - e.g. 2006/vc/fpv-albertpark.html, 2006/vc/fpv-altona.html, 2006/vc/fpv-ballarateast.html, 2006/vc/fpv-ballaratwest.html
 - **waec/** -- 2307 files, 63.7 MB
   - e.g. app.html, app.min.js, config-loader.js, config.json
@@ -224,14 +224,14 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | sa2010 | 47 | 253 | 22 | 4 |
 | sa2014 | 47 | 204 | 11 | 3 |
 | sa2018 | 47 | 264 | 51 | 12 |
-| sa2022 | 47 | 240 | 20 | 6 |
+| sa2022 | 47 | 240 | 21 | 6 |
 | sa2026 | 47 | 388 | 34 | 33 |
 | vic2006 | 88 | 459 | 43 | 7 |
 | vic2010 | 88 | 502 | 75 | 9 |
 | vic2014 | 88 | 545 | 91 | 9 |
 | vic2018 | 88 | 507 | 102 | 9 |
 | vic2022 | 87 | 731 | 119 | 13 |
-| vic2026 | 88 | 500 | 32 | NA |
+| vic2026 | 88 | 734 | 91 | NA |
 | wa1996 | 57 | 232 | 36 | 7 |
 | wa2001 | 57 | 366 | 89 | 12 |
 | wa2005 | 57 | 375 | 42 | 3 |
@@ -241,7 +241,7 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | wa2021 | 59 | 463 | 17 | 0 |
 | wa2025 | 59 | 398 | 29 | 6 |
 
-**Total: 22358 candidacies, 44 elections, NA non-major breakouts.**
+**Total: 22592 candidacies, 44 elections, NA non-major breakouts.**
 
 ## State booth results (`output/booths/`)
 

@@ -24,7 +24,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   there (Pete). End to end on 2022's pages: 87 districts published, ~65 s a cycle (parse 21 s, simulate 35 s).
   STILL OPEN: (1) the 2026 results index URL is only known on the night (the fetcher takes --index); (2) whether the
   pages fill in during the count (draft question in Pete's Gmail, unsent); (3) a 2026 voting-centre list for --places
-  (default: last election's booths); (4) a dress rehearsal of fetcher + loop together; (5) the ITG booths build
+  (default: last election's booths); (4) DONE 11 Nov: dress rehearsal of fetcher + loop on the live Nepean pages (found and fixed: the loop never saw website snapshots; the website candidate list has no enrolment, now `external/reference/vec/2026/enrolment/enrolment-2026.csv`, pass it as --enrolment); (5) the ITG booths build
   (`C:/dev/inthegame-blog/politics/night-maps/build-booths-2026.py`) also assumed the feed.
 - OPEN: Pakenham DemosAU/TKR rows in `hand_keyed_primaries.csv` (fieldwork date UNCONFIRMED). Done when `seat_polls.csv`
   carries the poll: delete the hand-keyed rows.
