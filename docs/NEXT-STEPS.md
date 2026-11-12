@@ -44,13 +44,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `--source-type=web --enrolment=external/reference/vec/2026/enrolment/enrolment-2026.csv --places=external/reference/vec/2026/voting-locations/places-2026.csv`, `cand_ref = "copy"` by default
   there (Pete). End to end on 2022's pages: 87 districts published, ~65 s a cycle (parse 21 s, simulate 35 s).
   STILL OPEN: (1) the 2026 results index URL is only known on the night (the fetcher takes --index); (2) whether the
-  pages fill in during the count (draft question in Pete's Gmail, unsent); (5) BUILT 12 Nov 11:07pm, unmerged: blog branch
-  `booths-2026-places` (70ce1e46, worktree `C:\dev\itg-wt-booths`; ITG session agreed, Pete chose geocoding) reads
-  places-2026.csv + `places-2026-geo.csv` (`scripts/geocode_vec_places_2026.py`: 338 of 359 placed in-district, 8 of 8
-  sampled correct, raw replies in `geocode-raw/`): 88 districts, 1,830 centres, 21 off the map (no OSM result: reserves,
-  corners, "Unit" addresses; listed in the geo file). Review (Sonnet, 12 Nov): 0 Important, 3 nits fixed. `live.qmd:582` loads it
-  live, so done when: reviewed, browser-checked at 390/1280 px (message ITG before any render or push), merged.
-  Re-run both after the week-of-election spreadsheet re-download; (3) DONE 11 Nov: the 2026 voting-centre list, `scripts/build_vec_places_2026.R` from the VEC venues spreadsheet
+  pages fill in during the count (draft question in Pete's Gmail, unsent); (5) LIVE 13 Nov 9:47am: inthegame-blog PR #1203 (into
+  main, branch off origin/main; Pete: merge) put 1,830 of 1,851 centres on /politics/live. Same morning (Pete: place the
+  21): geocoder d95cc366 places all 359 lookups in-district (no-unit and venue-name forms, 11 hand-placed in
+  `places-2026-manual.csv`, Erica and Altona Beach approximate). OPEN: rebuild `booths-vic2026.json` with it and PR into
+  blog main (branch off origin/main, never dev: dev holds an unpublished draft; message ITG before any worktree or render;
+  merge is Pete's call; then ITG merges main into dev). Re-run both after the week-of-election spreadsheet re-download; (3) DONE 11 Nov: the 2026 voting-centre list, `scripts/build_vec_places_2026.R` from the VEC venues spreadsheet
   (1,851 election-day centres, est. 1,603,331 ordinary votes; 310 early centres). Re-download the spreadsheet the week of the
   election (it changes: Change Log sheet) and rerun. Only 61 of 200 guest joint centres (JVC) match a 2022 booth name: if one
   never gets its own results row it stays a small uncounted placeholder. Same day, found and fixed: the night never matched
