@@ -30,10 +30,9 @@ obs <- flows[observed == TRUE][order(year)]
 
 # First preferences, so "was this party a similar size then?" can be tested as
 # a weighting rather than assumed to matter.
-er <- as.data.table(read_anchor_csv("eventual-results.csv",
-                                    c("year", "region", "party", "result")))
-er[, result := suppressWarnings(as.numeric(result))]
-er[, party := sub(" FP$", "", party)]
+# load_eventual_results(), not the raw file: it carries the known-error corrections (nsw2007, EVR1; 12 Nov 2026)
+er <- as.data.table(load_eventual_results())
+er[, result := actual]
 obs <- merge(obs, er[!is.na(result), .(year, region, party, fp = result)],
              by = c("year", "region", "party"), all.x = TRUE)
 setorder(obs, year)

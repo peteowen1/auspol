@@ -103,23 +103,23 @@ EVENTUAL_RESULT_FIXES <- data.table::data.table(
   source = "NSWEC 2007 Legislative Assembly first preferences")
 
 # Apply EVENTUAL_RESULT_FIXES (or `fixes`) to a loaded eventual-results table. Separate from the loader so it
-# can be tested without the anchor clone. Prints ER1 for each correction applied.
+# can be tested without the anchor clone. Prints EVR1 for each correction applied.
 # @noRd
 apply_eventual_result_fixes <- function(x, fixes = EVENTUAL_RESULT_FIXES,
                                         on = Sys.getenv("AUSPOL_EVENTUAL_FIXES", "1") != "0") {
-  if (!on) { message("ER1 eventual-results.csv: known-error corrections OFF (AUSPOL_EVENTUAL_FIXES=0)"); return(x) }
+  if (!on) { message("EVR1 eventual-results.csv: known-error corrections OFF (AUSPOL_EVENTUAL_FIXES=0)"); return(x) }
   for (i in seq_len(nrow(fixes))) {
     fy <- as.integer(fixes$year[i]); fr <- fixes$region[i]; fp <- fixes$party[i]
     hit <- which(as.integer(x$year) == fy & x$region == fr & x$party == fp)
-    if (length(hit) != 1L) stop(sprintf("ER1! eventual-results.csv: expected one %s %s %s row to correct, found %d",
+    if (length(hit) != 1L) stop(sprintf("EVR1! eventual-results.csv: expected one %s %s %s row to correct, found %d",
                                         fr, fy, fp, length(hit)), call. = FALSE)
     v <- x$actual[hit]
     if (isTRUE(abs(v - fixes$wrong[i]) < 0.005)) {
       x$actual[hit] <- fixes$right[i]
-      message(sprintf("ER1 eventual-results.csv: %s %s %s corrected %.2f -> %.2f (%s)",
+      message(sprintf("EVR1 eventual-results.csv: %s %s %s corrected %.2f -> %.2f (%s)",
                       fr, fy, fp, v, fixes$right[i], fixes$source[i]))
     } else if (!isTRUE(abs(v - fixes$right[i]) < 0.005)) {
-      stop(sprintf("ER1! eventual-results.csv: %s %s %s is %s, neither the known-wrong %.2f nor the official %.2f",
+      stop(sprintf("EVR1! eventual-results.csv: %s %s %s is %s, neither the known-wrong %.2f nor the official %.2f",
                    fr, fy, fp, format(v), fixes$wrong[i], fixes$right[i]), call. = FALSE)
     }
   }

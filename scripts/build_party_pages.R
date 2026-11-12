@@ -70,7 +70,7 @@ pe <- merge(pe, el, by = "election"); pe[, fp_pct := round(100 * votes / formal,
 ev <- as.data.table(load_eventual_results())
 chk <- merge(pe[fam == "labor", .(region, year, fp_pct)], ev[party == "ALP", .(region, year, actual)], by = c("region", "year"))
 # The anchor's NSW 2007 Labor/Coalition swap (found by this check, 11 Nov 2026) is corrected in
-# load_eventual_results() since 12 Nov (ER1), so every election is checked.
+# load_eventual_results() since 12 Nov (EVR1), so every election is checked.
 if (!nrow(chk)) stop("PTY2! no election joined to the statewide results")
 chk[, el := paste0(region, year)]
 gap <- abs(chk$fp_pct - chk$actual)
