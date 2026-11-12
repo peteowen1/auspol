@@ -58,16 +58,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   reference and its turnout fell to the state rate; `.night_seat_names()` now puts every input's names into the model's.
   Checked on all 88 districts with the 2022 pages under the live 2026 configuration (87 updated; Narracan has no 2022 page); (4) DONE 11 Nov: dress rehearsal of fetcher + loop on the live Nepean pages (found and fixed: the loop never saw website snapshots; the website candidate list has no enrolment, now `external/reference/vec/2026/enrolment/enrolment-2026.csv`, pass it as --enrolment); (5) the ITG booths build
   (`C:/dev/inthegame-blog/politics/night-maps/build-booths-2026.py`) also assumed the feed.
-- OPEN, SHIPPING 13 Nov: council-history coverage fix. Rebuild DONE 6:24am (`output/snapshots/20261113-0622-d938ce20-from3`),
-  both guards PASS, live clause breached (up to 5.3 points, all from the retrained trees); Pete: "Ship it" (DECISIONS 13 Nov,
-  prereg amendment 1). Next: review + check_like_ci, PR dev -> main, merge, stage 9 publish; done when the daily run is green.
-- OPEN, check after the NEXT STAGE-9 PUBLISH (not the daily run: it downloads the 9 Nov `seat-poll-blend-vic2026.csv` from
-  the shipped-models release, which still has the old Pakenham row; checked 12 Nov): Pakenham seat poll corrected 12 Nov. Fieldwork 4-8 Nov (Poll Bludger), and its client was
-  the typo "TKR", which filed a Herald Sun poll as stakeholder-sponsored (`direct_stake`); now `direct_indep` via a `poll_methods.csv`
-  row. Before (R2 `seat-probs-vic-2026.csv`, 12 Nov 8:49am): ONP 0.829, LNP 0.161, ALP 0.005. Done when the first file after that publish is compared and the move reported. The hand-keyed rows are
-  permanent: Wikipedia's vic2026 page lists only Hawthorn (checked 12 Nov). Roy Morgan's 21-26 Oct SMS poll of Bass/Hastings/
-  Morwell/Pakenham (release 10371) gives no per-seat primaries, so it cannot be keyed. Since 12 Nov the rebuild's stage 9 runs `fetch_seat_polls.R
-  --refresh-live` before promote, so a new Wikipedia vic2026 seat poll ships with the next publish (old page copies kept, dated).
+- DONE 13 Nov: council-history fix (PR #229, stage 9 8:34am, daily run 9:10am green; Footscray now GRN 0.519) and the
+  Pakenham seat-poll correction (published ONP 0.829 -> 0.888, LNP 0.161 -> 0.104, ALP 0.005 -> 0.004; poll fix plus new
+  trees). Full items moved to `backlog/journal-2026-11-11-queue-history.md`.
 - IN FLIGHT 9 Nov (Pete chose the levers): first-time-independent under-call. Six levers mapped in
   `reviews/newcomer-independents-walk-2026-11-09.md` (last section). Lever 1 REFUSED twice, stays off
   (`AUSPOL_NEW_IND_SHRINK_SIGNAL`, `_SIGNAL_CAP`; `plans/prereg-new-ind-shrink-signal-2026-11-09.md`: capped -68 SE 76;
