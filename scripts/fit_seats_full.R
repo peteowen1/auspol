@@ -2177,8 +2177,12 @@ stopifnot(!is.null(.fp), identical(dimnames(.fp)[[2]], rownames(shares)))
   other <- a[-match(lead, a)]   # one copy only: "LNP|LNP" (Liberal v National) keeps LNP as the other side
   sl <- 100 * ifelse(w[k] == lead, sh2[k], 1 - sh2[k])
   q <- stats::quantile(sl, .qs, names = FALSE)
+  # Same class on both sides: the draws cannot say which of the two candidates won, so "leader wins", its share
+  # and the swing to flip would describe whoever won each draw (always >= 50). Blank them rather than mislead.
+  same <- identical(lead, other)
+  if (same) q[] <- NA_real_
   data.table(seat = colnames(sim$tcp_winner)[j], leader = lead, other = other,
-             p_pair = round(mean(k), 4), p_leader_wins_pair = round(mean(w[k] == lead), 4),
+             p_pair = round(mean(k), 4), p_leader_wins_pair = if (same) NA_real_ else round(mean(w[k] == lead), 4),
              t(setNames(round(q, 2), paste0("leader_tcp_", .qn))),
              swing_to_flip = round(q[3] - 50, 2))
 }))

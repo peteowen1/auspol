@@ -24,7 +24,9 @@
 #'   order), `freq` (share of ALL draws for that seat landing on this
 #'   pairing -- frequencies for one seat sum to 1, uncontested seats
 #'   excepted), `f1_tcp_pct` (median `f1`'s two-candidate-preferred share
-#'   across just the draws in this pairing). Ordered by seat then
+#'   across just the draws in this pairing; for a pairing of one class, e.g.
+#'   `f1 == f2 == "LNP"` for Liberal v National, it is the median WINNER's
+#'   share, always 50 or more). Ordered by seat then
 #'   descending `freq`, so `[seat == "X"][1]` is always that seat's
 #'   most-likely pairing -- the same "headline scenario" AEF's own site
 #'   shows and `scripts/build_aef_tcp.R` extracts from their data.
