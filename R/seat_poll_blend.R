@@ -1177,8 +1177,11 @@ seat_poll_weights_split <- function(target_election) {
   # would count twice: same election and seat, fieldwork ending within 3 days, pollster names sharing their first
   # word. The scraped rows win and the hand-keyed ones are dropped, said aloud so the stale rows get deleted.
   fw <- function(x) tolower(sub("[^A-Za-z].*$", "", trimws(as.character(x))))
-  hk <- unique(h[, list(election, seat_name, pollster, fe = as.Date(fieldwork_end))])
-  sk <- unique(s[, list(election, seat_name, pollster, fe = as.Date(fieldwork_end))])
+  pk <- function(x) unique(data.table::data.table(election = x[["election"]], seat_name = x[["seat_name"]],
+                                                  pollster = x[["pollster"]], fe = as.Date(x[["fieldwork_end"]])))
+  # only scraped polls that carry PRIMARIES count: the hand-keyed file exists to supply primaries for polls the page
+  # gives only a two-candidate figure for (Wakehurst 2023, Sky News: 50-50 scraped, primaries hand-keyed)
+  hk <- pk(h); sk <- pk(s[is.finite(suppressWarnings(as.numeric(s[["fp"]])))])
   dup <- vapply(seq_len(nrow(hk)), function(i) {
     m <- sk$election == hk$election[i] & sk$seat_name == hk$seat_name[i] & fw(sk$pollster) == fw(hk$pollster[i])
     any(m & !is.na(sk$fe) & !is.na(hk$fe[i]) & abs(as.numeric(sk$fe - hk$fe[i])) <= 3)

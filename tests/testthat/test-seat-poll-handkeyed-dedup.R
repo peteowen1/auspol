@@ -28,6 +28,12 @@ test_that("a hand-keyed seat poll the scraped file also carries is counted once"
   expect_equal(sum(out$seat_name == "Pakenham"), 2L)
   expect_true(all(out$pollster[out$seat_name == "Pakenham"] == "DemosAU/TKW Research"))
 
+  # scraped with only a two-candidate figure (no primaries): the hand-keyed primaries are what the file is for, kept
+  tcp_only <- row("Pakenham", "DemosAU", "2026-11-08", "ONP", ""); tcp_only$tcp_a <- "50"
+  data.table::fwrite(data.table::rbindlist(list(row("Hawthorn", "Freshwater", "2025-08-16", "LNP", "41"), tcp_only)), f)
+  out <- .read_seat_polls_file_impl(f)
+  expect_equal(sum(out$seat_name == "Pakenham" & is.finite(suppressWarnings(as.numeric(out$fp)))), 2L)
+
   # a different pollster in the same seat and week is a different poll: both kept
   data.table::fwrite(data.table::rbindlist(list(row("Hawthorn", "Freshwater", "2025-08-16", "LNP", "41"),
                                                 row("Pakenham", "Redbridge", "2026-11-08", "ONP", "35"))), f)
