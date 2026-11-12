@@ -4,6 +4,10 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-11-12 vic2026 salience ships now; its coarse anchor scale is fixed before the final snapshot (Pete, 12 Nov 10:40pm).**
+  With/without on the live forecast: 12 of 88 favourites change, all close seats (Hawthorn IND 0.007 -> 0.346, Benambra
+  IND 0.001 -> 0.274; expected seats ALP 26.8 -> 24.9, ONP 14.7 -> 15.8, IND 0.1 -> 1.3). Known defect: linked values come
+  in ~5 steps of 0.0607 (17 candidates with raw rises 2.3-32.1 share 0.182). `reviews/salience-vic2026-live-walk-2026-11-12.md`.
 - **2026-11-12 vic2026 salience goes into the live forecast RANK-MAPPED, not raw (Pete, 12 Nov).** Each jump is divided by
   the anchor's (Ben Carroll) rise, and his is small, so the 11 Nov snapshot ran ~20x the backtest scale (p90 0.168 vs vic2022
   0.0079); each candidate keeps their vic2026 rank, mapped onto the backtest corpus within sign. Built on branch

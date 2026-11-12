@@ -118,7 +118,7 @@ waiting for R"; Claude in the auspol session did not see these requests firsthan
 | Request | Status |
 |---|---|
 | Review the pipeline for work that gets done and then overwritten | **OPEN (audit 24 Oct):** F8, F10, F12-F19 of the overwrite audit not done. Full history in the backlog file. |
-| Look into salience for vic2026 | **OPEN, still NOT in the published forecast (checked 12 Nov; told Pete 12 Nov):** snapshots exist (11 Nov, all 734 VEC candidates) but nothing read them, locally or in CI. Connector built rank-mapped (his choice, 12 Nov) on branch `salience-vic2026-link`, unmerged until the live with/without walk. Full history in the backlog file. |
+| Look into salience for vic2026 | **OPEN, still NOT in the published forecast (checked 12 Nov; told Pete 12 Nov):** snapshots exist (11 Nov, all 734 VEC candidates) but nothing read them, locally or in CI. Connector built rank-mapped (his choice, 12 Nov) on branch `salience-vic2026-link`, unmerged until the live with/without walk. Walked 12 Nov 10:40pm (12 favourites change); Pete: ship now, fix the coarse anchor scale before the final snapshot. Still NOT live until the branch merges and stage 9 publishes. Full history in the backlog file. |
 
 ## 2026-10-16
 

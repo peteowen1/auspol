@@ -22,10 +22,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - OPEN, LIVE GAP found 12 Nov: the published vic2026 forecast uses NO candidate salience (`XG5! no salience corpus yet` in
   every live log since 27 Oct; `output/salience-v6.csv` has 0 vic2026 rows; CI never had the file). Fix built, unmerged:
   branch `salience-vic2026-link` (0646dbc8, worktree `C:\dev\auspol-wt-salience`, rank-mapped per DECISIONS 2026-11-12).
-  Done when: live `fit_seats_full.R` with/without (`AUSPOL_OUT_SUFFIX`, in the worktree; first try killed by low memory),
-  moved seats walked with Pete, reviewed, merged (12 Nov 10:05pm: the with/without run `salbase` / `salon` launched in the
-  worktree; output copy only), and the next stage 9 prints `PRS1` with vic2026 rows. Worktree has
+  With/without DONE and walked 12 Nov; Pete: ship now (DECISIONS 2026-11-12; `reviews/salience-vic2026-live-walk-2026-11-12.md`).
+  Done when: branch reviewed and merged with the 13 Nov main PR, `link_vic2026_salience.R` run in this checkout before
+  stage 9, and the next stage 9 prints `PRS1` with vic2026 rows. Worktree has
   junctions under `external/`: unlink them before removing it.
+  THEN, before the final 25-27 Nov snapshot: fix the coarse anchor link (linked values in ~5 steps of 0.0607; review file
+  above), rerun the with/without.
 - OPEN (seat-poll nit from that review): the SPF1 guard (`scripts/fetch_seat_polls.R:443-452`) has no override, so if Wikipedia
   legitimately drops a vic2026 seat poll, every stage 9 keeps the old page until someone reads `s9_seatpolls.log`. Done when
   an `--accept-fewer` flag exists or the stage-9 summary prints SPF1 at the top. Same file area: an NA pollster in a scraped
