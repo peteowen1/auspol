@@ -36,8 +36,6 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   permanent: Wikipedia's vic2026 page lists only Hawthorn (checked 12 Nov). Roy Morgan's 21-26 Oct SMS poll of Bass/Hastings/
   Morwell/Pakenham (release 10371) gives no per-seat primaries, so it cannot be keyed. NOTE: `fetch_seat_polls.R` never refetches a
   cached page, so a new Wikipedia vic2026 seat poll would be missed: re-download `raw/vic2026.html` by hand if one appears.
-- OPEN, display only (class split itself closed, DECISIONS 2026-11-06): a final two of
-  one class (LNP|LNP, IND|IND) leaves the second side empty in the TCP tables (`R/tcp_scenarios.R` setdiff, `fit_seats_full.R:2166`).
 - IN FLIGHT 9 Nov (Pete chose the levers): first-time-independent under-call. Six levers mapped in
   `reviews/newcomer-independents-walk-2026-11-09.md` (last section). Lever 1 REFUSED twice, stays off
   (`AUSPOL_NEW_IND_SHRINK_SIGNAL`, `_SIGNAL_CAP`; `plans/prereg-new-ind-shrink-signal-2026-11-09.md`: capped -68 SE 76;

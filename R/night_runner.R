@@ -630,8 +630,11 @@ night_build_json <- function(st, res, snapshot, base = NULL, election = "vic2026
       pr <- paste(pmin(tw[, s], tr[, s]), pmax(tw[, s], tr[, s]), sep = "|"); top <- names(sort(table(pr), decreasing = TRUE))[1]
       hit <- pr == top; ab <- strsplit(top, "|", fixed = TRUE)[[1]]
       lead <- names(sort(table(tw[hit, s]), decreasing = TRUE))[1]
-      ft <- list(leader = lead, other = setdiff(ab, lead), p_pair = round(mean(hit), 4), p_leader_wins_pair = round(mean(tw[hit, s] == lead), 4))
-      if (!length(ft$other)) ft$other <- NULL
+      # one copy of the leader removed, so a same-class pair ("LNP|LNP", Liberal v National) keeps other = LNP; there the
+      # draws cannot say which candidate won, so no leader-win share (as fit_seats_full.R's seat ranges)
+      other <- ab[-match(lead, ab)]
+      ft <- list(leader = lead, other = other, p_pair = round(mean(hit), 4),
+                 p_leader_wins_pair = if (identical(lead, other)) NULL else round(mean(tw[hit, s] == lead), 4))
     }
     # the VEC's two-candidate count where the update used it: `wrong_pair` TRUE = the VEC's pair is not one the model expected
     v2 <- NULL
