@@ -45,3 +45,19 @@ that drove it.
 - Any control election not byte-identical without an explanation.
 - The live vic2026 forecast moving by more than 2 points of win probability in any seat, unexplained (its features
   are unchanged; only the trained trees move).
+
+## Amendment 1 (13 Nov 2026, after the rebuild; the clauses above are unedited)
+
+Rebuild `deciding-runs/20261112-1829-rebuild/` DONE 6:24am, snapshot `output/snapshots/20261113-0622-d938ce20-from3`.
+
+- Guard 1 PASS: pooled log loss 0.3166 -> 0.3175 (+0.0009, SE 0.0018; 2,931 seats, 35 elections).
+- Guard 2 PASS: share RMSE 4.0771 -> 4.0837 (+0.0067, n 19,616).
+- Control: fed2007, wa2001, wa2005 and wa2008 (every election before qld2009, the first changed training election) are
+  byte-identical. Every later election moves because its as-at trees train on changed rows; that explains the moves.
+- Reported: nsw2011 -0.0640 RMSE, qld2012 +0.0416, qld2015 -0.2092 (qld2009 is not a scored pair). Worse by more than 0.02
+  log loss: wa2013 +0.035 (Churchlands, Albany), sa2018 +0.023 (Morphett), wa2017 +0.022 (Labor 2-6 points lower across seats).
+- Live clause BREACHED: the scorer's SC4 was vacuous (the rebuild does not rerun the live forecast), so the live forecast
+  ran three times at HEAD d938ce20, seed 42: 10 Nov files, 10 Nov files plus new production trees, and all new files.
+  Max move 5.3 points (Footscray), 32 party-seat rows over 2 points; the new trees alone give 5.1 and 29 rows, and the
+  other 189 rebuild files at most 1.5. Outputs in `deciding-runs/20261112-council-scoring/live-walk/` (gitignored).
+- Pete, 13 Nov: "Ship it". The breach is recorded here rather than the clause being reread.

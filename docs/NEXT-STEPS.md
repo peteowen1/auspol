@@ -58,15 +58,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   reference and its turnout fell to the state rate; `.night_seat_names()` now puts every input's names into the model's.
   Checked on all 88 districts with the 2022 pages under the live 2026 configuration (87 updated; Narracan has no 2022 page); (4) DONE 11 Nov: dress rehearsal of fetcher + loop on the live Nepean pages (found and fixed: the loop never saw website snapshots; the website candidate list has no enrolment, now `external/reference/vec/2026/enrolment/enrolment-2026.csv`, pass it as --enrolment); (5) the ITG booths build
   (`C:/dev/inthegame-blog/politics/night-maps/build-booths-2026.py`) also assumed the feed.
-- OPEN, check 13 Nov morning: council-history rebuild `deciding-runs/20261112-1829-rebuild/` (stage 3, scheduled 11:30pm,
-  waits for 8 GB, never publishes). Score it against `output/snapshots/20261110-0929-82329b06-from1` by
-  `plans/prereg-council-coverage-2026-11-12.md` (control: untouched elections byte-identical; guards: 35-election log
-  loss within 1 SE, share RMSE within 0.02). Pass: PR to main, then stage 9 publish. Fail: to Pete with the elections.
-  Morning, two commands (NEW = the rebuild's `output/snapshots/<stamp>-from3`): `Rscript scripts/compare_rebuild_scores.R
-  output/snapshots/20261110-0929-82329b06-from1/pooled-backtest.csv NEW/pooled-backtest.csv` (guard 1, KX2), then the
-  scorer `Rscript deciding-runs/20261112-council-scoring/score_council_rebuild.R <baseline> NEW
-  deciding-runs/20261112-council-scoring/seat-probs-vic-2026.csv` (local only; SC1 control, SC2 guard 2, SC3 reported, SC4 live
-  vic2026 over 2 points; dry-run on identical snapshots gives 0 moved and +0.0000).
+- OPEN, SHIPPING 13 Nov: council-history coverage fix. Rebuild DONE 6:24am (`output/snapshots/20261113-0622-d938ce20-from3`),
+  both guards PASS, live clause breached (up to 5.3 points, all from the retrained trees); Pete: "Ship it" (DECISIONS 13 Nov,
+  prereg amendment 1). Next: review + check_like_ci, PR dev -> main, merge, stage 9 publish; done when the daily run is green.
 - OPEN, check after the NEXT STAGE-9 PUBLISH (not the daily run: it downloads the 9 Nov `seat-poll-blend-vic2026.csv` from
   the shipped-models release, which still has the old Pakenham row; checked 12 Nov): Pakenham seat poll corrected 12 Nov. Fieldwork 4-8 Nov (Poll Bludger), and its client was
   the typo "TKR", which filed a Herald Sun poll as stakeholder-sponsored (`direct_stake`); now `direct_indep` via a `poll_methods.csv`

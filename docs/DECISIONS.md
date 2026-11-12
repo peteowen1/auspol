@@ -4,6 +4,11 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-11-13 Council-history coverage fix ships, although the live forecast moves up to 5 points (Pete, 13 Nov).**
+  Both prereg guards pass (35-election log loss +0.0009, SE 0.0018; share RMSE +0.0067). Live vic2026 moves up to 5.3
+  points (Footscray ALP 53% -> 48%, favourite to GRN; Melton ONP -> LNP; ALP 26.8 -> 26.1 expected seats), all from the
+  retrained production trees (other rebuild files at most 1.5). That breached the prereg's "over 2 points, unexplained"
+  clause, so it went to Pete. `plans/prereg-council-coverage-2026-11-12.md` amendment 1.
 - **2026-11-12 vic2026 salience ships now; its coarse anchor scale is fixed before the final snapshot (Pete, 12 Nov 10:40pm).**
   With/without on the live forecast: 12 of 88 favourites change, all close seats (Hawthorn IND 0.007 -> 0.346, Benambra
   IND 0.001 -> 0.274; expected seats ALP 26.8 -> 24.9, ONP 14.7 -> 15.8, IND 0.1 -> 1.3). Known defect: linked values come
