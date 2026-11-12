@@ -84,6 +84,18 @@ def ask(params):
     return reply, True
 
 
+def named_ok(x, a, venue):
+    """A reply carries the asked postcode or suburb, or the venue's own name (first three words, which skips
+    suffixes like 'Pavilion' or '- The Pavilion' that OSM leaves off)."""
+    dn = x.get('display_name', '').lower()
+    v = ' '.join(re.sub(r'[^a-z0-9 ]', ' ', venue.lower()).split()[:3])
+    return bool((a[2] and a[2] in dn) or (a[1] and a[1].lower() in dn) or (v and v in ' '.join(re.sub(r'[^a-z0-9 ]', ' ', dn).split())))
+
+
+# Hand-placed positions for centres no lookup could place: district, booth, la, lo, source (where the point was read).
+MAN_F = os.path.join(ROOT, 'places-2026-manual.csv')
+M = {(norm(m['district']), norm(m['booth'])): m for m in csv.DictReader(open(MAN_F, encoding='utf-8'))} if os.path.exists(MAN_F) else {}
+print('GV5 %d hand-placed positions in %s' % (len(M), MAN_F))
 cache, fetched, out = {}, 0, []
 for r in need:
     a = addr(r)
@@ -93,12 +105,23 @@ for r in need:
         tries = [('street', {'street': a[0], 'city': a[1], 'postalcode': a[2], 'state': 'Victoria', 'country': 'Australia'}),
                  ('venue', {'q': '%s, %s VIC %s' % (r['Venue Name'].strip(), a[1], a[2])}),
                  ('freetext', {'q': '%s, %s VIC %s' % (a[0], a[1], a[2])})]
+        # 13 Nov: "Unit 8/85 Mt Derrimut Road" (temporary shopfront centres) found nothing in any form above; OSM
+        # knows the building number, not the unit. And a school or reserve under a new-estate or corner address is
+        # often in OSM by name alone. Both forms are only reached when the three above found no point inside.
+        nounit = re.sub(r'^(unit|shop|suite|factory)\s*\w+\s*/\s*', '', a[0], flags=re.I)
+        if nounit != a[0]:
+            tries.append(('street_nounit', {'street': nounit, 'city': a[1], 'postalcode': a[2], 'state': 'Victoria', 'country': 'Australia'}))
+        tries.append(('venue_only', {'q': '%s, Victoria, Australia' % r['Venue Name'].strip()}))
         res, fallback = None, None
         for how, p in tries:
             reply, new = ask(p); fetched += new
             if not reply: continue
             inside = [x for x in reply if D[dist_key].contains(Point(float(x['lon']), float(x['lat'])))] if dist_key in D else []
-            if inside: res = (how, len(reply), inside[0], True); break
+            # Inside the district AND carrying the asked postcode, suburb or venue name; a bare same-named street in a
+            # neighbouring suburb (Rosehill's Sapphire Street -> Essendon West, 13 Nov) goes on to the next form.
+            named = [x for x in inside if named_ok(x, a, r['Venue Name'])]
+            if named: res = (how, len(reply), named[0], True); break
+            if inside and not fallback: fallback = (how, len(reply), inside[0], True)
             fallback = fallback or (how, len(reply), reply[0], False)
         cache[(a, dist_key)] = res or fallback
     res = cache[(a, dist_key)]
@@ -114,8 +137,16 @@ for r in need:
         elif a[2] and a[2] not in row['display_name']:
             if a[1].lower() in row['display_name'].lower():   # kept (inside the district, right suburb), flagged for a hand check
                 row['reason'] = 'postcode differs (asked %s)' % a[2]
+            elif named_ok(best, ('', '', ''), r['Venue Name']):   # the venue itself, filed under a neighbouring suburb (Clyde North)
+                row['reason'] = 'venue found, suburb differs (asked %s %s)' % (a[1], a[2])
             else:   # neither the postcode nor the suburb: a same-named street elsewhere (Niddrie's Sapphire Street, 12 Nov)
                 row.update(ok=False, reason='postcode and suburb both differ (asked %s %s)' % (a[1], a[2]))
+    m = M.get((norm(r['district']), norm(r['booth'])))
+    if m and not row['ok']:   # hand-placed (places-2026-manual.csv), only where every lookup failed; same district test
+        la, lo = float(m['la']), float(m['lo'])
+        inside = dist_key in D and D[dist_key].contains(Point(lo, la))
+        row.update(method='manual', la=round(la, 5), lo=round(lo, 5), display_name=m['source'], n_results=0, ok=inside,
+                   reason='' if inside else 'manual point outside its district (%s)' % dist_key)
     out.append(row)
 
 with open(os.path.join(ROOT, 'places-2026-geo.csv') + '.tmp', 'w', encoding='utf-8', newline='') as o:
@@ -124,6 +155,6 @@ os.replace(os.path.join(ROOT, 'places-2026-geo.csv') + '.tmp', os.path.join(ROOT
 ok = sum(x['ok'] for x in out)
 print('GV2 %d new requests this run (%d raw replies on disk)' % (fetched, len(os.listdir(RAW))))
 print('GV3 %d of %d placed inside their district; %d not; %d flagged postcode differs (by method: %s)' % (
-    ok, len(out), len(out) - ok, sum(x['reason'].startswith('postcode') for x in out), {m: sum(1 for x in out if x['method'] == m and x['ok']) for m in ('street', 'venue', 'freetext')}))
-for x in [x for x in out if not x['ok']][:15]: print('GV4 not placed:', x['district'], '|', x['booth'], '|', x['address'], '|', x['reason'])
+    ok, len(out), len(out) - ok, sum(x['reason'].startswith('postcode') for x in out), {m: sum(1 for x in out if x['method'] == m and x['ok']) for m in ('street', 'venue', 'freetext', 'street_nounit', 'venue_only', 'manual')}))
+for x in [x for x in out if not x['ok']][:30]: print('GV4 not placed:', x['district'], '|', x['booth'], '|', x['address'], '|', x['reason'])
 print('wrote', os.path.join(ROOT, 'places-2026-geo.csv'))
