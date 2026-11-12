@@ -1173,6 +1173,24 @@ seat_poll_weights_split <- function(target_election) {
   if (!file.exists(hf)) stop("AUSPOL_SEAT_POLL_HANDKEYED=1 but ", hf, " is missing")
   h <- data.table::fread(hf, showProgress = FALSE)
   if (!nrow(h) || anyNA(h$source) || any(!nzchar(h$source))) stop(hf, " must have rows, each with a source")
+  # A hand-keyed poll the scraped file now carries too (stage 9 refreshes the live Wikipedia page since 12 Nov 2026)
+  # would count twice: same election and seat, fieldwork ending within 3 days, pollster names sharing their first
+  # word. The scraped rows win and the hand-keyed ones are dropped, said aloud so the stale rows get deleted.
+  fw <- function(x) tolower(sub("[^A-Za-z].*$", "", trimws(as.character(x))))
+  hk <- unique(h[, list(election, seat_name, pollster, fe = as.Date(fieldwork_end))])
+  sk <- unique(s[, list(election, seat_name, pollster, fe = as.Date(fieldwork_end))])
+  dup <- vapply(seq_len(nrow(hk)), function(i) {
+    m <- sk$election == hk$election[i] & sk$seat_name == hk$seat_name[i] & fw(sk$pollster) == fw(hk$pollster[i])
+    any(m & !is.na(sk$fe) & !is.na(hk$fe[i]) & abs(as.numeric(sk$fe - hk$fe[i])) <= 3)
+  }, logical(1))
+  if (any(dup)) {
+    gone <- hk[dup]
+    cat(sprintf("SPHK2! hand-keyed poll(s) now in the scraped file, hand-keyed rows dropped (delete them from %s): %s\n",
+                basename(hf), paste(gone$election, gone$seat_name, gone$pollster, gone$fe, collapse = "; ")))
+    drop <- paste(h$election, h$seat_name, h$pollster, as.Date(h$fieldwork_end)) %in% paste(gone$election, gone$seat_name, gone$pollster, gone$fe)
+    h <- h[!drop]
+    if (!nrow(h)) return(s)
+  }
   cat(sprintf("SPHK hand-keyed seat-poll rows appended: %d (%s)\n", nrow(h),
               paste(unique(paste(h$election, h$seat_name)), collapse = ", ")))
   h$source <- NULL
