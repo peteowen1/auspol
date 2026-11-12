@@ -1,3 +1,7 @@
+# auspol 0.4.160
+
+- **Final-two tables keep a same-class pairing** (Liberal v National, two independents): `tcp_scenarios()` no longer drops the row, the seat ranges in `fit_seats_full.R` and the night runner leave the leader-win fields empty for it, and the forecast JSON writes numeric NA as null.
+
 # auspol 0.4.159
 
 - **Pakenham seat poll** (DemosAU/TKW for the Herald Sun, n=484): fieldwork 4-8 Nov, and grouped as an independent poll (`direct_indep`) rather than stakeholder-sponsored; a typo'd client field had filed it as sponsored. Changes Pakenham's published forecast.
