@@ -18,7 +18,7 @@ written with ok = FALSE and the reason, and the booths build leaves it off the m
 Writes external/reference/vec/2026/voting-locations/places-2026-geo.csv: one row per places-2026.csv row that needed a
 lookup. Codes GV0-GV4.
 """
-import csv, hashlib, json, os, re, sys, time, urllib.parse, urllib.request
+import csv, hashlib, json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
 from shapely.geometry import shape, Point
 
 ROOT = os.path.join('external', 'reference', 'vec', '2026', 'voting-locations')
@@ -64,8 +64,15 @@ def ask(params):
     wait = 1.1 - (time.time() - last[0])
     if wait > 0: time.sleep(wait)
     url = 'https://nominatim.openstreetmap.org/search?' + urllib.parse.urlencode(q)
-    with urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': UA}), timeout=30) as resp:
-        body = resp.read().decode('utf-8')
+    for attempt in range(4):   # a transient 5xx or timeout (seen 12 Nov: "503 first byte timeout") waits and retries
+        try:
+            with urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': UA}), timeout=30) as resp:
+                body = resp.read().decode('utf-8')
+            break
+        except (urllib.error.URLError, TimeoutError) as e:
+            code = getattr(e, 'code', None)
+            if (code is not None and code < 500 and code != 429) or attempt == 3: raise
+            print('GV9 retry %d after %s' % (attempt + 1, e), flush=True); time.sleep(10 * (attempt + 1))
     last[0] = time.time()
     reply = json.loads(body)
     with open(f + '.tmp', 'w', encoding='utf-8') as o:
