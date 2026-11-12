@@ -49,6 +49,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   waits for 8 GB, never publishes). Score it against `output/snapshots/20261110-0929-82329b06-from1` by
   `plans/prereg-council-coverage-2026-11-12.md` (control: untouched elections byte-identical; guards: 35-election log
   loss within 1 SE, share RMSE within 0.02). Pass: PR to main, then stage 9 publish. Fail: to Pete with the elections.
+  Morning, two commands (NEW = the rebuild's `output/snapshots/<stamp>-from3`): `Rscript scripts/compare_rebuild_scores.R
+  output/snapshots/20261110-0929-82329b06-from1/pooled-backtest.csv NEW/pooled-backtest.csv` (guard 1, KX2), then the
+  scorer saved 12 Nov at `C:\Users\peteo\AppData\Local\Temp\claude\dc1a17ec65ae517e\69db74c1-4af5-49d4-9998-aadb66130b04\scratchpad\score_council_rebuild.R`
+  `<baseline> NEW <scratchpad>\pre-rebuild\seat-probs-vic-2026.csv` (SC1 control, SC2 guard 2, SC3 reported, SC4 live
+  vic2026 over 2 points; dry-run on identical snapshots gives 0 moved and +0.0000).
 - OPEN, check after the NEXT STAGE-9 PUBLISH (not the daily run: it downloads the 9 Nov `seat-poll-blend-vic2026.csv` from
   the shipped-models release, which still has the old Pakenham row; checked 12 Nov): Pakenham seat poll corrected 12 Nov. Fieldwork 4-8 Nov (Poll Bludger), and its client was
   the typo "TKR", which filed a Herald Sun poll as stakeholder-sponsored (`direct_stake`); now `direct_indep` via a `poll_methods.csv`
