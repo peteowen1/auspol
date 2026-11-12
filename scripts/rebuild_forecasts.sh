@@ -246,7 +246,16 @@ if at_least 3; then
 fi
 # COUNCIL HISTORY (AUSPOL_XGB_COUNCIL): read by stage 3 and the live forecast.
 # Rebuilt whenever stage 3 runs, from the parsed council results on disk.
+# Its seat-to-council overlap table was outside the pipeline until 2026-11-12 and had gone stale: built 8 Oct, before
+# nsw2007/11, qld2009/12/15, sa2006/10/14 and vic2006 joined the corpus, so no candidate there could match a council
+# (71 nsw2011 elected councillors read as "never stood"). Rebuilt here when candidacies.csv or the script is newer.
 if at_least 3; then
+  if [ ! -s output/lga-district-overlap.csv ] || [ output/candidacies.csv -nt output/lga-district-overlap.csv ] || [ scripts/build_lga_district_overlap.R -nt output/lga-district-overlap.csv ]; then
+    echo "-- LGA overlap: rebuilding (missing, or older than candidacies.csv or its script)"
+    Rscript scripts/build_lga_district_overlap.R > "$LOG/s3_lga_overlap.log" 2>&1 || { echo "!! build_lga_district_overlap.R failed -- see $LOG/s3_lga_overlap.log"; exit 1; }
+  else
+    echo "-- LGA overlap: up to date, kept"
+  fi
   python scripts/build_council_history.py > "$LOG/s3_council.log" 2>&1 || { echo "!! build_council_history.py failed -- see $LOG/s3_council.log"; exit 1; }
 fi
 # BUCKET SPLIT FILE (AUSPOL_BUCKET_SPLIT_SRC, shipped 2026-11-06): output/minor-class-shares-resid-v2.csv is rebuilt
