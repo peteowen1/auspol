@@ -61,3 +61,17 @@ Read with: both primary falls are about 1 SE; the gain is Mirani and Monash, eve
 was chosen after the move run, on the same 29 seats, so this says the copy version avoids the move version's damage
 and helps the two seats it was aimed at; it is not out-of-sample evidence. Mirani is still called wrong at full count.
 Live use needs candidate names in the night booth table (the VEC website pages carry them; `scripts/vec_web_booths.R`).
+
+### Amendment 1 (2026-11-12, AFTER the result; the original clauses above are left as written)
+
+The vic2022 replays and this prereg's scorer joined the 2018 booth table to 2022 by exact district name, and
+`output/booths-vic2018.csv` spells 25 of 87 districts its own way ("South Westcoast", "Albertpark"). That hid vic2022's
+two class-switchers (Marilyn Nuske, Bendigo West, OTH -> IND; Jim Doukas, South-West Coast, OTH_RIGHT -> IND), so the
+"vic2022 byte-identical" clause rested on the bug, not on vic2022 having no targets. Fixed 264cc306 (replays) and
+5963c174 (scorer); rerun `deciding-runs/20261112-vic2022-names/results-cand-ref.txt`:
+
+- Simulated primary, 30 target seats: -0.03170 (SE 0.02628); real nights unchanged, -0.00169 (SE 0.00161).
+- vic2022 night-average seat-winner log loss: -0.00057 (better); largest win-probability move 0.050.
+- Every other clause passes; "vic2022 identical" is FALSE, so the scorer prints FAIL.
+
+Pete, 12 Nov: keep `cand_ref = "copy"` ON for 28 Nov; the identical clause is void (its premise was the naming bug).

@@ -108,3 +108,10 @@ Lapse, recorded: the fitted values were to go into `docs/CONSTANTS.md` before th
 Shipped: `night_cycle()` runs at `.NIGHT_PAIR_CAL` = 0.945244, 0.681490 (fitted on all three nights, 388 seats, 33
 wrong, r 0.944), `--tcp-pair-cal=off` for the old cliff. `night_run_update()`'s own default stays NULL, so the replays
 keep a base arm.
+
+### Rescore after the vic2022 seat-name fix (2026-11-12; nothing above edited)
+
+vic2022's real-night replay rerun with every booth table's district names matched to the seats (264cc306): pooled
+-0.00212 (SE 0.00143, 389 seats; was -0.00175), without Monash -0.00078 (SE 0.00053); vic2022 +0.0012 (was +0.0028),
+Albert Park +0.030 (was +0.132: most of it was "Albertpark" missing its declaration-vote reference). Decision rule PASS,
+unchanged. `deciding-runs/20261112-vic2022-names/results-cal.txt`.

@@ -30,10 +30,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   reference and its turnout fell to the state rate; `.night_seat_names()` now puts every input's names into the model's.
   Checked on all 88 districts with the 2022 pages under the live 2026 configuration (87 updated; Narracan has no 2022 page); (4) DONE 11 Nov: dress rehearsal of fetcher + loop on the live Nepean pages (found and fixed: the loop never saw website snapshots; the website candidate list has no enrolment, now `external/reference/vec/2026/enrolment/enrolment-2026.csv`, pass it as --enrolment); (5) the ITG booths build
   (`C:/dev/inthegame-blog/politics/night-maps/build-booths-2026.py`) also assumed the feed.
-- IN FLIGHT 12 Nov, replay evidence: the replays now apply `.night_seat_names()` (264cc306; vic2018's "Albertpark" etc. had
-  left 25 of 87 seats' declaration votes without a reference in every vic2022 replay). Rerun running:
-  `deciding-runs/20261112-vic2022-names/` (real base + pair_cal, simulated base + cand_ref copy). Done when its DONE is read
-  and pair_cal / cand_ref / the called rule are rescored against the 11 Nov vic2022 numbers.
+- DONE 12 Nov, replay evidence (DECISIONS 2026-11-12): replays and the cand_ref scorer now match district names (264cc306,
+  5963c174); vic2022 rerun: pair_cal still PASS (pooled -0.00212), cand_ref copy kept ON by Pete (vic2022 has 2 switchers).
+  Called rule unchanged on the corrected night (85 seats reach 0.99, the one wrong first call Mildura 19:00 at 1.2% counted,
+  inside the 10% gate; Labor majority 18:03). Nothing left open here; delete this line next pass.
 - OPEN for Pete (ITG, 12 Nov): pollster pages list "Lighthouse" (one poll, 26 Oct 2026) and "Lighthouse/Growth
   Intelligence Centre" (one poll, 25 Oct) as two method versions a day apart: likely one firm under two source labels, and
   the "method changed" note is then false. No forecast effect (under 3 polls, both use the pooled house effect).
