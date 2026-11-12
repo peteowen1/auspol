@@ -187,7 +187,7 @@ doc <- list(
   chamber = list(parties = chamber, p_hung = round(hung, 4), p_onp_balance_of_power = round(onp_bop, 4), p_tie_most = p_tie_most),
   seats = seat_rows)
 out_f <- file.path(OUT, sprintf("%s%s.json", CFG$json_stem, SUF))   # a suffixed (diagnostic) run never overwrites the published name
-writeLines(jsonlite::toJSON(doc, auto_unbox = TRUE, null = "null", digits = 4), out_f)
+writeLines(jsonlite::toJSON(doc, auto_unbox = TRUE, null = "null", na = "null", digits = 4), out_f)   # numeric NA (a same-class final two) as null, not the string "NA"
 cat(sprintf("FJ2  wrote %s (%.0f KB)\n", out_f, file.size(out_f) / 1024))
 
 # history: one row per build
