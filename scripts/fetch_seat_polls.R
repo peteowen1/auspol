@@ -108,7 +108,7 @@ failed <- character(0)
 # truncated page) is discarded and the old copy restored.
 LIVE <- c("vic2026")
 refresh_live <- "--refresh-live" %in% commandArgs(trailingOnly = TRUE)
-refreshed_from <- list()   # key -> the kept previous copy, for the poll-count guard before writing
+refreshed_from <- list()   # key -> the kept previous copy, for the poll-count guard (SPF1) before writing
 for (key in names(pages)) {
   f <- file.path(raw_dir, paste0(key, ".html"))
   if (refresh_live && key %in% LIVE && file.exists(f)) {
@@ -126,7 +126,7 @@ for (key in names(pages)) {
       message("REFRESHED (live): ", key, "; previous copy kept as ", basename(keep))
       refreshed_from[[key]] <- keep
     } else {
-      unlink(tmp); message("SP0! ", key, ": refresh failed, truncated or not the article; the previous copy is kept")
+      unlink(tmp); message("SPF0! ", key, ": refresh failed, truncated or not the article; the previous copy is kept")
     }
     Sys.sleep(1)
     next
@@ -445,10 +445,10 @@ if (length(refreshed_from) && file.exists(out_csv)) {
   npoll <- function(x, k) { x <- x[x$election == k & x$row_type == "poll", ]; nrow(unique(x[, c("seat", "pollster", "date_raw")])) }
   for (k in names(refreshed_from)) {
     n_old <- npoll(prev, k); n_new <- if (nrow(seat_polls)) npoll(seat_polls, k) else 0L
-    message(sprintf("SP1  %s: %d distinct seat polls before the refresh, %d after", k, n_old, n_new))
+    message(sprintf("SPF1  %s: %d distinct seat polls before the refresh, %d after", k, n_old, n_new))
     if (n_new < n_old) {
       file.copy(refreshed_from[[k]], file.path(raw_dir, paste0(k, ".html")), overwrite = TRUE, copy.date = TRUE)
-      stop(sprintf("SP1! %s: the refreshed page has %d seat polls, the file on disk %d; previous page restored, seat_polls.csv not written", k, n_new, n_old))
+      stop(sprintf("SPF1! %s: the refreshed page has %d seat polls, the file on disk %d; previous page restored, seat_polls.csv not written", k, n_new, n_old))
     }
   }
 }
