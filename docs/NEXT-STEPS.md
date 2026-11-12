@@ -34,10 +34,6 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   5963c174); vic2022 rerun: pair_cal still PASS (pooled -0.00212), cand_ref copy kept ON by Pete (vic2022 has 2 switchers).
   Called rule unchanged on the corrected night (85 seats reach 0.99, the one wrong first call Mildura 19:00 at 1.2% counted,
   inside the 10% gate; Labor majority 18:03). Nothing left open here; delete this line next pass.
-- OPEN for Pete (ITG, 12 Nov): pollster pages list "Lighthouse" (one poll, 26 Oct 2026) and "Lighthouse/Growth
-  Intelligence Centre" (one poll, 25 Oct) as two method versions a day apart: likely one firm under two source labels, and
-  the "method changed" note is then false. No forecast effect (under 3 polls, both use the pooled house effect).
-  "Lonergan" 2013-16 vs "Lonergan Research" 2022 is filed the same way, method change unconfirmed. Done when Pete says merge or leave.
 - OPEN: Pakenham DemosAU/TKR rows in `hand_keyed_primaries.csv` (fieldwork date UNCONFIRMED). Done when `seat_polls.csv`
   carries the poll: delete the hand-keyed rows.
 - OPEN, display only (class split itself closed, DECISIONS 2026-11-06): a final two of

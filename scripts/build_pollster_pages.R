@@ -61,8 +61,19 @@ nm_all <- c(polls$firm, card$firm, acc$firm, byc$firm)
 fmap <- data.table(firm = nm_all)[, list(n = .N), by = firm][, key := pk(firm)][order(key, -n)][, list(canon = firm[1], alias = firm), by = key]
 al <- fmap[fmap$alias != fmap$canon]
 if (nrow(al)) cat(sprintf("PPG3 merged spellings: %s\n", paste(sprintf("'%s' -> '%s'", al$alias, al$canon), collapse = "; ")))
-cn <- function(x) { i <- match(x, fmap$alias); ifelse(is.na(i), x, fmap$canon[i]) }
+# One firm under two source labels, not a method change (Pete, 12 Nov 2026): one page under the first name. Lonergan
+# vs Lonergan Research stays two linked pages (method change unconfirmed).
+SAME_FIRM <- c("Lighthouse/Growth Intelligence Centre" = "Lighthouse")
+seen <- names(SAME_FIRM) %in% nm_all
+if (any(seen)) cat(sprintf("PPG3 same firm, one page: %s\n", paste(sprintf("'%s' -> '%s'", names(SAME_FIRM)[seen], SAME_FIRM[seen]), collapse = "; ")))
+cn <- function(x) { i <- match(x, fmap$alias); x <- ifelse(is.na(i), x, fmap$canon[i]); j <- match(x, names(SAME_FIRM)); ifelse(is.na(j), x, unname(SAME_FIRM)[j]) }
 polls[, firm := cn(firm)]; card[, firm := cn(firm)]; acc[, firm := cn(firm)]; byc[, firm := cn(firm)]; live[, firm := cn(firm)]
+# two names merged into one can leave two pooled rows for one election: add their polls
+pooled_rows <- is.na(live$party)
+if (any(pooled_rows)) live <- rbind(live[!pooled_rows], live[pooled_rows, list(party = NA_character_, effect_pts = NA_real_, n_polls = sum(n_polls)), by = list(election, firm)], use.names = TRUE)
+dl <- live[, list(mixed = any(is.na(party)) && !all(is.na(party)), dup = anyDuplicated(party[!is.na(party)]) > 0), by = list(election, firm)]
+if (any(dl$mixed | dl$dup))
+  stop("PPG6! merged pollster names left duplicate or mixed house-effect rows for one election: ", paste(unique(dl$firm[dl$mixed | dl$dup]), collapse = ", "))
 pname <- c(ALP = "Labor", LNP = "Coalition", GRN = "Greens", ONP = "One Nation", OTH = "others")
 firms <- sort(unique(c(card$firm, acc$firm, byc$firm[byc$firm != "(other firms)"], polls$firm)))
 if (anyDuplicated(slug(firms))) stop("PPG3! two pollster names give the same page address: ", paste(firms[duplicated(slug(firms))], collapse = ", "))

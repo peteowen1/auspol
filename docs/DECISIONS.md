@@ -4,6 +4,9 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-11-12 "Lighthouse" and "Lighthouse/Growth Intelligence Centre" are one firm: one pollster page (Pete, 12 Nov).** One poll each, a day apart
+  (25 and 26 Oct 2026), so the "method changed" note was false. `SAME_FIRM` in `scripts/build_pollster_pages.R`; pages only, the forecast
+  is unaffected (both under 3 polls, pooled house effect). "Lonergan" 2013-16 vs "Lonergan Research" 2022 stay two linked pages.
 - **2026-11-12 Night: cand_ref "copy" stays ON for 28 Nov; pair_cal still passes (Pete, 12 Nov).** The vic2022 replays and
   the cand_ref scorer matched booth tables by exact district name ("South Westcoast", "Albertpark"; 25 of 87), fixed
   264cc306/5963c174. Rerun: pair_cal pooled -0.00212 (SE 0.00143; was -0.00175), PASS; cand_ref simulated -0.0317
