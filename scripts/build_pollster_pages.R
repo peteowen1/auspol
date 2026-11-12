@@ -71,6 +71,9 @@ polls[, firm := cn(firm)]; card[, firm := cn(firm)]; acc[, firm := cn(firm)]; by
 # two names merged into one can leave two pooled rows for one election: add their polls
 pooled_rows <- is.na(live$party)
 if (any(pooled_rows)) live <- rbind(live[!pooled_rows], live[pooled_rows, list(party = NA_character_, effect_pts = NA_real_, n_polls = sum(n_polls)), by = list(election, firm)], use.names = TRUE)
+dl <- live[, list(mixed = any(is.na(party)) && !all(is.na(party)), dup = anyDuplicated(party[!is.na(party)]) > 0), by = list(election, firm)]
+if (any(dl$mixed | dl$dup))
+  stop("PPG6! merged pollster names left duplicate or mixed house-effect rows for one election: ", paste(unique(dl$firm[dl$mixed | dl$dup]), collapse = ", "))
 pname <- c(ALP = "Labor", LNP = "Coalition", GRN = "Greens", ONP = "One Nation", OTH = "others")
 firms <- sort(unique(c(card$firm, acc$firm, byc$firm[byc$firm != "(other firms)"], polls$firm)))
 if (anyDuplicated(slug(firms))) stop("PPG3! two pollster names give the same page address: ", paste(firms[duplicated(slug(firms))], collapse = ", "))
