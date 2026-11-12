@@ -186,7 +186,7 @@ def main():
             if (c.get('contest') or 'councillor') != 'mayor':
                 CC[(st_, int(c['year']))].add(cnorm(c['council']))
     unmatched_councils = collections.Counter()
-    no_ov = collections.Counter()   # covered by the state-year rule only: no overlap rows for the seat
+    no_ov = collections.Counter()   # seats with council years in the window but no overlap rows (NA unless a record matched)
     for r in S:
         y = int(r['year'])
         st = r['region'] if r['region'] != 'fed' else (r['state'] or '').lower()
@@ -238,6 +238,9 @@ def main():
             cov = False
             if win:
                 no_ov[r['election']] += 1
+        # a matched record is itself evidence the seat has data: a 2008 Queensland MAYORAL hit (mayors survive for ~73
+        # councils, councillors for 5) or a council-chosen mayor term must not be thrown away as NA (review, 12 Nov)
+        cov = cov or bool(hits) or bool(mterms)
         rec = dict(election=r['election'], seat=r['seat'], name=r['name'], party=r['party'], council_coverage=cov,
                    council_any=bool(hits), council_elected=any(h['elected'] == 'True' for h in hits),
                    council_mayor=any(h.get('contest') == 'mayor' and h['elected'] == 'True' for h in hits) or bool(mterms),
