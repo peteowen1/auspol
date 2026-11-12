@@ -29,12 +29,13 @@ ckpt_load <- function(out_dir, prefix, kinds, resume, settings = ckpt_settings()
     if (!identical(old, settings)) stop("NRC3! --resume=1 with different settings from the partial files (", prefix, "): only before: ",
                                          paste(setdiff(old, settings), collapse = "; "), " | only now: ", paste(setdiff(settings, old), collapse = "; "))
   }
-  writeLines(settings, sf)
   if (!resume) {
     old <- file.exists(ckpt_path(out_dir, prefix, kinds))
     if (any(old)) { cat(sprintf("NRC1 %s: %d stale partial file(s) removed (no --resume=1)\n", prefix, sum(old))); unlink(ckpt_path(out_dir, prefix, kinds)) }
+    writeLines(settings, sf)   # after the stale partials are gone, so old rows never sit under new settings
     return(list(rows = res, done = character(0)))
   }
+  writeLines(settings, sf)
   f <- ckpt_path(out_dir, prefix, "summary")
   if (!file.exists(f)) { cat(sprintf("NRC1 %s: --resume=1 but no partial summary, starting from the first time\n", prefix)); return(list(rows = res, done = character(0))) }
   rd <- function(k) data.table::fread(ckpt_path(out_dir, prefix, k), colClasses = list(character = "time"), showProgress = FALSE)
