@@ -53,7 +53,11 @@ SUCCESSOR = {'auburn': 'cumberland', 'bankstown': 'canterburybankstown', 'canter
              'greaterhumeshire': 'greaterhume', 'dubbo': 'dubboregional', 'wellington': 'dubboregional',
              'tamworth': 'tamworthregional', 'parramatta': 'parramatta', 'gloucester': 'midcoast', 'greatlakes': 'midcoast',
              'greatertaree': 'midcoast', 'goldenplains': 'goldenplains', 'armidaledumaresq': 'armidale',
-             'guyra': 'armidale', 'nambucca': 'nambuccavalley'}
+             'guyra': 'armidale', 'nambucca': 'nambuccavalley',
+             # renamed or merged since the election (CH3, 12 Nov 2026): WA's Roebourne is Karratha (2014); Queensland
+             # 2008's Roma and Dalby Regional (raw page keys "romaregional", "dalbyregional") are Maranoa and Western Downs
+             'roebourne': 'karratha', 'roma': 'maranoa', 'romaregional': 'maranoa',
+             'dalby': 'westerndowns', 'dalbyregional': 'westerndowns'}
 
 
 def nk(s):
@@ -62,6 +66,7 @@ def nk(s):
 
 def cnorm(s):
     s = (s or '').lower().replace('merri-bek', 'moreland').replace('merribek', 'moreland').replace('&', ' and ')
+    s = re.sub(r'\bby-?\s*election\b', ' ', s)   # "Greater Dandenong City Council By-election" is Greater Dandenong
     s = re.sub(r'\([^)]*\)', ' ', s)
     k = re.sub(r'[^a-z]', '', re.sub(STOP, ' ', s))
     return SUCCESSOR.get(k, k)
