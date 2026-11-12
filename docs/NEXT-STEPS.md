@@ -13,10 +13,18 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (10 Nov: One Nation stands in all 88 seats, so no seat-count conditioning applies; recheck for nsw2027's list); (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 12 Nov, 9:05pm.** main at 0.4.160. dev is 12 commits ahead, unmerged on purpose: council coverage (CH3 names,
+- **Status 12 Nov, 9:50pm.** main at 0.4.160. dev is 14 commits ahead, unmerged on purpose: council coverage (CH3 names,
   per-council coverage, Qld 2008, stale overlap rebuild), night replay settings check (NRC3), seat-poll `--refresh-live` and
   hand-keyed dedup. They go to main in one PR after the 13 Nov rebuild scores (item below). Round-2 review of the seat-poll
-  fixes (f4a3cbff..db6e0637, Sonnet, 12 Nov 9:10pm): 0 Important, so the gate is passed. Rebuild PENDING for 11:30pm.
+  fixes (f4a3cbff..db6e0637, Sonnet, 12 Nov 9:10pm): 0 Important, so the gate is passed. Rebuild PENDING for 11:30pm
+  (needs 8 GB free; at 9:36pm 1.7 GB, other verses' R jobs). Pete to send the VEC draft (Gmail, "RE: State Election 2026
+  results data feed"): it asks whether the voting-centre pages fill in during the count.
+- OPEN, LIVE GAP found 12 Nov: the published vic2026 forecast uses NO candidate salience (`XG5! no salience corpus yet` in
+  every live log since 27 Oct; `output/salience-v6.csv` has 0 vic2026 rows; CI never had the file). Fix built, unmerged:
+  branch `salience-vic2026-link` (0646dbc8, worktree `C:\dev\auspol-wt-salience`, rank-mapped per DECISIONS 2026-11-12).
+  Done when: live `fit_seats_full.R` with/without (`AUSPOL_OUT_SUFFIX`, in the worktree; first try killed by low memory),
+  moved seats walked with Pete, reviewed, merged, and the next stage 9 prints `PRS1` with vic2026 rows. Worktree has
+  junctions under `external/`: unlink them before removing it.
 - OPEN (seat-poll nit from that review): the SPF1 guard (`scripts/fetch_seat_polls.R:443-452`) has no override, so if Wikipedia
   legitimately drops a vic2026 seat poll, every stage 9 keeps the old page until someone reads `s9_seatpolls.log`. Done when
   an `--accept-fewer` flag exists or the stage-9 summary prints SPF1 at the top. Same file area: an NA pollster in a scraped
@@ -195,9 +203,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   resumable; anchor Ben Carroll since 4 Nov: Allan was replaced as Premier 28 Jul 2026 and her series linked 0 of 101
   batches; check the anchor against `leaders.csv` before each snapshot), then `scripts/build_vic2026_salience_jump.R`
   with the SAME `AUSPOL_SALIENCE_TO` (without it the builder falls back to 6 Oct and finds 0 batches)
-  (output/vic2026-salience-jump.csv). Local runs DO use a vic2026 salience corpus (live walk log: XG5 43 cells,
-  31 surge seats); the CI publish does not have one yet (DS3 falls back to flat surge_h), so the surge double count
-  (`AUSPOL_SURGE_LEVEL`) reaches the published forecast only once a corpus reaches CI.
+  (output/vic2026-salience-jump.csv), then `scripts/link_vic2026_salience.R` (branch `salience-vic2026-link`, item at top).
+  CORRECTED 12 Nov: local runs did NOT use a vic2026 corpus either (every live log prints `XG5!`); nothing read the jump file.
 - OPEN F8, F13, F17, F19 (F5, F7, F9 REFUSED; F10 and F12 SHIPPED, DECISIONS 30 Oct / `AUSPOL_LIVE_LEVEL_PRED_TREND`;
   F14, F15 were design notes, no task; F16 NOT PASSED 29 Oct; F18 walk 1 done; IND override shipped as arm H): post-xgb
   tables fitted on residuals the shares no longer carry (F8; arms R and N exhausted), HTV overwriting xgb flows (F13: no
@@ -276,8 +283,8 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
 
 ## Dated, cannot move
 
-- Nominations DONE 10 Nov (VEC final list live, DECISIONS 2026-11-10). OPEN leftovers, NOT CHECKED 10 Nov: rerun the
-  three salience scripts named in `published_flags.R` on the real list; revisit candidate-count weighting now counts are facts.
+- Nominations DONE 10 Nov (VEC final list live, DECISIONS 2026-11-10). Salience on the real list: the 11 Nov snapshot covers
+  all 734 VEC candidates (checked 12 Nov); wiring it in is the LIVE GAP item at top. OPEN: revisit candidate-count weighting.
 - **The day Liberal how-to-vote cards are published**: add
   `vic2026,ALL,<TRUE/FALSE>,<source>` to
   `external/reference/htv/liberal-alp-grn-order.csv` (~8 points of 2CP in

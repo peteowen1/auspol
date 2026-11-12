@@ -4,6 +4,10 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-11-12 vic2026 salience goes into the live forecast RANK-MAPPED, not raw (Pete, 12 Nov).** Each jump is divided by
+  the anchor's (Ben Carroll) rise, and his is small, so the 11 Nov snapshot ran ~20x the backtest scale (p90 0.168 vs vic2022
+  0.0079); each candidate keeps their vic2026 rank, mapped onto the backtest corpus within sign. Built on branch
+  `salience-vic2026-link` (`scripts/link_vic2026_salience.R`); not merged until the live with/without walk.
 - **2026-11-12 "Lighthouse" and "Lighthouse/Growth Intelligence Centre" are one firm: one pollster page (Pete, 12 Nov).** One poll each, a day apart
   (25 and 26 Oct 2026), so the "method changed" note was false. `SAME_FIRM` in `scripts/build_pollster_pages.R`; pages only, the forecast
   is unaffected (both under 3 polls, pooled house effect). "Lonergan" 2013-16 vs "Lonergan Research" 2022 stay two linked pages.
