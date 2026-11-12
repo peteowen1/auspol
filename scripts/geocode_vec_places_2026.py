@@ -33,10 +33,12 @@ def norm(s):   # as build-booths-2026.py and the night runner
     return re.sub(' +', ' ', s).strip()
 
 
+# Booths that can lend a position: only those WITH coordinates. booths-ref2018.json (Narracan) has none, so its
+# centres are looked up too; the feed's set-up file would have carried them.
 H = {}
 for f in (hist_f, ref_f):
     for d, bs in json.load(open(f, encoding='utf-8'))['districts'].items():
-        H.setdefault(norm(d), {norm(b['n']) for b in bs})
+        H.setdefault(norm(d), {norm(b['n']) for b in bs if b.get('la') is not None})
 D = {norm(ft['properties']['name']): shape(ft['geometry']) for ft in json.load(open(geo_f, encoding='utf-8'))['features']}
 rows = list(csv.DictReader(open(os.path.join(ROOT, 'places-2026.csv'), encoding='utf-8')))
 print('GV0 %d centres, %d districts with booth history, %d district boundaries' % (len(rows), len(H), len(D)))
@@ -48,7 +50,7 @@ host = {}   # venue address -> the district where it is a host or ordinary centr
 for r in rows:
     if r['joint'] != 'JVC': host.setdefault(addr(r), norm(r['district']))
 need = [r for r in rows if norm(r['booth']) not in H.get(norm(r['district']), set())]
-print('GV1 %d centres have no 2022/2018 booth of the same name; %d distinct addresses' % (len(need), len({addr(r) for r in need})))
+print('GV1 %d centres have no positioned 2022/2018 booth of the same name; %d distinct addresses' % (len(need), len({addr(r) for r in need})))
 
 os.makedirs(RAW, exist_ok=True)
 last = [0.0]
