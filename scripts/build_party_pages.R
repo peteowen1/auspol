@@ -69,14 +69,14 @@ pe <- merge(pe, el, by = "election"); pe[, fp_pct := round(100 * votes / formal,
 # anchor check: our Labor share against the commission's statewide figure
 ev <- as.data.table(load_eventual_results())
 chk <- merge(pe[fam == "labor", .(region, year, fp_pct)], ev[party == "ALP", .(region, year, actual)], by = c("region", "year"))
-# KNOWN: the anchor's eventual-results.csv swaps Labor and the Coalition for NSW 2007 (ALP FP 36.99, LNP FP 38.98;
-# the commission's count is Labor 38.98, found 11 Nov 2026 by this check), so that election is reported, not checked.
-KNOWN_BAD <- "nsw2007"
+# The anchor's NSW 2007 Labor/Coalition swap (found by this check, 11 Nov 2026) is corrected in
+# load_eventual_results() since 12 Nov (EVR1), so every election is checked.
+if (!nrow(chk)) stop("PTY2! no election joined to the statewide results")
 chk[, el := paste0(region, year)]
-cat(sprintf("PTY2 Labor first preferences vs the commission's statewide figure: %d elections, largest gap %.2f points (%s); known bad in the reference file: %s (gap %.2f)\n",
-            nrow(chk[!el %in% KNOWN_BAD]), chk[!el %in% KNOWN_BAD, max(abs(fp_pct - actual))], chk[!el %in% KNOWN_BAD][which.max(abs(fp_pct - actual)), el],
-            paste(KNOWN_BAD, collapse = ", "), chk[el %in% KNOWN_BAD, max(abs(fp_pct - actual))]))
-if (chk[!el %in% KNOWN_BAD, max(abs(fp_pct - actual))] > 0.5) stop("PTY2! summed first preferences disagree with the statewide result by more than 0.5 points")
+gap <- abs(chk$fp_pct - chk$actual)
+cat(sprintf("PTY2 Labor first preferences vs the commission's statewide figure: %d elections, largest gap %.2f points (%s)\n",
+            nrow(chk), max(gap), chk$el[which.max(gap)]))
+if (max(gap) > 0.5) stop("PTY2! summed first preferences disagree with the statewide result by more than 0.5 points: ", paste(chk$el[gap > 0.5], collapse = ", "))
 tpp <- ev[party == "@TPP", .(region, year, alp_tpp = actual)]
 pe <- merge(pe, tpp, by = c("region", "year"), all.x = TRUE)
 ed <- election_dates(); pe[, date := as.character(ed[election])]

@@ -634,3 +634,23 @@ test_that("the live night cycle runs at the fitted pair_cal unless told otherwis
   expect_error(.night_pair_cal_cfg("a,b"), "NW19!")
   expect_length(.NIGHT_PAIR_CAL, 2L)
 })
+
+test_that("night_stale_check warns once per quiet spell and resets on a new snapshot", {
+  t0 <- as.POSIXct("2026-11-28 19:00:00", tz = "Australia/Melbourne")
+  st <- night_stale_check(NULL, "20261128_190000", t0, 20)
+  expect_null(st$message)
+  st <- night_stale_check(st, "20261128_190000", t0 + 19 * 60, 20)
+  expect_null(st$message)                                   # not yet 20 minutes
+  st <- night_stale_check(st, "20261128_190000", t0 + 21 * 60, 20)
+  expect_match(st$message, "^NWL3! no new snapshot for 21 minutes")
+  st <- night_stale_check(st, "20261128_190000", t0 + 40 * 60, 20)
+  expect_null(st$message)                                   # once per spell, not every loop
+  st <- night_stale_check(st, "20261128_194000", t0 + 41 * 60, 20)
+  expect_null(st$message)                                   # a new stamp ends the spell
+  st <- night_stale_check(st, "20261128_194000", t0 + 62 * 60, 20)
+  expect_match(st$message, "NWL3!")                         # and a new spell can warn again
+  st0 <- night_stale_check(NULL, NA_character_, t0, 20)
+  expect_match(night_stale_check(st0, NA_character_, t0 + 25 * 60, 20)$message, "newest none")
+  off <- night_stale_check(NULL, "x", t0, 0)
+  expect_null(night_stale_check(off, "x", t0 + 999 * 60, 0)$message)   # 0 turns it off
+})

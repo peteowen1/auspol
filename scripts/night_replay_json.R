@@ -36,7 +36,11 @@ br <- flag("prev", file.path("output", sprintf("booths-%s%d.csv", region, st$fro
 bt <- flag("tcp-file", file.path("output", "booths", sprintf("%s%d-booth-tcp.csv", region, st$to)))
 for (f in c(bl, br, if (use_tcp) bt)) if (!file.exists(f)) stop("NJ1! missing ", f)
 L <- fread(bl, showProgress = FALSE); R <- fread(br, showProgress = FALSE); Tc <- if (use_tcp) fread(bt, showProgress = FALSE) else NULL
-cat(sprintf("NJ1  %s: %d seats, %d sims, 2CP %s, cand-ref=%s, early=%s, gap_k=%s, surge-fade=%s, tcp-center=%s, tcp-flow-floor=%s, fractions %s\n", st$pair, nrow(st$shares), sims,
+# booth tables' district names into the state's seat names, as night_cycle() does live ("Albertpark", 12 Nov 2026)
+for (nm in c("L", "R", "Tc")) { d <- get(nm); if (!is.null(d) && "district" %in% names(d)) { d$district <- .night_seat_names(d$district, rownames(st$shares)); assign(nm, d) } }
+cat(sprintf("NJ5  booth districts matching no seat: live %s; previous %s\n",
+            paste(setdiff(unique(L$district), rownames(st$shares)), collapse = ", "), paste(setdiff(unique(R$district), rownames(st$shares)), collapse = ", ")))
+cat(sprintf("NJ1 %s: %d seats, %d sims, 2CP %s, cand-ref=%s, early=%s, gap_k=%s, surge-fade=%s, tcp-center=%s, tcp-flow-floor=%s, fractions %s\n", st$pair, nrow(st$shares), sims,
             if (use_tcp) "ON" else "off", cand_ref, early, gap_k, surge_fade, tcp_center, tcp_floor, paste(fracs, collapse = ",")))
 
 index <- list()

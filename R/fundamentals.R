@@ -88,6 +88,44 @@ dedupe_reference_rows <- function(x, key_cols, what, label) {
   unique(x, by = key_cols)
 }
 
+# Known errors in eventual-results.csv, corrected on load. The file is the anchor clone's (third party), so it is
+# corrected here rather than edited. Each row gives the value the file carries (`wrong`) and the official one
+# (`right`), so the fix applies only while the file still says `wrong`: once upstream corrects it the row goes
+# quiet, and a value matching neither stops the load (the file changed in a way nobody checked).
+#
+# nsw2007: Labor and the Coalition swapped. NSWEC 2007 Legislative Assembly first preferences: Labor 38.98,
+# Liberal 26.94 + Nationals 10.06 = Coalition 37.00 (36.99 in the file); our candidacies agree to 0.03 points.
+# Found 11 Nov 2026 by build_party_pages.R's PTY2 check (the other 37 elections agree to 0.03).
+# @noRd
+EVENTUAL_RESULT_FIXES <- data.table::data.table(
+  year = c(2007L, 2007L), region = c("nsw", "nsw"), party = c("ALP", "LNP"),
+  wrong = c(36.99, 38.98), right = c(38.98, 36.99),
+  source = "NSWEC 2007 Legislative Assembly first preferences")
+
+# Apply EVENTUAL_RESULT_FIXES (or `fixes`) to a loaded eventual-results table. Separate from the loader so it
+# can be tested without the anchor clone. Prints EVR1 for each correction applied.
+# @noRd
+apply_eventual_result_fixes <- function(x, fixes = EVENTUAL_RESULT_FIXES,
+                                        on = Sys.getenv("AUSPOL_EVENTUAL_FIXES", "1") != "0") {
+  if (!on) { message("EVR1 eventual-results.csv: known-error corrections OFF (AUSPOL_EVENTUAL_FIXES=0)"); return(x) }
+  for (i in seq_len(nrow(fixes))) {
+    fy <- as.integer(fixes$year[i]); fr <- fixes$region[i]; fp <- fixes$party[i]
+    hit <- which(as.integer(x$year) == fy & x$region == fr & x$party == fp)
+    if (length(hit) != 1L) stop(sprintf("EVR1! eventual-results.csv: expected one %s %s %s row to correct, found %d",
+                                        fr, fy, fp, length(hit)), call. = FALSE)
+    v <- x$actual[hit]
+    if (isTRUE(abs(v - fixes$wrong[i]) < 0.005)) {
+      x$actual[hit] <- fixes$right[i]
+      message(sprintf("EVR1 eventual-results.csv: %s %s %s corrected %.2f -> %.2f (%s)",
+                      fr, fy, fp, v, fixes$right[i], fixes$source[i]))
+    } else if (!isTRUE(abs(v - fixes$right[i]) < 0.005)) {
+      stop(sprintf("EVR1! eventual-results.csv: %s %s %s is %s, neither the known-wrong %.2f nor the official %.2f",
+                   fr, fy, fp, format(v), fixes$wrong[i], fixes$right[i]), call. = FALSE)
+    }
+  }
+  x
+}
+
 #' Actual election results (the training target)
 #'
 #' @return data.table: `year`, `region`, `party` ("@TPP" or a party code),
@@ -102,6 +140,7 @@ load_eventual_results <- function() {
   out <- dedupe_reference_rows(out, c("year", "region", "party"),
                                "eventual-results.csv",
                                function(d) sprintf("%s %s", d$region, d$year))
+  out <- apply_eventual_result_fixes(out)
   # Guard against the ragged-row truncation this loader exists to avoid.
   # NOTE this cannot see a duplicate, which is why the call above exists:
   # duplicates push the count UP, so they make a truncated file look healthier.

@@ -14,7 +14,8 @@ vec_web_parse(path, district)
 \value{
 \verb{district, booth, booth_type, candidate, party, votes}: one row per candidate per voting centre
 (\code{booth_type} "ordinary"; "early" for an early voting centre row) and per declaration type (\code{booth} \code{NA}). A page
-with no rows yet and a total of nothing parses to zero rows. Stops (VWB1) on a truncated page or an unknown layout,
+with nothing counted yet (no rows, a total of nothing or none) gives one zero-vote row per candidate with
+\code{booth_type} "none", which \code{\link[=vec_web_booth_table]{vec_web_booth_table()}} uses for the candidates only. Stops (VWB1) on a truncated page or an unknown layout,
 and (VWB2) when the parsed rows do not sum to the page's own total.
 }
 \description{

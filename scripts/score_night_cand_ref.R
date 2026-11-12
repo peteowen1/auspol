@@ -20,7 +20,8 @@ prev_of <- c(fed2022 = "fed2019", fed2025 = "fed2022", nsw2023 = "nsw2019", qld2
 targets <- rbindlist(lapply(names(prev_of), function(p) {
   L <- fread(sprintf("output/booths-%s.csv", p), showProgress = FALSE); R <- fread(sprintf("output/booths-%s.csv", prev_of[[p]]), showProgress = FALSE)
   a <- unique(L[nzchar(L$candidate), list(seat = district, k = nm(candidate), candidate, now = classify_party(party))])
-  b <- unique(R[nzchar(R$candidate), list(seat = district, k = nm(candidate), then = classify_party(party))])
+  # previous election's district names into this one's, as the night does (booths-vic2018.csv "South Westcoast"; 12 Nov 2026)
+  b <- unique(R[nzchar(R$candidate), list(seat = .night_seat_names(district, unique(L$district)), k = nm(candidate), then = classify_party(party))])
   m <- merge(a, b, by = c("seat", "k")); m <- m[m$now != m$then]
   if (nrow(m)) m[, pair := p] else NULL
 }))

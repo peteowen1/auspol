@@ -26,6 +26,30 @@ night_snapshot_stamp <- function(path) {
   if (!length(m)) NA_character_ else m
 }
 
+#' Has the snapshot source gone quiet? (the loop's stale-source warning, NWL3)
+#'
+#' A failed page fetch writes no DONE, so the loop keeps the old snapshot; without this a long VEC outage
+#' looks exactly like a quiet count. Tracks when the newest stamp last CHANGED, by the loop's own clock (not
+#' the stamp's, which is the fetcher's), and warns once per quiet spell when that is more than `stale_min`
+#' minutes ago. A new stamp ends the spell.
+#' @param st State from the previous call, or `NULL` on the first.
+#' @param newest The newest snapshot stamp now (`NA` when there is none yet).
+#' @param now Current time (`POSIXct`).
+#' @param stale_min Minutes without a new stamp before warning; `0` or less turns the check off.
+#' @return List: `stamp`, `since` (when it last changed), `warned`, and `message` (a warning to log, or `NULL`).
+#' @export
+night_stale_check <- function(st, newest, now, stale_min) {
+  if (is.null(st) || !identical(st$stamp, newest)) st <- list(stamp = newest, since = now, warned = FALSE)
+  st$message <- NULL
+  quiet_min <- as.numeric(difftime(now, st$since, units = "mins"))
+  if (stale_min > 0 && !st$warned && quiet_min > stale_min) {
+    st$warned <- TRUE
+    st$message <- sprintf("NWL3! no new snapshot for %.0f minutes (newest %s): check the fetcher and the VEC site; the published JSON is that old",
+                          quiet_min, if (is.na(newest)) "none" else newest)
+  }
+  st
+}
+
 #' Copy a snapshot, byte for byte, into the dated raw archive (before anything parses it)
 #'
 #' Layout `<archive>/<YYYY-MM-DD>/<file name>`; the date is the one in the file name. An identical copy already

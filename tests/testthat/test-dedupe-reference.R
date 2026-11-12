@@ -52,3 +52,18 @@ test_that("a disagreement in a NON-value column is caught too", {
 test_that("a key column that is not present is refused", {
   expect_error(dedupe_reference_rows(make(), c("year", "nope"), "t.csv", lbl))
 })
+
+test_that("apply_eventual_result_fixes corrects only the known-wrong value", {
+  fx <- data.table::data.table(year = 2007L, region = "nsw", party = "ALP", wrong = 36.99, right = 38.98, source = "test")
+  x <- data.table::data.table(year = c(2007L, 2007L), region = "nsw", party = c("ALP", "LNP"), actual = c(36.99, 38.98))
+  expect_message(y <- apply_eventual_result_fixes(x, fx), "EVR1 eventual-results.csv: nsw 2007 ALP corrected 36.99 -> 38.98")
+  expect_equal(y$actual, c(38.98, 38.98))
+  x2 <- data.table::copy(x); x2$actual[1] <- 38.98                 # upstream already fixed: silent no-op
+  expect_silent(y2 <- apply_eventual_result_fixes(x2, fx)); expect_equal(y2$actual[1], 38.98)
+  x3 <- data.table::copy(x); x3$actual[1] <- 40                    # neither value: the file changed unchecked
+  expect_error(apply_eventual_result_fixes(x3, fx), "EVR1! .*neither")
+  expect_error(apply_eventual_result_fixes(x[party == "LNP"], fx), "EVR1! .*found 0")
+  # the shipped table swaps the pair back
+  z <- apply_eventual_result_fixes(x)
+  expect_equal(z$actual, c(38.98, 36.99))
+})
