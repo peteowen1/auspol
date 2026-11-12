@@ -111,8 +111,11 @@ for r in need:
         row.update(method=how, n_results=n, la=round(float(best['lat']), 5), lo=round(float(best['lon']), 5),
                    display_name=best.get('display_name', ''), ok=inside)
         if not inside: row['reason'] = 'outside its district (%s)' % dist_key
-        elif a[2] and a[2] not in row['display_name']:   # kept (inside the district), but flagged for a hand check
-            row['reason'] = 'postcode differs (asked %s)' % a[2]
+        elif a[2] and a[2] not in row['display_name']:
+            if a[1].lower() in row['display_name'].lower():   # kept (inside the district, right suburb), flagged for a hand check
+                row['reason'] = 'postcode differs (asked %s)' % a[2]
+            else:   # neither the postcode nor the suburb: a same-named street elsewhere (Niddrie's Sapphire Street, 12 Nov)
+                row.update(ok=False, reason='postcode and suburb both differ (asked %s %s)' % (a[1], a[2]))
     out.append(row)
 
 with open(os.path.join(ROOT, 'places-2026-geo.csv') + '.tmp', 'w', encoding='utf-8', newline='') as o:
