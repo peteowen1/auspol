@@ -55,3 +55,17 @@
   permanent: Wikipedia's vic2026 page lists only Hawthorn (checked 12 Nov). Roy Morgan's 21-26 Oct SMS poll of Bass/Hastings/
   Morwell/Pakenham (release 10371) gives no per-seat primaries, so it cannot be keyed. Since 12 Nov the rebuild's stage 9 runs `fetch_seat_polls.R
   --refresh-live` before promote, so a new Wikipedia vic2026 seat poll ships with the next publish (old page copies kept, dated).
+- OPEN, LIVE GAP found 12 Nov: the published vic2026 forecast uses NO candidate salience (`XG5! no salience corpus yet` in
+  every live log since 27 Oct; `output/salience-v6.csv` has 0 vic2026 rows; CI never had the file). Fix built, unmerged:
+  branch `salience-vic2026-link` (0646dbc8, worktree `C:\dev\auspol-wt-salience`, rank-mapped per DECISIONS 2026-11-12).
+  With/without DONE and walked 12 Nov; Pete: ship now (DECISIONS 2026-11-12; `reviews/salience-vic2026-live-walk-2026-11-12.md`).
+  Review round 1 (Sonnet, 12 Nov): 1 Important, PRS1 warned and published anyway; FIXED d3649546 (stops; daily run now
+  errors without the asset), tested on 4 broken inputs. Round 2 (Sonnet, 12 Nov 10:55pm): 0 Important, gate passed;
+  nit: the mtime check misses a later append to `salience-v6.csv` (`fetch_salience_v6_remaining.sh`), a snapshot-date
+  match would be sturdier. ORDER on 13 Nov: merge the branch into dev after the rebuild
+  scores, `Rscript scripts/link_vic2026_salience.R` here (same 11 Nov jump file as the walk), main PR, then stage 9
+  AT ONCE: until stage 9 uploads `salience-v6.csv`, the daily run on main fails by design. Done when merged,
+  stage 9 prints `PRS1  ... 663 vic2026 rows`, and the next stage 9 prints `PRS1` with vic2026 rows. Worktree has
+  junctions under `external/`: unlink them before removing it.
+  THEN, before the final 25-27 Nov snapshot: fix the coarse anchor link (linked values in ~5 steps of 0.0607; review file
+  above), rerun the with/without.

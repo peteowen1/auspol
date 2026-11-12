@@ -1,5 +1,5 @@
 # Puts the vic2026 salience snapshot into output/salience-v6.csv, the corpus governed_population(),
-# the live xgb features (xgb_primary_predict_live) and the DS3b blend read. Until this existed nothing
+# the live xgb features (xgb_primary_predict_live) read (the DS3b blend needs the surge-v2 hazard, off since 31 Oct). Until this existed nothing
 # did: every live Victorian run printed "XG5! no salience corpus yet for vic2026" (checked 12 Nov 2026;
 # the old connector, build_vic2026_salience_corpus.R, was retired 27 Oct for writing search LEVEL).
 #

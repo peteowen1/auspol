@@ -10,16 +10,19 @@ Usage: python -I scripts/geocode_vec_places_2026.py <booths-vic2022.json> <booth
   (the three files are in C:/dev/inthegame-blog/politics/night-maps/)
 
 Every raw reply is saved, unfiltered, to external/reference/vec/2026/voting-locations/geocode-raw/<key>.json with the
-request it answered; a rerun reads those instead of asking again (resumable). Up to three tries per address, each
-taken only when the one before found no point inside the district: the structured street address, the venue name and
-suburb, then the whole address as free text. A point is accepted only if it falls inside the district the venue is
+request it answered; a rerun reads those instead of asking again (resumable). Up to five tries per address, each
+taken only when the ones before found no point inside the district that carries the asked postcode, suburb or venue
+name: the structured street address, the venue name and suburb, the whole address as free text, the street without a
+"Unit N/" prefix, and the venue name alone. Centres no try places can be hand-placed in places-2026-manual.csv
+(district, booth, la, lo, source), held to the same district test. A point is accepted only if it falls inside the district the venue is
 in (its own district, or for a guest joint centre "JVC" the district hosting the same venue as "HJVC"); otherwise it is
 written with ok = FALSE and the reason, and the booths build leaves it off the map. An accepted point whose reply does
 not carry the asked postcode keeps ok = TRUE with reason "postcode differs" (a different street of the same name in
 the same district is possible; hand-check those).
 
 Writes external/reference/vec/2026/voting-locations/places-2026-geo.csv: one row per places-2026.csv row that needed a
-lookup. Codes GV0-GV4.
+lookup. A reason starting "approximate" marks an accepted point that is not the building: a street-only hit for an
+address with a number, or a hand-placed row whose source says APPROXIMATE. Codes GV0-GV5.
 """
 import csv, hashlib, json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
 from shapely.geometry import shape, Point
@@ -100,7 +103,8 @@ cache, fetched, out = {}, 0, []
 for r in need:
     a = addr(r)
     dist_key = host.get(a, norm(r['district'])) if r['joint'] == 'JVC' else norm(r['district'])
-    if (a, dist_key) not in cache:
+    ck = (a, dist_key, r['Venue Name'].strip())   # the venue forms and named_ok() read the venue name, so it is part of the key
+    if ck not in cache:
         # Next form whenever the last gave no point INSIDE the district, not only when it gave nothing (review 12 Nov).
         tries = [('street', {'street': a[0], 'city': a[1], 'postalcode': a[2], 'state': 'Victoria', 'country': 'Australia'}),
                  ('venue', {'q': '%s, %s VIC %s' % (r['Venue Name'].strip(), a[1], a[2])}),
@@ -112,7 +116,7 @@ for r in need:
         if nounit != a[0]:
             tries.append(('street_nounit', {'street': nounit, 'city': a[1], 'postalcode': a[2], 'state': 'Victoria', 'country': 'Australia'}))
         tries.append(('venue_only', {'q': '%s, Victoria, Australia' % r['Venue Name'].strip()}))
-        res, fallback = None, None
+        res, streetres, fallback = None, None, None
         for how, p in tries:
             reply, new = ask(p); fetched += new
             if not reply: continue
@@ -120,11 +124,19 @@ for r in need:
             # Inside the district AND carrying the asked postcode, suburb or venue name; a bare same-named street in a
             # neighbouring suburb (Rosehill's Sapphire Street -> Essendon West, 13 Nov) goes on to the next form.
             named = [x for x in inside if named_ok(x, a, r['Venue Name'])]
-            if named: res = (how, len(reply), named[0], True); break
-            if inside and not fallback: fallback = (how, len(reply), inside[0], True)
+            # The building, not just its street (review 13 Nov: 56 hits were a street's midpoint, some on long roads):
+            # a street form needs a house number back, a venue form the venue's own name. A street-only hit is kept and
+            # the later forms are still tried.
+            venue_form = how in ('venue', 'venue_only')
+            building = [x for x in named if (named_ok(x, ('', '', ''), r['Venue Name']) if venue_form
+                                             else (x.get('address', {}).get('house_number') or not re.search(r'\d', a[0])
+                                                   or named_ok(x, ('', '', ''), r['Venue Name'])))]
+            if building: res = (how, len(reply), building[0], True); break
+            if named and not streetres: streetres = (how, len(reply), named[0], True)
+            if inside and not (fallback and fallback[3]): fallback = (how, len(reply), inside[0], True)   # an inside point beats an earlier outside one
             fallback = fallback or (how, len(reply), reply[0], False)
-        cache[(a, dist_key)] = res or fallback
-    res = cache[(a, dist_key)]
+        cache[ck] = res or streetres or fallback
+    res = cache[ck]
     row = {'district': r['district'], 'booth': r['booth'], 'joint': r['joint'], 'venue': r['Venue Name'], 'address': ', '.join(a),
            'check_district': dist_key, 'method': '', 'la': '', 'lo': '', 'display_name': '', 'n_results': 0, 'ok': False, 'reason': ''}
     if res is None:
@@ -141,12 +153,16 @@ for r in need:
                 row['reason'] = 'venue found, suburb differs (asked %s %s)' % (a[1], a[2])
             else:   # neither the postcode nor the suburb: a same-named street elsewhere (Niddrie's Sapphire Street, 12 Nov)
                 row.update(ok=False, reason='postcode and suburb both differ (asked %s %s)' % (a[1], a[2]))
+        if row['ok'] and re.search(r'\d', a[0]) and not best.get('address', {}).get('house_number') \
+                and not named_ok(best, ('', '', ''), r['Venue Name']):   # e.g. "Little Boundary Road, Laverton North" (review 13 Nov)
+            row['reason'] = ('approximate: street only; ' + row['reason']).rstrip('; ')
     m = M.get((norm(r['district']), norm(r['booth'])))
     if m and not row['ok']:   # hand-placed (places-2026-manual.csv), only where every lookup failed; same district test
         la, lo = float(m['la']), float(m['lo'])
         inside = dist_key in D and D[dist_key].contains(Point(lo, la))
         row.update(method='manual', la=round(la, 5), lo=round(lo, 5), display_name=m['source'], n_results=0, ok=inside,
-                   reason='' if inside else 'manual point outside its district (%s)' % dist_key)
+                   reason=('approximate: hand-placed' if m['source'].startswith('APPROXIMATE') else '') if inside
+                   else 'manual point outside its district (%s)' % dist_key)
     out.append(row)
 
 with open(os.path.join(ROOT, 'places-2026-geo.csv') + '.tmp', 'w', encoding='utf-8', newline='') as o:
