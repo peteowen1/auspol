@@ -129,6 +129,19 @@ if (identical(.flag("AUSPOL_XGB_COUNCIL"), "1")) {
   data.table::fwrite(.chv, file.path(OUT, "council-history-vic2026.csv"))
   .arm_tables <- c(.arm_tables, "council-history-vic2026.csv")
 }
+# And the salience corpus with its vic2026 rows (scripts/link_vic2026_salience.R, 12 Nov 2026):
+# governed_population(), the live xgb salience features and the DS3b blend read it. The daily run
+# had no copy, so every Victorian candidate ran at the no-salience defaults (XG5!). Shipped whole
+# (~0.8 MB); the live forecast reads only its vic2026 rows.
+.sv <- data.table::fread(file.path(OUT, "salience-v6.csv"), showProgress = FALSE)
+.sv_n <- sum(.sv$election == "vic2026")
+if (.sv_n == 0L) {
+  cat("PRS1! output/salience-v6.csv has no vic2026 rows -- the published forecast runs WITHOUT candidate salience",
+      "(run scripts/build_vic2026_salience_jump.R, then scripts/link_vic2026_salience.R)\n")
+} else {
+  cat(sprintf("PRS1  salience-v6.csv ships with %d vic2026 rows\n", .sv_n))
+  .arm_tables <- c(.arm_tables, "salience-v6.csv")
+}
 # And the demographic correction (AUSPOL_DEMO_RESID=2): its per-seat Labor and
 # Greens adjustments, since the daily run has neither census features nor the
 # forecasts table. Placeholder shares: only the adjustments are kept.

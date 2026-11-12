@@ -341,6 +341,7 @@ jobs:
           gh release download shipped-models -p upset-floor-eps.csv -D output --clobber || echo "::warning::shipped-models has no upset-floor-eps.csv -- AUSPOL_UPSET_FLOOR=1 stops fit_seats_full.R (UF0!)"
           gh release download shipped-models -p booth-features-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no booth-features-vic2026.csv -- a model trained with AUSPOL_XGB_BOOTH=1 gets NA booth features (XB1!!)"
           gh release download shipped-models -p council-history-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no council-history-vic2026.csv -- a model trained with AUSPOL_XGB_COUNCIL=1 gets all-zero council features (XC1!!)"
+          gh release download shipped-models -p salience-v6.csv -D output --clobber || echo "::warning::shipped-models has no salience-v6.csv -- every vic2026 candidate runs at the no-salience defaults (XG5!)"
           gh release download shipped-models -p senate-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no senate-vic2026.csv -- a model trained with AUSPOL_XGB_SENATE=1 gets NA Senate features (XS1!!)"
           gh release download shipped-models -p onp-senate-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no onp-senate-vic2026.csv -- AUSPOL_ONP_ORDER=senate falls back to the House-rank One Nation rule (ONP1!!)"
           ls -l output/xgb-*
