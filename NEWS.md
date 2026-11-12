@@ -1,3 +1,7 @@
+# auspol 0.4.158
+
+- **Pollster pages**: "Lighthouse" and "Lighthouse/Growth Intelligence Centre" are one firm and get one page (`SAME_FIRM` in `scripts/build_pollster_pages.R`; check PPG6). Forecast unchanged.
+
 # auspol 0.4.157
 
 - **NSW 2007 result corrected on load**: the anchor file swaps Labor (38.98) and the Coalition (36.99); `apply_eventual_result_fixes()` (check EVR1, `AUSPOL_EVENTUAL_FIXES`, on) corrects it and stops on any unexpected value. Forecast byte-identical on all 35 elections; displayed figures change.
