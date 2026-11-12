@@ -133,15 +133,23 @@ if (identical(.flag("AUSPOL_XGB_COUNCIL"), "1")) {
 # governed_population(), the live xgb salience features and the DS3b blend read it. The daily run
 # had no copy, so every Victorian candidate ran at the no-salience defaults (XG5!). Shipped whole
 # (~0.8 MB); the live forecast reads only its vic2026 rows.
-.sv <- data.table::fread(file.path(OUT, "salience-v6.csv"), showProgress = FALSE)
+# Stops rather than warns (review 12 Nov): a publish without these rows ships a forecast with no salience while
+# every step reports success, and leaves whatever older salience asset is on the release in use.
+.sv_f <- file.path(OUT, "salience-v6.csv"); .vj_f <- file.path(OUT, "vic2026-salience-jump.csv")
+if (!file.exists(.sv_f)) stop("PRS1! ", .sv_f, " is missing -- the published forecast would run WITHOUT candidate salience")
+.sv <- data.table::fread(.sv_f, showProgress = FALSE)
 .sv_n <- sum(.sv$election == "vic2026")
-if (.sv_n == 0L) {
-  cat("PRS1! output/salience-v6.csv has no vic2026 rows -- the published forecast runs WITHOUT candidate salience",
-      "(run scripts/build_vic2026_salience_jump.R, then scripts/link_vic2026_salience.R)\n")
-} else {
-  cat(sprintf("PRS1  salience-v6.csv ships with %d vic2026 rows\n", .sv_n))
-  .arm_tables <- c(.arm_tables, "salience-v6.csv")
-}
+if (.sv_n == 0L)
+  stop("PRS1! output/salience-v6.csv has no vic2026 rows -- the published forecast would run WITHOUT candidate salience ",
+       "(run scripts/build_vic2026_salience_jump.R, then scripts/link_vic2026_salience.R)")
+# Which snapshot the rows came from: the jump file the link step read. Printed so a stale snapshot is visible at the
+# publish, and refused when the jump file is newer than the corpus (a refreshed snapshot that was never linked).
+if (!file.exists(.vj_f)) stop("PRS1! ", .vj_f, " is missing, so the vic2026 salience rows cannot be dated")
+.vj_to <- unique(data.table::fread(.vj_f, showProgress = FALSE)$snapshot_to)
+if (file.mtime(.vj_f) > file.mtime(.sv_f))
+  stop("PRS1! ", .vj_f, " (snapshot to ", paste(.vj_to, collapse = ","), ") is newer than salience-v6.csv -- rerun scripts/link_vic2026_salience.R")
+cat(sprintf("PRS1  salience-v6.csv ships with %d vic2026 rows, snapshot to %s\n", .sv_n, paste(.vj_to, collapse = ",")))
+.arm_tables <- c(.arm_tables, "salience-v6.csv")
 # And the demographic correction (AUSPOL_DEMO_RESID=2): its per-seat Labor and
 # Greens adjustments, since the daily run has neither census features nor the
 # forecasts table. Placeholder shares: only the adjustments are kept.
