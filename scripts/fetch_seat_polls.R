@@ -102,8 +102,28 @@ h2_stoplist_re <- "^(contents|see also|notes|references|external links|graphical
 whole_page_seat <- c(fed2016 = TRUE, fed2019 = TRUE, fed2022 = TRUE, fed2025 = TRUE)
 
 failed <- character(0)
+# --refresh-live: re-download the pages of elections not yet held (LIVE below). Every other page is fetched once and
+# kept forever, which left vic2026's copy at 29 Sep while seat polls were still being published (12 Nov 2026). The
+# old copy is kept, renamed with its own date, so the raw record survives; a download without a closing </html> (a
+# truncated page) is discarded and the old copy restored.
+LIVE <- c("vic2026")
+refresh_live <- "--refresh-live" %in% commandArgs(trailingOnly = TRUE)
 for (key in names(pages)) {
   f <- file.path(raw_dir, paste0(key, ".html"))
+  if (refresh_live && key %in% LIVE && file.exists(f)) {
+    keep <- file.path(raw_dir, sprintf("%s-%s.html", key, format(file.mtime(f), "%Y%m%d-%H%M")))
+    if (!file.exists(keep)) file.copy(f, keep, copy.date = TRUE)
+    tmp <- paste0(f, ".new")
+    ok <- tryCatch({ download.file(pages[[key]], destfile = tmp, method = "libcurl", headers = c(`User-Agent` = ua), quiet = TRUE); TRUE },
+                   error = function(e) { message("  REFRESH FAILED: ", conditionMessage(e)); FALSE })
+    if (ok && any(grepl("</html>", readLines(tmp, warn = FALSE), fixed = TRUE))) {
+      file.rename(tmp, f); message("REFRESHED (live): ", key, "; previous copy kept as ", basename(keep))
+    } else {
+      unlink(tmp); message("SP0! ", key, ": refresh failed or truncated, the previous copy is kept")
+    }
+    Sys.sleep(1)
+    next
+  }
   if (file.exists(f) && file.size(f) > 0) {
     message("SKIP (already on disk): ", key)
   } else {

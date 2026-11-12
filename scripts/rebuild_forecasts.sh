@@ -401,6 +401,10 @@ if [ "${AUSPOL_PUBLISH:-0}" = "1" ] && [ "$AUSPOL_N_SIMS" -ge 20000 ]; then
   # Old logs removed first: on 2026-09-28 a refused promote left the 20 Sep
   # publish log in place and the grep below printed its "uploaded" line.
   stage "9-promote-publish";  rm -f "$LOG/s9_promote.log" "$LOG/s9_publish.log"
+  # The promote step writes seat-poll-blend-vic2026.csv from seat_polls.csv: refresh the live election's Wikipedia
+  # page first, so a seat poll published since the last fetch ships (12 Nov 2026). A failure warns, never blocks.
+  Rscript scripts/fetch_seat_polls.R --refresh-live > "$LOG/s9_seatpolls.log" 2>&1 || echo "!! fetch_seat_polls.R --refresh-live failed -- shipping the seat polls already on disk; see $LOG/s9_seatpolls.log"
+  grep -h "REFRESHED\|SP0!" "$LOG/s9_seatpolls.log" || true
   if Rscript scripts/promote_rebuild.R > "$LOG/s9_promote.log" 2>&1 && Rscript scripts/publish_shipped_release.R > "$LOG/s9_publish.log" 2>&1; then
     grep -h "^PA0\|^PA5\|^PR4  uploaded\|^PR1!" "$LOG/s9_promote.log" "$LOG/s9_publish.log" || true
   else
