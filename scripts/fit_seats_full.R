@@ -2174,7 +2174,7 @@ stopifnot(!is.null(.fp), identical(dimnames(.fp)[[2]], rownames(shares)))
   k <- ok & pair == top
   a <- strsplit(top, "|", fixed = TRUE)[[1]]
   lead <- a[which.max(c(sum(w[k] == a[1]), sum(w[k] == a[2])))]
-  other <- setdiff(a, lead)
+  other <- a[-match(lead, a)]   # one copy only: "LNP|LNP" (Liberal v National) keeps LNP as the other side
   sl <- 100 * ifelse(w[k] == lead, sh2[k], 1 - sh2[k])
   q <- stats::quantile(sl, .qs, names = FALSE)
   data.table(seat = colnames(sim$tcp_winner)[j], leader = lead, other = other,

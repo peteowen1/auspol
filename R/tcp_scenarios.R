@@ -56,7 +56,11 @@ tcp_scenarios <- function(sim) {
       # draws, not an artefact of which party's name sorts first.
       tab <- sort(table(wv_p), decreasing = TRUE)
       f1i <- names(tab)[1]
-      f2i <- setdiff(strsplit(pk, "+", fixed = TRUE)[[1]], f1i)
+      # remove ONE copy of f1: a final two of one class (Liberal v National,
+      # both LNP; two independents) is "LNP+LNP", and setdiff() left f2 empty,
+      # which made data.table() drop the whole row.
+      sides <- strsplit(pk, "+", fixed = TRUE)[[1]]
+      f2i <- sides[-match(f1i, sides)]
       # tcp_share is always the WINNER's share of that draw's final two, so
       # f1's own share needs 1-share on draws where the OTHER party won.
       f1_share <- ifelse(wv_p == f1i, sv_p, 1 - sv_p)
