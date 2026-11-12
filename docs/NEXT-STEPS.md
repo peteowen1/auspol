@@ -128,9 +128,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   returning same-seat candidates changed class: Caulfield, Frankston, Lara, Laverton, Morwell, Mulgrave, Werribee).
   To do: the live night cycle on the VEC website reader (`scripts/vec_web_booths.R` carries names) with
   `cand_ref = "copy"` passed through `night_cycle()` cfg. Replays now write
-  every step and take `--resume=1` (9300e7df). OPEN, small: the partial files are keyed by night and label only, so a
-  resume with the same label and different flags would mix configurations; put a fingerprint of the flags in them
-  (review 11 Nov). Not while a replay job is running: the scripts are re-read mid-run.
+  every step and take `--resume=1` (9300e7df); since 12 Nov a resume with different flags or AUSPOL_* settings stops (NRC3,
+  `<prefix>.settings.txt` beside the partial files).
   History: `backlog/journal-2026-11-11-queue-history.md`.
   Also open: statewide draws shrink by the national mean counted, not the seat's; projection sd floors at 0.26;
   `--tcp-own-fp` built, OFF (needs flow uncertainty in the draws; `plans/prereg-flow-sd-2026-10-31.md` REFUSED).
