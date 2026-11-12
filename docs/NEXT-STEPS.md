@@ -13,8 +13,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (10 Nov: One Nation stands in all 88 seats, so no seat-count conditioning applies; recheck for nsw2027's list); (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 12 Nov.** Published forecast = main as of PR #219 (merged 11 Nov 11:12pm; 12 Nov 4:30am daily run green).
-  dev is ahead of main by the party-pages data only (c26cf08e, ca272e5a). dev and main CI green. Nothing running.
+- **Status 12 Nov, 4:30pm.** main = dev as of PR #224 (0.4.158, merged 4:01pm): NSW 2007 fix, night stale warning, replay
+  seat names, Lighthouse one page. dev and main CI green. Nothing running.
 - OPEN, NIGHT SOURCE (before 28 Nov): the VEC REFUSED the feed (11 Nov); the night now runs on the VEC WEBSITE.
   BUILT 11 Nov: `R/vec_web.R` (page parser, 2026 + 2022 layouts; booth table identical to the feed path on vic2022's
   final count, every booth cell), `scripts/fetch_vec_web_snapshot.R` (index page -> each district's two voting-centre
@@ -30,12 +30,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   reference and its turnout fell to the state rate; `.night_seat_names()` now puts every input's names into the model's.
   Checked on all 88 districts with the 2022 pages under the live 2026 configuration (87 updated; Narracan has no 2022 page); (4) DONE 11 Nov: dress rehearsal of fetcher + loop on the live Nepean pages (found and fixed: the loop never saw website snapshots; the website candidate list has no enrolment, now `external/reference/vec/2026/enrolment/enrolment-2026.csv`, pass it as --enrolment); (5) the ITG booths build
   (`C:/dev/inthegame-blog/politics/night-maps/build-booths-2026.py`) also assumed the feed.
-- DONE 12 Nov, replay evidence (DECISIONS 2026-11-12): replays and the cand_ref scorer now match district names (264cc306,
-  5963c174); vic2022 rerun: pair_cal still PASS (pooled -0.00212), cand_ref copy kept ON by Pete (vic2022 has 2 switchers).
-  Called rule unchanged on the corrected night (85 seats reach 0.99, the one wrong first call Mildura 19:00 at 1.2% counted,
-  inside the 10% gate; Labor majority 18:03). Nothing left open here; delete this line next pass.
-- OPEN: Pakenham DemosAU/TKR rows in `hand_keyed_primaries.csv` (fieldwork date UNCONFIRMED). Done when `seat_polls.csv`
-  carries the poll: delete the hand-keyed rows.
+- OPEN, check 13 Nov after the 4:30am run: Pakenham seat poll corrected 12 Nov. Fieldwork 4-8 Nov (Poll Bludger), and its client was
+  the typo "TKR", which filed a Herald Sun poll as stakeholder-sponsored (`direct_stake`); now `direct_indep` via a `poll_methods.csv`
+  row. Before (R2 `seat-probs-vic-2026.csv`, 12 Nov 8:49am): ONP 0.829, LNP 0.161, ALP 0.005. Done when the 13 Nov file is compared and the move reported. The hand-keyed rows are
+  permanent: Wikipedia's vic2026 page lists only Hawthorn (checked 12 Nov). Roy Morgan's 21-26 Oct SMS poll of Bass/Hastings/
+  Morwell/Pakenham (release 10371) gives no per-seat primaries, so it cannot be keyed. NOTE: `fetch_seat_polls.R` never refetches a
+  cached page, so a new Wikipedia vic2026 seat poll would be missed: re-download `raw/vic2026.html` by hand if one appears.
 - OPEN, display only (class split itself closed, DECISIONS 2026-11-06): a final two of
   one class (LNP|LNP, IND|IND) leaves the second side empty in the TCP tables (`R/tcp_scenarios.R` setdiff, `fit_seats_full.R:2166`).
 - IN FLIGHT 9 Nov (Pete chose the levers): first-time-independent under-call. Six levers mapped in

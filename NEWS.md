@@ -1,3 +1,7 @@
+# auspol 0.4.159
+
+- **Pakenham seat poll** (DemosAU/TKW for the Herald Sun, n=484): fieldwork 4-8 Nov, and grouped as an independent poll (`direct_indep`) rather than stakeholder-sponsored; a typo'd client field had filed it as sponsored. Changes Pakenham's published forecast.
+
 # auspol 0.4.158
 
 - **Pollster pages**: "Lighthouse" and "Lighthouse/Growth Intelligence Centre" are one firm and get one page (`SAME_FIRM` in `scripts/build_pollster_pages.R`; check PPG6). Forecast unchanged.
