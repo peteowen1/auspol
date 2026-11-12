@@ -28,7 +28,7 @@ Conventions
             sum over the council's ward pages (blank if any ward is missing).
 
 Exit status is non-zero if any validation fails. Stdlib only.
-Usage: python scripts/parse_ecq_council.py [--include-2008]   (2008 is partial; see main()).
+Usage: python scripts/parse_ecq_council.py [--no-2008]   (2008 is partial; see main()).
 """
 import copy
 import csv
@@ -408,10 +408,12 @@ def self_test_vote_check(rows):
 def main():
     names = council_names()
     rows = []
-    # 2008 is excluded by default: the Wayback capture holds mayoral pages for most councils
-    # but almost no ward-level councillor pages, and its old council set (e.g. Dalby Regional)
-    # does not map to the 2020 names. Pass --include-2008 to parse what exists anyway.
-    years = (2008, 2012, 2016, 2020, 2024) if "--include-2008" in sys.argv else (2012, 2016, 2020, 2024)
+    # 2008 is partial: the Wayback capture holds mayoral pages for most councils but ward-level
+    # councillor pages for only 5, and its old council set (e.g. Dalby Regional) does not map to
+    # the 2020 names (reported by build_council_history.py as CH3).
+    # 2008 included by default since 12 Nov 2026: build_council_history.py now decides coverage per council, so its
+    # partial capture (councillors for 5 councils, mayors for ~73) covers only the seats those councils overlap.
+    years = (2012, 2016, 2020, 2024) if "--no-2008" in sys.argv else (2008, 2012, 2016, 2020, 2024)
     for y in years:
         d = RAW / str(y)
         if not d.exists():

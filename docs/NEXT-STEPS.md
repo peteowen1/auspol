@@ -13,8 +13,30 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (10 Nov: One Nation stands in all 88 seats, so no seat-count conditioning applies; recheck for nsw2027's list); (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 12 Nov, 4:30pm.** main = dev as of PR #224 (0.4.158, merged 4:01pm): NSW 2007 fix, night stale warning, replay
-  seat names, Lighthouse one page. dev and main CI green. Nothing running.
+- **Status 12 Nov, 9:50pm.** main at 0.4.160. dev is 14 commits ahead, unmerged on purpose: council coverage (CH3 names,
+  per-council coverage, Qld 2008, stale overlap rebuild), night replay settings check (NRC3), seat-poll `--refresh-live` and
+  hand-keyed dedup. They go to main in one PR after the 13 Nov rebuild scores (item below). Round-2 review of the seat-poll
+  fixes (f4a3cbff..db6e0637, Sonnet, 12 Nov 9:10pm): 0 Important, so the gate is passed. Rebuild PENDING for 11:30pm
+  (needs 8 GB free; at 9:36pm 1.7 GB, other verses' R jobs). Pete to send the VEC draft (Gmail, "RE: State Election 2026
+  results data feed"): it asks whether the voting-centre pages fill in during the count.
+- OPEN, LIVE GAP found 12 Nov: the published vic2026 forecast uses NO candidate salience (`XG5! no salience corpus yet` in
+  every live log since 27 Oct; `output/salience-v6.csv` has 0 vic2026 rows; CI never had the file). Fix built, unmerged:
+  branch `salience-vic2026-link` (0646dbc8, worktree `C:\dev\auspol-wt-salience`, rank-mapped per DECISIONS 2026-11-12).
+  With/without DONE and walked 12 Nov; Pete: ship now (DECISIONS 2026-11-12; `reviews/salience-vic2026-live-walk-2026-11-12.md`).
+  Review round 1 (Sonnet, 12 Nov): 1 Important, PRS1 warned and published anyway; FIXED d3649546 (stops; daily run now
+  errors without the asset), tested on 4 broken inputs. Round 2 (Sonnet, 12 Nov 10:55pm): 0 Important, gate passed;
+  nit: the mtime check misses a later append to `salience-v6.csv` (`fetch_salience_v6_remaining.sh`), a snapshot-date
+  match would be sturdier. ORDER on 13 Nov: merge the branch into dev after the rebuild
+  scores, `Rscript scripts/link_vic2026_salience.R` here (same 11 Nov jump file as the walk), main PR, then stage 9
+  AT ONCE: until stage 9 uploads `salience-v6.csv`, the daily run on main fails by design. Done when merged,
+  stage 9 prints `PRS1  ... 663 vic2026 rows`, and the next stage 9 prints `PRS1` with vic2026 rows. Worktree has
+  junctions under `external/`: unlink them before removing it.
+  THEN, before the final 25-27 Nov snapshot: fix the coarse anchor link (linked values in ~5 steps of 0.0607; review file
+  above), rerun the with/without.
+- OPEN (seat-poll nit from that review): the SPF1 guard (`scripts/fetch_seat_polls.R:443-452`) has no override, so if Wikipedia
+  legitimately drops a vic2026 seat poll, every stage 9 keeps the old page until someone reads `s9_seatpolls.log`. Done when
+  an `--accept-fewer` flag exists or the stage-9 summary prints SPF1 at the top. Same file area: an NA pollster in a scraped
+  row with primaries would error the dedup (`R/seat_poll_blend.R:1183`); none in the data today.
 - OPEN, NIGHT SOURCE (before 28 Nov): the VEC REFUSED the feed (11 Nov); the night now runs on the VEC WEBSITE.
   BUILT 11 Nov: `R/vec_web.R` (page parser, 2026 + 2022 layouts; booth table identical to the feed path on vic2022's
   final count, every booth cell), `scripts/fetch_vec_web_snapshot.R` (index page -> each district's two voting-centre
@@ -22,7 +44,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `--source-type=web --enrolment=external/reference/vec/2026/enrolment/enrolment-2026.csv --places=external/reference/vec/2026/voting-locations/places-2026.csv`, `cand_ref = "copy"` by default
   there (Pete). End to end on 2022's pages: 87 districts published, ~65 s a cycle (parse 21 s, simulate 35 s).
   STILL OPEN: (1) the 2026 results index URL is only known on the night (the fetcher takes --index); (2) whether the
-  pages fill in during the count (draft question in Pete's Gmail, unsent); (3) DONE 11 Nov: the 2026 voting-centre list, `scripts/build_vec_places_2026.R` from the VEC venues spreadsheet
+  pages fill in during the count (draft question in Pete's Gmail, unsent); (5) BUILT 12 Nov 11:07pm, unmerged: blog branch
+  `booths-2026-places` (70ce1e46, worktree `C:\dev\itg-wt-booths`; ITG session agreed, Pete chose geocoding) reads
+  places-2026.csv + `places-2026-geo.csv` (`scripts/geocode_vec_places_2026.py`: 338 of 359 placed in-district, 8 of 8
+  sampled correct, raw replies in `geocode-raw/`): 88 districts, 1,830 centres, 21 off the map (no OSM result: reserves,
+  corners, "Unit" addresses; listed in the geo file). Review (Sonnet, 12 Nov): 0 Important, 3 nits fixed. `live.qmd:582` loads it
+  live, so done when: reviewed, browser-checked at 390/1280 px (message ITG before any render or push), merged.
+  Re-run both after the week-of-election spreadsheet re-download; (3) DONE 11 Nov: the 2026 voting-centre list, `scripts/build_vec_places_2026.R` from the VEC venues spreadsheet
   (1,851 election-day centres, est. 1,603,331 ordinary votes; 310 early centres). Re-download the spreadsheet the week of the
   election (it changes: Change Log sheet) and rerun. Only 61 of 200 guest joint centres (JVC) match a 2022 booth name: if one
   never gets its own results row it stays a small uncounted placeholder. Same day, found and fixed: the night never matched
@@ -30,47 +58,38 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   reference and its turnout fell to the state rate; `.night_seat_names()` now puts every input's names into the model's.
   Checked on all 88 districts with the 2022 pages under the live 2026 configuration (87 updated; Narracan has no 2022 page); (4) DONE 11 Nov: dress rehearsal of fetcher + loop on the live Nepean pages (found and fixed: the loop never saw website snapshots; the website candidate list has no enrolment, now `external/reference/vec/2026/enrolment/enrolment-2026.csv`, pass it as --enrolment); (5) the ITG booths build
   (`C:/dev/inthegame-blog/politics/night-maps/build-booths-2026.py`) also assumed the feed.
-- OPEN, check 13 Nov after the 4:30am run: Pakenham seat poll corrected 12 Nov. Fieldwork 4-8 Nov (Poll Bludger), and its client was
+- OPEN, SHIPPING 13 Nov: council-history coverage fix. Rebuild DONE 6:24am (`output/snapshots/20261113-0622-d938ce20-from3`),
+  both guards PASS, live clause breached (up to 5.3 points, all from the retrained trees); Pete: "Ship it" (DECISIONS 13 Nov,
+  prereg amendment 1). Next: review + check_like_ci, PR dev -> main, merge, stage 9 publish; done when the daily run is green.
+- OPEN, check after the NEXT STAGE-9 PUBLISH (not the daily run: it downloads the 9 Nov `seat-poll-blend-vic2026.csv` from
+  the shipped-models release, which still has the old Pakenham row; checked 12 Nov): Pakenham seat poll corrected 12 Nov. Fieldwork 4-8 Nov (Poll Bludger), and its client was
   the typo "TKR", which filed a Herald Sun poll as stakeholder-sponsored (`direct_stake`); now `direct_indep` via a `poll_methods.csv`
-  row. Before (R2 `seat-probs-vic-2026.csv`, 12 Nov 8:49am): ONP 0.829, LNP 0.161, ALP 0.005. Done when the 13 Nov file is compared and the move reported. The hand-keyed rows are
+  row. Before (R2 `seat-probs-vic-2026.csv`, 12 Nov 8:49am): ONP 0.829, LNP 0.161, ALP 0.005. Done when the first file after that publish is compared and the move reported. The hand-keyed rows are
   permanent: Wikipedia's vic2026 page lists only Hawthorn (checked 12 Nov). Roy Morgan's 21-26 Oct SMS poll of Bass/Hastings/
-  Morwell/Pakenham (release 10371) gives no per-seat primaries, so it cannot be keyed. NOTE: `fetch_seat_polls.R` never refetches a
-  cached page, so a new Wikipedia vic2026 seat poll would be missed: re-download `raw/vic2026.html` by hand if one appears.
+  Morwell/Pakenham (release 10371) gives no per-seat primaries, so it cannot be keyed. Since 12 Nov the rebuild's stage 9 runs `fetch_seat_polls.R
+  --refresh-live` before promote, so a new Wikipedia vic2026 seat poll ships with the next publish (old page copies kept, dated).
 - IN FLIGHT 9 Nov (Pete chose the levers): first-time-independent under-call. Six levers mapped in
   `reviews/newcomer-independents-walk-2026-11-09.md` (last section). Lever 1 REFUSED twice, stays off
   (`AUSPOL_NEW_IND_SHRINK_SIGNAL`, `_SIGNAL_CAP`; `plans/prereg-new-ind-shrink-signal-2026-11-09.md`: capped -68 SE 76;
-  uncapped 35-election log loss +0.0022, the base-level factor double counts the trees). Lever 2 SHIPPED 9 Nov (PR #211, published 9:50pm): `AUSPOL_NEW_IND_LIFT=1` (`R/new_ind_lift.R`; prereg `plans/prereg-new-ind-lift-2026-11-09.md`), additive +2.4 to +5.1 points fitted on earlier PUBLISHED shares (pre-lift column `ours_prelift`); 20k: sq err -790 SE 687, log loss +0.0000. Live: Ringwood, Williamstown ~3.5 -> ~7. Next levers: spread signal term, council data gaps (no Qld 2008/2014, SA pre-2018). OPEN for Pete: betting odds as an input (he
+  uncapped 35-election log loss +0.0022, the base-level factor double counts the trees). Lever 2 SHIPPED 9 Nov (PR #211, published 9:50pm): `AUSPOL_NEW_IND_LIFT=1` (`R/new_ind_lift.R`; prereg `plans/prereg-new-ind-lift-2026-11-09.md`), additive +2.4 to +5.1 points fitted on earlier PUBLISHED shares (pre-lift column `ours_prelift`); 20k: sq err -790 SE 687, log loss +0.0000. Live: Ringwood, Williamstown ~3.5 -> ~7. Next levers: spread signal term; council data gaps. Checked 12 Nov: Qld 2008 IS on disk and parses clean (`parse_ecq_council.py --include-2008`: 422 rows, all checks pass) but is PARTIAL: mayors for ~73 councils, councillors for 5 (Townsville, Sunshine Coast, Cairns, Brisbane, Bundaberg). Adding it as-is would mark every qld2009 seat covered, so a 2009 candidate who stood for councillor elsewhere would read as never-stood: coverage must become per council (councils overlapping the seat that have councillor pages that year), not per state-year (`build_council_history.py:218`). Noosa 2014 (Bolton, the motivating case) is not on disk at all: the 2014 de-amalgamation elections (Noosa, Douglas, Livingstone, Mareeba) need fetching. OPEN for Pete: betting odds as an input (he
   leans no; four elections of odds on disk). Seat-poll weight for new INDs PARKED (vic2026 has one seat poll).
   Background: 70 of 649 single first-timers took 15%+
   and we gave them about a third of it (Mackellar 18.6 v 38.1, Shepparton vic2014 7.0 v 35.2); 442 took under 5%, so no
   blanket lift (`reviews/newcomer-independents-walk-2026-11-09.md`). CORRECTED 9 Nov: the "generic 4-8%" was the
   per-candidate side model, which reaches seats only via the class split (OFF). `AUSPOL_MC_EXTRA=sal` has no route to the forecast that helps (screened 7 Nov; DECISIONS 2026-11-07;
   `reviews/aef7-gap-and-sal-screen-2026-11-07.md` section 1). Refits take 73 s with `AUSPOL_MC_ROUNDS_FROM`.
-- OPEN 7-8 Nov, TCP error vs AEF (Pete): NSW exhaustion SHIPPED (`plans/prereg-nsw-exhaust-tcp-2026-11-07.md`); ledger
-  TCP headline scores both sides on the SAME seats: 3.654 vs AEF 3.727 (n 667), goal met (PR #205). 8 Nov on dev
-  (PR #206): C++ engine applies exhaust (NSW stage 6 ~65 -> 11 min); exhaust rates made time-forward (leak fix,
-  `AUSPOL_NSW_EXHAUST_TF`). nsw2011/2015/2019 now get no exhaustion from the anchor (no earlier rates); measured rates
-  from NSWEC's pages (`scripts/build_nsw_exhaust_measured.R`, all 2015/2019/2023 pages ARE cached) are the off arm
-  `AUSPOL_NSW_EXHAUST_SRC=measured` (+ `_MEAS_MAJORS=0`), SHIPPED 8 Nov. fed2025: seat flow persistence SHIPPED 8 Nov
-  (`plans/prereg-seat-flow-persistence-2026-11-08.md`; fed2022/25 TCP -0.12 each, older federal worse). Its inputs are
-  FROZEN in git; states not built (need state TCP histories).
-  Low priority, pre-existing: `fit_nsw.R`/`fit_federal.R`/`fit_vic.R` read same-year flow rows; they feed no backtest.
-  OPEN, pre-existing (review 8 Nov): `AUSPOL_REBUILD_ONLY` reuse (`reuse_check()`, `rebuild_forecasts.sh`) checks file age, not
-  flags, so after a switch flip a rebuild that skips the affected harness silently reuses its old-config results.
-  FIXED, on main since PR #211 (9 Nov): the fingerprint drops run-control vars (eb0a628f); the first REBUILD_ONLY after
-  it reuses nothing (old tags). PARKED, same area: `apply_upset_floor.R` fits only files newer than
-  `AUSPOL_STAGE6_START`, so under REBUILD_ONLY the upset-floor fit drops every reused election. INERT (checked 10 Nov):
-  `AUSPOL_UPSET_FLOOR="0"` (`published_flags.R:324`), so stage 6b never runs. Trigger: fix before that switch is ever
-  turned on. The fix must keep reused files' raw copies (stage 6 `rm -rf output/upset-floor-raw`; reused files are
-  already mixed in place) and refresh a rerun file's raw copy when it is older than `AUSPOL_STAGE6_START`.
+- OPEN, TCP error vs AEF: goal met (ledger 3.654 vs AEF 3.727, n 667, PR #205); history moved verbatim 12 Nov to
+  `backlog/journal-2026-11-11-queue-history.md`. Still open: seat flow persistence for the states (needs state TCP
+  histories). PARKED, trigger "before `AUSPOL_UPSET_FLOOR` is turned on" (now "0"): the upset-floor fit drops reused
+  elections under REBUILD_ONLY (fix spec in the journal). Low: `fit_nsw.R`/`fit_federal.R`/`fit_vic.R` read same-year flows.
 - **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** History, DONE list and replay evidence:
   `backlog/journal-2026-11-05-election-night.md` (moved verbatim 6 Nov); plan `plans/election-night-booth-model.md`. Runbook:
   `gh release download forecast-latest -p night-state-vic-2026.rds -D output`, then `night_runner.R --state=output/night-state-vic-2026.rds
   --ref=output/booths-vic2026-ref.csv --council-lean=output/council-fp-2022.csv`. Live page https://inthegame.blog/politics/live
   (find my seat live, #166 closed 5 Nov). OPEN, in order:
-  1. SharePoint live-feed fetch: same blocker as the VEC feed item above (no reply to the 9 Nov chase); the Actions backup's live source waits on it.
-  2. BLOCKED on the feed (item 1 gives the XML): in ITG `politics/night-maps/`, `python -I build-booths-2026.py <State2026MediaFilePollingLocationsV2.xml>`, commit
-     `booths-vic2026.json`; check the popup at 390/1280 px and the 38 Narracan-only 2018 names against the 2026 polling places.
+  1-2. SUPERSEDED 12 Nov: the VEC refused the feed (11 Nov), so the SharePoint fetch and the XML booths build are moot. The
+     booths build now has to read `external/reference/vec/2026/voting-locations/places-2026.csv` (NIGHT SOURCE item, (5));
+     still check the popup at 390/1280 px and the 38 Narracan-only 2018 names against the 2026 polling places.
   3. Navbar link. "Called" rule TESTED 10 Nov on the 7 simulated replays (`reviews/night-called-rule-2026-11-10.md`):
      keep 0.99 with 10% counted; its 3 wrong calls (Melbourne, Monash 2025; Mirani 2024) survive any threshold, so the
      fix is the final-pair defect below. OPEN: confirm on the real fed2022/fed2025/vic2022 nights, after the replay seat-names fix above (vic2022 rerun).
@@ -79,8 +98,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
      VEC's published attendance. Upper-house model designed, not built (`plans/upper-house-night-model.md`).
   Dated: the Esri key (basemaps + geocoding, pay-as-you-go off) expires 27/10/2027.
 - OPEN, from the 28 Oct contested-seat research (evidence and the value-odds page, which does not refresh:
-  `reviews/needs-pete-evidence-2026-11-08.md`): One Nation spread pooling (needs code; spread fixed to SA 2026 by the
-  `sa_ratio` quantile map in `fit_seats_full.R`); Hastings/Cranbourne recheck DONE 10 Nov (no change; `reviews/contested-seats-vic2026-2026-10-28.md` last section); re-entry inflated
+  `reviews/needs-pete-evidence-2026-11-08.md`): One Nation spread pooling is AFTER 28 Nov only (spread stays as is for
+  vic2026, DECISIONS 2026-11-10; fixed to SA 2026 by the `sa_ratio` quantile map in `fit_seats_full.R`); re-entry inflated
   bases (other classes over-called -2.9, SE 0.84; Narracan Greens is the live case).
 
 
@@ -122,11 +141,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   Mirani and Monash carry it), kept OFF as an option: weak evidence (design chosen after the move run). Live use needs
   candidate names in the night booth table. Pete chose 11 Nov: ON for 28 Nov if switchers exist; they do (7 of 112
   returning same-seat candidates changed class: Caulfield, Frankston, Lara, Laverton, Morwell, Mulgrave, Werribee).
-  To do: the live night cycle on the VEC website reader (`scripts/vec_web_booths.R` carries names) with
-  `cand_ref = "copy"` passed through `night_cycle()` cfg. Replays now write
-  every step and take `--resume=1` (9300e7df). OPEN, small: the partial files are keyed by night and label only, so a
-  resume with the same label and different flags would mix configurations; put a fingerprint of the flags in them
-  (review 11 Nov). Not while a replay job is running: the scripts are re-read mid-run.
+  DONE 11 Nov: the website source defaults `cand_ref` to "copy" (`R/night_runner.R:697`). Replays now write
+  every step and take `--resume=1` (9300e7df); since 12 Nov a resume with different flags or AUSPOL_* settings stops (NRC3,
+  `<prefix>.settings.txt` beside the partial files).
   History: `backlog/journal-2026-11-11-queue-history.md`.
   Also open: statewide draws shrink by the national mean counted, not the seat's; projection sd floors at 0.26;
   `--tcp-own-fp` built, OFF (needs flow uncertainty in the draws; `plans/prereg-flow-sd-2026-10-31.md` REFUSED).
@@ -185,9 +202,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   resumable; anchor Ben Carroll since 4 Nov: Allan was replaced as Premier 28 Jul 2026 and her series linked 0 of 101
   batches; check the anchor against `leaders.csv` before each snapshot), then `scripts/build_vic2026_salience_jump.R`
   with the SAME `AUSPOL_SALIENCE_TO` (without it the builder falls back to 6 Oct and finds 0 batches)
-  (output/vic2026-salience-jump.csv). Local runs DO use a vic2026 salience corpus (live walk log: XG5 43 cells,
-  31 surge seats); the CI publish does not have one yet (DS3 falls back to flat surge_h), so the surge double count
-  (`AUSPOL_SURGE_LEVEL`) reaches the published forecast only once a corpus reaches CI.
+  (output/vic2026-salience-jump.csv), then `scripts/link_vic2026_salience.R` (branch `salience-vic2026-link`, item at top).
+  CORRECTED 12 Nov: local runs did NOT use a vic2026 corpus either (every live log prints `XG5!`); nothing read the jump file.
 - OPEN F8, F13, F17, F19 (F5, F7, F9 REFUSED; F10 and F12 SHIPPED, DECISIONS 30 Oct / `AUSPOL_LIVE_LEVEL_PRED_TREND`;
   F14, F15 were design notes, no task; F16 NOT PASSED 29 Oct; F18 walk 1 done; IND override shipped as arm H): post-xgb
   tables fitted on residuals the shares no longer carry (F8; arms R and N exhausted), HTV overwriting xgb flows (F13: no
@@ -266,8 +282,7 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
 
 ## Dated, cannot move
 
-- Nominations DONE 10 Nov (VEC final list live, DECISIONS 2026-11-10). OPEN leftovers, NOT CHECKED 10 Nov: rerun the
-  three salience scripts named in `published_flags.R` on the real list; revisit candidate-count weighting now counts are facts.
+- OPEN: revisit candidate-count weighting now the VEC final list is in (nominations DONE 10 Nov, DECISIONS 2026-11-10).
 - **The day Liberal how-to-vote cards are published**: add
   `vic2026,ALL,<TRUE/FALSE>,<source>` to
   `external/reference/htv/liberal-alp-grn-order.csv` (~8 points of 2CP in

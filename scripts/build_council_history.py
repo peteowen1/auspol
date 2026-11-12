@@ -53,7 +53,11 @@ SUCCESSOR = {'auburn': 'cumberland', 'bankstown': 'canterburybankstown', 'canter
              'greaterhumeshire': 'greaterhume', 'dubbo': 'dubboregional', 'wellington': 'dubboregional',
              'tamworth': 'tamworthregional', 'parramatta': 'parramatta', 'gloucester': 'midcoast', 'greatlakes': 'midcoast',
              'greatertaree': 'midcoast', 'goldenplains': 'goldenplains', 'armidaledumaresq': 'armidale',
-             'guyra': 'armidale', 'nambucca': 'nambuccavalley'}
+             'guyra': 'armidale', 'nambucca': 'nambuccavalley',
+             # renamed or merged since the election (CH3, 12 Nov 2026): WA's Roebourne is Karratha (2014); Queensland
+             # 2008's Roma and Dalby Regional (raw page keys "romaregional", "dalbyregional") are Maranoa and Western Downs
+             'roebourne': 'karratha', 'roma': 'maranoa', 'romaregional': 'maranoa',
+             'dalby': 'westerndowns', 'dalbyregional': 'westerndowns'}
 
 
 def nk(s):
@@ -62,6 +66,7 @@ def nk(s):
 
 def cnorm(s):
     s = (s or '').lower().replace('merri-bek', 'moreland').replace('merribek', 'moreland').replace('&', ' and ')
+    s = re.sub(r'\bby-?\s*election\b', ' ', s)   # "Greater Dandenong City Council By-election" is Greater Dandenong
     s = re.sub(r'\([^)]*\)', ' ', s)
     k = re.sub(r'[^a-z]', '', re.sub(STOP, ' ', s))
     return SUCCESSOR.get(k, k)
@@ -174,7 +179,19 @@ def main():
     for (st_, _s, _g), rows_ in CR.items():
         for c in rows_:
             cyears[st_].add(int(c['year']))
+    # Councils with COUNCILLOR results per (state, year). A seat is covered only by a council election year in which a
+    # council overlapping it (the same 5% rule as matching) has councillor results: Queensland 2008 survives for 5 of
+    # 73 councils, and councils that run their own elections (Fairfield) are absent from the commission files, so a
+    # state-year rule read their candidates as "never stood" (12 Nov 2026).
+    CC = collections.defaultdict(set)
+    for (st_, _s, _g), rows_ in CR.items():
+        if _g == '*':
+            continue
+        for c in rows_:
+            if (c.get('contest') or 'councillor') != 'mayor':
+                CC[(st_, int(c['year']))].add(cnorm(c['council']))
     unmatched_councils = collections.Counter()
+    no_ov = collections.Counter()   # seats with council years in the window but no overlap rows (NA unless a record matched)
     for r in S:
         y = int(r['year'])
         st = r['region'] if r['region'] != 'fed' else (r['state'] or '').lower()
@@ -215,7 +232,20 @@ def main():
                     mterms.append((ty, mc))
         if len({cnorm(m[1]) for m in mterms}) > 1:
             mterms = []
-        cov = any((y - 10 <= cy < y) or (st == 'qld' and cy == y) for cy in cyears.get(st, ()))
+        win = [cy for cy in cyears.get(st, ()) if (y - 10 <= cy < y) or (st == 'qld' and cy == y)]
+        ov_seat = OV.get((r['election'], nk(r['seat'])))
+        if ov_seat:
+            near = {k for k, o in ov_seat.items() if o[0] >= 0.05 or o[1] >= 0.05}
+            cov = any(near & CC.get((st, cy), set()) for cy in win)
+        else:
+            # no overlap rows for this seat (abolished or renamed outside the boundary vintages on disk: Charlton,
+            # Throsby, Butler): nobody can be matched, so the honest answer is NO DATA (NA), not "never stood"
+            cov = False
+            if win:
+                no_ov[r['election']] += 1
+        # a matched record is itself evidence the seat has data: a 2008 Queensland MAYORAL hit (mayors survive for ~73
+        # councils, councillors for 5) or a council-chosen mayor term must not be thrown away as NA (review, 12 Nov)
+        cov = cov or bool(hits) or bool(mterms)
         rec = dict(election=r['election'], seat=r['seat'], name=r['name'], party=r['party'], council_coverage=cov,
                    council_any=bool(hits), council_elected=any(h['elected'] == 'True' for h in hits),
                    council_mayor=any(h.get('contest') == 'mayor' and h['elected'] == 'True' for h in hits) or bool(mterms),
@@ -241,6 +271,11 @@ def main():
         e = sum(v for k, v in by.items() if k[0] == st and k[2])
         print(f'CH1  {st}: {n} state candidacies, {a} with council history ({e} elected councillors)')
     print(f'CH2  ambiguous (one name, several councils) dropped: {amb}')
+    # A seat with council years in its window but no overlap rows cannot match anyone. Before 12 Nov 2026 such seats
+    # read 'never stood' (the stale overlap left nsw2011, qld2012 and qld2015 entirely so). Now they are NA; a whole
+    # election listed here means the overlap table is stale.
+    if no_ov:
+        print(f'CH4  candidacies whose seat has NO overlap rows, given no coverage (NA): {dict(no_ov)} -- if a whole election is listed, rerun scripts/build_lga_district_overlap.R')
     if EXTRA:
         print(f'CH2m candidacies newly flagged mayor from council-chosen terms: {n_mayor_added}')
     if unmatched_councils:

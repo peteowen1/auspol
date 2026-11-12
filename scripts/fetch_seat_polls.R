@@ -102,8 +102,35 @@ h2_stoplist_re <- "^(contents|see also|notes|references|external links|graphical
 whole_page_seat <- c(fed2016 = TRUE, fed2019 = TRUE, fed2022 = TRUE, fed2025 = TRUE)
 
 failed <- character(0)
+# --refresh-live: re-download the pages of elections not yet held (LIVE below). Every other page is fetched once and
+# kept forever, which left vic2026's copy at 29 Sep while seat polls were still being published (12 Nov 2026). The
+# old copy is kept, renamed with its own date, so the raw record survives; a download without a closing </html> (a
+# truncated page) is discarded and the old copy restored.
+LIVE <- c("vic2026")
+refresh_live <- "--refresh-live" %in% commandArgs(trailingOnly = TRUE)
+refreshed_from <- list()   # key -> the kept previous copy, for the poll-count guard (SPF1) before writing
 for (key in names(pages)) {
   f <- file.path(raw_dir, paste0(key, ".html"))
+  if (refresh_live && key %in% LIVE && file.exists(f)) {
+    keep <- file.path(raw_dir, sprintf("%s-%s.html", key, format(file.mtime(f), "%Y%m%d-%H%M")))
+    if (!file.exists(keep)) file.copy(f, keep, copy.date = TRUE)
+    tmp <- paste0(f, ".new")
+    ok <- tryCatch({ download.file(pages[[key]], destfile = tmp, method = "libcurl", headers = c(`User-Agent` = ua), quiet = TRUE); TRUE },
+                   error = function(e) { message("  REFRESH FAILED: ", conditionMessage(e)); FALSE })
+    # The article itself, whole: an error or rate-limit page also ends in </html> (review, 12 Nov), so require the
+    # closing tag, the article's own title and a wikitable. A page that passes and still loses polls is caught below.
+    title <- gsub("_", " ", sub("^.*/wiki/", "", pages[[key]]))
+    tx <- if (ok) paste(readLines(tmp, warn = FALSE, encoding = "UTF-8"), collapse = "\n") else ""
+    good <- ok && grepl("</html>", tx, fixed = TRUE) && grepl(title, tx, fixed = TRUE) && grepl("wikitable", tx, fixed = TRUE)
+    if (good && isTRUE(file.rename(tmp, f))) {
+      message("REFRESHED (live): ", key, "; previous copy kept as ", basename(keep))
+      refreshed_from[[key]] <- keep
+    } else {
+      unlink(tmp); message("SPF0! ", key, ": refresh failed, truncated or not the article; the previous copy is kept")
+    }
+    Sys.sleep(1)
+    next
+  }
   if (file.exists(f) && file.size(f) > 0) {
     message("SKIP (already on disk): ", key)
   } else {
@@ -409,6 +436,21 @@ if (nrow(seat_polls)) {
   seat_polls$seat_name <- trimws(sub("\\s*\\((NSW|VIC|Vic|QLD|Qld|SA|WA|TAS|Tas|ACT|NT)\\)$", "", seat_polls$seat))
   message(sprintf("SPL1 %d poll rows, %d event rows (no numbers); %d seats renamed by state-suffix strip",
                   sum(has_num), sum(!has_num), sum(seat_polls$seat_name != seat_polls$seat)))
+}
+# A refreshed live page must not LOSE polls: Wikipedia only adds seat polls during a campaign, so fewer distinct polls
+# than the file on disk means the page changed shape or was not the article. Restore the previous copy and stop
+# before writing, so seat_polls.csv stays as it was (stage 9 then ships it and says so).
+if (length(refreshed_from) && file.exists(out_csv)) {
+  prev <- utils::read.csv(out_csv, stringsAsFactors = FALSE)
+  npoll <- function(x, k) { x <- x[x$election == k & x$row_type == "poll", ]; nrow(unique(x[, c("seat", "pollster", "date_raw")])) }
+  for (k in names(refreshed_from)) {
+    n_old <- npoll(prev, k); n_new <- if (nrow(seat_polls)) npoll(seat_polls, k) else 0L
+    message(sprintf("SPF1  %s: %d distinct seat polls before the refresh, %d after", k, n_old, n_new))
+    if (n_new < n_old) {
+      file.copy(refreshed_from[[k]], file.path(raw_dir, paste0(k, ".html")), overwrite = TRUE, copy.date = TRUE)
+      stop(sprintf("SPF1! %s: the refreshed page has %d seat polls, the file on disk %d; previous page restored, seat_polls.csv not written", k, n_new, n_old))
+    }
+  }
 }
 write.csv(seat_polls, out_csv, row.names = FALSE, na = "")
 

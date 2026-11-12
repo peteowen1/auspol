@@ -51,7 +51,7 @@ for (v in names(VINT)) {
     i$a <- as.numeric(st_area(i))
     d <- as.data.table(st_drop_geometry(i))[, .(region = rg, sed_vintage = v, district, lga = LGA_NAME21,
                                                 share_of_district = a / d_area, share_of_lga = a / l_area)]
-    ov[[paste(v, rg)]] <- d[share_of_district > 0.001]
+    ov[[paste(v, rg)]] <- d[share_of_district > 0.001 | share_of_lga > 0.05]   # a small city inside a vast district (Broken Hill in Barwon: 0.09% of it) is kept
   }
   cat(sprintf("LO1  SED %s done\n", v))
 }
@@ -74,7 +74,7 @@ for (v in names(CVINT)) {
   i$a <- as.numeric(st_area(i))
   d <- as.data.table(st_drop_geometry(i))[, .(region = "fed", sed_vintage = paste0("CED", v), district, lga = LGA_NAME21,
                                               share_of_district = a / d_area, share_of_lga = a / l_area)]
-  ov[[paste("ced", v)]] <- d[share_of_district > 0.001]
+  ov[[paste("ced", v)]] <- d[share_of_district > 0.001 | share_of_lga > 0.05]
   cat(sprintf("LO1  CED %s done (%d divisions)
 ", v, uniqueN(d$district)))
 }
