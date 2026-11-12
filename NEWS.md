@@ -1,3 +1,7 @@
+# auspol 0.4.162
+
+- **Candidate salience in the live Victorian forecast** (PR #230): the 11 Nov search-interest snapshot is linked into `output/salience-v6.csv` (663 vic2026 rows, rank-mapped onto the backtest scale) and shipped at stage 9, which now stops if the rows are missing (PRS1); the daily run fails without them. Close seats move most (Hawthorn and Benambra independents).
+
 # auspol 0.4.161
 
 - **Council history coverage** (PR #229): the council-to-district overlap table is rebuilt when stale, a seat counts as covered only where an overlapping council has results that year, and Queensland 2008 results are included. Retrained trees move the live Victorian forecast by up to 5 points (Footscray now leans Greens). Also: seat polls refresh from Wikipedia before each publish (guards SPF0/SPF1), a hand-keyed poll the scrape also has counts once, and a night-replay resume with different settings stops (NRC3).
