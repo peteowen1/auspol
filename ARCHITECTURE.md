@@ -193,7 +193,7 @@ and `shares` are different objects that never touch until `simulate_seat_contest
 | 11 | per-cell seat sd: level form, widened by seat size and seat composition, then re-derived net of the statewide draws; empirical error quantiles per class; Liberal/National split | `:1780-1792` |
 
 **The seat-poll blend (step 8).** Each polled (seat, class) cell is pulled toward its poll
-average by `v / (v + 1/P + t2)` (`seat_poll_blend_apply()`, `R/seat_poll_blend.R:909-1039`; the weight itself is `wvec <- v / (v + 1 / tb$wsum + t2)` at `:999`). `P` is the sum over that
+average by `v / (v + 1/P + t2)` (`seat_poll_blend_apply()`, `R/seat_poll_blend.R`; the weight itself is `wvec <- v / (v + 1 / tb$wsum + t2)` inside that function). `P` is the sum over that
 cell's polls of recency x precision: a weight `0.5^(days/H)` (half-life `H`, prior 60 days,
 fitted on earlier elections; the old 90-day window is gone) divided by sampling variance
 plus a non-sampling floor for the poll's method group (mrp, independent direct, stake-holder
@@ -409,7 +409,7 @@ was caught only against a number someone already knew.
   | `fit_projection.R` | `P1`–`P4`, `B1` |
   | `fit_seats.R` | `S1`–`S4`, `R1`–`R3` |
   | `fit_seats_full.R` | `S5`, `S7`‡ |
-  | `fit_scorecard.R` | `C1`–`C3` |
+  | `fit_scorecard.R` | `C1`–`C3`, `PLC1` |
 
   † **`NL3` reports rather than halting at the check**, like `fit_vic.R`'s
   `L3`. Both write a marker (`output/NL3-BREACH.txt`,
