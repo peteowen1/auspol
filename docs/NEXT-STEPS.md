@@ -30,6 +30,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   reference and its turnout fell to the state rate; `.night_seat_names()` now puts every input's names into the model's.
   Checked on all 88 districts with the 2022 pages under the live 2026 configuration (87 updated; Narracan has no 2022 page); (4) DONE 11 Nov: dress rehearsal of fetcher + loop on the live Nepean pages (found and fixed: the loop never saw website snapshots; the website candidate list has no enrolment, now `external/reference/vec/2026/enrolment/enrolment-2026.csv`, pass it as --enrolment); (5) the ITG booths build
   (`C:/dev/inthegame-blog/politics/night-maps/build-booths-2026.py`) also assumed the feed.
+- OPEN, check 13 Nov morning: council-history rebuild `deciding-runs/20261112-1829-rebuild/` (stage 3, scheduled 11:30pm,
+  waits for 8 GB, never publishes). Score it against `output/snapshots/20261110-0929-82329b06-from1` by
+  `plans/prereg-council-coverage-2026-11-12.md` (control: untouched elections byte-identical; guards: 35-election log
+  loss within 1 SE, share RMSE within 0.02). Pass: PR to main, then stage 9 publish. Fail: to Pete with the elections.
 - OPEN, check 13 Nov after the 4:30am run: Pakenham seat poll corrected 12 Nov. Fieldwork 4-8 Nov (Poll Bludger), and its client was
   the typo "TKR", which filed a Herald Sun poll as stakeholder-sponsored (`direct_stake`); now `direct_indep` via a `poll_methods.csv`
   row. Before (R2 `seat-probs-vic-2026.csv`, 12 Nov 8:49am): ONP 0.829, LNP 0.161, ALP 0.005. Done when the 13 Nov file is compared and the move reported. The hand-keyed rows are
