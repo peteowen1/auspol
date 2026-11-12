@@ -34,9 +34,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   waits for 8 GB, never publishes). Score it against `output/snapshots/20261110-0929-82329b06-from1` by
   `plans/prereg-council-coverage-2026-11-12.md` (control: untouched elections byte-identical; guards: 35-election log
   loss within 1 SE, share RMSE within 0.02). Pass: PR to main, then stage 9 publish. Fail: to Pete with the elections.
-- OPEN, check 13 Nov after the 4:30am run: Pakenham seat poll corrected 12 Nov. Fieldwork 4-8 Nov (Poll Bludger), and its client was
+- OPEN, check after the NEXT STAGE-9 PUBLISH (not the daily run: it downloads the 9 Nov `seat-poll-blend-vic2026.csv` from
+  the shipped-models release, which still has the old Pakenham row; checked 12 Nov): Pakenham seat poll corrected 12 Nov. Fieldwork 4-8 Nov (Poll Bludger), and its client was
   the typo "TKR", which filed a Herald Sun poll as stakeholder-sponsored (`direct_stake`); now `direct_indep` via a `poll_methods.csv`
-  row. Before (R2 `seat-probs-vic-2026.csv`, 12 Nov 8:49am): ONP 0.829, LNP 0.161, ALP 0.005. Done when the 13 Nov file is compared and the move reported. The hand-keyed rows are
+  row. Before (R2 `seat-probs-vic-2026.csv`, 12 Nov 8:49am): ONP 0.829, LNP 0.161, ALP 0.005. Done when the first file after that publish is compared and the move reported. The hand-keyed rows are
   permanent: Wikipedia's vic2026 page lists only Hawthorn (checked 12 Nov). Roy Morgan's 21-26 Oct SMS poll of Bass/Hastings/
   Morwell/Pakenham (release 10371) gives no per-seat primaries, so it cannot be keyed. NOTE: `fetch_seat_polls.R` never refetches a
   cached page, so a new Wikipedia vic2026 seat poll would be missed: re-download `raw/vic2026.html` by hand if one appears.
