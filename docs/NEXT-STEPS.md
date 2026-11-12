@@ -44,7 +44,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `--source-type=web --enrolment=external/reference/vec/2026/enrolment/enrolment-2026.csv --places=external/reference/vec/2026/voting-locations/places-2026.csv`, `cand_ref = "copy"` by default
   there (Pete). End to end on 2022's pages: 87 districts published, ~65 s a cycle (parse 21 s, simulate 35 s).
   STILL OPEN: (1) the 2026 results index URL is only known on the night (the fetcher takes --index); (2) whether the
-  pages fill in during the count (draft question in Pete's Gmail, unsent); (3) DONE 11 Nov: the 2026 voting-centre list, `scripts/build_vec_places_2026.R` from the VEC venues spreadsheet
+  pages fill in during the count (draft question in Pete's Gmail, unsent); (5) below PARKED 12 Nov 10:50pm with the ITG
+  session (messaged: places-2026.csv has NO coordinates, so unmatched centres need geocoding or stay off the map; who
+  ports `build-booths-2026.py`?). Trigger: its reply, or by 20 Nov do it on a blog branch; (3) DONE 11 Nov: the 2026 voting-centre list, `scripts/build_vec_places_2026.R` from the VEC venues spreadsheet
   (1,851 election-day centres, est. 1,603,331 ordinary votes; 310 early centres). Re-download the spreadsheet the week of the
   election (it changes: Change Log sheet) and rerun. Only 61 of 200 guest joint centres (JVC) match a 2022 booth name: if one
   never gets its own results row it stays a small uncounted placeholder. Same day, found and fixed: the night never matched
