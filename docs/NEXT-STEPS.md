@@ -22,6 +22,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - DONE 13 Nov: vic2026 salience is in the published forecast (PR #230; stage 9 `PRS1 ... 663 vic2026 rows`; daily run 9:25am
   green with `XG5 salience corpus found for vic2026: 526 of 616`). The coarse anchor scale is fixed: ladder link published 13 Nov
   (PR #231, stage 9 2:59pm, forecast run 3:34pm green, XG5 546 of 616; DECISIONS 13 Nov). Full item in `backlog/journal-2026-11-11-queue-history.md`.
+- DONE 13 Nov (first `poll-feed-check` run: 23 of 26 AusPoll polls in the anchor, Pakenham hand-keyed): the Greens' ORU Vic
+  poll (14-26 Oct) is not in the anchor but IS in the trend at full weight through the layered Wikipedia scrape (Pete, 13 Nov:
+  keep it at full weight; sponsor correction was refused 4 Nov). Same check found Lighthouse's 19 Oct-1 Nov Vic poll counted
+  TWICE ("Lighthouse/Growth Intelligence Centre" unpaired with "Lighthouse"): alias added; only vic changes (640 -> 639 rows).
 - DONE 13 Nov: the SPF1 seat-poll guard has an override: `Rscript scripts/fetch_seat_polls.R --refresh-live --accept-fewer`
   (the stop message names it). Tested on a scratch copy with a planted extra poll: stops without the flag, accepts with it,
   the next plain refresh passes. OPEN, same area: an NA pollster in a scraped row with primaries would error the dedup

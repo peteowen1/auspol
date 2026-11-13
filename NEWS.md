@@ -1,3 +1,7 @@
+# auspol 0.4.166
+
+- **Lighthouse's Vic poll counted once** (PR #234): the anchor's "Lighthouse" and Wikipedia's "Lighthouse/Growth Intelligence Centre" are now one firm in the poll layer (`firm_alias.csv`), so the 19 Oct-1 Nov poll stops entering the trend twice. Only vic2026 changes (640 -> 639 poll rows); live after the next stage 9.
+
 # auspol 0.4.165
 
 - **Seat-poll guard override** (PR #233): if Wikipedia really drops a live seat poll, `Rscript scripts/fetch_seat_polls.R --refresh-live --accept-fewer` accepts the lower count once (never zero); the SPF1 stop message names it. Stage 9 never passes the flag. Forecast unchanged.

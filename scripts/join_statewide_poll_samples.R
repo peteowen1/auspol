@@ -38,18 +38,21 @@ alias <- data.table(
   pattern = c("newspoll", "yougov", "morgan", "essential", "resolve", "red ?bridge|accent", "freshwater",
               "demos|premier national", "galaxy", "wolf", "nielsen", "reach ?tel", "ipsos", "lonergan",
               "ucomms", "taverner", "spectre", "fox ?& ?hedgehog", "^anu$", "dynata", "utting", "westpoll|patterson",
-              "painted dog", "^advertiser", "jws", "saulwick", "synesis", "mccrindle", "morning consult", "^amr$"),
+              "painted dog", "^advertiser", "jws", "saulwick", "synesis", "mccrindle", "morning consult", "^amr$",
+              "lighthouse"),
   canonical = c("newspoll", "yougov", "roymorgan", "essential", "resolve", "redbridge", "freshwater",
                 "demosau", "galaxy", "wolfsmith", "nielsen", "reachtel", "ipsos", "lonergan",
                 "ucomms", "taverner", "spectre", "foxhedgehog", "anu", "dynata", "utting", "westpoll",
-                "painteddog", "advertiser", "jws", "saulwick", "synesis", "mccrindle", "morningconsult", "amr"),
+                "painteddog", "advertiser", "jws", "saulwick", "synesis", "mccrindle", "morningconsult", "amr",
+                "lighthouse"),
   note = c("Newspoll, Newspoll2, Newspoll3 (era suffixes in the anchor), Newspoll-YouGov",
            "YouGov, YouGov2 (anchor), Newspoll-YouGov, YouGov-Galaxy", "Roy Morgan, F2F Morgan, SMS Morgan, Morgan Phone, Morgan multi-mode, Morgan (face/phone/multi)",
            "Essential", "ResolvePM, ResolvePM2 (anchor); Resolve, Resolve Strategic", "Redbridge, RedBridge/Accent, Accent/RedBridge, RedBridge Group",
            "Freshwater, Freshwater Strategy", "DemosAU, Demos AU, DemosAU/Premier National", "Galaxy, YouGov-Galaxy, Galaxy (Exit Poll)",
            "Wolf&Smith, Wolf + Smith, Wolf & Smith", "Nielsen", "ReachTEL, ReachTel", "Ipsos", "Lonergan, Lonergan Research",
            "uComms", "Taverner", "Spectre, Spectre Strategy", "Fox & Hedgehog", "ANU", "Dynata", "Utting, Utting Research", "Westpoll (WA)",
-           "Painted Dog", "Advertiser (SA)", "JWS Research", "Saulwick", "Agenda C Synesis", "McCrindle", "Morning Consult", "AMR"))
+           "Painted Dog", "Advertiser (SA)", "JWS Research", "Saulwick", "Agenda C Synesis", "McCrindle", "Morning Consult", "AMR",
+           "Lighthouse (anchor), Lighthouse/Growth Intelligence Centre (Wikipedia): one firm (13 Nov 2026: unpaired, the 19 Oct-1 Nov Vic poll counted twice)"))
 fwrite(alias, file.path(base_dir, "firm_alias.csv"))
 canon_of <- function(name) {
   vapply(name, function(nm) {
