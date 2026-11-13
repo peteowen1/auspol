@@ -176,7 +176,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   fetched, 526 linked to the Carroll scale (148 batches) -- linking works now the campaign has started. 26 Oct snapshot fetched, 0 of 101 batches linkable. All 500 candidates fetched
   18 Oct (window to 6 Oct), but that is before the campaign: nobody's search interest is rising yet (Premier 1.1 in the
   last 8 weeks vs 9.3 before), so batches cannot be linked and `jump` is not comparable with the backtests' polling-day
-  values. Each refresh: `AUSPOL_SALIENCE_TO=<date> Rscript scripts/fetch_salience_vic2026_full.R` (~100 requests,
+  values. Each refresh is ONE command since 13 Nov: `bash scripts/salience_vic2026_snapshot.sh <window end>` (all four steps
+  on one date, anchor checked against leaders.csv; tested 13 Nov on the cached 11 Nov window: byte-identical corpus), then stage 9.
+  The steps it runs: `AUSPOL_SALIENCE_TO=<date> Rscript scripts/fetch_salience_vic2026_full.R` (~100 requests,
   resumable; anchor Ben Carroll since 4 Nov: Allan was replaced as Premier 28 Jul 2026 and her series linked 0 of 101
   batches; check the anchor against `leaders.csv` before each snapshot), then the LADDER (ships 13 Nov, DECISIONS):
   `AUSPOL_SALIENCE_TO=<date> Rscript scripts/fetch_salience_vic2026_ladder.R` (~100 requests, ~12 min, 2 passes; read
