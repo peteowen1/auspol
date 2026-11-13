@@ -180,7 +180,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   resumable; anchor Ben Carroll since 4 Nov: Allan was replaced as Premier 28 Jul 2026 and her series linked 0 of 101
   batches; check the anchor against `leaders.csv` before each snapshot), then the LADDER (ships 13 Nov, DECISIONS):
   `AUSPOL_SALIENCE_TO=<date> Rscript scripts/fetch_salience_vic2026_ladder.R` (~100 requests, ~12 min, 2 passes; read
-  VJ6 link quality afterwards: 11 Nov gave shared peak median 56, 0 steps over 1.5x), then `scripts/build_vic2026_salience_jump.R`
+  VJ6 link quality afterwards: 11 Nov gave shared peak median 56, 0 steps over 1.5x; batch factors on the last 8 weeks:
+  no representative between 0 and 0.5 in the ladder, 24 of 148 under 0.5 in their own batch, all near-zero rises), then `scripts/build_vic2026_salience_jump.R`
   with the SAME `AUSPOL_SALIENCE_TO` (without it the builder falls back to 6 Oct and finds 0 batches)
   (output/vic2026-salience-jump.csv), then `scripts/link_vic2026_salience.R` (branch `salience-vic2026-link`, item at top).
   CORRECTED 12 Nov: local runs did NOT use a vic2026 corpus either (every live log prints `XG5!`); nothing read the jump file.
