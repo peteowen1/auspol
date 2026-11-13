@@ -4,6 +4,9 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-11-13 Party- and advocacy-paid statewide polls count x0.64 and lose a shrunk lean toward their sponsor (Pete, 13 Nov: "Ship it").**
+  12 paid polls since 2025 vs same-time independent polls: lean +0.24 (SE 0.55) -> ~0; extra noise -> factor 1.248. Placebo
+  18/20; no scored election has a paid poll before its cutoff, so it is first scored on vic2026. `plans/prereg-paid-poll-correction-2026-11-13.md`.
 - **2026-11-13 vic2026 salience is linked by a LADDER of similar-loudness queries, not the Premier (Pete, 13 Nov: "Ship it").**
   Beside the Premier the median batch representative peaked at 1 (0-100), so linked rises came in 5 steps; the ladder (49
   queries of 5, 2 shared per step, two passes) gives 229 distinct values among 238 positive jumps, 561 candidates linked.
