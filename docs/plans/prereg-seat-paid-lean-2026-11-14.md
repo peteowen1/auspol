@@ -50,3 +50,13 @@ figure moving by more than the poll's own lean.
 
 Limits named now: the noise floors (arm H) were fitted on uncorrected polls, so paid polls stay slightly too wide
 after the lean comes off (conservative). The two-candidate measure exists for federal only.
+
+## Amendment 1 (14 Nov, after printing the time-forward fits, BEFORE any score): the noise estimate gets a prior
+
+Method step 4's "pooled residual variance over all paid polls" rested on as few as 5 paid polls (2 degrees of
+freedom) for fed2022, giving a lean of +9.42 (SE 1.36) from four 2016-19 polls: the noise was too small to trust,
+not the lean too large to doubt. The residual variance is now pooled with the independent direct seat polls' own
+residual variance (each poll's side gap around its election-and-side mean, every training election), counted as one
+degree of freedom per independent poll beyond one per election:
+s2 = (SS_paid + df_ind * s2_ind) / (df_paid + df_ind). A paid poll is taken to be at least as noisy as an
+independent one, and the clustered SE (step 4) is unchanged. Nothing else changes; the original clause stands above.
