@@ -1,3 +1,7 @@
+# auspol 0.4.169
+
+- **Paid polls: a sponsor side with no fitted lean gets the pooled one** (PR #237): a first Climate 200 poll, or one with no independent polls near it, now has the pooled shrunk lean taken off rather than none, and the noise fit skips a paid poll missing part of its side. Live vic2026 and all 38 scored elections unchanged.
+
 # auspol 0.4.168
 
 - **Seat-poll read no longer errors on a scraped row with no pollster** (PR #236): the hand-keyed dedup treated the missing name as an unknown match and stopped; now it is no match and the hand-keyed rows are kept. None in today's data.
