@@ -1,3 +1,7 @@
+# auspol 0.4.164
+
+- **One command for a vic2026 salience snapshot** (PR #232): `bash scripts/salience_vic2026_snapshot.sh <window end>` runs the main fetch, the ladder, the builder and the link on one date, and stops unless the anchor is `leaders.csv`'s vic2026 head of government (SVS0-SVS5). The builder's new VJ8 line names every candidate with a positive rise who was searched in most weeks before the campaign, usually a namesake (David John, Berwick, on 11 Nov). Output unchanged.
+
 # auspol 0.4.163
 
 - **Candidate salience is linked by a ladder, not the Premier** (PR #231): next to the Premier almost every candidate's Google Trends series rounded to 0 or 1, so linked rises came in about 5 steps. `scripts/fetch_salience_vic2026_ladder.R` queries the batch representatives 5 at a time in loudness order, 2 shared with the next query, and `scripts/build_vic2026_salience_jump.R` chains the scale through them (VJ6 link quality, VJ7 ties): 229 distinct values among 238 positive rises, 561 candidates linked. In the live forecast 4 favourites change (Cranbourne, Essendon, Bentleigh, Eltham) and expected seats move under 1. Also: the geocoder places all 359 venue lookups (11 by hand, 29 flagged approximate), and the DS3b log line names surge-v2 as the reason the blend is off.
