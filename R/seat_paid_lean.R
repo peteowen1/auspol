@@ -118,10 +118,10 @@ seat_paid_lean_fit <- function(dev, s2_ind = NA_real_, df_ind = 0) {
   list(lean = lean, mu = mu, se_mu = se_mu, w0 = w0, mu_s = mu_s, tau2 = tau2, s2 = s2, n = nrow(d))
 }
 
-#' One earlier election's measured paid seat polls (results from `output/candidacies.csv`, federal two-candidate
-#' counts from `external/elections/aec-fed-tcp.csv`)
+#' One election's inputs for arm SPL: its seat polls (`.raw`), results from `output/candidacies.csv`, and federal
+#' two-candidate counts from `external/elections/aec-fed-tcp.csv` with the polls' two-candidate figures
 #' @keywords internal
-.seat_paid_lean_election <- function(el) {
+.seat_paid_lean_inputs <- function(el) {
   utils::capture.output(raw <- seat_poll_shares(el, .raw = TRUE))
   if (!nrow(raw) || !"sponsor" %in% names(raw)) return(NULL)
   cand <- data.table::fread(out_path("candidacies.csv"), select = c("election", "seat", "party", "votes"), showProgress = FALSE)
@@ -144,8 +144,18 @@ seat_paid_lean_fit <- function(dev, s2_ind = NA_real_, df_ind = 0) {
                                                 tcp_a = suppressWarnings(as.numeric(s$tcp_a))), by = "poll_id")
     }
   }
-  m <- seat_paid_lean_measure(raw, act, tcp, tcp_rows)
+  list(raw = raw, act = act, tcp = tcp, tcp_rows = tcp_rows)
+}
+
+#' One election's measured paid polls plus its independent-poll noise; `inp` and `sides` let the placebo
+#' (scripts/screen_seat_paid_lean.R) relabel polls
+#' @keywords internal
+.seat_paid_lean_election <- function(el, inp = .seat_paid_lean_inputs(el), sides = NULL) {
+  if (is.null(inp)) return(NULL)
+  m <- seat_paid_lean_measure(inp$raw, inp$act, inp$tcp, inp$tcp_rows, sides)
+  # an election with no direct polls returns before measuring any noise: no attributes, no noise
   s2 <- attr(m, "ind_s2"); dfi <- attr(m, "ind_df")
+  if (is.null(s2) || is.null(dfi)) { s2 <- NA_real_; dfi <- 0 }
   if (nrow(m)) { m$election <- el; m$cluster <- paste(el, m$cluster) }
   list(dev = m, ind_ss = if (is.finite(s2)) s2 * dfi else 0, ind_df = if (is.finite(s2)) dfi else 0)
 }
@@ -206,10 +216,15 @@ seat_paid_lean_apply <- function(per_poll, fit, sides = NULL) {
     if (sd_ == "IND" && !"IND" %in% cl) next
     sp <- .ppc_side_parties(sd_, unique(cl))
     on <- cl %in% sp
-    if (!any(on) || all(on)) next
-    tot <- sum(out$fp[ix]); l <- ln[[sd_]] * tot / 100
+    if (!any(on)) next
+    # the lean is in points of a full poll (ALP, LNP and GRN named, scaled to 100): a full poll with undecideds takes
+    # it in its own units; a partial one (Hawthorn 2026 reaches here as LNP 41 alone) takes it whole on the side's
+    # figures, and with nothing else named it just comes off (each class is averaged on its own in the blend)
+    full <- all(c("ALP", "LNP", "GRN") %in% cl)
+    l <- ln[[sd_]] * (if (full) sum(out$fp[ix]) / 100 else 1)
     f <- out$fp[ix]
-    f[on] <- f[on] - l * f[on] / sum(f[on]); f[!on] <- f[!on] + l * f[!on] / sum(f[!on])
+    f[on] <- f[on] - l * f[on] / sum(f[on])
+    if (any(!on)) f[!on] <- f[!on] + l * f[!on] / sum(f[!on])
     data.table::set(out, i = ix, j = "fp", value = f)
     moved <- c(moved, pid)
   }

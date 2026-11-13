@@ -60,3 +60,13 @@ residual variance (each poll's side gap around its election-and-side mean, every
 degree of freedom per independent poll beyond one per election:
 s2 = (SS_paid + df_ind * s2_ind) / (df_paid + df_ind). A paid poll is taken to be at least as noisy as an
 independent one, and the clustered SE (step 4) is unchanged. Nothing else changes; the original clause stands above.
+
+## Amendment 2 (14 Nov, after the first screen and the live walk): a bug fix in step 5, screen rerun
+
+Step 5 scaled the lean by the poll's own total even when the poll was partial, and skipped a poll naming only its
+side's parties. Hawthorn 2026 reaches the blend as LNP 41 alone (named-only drops its "others"), so the live walk
+showed it untouched, and a partial poll such as Ryan 2025 (LNP 45, GRN 13) took 58% of the lean. Now a full poll
+(ALP, LNP and GRN named) takes the lean in its own units; a partial poll takes it whole on the side's figures, and
+with no other figure the lean just comes off. The method's intent is unchanged; the first screen
+(`deciding-runs/20261114-1005-spl-screen`: seat log loss -0.0006, SE 0.0002; share error on 57 changed cells +8%,
+SE 16.3) measured the bugged step and is superseded by the rerun. C1 placebo (17/20 PASS) does not use step 5.
