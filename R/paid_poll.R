@@ -75,6 +75,8 @@ paid_poll_deviations <- function(polls, cls, sponsor, as_at, parties = c("ALP", 
   dv <- data.table::rbindlist(out)
   if (!nrow(dv)) return(dv)
   dv[, `:=`(date = pd[dv$i], firm = polls$firm[dv$i], paid = paid[dv$i], side = side[dv$i], d = dv$value - dv$ref)]
+  # `i` is a row of THIS region's table; `uid` stays unique when regions are pooled (review, 13 Nov)
+  dv[, uid := paste(if (is.null(attr(polls, "region"))) "?" else attr(polls, "region"), dv$i, sep = ":")]
   dv[]
 }
 
@@ -86,10 +88,13 @@ paid_poll_deviations <- function(polls, cls, sponsor, as_at, parties = c("ALP", 
 #'   (noise sd multiplier for paid polls), `n_paid`.
 #' @keywords internal
 paid_poll_fit <- function(dv) {
+  if (!nrow(dv)) dv <- data.table::data.table(uid = character(0), party = character(0), value = numeric(0),
+                                              date = as.Date(character(0)), paid = logical(0), side = character(0),
+                                              d = numeric(0))   # no deviations at all: the empty fit below
   base <- dv[!dv$paid & dv$date >= PAID_POLL_BASE_FROM]
   v0 <- if (nrow(base)) mean(base$d^2) else NA_real_
   pp <- dv[dv$paid]
-  n_paid <- data.table::uniqueN(pp$i)
+  n_paid <- data.table::uniqueN(pp$uid)
   empty <- list(lean = data.table::data.table(side = character(0), n = integer(0), m = numeric(0), se = numeric(0),
                                               w = numeric(0), shrunk = numeric(0)),
                 mu = 0, se_mu = NA_real_, w0 = 0, tau2 = 0, v0 = v0, x2 = 0, factor = 1, n_paid = n_paid)
@@ -98,7 +103,7 @@ paid_poll_fit <- function(dv) {
   side_gap <- function(tab, sd_) {
     sp <- .ppc_side_parties(sd_, unique(tab$party))
     if (!length(sp)) return(NULL)
-    g <- tab[tab$party %in% sp, list(gap = sum(d), np = .N), by = "i"]
+    g <- tab[tab$party %in% sp, list(gap = sum(d), np = .N), by = "uid"]
     g[g$np == length(sp)]
   }
   sides <- setdiff(unique(pp$side), "UNKNOWN")
@@ -129,7 +134,7 @@ paid_poll_fit <- function(dv) {
     on <- pp$party[ix] %in% sp
     # the lean comes off the side's parties (split by share) and goes to the rest (split by share)
     sh <- pp$value[ix]
-    tot_on <- ave(ifelse(on, sh, 0), pp$i[ix], FUN = sum); tot_off <- ave(ifelse(on, 0, sh), pp$i[ix], FUN = sum)
+    tot_on <- ave(ifelse(on, sh, 0), pp$uid[ix], FUN = sum); tot_off <- ave(ifelse(on, 0, sh), pp$uid[ix], FUN = sum)
     adj <- ifelse(on, -ln[[sd_]] * sh / pmax(tot_on, 1e-9), ln[[sd_]] * sh / pmax(tot_off, 1e-9))
     r[ix] <- r[ix] + adj
   }

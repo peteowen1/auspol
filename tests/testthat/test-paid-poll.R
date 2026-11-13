@@ -15,7 +15,9 @@ ppc_dv <- function(lean_lnp, sd_paid, n_paid = 30, seed = 1) {
   pd <- data.table::data.table(i = rep(1000 + seq_len(n_paid), each = 5), party = rep(pr, n_paid), value = 20, ref = 20,
                                n_ref = 5, date = as.Date("2026-06-01"), firm = "Paid", paid = TRUE, side = "LNP")
   pd[, d := stats::rnorm(.N, 0, sd_paid) + ifelse(party == "LNP", lean_lnp, -lean_lnp / 4)]
-  data.table::rbindlist(list(ind, pd))
+  out <- data.table::rbindlist(list(ind, pd))
+  out[, uid := paste0("t:", i)]
+  out[]
 }
 
 test_that("a real lean toward the sponsor is found and kept; none is invented", {
@@ -51,4 +53,15 @@ test_that("apply moves the side's share to the other parties, keeps the total an
 test_that("the switch accepts only 0 or 1", {
   withr::local_envvar(AUSPOL_PAID_POLL_CORRECT = "2")
   expect_error(paid_poll_mode(), "must be")
+})
+
+test_that("pooled regions with the same row numbers stay separate polls, and no deviations give the empty fit", {
+  dv <- ppc_dv(lean_lnp = 0, sd_paid = 2)
+  dv2 <- data.table::copy(dv)[dv$paid]
+  dv2[, uid := paste0("other:", i)]                          # same row numbers, another region
+  f <- paid_poll_fit(data.table::rbindlist(list(dv, dv2)))
+  expect_identical(f$n_paid, 60L)
+  e <- paid_poll_fit(data.table::data.table())
+  expect_identical(e$factor, 1)
+  expect_identical(nrow(e$lean), 0L)
 })
