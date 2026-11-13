@@ -722,3 +722,14 @@ Replay-only until the 2026 feed arrives; none is read by the published forecast.
 | Constant | Where | Value | Status |
 |---|---|---|---|
 | Flow sd floor | `night_run_update(tcp_flow_floor =)` -> `night_apply_tcp(flow_sd_floor =)`, `R/night_runner.R` | 0.01 (0.065 tried 31 Oct, taken off the same day) | **CHOSEN, not fitted.** The measured between-seat error of the night's booth-implied two-candidate flow is 0.065 (fed2022/fed2025, `docs/reviews/aec-preference-data-2026-10-30.md`), but using it as the floor never helped on the real-night replays and made vic2022 worse at 10pm (`docs/reviews/night-replay-real-feed-2026-10-31.md`, per-fix split). Open: why a measured error makes the update worse. |
+
+## Paid-poll correction (`AUSPOL_PAID_POLL_CORRECT`, SHIPPED 2026-11-13; `R/paid_poll.R`; `plans/prereg-paid-poll-correction-2026-11-13.md`)
+
+| constant | value | from data? |
+|---|---|---|
+| `PAID_POLL_WINDOW` | 21 days either side of a poll's midpoint for its independent reference polls | no: pre-registered; wide enough for 2+ neighbours in a state campaign |
+| `PAID_POLL_MIN_REF` | 2 independent reference polls | no: pre-registered floor so one poll is never the whole reference |
+| `PAID_POLL_BASE_FROM` | 2025-01-01: baseline variance from independent polls of the era sponsors are recorded | no: Wikipedia names sponsors only from 2025 (Amendment 1) |
+| noise shrink | extra variance x n/(n+3) | no: the `AUSPOL_CONSERVE_SHRINK_K` precedent |
+| lean, noise factor | fitted every run (13 Nov: lean ~0 per side, factor 1.248) | yes |
+| sponsor sides | `external/reference/polls/sponsor_side.csv` | no: hand list, approved by Pete 13 Nov |

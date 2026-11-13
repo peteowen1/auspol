@@ -179,3 +179,55 @@ paid_poll_apply <- function(polls, cls, sponsor, fit, as_at) {
   labs <- unique(paste0(polls$firm[ix], " [paid]"))
   list(polls = out, firm_factors = setNames(rep(fit$factor, length(labs)), labs), moved = data.table::rbindlist(moved))
 }
+
+#' Whether the paid-poll correction is on (`AUSPOL_PAID_POLL_CORRECT`, shipped "1" on 13 Nov 2026)
+#' @keywords internal
+paid_poll_mode <- function() {
+  v <- Sys.getenv("AUSPOL_PAID_POLL_CORRECT", "1")
+  if (!v %in% c("0", "1")) stop("AUSPOL_PAID_POLL_CORRECT must be \"0\" or \"1\", not ", v)
+  v == "1"
+}
+
+.ppc_cache <- new.env(parent = emptyenv())
+PAID_POLL_REGIONS <- c("fed", "nsw", "vic", "qld", "wa", "sa", "nt", "tas", "act")
+
+#' Paid-poll correction for one region's polls as of a cutoff, as trend_as_at() applies it
+#'
+#' Sponsor classes come from the Wikipedia poll table the poll layer reads ([poll_wiki_path()]); the lean and noise
+#' are fitted on the paid polls of EVERY region up to `as_at` ([paid_poll_fit()]), cached per process by cutoff, table
+#' and its mtime. With no paid poll of this region dated on or before `as_at`, nothing is fitted and the polls come
+#' back unchanged.
+#' @param polls From [load_polls()], with its `region` attribute.
+#' @param as_at Cutoff date.
+#' @return List: `polls`, `firm_factors` (`NULL` when nothing applies).
+#' @keywords internal
+paid_poll_for <- function(polls, as_at) {
+  path <- poll_wiki_path()
+  if (!file.exists(path)) {
+    message("PDP0! no poll table with sponsors (", path, "): paid-poll correction NOT applied")
+    return(list(polls = polls, firm_factors = NULL))
+  }
+  rg <- attr(polls, "region")
+  cls <- poll_sponsor_class(rg, polls)
+  reach <- as.character(cls) == "party" & is.finite(polls$date) & polls$date <= as_at
+  if (!any(reach)) return(list(polls = polls, firm_factors = NULL))
+  key <- paste(as.character(as_at), path, format(file.mtime(path), "%Y%m%d%H%M%OS3"),
+               Sys.getenv("AUSPOL_POLL_SOURCE"), sep = "#")
+  fit <- .ppc_cache[[key]]
+  if (is.null(fit)) {
+    dv <- data.table::rbindlist(lapply(PAID_POLL_REGIONS, function(r) {
+      pl <- if (identical(r, rg)) polls else tryCatch(suppressMessages(load_polls(r)), error = function(e) NULL)
+      if (is.null(pl)) return(NULL)
+      cl <- if (identical(r, rg)) cls else poll_sponsor_class(r, pl)
+      paid_poll_deviations(pl, as.character(cl), attr(cl, "sponsor"), as_at)
+    }), fill = TRUE)
+    fit <- paid_poll_fit(dv)
+    assign(key, fit, envir = .ppc_cache)
+    message(sprintf("PDP1 paid polls as at %s: %d (all regions); toward-sponsor lean %+.2f (SE %.2f), shrunk per side %s; noise factor %.3f (weight x%.2f)",
+                    as_at, fit$n_paid, fit$mu, fit$se_mu,
+                    if (nrow(fit$lean)) paste(sprintf("%s %+.2f", fit$lean$side, fit$lean$shrunk), collapse = ", ") else "none",
+                    fit$factor, 1 / fit$factor^2))
+  }
+  ap <- paid_poll_apply(polls, as.character(cls), attr(cls, "sponsor"), fit, as_at)
+  list(polls = ap$polls, firm_factors = ap$firm_factors)
+}

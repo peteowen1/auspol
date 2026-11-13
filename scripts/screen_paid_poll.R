@@ -16,6 +16,7 @@ suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 source("scripts/published_flags.R")
 for (k in names(PUBLISHED_FLAGS)) if (Sys.getenv(k) == "") do.call(Sys.setenv, setNames(list(PUBLISHED_FLAGS[[k]]), k))
+Sys.setenv(AUSPOL_PAID_POLL_CORRECT = "0")   # the screen applies the arm by hand; trend_as_at() must not apply it again
 cat("PPC0  poll table read for sponsors:", poll_wiki_path(), "\n")
 
 REGIONS <- c("fed", "nsw", "vic", "qld", "wa", "sa", "nt", "tas")

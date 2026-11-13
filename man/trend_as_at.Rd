@@ -17,6 +17,7 @@ trend_as_at(
   sigmas = c("default", "per_cycle", "pooled_tf"),
   weights = c("equal", "firm_factors", "record"),
   score_after = NULL,
+  extra_firm_factors = NULL,
   ...
 )
 }
@@ -65,6 +66,9 @@ this cycle began (\code{\link[=firm_record_factors]{firm_record_factors()}}); ar
 \item{score_after}{\code{NULL}, or a Date: also score the cycle's polls dated
 after \code{as_at} up to it against this fit (\code{\link[=poll_predictive_scores]{poll_predictive_scores()}}),
 returned as \code{poll_scores}.}
+
+\item{extra_firm_factors}{\code{NULL} (default, unchanged), or a named vector of noise sd multipliers for named firms,
+applied on top of \code{weights} (arm PPC: paid polls under their \code{"<firm> [paid]"} label).}
 
 \item{...}{Passed through to \code{\link[=fit_trend]{fit_trend()}} via \code{\link[=fit_cycle_trends]{fit_cycle_trends()}}, which
 is how a prior is varied when tuning it by held-out error. Names this

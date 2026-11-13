@@ -88,6 +88,13 @@ trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
          "cycle. Vary a fit_trend() prior instead, or extend this function.",
          call. = FALSE)
   }
+  # Arm PPC, shipped 13 Nov 2026 (prereg-paid-poll-correction-2026-11-13): party- and advocacy-paid polls get the
+  # shrunk lean toward their sponsor taken out and count for less. No paid poll before as_at: polls unchanged.
+  if (paid_poll_mode()) {
+    ppc <- paid_poll_for(polls, as_at)
+    polls <- ppc$polls
+    if (length(ppc$firm_factors)) extra_firm_factors <- c(extra_firm_factors[setdiff(names(extra_firm_factors), names(ppc$firm_factors))], ppc$firm_factors)
+  }
   cp <- cycle_polls(polls, year, cycles)
   keep <- cp$date <= as_at
   cp2 <- cp[which(keep), ]
