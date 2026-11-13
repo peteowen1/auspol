@@ -93,6 +93,8 @@ NON_MODEL_SWITCHES <- c(
   AUSPOL_RELEASE_TAG             = "RUN",  # publish_shipped_release.R
   AUSPOL_RETIRE_REWRITE          = "BUILDER",  # fetch_retirements.R
   AUSPOL_SALIENCE_ANCHOR         = "BUILDER",  # build_vic2026_salience_jump.R, fetch_salience_vic2026_full.R
+  AUSPOL_LADDER_PASSES           = "BUILDER",  # fetch_salience_vic2026_ladder.R (default 2)
+  AUSPOL_SALIENCE_LINK           = "BUILDER",  # build_vic2026_salience_jump.R: "ladder" when the ladder file exists, else "anchor"
   AUSPOL_SALIENCE_CALIBRATE      = "BUILDER",  # fetch_seat_salience_v3.R
   AUSPOL_SALIENCE_CONTROLS       = "BUILDER",  # fetch_salience.R
   AUSPOL_SALIENCE_ELECTION       = "BUILDER",  # fetch_salience_v4.R, fetch_salience_v6.R, fetch_salience_v6_vic2010.R, fetch_seat_salience.R, fetch_seat_salience_v3.R, fit_salience_hazard_v4.R

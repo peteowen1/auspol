@@ -1669,7 +1669,9 @@ if (!.sb_once) shares <- blend_salience_shares(shares, if (exists(".hz")) .hz el
                                 expected = .exp_mode > 0L) else attr(shares, "cells") <- 0L
 cat(sprintf("DS3b salience point estimate applied to %d (seat,party) cells%s%s\n",
             attr(shares, "cells"), if (.sb_once) " after the trees (AUSPOL_SALIENCE_BLEND_ONCE=1: applied before them, SBL1)" else "",
-            if (is.null(if (exists(".hz")) .hz else NULL)) sub("@T", TGT, " (no corpus for @T yet)", fixed = TRUE) else ""))
+            if (is.null(if (exists(".hz")) .hz else NULL))
+              (if (!.surge_v2_on) " (no surge-v2 hazard: AUSPOL_SALIENCE_SURGE_V2 is off, so this blend is off; the corpus still reaches the xgb features, XG5)"
+               else sub("@T", TGT, " (no corpus for @T yet)", fixed = TRUE)) else ""))
 # v61 NOMINATION ZEROING, AFTER every step that can add share to a cell, with the
 # live flow matrix `fm`. Read from the function bodies 2026-10-03:
 #   CAN add share to a cell (pmax(0, x + adj), a blend toward a target, or a shift

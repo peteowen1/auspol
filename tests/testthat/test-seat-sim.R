@@ -363,7 +363,9 @@ test_that("surge_party directs the surge to the named class, below the floor, an
   p_old <- setNames(old$win_prob$prob, paste(old$win_prob$seat, old$win_prob$party))
   p_new <- setNames(new$win_prob$prob, paste(new$win_prob$seat, new$win_prob$party))
   expect_true(is.na(p_old["s1 IND"]) || p_old["s1 IND"] < 0.05)   # default rule never surges a 1% IND
-  expect_true(p_new["s1 IND"] > 0.5)                              # the named recipient does, floor or not
+  # unname(): on a named logical, waldo calls diffobj even when the values match, and this laptop's Application
+  # Control blocks diffobj.dll (13 Nov 2026), so the passing expectation errored locally.
+  expect_true(unname(p_new["s1 IND"]) > 0.5)                      # the named recipient does, floor or not
   expect_equal(new$surge_recipient_fallback, 1L)                  # s2 named a class that is not there
   expect_true(new$engine %in% c("r", "cpp")); expect_equal(new$surge_recipient_fallback_draws, 0L)
   # A named class at ZERO share in the seat falls back per draw, and is counted per seat-draw.

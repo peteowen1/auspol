@@ -130,7 +130,7 @@ if (identical(.flag("AUSPOL_XGB_COUNCIL"), "1")) {
   .arm_tables <- c(.arm_tables, "council-history-vic2026.csv")
 }
 # And the salience corpus with its vic2026 rows (scripts/link_vic2026_salience.R, 12 Nov 2026):
-# governed_population(), the live xgb salience features and the DS3b blend read it. The daily run
+# governed_population() and the live xgb salience features read it (DS3b needs surge-v2, off). The daily run
 # had no copy, so every Victorian candidate ran at the no-salience defaults (XG5!). Shipped whole
 # (~0.8 MB); the live forecast reads only its vic2026 rows.
 # Stops rather than warns (review 12 Nov): a publish without these rows ships a forecast with no salience while

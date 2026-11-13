@@ -19,20 +19,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   fixes (f4a3cbff..db6e0637, Sonnet, 12 Nov 9:10pm): 0 Important, so the gate is passed. Rebuild PENDING for 11:30pm
   (needs 8 GB free; at 9:36pm 1.7 GB, other verses' R jobs). Pete to send the VEC draft (Gmail, "RE: State Election 2026
   results data feed"): it asks whether the voting-centre pages fill in during the count.
-- OPEN, LIVE GAP found 12 Nov: the published vic2026 forecast uses NO candidate salience (`XG5! no salience corpus yet` in
-  every live log since 27 Oct; `output/salience-v6.csv` has 0 vic2026 rows; CI never had the file). Fix built, unmerged:
-  branch `salience-vic2026-link` (0646dbc8, worktree `C:\dev\auspol-wt-salience`, rank-mapped per DECISIONS 2026-11-12).
-  With/without DONE and walked 12 Nov; Pete: ship now (DECISIONS 2026-11-12; `reviews/salience-vic2026-live-walk-2026-11-12.md`).
-  Review round 1 (Sonnet, 12 Nov): 1 Important, PRS1 warned and published anyway; FIXED d3649546 (stops; daily run now
-  errors without the asset), tested on 4 broken inputs. Round 2 (Sonnet, 12 Nov 10:55pm): 0 Important, gate passed;
-  nit: the mtime check misses a later append to `salience-v6.csv` (`fetch_salience_v6_remaining.sh`), a snapshot-date
-  match would be sturdier. ORDER on 13 Nov: merge the branch into dev after the rebuild
-  scores, `Rscript scripts/link_vic2026_salience.R` here (same 11 Nov jump file as the walk), main PR, then stage 9
-  AT ONCE: until stage 9 uploads `salience-v6.csv`, the daily run on main fails by design. Done when merged,
-  stage 9 prints `PRS1  ... 663 vic2026 rows`, and the next stage 9 prints `PRS1` with vic2026 rows. Worktree has
-  junctions under `external/`: unlink them before removing it.
-  THEN, before the final 25-27 Nov snapshot: fix the coarse anchor link (linked values in ~5 steps of 0.0607; review file
-  above), rerun the with/without.
+- DONE 13 Nov: vic2026 salience is in the published forecast (PR #230; stage 9 `PRS1 ... 663 vic2026 rows`; daily run 9:25am
+  green with `XG5 salience corpus found for vic2026: 526 of 616`). The coarse anchor scale is fixed: ladder link ships 13 Nov
+  (DECISIONS 13 Nov). Worktree `C:/dev/auspol-wt-salience` can go. Full item in `backlog/journal-2026-11-11-queue-history.md`.
 - OPEN (seat-poll nit from that review): the SPF1 guard (`scripts/fetch_seat_polls.R:443-452`) has no override, so if Wikipedia
   legitimately drops a vic2026 seat poll, every stage 9 keeps the old page until someone reads `s9_seatpolls.log`. Done when
   an `--accept-fewer` flag exists or the stage-9 summary prints SPF1 at the top. Same file area: an NA pollster in a scraped
@@ -44,13 +33,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `--source-type=web --enrolment=external/reference/vec/2026/enrolment/enrolment-2026.csv --places=external/reference/vec/2026/voting-locations/places-2026.csv`, `cand_ref = "copy"` by default
   there (Pete). End to end on 2022's pages: 87 districts published, ~65 s a cycle (parse 21 s, simulate 35 s).
   STILL OPEN: (1) the 2026 results index URL is only known on the night (the fetcher takes --index); (2) whether the
-  pages fill in during the count (draft question in Pete's Gmail, unsent); (5) BUILT 12 Nov 11:07pm, unmerged: blog branch
-  `booths-2026-places` (70ce1e46, worktree `C:\dev\itg-wt-booths`; ITG session agreed, Pete chose geocoding) reads
-  places-2026.csv + `places-2026-geo.csv` (`scripts/geocode_vec_places_2026.py`: 338 of 359 placed in-district, 8 of 8
-  sampled correct, raw replies in `geocode-raw/`): 88 districts, 1,830 centres, 21 off the map (no OSM result: reserves,
-  corners, "Unit" addresses; listed in the geo file). Review (Sonnet, 12 Nov): 0 Important, 3 nits fixed. `live.qmd:582` loads it
-  live, so done when: reviewed, browser-checked at 390/1280 px (message ITG before any render or push), merged.
-  Re-run both after the week-of-election spreadsheet re-download; (3) DONE 11 Nov: the 2026 voting-centre list, `scripts/build_vec_places_2026.R` from the VEC venues spreadsheet
+  pages fill in during the count (draft question in Pete's Gmail, unsent); (5) DONE 13 Nov: all 1,851 centres on /politics/live (blog #1203 9:47am, #1205 10:36am; Pete: merge).
+  Geocoder 2058bdd1 places all 359 lookups in-district (11 hand-placed in `places-2026-manual.csv`; 27 street-level and
+  2 hand-placed flagged approximate). Blog route: branch off origin/main, PR into main, ITG merges main into dev. Re-run both after the week-of-election spreadsheet re-download; (3) DONE 11 Nov: the 2026 voting-centre list, `scripts/build_vec_places_2026.R` from the VEC venues spreadsheet
   (1,851 election-day centres, est. 1,603,331 ordinary votes; 310 early centres). Re-download the spreadsheet the week of the
   election (it changes: Change Log sheet) and rerun. Only 61 of 200 guest joint centres (JVC) match a 2022 booth name: if one
   never gets its own results row it stays a small uncounted placeholder. Same day, found and fixed: the night never matched
@@ -193,7 +178,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   last 8 weeks vs 9.3 before), so batches cannot be linked and `jump` is not comparable with the backtests' polling-day
   values. Each refresh: `AUSPOL_SALIENCE_TO=<date> Rscript scripts/fetch_salience_vic2026_full.R` (~100 requests,
   resumable; anchor Ben Carroll since 4 Nov: Allan was replaced as Premier 28 Jul 2026 and her series linked 0 of 101
-  batches; check the anchor against `leaders.csv` before each snapshot), then `scripts/build_vic2026_salience_jump.R`
+  batches; check the anchor against `leaders.csv` before each snapshot), then the LADDER (ships 13 Nov, DECISIONS):
+  `AUSPOL_SALIENCE_TO=<date> Rscript scripts/fetch_salience_vic2026_ladder.R` (~100 requests, ~12 min, 2 passes; read
+  VJ6 link quality afterwards: 11 Nov gave shared peak median 56, 0 steps over 1.5x; batch factors on the last 8 weeks:
+  no representative between 0 and 0.5 in the ladder, 24 of 148 under 0.5 in their own batch, all near-zero rises), then `scripts/build_vic2026_salience_jump.R`
   with the SAME `AUSPOL_SALIENCE_TO` (without it the builder falls back to 6 Oct and finds 0 batches)
   (output/vic2026-salience-jump.csv), then `scripts/link_vic2026_salience.R` (branch `salience-vic2026-link`, item at top).
   CORRECTED 12 Nov: local runs did NOT use a vic2026 corpus either (every live log prints `XG5!`); nothing read the jump file.
