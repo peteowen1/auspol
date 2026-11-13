@@ -58,7 +58,9 @@ mf <- sort(list.files(CACHE, pattern = "^vic2026-manifest-.*\\.csv$", full.names
 if (is.na(mf)) stop("LF0! no vic2026 manifest (run scripts/fetch_salience_vic2026_full.R first)")
 M <- fread(mf, showProgress = FALSE)
 if (!all(M$window == paste(FROM, TO))) stop("LF0! manifest ", basename(mf), " is for window ", M$window[1], ", not ", FROM, " ", TO)
-# representatives: each cached batch's loudest member over the last 8 weeks (the fetcher's and the builder's rule)
+# representatives: each cached batch's loudest member over the last 8 weeks (the fetcher's and the builder's rule).
+# Not the whole-window loudest: tried 13 Nov, that picks famous namesakes loud all year (Paul Kelly, Steve Martin),
+# which stretch the ladder; 41 representatives chained to 0 and linked candidates fell 561 -> 516.
 reps <- unique(unlist(lapply(unique(M$batch[nzchar(M$batch)]), function(b) {
   f <- key_file(strsplit(b, "|", fixed = TRUE)[[1]]); if (!file.exists(f)) return(NULL)
   z <- readRDS(f); if (isTRUE(z$empty)) return(NULL); s <- as.data.table(z$series)

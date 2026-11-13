@@ -4,6 +4,13 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-11-13 vic2026 salience is linked by a LADDER of similar-loudness queries, not the Premier (Pete, 13 Nov: "Ship it").**
+  Beside the Premier the median batch representative peaked at 1 (0-100), so linked rises came in 5 steps; the ladder (49
+  queries of 5, 2 shared per step, two passes) gives 229 distinct values among 238 positive jumps, 561 candidates linked.
+  Batch factors use the representative's last-8-weeks level (whole-window levels made one Morwell batch 30x too loud).
+  Live vs anchor: 4 favourites change (Cranbourne ONP 56% -> ALP 67%, Essendon ALP -> IND 40%, Bentleigh and Eltham LNP ->
+  ALP ~51%); Mornington IND 24% -> 1%; expected seats move under 1. No outcome exists to score it against.
+  `scripts/fetch_salience_vic2026_ladder.R`, `scripts/build_vic2026_salience_jump.R` (VJ6/VJ7).
 - **2026-11-13 Council-history coverage fix ships, although the live forecast moves up to 5 points (Pete, 13 Nov).**
   Both prereg guards pass (35-election log loss +0.0009, SE 0.0018; share RMSE +0.0067). Live vic2026 moves up to 5.3
   points (Footscray ALP 53% -> 48%, favourite to GRN; Melton ONP -> LNP; ALP 26.8 -> 26.1 expected seats), all from the

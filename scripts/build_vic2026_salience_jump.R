@@ -94,14 +94,35 @@ if (identical(LINK, "ladder")) {
                 sum(steps$spread > 1.5, na.rm = TRUE)))
   }
   if (any(!is.finite(scale))) cat(sprintf("VJ6! chain broken at query %s: later representatives unlinked\n", qn[which(!is.finite(scale))[1]]))
-  lad <- rbindlist(lapply(seq_along(qn), function(i) if (!is.null(lev[[i]]) && is.finite(scale[i])) lev[[i]][, .(keyword, v = level * scale[i])]))
-  lad <- lad[v > 0, .(ladder = exp(mean(log(v)))), by = keyword]
+  # A batch's factor compares its representative in the ladder and in its own batch over the LAST 8 WEEKS, the window
+  # that chose it as the batch's loudest (one Google factor per query, so any window gives the same ratio; the chain
+  # above stays on whole-window levels, where the shared members are best measured). Whole-window levels here put
+  # 37 of 148 representatives under 0.5 in their own batch (Ross McPhee, Morwell: 0.19, one spike of 11), and that
+  # coarse denominator scaled Casey Murphy's batch ~30-fold (13 Nov live walk).
+  l8 <- lapply(qn, function(q) {
+    f <- file.path(CACHE, Q$file[Q$query == q][1]); if (!file.exists(f)) return(NULL)
+    z <- readRDS(f); if (isTRUE(z$empty)) return(NULL)
+    as.data.table(z$series)[date > TO - 56, .(level = mean(hits)), by = keyword]
+  })
+  # Where the representative is silent over those 8 weeks in its ladder query (30 batches, 13 Nov), fall back to
+  # the whole-window ratio rather than leave the batch unlinked.
+  chain_of <- function(L) {
+    d <- rbindlist(lapply(seq_along(qn), function(i) if (!is.null(L[[i]]) && is.finite(scale[i])) L[[i]][, .(keyword, v = level * scale[i])]))
+    d[v > 0, .(ladder = exp(mean(log(v)))), by = keyword]
+  }
+  lad8 <- chain_of(l8); ladw <- chain_of(lev)
+  ratio <- function(lv, own) if (length(lv) && length(own) && is.finite(own) && own > 0) lv / own else NA_real_
+  n8 <- 0L; nw <- 0L
   out <- rbindlist(lapply(names(B), function(b) {
     x <- B[[b]]; s <- read_series(strsplit(b, "|", fixed = TRUE)[[1]])
-    own_lev <- s[keyword == x$rep, mean(hits)]; lv <- lad[keyword == x$rep, ladder]
-    sc <- if (length(lv) && length(own_lev) && own_lev > 0) lv / own_lev else NA_real_
+    sc <- ratio(lad8[keyword == x$rep, ladder], s[keyword == x$rep & date > TO - 56, mean(hits)])
+    if (is.finite(sc)) n8 <<- n8 + 1L else {
+      sc <- ratio(ladw[keyword == x$rep, ladder], s[keyword == x$rep, mean(hits)]); if (is.finite(sc)) nw <<- nw + 1L
+    }
     x$j[, .(keyword, jump_raw = jump, jump = jump * sc, linked = is.finite(sc))]
   }))
+  cat(sprintf("VJ6  batch factors: %d from the last-8-weeks ratio, %d from the whole-window fallback, %d unlinked\n",
+              n8, nw, length(B) - n8 - nw))
 } else {
 out <- rbindlist(lapply(names(B), function(b) {
   x <- B[[b]]; own <- x$j[keyword == x$rep, jump]; v <- link[keyword == x$rep & is.finite(rel), rel]
