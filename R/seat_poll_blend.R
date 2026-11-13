@@ -162,11 +162,13 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
                  sponsored = !is.na(client[1]) & nzchar(trimws(client[1])),
                  firm = .seat_poll_firm_key(pollster[1]),
                  .pollster = pollster[1], .fw = as.character(fieldwork_end[1]), .seat0 = seat[1],
-                 .n0 = suppressWarnings(as.numeric(sample_n[1]))), by = poll_id]
+                 .n0 = suppressWarnings(as.numeric(sample_n[1])),
+                 .client = as.character(client[1])), by = poll_id]
   per_poll <- merge(per_poll, pf, by = "poll_id")
   # MRP sample sizes are the NATIONAL survey (YouGov fed2025: 10,822), not the seat's.
   per_poll$n_seat[per_poll$mrp] <- NA_real_
   per_poll$group <- ifelse(per_poll$mrp, "mrp", ifelse(per_poll$sponsored, "sponsored", "direct"))
+  per_poll$sponsor <- ifelse(is.na(per_poll$.client) | !nzchar(trimws(per_poll$.client)), NA_character_, per_poll$.client)
   if (.seat_poll_groups_mode() != "0") {
     M <- .seat_poll_method_table()
     el_lab <- el_arg
@@ -177,6 +179,9 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
     old <- ifelse(per_poll$mrp, "mrp", ifelse(per_poll$sponsored, "direct_stake", "direct_indep"))
     per_poll$group <- ifelse(is.na(hit), old, M$mgroup[hit])
     per_poll$group[per_poll$mrp] <- "mrp"          # MRP by structure stays MRP whatever the file says
+    # who paid (arm SPL): the method file's sponsor when it names one, else the poll's own client
+    sn <- M$sponsor_name[hit]
+    per_poll$sponsor <- ifelse(!is.na(sn) & nzchar(sn), sn, per_poll$sponsor)
     if (.seat_poll_firm_on()) {
       pc <- M$pollster_clean[hit]
       per_poll$firm <- ifelse(is.na(hit) | !nzchar(pc) | pc == "unknown", per_poll$firm, .seat_poll_firm_key(pc))
@@ -187,6 +192,14 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
                 sum(!is.na(unique(data.table::data.table(id = per_poll$poll_id, h = hit))$h)), length(unique(per_poll$poll_id))))
   }
   if (.raw) return(per_poll)
+  if (.seat_paid_lean_on()) {
+    # arm SPL (prereg-seat-paid-lean-2026-11-14.md): each paid poll loses its side's shrunk lean, learned from
+    # elections before this one; after the .raw return, so the fits that read .raw see the polls as published
+    per_poll <- seat_paid_lean_apply(per_poll, seat_paid_lean(el_arg))
+    mv <- attr(per_poll, "moved")
+    cat(sprintf("SPL2 %s paid seat polls with the lean taken off: %d%s\n", el_arg, length(mv),
+                if (length(mv)) paste0(" (", paste(mv, collapse = "; "), ")") else ""))
+  }
   per_poll$wt <- .seat_poll_cell_weights(per_poll, seat_poll_decay_params(el_arg))
   per_poll$type <- ifelse(per_poll$mrp, "mrp", "direct")
   by_cols <- if (by_type) c("seat", "class", "type") else c("seat", "class")
