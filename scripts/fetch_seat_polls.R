@@ -108,6 +108,10 @@ failed <- character(0)
 # truncated page) is discarded and the old copy restored.
 LIVE <- c("vic2026")
 refresh_live <- "--refresh-live" %in% commandArgs(trailingOnly = TRUE)
+# --accept-fewer: the SPF1 guard below stops when a refreshed page has fewer seat polls than the file on disk. If
+# Wikipedia really did remove a poll (a retraction, a duplicate merged), rerun once by hand with this flag after
+# reading the page; the file on disk then carries the lower count and later stage-9 refreshes pass on their own.
+accept_fewer <- "--accept-fewer" %in% commandArgs(trailingOnly = TRUE)
 refreshed_from <- list()   # key -> the kept previous copy, for the poll-count guard (SPF1) before writing
 for (key in names(pages)) {
   f <- file.path(raw_dir, paste0(key, ".html"))
@@ -446,9 +450,11 @@ if (length(refreshed_from) && file.exists(out_csv)) {
   for (k in names(refreshed_from)) {
     n_old <- npoll(prev, k); n_new <- if (nrow(seat_polls)) npoll(seat_polls, k) else 0L
     message(sprintf("SPF1  %s: %d distinct seat polls before the refresh, %d after", k, n_old, n_new))
-    if (n_new < n_old) {
+    if (n_new < n_old && accept_fewer) {
+      message(sprintf("SPF1  %s: ACCEPTED %d fewer seat polls (--accept-fewer); seat_polls.csv is rewritten from the new page", k, n_old - n_new))
+    } else if (n_new < n_old) {
       file.copy(refreshed_from[[k]], file.path(raw_dir, paste0(k, ".html")), overwrite = TRUE, copy.date = TRUE)
-      stop(sprintf("SPF1! %s: the refreshed page has %d seat polls, the file on disk %d; previous page restored, seat_polls.csv not written", k, n_new, n_old))
+      stop(sprintf("SPF1! %s: the refreshed page has %d seat polls, the file on disk %d; previous page restored, seat_polls.csv not written. If the page really dropped a poll, rerun: Rscript scripts/fetch_seat_polls.R --refresh-live --accept-fewer", k, n_new, n_old))
     }
   }
 }
