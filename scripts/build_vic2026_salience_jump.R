@@ -68,7 +68,7 @@ if (identical(LINK, "ladder")) {
   lev <- lapply(qn, function(q) {
     f <- file.path(CACHE, Q$file[Q$query == q][1]); if (!file.exists(f)) return(NULL)
     z <- readRDS(f); if (isTRUE(z$empty)) return(NULL)
-    as.data.table(z$series)[, .(level = mean(hits)), by = keyword]
+    as.data.table(z$series)[, .(level = mean(hits), nz = sum(hits > 0), peak = max(hits)), by = keyword]
   })
   scale <- rep(NA_real_, length(qn)); scale[1] <- if (is.null(lev[[1]])) NA_real_ else 1
   steps <- list()
@@ -77,12 +77,22 @@ if (identical(LINK, "ladder")) {
     if (is.null(a) || is.null(b) || !is.finite(scale[i - 1L])) next
     sh <- merge(a, b, by = "keyword", suffixes = c("_prev", "_this"))[level_prev > 0 & level_this > 0]
     if (nrow(sh)) scale[i] <- scale[i - 1L] * exp(mean(log(sh$level_prev / sh$level_this)))
-    steps[[i]] <- data.table(query = qn[i], n_shared = nrow(sh), min_level = if (nrow(sh)) min(c(sh$level_prev, sh$level_this)) else NA_real_)
+    r <- sh$level_prev / sh$level_this
+    steps[[i]] <- data.table(query = qn[i], n_shared = nrow(sh), min_level = if (nrow(sh)) min(c(sh$level_prev, sh$level_this)) else NA_real_,
+                             min_nz = if (nrow(sh)) min(pmin(sh$nz_prev, sh$nz_this)) else NA_integer_,
+                             min_peak = if (nrow(sh)) min(pmin(sh$peak_prev, sh$peak_this)) else NA_real_,
+                             spread = if (length(r) > 1) max(r) / min(r) else NA_real_)
   }
   steps <- rbindlist(steps)
-  cat(sprintf("VJ6  ladder %s: %d queries, %d on the chained scale; shared members per step: %s; smallest shared level %.2f (0-100)\n",
-              basename(lad_f), length(qn), sum(is.finite(scale)), paste(names(table(steps$n_shared)), table(steps$n_shared), sep = "x", collapse = " "),
-              min(steps$min_level, na.rm = TRUE)))
+  if (nrow(steps)) {
+    cat(sprintf("VJ6  ladder %s: %d queries, %d on the chained scale; shared members per step: %s; smallest shared level %.2f (0-100)\n",
+                basename(lad_f), length(qn), sum(is.finite(scale)), paste(names(table(steps$n_shared)), table(steps$n_shared), sep = "x", collapse = " "),
+                min(steps$min_level, na.rm = TRUE)))
+    # how well each link is measured: a shared member's spike height is Google's integer, so a low peak is a coarse ratio
+    cat(sprintf("VJ6  link quality: shared peak (lower of the pair, 0-100) median %.0f, under 10 at %d of %d steps; non-zero weeks 1-2 at %d; shared-ratio spread over 1.5x at %d\n",
+                median(steps$min_peak, na.rm = TRUE), sum(steps$min_peak < 10, na.rm = TRUE), nrow(steps), sum(steps$min_nz <= 2, na.rm = TRUE),
+                sum(steps$spread > 1.5, na.rm = TRUE)))
+  }
   if (any(!is.finite(scale))) cat(sprintf("VJ6! chain broken at query %s: later representatives unlinked\n", qn[which(!is.finite(scale))[1]]))
   lad <- rbindlist(lapply(seq_along(qn), function(i) if (!is.null(lev[[i]]) && is.finite(scale[i])) lev[[i]][, .(keyword, v = level * scale[i])]))
   lad <- lad[v > 0, .(ladder = exp(mean(log(v)))), by = keyword]

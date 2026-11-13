@@ -79,23 +79,55 @@ cat(sprintf("LF1  %s: %d representatives, %d with an anchor-link level (%d linki
 # The shared members are chosen AFTER each query: its OVERLAP quietest members with non-zero volume carry on to the
 # next. A fixed overlap broke the chain on 13 Nov (first build): past the 20 representatives the anchor link reads as
 # 0 the order is alphabetical, and two zero-volume members were the only link between queries 36 and 37.
-n_new <- 0L; todo <- O$keyword; carry <- character(); Q <- list(); q <- 0L
-while (length(todo)) {
-  q <- q + 1L
-  take <- c(carry, head(todo, MAXKW - length(carry))); todo <- setdiff(todo, take)
-  s <- qry(take)
-  if (!st$hit) { n_new <- n_new + 1L; Sys.sleep(SLEEP) }
-  Q[[q]] <- data.table(query = q, pos = seq_along(take), keyword = take, file = basename(key_file(take)))
-  lv <- if (is.null(s)) data.table(keyword = take, level = 0) else s[, .(level = mean(hits)), by = keyword]
-  nz <- lv[level > 0][order(level)]
-  carry <- if (nrow(nz)) head(nz$keyword, OVERLAP) else carry   # none audible: carry the last carry again
-  if (!nrow(nz)) cat(sprintf("LF4! query %d: no member with non-zero volume; carrying %s again\n", q, paste(carry, collapse = ", ")))
-  if (length(todo) && length(carry) >= MAXKW) carry <- head(carry, MAXKW - 1L)
-  if (q %% 10 == 0) cat(sprintf("LF3  query %d (%d representatives left, %d new requests so far)\n", q, length(todo), n_new))
+run_ladder <- function(order_kw) {
+  n_new <- 0L; todo <- order_kw; carry <- character(); Q <- list(); q <- 0L
+  while (length(todo)) {
+    q <- q + 1L
+    take <- c(carry, head(todo, MAXKW - length(carry))); todo <- setdiff(todo, take)
+    s <- qry(take)
+    if (!st$hit) { n_new <- n_new + 1L; Sys.sleep(SLEEP) }
+    Q[[q]] <- data.table(query = q, pos = seq_along(take), keyword = take, file = basename(key_file(take)))
+    lv <- if (is.null(s)) data.table(keyword = take, level = 0) else s[, .(level = mean(hits)), by = keyword]
+    nz <- lv[level > 0][order(level)]
+    carry <- if (nrow(nz)) head(nz$keyword, OVERLAP) else carry   # none audible: carry the last carry again
+    if (!nrow(nz)) cat(sprintf("LF4! query %d: no member with non-zero volume; carrying %s again\n", q, paste(carry, collapse = ", ")))
+    if (q %% 10 == 0) cat(sprintf("LF3  query %d (%d representatives left, %d new requests so far)\n", q, length(todo), n_new))
+  }
+  Q <- rbindlist(Q)
+  Q[, cached := file.exists(file.path(CACHE, file))]
+  attr(Q, "n_new") <- n_new
+  Q
 }
-Q <- rbindlist(Q)
-cat(sprintf("LF2  %d ladder queries of up to %d, up to %d shared between neighbours (quietest audible members)\n", q, MAXKW, OVERLAP))
-Q[, cached := file.exists(file.path(CACHE, file))]
-fwrite(Q[, .(query, pos, keyword, file, cached, window = paste(FROM, TO))], file.path(CACHE, sprintf("vic2026-ladder-%s.csv", TO)))
-cat(sprintf("LF9  %d new requests; %d of %d queries cached; wrote %s\n", n_new, uniqueN(Q[cached == TRUE, query]), max(Q$query),
-            file.path(CACHE, sprintf("vic2026-ladder-%s.csv", TO))))
+# Chained level of every member, query 1's units (the same algebra as build_vic2026_salience_jump.R's VJ6).
+chain_levels <- function(Q) {
+  qn <- sort(unique(Q$query))
+  lev <- lapply(qn, function(q) as.data.table(readRDS(file.path(CACHE, Q$file[Q$query == q][1]))$series)[, .(level = mean(hits)), by = keyword])
+  sc <- rep(NA_real_, length(qn)); sc[1] <- 1
+  for (i in seq_along(qn)[-1]) {
+    sh <- merge(lev[[i - 1L]], lev[[i]], by = "keyword")[level.x > 0 & level.y > 0]
+    if (nrow(sh) && is.finite(sc[i - 1L])) sc[i] <- sc[i - 1L] * exp(mean(log(sh$level.x / sh$level.y)))
+  }
+  rbindlist(lapply(seq_along(qn), function(i) lev[[i]][, .(keyword, v = level * sc[i])]))[, .(level = if (any(is.finite(v) & v > 0)) exp(mean(log(v[is.finite(v) & v > 0]))) else 0), by = keyword]
+}
+# Pass 1 orders by the anchor link; past ~20 representatives that reads 0 and the order is alphabetical, so a loud
+# member can sit beside quiet ones and flatten them to 1-2 spike weeks (review, 13 Nov: 42 of 48 links rested on
+# members with 1-2 non-zero weeks). Pass 2 re-orders by pass 1's chained levels, so neighbours really are of similar
+# loudness. AUSPOL_LADDER_PASSES (default 2). Each pass is kept as vic2026-ladder-<TO>-pass<k>.csv; the last is also
+# written as vic2026-ladder-<TO>.csv, the file build_vic2026_salience_jump.R reads.
+PASSES <- as.integer(Sys.getenv("AUSPOL_LADDER_PASSES", "2"))
+ord <- O$keyword
+for (p in seq_len(PASSES)) {
+  Q <- run_ladder(ord)
+  pf <- file.path(CACHE, sprintf("vic2026-ladder-%s-pass%d.csv", TO, p))
+  fwrite(Q[, .(query, pos, keyword, file, cached, window = paste(FROM, TO), pass = p)], pf)
+  cat(sprintf("LF2  pass %d: %d queries, %d new requests, %d of %d cached -> %s\n", p, max(Q$query), attr(Q, "n_new"),
+              uniqueN(Q[cached == TRUE, query]), max(Q$query), basename(pf)))
+  if (p < PASSES) {
+    cl <- chain_levels(Q); miss <- setdiff(O$keyword, cl$keyword)
+    ord <- c(cl[order(-level, keyword), keyword], miss)
+    cat(sprintf("LF5  pass %d chained levels: %d representatives, %d at 0; pass %d order starts %s\n", p, nrow(cl), sum(cl$level == 0),
+                p + 1L, paste(head(ord, 4), collapse = ", ")))
+  }
+}
+fwrite(Q[, .(query, pos, keyword, file, cached, window = paste(FROM, TO), pass = PASSES)], file.path(CACHE, sprintf("vic2026-ladder-%s.csv", TO)))
+cat(sprintf("LF9  wrote %s (pass %d)\n", file.path(CACHE, sprintf("vic2026-ladder-%s.csv", TO)), PASSES))
