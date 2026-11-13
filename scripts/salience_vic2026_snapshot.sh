@@ -19,7 +19,9 @@ LOG=output/salience-snapshot-logs; mkdir -p "$LOG"
 echo "SN0  window end $TO, anchor $ANCHOR, logs in $LOG/"
 run() {  # step name, script
   echo "SN$1  $(date +%H:%M:%S) $2"
-  if ! Rscript "scripts/$2" > "$LOG/$TO-$2.log" 2>&1; then echo "SN$1! $2 failed; tail of its log:"; tail -15 "$LOG/$TO-$2.log"; exit 1; fi
+  local rc=0; Rscript "scripts/$2" > "$LOG/$TO-$2.log" 2>&1 || rc=$?
+  if [[ $rc -eq 3 ]]; then echo "SN$1! $2 THROTTLED by Google: cached queries are kept, rerun this command later"; exit 3; fi
+  if [[ $rc -ne 0 ]]; then echo "SN$1! $2 failed (exit $rc); tail of its log:"; tail -15 "$LOG/$TO-$2.log"; exit 1; fi
 }
 run 1 fetch_salience_vic2026_full.R
 grep -E "^(F|S)[A-Z]*[0-9]" "$LOG/$TO-fetch_salience_vic2026_full.R.log" | tail -3 || true
@@ -27,6 +29,7 @@ run 2 fetch_salience_vic2026_ladder.R
 grep -E "^LF(2|9)" "$LOG/$TO-fetch_salience_vic2026_ladder.R.log" || true
 run 3 build_vic2026_salience_jump.R
 grep -E "^VJ(3|6|7)" "$LOG/$TO-build_vic2026_salience_jump.R.log" || true
+sed -n '/^VJ8/,/^VJ3/p' "$LOG/$TO-build_vic2026_salience_jump.R.log" | grep -v '^VJ3' || true   # the namesake list
 run 4 link_vic2026_salience.R
 tail -3 "$LOG/$TO-link_vic2026_salience.R.log"
 echo "SN5  $(date +%H:%M:%S) done. Read VJ6 link quality above (11 Nov: shared peak median 56, 0 steps over 1.5x), then publish with stage 9."
