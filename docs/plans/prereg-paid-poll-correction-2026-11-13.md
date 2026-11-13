@@ -82,3 +82,11 @@ Deviations are computed for every paid poll and for independent polls dated 2025
     OTH 10.44 -> 10.40 (the ORU poll's One Nation 14 counts for less).
 
 Decision: Pete's (C1-C3 necessary, passed or not testable).
+
+## Amendment 2 (14 Nov 2026, after shipping): a side with no fitted row gets the pooled lean
+
+Review nit 3 of PR #235. A paid poll whose known side had no row in the lean table (no independent polls in reach,
+or a sponsor side never seen before, e.g. the first Climate 200 poll) had NO lean taken off, where partial pooling
+gives a cell with no data the pooled shrunk lean `mu_s` (`.ppc_leans()`, `R/paid_poll.R`). UNKNOWN stays at none.
+Rerun of the screen: C1 18/20 PASS, C2 38/38 byte-identical PASS, live vic2026 unchanged (all three paid sides, ALP+GRN,
+LNP and GRN, have their own row; trend change vs published still ONP +0.14, others under 0.05).

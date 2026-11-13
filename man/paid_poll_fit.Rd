@@ -10,7 +10,7 @@ paid_poll_fit(dv)
 \item{dv}{From \code{\link[=paid_poll_deviations]{paid_poll_deviations()}}, pooled over regions.}
 }
 \value{
-List: \code{lean} (data.table per side: \code{n}, \code{m} raw mean side gap, \code{se}, \code{w}, \code{shrunk}), \code{mu}, \code{se_mu}, \code{w0},
+List: \code{lean} (data.table per side: \code{n}, \code{m} raw mean side gap, \code{se}, \code{w}, \code{shrunk}), \code{mu}, \code{se_mu}, \code{w0}, \code{mu_s} (pooled shrunk lean, for a side with no row),
 \code{tau2}, \code{v0} (mean squared independent deviation per cell, points^2), \code{x2} (extra variance, shrunk), \code{factor}
 (noise sd multiplier for paid polls), \code{n_paid}.
 }

@@ -52,6 +52,19 @@ test_that("apply moves the side's share to the other parties, keeps the total an
   expect_identical(ap$firm_factors, c("A [paid]" = 1.25))
 })
 
+test_that("a known side the fit has no row for gets the pooled shrunk lean; UNKNOWN gets none", {
+  polls <- data.table::data.table(date = as.Date(c("2026-10-01", "2026-10-02", "2026-10-03")), firm = c("A", "B", "C"),
+                                  ALP = 25, LNP = 32, GRN = 15, ONP = 14, OTH = 14)
+  fit <- list(lean = data.table::data.table(side = "GRN", n = 1L, m = 2, se = 1, w = 1, shrunk = 1.5), mu_s = 0.8,
+              factor = 1.25)
+  ap <- paid_poll_apply(polls, rep("party", 3), rep("x", 3), fit, as.Date("2026-11-13"), sides = c("GRN", "IND", "UNKNOWN"))
+  p <- ap$polls
+  expect_equal(p$GRN[1], 13.5)                                # own row
+  expect_equal(p$OTH[2], 14 - 0.8)                            # no IND column: OTH carries the side; pooled lean
+  expect_identical(unlist(p[3, -1:-2]), unlist(polls[3, -1:-2]))   # direction unknown: untouched
+  expect_equal(.ppc_leans(list(lean = fit$lean[0]), c("LNP", NA)), c(LNP = 0))   # an old fit with no mu_s: none
+})
+
 test_that("the switch accepts only 0 or 1", {
   withr::local_envvar(AUSPOL_PAID_POLL_CORRECT = "2")
   expect_error(paid_poll_mode(), "must be")
