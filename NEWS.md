@@ -1,3 +1,7 @@
+# auspol 0.4.168
+
+- **Seat-poll read no longer errors on a scraped row with no pollster** (PR #236): the hand-keyed dedup treated the missing name as an unknown match and stopped; now it is no match and the hand-keyed rows are kept. None in today's data.
+
 # auspol 0.4.167
 
 - **Paid polls count for less** (PR #235, arm PPC, `AUSPOL_PAID_POLL_CORRECT=1`): a statewide poll paid for by a party or advocacy group is compared with the independent polls fielded within 21 days of it. The lean toward its sponsor's side (+0.24 points, SE 0.55, shrunk to about 0) is taken out and it counts x0.64 for its extra noise (`R/paid_poll.R`, log line PDP1). Placebo 18/20; all 38 scored elections unchanged; live vic2026 One Nation +0.14. `docs/plans/prereg-paid-poll-correction-2026-11-13.md`.
