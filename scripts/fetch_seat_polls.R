@@ -450,7 +450,7 @@ if (length(refreshed_from) && file.exists(out_csv)) {
   for (k in names(refreshed_from)) {
     n_old <- npoll(prev, k); n_new <- if (nrow(seat_polls)) npoll(seat_polls, k) else 0L
     message(sprintf("SPF1  %s: %d distinct seat polls before the refresh, %d after", k, n_old, n_new))
-    if (n_new < n_old && accept_fewer) {
+    if (n_new < n_old && accept_fewer && n_new > 0) {   # a page that parses to no polls is never accepted (review, 13 Nov)
       message(sprintf("SPF1  %s: ACCEPTED %d fewer seat polls (--accept-fewer); seat_polls.csv is rewritten from the new page", k, n_old - n_new))
     } else if (n_new < n_old) {
       file.copy(refreshed_from[[k]], file.path(raw_dir, paste0(k, ".html")), overwrite = TRUE, copy.date = TRUE)
