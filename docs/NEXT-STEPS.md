@@ -28,8 +28,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   TWICE ("Lighthouse/Growth Intelligence Centre" unpaired with "Lighthouse"): alias added; only vic changes (640 -> 639 rows).
 - DONE 13 Nov: the SPF1 seat-poll guard has an override: `Rscript scripts/fetch_seat_polls.R --refresh-live --accept-fewer`
   (the stop message names it). Tested on a scratch copy with a planted extra poll: stops without the flag, accepts with it,
-  the next plain refresh passes. OPEN, same area: an NA pollster in a scraped row with primaries would error the dedup
-  (`R/seat_poll_blend.R:1183`); none in the data today.
+  the next plain refresh passes. DONE 14 Nov, same area: an NA pollster in a scraped row with primaries errored the
+  hand-keyed dedup (`if (any(dup))` on NA); now no match (`na.rm`), with a test that failed before the fix.
 - OPEN, NIGHT SOURCE (before 28 Nov): the VEC REFUSED the feed (11 Nov); the night now runs on the VEC WEBSITE.
   BUILT 11 Nov: `R/vec_web.R` (page parser, 2026 + 2022 layouts; booth table identical to the feed path on vic2022's
   final count, every booth cell), `scripts/fetch_vec_web_snapshot.R` (index page -> each district's two voting-centre

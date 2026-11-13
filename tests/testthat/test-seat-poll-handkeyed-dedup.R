@@ -39,4 +39,10 @@ test_that("a hand-keyed seat poll the scraped file also carries is counted once"
                                                 row("Pakenham", "Redbridge", "2026-11-08", "ONP", "35"))), f)
   out <- .read_seat_polls_file_impl(f)
   expect_equal(sum(out$seat_name == "Pakenham"), 3L)
+
+  # a scraped row with primaries but no pollster cannot be matched to anything: no error, the hand-keyed rows kept
+  data.table::fwrite(data.table::rbindlist(list(row("Hawthorn", "Freshwater", "2025-08-16", "LNP", "41"),
+                                                row("Pakenham", NA, "2026-11-08", "ONP", "35"))), f, na = "NA")
+  out <- .read_seat_polls_file_impl(f)
+  expect_equal(sum(out$seat_name == "Pakenham"), 3L)
 })

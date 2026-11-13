@@ -1184,7 +1184,8 @@ seat_poll_weights_split <- function(target_election) {
   hk <- pk(h); sk <- pk(s[is.finite(suppressWarnings(as.numeric(s[["fp"]])))])
   dup <- vapply(seq_len(nrow(hk)), function(i) {
     m <- sk$election == hk$election[i] & sk$seat_name == hk$seat_name[i] & fw(sk$pollster) == fw(hk$pollster[i])
-    any(m & !is.na(sk$fe) & !is.na(hk$fe[i]) & abs(as.numeric(sk$fe - hk$fe[i])) <= 3)
+    # na.rm: a missing pollster, seat or date on either side cannot establish a match (NA would error `if (any(dup))`)
+    any(m & !is.na(sk$fe) & !is.na(hk$fe[i]) & abs(as.numeric(sk$fe - hk$fe[i])) <= 3, na.rm = TRUE)
   }, logical(1))
   if (any(dup)) {
     gone <- hk[dup]
