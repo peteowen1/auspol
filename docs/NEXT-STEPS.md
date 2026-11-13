@@ -22,6 +22,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - DONE 13 Nov: vic2026 salience is in the published forecast (PR #230; stage 9 `PRS1 ... 663 vic2026 rows`; daily run 9:25am
   green with `XG5 salience corpus found for vic2026: 526 of 616`). The coarse anchor scale is fixed: ladder link published 13 Nov
   (PR #231, stage 9 2:59pm, forecast run 3:34pm green, XG5 546 of 616; DECISIONS 13 Nov). Full item in `backlog/journal-2026-11-11-queue-history.md`.
+- OPEN (Pete's call, my recommendation: leave out): the Vic Online Research Unit poll for the Greens (14-26 Oct, n=1488,
+  L/NP 32, ALP 25, GRN 15, ONP 14, OTH 14; TPP L/NP 54) is not in the anchor's poll-data-vic.csv, likely excluded on purpose
+  as a party-commissioned poll. Found by the first `poll-feed-check` run (13 Nov: 23 of 26 AusPoll polls in the data, Pakenham
+  already hand-keyed; the other two gaps are QLD and SA-federal, not read by the vic forecast).
 - DONE 13 Nov: the SPF1 seat-poll guard has an override: `Rscript scripts/fetch_seat_polls.R --refresh-live --accept-fewer`
   (the stop message names it). Tested on a scratch copy with a planted extra poll: stops without the flag, accepts with it,
   the next plain refresh passes. OPEN, same area: an NA pollster in a scraped row with primaries would error the dedup
