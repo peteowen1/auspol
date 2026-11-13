@@ -48,6 +48,8 @@
 #'   Measured 0.6% worse; see docs/plans/prereg-firm-factors.md. `"record"`
 #'   uses each pollster's deviations from RESULTS at elections held before
 #'   this cycle began ([firm_record_factors()]); arm, 2026-10-09.
+#' @param extra_firm_factors `NULL` (default, unchanged), or a named vector of noise sd multipliers for named firms,
+#'   applied on top of `weights` (arm PPC: paid polls under their `"<firm> [paid]"` label).
 #' @param score_after `NULL`, or a Date: also score the cycle's polls dated
 #'   after `as_at` up to it against this fit ([poll_predictive_scores()]),
 #'   returned as `poll_scores`.
@@ -65,7 +67,7 @@ trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
                         min_polls = 8, nu = Inf, with_series = FALSE,
                         sigmas = c("default", "per_cycle", "pooled_tf"),
                         weights = c("equal", "firm_factors", "record"),
-                        score_after = NULL, ...) {
+                        score_after = NULL, extra_firm_factors = NULL, ...) {
   sigmas <- match.arg(sigmas)
   weights <- match.arg(weights)
   firm_w <- NULL
@@ -85,6 +87,13 @@ trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
          " itself; passing it through `...` would be swallowed as a thin ",
          "cycle. Vary a fit_trend() prior instead, or extend this function.",
          call. = FALSE)
+  }
+  # Arm PPC, shipped 13 Nov 2026 (prereg-paid-poll-correction-2026-11-13): party- and advocacy-paid polls get the
+  # shrunk lean toward their sponsor taken out and count for less. No paid poll before as_at: polls unchanged.
+  if (paid_poll_mode()) {
+    ppc <- paid_poll_for(polls, as_at)
+    polls <- ppc$polls
+    if (length(ppc$firm_factors)) extra_firm_factors <- c(extra_firm_factors[setdiff(names(extra_firm_factors), names(ppc$firm_factors))], ppc$firm_factors)
   }
   cp <- cycle_polls(polls, year, cycles)
   keep <- cp$date <= as_at
@@ -180,6 +189,13 @@ trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
         firm_w <- stats::setNames(fac$factor, fac$firm)
       }
     }
+  }
+
+  # Arm PPC (prereg-paid-poll-correction-2026-11-13): noise multipliers for named firms, on top of `weights`
+  # (a paid poll is fitted under its own "<firm> [paid]" label). NULL leaves the fit exactly as before.
+  if (length(extra_firm_factors)) {
+    stopifnot(!is.null(names(extra_firm_factors)), all(is.finite(extra_firm_factors)), all(extra_firm_factors > 0))
+    firm_w <- c(firm_w[setdiff(names(firm_w), names(extra_firm_factors))], extra_firm_factors)
   }
 
   # Skip the posterior-variance solve unless the caller wants the bands. The

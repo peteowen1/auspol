@@ -1,0 +1,21 @@
+pattern,side,note
+liberal party|^liberals?$|group of liberal party members,LNP,"party; Pete approved the list 13 Nov 2026"
+national party|^nationals$,LNP,party
+^advance,LNP,conservative advocacy group
+minerals council,LNP,industry body
+blueprint institute,LNP,"free-market think tank (from memory, not checked against a document)"
+australian energy producers,LNP,industry body
+forest products,LNP,industry body
+labor party|^alp$,ALP,party
+construction.*forestry|cfmmeu|united workers union,ALP,union
+greens,GRN,party (also Victorian Greens); the first matching row wins
+australia institute,ALP+GRN,left advocacy
+climate council,ALP+GRN,left advocacy
+getup,ALP+GRN,left advocacy
+amplify,ALP+GRN,left advocacy
+common threads,ALP+GRN,pro-Treaty advocacy
+queensland conservation council,ALP+GRN,environment advocacy
+climate 200,IND,teal independents' funder
+fair go australia,UNKNOWN,leaning not known: extra noise only
+liberals against nuclear,UNKNOWN,leaning not known: extra noise only
+internal|unnamed|industry association,UNKNOWN,sponsor not named: extra noise only

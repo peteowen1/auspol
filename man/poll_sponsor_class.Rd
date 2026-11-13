@@ -15,7 +15,8 @@ poll_sponsor_class(region, polls, path = poll_wiki_path())
 }
 \value{
 Character vector, one of \code{"party"}, \code{"media"}, \code{"unknown"} per row of \code{polls}; attribute
-\code{matched} (rows matched to a Wikipedia row).
+\code{matched} (rows matched to a Wikipedia row) and attribute \code{sponsor} (the matched row's client text, \code{""} when
+unmatched).
 }
 \description{
 Sponsor class of every poll the trend fits
