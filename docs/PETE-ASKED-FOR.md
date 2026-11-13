@@ -39,6 +39,7 @@ moved verbatim 2026-10-24. Every row below still has something open.
 |---|---|
 | Check the AusPoll X feed so every election poll it posts is in our data; make it a skill; name prominent Australian election analysts on X | **DONE 13 Nov.** 23 of 26 AusPoll polls in the anchor; Pakenham hand-keyed since 10 Nov; the Greens' ORU poll in via our Wikipedia layer. Found and fixed Lighthouse's Vic poll counted twice (PR #234, live 13 Nov). Skill `poll-feed-check` (~/.claude/skills). Handles: @AntonyGreenElec, @PollBludger, @kevinbonham, @benraue, @GhostWhoVotes, @AusPoll6. |
 | Party-paid polls: "test it first, shrinkage or better method, don't just add as is"; Pete chose noise + lean toward the sponsor | **SHIPPING 13 Nov** (`AUSPOL_PAID_POLL_CORRECT=1`, `plans/prereg-paid-poll-correction-2026-11-13.md`): lean learned from same-time independent polls, none detectable yet (+0.24, SE 0.55, shrunk to ~0); paid polls count x0.64. Placebo 18/20; 38 elections unchanged; first scorable on vic2026. |
+| Same request, SEAT polls (14 Nov, Pete chose "Build it"): paid seat polls overstate the sponsor's side +3.0 points net of independent seat polls (29 polls, SE 0.92) | **IN PROGRESS 14 Nov.** Walk: `reviews/seat-poll-paid-lean-walk-2026-11-14.md`. Paid seat polls already count for less (arm H, 18 Oct); the lean correction is being built time-forward and screened on seat accuracy before shipping. Live: Hawthorn only. |
 
 ## 2026-11-07
 
