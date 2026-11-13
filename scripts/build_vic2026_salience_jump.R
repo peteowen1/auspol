@@ -5,7 +5,7 @@
 # is the SNAPSHOT end (AUSPOL_SALIENCE_TO, the fetch window's last day), not polling day: a pre-election
 # snapshot measures the rise so far, and a later snapshot (refetch with a new AUSPOL_SALIENCE_TO) moves it
 # toward the polling-day quantity the backtests use.
-#   Rscript scripts/build_vic2026_salience_jump.R      -> output/vic2026-salience-jump.csv   (codes VJ0-VJ5)
+#   Rscript scripts/build_vic2026_salience_jump.R      -> output/vic2026-salience-jump.csv   (codes VJ0-VJ8)
 suppressMessages(library(data.table))
 WEEKS <- 8L; BASE_DAYS <- 300L; SPAN <- 400L; GEO <- "AU-VIC"   # as fetch_salience_v6.R:38-41
 ANCHOR <- Sys.getenv("AUSPOL_SALIENCE_ANCHOR", "Ben Carroll")   # the Premier (since 28 Jul 2026); must match the fetcher's
@@ -135,6 +135,16 @@ cat(sprintf("VJ7  link = %s; linked positive jumps: %d, distinct values %d, larg
             LINK, length(.lp), uniqueN(round(.lp, 10)), if (length(.lp)) max(table(round(.lp, 10))) else 0L,
             100 * mean(out[linked %in% TRUE, jump] == 0)))
 R <- merge(M[, .(seat, cand, party, keyword)], out, by = "keyword", all.x = TRUE)
+# VJ8 NAMESAKES: a name searched in most weeks BEFORE the campaign is usually someone else (13 Nov: "David John",
+# Berwick IND, searched in 58 of 58 weeks at ~60/100; its drift up gave the state's 9th-largest linked rise). The
+# jump statistic cancels a steady namesake only up to its drift, so name every such candidate with a positive rise.
+.bnz <- rbindlist(lapply(names(B), function(b) {
+  s <- read_series(strsplit(b, "|", fixed = TRUE)[[1]])
+  s[date > REF - BASE_DAYS & date <= REF - WEEKS * 7L, .(base_nz = mean(hits > 0), base = mean(hits)), by = keyword]
+}))
+.ns <- merge(R[is.finite(jump) & jump > 0], .bnz, by = "keyword")[base_nz >= 0.8][order(-jump)]
+cat(sprintf("VJ8  %d candidate(s) with a positive rise were searched in 80%%+ of pre-campaign weeks (likely namesakes; check each):\n", nrow(.ns)))
+if (nrow(.ns)) print(.ns[, .(seat, cand, party, base_nz = round(base_nz, 2), base = round(base, 1), jump = signif(jump, 3))])
 cat(sprintf("VJ3  %d candidates: %d with a jump, %d linked to the anchor scale; %.0f%% of linked exactly zero or below\n",
             nrow(R), sum(is.finite(R$jump_raw)), sum(R$linked %in% TRUE),
             100 * mean(R$jump[R$linked %in% TRUE] <= 0)))
