@@ -131,6 +131,12 @@ paid_poll_fit <- function(dv) {
     ix <- which(pp$side == sd_)
     if (!length(ix) || ln[[sd_]] == 0) next
     sp <- .ppc_side_parties(sd_, unique(pp$party))
+    if (!length(sp)) next
+    # only polls carrying every party of the side and at least one other, as side_gap() and paid_poll_apply() require
+    n_on <- ave(as.integer(pp$party[ix] %in% sp), pp$uid[ix], FUN = sum)
+    n_all <- ave(rep(1L, length(ix)), pp$uid[ix], FUN = sum)
+    ix <- ix[n_on == length(sp) & n_all > n_on]
+    if (!length(ix)) next
     on <- pp$party[ix] %in% sp
     # the lean comes off the side's parties (split by share) and goes to the rest (split by share)
     sh <- pp$value[ix]

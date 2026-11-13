@@ -90,3 +90,6 @@ or a sponsor side never seen before, e.g. the first Climate 200 poll) had NO lea
 gives a cell with no data the pooled shrunk lean `mu_s` (`.ppc_leans()`, `R/paid_poll.R`). UNKNOWN stays at none.
 Rerun of the screen: C1 18/20 PASS, C2 38/38 byte-identical PASS, live vic2026 unchanged (all three paid sides, ALP+GRN,
 LNP and GRN, have their own row; trend change vs published still ONP +0.14, others under 0.05).
+Same review, nits 1-2: the extra-noise loop now skips a paid poll that lacks any party of its side (or has no other
+party), as `side_gap()` and `paid_poll_apply()` already did; before, such a poll had the lean added to every cell,
+inflating the noise factor. Rerun: noise factor 1.246 unchanged, C1/C2 PASS.

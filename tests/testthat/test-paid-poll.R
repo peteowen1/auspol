@@ -65,6 +65,17 @@ test_that("a known side the fit has no row for gets the pooled shrunk lean; UNKN
   expect_equal(.ppc_leans(list(lean = fit$lean[0]), c("LNP", NA)), c(LNP = 0))   # an old fit with no mu_s: none
 })
 
+test_that("the noise fit leaves alone a paid poll missing part of its side, as apply does", {
+  dv <- ppc_dv(lean_lnp = 4, sd_paid = 2)                    # a real LNP lean, so the pooled lean is not zero
+  odd <- function(side) data.table::data.table(i = 9999L, party = c("ALP", "LNP", "ONP", "OTH"), value = 20, ref = 20,
+                                               n_ref = 5, date = as.Date("2026-06-01"), firm = "Paid", paid = TRUE,
+                                               side = side, d = c(1, -1, 0.5, -0.5), uid = "t:9999")
+  f <- paid_poll_fit(data.table::rbindlist(list(dv, odd("GRN")), use.names = TRUE))       # a GRN poll with no GRN figure: no row
+  u <- paid_poll_fit(data.table::rbindlist(list(dv, odd("UNKNOWN")), use.names = TRUE))   # never shifted
+  expect_gt(abs(f$mu_s), 0.5)
+  expect_equal(f$x2, u$x2)
+})
+
 test_that("the switch accepts only 0 or 1", {
   withr::local_envvar(AUSPOL_PAID_POLL_CORRECT = "2")
   expect_error(paid_poll_mode(), "must be")
