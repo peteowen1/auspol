@@ -118,7 +118,7 @@ waiting for R"; Claude in the auspol session did not see these requests firsthan
 | Request | Status |
 |---|---|
 | Review the pipeline for work that gets done and then overwritten | **OPEN (audit 24 Oct):** F8, F10, F12-F19 of the overwrite audit not done. Full history in the backlog file. |
-| Look into salience for vic2026 | **SHIPPED 13 Nov** (PR #230, stage 9 9:23am `PRS1 ... 663 vic2026 rows, snapshot to 2026-11-11`; daily run 9:25am green, `XG5 salience corpus found for vic2026: 526 of 616 seat-classes matched`; published Hawthorn IND 0.406, Benambra IND 0.376). Rank-mapped (his choice 12 Nov). The coarse anchor scale is fixed: the ladder link ships 13 Nov (Pete: "Ship it"; DECISIONS 13 Nov), publish pending stage 9. The DS3b blend stays off with surge-v2 (off since 31 Oct), by design. Full history in the backlog file. |
+| Look into salience for vic2026 | **SHIPPED 13 Nov** (PR #230, stage 9 9:23am `PRS1 ... 663 vic2026 rows, snapshot to 2026-11-11`; daily run 9:25am green, `XG5 salience corpus found for vic2026: 526 of 616 seat-classes matched`; published Hawthorn IND 0.406, Benambra IND 0.376). Rank-mapped (his choice 12 Nov). The coarse anchor scale is fixed: the ladder link SHIPPED 13 Nov (Pete: "Ship it"; PR #231, stage 9 2:59pm `PRS1 ... 685 vic2026 rows`; forecast run 3:34pm green, `XG5 ... 546 of 616`; published Cranbourne ALP 0.682, Essendon IND 0.398). The DS3b blend stays off with surge-v2 (off since 31 Oct), by design. Full history in the backlog file. |
 
 ## 2026-10-16
 

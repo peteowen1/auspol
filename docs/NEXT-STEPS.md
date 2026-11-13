@@ -20,8 +20,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (needs 8 GB free; at 9:36pm 1.7 GB, other verses' R jobs). Pete to send the VEC draft (Gmail, "RE: State Election 2026
   results data feed"): it asks whether the voting-centre pages fill in during the count.
 - DONE 13 Nov: vic2026 salience is in the published forecast (PR #230; stage 9 `PRS1 ... 663 vic2026 rows`; daily run 9:25am
-  green with `XG5 salience corpus found for vic2026: 526 of 616`). The coarse anchor scale is fixed: ladder link ships 13 Nov
-  (DECISIONS 13 Nov). Worktree `C:/dev/auspol-wt-salience` can go. Full item in `backlog/journal-2026-11-11-queue-history.md`.
+  green with `XG5 salience corpus found for vic2026: 526 of 616`). The coarse anchor scale is fixed: ladder link published 13 Nov
+  (PR #231, stage 9 2:59pm, forecast run 3:34pm green, XG5 546 of 616; DECISIONS 13 Nov). Full item in `backlog/journal-2026-11-11-queue-history.md`.
 - OPEN (seat-poll nit from that review): the SPF1 guard (`scripts/fetch_seat_polls.R:443-452`) has no override, so if Wikipedia
   legitimately drops a vic2026 seat poll, every stage 9 keeps the old page until someone reads `s9_seatpolls.log`. Done when
   an `--accept-fewer` flag exists or the stage-9 summary prints SPF1 at the top. Same file area: an NA pollster in a scraped
@@ -176,7 +176,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   fetched, 526 linked to the Carroll scale (148 batches) -- linking works now the campaign has started. 26 Oct snapshot fetched, 0 of 101 batches linkable. All 500 candidates fetched
   18 Oct (window to 6 Oct), but that is before the campaign: nobody's search interest is rising yet (Premier 1.1 in the
   last 8 weeks vs 9.3 before), so batches cannot be linked and `jump` is not comparable with the backtests' polling-day
-  values. Each refresh: `AUSPOL_SALIENCE_TO=<date> Rscript scripts/fetch_salience_vic2026_full.R` (~100 requests,
+  values. Each refresh is ONE command since 13 Nov: `bash scripts/salience_vic2026_snapshot.sh <window end>` (all four steps
+  on one date, anchor checked against leaders.csv; tested 13 Nov on the cached 11 Nov window: byte-identical corpus), then stage 9.
+  The steps it runs: `AUSPOL_SALIENCE_TO=<date> Rscript scripts/fetch_salience_vic2026_full.R` (~100 requests,
   resumable; anchor Ben Carroll since 4 Nov: Allan was replaced as Premier 28 Jul 2026 and her series linked 0 of 101
   batches; check the anchor against `leaders.csv` before each snapshot), then the LADDER (ships 13 Nov, DECISIONS):
   `AUSPOL_SALIENCE_TO=<date> Rscript scripts/fetch_salience_vic2026_ladder.R` (~100 requests, ~12 min, 2 passes; read
