@@ -52,6 +52,30 @@ test_that("apply moves the side's share to the other parties, keeps the total an
   expect_identical(ap$firm_factors, c("A [paid]" = 1.25))
 })
 
+test_that("a known side the fit has no row for gets the pooled shrunk lean; UNKNOWN gets none", {
+  polls <- data.table::data.table(date = as.Date(c("2026-10-01", "2026-10-02", "2026-10-03")), firm = c("A", "B", "C"),
+                                  ALP = 25, LNP = 32, GRN = 15, ONP = 14, OTH = 14)
+  fit <- list(lean = data.table::data.table(side = "GRN", n = 1L, m = 2, se = 1, w = 1, shrunk = 1.5), mu_s = 0.8,
+              factor = 1.25)
+  ap <- paid_poll_apply(polls, rep("party", 3), rep("x", 3), fit, as.Date("2026-11-13"), sides = c("GRN", "IND", "UNKNOWN"))
+  p <- ap$polls
+  expect_equal(p$GRN[1], 13.5)                                # own row
+  expect_equal(p$OTH[2], 14 - 0.8)                            # no IND column: OTH carries the side; pooled lean
+  expect_identical(unlist(p[3, -1:-2]), unlist(polls[3, -1:-2]))   # direction unknown: untouched
+  expect_equal(.ppc_leans(list(lean = fit$lean[0]), c("LNP", NA)), c(LNP = 0))   # an old fit with no mu_s: none
+})
+
+test_that("the noise fit leaves alone a paid poll missing part of its side, as apply does", {
+  dv <- ppc_dv(lean_lnp = 4, sd_paid = 2)                    # a real LNP lean, so the pooled lean is not zero
+  odd <- function(side) data.table::data.table(i = 9999L, party = c("ALP", "LNP", "ONP", "OTH"), value = 20, ref = 20,
+                                               n_ref = 5, date = as.Date("2026-06-01"), firm = "Paid", paid = TRUE,
+                                               side = side, d = c(1, -1, 0.5, -0.5), uid = "t:9999")
+  f <- paid_poll_fit(data.table::rbindlist(list(dv, odd("GRN")), use.names = TRUE))       # a GRN poll with no GRN figure: no row
+  u <- paid_poll_fit(data.table::rbindlist(list(dv, odd("UNKNOWN")), use.names = TRUE))   # never shifted
+  expect_gt(abs(f$mu_s), 0.5)
+  expect_equal(f$x2, u$x2)
+})
+
 test_that("the switch accepts only 0 or 1", {
   withr::local_envvar(AUSPOL_PAID_POLL_CORRECT = "2")
   expect_error(paid_poll_mode(), "must be")

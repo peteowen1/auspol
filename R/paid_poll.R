@@ -83,7 +83,7 @@ paid_poll_deviations <- function(polls, cls, sponsor, as_at, parties = c("ALP", 
 #' Fit the paid-poll lean and noise from deviations
 #'
 #' @param dv From [paid_poll_deviations()], pooled over regions.
-#' @return List: `lean` (data.table per side: `n`, `m` raw mean side gap, `se`, `w`, `shrunk`), `mu`, `se_mu`, `w0`,
+#' @return List: `lean` (data.table per side: `n`, `m` raw mean side gap, `se`, `w`, `shrunk`), `mu`, `se_mu`, `w0`, `mu_s` (pooled shrunk lean, for a side with no row),
 #'   `tau2`, `v0` (mean squared independent deviation per cell, points^2), `x2` (extra variance, shrunk), `factor`
 #'   (noise sd multiplier for paid polls), `n_paid`.
 #' @keywords internal
@@ -97,7 +97,7 @@ paid_poll_fit <- function(dv) {
   n_paid <- data.table::uniqueN(pp$uid)
   empty <- list(lean = data.table::data.table(side = character(0), n = integer(0), m = numeric(0), se = numeric(0),
                                               w = numeric(0), shrunk = numeric(0)),
-                mu = 0, se_mu = NA_real_, w0 = 0, tau2 = 0, v0 = v0, x2 = 0, factor = 1, n_paid = n_paid)
+                mu = 0, se_mu = NA_real_, w0 = 0, mu_s = 0, tau2 = 0, v0 = v0, x2 = 0, factor = 1, n_paid = n_paid)
   if (!n_paid || !is.finite(v0)) return(empty)
   # side gap per paid poll, and the same side gap for every independent poll (its baseline variance)
   side_gap <- function(tab, sd_) {
@@ -122,15 +122,21 @@ paid_poll_fit <- function(dv) {
     mu_s <- w0 * mu
     lean[, w := tau2 / (tau2 + lean$se^2)]
     lean[, shrunk := mu_s + lean$w * (lean$m - mu_s)]
-    fit$lean <- lean; fit$mu <- mu; fit$se_mu <- se_mu; fit$w0 <- w0; fit$tau2 <- tau2
+    fit$lean <- lean; fit$mu <- mu; fit$se_mu <- se_mu; fit$w0 <- w0; fit$mu_s <- mu_s; fit$tau2 <- tau2
   }
   # extra noise: paid polls' squared gaps after the lean, beyond the independent baseline
-  ln <- setNames(fit$lean$shrunk, fit$lean$side)
+  ln <- .ppc_leans(fit, unique(pp$side))
   r <- pp$d
   for (sd_ in names(ln)) {
     ix <- which(pp$side == sd_)
-    if (!length(ix)) next
+    if (!length(ix) || ln[[sd_]] == 0) next
     sp <- .ppc_side_parties(sd_, unique(pp$party))
+    if (!length(sp)) next
+    # only polls carrying every party of the side and at least one other, as side_gap() and paid_poll_apply() require
+    n_on <- ave(as.integer(pp$party[ix] %in% sp), pp$uid[ix], FUN = sum)
+    n_all <- ave(rep(1L, length(ix)), pp$uid[ix], FUN = sum)
+    ix <- ix[n_on == length(sp) & n_all > n_on]
+    if (!length(ix)) next
     on <- pp$party[ix] %in% sp
     # the lean comes off the side's parties (split by share) and goes to the rest (split by share)
     sh <- pp$value[ix]
@@ -142,6 +148,17 @@ paid_poll_fit <- function(dv) {
   fit$x2 <- x2
   fit$factor <- sqrt(1 + x2 / v0)
   fit
+}
+
+#' The lean taken off each side: its own shrunk lean, or the pooled shrunk lean `mu_s` for a known side the fit has
+#' no row for (no independent polls in reach, or a new sponsor side), as partial pooling gives a cell with no data.
+#' UNKNOWN and missing sides get none: the direction is not known.
+#' @keywords internal
+.ppc_leans <- function(fit, sides) {
+  sides <- setdiff(unique(sides[!is.na(sides)]), "UNKNOWN")
+  mu_s <- if (is.null(fit$mu_s) || !is.finite(fit$mu_s)) 0 else fit$mu_s
+  own <- setNames(fit$lean$shrunk, fit$lean$side)
+  setNames(vapply(sides, function(s) if (s %in% names(own) && is.finite(own[[s]])) own[[s]] else mu_s, 1), sides)
 }
 
 #' Apply the paid-poll correction to one region's polls
@@ -160,7 +177,7 @@ paid_poll_apply <- function(polls, cls, sponsor, fit, as_at, sides = NULL) {
   ix <- which(cls == "party" & is.finite(polls$date) & polls$date <= as_at)
   if (!length(ix)) return(list(polls = out, firm_factors = NULL, moved = data.table::data.table()))
   side <- if (is.null(sides)) paid_poll_side(sponsor[ix]) else sides[ix]
-  ln <- setNames(fit$lean$shrunk, fit$lean$side)
+  ln <- .ppc_leans(fit, side)
   cols <- intersect(c("ALP", "LNP", "GRN", "ONP", "OTH", "IND"), names(polls))
   moved <- vector("list", length(ix))
   for (k in seq_along(ix)) {
