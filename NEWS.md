@@ -1,3 +1,7 @@
+# auspol 0.4.165
+
+- **Seat-poll guard override** (PR #233): if Wikipedia really drops a live seat poll, `Rscript scripts/fetch_seat_polls.R --refresh-live --accept-fewer` accepts the lower count once (never zero); the SPF1 stop message names it. Stage 9 never passes the flag. Forecast unchanged.
+
 # auspol 0.4.164
 
 - **One command for a vic2026 salience snapshot** (PR #232): `bash scripts/salience_vic2026_snapshot.sh <window end>` runs the main fetch, the ladder, the builder and the link on one date, and stops unless the anchor is `leaders.csv`'s vic2026 head of government (SVS0-SVS5). The builder's new VJ8 line names every candidate with a positive rise who was searched in most weeks before the campaign, usually a namesake (David John, Berwick, on 11 Nov). Output unchanged.
