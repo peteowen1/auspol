@@ -60,6 +60,25 @@ poll is compared with the independent polls taken at the same time.
 - No outcome-based test of a gain is possible yet; vic2026 (28 Nov) is the first completed election with labelled
   party polls in a scored cycle.
 
-## RESULT
+## Amendment 1 (written before the run, after profiling): subject polls
 
-(Filled in after the runs; this section is the only part written after numbers were seen.)
+Deviations are computed for every paid poll and for independent polls dated 2025-01-01 or later (the baseline's era,
+`PAID_POLL_BASE_FROM`); any independent poll can be a reference. Speed only: no paid poll is recorded before 2025.
+
+## RESULT (13 Nov 2026, `scripts/screen_paid_poll.R`, codes PPC0-PPC4, fresh vic2026 Wikipedia scrape)
+
+- **What it could see:** 12 paid polls the trend fits (fed 5, vic 2, others in nsw/tas/nt; sub-state MRP rows are not
+  fitted polls). Sides: ALP+GRN 6, LNP 5, GRN 1.
+- **C1 placebo: PASS**, 18 of 20 repeats (need 16): random independent polls labelled paid get no lean and no extra noise.
+- **C2: PASS**, all 38 scored elections byte-identical (no paid poll before any of their cutoffs).
+- **C3: not testable**, no scored election has a paid poll before its cutoff (sponsors recorded only from 2025).
+- **C4 live:**
+  - **Lean: none detectable.** Raw side gaps vs same-time independent polls: ALP+GRN -0.55 points (SE 0.82, 6 polls),
+    LNP +1.14 (SE 0.94, 5), GRN +0.50 (SE 1.20, 1). Overall toward-sponsor +0.24 (SE 0.55), kept 16%; between-side
+    variance 0, so every side shrinks to +0.04. The Greens' ORU poll is not shifted.
+  - **Noise: paid polls are noisier.** An independent poll's gap from its neighbours has sd 2.04 points (mean square
+    4.17); paid polls add 2.32 (shrunk by n/(n+3)). Noise factor 1.248, so a paid poll counts 0.64 of an independent one.
+  - vic2026 trend, published -> arm: LNP 30.24 -> 30.21, ALP 23.08 -> 23.03, GRN 14.13 -> 14.12, **ONP 19.84 -> 19.98**,
+    OTH 10.44 -> 10.40 (the ORU poll's One Nation 14 counts for less).
+
+Decision: Pete's (C1-C3 necessary, passed or not testable).

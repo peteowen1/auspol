@@ -21,7 +21,8 @@ POLL_SPONSOR_ADVOCACY <- paste0("party|labor|liberal|greens|nationals|institute|
 #' @param polls From [load_polls()] for that region.
 #' @param path Path to `statewide_polls_wiki.csv`; by default the copy the trend reads ([poll_wiki_path()]).
 #' @return Character vector, one of `"party"`, `"media"`, `"unknown"` per row of `polls`; attribute
-#'   `matched` (rows matched to a Wikipedia row).
+#'   `matched` (rows matched to a Wikipedia row) and attribute `sponsor` (the matched row's client text, `""` when
+#'   unmatched).
 #' @export
 poll_sponsor_class <- function(region, polls, path = poll_wiki_path()) {
   lab <- .sponsor_wiki_labels(path)
@@ -29,6 +30,7 @@ poll_sponsor_class <- function(region, polls, path = poll_wiki_path()) {
   is_reg <- lab$region == reg
   wl <- lab[is_reg]
   out <- rep("unknown", nrow(polls))
+  spn <- rep("", nrow(polls))   # the matched Wikipedia row's client text (arm PPC reads it for the sponsor's side)
   matched <- 0L
   if (nrow(wl) && nrow(polls)) {
     alias <- poll_wiki_alias(path)
@@ -41,11 +43,12 @@ poll_sponsor_class <- function(region, polls, path = poll_wiki_path()) {
       hit <- which(w_fam == p_fam[i] & is.finite(dd) & dd <= 4L &
                      (!is.finite(w_alp) | !is.finite(p_alp[i]) | abs(w_alp - p_alp[i]) <= 1.5))
       if (!length(hit)) next
-      out[i] <- w_cls[hit[which.min(dd[hit])]]
+      j <- hit[which.min(dd[hit])]
+      out[i] <- w_cls[j]; spn[i] <- wl$sponsor[j]
       matched <- matched + 1L
     }
   }
-  structure(out, matched = matched)
+  structure(out, matched = matched, sponsor = spn)
 }
 
 .sponsor_cache <- new.env(parent = emptyenv())
@@ -72,7 +75,7 @@ poll_sponsor_class <- function(region, polls, path = poll_wiki_path()) {
   series <- names(n_media)[n_media >= 3L]
   cls[cls == "none"] <- ifelse(fam[cls == "none"] %in% series, "media", "unknown")
   lab <- data.table::data.table(region = w$region, fam = fam, mid = mid,
-                                alp = suppressWarnings(as.numeric(w$alp_fp)), cls = cls)
+                                alp = suppressWarnings(as.numeric(w$alp_fp)), cls = cls, sponsor = sp)
   lab <- lab[is.finite(lab$mid)]
   .sponsor_cache[[path]] <- lab
   lab
