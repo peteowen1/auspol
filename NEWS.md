@@ -1,3 +1,7 @@
+# auspol 0.4.163
+
+- **Candidate salience is linked by a ladder, not the Premier** (PR #231): next to the Premier almost every candidate's Google Trends series rounded to 0 or 1, so linked rises came in about 5 steps. `scripts/fetch_salience_vic2026_ladder.R` queries the batch representatives 5 at a time in loudness order, 2 shared with the next query, and `scripts/build_vic2026_salience_jump.R` chains the scale through them (VJ6 link quality, VJ7 ties): 229 distinct values among 238 positive rises, 561 candidates linked. In the live forecast 4 favourites change (Cranbourne, Essendon, Bentleigh, Eltham) and expected seats move under 1. Also: the geocoder places all 359 venue lookups (11 by hand, 29 flagged approximate), and the DS3b log line names surge-v2 as the reason the blend is off.
+
 # auspol 0.4.162
 
 - **Candidate salience in the live Victorian forecast** (PR #230): the 11 Nov search-interest snapshot is linked into `output/salience-v6.csv` (663 vic2026 rows, rank-mapped onto the backtest scale) and shipped at stage 9, which now stops if the rows are missing (PRS1); the daily run fails without them. Close seats move most (Hawthorn and Benambra independents).
