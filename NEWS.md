@@ -1,3 +1,7 @@
+# auspol 0.4.167
+
+- **Paid polls count for less** (PR #235, arm PPC, `AUSPOL_PAID_POLL_CORRECT=1`): a statewide poll paid for by a party or advocacy group is compared with the independent polls fielded within 21 days of it. The lean toward its sponsor's side (+0.24 points, SE 0.55, shrunk to about 0) is taken out and it counts x0.64 for its extra noise (`R/paid_poll.R`, log line PDP1). Placebo 18/20; all 38 scored elections unchanged; live vic2026 One Nation +0.14. `docs/plans/prereg-paid-poll-correction-2026-11-13.md`.
+
 # auspol 0.4.166
 
 - **Lighthouse's Vic poll counted once** (PR #234): the anchor's "Lighthouse" and Wikipedia's "Lighthouse/Growth Intelligence Centre" are now one firm in the poll layer (`firm_alias.csv`), so the 19 Oct-1 Nov poll stops entering the trend twice. Only vic2026 changes (640 -> 639 poll rows); live after the next stage 9.
