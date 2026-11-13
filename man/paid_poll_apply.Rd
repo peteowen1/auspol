@@ -4,7 +4,7 @@
 \alias{paid_poll_apply}
 \title{Apply the paid-poll correction to one region's polls}
 \usage{
-paid_poll_apply(polls, cls, sponsor, fit, as_at)
+paid_poll_apply(polls, cls, sponsor, fit, as_at, sides = NULL)
 }
 \arguments{
 \item{polls}{From \code{\link[=load_polls]{load_polls()}} (the region being forecast).}
@@ -14,6 +14,8 @@ paid_poll_apply(polls, cls, sponsor, fit, as_at)
 \item{fit}{From \code{\link[=paid_poll_fit]{paid_poll_fit()}}.}
 
 \item{as_at}{Cutoff; paid polls after it are left alone (the trend never sees them).}
+
+\item{sides}{\code{NULL} (read \code{sponsor_side.csv} via \code{\link[=paid_poll_side]{paid_poll_side()}}) or the side of every row of \code{polls}.}
 }
 \value{
 List: \code{polls} (paid polls shifted and relabelled \code{"<firm> [paid]"}), \code{firm_factors} (named, the paid

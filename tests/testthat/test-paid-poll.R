@@ -1,6 +1,8 @@
 # Arm PPC (R/paid_poll.R; plans/prereg-paid-poll-correction-2026-11-13.md). Synthetic polls only: no anchor data.
 
 test_that("sponsor sides come from sponsor_side.csv, first match wins, unmatched is UNKNOWN", {
+  # R CMD check's package copy has no external/ (.Rbuildignore); the repo checkout does
+  skip_if_not(file.exists(file.path(pkg_root(), "external", "reference", "polls", "sponsor_side.csv")), "sponsor_side.csv not in this copy")
   s <- paid_poll_side(c("Victorian Greens", "The Australia Institute", "Liberal Party", "Minerals Council of Australia",
                         "Climate 200", "Somebody New", ""))
   expect_identical(s, c("GRN", "ALP+GRN", "LNP", "LNP", "IND", "UNKNOWN", NA))
@@ -41,7 +43,7 @@ test_that("apply moves the side's share to the other parties, keeps the total an
                                   OTH = c(14, 10, 14))
   fit <- list(lean = data.table::data.table(side = "GRN", n = 1L, m = 2, se = 1, w = 1, shrunk = 1.5), factor = 1.25)
   ap <- paid_poll_apply(polls, c("party", "media", "party"), c("Victorian Greens", "", "Victorian Greens"), fit,
-                        as.Date("2026-11-13"))
+                        as.Date("2026-11-13"), sides = c("GRN", NA, "GRN"))
   p <- ap$polls
   expect_equal(p$GRN[1], 13.5)
   expect_equal(sum(unlist(p[1, c("ALP", "LNP", "GRN", "ONP", "OTH")])), 100)

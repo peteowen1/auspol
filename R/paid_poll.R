@@ -150,15 +150,16 @@ paid_poll_fit <- function(dv) {
 #' @param cls,sponsor From [poll_sponsor_class()] for `polls`.
 #' @param fit From [paid_poll_fit()].
 #' @param as_at Cutoff; paid polls after it are left alone (the trend never sees them).
+#' @param sides `NULL` (read `sponsor_side.csv` via [paid_poll_side()]) or the side of every row of `polls`.
 #' @return List: `polls` (paid polls shifted and relabelled `"<firm> [paid]"`), `firm_factors` (named, the paid
 #'   labels at `fit$factor`; `NULL` when no paid poll is in reach), `moved` (data.table of what changed).
 #' @keywords internal
-paid_poll_apply <- function(polls, cls, sponsor, fit, as_at) {
+paid_poll_apply <- function(polls, cls, sponsor, fit, as_at, sides = NULL) {
   out <- data.table::copy(polls)
   for (a in c("parties", "region")) data.table::setattr(out, a, attr(polls, a))
   ix <- which(cls == "party" & is.finite(polls$date) & polls$date <= as_at)
   if (!length(ix)) return(list(polls = out, firm_factors = NULL, moved = data.table::data.table()))
-  side <- paid_poll_side(sponsor[ix])
+  side <- if (is.null(sides)) paid_poll_side(sponsor[ix]) else sides[ix]
   ln <- setNames(fit$lean$shrunk, fit$lean$side)
   cols <- intersect(c("ALP", "LNP", "GRN", "ONP", "OTH", "IND"), names(polls))
   moved <- vector("list", length(ix))
