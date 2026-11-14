@@ -47,3 +47,12 @@ test_that("the live runner's class_split setting: on by default, off when asked,
   expect_identical(suppressMessages(.night_class_split_cfg("on", "vic2026", NULL))$f, c(IND = 0.4))
   expect_error(.night_class_split_cfg("yes", "vic2026", ca), "NW23!")
 })
+
+test_that("a failing parameter fit turns the split off for the night instead of stopping it, and is cached", {
+  local_mocked_bindings(night_class_split_params = function(target_election) stop("no such file"))
+  ca <- new.env()
+  expect_message(p <- .night_class_split_cfg(NULL, "vic2026", ca), "NW23! night class split OFF")
+  expect_null(p)
+  expect_true(exists("class_split_vic2026", envir = ca, inherits = FALSE))   # cached: later cycles do not retry
+  expect_null(suppressMessages(.night_class_split_cfg(NULL, "vic2026", ca)))
+})

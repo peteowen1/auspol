@@ -558,7 +558,9 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
   }
   # a state with no surge (surge_h NULL) has nothing to fade; night_surge_fade() would stop on it
   sh <- if (surge_fade && nu$n_updated > 0L && length(st$surge_h)) night_surge_fade(st$surge_h, nu$counted, seats) else st$surge_h
-  ncs <- if (!is.null(class_split) && nu$n_updated > 0L) night_class_split(conv$live, nu$units, nu$counted, class_split, seats) else NULL
+  # a split that fails this cycle (e.g. a booth table without candidate names, NCS1!) leaves the cycle as without it
+  ncs <- if (!is.null(class_split) && nu$n_updated > 0L) tryCatch(night_class_split(conv$live, nu$units, nu$counted, class_split, seats),
+    error = function(e) { message("NW24! night class split skipped this cycle: ", conditionMessage(e)); NULL }) else NULL
   csp <- .night_merge_split(st$coalition_split, ncs, seats)
   run <- function(ov) simulate_seat_contests(level_sd = st$level_sd, sd_override = sdo, level_mult = st$level_mult, shares, st$fm,
                                 party_sd = st$psd, statewide_draws = swd, seat_sd = st$seat_sd, n_sims = sims,
@@ -719,7 +721,10 @@ night_publish_json <- function(doc, out_file, min_seats = 1L) {
     stop("NW23! class_split must be \"on\" or \"off\" (got ", paste(format(x), collapse = ","), ")", call. = FALSE)
   key <- paste0("class_split_", election)
   if (!is.null(cache) && exists(key, envir = cache, inherits = FALSE)) return(get(key, envir = cache))
-  p <- night_class_split_params(election)
+  # never stops the night: its inputs (output/minor-candidate-oof-resid-v2.csv, the transfers files) are machine-local,
+  # so a missing or unreadable one turns the split OFF for the night, says so, and is cached so cycles do not retry
+  p <- tryCatch(night_class_split_params(election), error = function(e) {
+    message("NW23! night class split OFF for the night, its parameters failed: ", conditionMessage(e)); NULL })
   message(sprintf("NW23  night class split %s: %s", election, if (is.null(p)) "NO parameters, off" else
     sprintf("sd0 %.3f, f %s", p$sd0, paste(names(p$f), sprintf("%.3f", p$f), collapse = " "))))
   if (!is.null(cache)) assign(key, p, envir = cache)
