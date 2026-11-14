@@ -69,3 +69,26 @@
   junctions under `external/`: unlink them before removing it.
   THEN, before the final 25-27 Nov snapshot: fix the coarse anchor link (linked values in ~5 steps of 0.0607; review file
   above), rerun the with/without.
+
+## Moved from NEXT-STEPS 14 Nov 2026 (closed items, verbatim)
+
+- **Status 12 Nov, 9:50pm.** main at 0.4.160. dev is 14 commits ahead, unmerged on purpose: council coverage (CH3 names,
+  per-council coverage, Qld 2008, stale overlap rebuild), night replay settings check (NRC3), seat-poll `--refresh-live` and
+  hand-keyed dedup. They go to main in one PR after the 13 Nov rebuild scores (item below). Round-2 review of the seat-poll
+  fixes (f4a3cbff..db6e0637, Sonnet, 12 Nov 9:10pm): 0 Important, so the gate is passed. Rebuild PENDING for 11:30pm
+  (needs 8 GB free; at 9:36pm 1.7 GB, other verses' R jobs). Pete to send the VEC draft (Gmail, "RE: State Election 2026
+  results data feed"): it asks whether the voting-centre pages fill in during the count.
+- DONE 13 Nov: vic2026 salience is in the published forecast (PR #230; stage 9 `PRS1 ... 663 vic2026 rows`; daily run 9:25am
+  green with `XG5 salience corpus found for vic2026: 526 of 616`). The coarse anchor scale is fixed: ladder link published 13 Nov
+  (PR #231, stage 9 2:59pm, forecast run 3:34pm green, XG5 546 of 616; DECISIONS 13 Nov). Full item in `backlog/journal-2026-11-11-queue-history.md`.
+- DONE 13 Nov (first `poll-feed-check` run: 23 of 26 AusPoll polls in the anchor, Pakenham hand-keyed): the Greens' ORU Vic
+  poll (14-26 Oct) is not in the anchor but IS in the trend at full weight through the layered Wikipedia scrape (Pete, 13 Nov:
+  keep it at full weight; sponsor correction was refused 4 Nov). Same check found Lighthouse's 19 Oct-1 Nov Vic poll counted
+  TWICE ("Lighthouse/Growth Intelligence Centre" unpaired with "Lighthouse"): alias added; only vic changes (640 -> 639 rows).
+- DONE 13 Nov: the SPF1 seat-poll guard has an override: `Rscript scripts/fetch_seat_polls.R --refresh-live --accept-fewer`
+  (the stop message names it). Tested on a scratch copy with a planted extra poll: stops without the flag, accepts with it,
+  the next plain refresh passes. DONE 14 Nov, same area: an NA pollster in a scraped row with primaries errored the
+  hand-keyed dedup (`if (any(dup))` on NA); now no match (`na.rm`), with a test that failed before the fix.
+- DONE 13 Nov: council-history fix (PR #229, stage 9 8:34am, daily run 9:10am green; Footscray now GRN 0.519) and the
+  Pakenham seat-poll correction (published ONP 0.829 -> 0.888, LNP 0.161 -> 0.104, ALP 0.005 -> 0.004; poll fix plus new
+  trees). Full items moved to `backlog/journal-2026-11-11-queue-history.md`.

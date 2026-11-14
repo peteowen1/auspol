@@ -13,26 +13,14 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (10 Nov: One Nation stands in all 88 seats, so no seat-count conditioning applies; recheck for nsw2027's list); (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 12 Nov, 9:50pm.** main at 0.4.160. dev is 14 commits ahead, unmerged on purpose: council coverage (CH3 names,
-  per-council coverage, Qld 2008, stale overlap rebuild), night replay settings check (NRC3), seat-poll `--refresh-live` and
-  hand-keyed dedup. They go to main in one PR after the 13 Nov rebuild scores (item below). Round-2 review of the seat-poll
-  fixes (f4a3cbff..db6e0637, Sonnet, 12 Nov 9:10pm): 0 Important, so the gate is passed. Rebuild PENDING for 11:30pm
-  (needs 8 GB free; at 9:36pm 1.7 GB, other verses' R jobs). Pete to send the VEC draft (Gmail, "RE: State Election 2026
-  results data feed"): it asks whether the voting-centre pages fill in during the count.
+- **Status 14 Nov, 2:30pm.** main and dev level at 0.4.170 (PRs #233-#238 merged 13-14 Nov: seat-poll guard override,
+  Lighthouse alias, statewide paid-poll correction PPC and its nits, NA-pollster dedup, paid SEAT-poll lean SPL). Daily
+  forecast runs green. Pete to send the VEC draft (Gmail, "RE: State Election 2026 results data feed"): it asks whether
+  the voting-centre pages fill in during the count. Next dated steps: 23 Nov week-of-election VEC venues rerun; 25 Nov
+  final salience snapshot (both in The Daily Eight).
 - SHIPPED 14 Nov, arm SPL (Pete's override, "Build per-side, ship live"): paid SEAT polls lose a lean toward the sponsor's
   side, each side shrunk to zero (`AUSPOL_SEAT_POLL_PAID_LEAN=1`, `plans/prereg-seat-paid-lean-2026-11-14.md`). Backtest
   neutral; live today unchanged (Hawthorn's paid poll is 15 months old). OPEN after 28 Nov: score it on vic2026.
-- DONE 13 Nov: vic2026 salience is in the published forecast (PR #230; stage 9 `PRS1 ... 663 vic2026 rows`; daily run 9:25am
-  green with `XG5 salience corpus found for vic2026: 526 of 616`). The coarse anchor scale is fixed: ladder link published 13 Nov
-  (PR #231, stage 9 2:59pm, forecast run 3:34pm green, XG5 546 of 616; DECISIONS 13 Nov). Full item in `backlog/journal-2026-11-11-queue-history.md`.
-- DONE 13 Nov (first `poll-feed-check` run: 23 of 26 AusPoll polls in the anchor, Pakenham hand-keyed): the Greens' ORU Vic
-  poll (14-26 Oct) is not in the anchor but IS in the trend at full weight through the layered Wikipedia scrape (Pete, 13 Nov:
-  keep it at full weight; sponsor correction was refused 4 Nov). Same check found Lighthouse's 19 Oct-1 Nov Vic poll counted
-  TWICE ("Lighthouse/Growth Intelligence Centre" unpaired with "Lighthouse"): alias added; only vic changes (640 -> 639 rows).
-- DONE 13 Nov: the SPF1 seat-poll guard has an override: `Rscript scripts/fetch_seat_polls.R --refresh-live --accept-fewer`
-  (the stop message names it). Tested on a scratch copy with a planted extra poll: stops without the flag, accepts with it,
-  the next plain refresh passes. DONE 14 Nov, same area: an NA pollster in a scraped row with primaries errored the
-  hand-keyed dedup (`if (any(dup))` on NA); now no match (`na.rm`), with a test that failed before the fix.
 - OPEN, NIGHT SOURCE (before 28 Nov): the VEC REFUSED the feed (11 Nov); the night now runs on the VEC WEBSITE.
   BUILT 11 Nov: `R/vec_web.R` (page parser, 2026 + 2022 layouts; booth table identical to the feed path on vic2022's
   final count, every booth cell), `scripts/fetch_vec_web_snapshot.R` (index page -> each district's two voting-centre
@@ -50,9 +38,6 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   reference and its turnout fell to the state rate; `.night_seat_names()` now puts every input's names into the model's.
   Checked on all 88 districts with the 2022 pages under the live 2026 configuration (87 updated; Narracan has no 2022 page); (4) DONE 11 Nov: dress rehearsal of fetcher + loop on the live Nepean pages (found and fixed: the loop never saw website snapshots; the website candidate list has no enrolment, now `external/reference/vec/2026/enrolment/enrolment-2026.csv`, pass it as --enrolment); (5) the ITG booths build
   (`C:/dev/inthegame-blog/politics/night-maps/build-booths-2026.py`) also assumed the feed.
-- DONE 13 Nov: council-history fix (PR #229, stage 9 8:34am, daily run 9:10am green; Footscray now GRN 0.519) and the
-  Pakenham seat-poll correction (published ONP 0.829 -> 0.888, LNP 0.161 -> 0.104, ALP 0.005 -> 0.004; poll fix plus new
-  trees). Full items moved to `backlog/journal-2026-11-11-queue-history.md`.
 - IN FLIGHT 9 Nov (Pete chose the levers): first-time-independent under-call. Six levers mapped in
   `reviews/newcomer-independents-walk-2026-11-09.md` (last section). Lever 1 REFUSED twice, stays off
   (`AUSPOL_NEW_IND_SHRINK_SIGNAL`, `_SIGNAL_CAP`; `plans/prereg-new-ind-shrink-signal-2026-11-09.md`: capped -68 SE 76;
