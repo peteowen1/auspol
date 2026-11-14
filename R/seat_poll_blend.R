@@ -68,6 +68,8 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
              # Under AUSPOL_POSTXGB_RESID_NET=1 current_seat_predictions() also reads the port's inputs;
              # stamped only then, so the default key (and so the default cache) is unchanged.
              if (postxgb_resid_net_on()) .port_input_files() else character(0),
+             # arm SPL reads each paid poll's side from sponsor_side.csv; stamped only when on (default key unchanged)
+             if (.seat_paid_lean_on()) file.path(pkg_root(), "external", "reference", "polls", "sponsor_side.csv") else character(0),
              extra)
   fi <- file.info(files, extra_cols = FALSE)
   # Hashed: the key is used as a variable name in .seat_poll_memo, and R caps those at 10,000 bytes. Every

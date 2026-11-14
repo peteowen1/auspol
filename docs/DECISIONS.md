@@ -4,6 +4,10 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-11-14 Paid SEAT polls lose a lean toward their sponsor's side, each side shrunk to zero on its own (Pete: "Build per-side, ship live"; an override of an unvalidated backtest).**
+  Hindsight: fed2025 Coalition-paid +4.7 net, Labor/Greens +2.6, Climate 200 -0.5. Time-forward no variant beat zero on fed2025 (only 6
+  older Labor/Greens-side polls to learn from). Placebo 18/20; live: Hawthorn's Liberal-members poll 41 -> 37.7 only. Score on vic2026.
+  `plans/prereg-seat-paid-lean-2026-11-14.md` (amendment 3).
 - **2026-11-13 Party- and advocacy-paid statewide polls count x0.64 and lose a shrunk lean toward their sponsor (Pete, 13 Nov: "Ship it").**
   12 paid polls since 2025 vs same-time independent polls: lean +0.24 (SE 0.55) -> ~0; extra noise -> factor 1.248. Placebo
   18/20; no scored election has a paid poll before its cutoff, so it is first scored on vic2026. `plans/prereg-paid-poll-correction-2026-11-13.md`.

@@ -169,7 +169,8 @@ seat_paid_lean_fit <- function(dev, s2_ind = NA_real_, df_ind = 0) {
 #' @keywords internal
 seat_paid_lean <- function(target_election) {
   .seat_poll_memoised(.seat_poll_memo_key(target_election, "spl", FALSE, FALSE, FALSE,
-                                          extra = file.path(pkg_root(), "external", "elections", "aec-fed-tcp.csv")),
+                                          extra = c(file.path(pkg_root(), "external", "elections", "aec-fed-tcp.csv"),
+                                                    file.path(pkg_root(), "external", "reference", "polls", "sponsor_side.csv"))),
                       function() {
     ed <- election_dates()
     t0 <- as.Date(unname(ed[target_election]))
@@ -228,6 +229,8 @@ seat_paid_lean_apply <- function(per_poll, fit, sides = NULL) {
     full <- all(c("ALP", "LNP", "GRN") %in% cl)
     l <- ln[[sd_]] * (if (full) sum(out$fp[ix]) / 100 else 1)
     f <- out$fp[ix]
+    # never more than the figures it comes off (a partial poll naming only a small side figure): no negative share
+    l <- if (l > 0) min(l, sum(f[on])) else if (any(!on)) max(l, -sum(f[!on])) else 0
     f[on] <- f[on] - l * f[on] / sum(f[on])
     if (any(!on)) f[!on] <- f[!on] + l * f[!on] / sum(f[!on])
     data.table::set(out, i = ix, j = "fp", value = f)

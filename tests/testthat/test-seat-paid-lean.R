@@ -65,6 +65,9 @@ test_that("apply takes the lean off the side's figures and gives it to the rest;
   # a partial poll (no GRN) takes the whole lean, not the lean scaled by its 60-point total
   pp <- data.table::data.table(poll_id = "q", seat = "Q", group = "direct_stake", sponsor = "Advance", class = c("LNP", "ALP"), fp = c(40, 20))
   expect_equal(seat_paid_lean_apply(pp, fit)$fp, c(36, 24))
+  # a lean bigger than the side's only figure takes it to zero, never below
+  small <- data.table::data.table(poll_id = "s", seat = "S", group = "direct_stake", sponsor = "Advance", class = "LNP", fp = 3)
+  expect_equal(seat_paid_lean_apply(small, fit)$fp, 0)
   # a known side with no row of its own gets none (amendment 3)
   r2 <- data.table::copy(r); r2$sponsor[r2$poll_id == "p1"] <- "Australia Institute"   # ALP+GRN: no row
   o2 <- seat_paid_lean_apply(r2, fit)
