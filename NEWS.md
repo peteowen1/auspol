@@ -1,3 +1,7 @@
+# auspol 0.4.173
+
+- **vic2026 Liberal how-to-vote card is known: Labor above the Greens** (PR #241): read from the VEC's registered cards (6 of 7 inner-Melbourne cards; Brunswick open). Replaces the 0.67 card mix. A seat-level open card now keeps that seat's learned flows. Live: Pascoe Vale Labor 0.347 -> 0.426, Northcote 0.163 -> 0.205, Footscray 0.262 -> 0.301, Preston 0.818 -> 0.843; expected seats ALP +0.27, GRN -0.27.
+
 # auspol 0.4.172
 
 - **Federal night replay matches the on-screen pair case-folded** (PR #240): "Van MANEN" against "VAN MANEN" had cost 8 divisions a night their two-candidate count (Forde fed2025 among them). The night class split restated on the fixed replays still passes (pooled -0.0084, SE 0.0095; without Monash +0.0011, SE 0.0010); the live `.NIGHT_PAIR_CAL` refit is identical. Replay harness only.
