@@ -733,3 +733,11 @@ Replay-only until the 2026 feed arrives; none is read by the published forecast.
 | noise shrink | extra variance x n/(n+3) | no: the `AUSPOL_CONSERVE_SHRINK_K` precedent |
 | lean, noise factor | fitted every run (13 Nov: lean ~0 per side, factor 1.248) | yes |
 | sponsor sides | `external/reference/polls/sponsor_side.csv` | no: hand list, approved by Pete 13 Nov |
+
+## Paid seat-poll lean (`AUSPOL_SEAT_POLL_PAID_LEAN`, SHIPPED 2026-11-14; `R/seat_paid_lean.R`; `plans/prereg-seat-paid-lean-2026-11-14.md`)
+
+| constant | value | from data? |
+|---|---|---|
+| `SEAT_PAID_LEAN_BASE_K` | an election's independent-poll side mean shrunk to 0 by n/(n+3) | no: the `AUSPOL_CONSERVE_SHRINK_K` precedent |
+| `SEAT_PAID_LEAN_SIDES` | ALP, ALP+GRN, GRN, LNP, IND (UNKNOWN gets none) | no: the sides of `sponsor_side.csv` |
+| lean per side, noise | fitted per target from earlier elections, each side shrunk to zero (vic2026: LNP +3.27, ALP+GRN +2.97, IND -0.18; noise sd 4.54) | yes |

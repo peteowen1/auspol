@@ -1,3 +1,7 @@
+# auspol 0.4.170
+
+- **Paid seat polls lose their lean toward the sponsor** (PR #238, arm SPL, `AUSPOL_SEAT_POLL_PAID_LEAN=1`, Pete's override): learned time-forward from seat results net of independent seat polls, each side shrunk to zero on its own (`R/seat_paid_lean.R`, SPQ1/SPQ2). Looking back, fed2025 Coalition-paid polls overstated the Coalition +4.7 net; placebo 18/20; backtest neutral; live vic2026 unchanged today. `docs/plans/prereg-seat-paid-lean-2026-11-14.md`.
+
 # auspol 0.4.169
 
 - **Paid polls: a sponsor side with no fitted lean gets the pooled one** (PR #237): a first Climate 200 poll, or one with no independent polls near it, now has the pooled shrunk lean taken off rather than none, and the noise fit skips a paid poll missing part of its side. Live vic2026 and all 38 scored elections unchanged.

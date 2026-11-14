@@ -1044,7 +1044,18 @@ CLASSIFY <- list(
   AUSPOL_WA_TRANSFER = "HARNESS-ONLY, WA: forces candidate transfer on/off; empty (published) keeps it tied to the slope mode.",
   AUSPOL_XGB_NOTIONAL = "FITTING-TIME, on: x_notional_adj feature in scripts/fit_xgb_primary_v6.R; baked into the trained model.",
   AUSPOL_XGB_RAW_LEVEL = "FITTING-TIME ARM, off: raw level features in scripts/fit_xgb_primary_v6.R; never shipped.",
-  AUSPOL_XGB_RETIRING_MP = "FITTING-TIME ARM, off: retiring_mp_tenure feature in scripts/fit_xgb_primary_v6.R; never shipped."
+  AUSPOL_XGB_RETIRING_MP = "FITTING-TIME ARM, off: retiring_mp_tenure feature in scripts/fit_xgb_primary_v6.R; never shipped.",
+  # ---- Added 2026-11-14: three switches of 12-14 Nov that printed MR2!.
+  AUSPOL_EVENTUAL_FIXES = paste(
+    "DATA CORRECTION, on since 12 Nov: load_eventual_results() in R/fundamentals.R fixes known errors in the anchor's",
+    "eventual-results.csv (EVR1 line); every path that reads past results reaches it, below the entry-point grep."),
+  AUSPOL_PAID_POLL_CORRECT = paste(
+    "SHIPPED 2026-11-13 (Pete; plans/prereg-paid-poll-correction-2026-11-13.md). Read in R/paid_poll.R via trend_as_at()",
+    "in R/projection.R, which every harness and fit_seats_full.R call to fit the statewide trend (PDP1 line)."),
+  AUSPOL_SEAT_POLL_PAID_LEAN = paste(
+    "SHIPPED 2026-11-14 as Pete's override (plans/prereg-seat-paid-lean-2026-11-14.md amendment 3). Read in",
+    "R/seat_paid_lean.R from .seat_poll_shares_impl() in R/seat_poll_blend.R, which every harness and fit_seats_full.R",
+    "reach through seat_poll_shares() (SPQ1/SPQ2 lines).")
 )
 
 fmt_row <- function(sw) {
