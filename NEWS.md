@@ -1,3 +1,7 @@
+# auspol 0.4.172
+
+- **Federal night replay matches the on-screen pair case-folded** (PR #240): "Van MANEN" against "VAN MANEN" had cost 8 divisions a night their two-candidate count (Forde fed2025 among them). The night class split restated on the fixed replays still passes (pooled -0.0084, SE 0.0095; without Monash +0.0011, SE 0.0010); the live `.NIGHT_PAIR_CAL` refit is identical. Replay harness only.
+
 # auspol 0.4.171
 
 - **Election night counts two candidates of one class separately** (PR #239, live default, Pete: "Ship for 28 Nov"): the junior candidate's share comes from the counted booth figures (`R/night_class_split.R`, NW23/NW24). Three replayed nights: pooled night log loss -0.0076 (SE 0.0096); Monash fed2025's Liberal winner 0.005 -> 0.469. `docs/plans/prereg-night-class-split-2026-11-14.md`.

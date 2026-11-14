@@ -104,7 +104,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (Liberal ~0.005). CORRECTED 14 Nov: the cause is not the pair prior but two independents run as one (Leonard 17.1 +
   Broadbent 10.2 = one IND on 27.3%, past Labor's 20.3); the night class split from counted figures SHIPPED 14 Nov as
   the live night default (`plans/prereg-night-class-split-2026-11-14.md` PASSED; Monash Liberal 0.005 -> 0.469). OPEN: see it
-  run in the 25 Nov dress rehearsal (NW23/NW24); Forde fed2025 (minor-right split flips the late lean) not traced. Found on the way: the federal replay dropped every pair the AEC later
+  run in the 25 Nov dress rehearsal (NW23/NW24, Daily Eight 25 Nov). Forde fed2025 TRACED 14 Nov: the replay never
+  used its 2CP count because the feed says "Van MANEN" and the booth file "VAN MANEN" (8 divisions a night, case only;
+  FIXED 21578e34); with the count the split ends Forde Labor 0.691 against base 0.642. Restated on the fixed replays
+  (`deciding-runs/20261114-1700-replay-namecase/`): pooled -0.0084 (SE 0.0095), without Monash +0.0011 (SE 0.0010),
+  PASS; `.NIGHT_PAIR_CAL` refit identical. Found on the way: the federal replay dropped every pair the AEC later
   blanked (Monash among 15/21 seats), fixed 59dff525; earlier federal night numbers (the called-rule test) ran on the old filter.
   Mirani qld2024 traced 11 Nov: (1) FIXED, classify_party() filed bare codes (LNP/ALP/LIB/KAP in the qld/sa/vic2006-10
   booth 2CP files) as OTH, so the counted pair was never matched (qld2024 half-count log loss 0.2296 -> 0.1668).
