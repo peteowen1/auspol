@@ -2,13 +2,13 @@
 % Please edit documentation in R/seat_paid_lean.R
 \name{.seat_paid_lean_election}
 \alias{.seat_paid_lean_election}
-\title{One earlier election's measured paid seat polls (results from \code{output/candidacies.csv}, federal two-candidate
-counts from \code{external/elections/aec-fed-tcp.csv})}
+\title{One election's measured paid polls plus its independent-poll noise; \code{inp} and \code{sides} let the placebo
+(scripts/screen_seat_paid_lean.R) relabel polls}
 \usage{
-.seat_paid_lean_election(el)
+.seat_paid_lean_election(el, inp = .seat_paid_lean_inputs(el), sides = NULL)
 }
 \description{
-One earlier election's measured paid seat polls (results from \code{output/candidacies.csv}, federal two-candidate
-counts from \code{external/elections/aec-fed-tcp.csv})
+One election's measured paid polls plus its independent-poll noise; \code{inp} and \code{sides} let the placebo
+(scripts/screen_seat_paid_lean.R) relabel polls
 }
 \keyword{internal}

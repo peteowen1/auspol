@@ -5,7 +5,7 @@
 
 #' Whether paid seat polls lose their lean toward the sponsor (`AUSPOL_SEAT_POLL_PAID_LEAN`, arm SPL)
 #' @keywords internal
-.seat_paid_lean_on <- function() .seat_poll_onoff("AUSPOL_SEAT_POLL_PAID_LEAN", "0")
+.seat_paid_lean_on <- function() .seat_poll_onoff("AUSPOL_SEAT_POLL_PAID_LEAN", "1")   # shipped 14 Nov 2026
 
 SEAT_PAID_LEAN_BASE_K <- 3   # an election's independent-poll mean is shrunk to 0 by n/(n + 3), as AUSPOL_CONSERVE_SHRINK_K
 SEAT_PAID_LEAN_SIDES <- c("ALP", "ALP+GRN", "GRN", "LNP", "IND")

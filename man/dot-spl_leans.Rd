@@ -2,11 +2,11 @@
 % Please edit documentation in R/seat_paid_lean.R
 \name{.spl_leans}
 \alias{.spl_leans}
-\title{The lean per side: its own shrunk row, else the pooled mu_s for a known side; UNKNOWN/NA get none}
+\title{The lean per side: its own shrunk row; a side with no row, UNKNOWN and NA get none}
 \usage{
 .spl_leans(fit, sides)
 }
 \description{
-The lean per side: its own shrunk row, else the pooled mu_s for a known side; UNKNOWN/NA get none
+The lean per side: its own shrunk row; a side with no row, UNKNOWN and NA get none
 }
 \keyword{internal}

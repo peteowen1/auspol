@@ -19,10 +19,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   fixes (f4a3cbff..db6e0637, Sonnet, 12 Nov 9:10pm): 0 Important, so the gate is passed. Rebuild PENDING for 11:30pm
   (needs 8 GB free; at 9:36pm 1.7 GB, other verses' R jobs). Pete to send the VEC draft (Gmail, "RE: State Election 2026
   results data feed"): it asks whether the voting-centre pages fill in during the count.
-- OPEN 14 Nov, arm SPL (Pete: "Build it"): paid SEAT polls lose a shrunk lean toward the sponsor's side
-  (`AUSPOL_SEAT_POLL_PAID_LEAN`, built, OFF; `R/seat_paid_lean.R`, `plans/prereg-seat-paid-lean-2026-11-14.md`). Placebo
-  17/20 PASS; live: Hawthorn's Liberal-members poll LNP 41 -> 36.8, nothing else. Time-forward leans for fed2022/fed2025
-  (+9.5/+7.4 from 5-6 old polls) break the prereg's 6-point limit, so the ship call goes to Pete with the screen split.
+- SHIPPED 14 Nov, arm SPL (Pete's override, "Build per-side, ship live"): paid SEAT polls lose a lean toward the sponsor's
+  side, each side shrunk to zero (`AUSPOL_SEAT_POLL_PAID_LEAN=1`, `plans/prereg-seat-paid-lean-2026-11-14.md`). Backtest
+  neutral; live today unchanged (Hawthorn's paid poll is 15 months old). OPEN after 28 Nov: score it on vic2026.
 - DONE 13 Nov: vic2026 salience is in the published forecast (PR #230; stage 9 `PRS1 ... 663 vic2026 rows`; daily run 9:25am
   green with `XG5 salience corpus found for vic2026: 526 of 616`). The coarse anchor scale is fixed: ladder link published 13 Nov
   (PR #231, stage 9 2:59pm, forecast run 3:34pm green, XG5 546 of 616; DECISIONS 13 Nov). Full item in `backlog/journal-2026-11-11-queue-history.md`.

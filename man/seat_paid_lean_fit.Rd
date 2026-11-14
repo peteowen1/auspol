@@ -2,7 +2,7 @@
 % Please edit documentation in R/seat_paid_lean.R
 \name{seat_paid_lean_fit}
 \alias{seat_paid_lean_fit}
-\title{Fit the per-side lean of paid seat polls (partial pooling across sides, SE clustered on sponsor and election)}
+\title{Fit the per-side lean of paid seat polls (each side shrunk to zero on its own, SE clustered on sponsor and election)}
 \usage{
 seat_paid_lean_fit(dev, s2_ind = NA_real_, df_ind = 0)
 }
@@ -14,10 +14,10 @@ election and sponsor.}
 the paid-poll residual variance is pooled with (prereg amendment 1). \code{df_ind = 0} uses the paid polls alone.}
 }
 \value{
-List: \code{lean} (per side: \code{n}, \code{k} clusters, \code{m}, \code{se}, \code{w}, \code{shrunk}), \code{mu}, \code{se_mu}, \code{w0}, \code{mu_s}
-(pooled shrunk lean, for a known side with no row), \code{tau2}, \code{s2} (residual variance), \code{n}.
+List: \code{lean} (per side: \code{n}, \code{k} clusters, \code{m}, \code{se}, \code{w} = tau0^2/(tau0^2+se^2), \code{shrunk} = w m), and for the
+log only \code{mu}, \code{se_mu}, \code{w0}, \code{mu_s} (pooled across sides), \code{tau2}; \code{s2} (residual variance), \code{n}.
 }
 \description{
-Fit the per-side lean of paid seat polls (partial pooling across sides, SE clustered on sponsor and election)
+Fit the per-side lean of paid seat polls (each side shrunk to zero on its own, SE clustered on sponsor and election)
 }
 \keyword{internal}
