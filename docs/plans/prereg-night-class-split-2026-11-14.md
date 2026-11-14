@@ -90,3 +90,9 @@ Added after the decision; the clauses and table above are unedited.
   came from the wrong count order.
 - With the fix (fed2025, both arms, same seeds): Forde Labor at 9pm base 0.829, split 0.870; at the end base 0.642,
   split 0.691. Rerun of all federal arms: `deciding-runs/20261114-1700-replay-namecase/`.
+- RESTATED (rerun DONE 10:45pm, code 21578e34, same seeds; vic2022 copied, unaffected; fed2022 base changed in exactly
+  the 8 fixed divisions and nowhere else). Split minus base, SE clustered on seat: fed2022 +0.0011 (0.0012), fed2025
+  -0.0222 (0.0247), vic2022 -0.0010 (0.0010), pooled -0.0084 (0.0095), targeted -0.0097, without Monash +0.0011
+  (0.0010; was +0.0018). Decision rule: PASS on every clause; guard 0 moved seats without a split on the federal nights.
+  The live `.NIGHT_PAIR_CAL` refitted on the fixed base replays is identical (0.945244, 0.681490; 388 seats, 33 wrong):
+  the fit reads each pair's first showing, before any booth 2CP count.
