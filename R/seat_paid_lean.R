@@ -82,14 +82,14 @@ seat_paid_lean_measure <- function(raw, act, tcp = NULL, tcp_rows = NULL, sides 
 
 .spl_noise <- function(x, s2, df) { attr(x, "ind_s2") <- s2; attr(x, "ind_df") <- df; x }
 
-#' Fit the per-side lean of paid seat polls (partial pooling across sides, SE clustered on sponsor and election)
+#' Fit the per-side lean of paid seat polls (each side shrunk to zero on its own, SE clustered on sponsor and election)
 #'
 #' @param dev Rows of [seat_paid_lean_measure()] over the training elections, with `cluster` already holding
 #'   election and sponsor.
 #' @param s2_ind,df_ind Independent seat polls' residual variance (points^2) and its degrees of freedom: the prior
 #'   the paid-poll residual variance is pooled with (prereg amendment 1). `df_ind = 0` uses the paid polls alone.
-#' @return List: `lean` (per side: `n`, `k` clusters, `m`, `se`, `w`, `shrunk`), `mu`, `se_mu`, `w0`, `mu_s`
-#'   (pooled shrunk lean, for a known side with no row), `tau2`, `s2` (residual variance), `n`.
+#' @return List: `lean` (per side: `n`, `k` clusters, `m`, `se`, `w` = tau0^2/(tau0^2+se^2), `shrunk` = w m), and for the
+#'   log only `mu`, `se_mu`, `w0`, `mu_s` (pooled across sides), `tau2`; `s2` (residual variance), `n`.
 #' @keywords internal
 seat_paid_lean_fit <- function(dev, s2_ind = NA_real_, df_ind = 0) {
   empty <- list(lean = data.table::data.table(side = character(0), n = integer(0), k = integer(0), m = numeric(0),
@@ -113,9 +113,14 @@ seat_paid_lean_fit <- function(dev, s2_ind = NA_real_, df_ind = 0) {
   tau2 <- if (kk > 1L) max(0, (sum(wt * (lean$m - mu)^2) - (kk - 1)) / (sum(wt) - sum(wt^2) / sum(wt))) else 0
   w0 <- mu^2 / (mu^2 + se_mu^2)
   mu_s <- w0 * mu
-  lean[, w := tau2 / (tau2 + lean$se^2)]
-  lean[, shrunk := mu_s + lean$w * (lean$m - mu_s)]
-  list(lean = lean, mu = mu, se_mu = se_mu, w0 = w0, mu_s = mu_s, tau2 = tau2, s2 = s2, n = nrow(d))
+  # amendment 3 (Pete, 14 Nov): sides are NOT pooled toward each other but each shrunk toward ZERO, by an
+  # empirical-Bayes weight: tau0^2 = how far real side leans spread around zero (mean of m^2 - se^2, floored at 0),
+  # w = tau0^2 / (tau0^2 + se^2). Pure noise gives tau0^2 ~ 0 and no lean; Climate 200's record (none) is never
+  # overruled by Advance's (+4.7). mu, tau2 and mu_s stay in the fit for the log only.
+  tau0 <- max(0, mean(lean$m^2 - lean$se^2))
+  lean[, w := tau0 / (tau0 + lean$se^2)]
+  lean[, shrunk := lean$w * lean$m]
+  list(lean = lean, mu = mu, se_mu = se_mu, w0 = w0, mu_s = mu_s, tau2 = tau2, tau0 = tau0, s2 = s2, n = nrow(d))
 }
 
 #' One election's inputs for arm SPL: its seat polls (`.raw`), results from `output/candidacies.csv`, and federal
@@ -183,13 +188,13 @@ seat_paid_lean <- function(target_election) {
   })
 }
 
-#' The lean per side: its own shrunk row, else the pooled mu_s for a known side; UNKNOWN/NA get none
+#' The lean per side: its own shrunk row; a side with no row, UNKNOWN and NA get none
 #' @keywords internal
 .spl_leans <- function(fit, sides) {
   sides <- intersect(unique(sides[!is.na(sides)]), SEAT_PAID_LEAN_SIDES)
   own <- setNames(fit$lean$shrunk, fit$lean$side)
-  mu_s <- if (is.finite(fit$mu_s)) fit$mu_s else 0
-  setNames(vapply(sides, function(x) if (x %in% names(own) && is.finite(own[[x]])) own[[x]] else mu_s, 1), sides)
+  # a side with no record of its own gets none (amendment 3: no borrowing across sides)
+  setNames(vapply(sides, function(x) if (x %in% names(own) && is.finite(own[[x]])) own[[x]] else 0, 1), sides)
 }
 
 #' Take the lean off each paid seat poll's figures (one row per poll and class, as in .seat_poll_shares_impl())

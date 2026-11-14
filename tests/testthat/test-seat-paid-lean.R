@@ -30,13 +30,17 @@ test_that("the two-candidate figure is used when the primaries are incomplete an
   expect_identical(m$how[m$poll_id == "p2"], "tcp")
 })
 
-test_that("the fit finds a real lean, pools sides, and the independent noise prior widens a thin fit", {
+test_that("the fit finds a real lean per side, keeps sides apart, and the independent noise prior widens a thin fit", {
   set.seed(3)
   dev <- data.table::data.table(side = rep(c("LNP", "ALP+GRN"), each = 20), cluster = paste0("c", 1:40),
                                 net = c(stats::rnorm(20, 4, 4), stats::rnorm(20, 4, 4)))
   f <- seat_paid_lean_fit(dev)
-  expect_gt(f$mu_s, 2.5)
   expect_true(all(f$lean$shrunk > 2.5))
+  # a side with no lean of its own is not pulled up by another side's (amendment 3: no pooling across sides)
+  dev2 <- data.table::copy(dev); dev2$net[dev2$side == "ALP+GRN"] <- stats::rnorm(20, 0, 4)
+  f2 <- seat_paid_lean_fit(dev2)
+  expect_lt(abs(f2$lean$shrunk[f2$lean$side == "ALP+GRN"]), 1)
+  expect_gt(f2$lean$shrunk[f2$lean$side == "LNP"], 2.5)
   thin <- dev[c(1, 2, 21)]                                # three polls: noise from them alone is not to be trusted
   expect_gt(seat_paid_lean_fit(thin, s2_ind = 100, df_ind = 50)$se_mu, seat_paid_lean_fit(thin)$se_mu)
   expect_identical(seat_paid_lean_fit(dev[0])$mu_s, 0)
@@ -61,10 +65,10 @@ test_that("apply takes the lean off the side's figures and gives it to the rest;
   # a partial poll (no GRN) takes the whole lean, not the lean scaled by its 60-point total
   pp <- data.table::data.table(poll_id = "q", seat = "Q", group = "direct_stake", sponsor = "Advance", class = c("LNP", "ALP"), fp = c(40, 20))
   expect_equal(seat_paid_lean_apply(pp, fit)$fp, c(36, 24))
-  # a known side with no row of its own gets the pooled lean
+  # a known side with no row of its own gets none (amendment 3)
   r2 <- data.table::copy(r); r2$sponsor[r2$poll_id == "p1"] <- "Australia Institute"   # ALP+GRN: no row
   o2 <- seat_paid_lean_apply(r2, fit)
-  expect_equal(sum(o2$fp[o2$poll_id == "p1" & o2$class %in% c("ALP", "GRN")]), 40 - 3)
+  expect_identical(o2$fp[o2$poll_id == "p1"], r2$fp[r2$poll_id == "p1"])
 })
 
 test_that("the switch accepts only 0 or 1", {

@@ -70,3 +70,22 @@ showed it untouched, and a partial poll such as Ryan 2025 (LNP 45, GRN 13) took 
 with no other figure the lean just comes off. The method's intent is unchanged; the first screen
 (`deciding-runs/20261114-1005-spl-screen`: seat log loss -0.0006, SE 0.0002; share error on 57 changed cells +8%,
 SE 16.3) measured the bugged step and is superseded by the rerun. C1 placebo (17/20 PASS) does not use step 5.
+
+## Amendment 3 (14 Nov, Pete's call after the rerun): sides kept apart, each shrunk to zero; ship as an override
+
+Rerun on the fixed step 5 (`deciding-runs/20261114-1042-spl-screen2`, fed2022/fed2025/nsw2023 at 2,000 sims): seat
+log loss 0.2609 -> 0.2602 (-0.0007, SE 0.0003), share squared error on the 57 changed cells +9% (SE 17.8). By party
+the harm was IND +40.4 (Climate 200's Wentworth polls cut by the pooled lean although their own record is -0.5),
+LNP +22.3, GRN +14.4. A seconds-long time-forward check (each election's paid-poll net lean predicted from earlier
+elections only) found NO variant better than zero on fed2025 (current 1012.5, sides unpooled 799.4, plus an
+election random effect 715.4, zero 690.2, points^2): before fed2025 only 6 Labor/Greens-side polls from 2016-19
+existed, with leans of +7 to +10 against fed2025's +2.6, and no Coalition-paid or Climate 200 poll. The lean is
+real in hindsight (fed2025: LNP-paid +4.7 net, 11 polls, 4 sponsors; ALP+GRN +2.6; Climate 200 -0.5).
+
+Pete, 14 Nov: "build it to be as predictive as possible as there's clearly signal", then "Build per-side, ship
+live". Step 4 now keeps sides apart: each side's mean is shrunk toward ZERO by an empirical-Bayes weight
+tau0^2/(tau0^2 + se^2), tau0^2 = max(0, mean over sides of m^2 - se^2); a side with no record gets none. A first
+try with the plug-in weight m^2/(m^2 + se^2) FAILED C1 (14 of 20); the empirical-Bayes weight passes (18 of 20).
+Live vic2026: LNP +3.27, ALP+GRN +2.97, IND -0.18; Hawthorn's Liberal-members poll LNP 41 -> 37.7, the only cell
+that moves. Shipping is Pete's override of an unvalidated backtest (the clause "worse by more than 2 SE" on the
+changed shares and the 6-point limit both fired on the pooled version); scored on vic2026 after 28 Nov.
