@@ -1,3 +1,7 @@
+# auspol 0.4.171
+
+- **Election night counts two candidates of one class separately** (PR #239, live default, Pete: "Ship for 28 Nov"): the junior candidate's share comes from the counted booth figures (`R/night_class_split.R`, NW23/NW24). Three replayed nights: pooled night log loss -0.0076 (SE 0.0096); Monash fed2025's Liberal winner 0.005 -> 0.469. `docs/plans/prereg-night-class-split-2026-11-14.md`.
+
 # auspol 0.4.170
 
 - **Paid seat polls lose their lean toward the sponsor** (PR #238, arm SPL, `AUSPOL_SEAT_POLL_PAID_LEAN=1`, Pete's override): learned time-forward from seat results net of independent seat polls, each side shrunk to zero on its own (`R/seat_paid_lean.R`, SPQ1/SPQ2). Looking back, fed2025 Coalition-paid polls overstated the Coalition +4.7 net; placebo 18/20; backtest neutral; live vic2026 unchanged today. `docs/plans/prereg-seat-paid-lean-2026-11-14.md`.
