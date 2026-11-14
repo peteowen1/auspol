@@ -19,6 +19,8 @@ reference table's ordinary booths); anything else: the VEC feed),
 \code{\link[=night_booth_update]{night_booth_update()}}),
 \code{tcp_pair_cal} (\code{"fitted"} by default: the calibrated night-pair prior, \verb{docs/plans/prereg-night-pair-cal-2026-11-11.md};
 \code{"off"} for the old 0.2 pair cliff; or \code{"alpha,beta"}),
+\code{class_split} (\code{"on"} by default: two candidates of one minor class counted separately, \verb{docs/plans/prereg-night-class-split-2026-11-14.md};
+\code{"off"}),
 \code{last_stamp} (skip when the newest snapshot has this stamp), \code{cache} (environment for the state and lookup).}
 }
 \value{

@@ -37,3 +37,13 @@ test_that("merging keeps the Coalition elements, and gives neutral ones when the
   expect_identical(m1$f, 0.8); expect_identical(unname(m1$cls["Monash"]), "IND")
   expect_identical(.night_merge_split(cs0, NULL, "Monash"), cs0)
 })
+
+test_that("the live runner's class_split setting: on by default, off when asked, cached per election", {
+  local_mocked_bindings(night_class_split_params = function(target_election) list(sd0 = 0.2, f = c(IND = 0.4)))
+  ca <- new.env()
+  expect_identical(suppressMessages(.night_class_split_cfg(NULL, "vic2026", ca))$sd0, 0.2)
+  expect_true(exists("class_split_vic2026", envir = ca, inherits = FALSE))
+  expect_null(.night_class_split_cfg("off", "vic2026", ca))
+  expect_identical(suppressMessages(.night_class_split_cfg("on", "vic2026", NULL))$f, c(IND = 0.4))
+  expect_error(.night_class_split_cfg("yes", "vic2026", ca), "NW23!")
+})

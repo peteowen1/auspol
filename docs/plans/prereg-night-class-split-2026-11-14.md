@@ -45,3 +45,29 @@ Arms: base, split (`--class-split=1`).
   targeted set falls, no night is worse by more than 0.005, and the Monash known answer holds. Anything else goes
   to Pete with the split.
 - Unacceptable even if those pass: a seat with no split that moves at all; any seat summing above 1.
+
+## RESULT (14 Nov 2026, 3:19pm): PASS; SHIPPED as the live night default (Pete: "Ship for 28 Nov")
+
+Run `deciding-runs/20261114-1500-night-class-split/` (code a1f36a82; vic2022 split rerun on 91f7cf68 after it
+stopped on NCS1!: the VEC feed's booth table carried no candidate names, now it does; vic2022 base unaffected, as
+the name column is read only by the split and by `cand_ref`, off on the feed). 20,000 sims, same seeds.
+Night-average seat-winner log loss (lower is better), split minus base, SE clustered on seat:
+
+| Set | Seats | Base | Split | Change (SE) |
+|---|---|---|---|---|
+| fed2022 | 151 | 0.0724 | 0.0735 | +0.0011 (0.0012) |
+| fed2025 | 150 | 0.1387 | 0.1184 | -0.0203 (0.0248) |
+| vic2022 | 88 | 0.0643 | 0.0633 | -0.0010 (0.0010) |
+| pooled | 389 | 0.0961 | 0.0885 | -0.0076 (0.0096) |
+| targeted (2+ same-class candidates) | 327 | 0.1058 | 0.0969 | -0.0088 (0.0114) |
+| pooled without Monash | 388 | | | +0.0018 (0.0012) |
+
+Clauses: pooled not worse by more than 1 SE TRUE; targeted falls TRUE; no night worse by > 0.005 TRUE; Monash
+Liberal above base at 8pm (0.654 vs 0.046), 9pm (0.340 vs 0.006) and the end (0.469 vs 0.005) TRUE; no seat
+without 2+ same-class candidates moved TRUE (the one scorer flag, South-West Coast vic2022, is the hyphen: the booth
+file says "South West Coast", four independents); no seat above 1 TRUE.
+
+Read with: the gain is mostly Monash; without it +0.0018 (1.5 SE). The costs: Bradfield fed2025 +0.305 (Boele won
+by 26 votes; base was 0.99 sure because it counted another independent's 4.1% (Yin) as hers; split ends 0.67), Forde
++0.256 (a minor-right split, Pop 5.1 / Hiscock 4.7, flips the late lean to the Liberal; Labor won; not traced),
+Lyons fed2022 +0.144, Calare +0.123 (an 8pm wobble, 0.99+ by 10pm).

@@ -203,7 +203,7 @@ night_booth_table <- function(feed, lookup, places = NULL, include_late = FALSE)
   dis <- feed$contests[, c("district_id", "district")]; dis[, seat := dn(district)]
   cd <- merge(cd, dis[, c("district_id", "seat")], by = "district_id", sort = FALSE)
   # `candidate` (the feed's name) rides along: the night class split counts candidates of one class separately
-  cd[, candidate := name]
+  data.table::set(cd, j = "candidate", value = cd$name)
   cmap <- cd[, c("district_id", "candidate_id", "seat", "party", "candidate")]
 
   rows <- list()
@@ -710,6 +710,22 @@ night_publish_json <- function(doc, out_file, min_seats = 1L) {
   stop("NW20! cand_ref must be \"off\", \"copy\" or \"move\" (got ", paste(format(x), collapse = ","), ")", call. = FALSE)
 }
 
+# cfg$class_split (NW23, NW24): NULL or "on" -> two candidates of one minor class run separately from their counted figures (Pete,
+# 14 Nov 2026: on for the 28 Nov night; docs/plans/prereg-night-class-split-2026-11-14.md PASSED); "off" -> as before.
+# Parameters fitted once per election from earlier ones (night_class_split_params()), kept in the cycle cache.
+.night_class_split_cfg <- function(x, election, cache) {
+  if (identical(x, "off") || isFALSE(x)) return(NULL)
+  if (!(is.null(x) || identical(x, "on") || isTRUE(x)))
+    stop("NW23! class_split must be \"on\" or \"off\" (got ", paste(format(x), collapse = ","), ")", call. = FALSE)
+  key <- paste0("class_split_", election)
+  if (!is.null(cache) && exists(key, envir = cache, inherits = FALSE)) return(get(key, envir = cache))
+  p <- night_class_split_params(election)
+  message(sprintf("NW23  night class split %s: %s", election, if (is.null(p)) "NO parameters, off" else
+    sprintf("sd0 %.3f, f %s", p$sd0, paste(names(p$f), sprintf("%.3f", p$f), collapse = " "))))
+  if (!is.null(cache)) assign(key, p, envir = cache)
+  p
+}
+
 #' One election-night cycle
 #'
 #' @param cfg List: `source`, `archive`, `setup`, `state` (RDS path or already-read list), `ref` (booth CSV path),
@@ -724,6 +740,8 @@ night_publish_json <- function(doc, out_file, min_seats = 1L) {
 #'   [night_booth_update()]),
 #'   `tcp_pair_cal` (`"fitted"` by default: the calibrated night-pair prior, `docs/plans/prereg-night-pair-cal-2026-11-11.md`;
 #'   `"off"` for the old 0.2 pair cliff; or `"alpha,beta"`),
+#'   `class_split` (`"on"` by default: two candidates of one minor class counted separately, `docs/plans/prereg-night-class-split-2026-11-14.md`;
+#'   `"off"`),
 #'   `last_stamp` (skip when the newest snapshot has this stamp), `cache` (environment for the state and lookup).
 #' @return List: `status` ("ok", "no_new" or "failed"), `stamp`, `timings` (seconds per step), `message`, `summary`.
 #' @export
@@ -852,7 +870,9 @@ night_cycle <- function(cfg) {
                             surge_fade = !isFALSE(cfg$surge_fade), tcp_center = if (is.null(cfg$tcp_center)) "median" else cfg$tcp_center,
                             tcp_flow_floor = if (is.null(cfg$tcp_flow_floor)) 0.01 else cfg$tcp_flow_floor,
                             tcp_own_fp = isTRUE(cfg$tcp_own_fp), tcp_pair_cal = .night_pair_cal_cfg(cfg$tcp_pair_cal),
-                            cand_ref = .night_cand_ref_cfg(cfg$cand_ref, web)); stamp_t("update_simulate")
+                            cand_ref = .night_cand_ref_cfg(cfg$cand_ref, web),
+                            class_split = .night_class_split_cfg(cfg$class_split, cache$st$pair, cache)); stamp_t("update_simulate")
+    if (!is.null(res$class_split)) message(sprintf("NW24  night class split: %d seat(s) counting 2+ candidates of one class separately", nrow(res$class_split)))
     res$denominator <- denom; res$n_placeholder <- conv$n_placeholder_booths; res$n_unlisted <- conv$n_unlisted_booths
     if (length(res$nu$fallback_projected)) message("NW12  ", length(res$nu$fallback_projected), " seat(s) fell back to the projected denominator (no usable expected votes): ", paste(res$nu$fallback_projected, collapse = ", "))
     bk <- night_booth_results_safe(conv, cache$ref)

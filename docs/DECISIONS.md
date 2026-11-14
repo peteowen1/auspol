@@ -4,6 +4,9 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-11-14 On election night, two candidates of one minor class are counted separately from their counted figures (Pete: "Ship for 28 Nov").**
+  Prereg PASSED on fed2022/fed2025/vic2022 replays: pooled night log loss -0.0076 (SE 0.0096), no night worse by >0.005; Monash's
+  winner 0.005 -> 0.469. Gain mostly Monash (without it +0.0018, SE 0.0012). Pre-election split stays OFF (6 Nov). `plans/prereg-night-class-split-2026-11-14.md`.
 - **2026-11-14 Paid SEAT polls lose a lean toward their sponsor's side, each side shrunk to zero on its own (Pete: "Build per-side, ship live"; an override of an unvalidated backtest).**
   Hindsight: fed2025 Coalition-paid +4.7 net, Labor/Greens +2.6, Climate 200 -0.5. Time-forward no variant beat zero on fed2025 (only 6
   older Labor/Greens-side polls to learn from). Placebo 18/20; live: Hawthorn's Liberal-members poll 41 -> 37.7 only. Score on vic2026.
