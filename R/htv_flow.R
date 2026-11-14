@@ -45,7 +45,8 @@ htv_order_table <- function(path = NULL) {
 #' Reads `external/reference/htv/coalition-card-order-researched.csv` (columns `election`, `seat` ("ALL", a seat, or
 #' seats separated by ";"), `party`, `order`, `confidence`, `source_url`, ...) and returns the shape
 #' [htv_order_table()] returns: one row per election and seat with a HIGH or MED confidence Liberal / LNP / CLP card
-#' that orders the two (`GRN_ABOVE_ALP` TRUE, `ALP_ABOVE_GRN` FALSE). Prints HTV13 with what it kept and dropped.
+#' that orders the two (`GRN_ABOVE_ALP` TRUE, `ALP_ABOVE_GRN` FALSE), plus seat-level `OPEN` cards as `NA` (that
+#' seat keeps its learned flows rather than the election's ALL row). Prints HTV13 with what it kept and dropped.
 #' @param path The researched CSV.
 #' @return data.table `election`, `seat`, `greens_above_labor`, `source`; NULL with a message when the file is absent.
 #' @export
@@ -55,8 +56,12 @@ htv_researched_table <- function(path = file.path("external", "reference", "htv"
   need <- c("election", "seat", "party", "order", "confidence", "source_url")
   miss <- setdiff(need, names(d))
   if (length(miss)) stop("researched HTV table lacks: ", paste(miss, collapse = ", "), call. = FALSE)
-  map <- c(GRN_ABOVE_ALP = TRUE, ALP_ABOVE_GRN = FALSE)
-  keep <- d$party %in% c("LIB", "LNP", "CLP") & d$confidence %in% c("HIGH", "MED") & d$order %in% names(map)
+  # A SEAT-level OPEN card (15 Nov 2026, Pete: Brunswick vic2026, "1 Liberal, then your choice") is kept with NA, so
+  # htv_flow_override() leaves that seat's learned flows alone instead of giving it the election's ALL row. An OPEN ALL
+  # row stays dropped: with no statewide order there is nothing for a seat to inherit, which is the same as no row.
+  map <- c(GRN_ABOVE_ALP = TRUE, ALP_ABOVE_GRN = FALSE, OPEN = NA)
+  keep <- d$party %in% c("LIB", "LNP", "CLP") & d$confidence %in% c("HIGH", "MED") & d$order %in% names(map) &
+    !(d$order == "OPEN" & d$seat == "ALL")
   k <- d[keep]
   seats <- strsplit(as.character(k$seat), ";", fixed = TRUE)
   out <- data.table::data.table(election = rep(k$election, lengths(seats)), seat = trimws(unlist(seats)),
@@ -64,8 +69,8 @@ htv_researched_table <- function(path = file.path("external", "reference", "htv"
                                 source = rep(k$source_url, lengths(seats)))
   dup <- out[duplicated(out[, c("election", "seat"), with = FALSE])]
   if (nrow(dup)) stop("researched HTV table has two kept rows for: ", paste(unique(paste(dup$election, dup$seat)), collapse = ", "), call. = FALSE)
-  cat(sprintf("HTV13 researched card table: %d rows kept (%d elections), %d dropped (open/no card/split/unknown/low confidence or not Liberal)\n",
-              nrow(out), data.table::uniqueN(out$election), sum(!keep)))
+  cat(sprintf("HTV13 researched card table: %d rows kept (%d elections; %d open seat card(s): no override there), %d dropped (statewide open/no card/split/unknown/low confidence or not Liberal)\n",
+              nrow(out), data.table::uniqueN(out$election), sum(is.na(out$greens_above_labor)), sum(!keep)))
   out
 }
 
