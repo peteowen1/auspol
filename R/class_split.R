@@ -80,11 +80,6 @@ class_split_fit <- function(target_election, oof = NULL, transfers = NULL,
   if (nrow(hist) < 5L) return(empty)
   sdv <- sqrt(mean((hist$j_share / hist$all_share - hist$r)^2))
 
-  tgt <- agg[agg$election == tgt_el]
-  if (!nrow(tgt)) return(empty)
-  data.table::setorderv(tgt, c("seat", "p2"), c(1L, -1L))
-  tgt <- tgt[!duplicated(tgt$seat)]
-
   if (is.null(transfers)) transfers <- class_split_transfers(classes = classes)
   tx <- data.table::as.data.table(transfers)
   tx <- tx[.yr(tx$election) < tgt_year & tx$from %in% classes]
@@ -98,6 +93,12 @@ class_split_fit <- function(target_election, oof = NULL, transfers = NULL,
     # A class with no earlier same-class exclusion takes the all-class rate.
     if (nrow(e)) as.numeric(coalition_f(e, .rg(tgt_el), mode)) else as.numeric(f_all)
   }, 0)
+  # sd and f never depend on the target's own candidates: an election with none (the night split's live vic2026,
+  # whose per-candidate predictions are not in the file) still gets them, with no seats
+  tgt <- agg[agg$election == tgt_el]
+  if (!nrow(tgt)) { empty$sd <- sdv; empty$f <- f_by; return(empty) }
+  data.table::setorderv(tgt, c("seat", "p2"), c(1L, -1L))
+  tgt <- tgt[!duplicated(tgt$seat)]
   list(seats = data.frame(seat = tgt$seat, cls = tgt$cls, r = tgt$r, sd = rep(sdv, nrow(tgt)),
                           f = unname(f_by[tgt$cls]), n_cand = tgt$n_cand, stringsAsFactors = FALSE),
        sd = sdv, f = f_by, n_hist = nrow(hist), n_target = nrow(tgt), n_events = nrow(ev),

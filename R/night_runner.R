@@ -532,12 +532,14 @@ night_expected_votes <- function(enrolment, prev, basis = c("night", "final")) {
 #'   the calibrated pair prior (`docs/plans/prereg-night-pair-cal-2026-11-11.md`).
 #' @param cand_ref Passed to [night_booth_update()]: `FALSE` (default, unchanged) or `TRUE`, a returning candidate's
 #'   previous votes as their current class's booth reference (`docs/plans/prereg-night-candidate-ref-2026-11-11.md`).
+#' @param class_split `NULL` (default, unchanged) or [night_class_split_params()]: two candidates of one minor class
+#'   run separately from their counted figures (`docs/plans/prereg-night-class-split-2026-11-14.md`).
 #' @return List: `sim`, `nu` (the update), `shares`, `sd`, `matched` (seats in both state and feed),
-#'   `n_updated`.
+#'   `n_updated`, `class_split` (the split seats, or `NULL`).
 #' @export
 night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "table", "expected"), expected = NULL, sims = NULL, use_tcp = TRUE,
                              lean = NULL, early_frac = NULL, surge_fade = TRUE, tcp_center = "median", tcp_flow_floor = 0.01, tcp_own_fp = FALSE,
-                             tcp_pair_r = NULL, tcp_pair_cal = NULL, cand_ref = FALSE) {
+                             tcp_pair_r = NULL, tcp_pair_cal = NULL, cand_ref = FALSE, class_split = NULL) {
   total <- match.arg(total)
   if (!is.numeric(tcp_flow_floor) || length(tcp_flow_floor) != 1L || !is.finite(tcp_flow_floor) || tcp_flow_floor < 0)
     stop("NW17! tcp_flow_floor must be one finite number >= 0 (got ", paste(format(tcp_flow_floor), collapse = ", "), ")", call. = FALSE)
@@ -554,9 +556,11 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
   }
   # a state with no surge (surge_h NULL) has nothing to fade; night_surge_fade() would stop on it
   sh <- if (surge_fade && nu$n_updated > 0L && length(st$surge_h)) night_surge_fade(st$surge_h, nu$counted, seats) else st$surge_h
+  ncs <- if (!is.null(class_split) && nu$n_updated > 0L) night_class_split(conv$live, nu$units, nu$counted, class_split, seats) else NULL
+  csp <- .night_merge_split(st$coalition_split, ncs, seats)
   run <- function(ov) simulate_seat_contests(level_sd = st$level_sd, sd_override = sdo, level_mult = st$level_mult, shares, st$fm,
                                 party_sd = st$psd, statewide_draws = swd, seat_sd = st$seat_sd, n_sims = sims,
-                                breakout_p = st$bo$p, breakout_q = st$bo$q, coalition_split = st$coalition_split, error_q = st$error_q,
+                                breakout_p = st$bo$p, breakout_q = st$bo$q, coalition_split = csp, error_q = st$error_q,
                                 smooth = st$smooth, seed = st$seed, party_cor = st$party_cor, shrink = st$shrink,
                                 conditional_override = ov, conditional_override_sd = attr(ov, "sd"),
                                 fallback_smooth = st$fb_smooth, shrink_k = st$shrink_k, flow_sd = st$flow_sd,
@@ -572,7 +576,8 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
     n_tcp <- nrow(obs)
     sim <- night_apply_tcp(sim, obs, center = tcp_center, flow_sd_floor = tcp_flow_floor, own_fp = tcp_own_fp, pair_r = tcp_pair_r, pair_cal = tcp_pair_cal)
   }
-  list(sim = sim, nu = nu, shares = shares, sd = sdo, matched = matched, n_updated = nu$n_updated, n_tcp = n_tcp)
+  list(sim = sim, nu = nu, shares = shares, sd = sdo, matched = matched, n_updated = nu$n_updated, n_tcp = n_tcp,
+       class_split = if (is.null(ncs)) NULL else attr(ncs, "detail"))
 }
 
 #' Build the published-shape JSON document from a night update

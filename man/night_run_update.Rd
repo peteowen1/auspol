@@ -21,7 +21,8 @@ night_run_update(
   tcp_own_fp = FALSE,
   tcp_pair_r = NULL,
   tcp_pair_cal = NULL,
-  cand_ref = FALSE
+  cand_ref = FALSE,
+  class_split = NULL
 )
 }
 \arguments{
@@ -69,10 +70,13 @@ the calibrated pair prior (\verb{docs/plans/prereg-night-pair-cal-2026-11-11.md}
 
 \item{cand_ref}{Passed to \code{\link[=night_booth_update]{night_booth_update()}}: \code{FALSE} (default, unchanged) or \code{TRUE}, a returning candidate's
 previous votes as their current class's booth reference (\verb{docs/plans/prereg-night-candidate-ref-2026-11-11.md}).}
+
+\item{class_split}{\code{NULL} (default, unchanged) or \code{\link[=night_class_split_params]{night_class_split_params()}}: two candidates of one minor class
+run separately from their counted figures (\verb{docs/plans/prereg-night-class-split-2026-11-14.md}).}
 }
 \value{
 List: \code{sim}, \code{nu} (the update), \code{shares}, \code{sd}, \code{matched} (seats in both state and feed),
-\code{n_updated}.
+\code{n_updated}, \code{class_split} (the split seats, or \code{NULL}).
 }
 \description{
 The same steps as \code{scripts/night_replay.R} (\code{run_one}), driven by a table of reported units instead of a
