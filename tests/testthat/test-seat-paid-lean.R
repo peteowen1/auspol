@@ -9,11 +9,13 @@ spl_raw <- function() {
     row("i1", "A", "direct_indep", NA, c(ALP = 34, LNP = 42, GRN = 12, OTH = 12)),
     row("i2", "B", "direct_indep", NA, c(ALP = 30, LNP = 44, GRN = 14, OTH = 12))))
 }
+# sides passed in: R CMD check's package copy has no external/sponsor_side.csv (memory: repo-file tests)
+SPL_SIDES <- c(p1 = "LNP", p2 = "IND")
 spl_act <- data.table::data.table(seat = rep(c("A", "B"), each = 4), party = rep(c("ALP", "LNP", "GRN", "OTH"), 2),
                                   share = c(35, 40, 12, 13, 31, 42, 14, 13))
 
 test_that("a paid poll's side gap is measured against the result, net of the independent polls' shrunk mean", {
-  m <- seat_paid_lean_measure(spl_raw(), spl_act)
+  m <- seat_paid_lean_measure(spl_raw(), spl_act, sides = SPL_SIDES)
   expect_identical(m$poll_id, "p1")                      # the Climate 200 poll has no IND figure and no tcp: not measured
   expect_equal(m$gap, 10)
   # independent LNP gaps +2 and +2: mean 2, shrunk by 2/(2+3)
@@ -25,7 +27,7 @@ test_that("a paid poll's side gap is measured against the result, net of the ind
 test_that("the two-candidate figure is used when the primaries are incomplete and the pair is the final pair", {
   tcp <- data.table::data.table(seat = c("B", "B"), party = c("LNP", "IND"), tshare = c(48, 52))
   tr <- data.table::data.table(poll_id = "p2", pa = "IND", pb = "LNP", tcp_a = 55)
-  m <- seat_paid_lean_measure(spl_raw(), spl_act, tcp, tr)
+  m <- seat_paid_lean_measure(spl_raw(), spl_act, tcp, tr, sides = SPL_SIDES)
   expect_equal(m$gap[m$poll_id == "p2"], 3)
   expect_identical(m$how[m$poll_id == "p2"], "tcp")
 })
@@ -51,7 +53,7 @@ test_that("apply takes the lean off the side's figures and gives it to the rest;
   r <- spl_raw()
   r <- data.table::rbindlist(list(r, data.table::data.table(poll_id = "p3", seat = "A", group = "direct_stake",
                                   sponsor = "Liberals against Nuclear", class = c("ALP", "LNP"), fp = c(40, 60))))
-  out <- seat_paid_lean_apply(r, fit)
+  out <- seat_paid_lean_apply(r, fit, sides = c(SPL_SIDES, p3 = "UNKNOWN"))
   p1 <- out[out$poll_id == "p1"]
   expect_equal(p1$fp[p1$class == "LNP"], 46)
   expect_equal(sum(p1$fp), 100)
@@ -61,17 +63,23 @@ test_that("apply takes the lean off the side's figures and gives it to the rest;
   expect_identical(attr(out, "moved"), "p1")
   # a poll naming only the sponsor's party (Hawthorn 2026: LNP 41) takes the whole lean off it
   h <- data.table::data.table(poll_id = "h", seat = "H", group = "direct_stake", sponsor = "Liberal Party", class = "LNP", fp = 41)
-  expect_equal(seat_paid_lean_apply(h, fit)$fp, 41 - 4)
+  expect_equal(seat_paid_lean_apply(h, fit, sides = c(h = "LNP"))$fp, 41 - 4)
   # a partial poll (no GRN) takes the whole lean, not the lean scaled by its 60-point total
   pp <- data.table::data.table(poll_id = "q", seat = "Q", group = "direct_stake", sponsor = "Advance", class = c("LNP", "ALP"), fp = c(40, 20))
-  expect_equal(seat_paid_lean_apply(pp, fit)$fp, c(36, 24))
+  expect_equal(seat_paid_lean_apply(pp, fit, sides = c(q = "LNP"))$fp, c(36, 24))
   # a lean bigger than the side's only figure takes it to zero, never below
   small <- data.table::data.table(poll_id = "s", seat = "S", group = "direct_stake", sponsor = "Advance", class = "LNP", fp = 3)
-  expect_equal(seat_paid_lean_apply(small, fit)$fp, 0)
+  expect_equal(seat_paid_lean_apply(small, fit, sides = c(s = "LNP"))$fp, 0)
   # a known side with no row of its own gets none (amendment 3)
   r2 <- data.table::copy(r); r2$sponsor[r2$poll_id == "p1"] <- "Australia Institute"   # ALP+GRN: no row
-  o2 <- seat_paid_lean_apply(r2, fit)
+  o2 <- seat_paid_lean_apply(r2, fit, sides = c(p1 = "ALP+GRN", p2 = "IND", p3 = "UNKNOWN"))
   expect_identical(o2$fp[o2$poll_id == "p1"], r2$fp[r2$poll_id == "p1"])
+})
+
+test_that("sponsor names map to sides through sponsor_side.csv", {
+  skip_if_not(file.exists(file.path(pkg_root(), "external", "reference", "polls", "sponsor_side.csv")), "sponsor_side.csv not in this copy")
+  r <- spl_raw()
+  expect_identical(seat_paid_lean_measure(r, spl_act)$poll_id, seat_paid_lean_measure(r, spl_act, sides = SPL_SIDES)$poll_id)
 })
 
 test_that("the switch accepts only 0 or 1", {
