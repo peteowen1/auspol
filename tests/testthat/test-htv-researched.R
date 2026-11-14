@@ -32,6 +32,9 @@ test_that("a seat-level OPEN card is kept as NA and that seat keeps its learned 
   expect_null(out[["Brunswick"]])                                 # no override: the caller's learned flows stand
   expect_equal(out[["Richmond"]][["LNP|ALP,GRN"]][["ALP"]], 0.62)
   expect_equal(attr(out, "htv")$applied, 1L)
+  # only open seat cards and no ALL row (vic2018): nothing applies, and a NULL override must come back NULL
+  only_open <- t[t$seat == "Brunswick"]
+  expect_null(htv_flow_override(NULL, fm, "x2026", c("Brunswick", "Richmond"), table = only_open, rows = rows))
 })
 
 test_that("AUSPOL_HTV_TABLE selects the table, and a bad value stops", {

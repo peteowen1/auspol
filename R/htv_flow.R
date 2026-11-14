@@ -244,6 +244,9 @@ htv_flow_override <- function(ov, fm, target_election, seats, table = NULL, rows
   cat(sprintf("HTV1 %s: Liberal card applied to %d of %d seats (%s); fitted Liberal->ALP share when ALP+GRN alive: greens-above %.0f%%, labor-above %.0f%%\n",
               target_election, applied, length(seats), paste(sprintf("%s=%d", names(table(orders)), as.integer(table(orders))), collapse = " "),
               fr$greens_above, fr$labor_above))
+  # Nothing applied (e.g. an election with only open seat cards, vic2018): hand back the caller's own value. `out`
+  # would be an empty list when ov is NULL, which simulate_seat_contests() rejects as a wrong-length override.
+  if (applied == 0L) return(ov)
   out
 }
 
