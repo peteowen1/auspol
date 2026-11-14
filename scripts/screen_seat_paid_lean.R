@@ -1,5 +1,5 @@
 # Arm SPL checks that need no harness run (docs/plans/prereg-seat-paid-lean-2026-11-14.md):
-#   SPS1  the fits per target election (time-forward), as SPL1 prints them
+#   SPS1  the fits per target election (time-forward), as SPQ1 prints them
 #   SPS2  C1 placebo: 20 repeats, 25 random independent direct seat polls labelled paid with real sides
 #   SPS3  C5 live: vic2026 seat-poll cells with the arm off and on (Hawthorn's paid poll), per class
 # C2-C4 come from the deciding run (scripts/deciding_run.ps1 -Arm "AUSPOL_SEAT_POLL_PAID_LEAN=1").

@@ -1055,7 +1055,7 @@ CLASSIFY <- list(
   AUSPOL_SEAT_POLL_PAID_LEAN = paste(
     "SHIPPED 2026-11-14 as Pete's override (plans/prereg-seat-paid-lean-2026-11-14.md amendment 3). Read in",
     "R/seat_paid_lean.R from .seat_poll_shares_impl() in R/seat_poll_blend.R, which every harness and fit_seats_full.R",
-    "reach through seat_poll_shares() (SPL1/SPL2 lines).")
+    "reach through seat_poll_shares() (SPQ1/SPQ2 lines).")
 )
 
 fmt_row <- function(sw) {

@@ -181,7 +181,7 @@ seat_paid_lean <- function(target_election) {
     dev <- data.table::rbindlist(lapply(per, `[[`, "dev"), fill = TRUE)
     ind_df <- sum(vapply(per, `[[`, 1, "ind_df"))
     fit <- seat_paid_lean_fit(dev, if (ind_df > 0) sum(vapply(per, `[[`, 1, "ind_ss")) / ind_df else NA_real_, ind_df)
-    cat(sprintf("SPL1 %s paid seat-poll lean from %d earlier election(s), %d measured paid polls (noise sd %s, %d independent df): pooled %+.2f (SE %s), shrunk %+.2f; per side %s\n",
+    cat(sprintf("SPQ1 %s paid seat-poll lean from %d earlier election(s), %d measured paid polls (noise sd %s, %d independent df): pooled %+.2f (SE %s), shrunk %+.2f; per side %s\n",
                 target_election, length(els), fit$n, if (is.finite(fit$s2)) sprintf("%.2f", sqrt(fit$s2)) else "NA", as.integer(ind_df),
                 fit$mu, if (is.finite(fit$se_mu)) sprintf("%.2f", fit$se_mu) else "NA", fit$mu_s,
                 if (nrow(fit$lean)) paste(sprintf("%s %+.2f (n %d, %d clusters)", fit$lean$side, fit$lean$shrunk, fit$lean$n, fit$lean$k), collapse = ", ") else "none"))

@@ -199,7 +199,7 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
     # elections before this one; after the .raw return, so the fits that read .raw see the polls as published
     per_poll <- seat_paid_lean_apply(per_poll, seat_paid_lean(el_arg))
     mv <- attr(per_poll, "moved")
-    cat(sprintf("SPL2 %s paid seat polls with the lean taken off: %d%s\n", el_arg, length(mv),
+    cat(sprintf("SPQ2 %s paid seat polls with the lean taken off: %d%s\n", el_arg, length(mv),
                 if (length(mv)) paste0(" (", paste(mv, collapse = "; "), ")") else ""))
   }
   per_poll$wt <- .seat_poll_cell_weights(per_poll, seat_poll_decay_params(el_arg))
