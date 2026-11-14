@@ -101,7 +101,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   mean miss 23.4 before the blend, 11.6 published, 10 seats (Wakehurst published 30.0, not 13.7).
 - OPEN, NIGHT MODEL (before 28 Nov). `pair_cal` v2 PASSED (pooled -0.00175, SE 0.00147; vic2022 +0.0028) and is the
   live night default, 11 Nov (prereg RESULT in `plans/prereg-night-pair-cal-2026-11-11.md`). Monash still ends wrong
-  (Liberal ~0.005): the next lever is the model's own pair prior, not trust in the AEC. Found on the way: the federal replay dropped every pair the AEC later
+  (Liberal ~0.005). CORRECTED 14 Nov: the cause is not the pair prior but two independents run as one (Leonard 17.1 +
+  Broadbent 10.2 = one IND on 27.3%, past Labor's 20.3); the night class split from counted figures is being tested
+  (`plans/prereg-night-class-split-2026-11-14.md`, Pete: "Build and test it"). Found on the way: the federal replay dropped every pair the AEC later
   blanked (Monash among 15/21 seats), fixed 59dff525; earlier federal night numbers (the called-rule test) ran on the old filter.
   Mirani qld2024 traced 11 Nov: (1) FIXED, classify_party() filed bare codes (LNP/ALP/LIB/KAP in the qld/sa/vic2006-10
   booth 2CP files) as OTH, so the counted pair was never matched (qld2024 half-count log loss 0.2296 -> 0.1668).
