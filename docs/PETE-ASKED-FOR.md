@@ -33,6 +33,12 @@ moved verbatim 2026-10-24. Every row below still has something open.
 
 ---
 
+## 2026-11-15
+
+| Request | Status |
+|---|---|
+| Brunswick's registered 2026 Liberal card is OPEN (1 Liberal, then "your choice"): model it as open, not as the statewide Labor-above order (Pete chose "Build 'open card'") | **IN PROGRESS 15 Nov.** The vic2026 statewide card row (Labor above Greens, read from the VEC's registered cards) is added; OPEN needs a third state in `R/htv_flow.R`. |
+
 ## 2026-11-13
 
 | Request | Status |

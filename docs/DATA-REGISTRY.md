@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-11-12 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-11-15 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
@@ -162,7 +162,7 @@ cannot pass as a working one.
   - e.g. raw/2020/BallotPaperVersions.txt, raw/2020/BrindabellaTotal.txt, raw/2020/Candidates.txt, raw/2020/DataDescriptions.pdf
 - **historical-odds/** -- 34 files, 784 KB
   - e.g. afe2025/betr_electorate_data.json, afe2025/betr_wide.csv, afe2025/market_odds.json, afe2025/sportsbet_wide.csv
-- **htv/** -- 79 files, 20.5 MB
+- **htv/** -- 95 files, 60.0 MB
   - e.g. coalition-card-order-researched.csv, liberal-alp-grn-order.csv, raw/fed2007/vee-how-to-vote-2007.html, raw/fed2010/andrewnorton-2010-08-16.html
 - **leaders/** -- 2 files, 66 KB
   - e.g. leaders-supplement.csv, leaders.csv
@@ -172,7 +172,7 @@ cannot pass as a working one.
   - e.g. media-feed/election-results-feed.html, media-feed/nswec-state-and-local-election-media-feeds.pdf, raw/2011/fp/Albury.htm, raw/2011/fp/Auburn.htm
 - **ntec/** -- 98 files, 9.2 MB
   - e.g. raw/2012_la_general_election.pdf, raw/2012_la_general_election.txt, raw/2012_la_general_election_raw.txt, raw/div/2016-arafura.html
-- **polls/** -- 4094 files, 498.0 MB. **1 ZERO-BYTE: crosstabs-ambiguous.txt**
+- **polls/** -- 4101 files, 505.8 MB. **1 ZERO-BYTE: crosstabs-ambiguous.txt**
   - e.g. act-polls-handkeyed.csv, archive/archive_vs_ae_pairs.csv, archive/fed_archive_polls.csv, archive/morgan_rows.csv
 - **retirements/** -- 57 files, 29.5 MB
   - e.g. raw/fed2004.html, raw/fed2004_candidates.html, raw/fed2004_members.html, raw/fed2007.html
@@ -180,9 +180,9 @@ cannot pass as a working one.
   - e.g. abc-guide-bios-offline.csv, abc-guide-bios.csv, abc-guide-raw/_cache/listing_fed2007_abc_net_au_elections_federal_2007_guide.json, abc-guide-raw/_cache/listing_fed2010_abc_net_au_elections_federal_2010_guide.json
 - **tas/** -- 26 files, 2.5 MB
   - e.g. raw/tec/2018/2018-Bass-first-prefs-by-polling-places.xlsx, raw/tec/2018/2018-Braddon-first-prefs-by-polling-places.xlsx, raw/tec/2018/2018-Denison-first-prefs-by-polling-places.xlsx, raw/tec/2018/2018-Franklin-first-prefs-by-polling-places.xlsx
-- **trends/** -- 5751 files, 3.8 MB
+- **trends/** -- 5987 files, 4.3 MB
   - e.g. 2019_anch2_Adrian_Wone_Susie_Beveridge_Will_Landers_Ammar_Khan.rds, 2019_anch2_Bill_Chandler_Susan_Moylan_Dave_Blake_Tim_Bohm.rds, 2019_anch2_Robert_Oakeshott_Helen_Haines_Zali_Steggall_Kerryn_Phelps.rds, 2019_anch2_Trevor_Jones_Colin_Butland_David_Norman_Thor_Prohaska.rds
-- **vec/** -- 3815 files, 458.1 MB
+- **vec/** -- 4323 files, 458.7 MB
   - e.g. 2006/vc/fpv-albertpark.html, 2006/vc/fpv-altona.html, 2006/vc/fpv-ballarateast.html, 2006/vc/fpv-ballaratwest.html
 - **waec/** -- 2307 files, 63.7 MB
   - e.g. app.html, app.min.js, config-loader.js, config.json

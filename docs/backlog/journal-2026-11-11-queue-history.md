@@ -1,5 +1,19 @@
 # Queue item text moved verbatim from NEXT-STEPS.md (11 Nov 2026, wrap-up)
 
+## Moved 15 Nov 2026 (wrap-up): head of the NIGHT MODEL item
+
+- OPEN, NIGHT MODEL (before 28 Nov). `pair_cal` v2 PASSED (pooled -0.00175, SE 0.00147; vic2022 +0.0028) and is the
+  live night default, 11 Nov (prereg RESULT in `plans/prereg-night-pair-cal-2026-11-11.md`). Monash still ends wrong
+  (Liberal ~0.005). CORRECTED 14 Nov: the cause is not the pair prior but two independents run as one (Leonard 17.1 +
+  Broadbent 10.2 = one IND on 27.3%, past Labor's 20.3); the night class split from counted figures SHIPPED 14 Nov as
+  the live night default (`plans/prereg-night-class-split-2026-11-14.md` PASSED; Monash Liberal 0.005 -> 0.469). OPEN: see it
+  run in the 25 Nov dress rehearsal (NW23/NW24, Daily Eight 25 Nov). Forde fed2025 TRACED 14 Nov: the replay never
+  used its 2CP count because the feed says "Van MANEN" and the booth file "VAN MANEN" (8 divisions a night, case only;
+  FIXED 21578e34); with the count the split ends Forde Labor 0.691 against base 0.642. Restated on the fixed replays
+  (`deciding-runs/20261114-1700-replay-namecase/`): pooled -0.0084 (SE 0.0095), without Monash +0.0011 (SE 0.0010),
+  PASS; `.NIGHT_PAIR_CAL` refit identical. Found on the way: the federal replay dropped every pair the AEC later
+  blanked (Monash among 15/21 seats), fixed 59dff525; earlier federal night numbers (the called-rule test) ran on the old filter.
+
 - OPEN, unblocked 9 Nov (reuse fix on main): `AUSPOL_POLL_SERIES_CLASS=name` (SA-Best, Katter, UAP, FF classed by full name). 20k on 7 pairs a tie
   (-0.0028, SE 0.0038); sa2018 +0.037 of which Morphett +0.031. `plans/prereg-poll-series-class-2026-11-06.md`, last section.
   Pete 10 Nov 11:10pm: "Run all 35". Deciding run scheduled 11:20pm (code 049ebc10, 20k, all pairs):
@@ -92,3 +106,24 @@
 - DONE 13 Nov: council-history fix (PR #229, stage 9 8:34am, daily run 9:10am green; Footscray now GRN 0.519) and the
   Pakenham seat-poll correction (published ONP 0.829 -> 0.888, LNP 0.161 -> 0.104, ALP 0.005 -> 0.004; poll fix plus new
   trees). Full items moved to `backlog/journal-2026-11-11-queue-history.md`.
+
+
+## Moved from NEXT-STEPS 15 Nov: NIGHT SOURCE item, verbatim
+
+- OPEN, NIGHT SOURCE (before 28 Nov): the VEC REFUSED the feed (11 Nov); the night now runs on the VEC WEBSITE.
+  BUILT 11 Nov: `R/vec_web.R` (page parser, 2026 + 2022 layouts; booth table identical to the feed path on vic2022's
+  final count, every booth cell), `scripts/fetch_vec_web_snapshot.R` (index page -> each district's two voting-centre
+  pages -> stamped folder + manifest + DONE; tested on the live Nepean pages), `night_cycle(source_type = "web")` with
+  `--source-type=web --enrolment=external/reference/vec/2026/enrolment/enrolment-2026.csv --places=external/reference/vec/2026/voting-locations/places-2026.csv`, `cand_ref = "copy"` by default
+  there (Pete). End to end on 2022's pages: 87 districts published, ~65 s a cycle (parse 21 s, simulate 35 s).
+  STILL OPEN: (1) the 2026 results index URL is only known on the night (the fetcher takes --index); (2) whether the
+  pages fill in during the count (draft question in Pete's Gmail, unsent); (5) DONE 13 Nov: all 1,851 centres on /politics/live (blog #1203 9:47am, #1205 10:36am; Pete: merge).
+  Geocoder 2058bdd1 places all 359 lookups in-district (11 hand-placed in `places-2026-manual.csv`; 27 street-level and
+  2 hand-placed flagged approximate). Blog route: branch off origin/main, PR into main, ITG merges main into dev. Re-run both after the week-of-election spreadsheet re-download; (3) DONE 11 Nov: the 2026 voting-centre list, `scripts/build_vec_places_2026.R` from the VEC venues spreadsheet
+  (1,851 election-day centres, est. 1,603,331 ordinary votes; 310 early centres). Re-download the spreadsheet the week of the
+  election (it changes: Change Log sheet) and rerun. Only 61 of 200 guest joint centres (JVC) match a 2022 booth name: if one
+  never gets its own results row it stays a small uncounted placeholder. Same day, found and fixed: the night never matched
+  "South-West Coast" (model, website) to "South West Coast" (`booths-vic2026-ref.csv`), so that seat's declaration votes had no
+  reference and its turnout fell to the state rate; `.night_seat_names()` now puts every input's names into the model's.
+  Checked on all 88 districts with the 2022 pages under the live 2026 configuration (87 updated; Narracan has no 2022 page); (4) DONE 11 Nov: dress rehearsal of fetcher + loop on the live Nepean pages (found and fixed: the loop never saw website snapshots; the website candidate list has no enrolment, now `external/reference/vec/2026/enrolment/enrolment-2026.csv`, pass it as --enrolment); (5) the ITG booths build
+  (`C:/dev/inthegame-blog/politics/night-maps/build-booths-2026.py`) also assumed the feed.

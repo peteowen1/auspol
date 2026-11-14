@@ -16,6 +16,27 @@ test_that("the researched table maps card orders, splits seat lists and drops op
   expect_equal(t$greens_above_labor, c(FALSE, TRUE, FALSE, FALSE))
 })
 
+test_that("a seat-level OPEN card is kept as NA and that seat keeps its learned flows (Brunswick vic2026)", {
+  f <- withr::local_tempfile(fileext = ".csv")
+  data.table::fwrite(data.table::data.table(
+    election = c("x2026", "x2026", "x2027"), seat = c("ALL", "Brunswick", "ALL"), party = "LIB",
+    order = c("ALP_ABOVE_GRN", "OPEN", "OPEN"), confidence = "HIGH", source_url = "u"), f)
+  t <- htv_researched_table(f)
+  expect_equal(nrow(t), 2L)                                       # the statewide OPEN row (x2027) is still dropped
+  expect_identical(t[t$seat == "Brunswick"]$greens_above_labor, NA)
+  expect_false(t[t$seat == "ALL"]$greens_above_labor)
+  cond <- list("LNP|ALP,GRN" = c(ALP = 0.3, GRN = 0.7))
+  fm <- list(conditional = cond)
+  rows <- list(greens_above = 38, labor_above = 62)
+  out <- htv_flow_override(NULL, fm, "x2026", c("Brunswick", "Richmond"), table = t, rows = rows)
+  expect_null(out[["Brunswick"]])                                 # no override: the caller's learned flows stand
+  expect_equal(out[["Richmond"]][["LNP|ALP,GRN"]][["ALP"]], 0.62)
+  expect_equal(attr(out, "htv")$applied, 1L)
+  # only open seat cards and no ALL row (vic2018): nothing applies, and a NULL override must come back NULL
+  only_open <- t[t$seat == "Brunswick"]
+  expect_null(htv_flow_override(NULL, fm, "x2026", c("Brunswick", "Richmond"), table = only_open, rows = rows))
+})
+
 test_that("AUSPOL_HTV_TABLE selects the table, and a bad value stops", {
   withr::local_envvar(AUSPOL_HTV_TABLE = "nonsense")
   expect_error(htv_order_table(), "shipped or researched")
