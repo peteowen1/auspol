@@ -222,7 +222,7 @@ seat_paid_lean_apply <- function(per_poll, fit, sides = NULL) {
     if (sd_ == "IND" && !"IND" %in% cl) next
     sp <- .ppc_side_parties(sd_, unique(cl))
     on <- cl %in% sp
-    if (!any(on)) next
+    if (!any(on) || sum(out$fp[ix][on]) <= 0) next   # a side listed at 0% has nothing to take the lean off (0/0)
     # the lean is in points of a full poll (ALP, LNP and GRN named, scaled to 100): a full poll with undecideds takes
     # it in its own units; a partial one (Hawthorn 2026 reaches here as LNP 41 alone) takes it whole on the side's
     # figures, and with nothing else named it just comes off (each class is averaged on its own in the blend)

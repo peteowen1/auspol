@@ -70,6 +70,10 @@ test_that("apply takes the lean off the side's figures and gives it to the rest;
   # a lean bigger than the side's only figure takes it to zero, never below
   small <- data.table::data.table(poll_id = "s", seat = "S", group = "direct_stake", sponsor = "Advance", class = "LNP", fp = 3)
   expect_equal(seat_paid_lean_apply(small, fit, sides = c(s = "LNP"))$fp, 0)
+  # a side listed at 0% is left alone (no 0/0)
+  zero <- data.table::data.table(poll_id = "z", seat = "Z", group = "direct_stake", sponsor = "x", class = c("LNP", "ALP"), fp = c(0, 50))
+  zo <- seat_paid_lean_apply(zero, fit, sides = c(z = "LNP"))
+  expect_identical(zo$fp, c(0, 50)); expect_identical(attr(zo, "moved"), character(0))
   # a known side with no row of its own gets none (amendment 3)
   r2 <- data.table::copy(r); r2$sponsor[r2$poll_id == "p1"] <- "Australia Institute"   # ALP+GRN: no row
   o2 <- seat_paid_lean_apply(r2, fit, sides = c(p1 = "ALP+GRN", p2 = "IND", p3 = "UNKNOWN"))
@@ -79,7 +83,9 @@ test_that("apply takes the lean off the side's figures and gives it to the rest;
 test_that("sponsor names map to sides through sponsor_side.csv", {
   skip_if_not(file.exists(file.path(pkg_root(), "external", "reference", "polls", "sponsor_side.csv")), "sponsor_side.csv not in this copy")
   r <- spl_raw()
-  expect_identical(seat_paid_lean_measure(r, spl_act)$poll_id, seat_paid_lean_measure(r, spl_act, sides = SPL_SIDES)$poll_id)
+  expect_identical(paid_poll_side(c("Advance", "Climate 200", "Liberal Party", "Australia Institute")),
+                   c("LNP", "IND", "LNP", "ALP+GRN"))
+  expect_identical(seat_paid_lean_measure(r, spl_act)$side, seat_paid_lean_measure(r, spl_act, sides = SPL_SIDES)$side)
 })
 
 test_that("the switch accepts only 0 or 1", {
