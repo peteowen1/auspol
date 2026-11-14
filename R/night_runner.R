@@ -202,7 +202,9 @@ night_booth_table <- function(feed, lookup, places = NULL, include_late = FALSE)
   cd[, party := data.table::fifelse(independent, "Independent", data.table::fifelse(is.na(registered_name), "UNMAPPED", registered_name))]
   dis <- feed$contests[, c("district_id", "district")]; dis[, seat := dn(district)]
   cd <- merge(cd, dis[, c("district_id", "seat")], by = "district_id", sort = FALSE)
-  cmap <- cd[, c("district_id", "candidate_id", "seat", "party")]
+  # `candidate` (the feed's name) rides along: the night class split counts candidates of one class separately
+  cd[, candidate := name]
+  cmap <- cd[, c("district_id", "candidate_id", "seat", "party", "candidate")]
 
   rows <- list()
   bo <- feed$booths
@@ -213,7 +215,7 @@ night_booth_table <- function(feed, lookup, places = NULL, include_late = FALSE)
     bo <- data.table::copy(bo); bo[, booth_type := bt]
     bo <- merge(bo, cmap, by = c("district_id", "candidate_id"), all.x = TRUE, sort = FALSE)
     if (anyNA(bo$party)) stop("NW2! booth votes for a candidate id that is not in the district's candidate list", call. = FALSE)
-    rows[[1]] <- bo[, list(district = seat, booth, booth_type, party, votes)]
+    rows[[1]] <- bo[, list(district = seat, booth, booth_type, party, votes, candidate)]
   }
   have_booth <- if (length(rows)) unique(rows[[1]][, c("district", "booth_type")]) else data.table::data.table(district = character(), booth_type = character())
   bty <- feed$by_type
@@ -239,10 +241,10 @@ night_booth_table <- function(feed, lookup, places = NULL, include_late = FALSE)
       drop <- drop | (bty$vote_type == "Ordinary" & bty$seat %in% listed)
     }
     bty <- bty[!drop, ]
-    rows[[length(rows) + 1L]] <- bty[, list(district = seat, booth = paste0("(district ", booth_type, ")"), booth_type, party, votes)]
+    rows[[length(rows) + 1L]] <- bty[, list(district = seat, booth = paste0("(district ", booth_type, ")"), booth_type, party, votes, candidate)]
   }
   live <- data.table::rbindlist(rows, use.names = TRUE)
-  if (!nrow(live)) live <- data.table::data.table(district = character(), booth = character(), booth_type = character(), party = character(), votes = numeric())
+  if (!nrow(live)) live <- data.table::data.table(district = character(), booth = character(), booth_type = character(), party = character(), votes = numeric(), candidate = character())
   n_placeholder_booths <- 0L; n_unlisted <- 0L
   if (!is.null(places)) {
     pl <- places[places$booth_class == "VotingCentre", ]
@@ -255,7 +257,7 @@ night_booth_table <- function(feed, lookup, places = NULL, include_late = FALSE)
     # no placeholder where a reported booth matches by name after normalising (Mt/Mount, St/Saint, case, punctuation)
     pl <- pl[!paste(pl$seat, .norm_booth(pl$booth)) %in% paste(live$district, .norm_booth(live$booth)), ]
     if (nrow(pl)) { n_placeholder_booths <- nrow(pl)
-      live <- rbind(live, pl[, list(district = seat, booth, booth_type = "ordinary", party, votes = 0)]) }
+      live <- rbind(live, pl[, list(district = seat, booth, booth_type = "ordinary", party, votes = 0, candidate = NA_character_)]) }
   }
   if (!include_late) live <- live[!live$booth_type %in% .night_late_types, ]
   # placeholders: a district-level unit with no rows at all still has to exist (uncounted) so it is projected
@@ -263,7 +265,7 @@ night_booth_table <- function(feed, lookup, places = NULL, include_late = FALSE)
   ph <- data.table::rbindlist(lapply(if (include_late) .night_unit_types else setdiff(.night_unit_types, .night_late_types), function(ty) {
     have <- live$district[live$booth_type == ty]
     x <- p1[!p1$seat %in% have, ]
-    if (!nrow(x)) NULL else x[, list(district = seat, booth = paste0("(district ", ty, ")"), booth_type = ty, party, votes = 0)]
+    if (!nrow(x)) NULL else x[, list(district = seat, booth = paste0("(district ", ty, ")"), booth_type = ty, party, votes = 0, candidate = NA_character_)]
   }))
   if (!is.null(ph) && nrow(ph)) live <- rbind(live, ph)
   live[, unit := data.table::fifelse(booth_type == "ordinary", booth, booth_type)]

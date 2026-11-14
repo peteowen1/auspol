@@ -50,7 +50,8 @@ test_that("conversion gives the booth table shape: types, names, parties, no dou
   # the district counts by type repeat the booths' votes for ordinary / EVC / mobile: only one of the two may be used
   cv <- night_booth_table(nr_feed(), nr_lookup(), include_late = TRUE)
   L <- cv$live
-  expect_named(L, c("district", "booth", "booth_type", "party", "votes"))
+  expect_named(L, c("district", "booth", "booth_type", "party", "votes", "candidate"))
+  expect_false(anyNA(L$candidate[L$votes > 0]))                             # the night class split needs every counted name
   expect_setequal(unique(L$district), "Alpha")                               # " District" suffix gone
   expect_setequal(unique(L$booth_type), c("ordinary", "early", "postal", "absent", "provisional", "marked_as_voted"))
   expect_equal(sum(L$votes[L$booth_type == "ordinary"]), 32)                  # booths only, not Ordinary by type as well
