@@ -27,6 +27,9 @@ surge_fade <- !identical(flag("surge-fade", "1"), "0"); tcp_center <- flag("tcp-
 tcp_floor <- as.numeric(flag("tcp-flow-floor", "0.01")); own_fp <- identical(flag("tcp-own-fp", "0"), "1")
 pair_r <- flag("pair-r", NULL); if (!is.null(pair_r)) pair_r <- as.numeric(pair_r)   # prereg-night-pair-trust-2026-11-11
 cand_ref <- local({ v <- flag("cand-ref", "0"); if (v == "1") TRUE else if (v %in% c("move", "copy")) v else if (v == "0") FALSE else stop("--cand-ref must be 0, 1, move or copy") })   # prereg-night-candidate-ref(-copy)-2026-11-11
+cls_split_on <- identical(flag("class-split", "0"), "1")   # prereg-night-class-split-2026-11-14
+cls_split <- if (cls_split_on) night_class_split_params(pair_lbl) else NULL
+if (cls_split_on) cat(sprintf("NRCS night class split: %s\n", if (is.null(cls_split)) "NO parameters (class_split_fit gave none): off" else sprintf("sd0 %.3f, f %s", cls_split$sd0, paste(names(cls_split$f), sprintf("%.3f", cls_split$f), collapse = " "))))
 pair_cal <- flag("pair-cal", NULL); if (!is.null(pair_cal)) pair_cal <- as.numeric(strsplit(pair_cal, ",")[[1]])   # c(alpha,beta), prereg-night-pair-cal-2026-11-11
 day <- as.Date(c(`2022` = "2022-05-21", `2025` = "2025-05-03")[[as.character(yr)]])
 tm <- strsplit(flag("times", paste(c(sprintf("%02d:%02d", rep(18:23, each = 4), c(0, 15, 30, 45)), "24:00", "25:00", "26:00", "27:00"), collapse = ",")), ",")[[1]]
@@ -83,7 +86,7 @@ for (k in seq_along(at)) {
   tcp_rows <- merge(Tc, tb, by = c("district", "booth"))
   conv <- list(live = L, counted = rep_pp, tcp = tcp_rows)
   r <- night_run_update(st, conv, R, gap_k = 5, total = "projected", use_tcp = nrow(tcp_rows) > 0,
-                        surge_fade = surge_fade, tcp_center = tcp_center, tcp_flow_floor = tcp_floor, tcp_own_fp = own_fp, tcp_pair_r = pair_r, tcp_pair_cal = pair_cal, cand_ref = cand_ref)
+                        surge_fade = surge_fade, tcp_center = tcp_center, tcp_flow_floor = tcp_floor, tcp_own_fp = own_fp, tcp_pair_r = pair_r, tcp_pair_cal = pair_cal, cand_ref = cand_ref, class_split = cls_split)
   tot <- r$sim$totals; alp <- tot[, "ALP"]
   oth <- tot[, setdiff(colnames(tot), "ALP"), drop = FALSE]
   wp <- as.data.table(r$sim$win_prob)

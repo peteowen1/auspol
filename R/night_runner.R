@@ -202,7 +202,9 @@ night_booth_table <- function(feed, lookup, places = NULL, include_late = FALSE)
   cd[, party := data.table::fifelse(independent, "Independent", data.table::fifelse(is.na(registered_name), "UNMAPPED", registered_name))]
   dis <- feed$contests[, c("district_id", "district")]; dis[, seat := dn(district)]
   cd <- merge(cd, dis[, c("district_id", "seat")], by = "district_id", sort = FALSE)
-  cmap <- cd[, c("district_id", "candidate_id", "seat", "party")]
+  # `candidate` (the feed's name) rides along: the night class split counts candidates of one class separately
+  data.table::set(cd, j = "candidate", value = cd$name)
+  cmap <- cd[, c("district_id", "candidate_id", "seat", "party", "candidate")]
 
   rows <- list()
   bo <- feed$booths
@@ -213,7 +215,7 @@ night_booth_table <- function(feed, lookup, places = NULL, include_late = FALSE)
     bo <- data.table::copy(bo); bo[, booth_type := bt]
     bo <- merge(bo, cmap, by = c("district_id", "candidate_id"), all.x = TRUE, sort = FALSE)
     if (anyNA(bo$party)) stop("NW2! booth votes for a candidate id that is not in the district's candidate list", call. = FALSE)
-    rows[[1]] <- bo[, list(district = seat, booth, booth_type, party, votes)]
+    rows[[1]] <- bo[, list(district = seat, booth, booth_type, party, votes, candidate)]
   }
   have_booth <- if (length(rows)) unique(rows[[1]][, c("district", "booth_type")]) else data.table::data.table(district = character(), booth_type = character())
   bty <- feed$by_type
@@ -239,10 +241,10 @@ night_booth_table <- function(feed, lookup, places = NULL, include_late = FALSE)
       drop <- drop | (bty$vote_type == "Ordinary" & bty$seat %in% listed)
     }
     bty <- bty[!drop, ]
-    rows[[length(rows) + 1L]] <- bty[, list(district = seat, booth = paste0("(district ", booth_type, ")"), booth_type, party, votes)]
+    rows[[length(rows) + 1L]] <- bty[, list(district = seat, booth = paste0("(district ", booth_type, ")"), booth_type, party, votes, candidate)]
   }
   live <- data.table::rbindlist(rows, use.names = TRUE)
-  if (!nrow(live)) live <- data.table::data.table(district = character(), booth = character(), booth_type = character(), party = character(), votes = numeric())
+  if (!nrow(live)) live <- data.table::data.table(district = character(), booth = character(), booth_type = character(), party = character(), votes = numeric(), candidate = character())
   n_placeholder_booths <- 0L; n_unlisted <- 0L
   if (!is.null(places)) {
     pl <- places[places$booth_class == "VotingCentre", ]
@@ -255,7 +257,7 @@ night_booth_table <- function(feed, lookup, places = NULL, include_late = FALSE)
     # no placeholder where a reported booth matches by name after normalising (Mt/Mount, St/Saint, case, punctuation)
     pl <- pl[!paste(pl$seat, .norm_booth(pl$booth)) %in% paste(live$district, .norm_booth(live$booth)), ]
     if (nrow(pl)) { n_placeholder_booths <- nrow(pl)
-      live <- rbind(live, pl[, list(district = seat, booth, booth_type = "ordinary", party, votes = 0)]) }
+      live <- rbind(live, pl[, list(district = seat, booth, booth_type = "ordinary", party, votes = 0, candidate = NA_character_)]) }
   }
   if (!include_late) live <- live[!live$booth_type %in% .night_late_types, ]
   # placeholders: a district-level unit with no rows at all still has to exist (uncounted) so it is projected
@@ -263,7 +265,7 @@ night_booth_table <- function(feed, lookup, places = NULL, include_late = FALSE)
   ph <- data.table::rbindlist(lapply(if (include_late) .night_unit_types else setdiff(.night_unit_types, .night_late_types), function(ty) {
     have <- live$district[live$booth_type == ty]
     x <- p1[!p1$seat %in% have, ]
-    if (!nrow(x)) NULL else x[, list(district = seat, booth = paste0("(district ", ty, ")"), booth_type = ty, party, votes = 0)]
+    if (!nrow(x)) NULL else x[, list(district = seat, booth = paste0("(district ", ty, ")"), booth_type = ty, party, votes = 0, candidate = NA_character_)]
   }))
   if (!is.null(ph) && nrow(ph)) live <- rbind(live, ph)
   live[, unit := data.table::fifelse(booth_type == "ordinary", booth, booth_type)]
@@ -532,12 +534,14 @@ night_expected_votes <- function(enrolment, prev, basis = c("night", "final")) {
 #'   the calibrated pair prior (`docs/plans/prereg-night-pair-cal-2026-11-11.md`).
 #' @param cand_ref Passed to [night_booth_update()]: `FALSE` (default, unchanged) or `TRUE`, a returning candidate's
 #'   previous votes as their current class's booth reference (`docs/plans/prereg-night-candidate-ref-2026-11-11.md`).
+#' @param class_split `NULL` (default, unchanged) or [night_class_split_params()]: two candidates of one minor class
+#'   run separately from their counted figures (`docs/plans/prereg-night-class-split-2026-11-14.md`).
 #' @return List: `sim`, `nu` (the update), `shares`, `sd`, `matched` (seats in both state and feed),
-#'   `n_updated`.
+#'   `n_updated`, `class_split` (the split seats, or `NULL`).
 #' @export
 night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "table", "expected"), expected = NULL, sims = NULL, use_tcp = TRUE,
                              lean = NULL, early_frac = NULL, surge_fade = TRUE, tcp_center = "median", tcp_flow_floor = 0.01, tcp_own_fp = FALSE,
-                             tcp_pair_r = NULL, tcp_pair_cal = NULL, cand_ref = FALSE) {
+                             tcp_pair_r = NULL, tcp_pair_cal = NULL, cand_ref = FALSE, class_split = NULL) {
   total <- match.arg(total)
   if (!is.numeric(tcp_flow_floor) || length(tcp_flow_floor) != 1L || !is.finite(tcp_flow_floor) || tcp_flow_floor < 0)
     stop("NW17! tcp_flow_floor must be one finite number >= 0 (got ", paste(format(tcp_flow_floor), collapse = ", "), ")", call. = FALSE)
@@ -554,9 +558,13 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
   }
   # a state with no surge (surge_h NULL) has nothing to fade; night_surge_fade() would stop on it
   sh <- if (surge_fade && nu$n_updated > 0L && length(st$surge_h)) night_surge_fade(st$surge_h, nu$counted, seats) else st$surge_h
+  # a split that fails this cycle (e.g. a booth table without candidate names, NCS1!) leaves the cycle as without it
+  ncs <- if (!is.null(class_split) && nu$n_updated > 0L) tryCatch(night_class_split(conv$live, nu$units, nu$counted, class_split, seats),
+    error = function(e) { message("NW24! night class split skipped this cycle: ", conditionMessage(e)); NULL }) else NULL
+  csp <- .night_merge_split(st$coalition_split, ncs, seats)
   run <- function(ov) simulate_seat_contests(level_sd = st$level_sd, sd_override = sdo, level_mult = st$level_mult, shares, st$fm,
                                 party_sd = st$psd, statewide_draws = swd, seat_sd = st$seat_sd, n_sims = sims,
-                                breakout_p = st$bo$p, breakout_q = st$bo$q, coalition_split = st$coalition_split, error_q = st$error_q,
+                                breakout_p = st$bo$p, breakout_q = st$bo$q, coalition_split = csp, error_q = st$error_q,
                                 smooth = st$smooth, seed = st$seed, party_cor = st$party_cor, shrink = st$shrink,
                                 conditional_override = ov, conditional_override_sd = attr(ov, "sd"),
                                 fallback_smooth = st$fb_smooth, shrink_k = st$shrink_k, flow_sd = st$flow_sd,
@@ -572,7 +580,8 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
     n_tcp <- nrow(obs)
     sim <- night_apply_tcp(sim, obs, center = tcp_center, flow_sd_floor = tcp_flow_floor, own_fp = tcp_own_fp, pair_r = tcp_pair_r, pair_cal = tcp_pair_cal)
   }
-  list(sim = sim, nu = nu, shares = shares, sd = sdo, matched = matched, n_updated = nu$n_updated, n_tcp = n_tcp)
+  list(sim = sim, nu = nu, shares = shares, sd = sdo, matched = matched, n_updated = nu$n_updated, n_tcp = n_tcp,
+       class_split = if (is.null(ncs)) NULL else attr(ncs, "detail"))
 }
 
 #' Build the published-shape JSON document from a night update
@@ -703,6 +712,25 @@ night_publish_json <- function(doc, out_file, min_seats = 1L) {
   stop("NW20! cand_ref must be \"off\", \"copy\" or \"move\" (got ", paste(format(x), collapse = ","), ")", call. = FALSE)
 }
 
+# cfg$class_split (NW23, NW24): NULL or "on" -> two candidates of one minor class run separately from their counted figures (Pete,
+# 14 Nov 2026: on for the 28 Nov night; docs/plans/prereg-night-class-split-2026-11-14.md PASSED); "off" -> as before.
+# Parameters fitted once per election from earlier ones (night_class_split_params()), kept in the cycle cache.
+.night_class_split_cfg <- function(x, election, cache) {
+  if (identical(x, "off") || isFALSE(x)) return(NULL)
+  if (!(is.null(x) || identical(x, "on") || isTRUE(x)))
+    stop("NW23! class_split must be \"on\" or \"off\" (got ", paste(format(x), collapse = ","), ")", call. = FALSE)
+  key <- paste0("class_split_", election)
+  if (!is.null(cache) && exists(key, envir = cache, inherits = FALSE)) return(get(key, envir = cache))
+  # never stops the night: its inputs (output/minor-candidate-oof-resid-v2.csv, the transfers files) are machine-local,
+  # so a missing or unreadable one turns the split OFF for the night, says so, and is cached so cycles do not retry
+  p <- tryCatch(night_class_split_params(election), error = function(e) {
+    message("NW23! night class split OFF for the night, its parameters failed: ", conditionMessage(e)); NULL })
+  message(sprintf("NW23  night class split %s: %s", election, if (is.null(p)) "NO parameters, off" else
+    sprintf("sd0 %.3f, f %s", p$sd0, paste(names(p$f), sprintf("%.3f", p$f), collapse = " "))))
+  if (!is.null(cache)) assign(key, p, envir = cache)
+  p
+}
+
 #' One election-night cycle
 #'
 #' @param cfg List: `source`, `archive`, `setup`, `state` (RDS path or already-read list), `ref` (booth CSV path),
@@ -717,6 +745,8 @@ night_publish_json <- function(doc, out_file, min_seats = 1L) {
 #'   [night_booth_update()]),
 #'   `tcp_pair_cal` (`"fitted"` by default: the calibrated night-pair prior, `docs/plans/prereg-night-pair-cal-2026-11-11.md`;
 #'   `"off"` for the old 0.2 pair cliff; or `"alpha,beta"`),
+#'   `class_split` (`"on"` by default: two candidates of one minor class counted separately, `docs/plans/prereg-night-class-split-2026-11-14.md`;
+#'   `"off"`),
 #'   `last_stamp` (skip when the newest snapshot has this stamp), `cache` (environment for the state and lookup).
 #' @return List: `status` ("ok", "no_new" or "failed"), `stamp`, `timings` (seconds per step), `message`, `summary`.
 #' @export
@@ -845,7 +875,9 @@ night_cycle <- function(cfg) {
                             surge_fade = !isFALSE(cfg$surge_fade), tcp_center = if (is.null(cfg$tcp_center)) "median" else cfg$tcp_center,
                             tcp_flow_floor = if (is.null(cfg$tcp_flow_floor)) 0.01 else cfg$tcp_flow_floor,
                             tcp_own_fp = isTRUE(cfg$tcp_own_fp), tcp_pair_cal = .night_pair_cal_cfg(cfg$tcp_pair_cal),
-                            cand_ref = .night_cand_ref_cfg(cfg$cand_ref, web)); stamp_t("update_simulate")
+                            cand_ref = .night_cand_ref_cfg(cfg$cand_ref, web),
+                            class_split = .night_class_split_cfg(cfg$class_split, cache$st$pair, cache)); stamp_t("update_simulate")
+    if (!is.null(res$class_split)) message(sprintf("NW24  night class split: %d seat(s) counting 2+ candidates of one class separately", nrow(res$class_split)))
     res$denominator <- denom; res$n_placeholder <- conv$n_placeholder_booths; res$n_unlisted <- conv$n_unlisted_booths
     if (length(res$nu$fallback_projected)) message("NW12  ", length(res$nu$fallback_projected), " seat(s) fell back to the projected denominator (no usable expected votes): ", paste(res$nu$fallback_projected, collapse = ", "))
     bk <- night_booth_results_safe(conv, cache$ref)
