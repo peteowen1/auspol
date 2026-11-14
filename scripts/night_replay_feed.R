@@ -58,8 +58,14 @@ miss <- setdiff(unique(pp$division), seats); if (length(miss)) cat("NRF1 feed di
 # later in the night then counted as "never usable", so Monash fed2025 (Labor v Liberal on screen 6:01-8:37pm,
 # the declared pair) lost its count all night, as did 15 of 151 fed2022 and 21 of 150 fed2025 divisions.
 D[, ts := tsec(snapshot_time)]
-pair_key <- function(x) vapply(strsplit(ifelse(is.na(x), "", x), " v ", fixed = TRUE), function(z) paste(sort(trimws(z)), collapse = " v "), "")
-dec <- Tc[, list(dec_pair = paste(sort(unique(trimws(candidate))), collapse = " v ")), by = list(division = district)]
+# Names are compared case-folded: the feed writes "Van MANEN, Bert" and "McEWEN", the booth file "VAN MANEN, Bert"
+# and "MCEWEN". Until 14 Nov a case-only difference read as a wrong pair, so 8 divisions a night (fed2022: Dobell,
+# Eden-Monaro, Flinders, Lindsay, Riverina, Shortland, Swan, Wright; fed2025: Dobell, Eden-Monaro, Fairfax, Forde,
+# Lindsay, McEwen, Riverina, Wright) never had their two-candidate count used (found tracing Forde, class split).
+pair_key <- function(x) vapply(strsplit(ifelse(is.na(x), "", x), " v ", fixed = TRUE), function(z) paste(sort(toupper(trimws(z))), collapse = " v "), "")
+pair_key_cs <- function(x) vapply(strsplit(ifelse(is.na(x), "", x), " v ", fixed = TRUE), function(z) paste(sort(trimws(z)), collapse = " v "), "")
+dec <- Tc[, list(dec_pair = paste(sort(unique(toupper(trimws(candidate)))), collapse = " v "),
+                 dec_pair_cs = paste(sort(unique(trimws(candidate))), collapse = " v ")), by = list(division = district)]
 D <- merge(D, dec, by = "division", all.x = TRUE)
 dec_cls <- unique(Tc[, list(division = district, candidate, cls = classify_party(party_raw))])[,
   list(dec_cls = paste(sort(cls), collapse = "|"), n_cand = .N), by = division]
@@ -67,8 +73,10 @@ if (any(dec_cls$n_cand != 2L)) stop("NRF5! declared pair without exactly 2 candi
 D[, night_key := pair_key(tcp_pair)]
 D[, pair_ok := nzchar(night_key) & !is.na(dec_pair) & night_key == dec_pair & !(tolower(as.character(tcp_maverick)) %in% "true")]
 pk <- D[nzchar(night_key), list(ever_shown = TRUE, ever_ok = any(pair_ok)), by = division]
-cat(sprintf("NRF0 %s: %d divisions showed a pair; %d usable at some point; %d never (pair not the declared one)\n",
-            pair_lbl, nrow(pk), sum(pk$ever_ok), sum(!pk$ever_ok)))
+cs_only <- unique(D$division[D$pair_ok & pair_key_cs(D$tcp_pair) != D$dec_pair_cs])
+cat(sprintf("NRF0 %s: %d divisions showed a pair; %d usable at some point; %d never (pair not the declared one); %d matched only once case is ignored%s\n",
+            pair_lbl, nrow(pk), sum(pk$ever_ok), sum(!pk$ever_ok), length(cs_only),
+            if (length(cs_only)) paste0(" (", paste(sort(cs_only), collapse = ", "), ")") else ""))
 if (!sum(pk$ever_ok)) stop("NRF0! no division's night pair matched its declared pair: check the name formats in Tc and the feed")
 
 source("scripts/night_replay_checkpoint.R")   # per-step partial files; --resume=1 skips the times already done
