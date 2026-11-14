@@ -99,17 +99,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   time-forward "seat polls under-call new independents" term (5 of 10 polled new independents under-called by
   9-22 points: Mayo, Warringah, Kooyong, Mackellar, Mount Gambier). Seat polls already reach new independents:
   mean miss 23.4 before the blend, 11.6 published, 10 seats (Wakehurst published 30.0, not 13.7).
-- OPEN, NIGHT MODEL (before 28 Nov). `pair_cal` v2 PASSED (pooled -0.00175, SE 0.00147; vic2022 +0.0028) and is the
-  live night default, 11 Nov (prereg RESULT in `plans/prereg-night-pair-cal-2026-11-11.md`). Monash still ends wrong
-  (Liberal ~0.005). CORRECTED 14 Nov: the cause is not the pair prior but two independents run as one (Leonard 17.1 +
-  Broadbent 10.2 = one IND on 27.3%, past Labor's 20.3); the night class split from counted figures SHIPPED 14 Nov as
-  the live night default (`plans/prereg-night-class-split-2026-11-14.md` PASSED; Monash Liberal 0.005 -> 0.469). OPEN: see it
-  run in the 25 Nov dress rehearsal (NW23/NW24, Daily Eight 25 Nov). Forde fed2025 TRACED 14 Nov: the replay never
-  used its 2CP count because the feed says "Van MANEN" and the booth file "VAN MANEN" (8 divisions a night, case only;
-  FIXED 21578e34); with the count the split ends Forde Labor 0.691 against base 0.642. Restated on the fixed replays
-  (`deciding-runs/20261114-1700-replay-namecase/`): pooled -0.0084 (SE 0.0095), without Monash +0.0011 (SE 0.0010),
-  PASS; `.NIGHT_PAIR_CAL` refit identical. Found on the way: the federal replay dropped every pair the AEC later
-  blanked (Monash among 15/21 seats), fixed 59dff525; earlier federal night numbers (the called-rule test) ran on the old filter.
+- OPEN, NIGHT MODEL (before 28 Nov). Live defaults: `pair_cal` v2 (11 Nov) and the night class split (14 Nov, PR #239;
+  restated PASS after the Forde replay fix, PR #240). OPEN: see the class split run in the 25 Nov dress rehearsal
+  (NW23/NW24 lines; Daily Eight 25 Nov). Preregs: `plans/prereg-night-pair-cal-2026-11-11.md`,
+  `plans/prereg-night-class-split-2026-11-14.md`; history in `backlog/journal-2026-11-11-queue-history.md`.
   Mirani qld2024 traced 11 Nov: (1) FIXED, classify_party() filed bare codes (LNP/ALP/LIB/KAP in the qld/sa/vic2006-10
   booth 2CP files) as OTH, so the counted pair was never matched (qld2024 half-count log loss 0.2296 -> 0.1668).
   (2) `cand_ref` (by-candidate booth reference, Pete's choice) FAILED its prereg 11 Nov and stays OFF (7f921437):
