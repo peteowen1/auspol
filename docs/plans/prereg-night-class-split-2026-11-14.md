@@ -71,3 +71,22 @@ Read with: the gain is mostly Monash; without it +0.0018 (1.5 SE). The costs: Br
 by 26 votes; base was 0.99 sure because it counted another independent's 4.1% (Yin) as hers; split ends 0.67), Forde
 +0.256 (a minor-right split, Pop 5.1 / Hiscock 4.7, flips the late lean to the Liberal; Labor won; not traced),
 Lyons fed2022 +0.144, Calare +0.123 (an 8pm wobble, 0.99+ by 10pm).
+
+### ADDENDUM (14 Nov, 8pm, after the result): Forde traced; a replay bug, not the split
+
+Added after the decision; the clauses and table above are unedited.
+
+- Forde never had its two-candidate count used in either arm. The feed shows "HOLZBERGER, Rowan v Van MANEN, Bert"
+  from 6:01pm; the booth file says "VAN MANEN, Bert"; `night_replay_feed.R` compared case-sensitively and read it as a
+  wrong pair. 8 divisions a night were lost this way (fed2022: Dobell, Eden-Monaro, Flinders, Lindsay, Riverina,
+  Shortland, Swan, Wright; fed2025: Dobell, Eden-Monaro, Fairfax, Forde, Lindsay, McEwen, Riverina, Wright). Fixed
+  21578e34 (case-folded; NRF0 prints the matches). The live VEC path does not compare names.
+- Without the count both arms run on preference flows from first preferences. At the final count Labor's simulated
+  2CP share (actual 51.77%): base mean 50.54 (P Labor 0.588), split 49.79 (0.343). The split puts the exclusion order
+  right (both minor-rights out first into One Nation, as in the AEC's distribution); base often ran the combined
+  minor-right (9.9%) past One Nation (10.2%), and that last minor's flow to Labor is 40.0% in the model against One
+  Nation's 27.4%. Actual One Nation last-exclusion flow to Labor in Forde: 32.6% (fed2025 median 29.8% over 23 seats,
+  fed2022 37.8% over 24), so the model's 27.4% is ordinary seat-level error, not a general miss. Base's better number
+  came from the wrong count order.
+- With the fix (fed2025, both arms, same seeds): Forde Labor at 9pm base 0.829, split 0.870; at the end base 0.642,
+  split 0.691. Rerun of all federal arms: `deciding-runs/20261114-1700-replay-namecase/`.
