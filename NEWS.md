@@ -1,3 +1,7 @@
+# auspol 0.4.176
+
+- **The site's candidate names come from the VEC's final list** (PR #244): `scripts/build_forecast_json.R` read names from a Wikipedia table last regenerated 16 Oct, which left 219 of 572 seat-party cells with a vote unnamed on the 15 Nov forecast and named a Liberal in Croydon who did not nominate. It now reads the commission's rows of `output/candidacies.csv` (572 of 572 named), keeps `sitting` from the Wikipedia table (67 of 67), adds a `candidates` array per party row, and stops (`FJ5!`) when under 95% of ALP/LNP/GRN/ONP cells are named. No forecast number changes. Also adds the 15 Nov full review (`docs/reviews/FABLE-FULL-REVIEW-2026-11-15.md`).
+
 # auspol 0.4.175
 
 - **The vic2026 benchmark capture reads every Betfair chunk and drops books that are not markets** (PR #243): Betfair now lists all 88 seats, fetched 10 markets a request; the three capture readers (`snapshot_benchmarks.R`, `compare_bookmaker_odds.R`, `value_odds_vic2026.R`) read only the newest file and would have scored 9 seats. They now share `scripts/benchmark_books.R`. Books with one price (which devigged to certainty), over 150%, or a 1.01-style placeholder are dropped and counted (`VBK2!`): 15 Nov Betfair keeps 2 of 88 seats, Sportsbet all 88. Seat names match ignoring hyphens ("South West Coast"); "Green" is the Greens. Scripts only; the forecast is unchanged.
