@@ -17,10 +17,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `AUSPOL_LIVE_N_CAND=1`, DECISIONS 2026-11-15); CI green. OPEN for Pete: send the VEC draft (Gmail, "RE: State Election
   2026 results data feed"; unsent as of 15 Nov). Dated (Daily Eight): Mon 16 Nov check the daily run (next item); Tue 17 Nov
   benchmark capture (VPN OFF); 23 Nov VEC venues rerun; 25 Nov final salience snapshot + night dress rehearsal.
-- OPEN, Mon 16 Nov: read the 4:30am run's conclusion and log. Done when the log has `XNC1 n_cand_now from the final list for
-  vic2026: ... 110 with more than one candidate`, `FJ4  candidate names from: vec (734 rows)`, `FJ5  named cells: 572 of 572`
-  and the `HTV1`/`HTV14` lines below, and the site shows Labor near 23.3 expected seats (was 24.3) and Croydon's Liberal as
-  Toby Wooldridge. An `XNC1!` line for nsw2027 is expected (provisional list).
+- DONE Mon 16 Nov 7:30am: the 4:30am run (43741480657) concluded success with `XNC1 ... 110 with more than one candidate`,
+  `FJ4 candidate names from: vec (734 rows)`, `FJ5 named cells: 575 of 575`, `HTV1 ... (labor_above=87 open=1)`, `HTV14`;
+  site built 4:38am at `30b6435`, Labor 23.34 expected seats, Croydon's Liberal is Toby Wooldridge.
+- OPEN, visible on the site since 16 Nov (from PR #244): where a class has several candidates the seat card names the FIRST
+  ON THE BALLOT, not the one the vote belongs to. Essendon shows "Ava Adams" as the 85% Independent favourite; the class's
+  vote is Oscar Yildiz's carried personal vote. Fix in `scripts/build_forecast_json.R` (order by sitting, then the
+  candidate with a carried or prior vote, then ballot). Done when Essendon names Yildiz. 1-2 hours. Before 28 Nov.
 - OPEN, 15 Nov full review (`reviews/FABLE-FULL-REVIEW-2026-11-15.md`, "Pick up from here" is the work list; Pete's four
   answers are in DECISIONS 2026-11-15). Not built, in order: A1-A3 (`forecast.yaml`: manual runs skip the what-if jobs, quiet
   five false warnings, alarm on a NEW validation failure; `fit_nsw.R` has failed unseen since 13 Nov), A5 (poll-layer log
