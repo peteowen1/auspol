@@ -32,6 +32,10 @@ on:
         description: "Also raise the failure alarm on this manual run, to prove the alarm still fires"
         type: boolean
         default: false
+      scenarios:
+        description: "Also build the what-if scenarios on this manual run (daily runs always build them)"
+        type: boolean
+        default: false
 
 permissions:
   # contents: write is for the "Publish the forecast" step, which uploads the
@@ -244,8 +248,15 @@ jobs:
           gh release download shipped-models -p seat-poll-blend-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no seat-poll-blend-vic2026.csv -- the forecast runs WITHOUT the v50 seat-poll blend"
           gh release download shipped-models -p leader-seat-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no leader-seat-vic2026.csv -- the forecast runs WITHOUT the leader-seat bonus"
           gh release download shipped-models -p demo-resid-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no demo-resid-vic2026.csv -- the forecast runs WITHOUT the demographic correction"
-          gh release download shipped-models -p seat-poll-joint-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no seat-poll-joint-vic2026.csv -- AUSPOL_SEAT_POLL_BLEND=3 runs WITHOUT the joint blend"
-          gh release download shipped-models -p departed-fed-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no departed-fed-vic2026.csv -- the forecast runs WITHOUT the departed-member blend"
+          # Files only an OFF switch reads are fetched (and warned about) only when the published value needs
+          # them: five warnings fired every day for switches published off (review 2026-11-15, Issue 6).
+          pflag() { Rscript -e "source('scripts/published_flags.R'); cat(PUBLISHED_FLAGS[['$1']])"; }
+          if [ "$(pflag AUSPOL_SEAT_POLL_BLEND)" = "3" ]; then
+            gh release download shipped-models -p seat-poll-joint-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no seat-poll-joint-vic2026.csv -- AUSPOL_SEAT_POLL_BLEND=3 runs WITHOUT the joint blend"
+          fi
+          if [ "$(pflag AUSPOL_DEPARTED_FED)" != "0" ]; then
+            gh release download shipped-models -p departed-fed-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no departed-fed-vic2026.csv -- the forecast runs WITHOUT the departed-member blend"
+          fi
           # AUSPOL_ONP_ORDER (published "senate_rank", shipped 2026-10-26): fit_seats_full.R stops without
           # the district Senate One Nation shares, so a missing table fails HERE with the reason.
           ONP_ORDER=$(Rscript -e 'source("scripts/published_flags.R"); cat(PUBLISHED_FLAGS[["AUSPOL_ONP_ORDER"]])')
@@ -338,12 +349,18 @@ jobs:
               [ -s "output/$f" ] || { echo "::error::output/$f is missing or empty after download"; exit 1; }
             done
           fi
-          gh release download shipped-models -p upset-floor-eps.csv -D output --clobber || echo "::warning::shipped-models has no upset-floor-eps.csv -- AUSPOL_UPSET_FLOOR=1 stops fit_seats_full.R (UF0!)"
-          gh release download shipped-models -p booth-features-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no booth-features-vic2026.csv -- a model trained with AUSPOL_XGB_BOOTH=1 gets NA booth features (XB1!!)"
+          if [ "$(pflag AUSPOL_UPSET_FLOOR)" != "0" ]; then
+            gh release download shipped-models -p upset-floor-eps.csv -D output --clobber || echo "::warning::shipped-models has no upset-floor-eps.csv -- AUSPOL_UPSET_FLOOR=1 stops fit_seats_full.R (UF0!)"
+          fi
+          if [ "$(pflag AUSPOL_XGB_BOOTH)" != "0" ]; then
+            gh release download shipped-models -p booth-features-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no booth-features-vic2026.csv -- a model trained with AUSPOL_XGB_BOOTH=1 gets NA booth features (XB1!!)"
+          fi
           gh release download shipped-models -p council-history-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no council-history-vic2026.csv -- a model trained with AUSPOL_XGB_COUNCIL=1 gets all-zero council features (XC1!!)"
           gh release download shipped-models -p salience-v6.csv -D output --clobber || { echo "::error::shipped-models has no salience-v6.csv -- every vic2026 candidate would run at the no-salience defaults (XG5!); publish a rebuild (stage 9) first"; exit 1; }
           grep -q ',vic2026,' output/salience-v6.csv || { echo "::error::output/salience-v6.csv has no vic2026 rows (XG5!)"; exit 1; }
-          gh release download shipped-models -p senate-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no senate-vic2026.csv -- a model trained with AUSPOL_XGB_SENATE=1 gets NA Senate features (XS1!!)"
+          if [ "$(pflag AUSPOL_XGB_SENATE)" != "0" ]; then
+            gh release download shipped-models -p senate-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no senate-vic2026.csv -- a model trained with AUSPOL_XGB_SENATE=1 gets NA Senate features (XS1!!)"
+          fi
           gh release download shipped-models -p onp-senate-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no onp-senate-vic2026.csv -- AUSPOL_ONP_ORDER=senate falls back to the House-rank One Nation rule (ONP1!!)"
           ls -l output/xgb-*
           # The forecast history table lives on the forecast-latest release;
@@ -351,7 +368,8 @@ jobs:
           gh release download forecast-latest -p forecast-history.csv -D output --clobber 2>/dev/null || echo "no forecast-history.csv yet (first run)"
           # STALENESS: the models must not lag the code. 2026-09-19: they were
           # eight days and ~40 commits behind main and nobody noticed. Warn
-          # loudly past 3 days; fail past 14 (a rebuild takes 25 minutes).
+          # loudly past 3 days; fail past 14 (a full rebuild took 84 minutes
+          # on 13 Nov, 5:00 to 6:24am).
           # A missing or unreadable manifest degrades to a warning, never a
           # failed forecast (review gate, 2026-09-19).
           if gh release download shipped-models -p MANIFEST.json -D output --clobber 2>/dev/null; then
@@ -496,7 +514,6 @@ jobs:
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
-      # Kept so a human can download and eyeball the page before publishing it.
       - name: Publish the forecast to the forecast-latest release
         # release-as-data-bus: the ITG page fetches these by fixed URL. The
         # history table is downloaded first so each build appends to it.
@@ -579,7 +596,7 @@ jobs:
           fi
           command -v wrangler >/dev/null || npm install -g wrangler@4.135.0 >/dev/null 2>&1
           bash scripts/publish_forecast_history.sh || { echo "::warning::forecast history step failed; the live forecast is unaffected"; exit 1; }
-      - name: NSW 2027 forecast (off until the repository variable AUSPOL_PUBLISH_NSW2027 is 1)
+      - name: NSW 2027 forecast (on while the repository variable AUSPOL_PUBLISH_NSW2027 is 1, set 8 Oct)
         # Runs AFTER every Victorian publish step (release, R2 feed, dated R2 copy),
         # so a NSW failure turns the run red and raises the alarm but cannot skip
         # them (review 2026-10-08: placed before the R2 steps it would have). Same script, AUSPOL_TARGET=nsw2027 (plans/nsw2027-itg-scope-2026-10-08.md).
@@ -658,6 +675,7 @@ jobs:
           fi
           command -v wrangler >/dev/null || npm install -g wrangler@4.135.0 >/dev/null 2>&1
           bash scripts/publish_forecast_history.sh || { echo "::warning::NSW forecast history step failed; the live forecast is unaffected"; exit 1; }
+      # Kept so a human can download and eyeball a run's outputs; publishing above does not wait for it.
       - name: Upload outputs
         if: always()
         uses: actions/upload-artifact@v4
@@ -800,8 +818,9 @@ jobs:
   # block or change it: the forced runs write suffixed files only.
   scenarios:
     needs: refresh
-    # A manual --quick run may skip the seat model the scenarios rerun.
-    if: ${{ !inputs.quick }}
+    # A manual --quick run may skip the seat model the scenarios rerun. A manual run builds them only when
+    # asked (inputs.scenarios): 16 jobs of what-ifs cost ~16 min of runners and nothing reads a test run's.
+    if: ${{ !inputs.quick && (github.event_name == 'schedule' || inputs.daily || inputs.scenarios) }}
     runs-on: ubuntu-latest
     timeout-minutes: 80   # worst case: two (10 + 7 + 10)-min install rounds + ~16 min of scenarios
     strategy:

@@ -47,8 +47,8 @@ Each stage is one script; the driver times them and prints the split.
 | 8 | `build_aef_comparison.R`, `build_aef7_tcp_actual.R`, `build_aef7_ledger_data.R`, `build_aef7_ledger_html.R` | | `output/aef-comparison-full.csv`, `output/aef7-tcp-actual.csv`, `output/aef7-ledger-data.json` + `-summary.json`, `output/aef7-ledger.html` | the ledger: the two JSON files substituted into `scripts/templates/aef7-ledger.template.html`. Stage 9 uploads the HTML and this file to the release |
 | 9 | `promote_rebuild.R`, `publish_shipped_release.R` (only with `AUSPOL_PUBLISH=1` and 20,000 sims) | | `output/shipped/MANIFEST.json`; the `shipped-models` GitHub release (models plus `candidacies.csv`, which CI cannot build) | the daily forecast workflow downloads these; the manifest's date is what its staleness check reads |
 
-**The daily live forecast** (`.github/workflows/forecast.yaml`, 06:00
-Melbourne): fetches polls and election data, downloads the shipped models,
+**The daily live forecast** (`.github/workflows/forecast.yaml`, 04:30
+Melbourne, dispatched by the inthegame-blog worker): fetches polls and election data, downloads the shipped models,
 runs `run_all.R` (which ends with `fit_seats_full.R`, `build_page.R` and
 `build_forecast_json.R`; a validation breach in another state's stage is a
 warning, not a failed forecast), and publishes `forecast-vic2026.json`,
