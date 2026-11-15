@@ -1,0 +1,55 @@
+district,call_class,prob
+Bayswater,LNP,1
+Berwick,LNP,0.931000081240822
+Berwick,ANY_OTHER,0.0689999187556724
+Brighton,LNP,0.956114862839932
+Brighton,ANY_OTHER,0.0438851371600683
+Brunswick,GRN,1
+Caulfield,LNP,0.986857382529368
+Caulfield,ANY_OTHER,0.0131426174706316
+Dandenong,ALP,1
+Eildon,LNP,0.973599827196136
+Eildon,ANY_OTHER,0.0132000864019649
+Eildon,ONP,0.0132000864019649
+Evelyn,LNP,1
+Geelong,ALP,1
+Gippsland East,LNP,1
+Gippsland South,LNP,1
+Glen Waverley,LNP,1
+Hawthorn,LNP,1
+Ivanhoe,ALP,1
+Kalkallo,ALP,1
+Kew,LNP,1
+Kororoit,LNP,1
+Lara,ALP,1
+Laverton,ALP,1
+Lowan,LNP,1
+Macedon,LNP,1
+Melbourne,GRN,1
+Mildura,LNP,1
+Mornington,LNP,1
+Morwell,LNP,1
+Mulgrave,ALP,1
+Murray Plains,LNP,1
+Narracan,LNP,1
+Narre Warren North,ALP,1
+Narre Warren South,ALP,1
+Nepean,LNP,1
+Oakleigh,ALP,1
+Ovens Valley,LNP,1
+Point Cook,ALP,1
+Polwarth,LNP,1
+Prahran,GRN,1
+Preston,ALP,1
+Richmond,GRN,1
+Ringwood,LNP,1
+Rowville,LNP,1
+Shepparton,LNP,1
+South Barwon,LNP,1
+South-West Coast,LNP,1
+St Albans,ALP,1
+Sunbury,ONP,1
+Sydenham,ONP,1
+Tarneit,ALP,1
+Thomastown,ALP,1
+Wendouree,ALP,1

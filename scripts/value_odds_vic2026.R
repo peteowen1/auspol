@@ -23,6 +23,7 @@
 # Check codes: VO1 (inputs), VO2 (matching), VO3 (outputs). A `!` code stops the run.
 
 suppressMessages({ library(data.table); library(oddsdata); library(jsonlite) })
+source(file.path("scripts", "benchmark_books.R"))   # bk_read_betfair(), bk_drop_unreal_books(), bk_our_seat()
 
 args <- commandArgs(trailingOnly = TRUE)
 DAY <- sub("^--date=", "", grep("^--date=", args, value = TRUE))
@@ -49,9 +50,16 @@ books <- list(
 pats <- c(sportsbet = "^event-.*-markets-.*json$", tab = "^Politics-Victorian-Politics.*\\.json$", betfair = "^markets-.*json$")
 got <- list(); fetched <- list()
 for (src in names(books)) {
-  f <- newest(src, pats[[src]])
-  if (is.na(f)) { cat(sprintf("VO1  %s: no capture for %s -- left out\n", src, DAY)); next }
-  x <- books[[src]](f)
+  if (src == "betfair") {   # chunked: every markets file, newest copy of each market
+    x <- bk_read_betfair(file.path(RAW, src), rd)
+    if (is.null(x)) { cat(sprintf("VO1  %s: no capture for %s -- left out\n", src, DAY)); next }
+    x <- x[event == "Individual Electorates"][, seat := sub("^Seat of ", "", market)]
+    f <- file.path(RAW, src, if (nrow(x)) x$file[1] else "none")
+  } else {
+    f <- newest(src, pats[[src]])
+    if (is.na(f)) { cat(sprintf("VO1  %s: no capture for %s -- left out\n", src, DAY)); next }
+    x <- books[[src]](f)
+  }
   ft <- man$fetched_utc[man$file == file.path(src, basename(f))]
   ft <- if (length(ft)) ft[1] else NA_character_
   cat(sprintf("VO1  %s: %d seats, %d prices, fetched %s (%s)\n", src, uniqueN(x$seat), nrow(x),
@@ -63,11 +71,12 @@ for (src in names(books)) {
 if (!length(got)) stop("VO1! no bookmaker captured for ", DAY)
 px <- rbindlist(got, fill = TRUE)
 okey <- function(x) fcase(
-  grepl("^Labor$", x), "ALP", grepl("^(Liberals?|Nationals?|Coalition)$", x), "LNP", grepl("^Gre+ns$", x), "GRN",
+  grepl("^Labor$", x), "ALP", grepl("^(Liberals?|Nationals?|Coalition)$", x), "LNP", grepl("^Gre+ns?$", x), "GRN",
   grepl("^One Nation$", x), "ONP", grepl("^Independent", x), "IND", grepl("^(Any )?Other", x), "OTHER")
 px[, cls := okey(selection)]
 if (anyNA(px$cls)) stop("VO2! selections with no class: ", paste(unique(px[is.na(cls), selection]), collapse = ", "))
-px[, key := toupper(trimws(seat))]
+px[, key := toupper(bk_our_seat(seat, fread(file.path(RAW, "ours", "seat-probs-vic-2026.csv"))$seat))]
+px <- bk_drop_unreal_books(px, c("source", "key"), "bookmakers")   # placeholder books (BK2!)
 px <- implied_probs(px, "power", by = c("source", "key"))
 
 # ---- our published forecast as captured that day ----

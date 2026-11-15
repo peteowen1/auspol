@@ -17,6 +17,7 @@
 # Check codes: VB16 (inputs and coverage), VB17 (result).
 
 suppressMessages({ library(data.table); library(oddsdata) })
+source(file.path("scripts", "benchmark_books.R"))   # bk_read_betfair(), bk_drop_unreal_books(), bk_our_seat()
 
 args <- commandArgs(trailingOnly = TRUE)
 DAY <- sub("^--date=", "", grep("^--date=", args, value = TRUE))
@@ -39,9 +40,16 @@ pats <- c(sportsbet = "^event-.*-markets-.*json$", tab = "^Politics-Victorian-Po
 man <- fread(file.path(RAW, "manifest.tsv"), sep = "\t")
 got <- list()
 for (src in names(books)) {
-  f <- newest(src, pats[[src]])
-  if (is.na(f)) { cat(sprintf("VB16! %s: no capture for %s -- left out\n", src, DAY)); next }
-  x <- books[[src]](f)
+  if (src == "betfair") {   # chunked: every markets file, newest copy of each market
+    x <- bk_read_betfair(file.path(RAW, src), rd)
+    if (is.null(x)) { cat(sprintf("VB16! %s: no capture for %s -- left out\n", src, DAY)); next }
+    x <- x[event == "Individual Electorates"][, seat := sub("^Seat of ", "", market)]
+    f <- file.path(RAW, src, if (nrow(x)) x$file[1] else "none")
+  } else {
+    f <- newest(src, pats[[src]])
+    if (is.na(f)) { cat(sprintf("VB16! %s: no capture for %s -- left out\n", src, DAY)); next }
+    x <- books[[src]](f)
+  }
   # the parsers stamp parse time; the fetch time is in the manifest
   ft <- man$fetched_utc[man$file == file.path(src, basename(f))]
   cat(sprintf("VB16  %s: %d seats, %d prices, fetched %s (%s)\n", src, uniqueN(x$seat), nrow(x),
@@ -54,11 +62,12 @@ if (length(got) < 2L) stop("VB16! fewer than two bookies captured for ", DAY, ":
 # outcome key per selection: Liberal and Nationals are separate outcomes for an arbitrage
 okey <- function(x) fcase(
   grepl("^Labor$", x), "ALP", grepl("^Liberals?$", x), "LIB", grepl("^Nationals?$", x), "NAT",
-  grepl("^Coalition$", x), "COAL", grepl("^Gre+ns$", x), "GRN", grepl("^One Nation$", x), "ONP",
+  grepl("^Coalition$", x), "COAL", grepl("^Gre+ns?$", x), "GRN", grepl("^One Nation$", x), "ONP",
   grepl("^Independent", x), paste0("IND:", sub("^Independent *", "", x)), grepl("^(Any )?Other", x), "OTHER")
 all <- rbindlist(got, fill = TRUE)[, key := okey(selection)]
 if (anyNA(all$key)) stop("VB16! selections with no outcome key: ", paste(unique(all[is.na(key), selection]), collapse = ", "))
-all[, seat := toupper(trimws(seat))]
+all[, seat := toupper(bk_our_seat(seat, fread(file.path(RAW, "ours", "seat-probs-vic-2026.csv"))$seat))]
+all <- bk_drop_unreal_books(all, c("source", "seat"), "bookmakers")   # placeholder books (BK2!)
 # for the top-4 table: TAB's "Coalition" is Sportsbet's "Liberal" in a seat with no Nationals runner
 all[, key4 := fifelse(key == "COAL" & !any(key == "NAT"), "LIB", key), by = seat]
 

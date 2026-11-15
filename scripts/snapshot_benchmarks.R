@@ -56,6 +56,7 @@
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages({ library(data.table); library(jsonlite) })
+source(file.path("scripts", "benchmark_books.R"))   # bk_read_betfair(), bk_drop_unreal_books(), bk_our_seat()
 
 args <- commandArgs(trailingOnly = TRUE)
 DERIVE_ONLY <- "--derive" %in% args
@@ -178,7 +179,8 @@ if (!DERIVE_ONLY) {
       nav <- oddsdata::bf_search(2378961, store = store)      # Betfair politics
       vic <- nav[event %in% c("Australia - Victoria State Politics", "Individual Electorates")]
       if (!nrow(vic)) stop("no Victorian markets in Betfair's politics search")
-      oddsdata::bf_prices(vic$market_id, store = store)
+      # chunk 10: the default 40 hit Betfair's TOO_MUCH_DATA fault on 15 Nov once every seat had a market
+      oddsdata::bf_prices(vic$market_id, store = store, chunk = 10L)
     })
     # TAB's feed is behind bot protection and is NOT automated around (no headless Chrome, no faked user agent).
     # It loads normally in Pete's own Chrome, so Claude does this step itself with Claude in Chrome (done 27 Oct):
@@ -205,12 +207,10 @@ written <- character()
 
 ours_seats <- if (file.exists(raw("ours", "seat-probs-vic-2026.csv"))) unique(fread(raw("ours", "seat-probs-vic-2026.csv"))$seat) else character()
 if (length(ours_seats) != N_DISTRICTS) stop(sprintf("VB4! our seat-probs for %s has %d districts, not %d: nothing can be matched", DAY, length(ours_seats), N_DISTRICTS))
-canon <- setNames(ours_seats, toupper(ours_seats))
 
 # One district name per row, by our spelling; every one of the 88 present. Returns the canonical names.
 match_districts <- function(x, src, all = TRUE) {
-  k <- toupper(trimws(x)); out <- unname(canon[k])
-  if (anyNA(out)) stop(sprintf("VB5! %s names %d districts we do not: %s", src, sum(is.na(out)), paste(unique(x[is.na(out)]), collapse = ", ")))
+  out <- bk_our_seat(x, ours_seats)   # case, hyphens and spaces ignored; an unmatched name stops (BK3!)
   if (all && uniqueN(out) != N_DISTRICTS) stop(sprintf("VB5! %s covers %d of %d districts", src, uniqueN(out), N_DISTRICTS))
   out
 }
@@ -336,7 +336,7 @@ book_class <- function(x) {
   out <- rep(NA_character_, length(x))
   out[grepl("^Labor$", x)] <- "ALP"
   out[grepl("^(Liberals?|Nationals?|Coalition|L-?NP)$", x)] <- "LNP"
-  out[grepl("^Gre+ns$", x)] <- "GRN"                 # TAB spells it "Greeens" in one market (24 Oct)
+  out[grepl("^Gre+ns?$", x)] <- "GRN"                 # TAB spells it "Greeens" in one market (24 Oct); Betfair "Green" (15 Nov)
   out[grepl("^One Nation$", x)] <- "ONP"
   out[grepl("^Independent", x)] <- "IND"
   out[grepl("^(Any )?Other", x)] <- "ANY_OTHER"
@@ -350,11 +350,12 @@ if (requireNamespace("oddsdata", quietly = TRUE)) {
       oddsdata::sb_parse_markets(read_txt(f), "seat-betting")[, seat := market] },
     tab = function() { f <- newest("tab", "^Politics-Victorian-Politics.*\\.json$"); if (is.na(f)) NULL else
       oddsdata::tab_parse_markets(read_txt(f))[market == "Seat Winner"][, seat := sub(" State Election$", "", event)] },
-    betfair = function() { f <- newest("betfair", "^markets-.*\\.json$"); if (is.na(f)) NULL else
-      oddsdata::bf_parse_prices(read_txt(f))[event == "Individual Electorates"][, seat := sub("^Seat of ", "", market)] })
+    betfair = function() { o <- bk_read_betfair(raw("betfair"), read_txt); if (is.null(o)) NULL else   # every chunk file
+      o[event == "Individual Electorates"][, seat := sub("^Seat of ", "", market)] })
   for (src in names(parsers)) {
     o <- parsers[[src]]()
     if (is.null(o) || !nrow(o)) { cat(sprintf("VB4! no %s seat markets on disk for this date\n", src)); fails <- c(fails, src); next }
+    o <- bk_drop_unreal_books(o, c("source", "fetched_utc", "market_id", "seat"), src)   # placeholder books (BK2!)
     o <- oddsdata::implied_probs(o, "power")
     o <- o[!is.na(prob)]
     cat(sprintf("VB15 %s: %d seat markets, median overround %.3f (1.000 = no margin)\n", src, uniqueN(o$seat), median(o$overround)))
