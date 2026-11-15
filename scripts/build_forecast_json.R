@@ -132,7 +132,8 @@ if (!is.null(CFG$final_source) && !is.na(CFG$final_source) && file.exists(cc_f))
     if (length(no_list)) stop("FJ4! ", ELECTION, ": the final candidate list has no rows for ", length(no_list),
                               " published seat(s): ", paste(no_list, collapse = ", "))
     cands <- fin; CAND_SOURCE <- CFG$final_source
-  }
+  } else cat(sprintf("FJ4! %s: %s has no '%s' rows for this election -- names fall back to the provisional Wikipedia table\n",
+                     ELECTION, cc_f, CFG$final_source))
 }
 cat(sprintf("FJ4  candidate names from: %s (%d rows)\n", CAND_SOURCE, if (is.null(cands)) 0L else nrow(cands)))
 
