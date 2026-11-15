@@ -110,8 +110,17 @@ CAND_SOURCE <- if (is.null(cands)) "none" else "wikipedia"
 cc_f <- Sys.getenv("AUSPOL_CAND_OUT", file.path(OUT, "candidacies.csv"))   # the builder's own override, for a scratch copy
 if (!is.null(CFG$final_source) && !is.na(CFG$final_source) && file.exists(cc_f)) {
   cc <- fread(cc_f, showProgress = FALSE, encoding = "UTF-8",
-              select = c("election", "seat", "name", "party", "historic_elected", "ballot_position", "source"))
+              select = c("election", "year", "seat", "name", "party", "historic_elected", "ballot_position",
+                         "source", "pcv"))
   keep_cc <- cc$election == ELECTION & cc$source == CFG$final_source
+  # Each final-list name's best earlier vote share anywhere in the corpus (2026-11-16). Where a class has
+  # several candidates, the class's vote is mostly the one with a record: Essendon's Independent share is
+  # Oscar Yildiz's carried 23.5 from Pascoe Vale 2018, and ballot order alone named Ava Adams.
+  this_year <- suppressWarnings(as.integer(cc$year[which(keep_cc)][1]))
+  name_key <- toupper(trimws(cc$name))
+  earlier <- which(!keep_cc & cc$year < this_year & is.finite(cc$pcv))
+  prior_best <- if (length(earlier)) tapply(cc$pcv[earlier], name_key[earlier], max) else numeric(0)
+  cc[, prior_pcv := as.numeric(prior_best[name_key])]
   cc <- cc[which(keep_cc)]
   if (nrow(cc)) {
     # `sitting` (holds THIS seat) stays with the Wikipedia table, matched on seat and the last word of the
@@ -123,11 +132,17 @@ if (!is.null(CFG$final_source) && !is.na(CFG$final_source) && file.exists(cc_f))
       paste(cands$seat, last_word(cands$name))[which(cands$sitting %in% c(TRUE, "TRUE"))] else character(0)
     fin <- data.table(seat = cc$seat, name = pretty_name(cc$name), party = cc$party,
                       sitting = paste(cc$seat, last_word(sub(",.*$", "", cc$name))) %in% wiki_sit,
+                      prior = ifelse(is.na(cc$prior_pcv), -1, cc$prior_pcv),
                       ballot = as.integer(cc$ballot_position))
     cat(sprintf("FJ4  sitting members: %d of the %d the Wikipedia table lists are on the final list\n",
                 sum(fin$sitting), length(wiki_sit)))
-    # the sitting member first, then ballot order: the first name of a class is the one the card shows
-    fin <- fin[order(fin$seat, fin$party, -fin$sitting, fin$ballot)]
+    # the sitting member first, then the best earlier vote, then ballot order: the first name of a class is
+    # the one the card shows
+    fin <- fin[order(fin$seat, fin$party, -fin$sitting, -fin$prior, fin$ballot)]
+    # FJ6 counts the cards where the earlier vote changed the name, against sitting-then-ballot order
+    multi <- fin[, .(n = .N, moved = ballot[1] != min(ballot[sitting == sitting[1]])), by = .(seat, party)][n > 1]
+    cat(sprintf("FJ6  seat-classes with several candidates: %d; named by an earlier vote, not ballot order: %d\n",
+                nrow(multi), sum(multi$moved, na.rm = TRUE)))
     no_list <- setdiff(shares$seat, fin$seat)
     if (length(no_list)) stop("FJ4! ", ELECTION, ": the final candidate list has no rows for ", length(no_list),
                               " published seat(s): ", paste(no_list, collapse = ", "))

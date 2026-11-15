@@ -13,15 +13,29 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (10 Nov: One Nation stands in all 88 seats, so no seat-count conditioning applies; recheck for nsw2027's list); (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 15 Nov, 7:15pm.** main 0.4.175 (PR #243, benchmark capture fixes; dev ahead by docs only); CI green. OPEN for
-  Pete: send the VEC draft (Gmail, "RE: State Election 2026 results data feed"; unsent as of 15 Nov): it asks whether the
-  voting-centre pages fill in during the count. Dated (all in The Daily Eight): Mon 16 Nov check the daily run's HTV lines;
-  Tue 17 Nov benchmark capture (VPN OFF; Betfair has 2 real seat books of 88); 23 Nov VEC venues rerun; 25 Nov final
-  salience snapshot + night dress rehearsal.
+- **Status 15 Nov, 11:05pm.** main 0.4.177 (PR #244 site candidate names from the VEC list; PR #245
+  `AUSPOL_LIVE_N_CAND=1`, DECISIONS 2026-11-15); CI green. OPEN for Pete: send the VEC draft (Gmail, "RE: State Election
+  2026 results data feed"; unsent as of 15 Nov). Dated (Daily Eight): Tue 17 Nov
+  benchmark capture (VPN OFF); 23 Nov VEC venues rerun; 25 Nov final salience snapshot + night dress rehearsal.
+- FIXED on dev 16 Nov, not yet on main: where a class has several candidates the seat card named the FIRST ON THE BALLOT.
+  `scripts/build_forecast_json.R` now orders sitting member, then best earlier vote share, then ballot (`FJ6` log line);
+  21 of 576 cards change, Essendon names Oscar Yildiz (23.5, Pascoe Vale 2018). OPEN: merge, then check the next daily
+  run's site shows Yildiz.
+- OPEN, 15 Nov full review (`reviews/FABLE-FULL-REVIEW-2026-11-15.md`, "Pick up from here" is the work list; Pete's four
+  answers are in DECISIONS 2026-11-15). A1-A3 BUILT on dev 16 Nov (manual runs skip the what-if jobs; five false
+  warnings gated on their switches; the alarm step now runs on green daily runs too; `fit_nsw.R`'s sigma_obs failure
+  in `.github/known-failures.txt` per B3, NL3 lines deleted; `test_failure_signature.sh` 5e grep fixed, broken since
+  9 Oct). OPEN: merge, then check the next daily run's summary says "Alarm not raised". Not built: A5 (poll-layer
+  log lines), A6 + blog (tiles show the forecast's level; relabel the two-party line). Trigger: before 28 Nov for A6.
+- OPEN, model, found 15 Nov (same review, item A7; each needs Pete before shipping): (1) a standing class whose adjusted
+  2022 share is below its statewide fall is clipped to 0 at the base (Kew Other-right still 0%; 123 of 19,616 backtest rows);
+  (2) Evelyn's Michelle O'Brien carries Michael O'Brien's "elected" flag (`given_stem()` is two letters, `R/names.R:249`;
+  needs a retrain); (3) the 88 seats' minor classes add to 12.5 against the polls' 11.0 since PR #245, Labor +0.3: cause
+  not found (item C1: print the mean seat share after each step beside `FP0`). Trigger: (3) before 28 Nov (a
+  half-day trace, changes no number); (1) and (2) at the post-election review unless Pete asks sooner.
 - SHIPPED 15 Nov (PR #241, merged 10:23am; publishes with the 16 Nov 4:30am daily run): vic2026 Liberal card known, Labor
-  above the Greens (VEC registered cards); Brunswick open, keeps learned flows. OPEN: check the 16 Nov run's conclusion
-  and that `HTV1 vic2026: ... applied to 88 of 88 seats (labor_above=87 open=1)` and `HTV14` are in its log.
-  Also SHIPPED 15 Nov (PR #242): `AUSPOL_HTV_LABELS=hybrid` (card shares learn from the cards; open share). OPEN: the 13 UNKNOWN
+  above the Greens (VEC registered cards); Brunswick open, keeps learned flows. Live in the 16 Nov 4:30am run
+  (43741480657: `HTV1 ... labor_above=87 open=1`, `HTV14`). Also SHIPPED 15 Nov (PR #242): `AUSPOL_HTV_LABELS=hybrid` (card shares learn from the cards; open share). OPEN: the 13 UNKNOWN
   card rows (counted 15 Nov: fed2007/2010/2019, nsw2015, qld2012, sa2010/2014/2022, wa2001/2005/2008/2017/2025) still train
   on their results; each dated card found moves one to its card. Source: `external/reference/htv/coalition-card-order-researched.csv`.
   Every row was open-web searched 6 Nov; the remaining route is Wayback captures of the commissions' card pages and PDFs, dated

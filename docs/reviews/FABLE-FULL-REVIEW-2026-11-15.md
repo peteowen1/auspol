@@ -2,8 +2,16 @@
 
 ## Pick up from here
 
-Written 9:10pm Sunday 15 Nov 2026. **All five sections are finished; none is in progress.** The work list
-below runs top to bottom. Full briefs are the "Issue N" blocks further down this file; each item here adds
+Written 9:10pm Sunday 15 Nov 2026; this paragraph updated 11:05pm. **All five sections are finished; none
+is in progress.** SHIPPED since: **A4** (PR #244, merged 9:28pm: site candidate names from the VEC list;
+ignore the "NOT committed" wording under A4) and, from item **A7**, the live candidate count (PR #245,
+merged 10:24pm, `AUSPOL_LIVE_N_CAND=1`; ignore "UNCOMMITTED, switch OFF" there). Pete's decisions B1-B4 and
+the PR #245 ship are in `docs/DECISIONS.md` (2026-11-15). Still to do: A1, A2, A3, A5, A6, the rest of A7
+(zero clip at the base, the O'Brien name collision), and section C. After PR #245 the seat means in
+finding 1.4 are out of date: minor classes now add to 12.5 against the polls' 11.0 and Labor averages
+22.80 against 22.51. The 46 suffixed scratch files from tonight's runs (`-llp1`, `-llp0`, `-traceripon`,
+`-ncand1`, `-ncandpub`) were deleted at wrap-up, so A4's and C1's proofs that name them need a fresh
+suffixed run. The work list below runs top to bottom. Full briefs are the "Issue N" blocks further down this file; each item here adds
 what must not change, the proof, and what it collides with.
 
 Rules for every item: work on `dev`; run `powershell.exe -Command 'Rscript "scripts/check_like_ci.R"'`
