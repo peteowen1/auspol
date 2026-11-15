@@ -139,9 +139,10 @@ if (!is.null(CFG$final_source) && !is.na(CFG$final_source) && file.exists(cc_f))
     # the sitting member first, then the best earlier vote, then ballot order: the first name of a class is
     # the one the card shows
     fin <- fin[order(fin$seat, fin$party, -fin$sitting, -fin$prior, fin$ballot)]
-    multi <- fin[, .(n = .N, by_prior = any(prior >= 0) && !sitting[1]), by = .(seat, party)][n > 1]
+    # FJ6 counts the cards where the earlier vote changed the name, against sitting-then-ballot order
+    multi <- fin[, .(n = .N, moved = ballot[1] != min(ballot[sitting == sitting[1]])), by = .(seat, party)][n > 1]
     cat(sprintf("FJ6  seat-classes with several candidates: %d; named by an earlier vote, not ballot order: %d\n",
-                nrow(multi), sum(multi$by_prior)))
+                nrow(multi), sum(multi$moved, na.rm = TRUE)))
     no_list <- setdiff(shares$seat, fin$seat)
     if (length(no_list)) stop("FJ4! ", ELECTION, ": the final candidate list has no rows for ", length(no_list),
                               " published seat(s): ", paste(no_list, collapse = ", "))
