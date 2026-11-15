@@ -13,13 +13,15 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (10 Nov: One Nation stands in all 88 seats, so no seat-count conditioning applies; recheck for nsw2027's list); (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 15 Nov, 9:45am.** main and dev 0.4.173 (PR #241); CI and daily forecast green. OPEN for Pete: send
+- **Status 15 Nov, 9:45am.** main and dev 0.4.174 (PRs #241, #242); CI and daily forecast green. OPEN for Pete: send
   the VEC draft (Gmail, "RE: State Election 2026 results data feed"; no reply sent as of 15 Nov): it asks whether the
   voting-centre pages fill in during the count. Dated: Tue 17 Nov benchmark capture; 23 Nov VEC venues rerun; 25 Nov
   final salience snapshot + night dress rehearsal (The Daily Eight). PR #228 (agent docs drift, CONSTANTS.md) open.
 - SHIPPED 15 Nov (PR #241, merged 10:23am; publishes with the 16 Nov 4:30am daily run): vic2026 Liberal card known, Labor
   above the Greens (VEC registered cards); Brunswick open, keeps learned flows. OPEN: check the 16 Nov run's conclusion
-  and that `HTV1 vic2026: ... applied to 87 of 88 seats` is in its log.
+  and that `HTV1 vic2026: ... applied to 88 of 88 seats (labor_above=87 open=1)` and `HTV14` are in its log.
+  Also SHIPPED 15 Nov (PR #242): `AUSPOL_HTV_LABELS=hybrid` (card shares learn from the cards; open share). OPEN: the 15 UNKNOWN
+  card rows (fed2007/2010, vic2006, wa2005-2025 ...) still train on their results; each dated card found moves one to its card.
 - SHIPPED 14 Nov, arm SPL (Pete's override, "Build per-side, ship live"): paid SEAT polls lose a lean toward the sponsor's
   side, each side shrunk to zero (`AUSPOL_SEAT_POLL_PAID_LEAN=1`, `plans/prereg-seat-paid-lean-2026-11-14.md`). Backtest
   neutral; live today unchanged (Hawthorn's paid poll is 15 months old). OPEN after 28 Nov: score it on vic2026.
