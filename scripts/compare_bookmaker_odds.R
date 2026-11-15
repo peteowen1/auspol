@@ -67,7 +67,7 @@ okey <- function(x) fcase(
 all <- rbindlist(got, fill = TRUE)[, key := okey(selection)]
 if (anyNA(all$key)) stop("VB16! selections with no outcome key: ", paste(unique(all[is.na(key), selection]), collapse = ", "))
 all[, seat := toupper(bk_our_seat(seat, fread(file.path(RAW, "ours", "seat-probs-vic-2026.csv"))$seat))]
-all <- bk_drop_unreal_books(all, c("source", "seat"), "bookmakers")   # placeholder books (BK2!)
+all <- bk_drop_unreal_books(all, c("source", "seat"), "bookmakers")   # placeholder books (VBK2!)
 # for the top-4 table: TAB's "Coalition" is Sportsbet's "Liberal" in a seat with no Nationals runner
 all[, key4 := fifelse(key == "COAL" & !any(key == "NAT"), "LIB", key), by = seat]
 

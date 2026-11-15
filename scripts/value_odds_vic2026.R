@@ -76,7 +76,7 @@ okey <- function(x) fcase(
 px[, cls := okey(selection)]
 if (anyNA(px$cls)) stop("VO2! selections with no class: ", paste(unique(px[is.na(cls), selection]), collapse = ", "))
 px[, key := toupper(bk_our_seat(seat, fread(file.path(RAW, "ours", "seat-probs-vic-2026.csv"))$seat))]
-px <- bk_drop_unreal_books(px, c("source", "key"), "bookmakers")   # placeholder books (BK2!)
+px <- bk_drop_unreal_books(px, c("source", "key"), "bookmakers")   # placeholder books (VBK2!)
 px <- implied_probs(px, "power", by = c("source", "key"))
 
 # ---- our published forecast as captured that day ----

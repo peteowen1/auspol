@@ -210,7 +210,7 @@ if (length(ours_seats) != N_DISTRICTS) stop(sprintf("VB4! our seat-probs for %s 
 
 # One district name per row, by our spelling; every one of the 88 present. Returns the canonical names.
 match_districts <- function(x, src, all = TRUE) {
-  out <- bk_our_seat(x, ours_seats)   # case, hyphens and spaces ignored; an unmatched name stops (BK3!)
+  out <- bk_our_seat(x, ours_seats)   # case, hyphens and spaces ignored; an unmatched name stops (VBK3!)
   if (all && uniqueN(out) != N_DISTRICTS) stop(sprintf("VB5! %s covers %d of %d districts", src, uniqueN(out), N_DISTRICTS))
   out
 }
@@ -355,7 +355,7 @@ if (requireNamespace("oddsdata", quietly = TRUE)) {
   for (src in names(parsers)) {
     o <- parsers[[src]]()
     if (is.null(o) || !nrow(o)) { cat(sprintf("VB4! no %s seat markets on disk for this date\n", src)); fails <- c(fails, src); next }
-    o <- bk_drop_unreal_books(o, c("source", "fetched_utc", "market_id", "seat"), src)   # placeholder books (BK2!)
+    o <- bk_drop_unreal_books(o, c("source", "fetched_utc", "market_id", "seat"), src)   # placeholder books (VBK2!)
     o <- oddsdata::implied_probs(o, "power")
     o <- o[!is.na(prob)]
     cat(sprintf("VB15 %s: %d seat markets, median overround %.3f (1.000 = no margin)\n", src, uniqueN(o$seat), median(o$overround)))
