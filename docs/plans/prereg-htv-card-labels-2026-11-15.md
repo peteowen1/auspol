@@ -64,3 +64,33 @@ construction (`HTV0 no how-to-vote entry`).
 What would make a win unacceptable: a gain carried by the NSW/QLD open-ticket elections alone (optional preferential
 voting: those who keep numbering are self-selected, so their split may not carry to a full-preference state). Reported
 as a split: full-preference elections vs optional-preferential ones.
+
+## RESULT (2026-11-15 12:26pm, 1,000 sims, the 18 elections; arm cache 15fa041aa161 / base 017393a99047): A TIE; guard FAILS. To Pete.
+
+Seat-winner log loss (lower is better), 1,746 seats: 0.2847 -> 0.2861, +0.0014 (SE 0.0017, clustered on election),
+within 1 SE. AEF-7 ledger subset (622 seats): 0.2585 -> 0.2576, -0.0009 (SE 0.0005). 16 of 18 elections changed; HD1
+confirmed the arm applied.
+
+| Election | Seats moved | Change |
+|---|---|---|
+| vic2010 | 31 | +0.0323 |
+| qld2020 | 14 | +0.0064 |
+| nsw2019 | 7 | +0.0009 |
+| nsw2023, fed2022 | 3, 4 | +0.0002, +0.0001 |
+| qld2015, wa2013, fed2016 | 1, 0, 4 | 0.0000 |
+| sa2018, sa2026 | 4, 3 | -0.0002 each |
+| vic2022 | 10 | -0.0005 |
+| fed2013 | 5 | -0.0012 |
+| vic2014 | 8 | -0.0013 |
+| vic2018 | 6 | -0.0018 |
+| qld2024 | 3 | -0.0020 |
+| fed2025 | 15 | -0.0024 |
+
+- Guard: leave-one-election-out FAILS (dropping vic2010 alone flips the sign); vic2010 is about 2 SE of its own seats
+  worse (own SE not printed by quick_arm; 6 Nov's same-size vic2010 move had SE 0.0149: unverified).
+- Cause, not anticipated for vic2010 (it was for qld2020): with card labels nothing before 2013 has a dated card, so
+  vic2010 has no Labor-above training and loses its override. The arm removes training data for early targets; the
+  cost is the design, not the labels.
+- Without vic2010 and qld2020 the other 16 average about -0.0006 (from the rows above, by hand).
+- Open-ticket split (the unacceptable-win check): not triggered; NSW open elections net +0.0011 (worse), so no gain
+  rests on them.
