@@ -94,3 +94,22 @@ confirmed the arm applied.
 - Without vic2010 and qld2020 the other 16 average about -0.0006 (from the rows above, by hand).
 - Open-ticket split (the unacceptable-win check): not triggered; NSW open elections net +0.0011 (worse), so no gain
   rests on them.
+
+## AMENDMENT 1 (2026-11-15 ~12:45pm, after the RESULT above; Pete chose "Hybrid, rescreen"): `AUSPOL_HTV_LABELS=hybrid`
+
+Written after seeing the card arm's result, so it is a new arm, not a rescue of the old one; the clauses above are left
+as they were. Hybrid: a seat's card label where a dated card exists (seat row, else ALL row); seats with neither are
+labelled by their election's pooled split among those seats (under 50% to Labor is Greens-above), as the published
+"outcome" mode does. It keeps the corrections (NSW open cards, vic2018 open seats, wa2013 by its card) and restores
+training for early targets.
+
+Dry-run shares (fitted only, no score seen): vic2026 Labor-above 61.7% (outcome 62.1%), Greens-above 38.3%, open 57.1%;
+vic2010 54.4 / 27.0 / none; qld2020 59.6 / 35.8 / 52.6.
+
+Known answers: vic2010 and qld2020 return close to their baseline (both now have training cells); the open-ticket
+elections and vic2018 move as in the card arm.
+
+Screen: same command, same 18 elections, `AUSPOL_HTV_LABELS=hybrid`, `--reuse` (the published path's code is
+unchanged by this commit; the canary decides). Same primary, guard (no election worse by more than 2 SE of its own
+seats; leave-one-election-out sign) and decision rule as above. Unacceptable: a gain that rests on vic2010 or qld2020
+returning to baseline (that is the gap closing, not an improvement) -- so the decision is read on the 16 others too.

@@ -4,7 +4,13 @@
 \alias{htv_card_label_shares}
 \title{Card shares from card-labelled cells, partial-pooled (AUSPOL_HTV_LABELS=card)}
 \usage{
-htv_card_label_shares(target_election, sp, tab, hl = htv_recency_hl())
+htv_card_label_shares(
+  target_election,
+  sp,
+  tab,
+  hl = htv_recency_hl(),
+  fallback_outcome = FALSE
+)
 }
 \arguments{
 \item{target_election}{Target; only earlier elections train.}
@@ -12,6 +18,9 @@ htv_card_label_shares(target_election, sp, tab, hl = htv_recency_hl())
 \item{sp}{\code{\link[=htv_seat_splits]{htv_seat_splits()}} result. @param tab Card table (\code{\link[=htv_order_table]{htv_order_table()}} shape).}
 
 \item{hl}{Recency half-life in years.}
+
+\item{fallback_outcome}{TRUE (\code{hybrid}): seats with no card label are labelled by their election's pooled split
+among those seats (under 50\% to Labor is Greens-above) instead of being left out.}
 }
 \value{
 list(greens_above, labor_above, open, n = cells table, shrink = per-label table); NULL with no cells.

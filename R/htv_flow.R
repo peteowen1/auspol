@@ -129,12 +129,13 @@ htv_seat_splits <- function(dir = file.path("external", "elections")) {
 #'
 #' `"outcome"` (published): each earlier election is labelled by its own observed split (under 50% to Labor is
 #' Greens-above). `"card"`: labels come from the card table, per election and seat, with a third label `open`
-#' (`docs/plans/prereg-htv-card-labels-2026-11-15.md`).
-#' @return `"outcome"` or `"card"`.
+#' (`docs/plans/prereg-htv-card-labels-2026-11-15.md`). `"hybrid"` (amendment 1): the card label where a dated card
+#' exists; seats with none are labelled by their election's pooled result, as under `"outcome"`.
+#' @return `"outcome"`, `"card"` or `"hybrid"`.
 #' @export
 htv_labels_mode <- function() {
   v <- Sys.getenv("AUSPOL_HTV_LABELS", "outcome")   # the published value (scripts/published_flags.R)
-  if (!v %in% c("outcome", "card")) stop("HTV14! AUSPOL_HTV_LABELS must be outcome or card, not '", v, "'", call. = FALSE)
+  if (!v %in% c("outcome", "card", "hybrid")) stop("HTV14! AUSPOL_HTV_LABELS must be outcome, card or hybrid, not '", v, "'", call. = FALSE)
   v
 }
 
@@ -146,9 +147,11 @@ htv_labels_mode <- function() {
 #' @param target_election Target; only earlier elections train.
 #' @param sp [htv_seat_splits()] result. @param tab Card table ([htv_order_table()] shape).
 #' @param hl Recency half-life in years.
+#' @param fallback_outcome TRUE (`hybrid`): seats with no card label are labelled by their election's pooled split
+#'   among those seats (under 50% to Labor is Greens-above) instead of being left out.
 #' @return list(greens_above, labor_above, open, n = cells table, shrink = per-label table); NULL with no cells.
 #' @export
-htv_card_label_shares <- function(target_election, sp, tab, hl = htv_recency_hl()) {
+htv_card_label_shares <- function(target_election, sp, tab, hl = htv_recency_hl(), fallback_outcome = FALSE) {
   if (is.null(sp) || is.null(tab) || !nrow(sp) || !nrow(tab)) return(NULL)
   sp <- data.table::as.data.table(sp); tab <- data.table::as.data.table(tab)
   sp <- sp[elections_before(sp$election, target_election)]
@@ -157,7 +160,14 @@ htv_card_label_shares <- function(target_election, sp, tab, hl = htv_recency_hl(
   all_rows <- tab[tab$seat == "ALL", list(election, all_label = lab_of(greens_above_labor))]
   sp <- merge(sp, seat_rows, by = c("election", "seat"), all.x = TRUE)
   sp <- merge(sp, all_rows, by = "election", all.x = TRUE)
-  sp[, label := data.table::fifelse(!is.na(seat_label), seat_label, all_label)]
+  # as.character: with no ALL (or no seat) rows the merged column is all-NA logical, which fifelse refuses to mix
+  sp[, label := data.table::fifelse(!is.na(seat_label), as.character(seat_label), as.character(all_label))]
+  if (isTRUE(fallback_outcome) && anyNA(sp$label)) {
+    unl <- sp[is.na(sp$label), list(fb = data.table::fifelse(100 * sum(alp) / sum(tot) < 50, "greens_above", "labor_above")), by = election]
+    sp <- merge(sp, unl, by = "election", all.x = TRUE)
+    sp[is.na(label), label := fb]
+    sp[, fb := NULL]
+  }
   sp <- sp[!is.na(sp$label)]
   if (!nrow(sp)) return(NULL)
   cells <- sp[, list(alp_share = 100 * sum(alp) / sum(tot), n_seats = .N), by = list(election, label)]
@@ -200,7 +210,9 @@ htv_card_label_shares <- function(target_election, sp, tab, hl = htv_recency_hl(
 #' @export
 fit_htv_flow_rows <- function(target_election, dir = file.path("external", "elections"), min_seats = 2L) {
   # AUSPOL_HTV_LABELS=card: labels from the card table, not the result; a third (open) share; shrinkage, no min_seats.
-  if (identical(htv_labels_mode(), "card")) return(htv_card_label_shares(target_election, htv_seat_splits(dir), htv_order_table()))
+  lm <- htv_labels_mode()
+  if (lm %in% c("card", "hybrid"))
+    return(htv_card_label_shares(target_election, htv_seat_splits(dir), htv_order_table(), fallback_outcome = identical(lm, "hybrid")))
   obs <- htv_observed_splits(dir)
   if (is.null(obs)) return(NULL)
   obs <- obs[elections_before(obs$election, target_election) & obs$n_seats >= min_seats]   # time-forward

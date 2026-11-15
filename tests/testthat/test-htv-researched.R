@@ -87,5 +87,18 @@ test_that("an open card takes the open share only when one is fitted", {
 
 test_that("AUSPOL_HTV_LABELS refuses an unknown value", {
   withr::local_envvar(AUSPOL_HTV_LABELS = "results")
-  expect_error(htv_labels_mode(), "outcome or card")
+  expect_error(htv_labels_mode(), "outcome, card or hybrid")
+})
+
+test_that("hybrid labels seats with no card by their election's pooled result; carded seats keep the card", {
+  sp <- data.table::data.table(election = c("x2006", "x2006", "x2018", "x2018", "x2018"), seat = c("A", "B", "A", "B", "C"),
+                               alp = c(30, 28, 57, 60, 40), tot = 100)
+  tab <- data.table::data.table(election = "x2018", seat = "A", greens_above_labor = NA)   # only x2018 seat A has a card (open)
+  card <- htv_card_label_shares("x2026", sp, tab, hl = 0)
+  expect_equal(sort(unique(paste(card$n$election, card$n$label))), "x2018 open")
+  hyb <- htv_card_label_shares("x2026", sp, tab, hl = 0, fallback_outcome = TRUE)
+  lab <- setNames(hyb$n$label, paste(hyb$n$election, hyb$n$alp_share))
+  expect_equal(unname(lab["x2006 29"]), "greens_above")             # no card anywhere: its result labels it
+  expect_equal(unname(lab["x2018 50"]), "labor_above")              # seats B and C pooled: 50.0, not under 50
+  expect_equal(unname(lab["x2018 57"]), "open")                     # the carded seat keeps its card
 })
