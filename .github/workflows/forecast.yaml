@@ -724,15 +724,28 @@ jobs:
       # ONE issue, reopened and commented rather than a new one nightly --
       # otherwise a week of failures buries the repo in duplicates and the
       # alarm becomes the thing people learn to ignore.
+      #
+      # GREEN RUNS TOO (2026-11-16, review A3). The pipeline step turns a
+      # validation breach into a warning so Victoria still publishes, so a NEW
+      # failure there leaves the job green, and an alarm gated on failure()
+      # never saw it: fit_nsw.R stopped in every daily run from 13 Nov and
+      # nobody was told. So the step runs whenever the job was not cancelled;
+      # on a green run with nothing new it only writes "Alarm not raised".
       - name: Raise an alarm
-        if: failure() && (github.event_name == 'schedule' || inputs.daily || inputs.alarm_test)
+        if: ${{ !cancelled() && (github.event_name == 'schedule' || inputs.daily || inputs.alarm_test) }}
         env:
           GH_TOKEN: ${{ github.token }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          JOB_STATUS: ${{ job.status }}
         shell: bash
         run: |
           set -euo pipefail
           TITLE="Forecast refresh is failing"
+          if [ "$JOB_STATUS" = "success" ]; then
+            HEADLINE="The nightly forecast published, but a validation stage failed with something new."
+          else
+            HEADLINE="The nightly forecast refresh failed with something new."
+          fi
 
           # FIRE ON A CHANGE, NOT ON REDNESS.
           #
@@ -792,7 +805,7 @@ jobs:
             fi
           fi
           BODY=$(printf '%s\n\n```\n%s\n```\n\n## What failed\n\n```\n%s\n```\n\nRun: %s\n\nThis issue is raised only for failures NOT already listed in `.github/known-failures.txt`, so everything under "NEW failures" above is something that changed. If one of them is a failure to live with rather than fix, add its token to that file WITH A REASON -- the alarm will then stay quiet about it and tell you when it stops failing.\n\nThis issue is reused for every consecutive alarm rather than opening a new one. Close it when the run is green again.' \
-                 "The nightly forecast refresh failed with something new." "$STAGES" "$DIFF" "$RUN_URL")
+                 "$HEADLINE" "$STAGES" "$DIFF" "$RUN_URL")
           # EXACT title match, filtered client-side. `--search ... in:title` is
           # fuzzy and this repo already has an open issue whose title contains
           # "Forecast refresh" -- a false match would comment there forever and

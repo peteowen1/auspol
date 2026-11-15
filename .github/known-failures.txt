@@ -25,29 +25,24 @@
 # step reports tokens that are in this file but no longer failing, so the
 # run summary will tell you when one is ready to delete.
 
-# --- NSW 2027 One Nation, poll tracking ------------------------------------
-# fit_nsw.R's NL3 check: One Nation is fitted below its own recent polls by
-# more than the 2.5-point bound. Partial pooling of thin parties' walk
-# parameters (AUSPOL_NSW_THIN_WALK, shipped 2026-09-14) narrowed the gap from
-# 5.15 to 3.38 but did not close it.
+# --- NSW 2027 One Nation, poll noise ---------------------------------------
+# fit_nsw.R's H-check at line 185: the fitted poll noise (sigma_obs) for NSW
+# One Nation came out at 3.04 points on 24 polls, against a limit of 3.0. It
+# has stopped the NSW stage in every daily run since 13 Nov 10:39pm (first
+# 43418778677); the 13 Nov 4:30am run passed. Nothing published reads this
+# stage: the NSW 2027 page has its own step, and Victoria is unaffected.
+# Accepted by Pete on 15 Nov (decision B3, docs/DECISIONS.md 2026-11-15,
+# review reviews/FABLE-FULL-REVIEW-2026-11-15.md) rather than moving the limit
+# before the Victorian election.
 #
-# Kept rather than fixed because two pre-registered experiments aborted on
-# whether the gap is the fit or the check, the second at 19 cycles against a
-# floor of 20 -- see docs/plans/prereg-poll-tracking-bound-scaling.md, whose
-# closing section records that the remaining options are decisions rather than
-# experiments and forbids raising POLL_TRACKING_BOUND or min_polls to clear it.
+# REMOVABLE WHEN: the limit is reviewed after 28 Nov 2026.
 #
-# REMOVABLE WHEN: the separability gate can run (it needs one more completed
-# election with polls), or Pete decides between the options that plan names.
+# The old NL3 lines (One Nation fitted below its polls) were deleted on
+# 16 Nov: when the stage last reached NL3 (13 Nov 4:30am, run 43270170588) the
+# gap was 1.08 against a bound of 2.5, so it passes.
 #
-# NOTE the shape of the middle line. It was `stage:fit_nsw.R` until review on
-# 2026-09-14 pointed out that such a token matches that script failing for ANY
-# reason -- so a brand-new NL4 breach, or an unrelated crash, would have been
-# muted by an entry whose justification above is specifically about NL3 and One
-# Nation. Carrying the reason means a different failure in the same script is a
-# different token, and therefore an alarm.
-#
-# So do NOT shorten these lines to make them tidy. The detail is the point.
+# NOTE the shape of the middle line: it carries the reason, so a different
+# failure in fit_nsw.R is a different token, and therefore an alarm. Do NOT
+# shorten it to `stage:fit_nsw.R`.
 stage:NSW cycles
-stage:fit_nsw.R:CHECK:NL3 breached on 1 NSW cycle(s) -- details above and in outpu
-breach:NL3:2027:ONP
+stage:fit_nsw.R:CHECK:sd_from_link(e$sigma_obs, share, sc) <= 3 is not TRUE

@@ -22,9 +22,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   21 of 576 cards change, Essendon names Oscar Yildiz (23.5, Pascoe Vale 2018). OPEN: merge, then check the next daily
   run's site shows Yildiz.
 - OPEN, 15 Nov full review (`reviews/FABLE-FULL-REVIEW-2026-11-15.md`, "Pick up from here" is the work list; Pete's four
-  answers are in DECISIONS 2026-11-15). Not built, in order: A1-A3 (`forecast.yaml`: manual runs skip the what-if jobs, quiet
-  five false warnings, alarm on a NEW validation failure; `fit_nsw.R` has failed unseen since 13 Nov), A5 (poll-layer log
-  lines), A6 + blog (tiles show the forecast's level; relabel the two-party line). Trigger: before 28 Nov for A3, A6.
+  answers are in DECISIONS 2026-11-15). A1-A3 BUILT on dev 16 Nov (manual runs skip the what-if jobs; five false
+  warnings gated on their switches; the alarm step now runs on green daily runs too; `fit_nsw.R`'s sigma_obs failure
+  in `.github/known-failures.txt` per B3, NL3 lines deleted; `test_failure_signature.sh` 5e grep fixed, broken since
+  9 Oct). OPEN: merge, then check the next daily run's summary says "Alarm not raised". Not built: A5 (poll-layer
+  log lines), A6 + blog (tiles show the forecast's level; relabel the two-party line). Trigger: before 28 Nov for A6.
 - OPEN, model, found 15 Nov (same review, item A7; each needs Pete before shipping): (1) a standing class whose adjusted
   2022 share is below its statewide fall is clipped to 0 at the base (Kew Other-right still 0%; 123 of 19,616 backtest rows);
   (2) Evelyn's Michelle O'Brien carries Michael O'Brien's "elected" flag (`given_stem()` is two letters, `R/names.R:249`;
