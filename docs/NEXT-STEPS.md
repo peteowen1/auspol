@@ -16,12 +16,14 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - **Status 15 Nov, 9:45am.** main and dev 0.4.174 (PRs #241, #242); CI and daily forecast green. OPEN for Pete: send
   the VEC draft (Gmail, "RE: State Election 2026 results data feed"; no reply sent as of 15 Nov): it asks whether the
   voting-centre pages fill in during the count. Dated: Tue 17 Nov benchmark capture; 23 Nov VEC venues rerun; 25 Nov
-  final salience snapshot + night dress rehearsal (The Daily Eight). PR #228 (agent docs drift, CONSTANTS.md) open.
+  final salience snapshot + night dress rehearsal (The Daily Eight). PR #228 (CONSTANTS.md drift) merged 15 Nov.
 - SHIPPED 15 Nov (PR #241, merged 10:23am; publishes with the 16 Nov 4:30am daily run): vic2026 Liberal card known, Labor
   above the Greens (VEC registered cards); Brunswick open, keeps learned flows. OPEN: check the 16 Nov run's conclusion
   and that `HTV1 vic2026: ... applied to 88 of 88 seats (labor_above=87 open=1)` and `HTV14` are in its log.
   Also SHIPPED 15 Nov (PR #242): `AUSPOL_HTV_LABELS=hybrid` (card shares learn from the cards; open share). OPEN: the 15 UNKNOWN
   card rows (fed2007/2010, vic2006, wa2005-2025 ...) still train on their results; each dated card found moves one to its card.
+  Source: `external/reference/htv/coalition-card-order-researched.csv`; fill from the commissions' registered cards (sa2014
+  has an archive.org capture of ECSA's card page). Done when: 0 UNKNOWN rows, or each remaining one says where it was searched.
 - SHIPPED 14 Nov, arm SPL (Pete's override, "Build per-side, ship live"): paid SEAT polls lose a lean toward the sponsor's
   side, each side shrunk to zero (`AUSPOL_SEAT_POLL_PAID_LEAN=1`, `plans/prereg-seat-paid-lean-2026-11-14.md`). Backtest
   neutral; live today unchanged (Hawthorn's paid poll is 15 months old). OPEN after 28 Nov: score it on vic2026.
@@ -178,6 +180,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## Open from 17 Oct
 
+Trigger for every item in this section and the three below it (to "Dated, cannot move"): the post-election review
+after 28 Nov. None blocks vic2026 (triaged 15 Nov).
+
 - OPEN, bigger than composition spread C (parked, `reviews/composition-spread-2026-10-17.md`) or error distribution E
   (`AUSPOL_ERROR_DIST`, refused then SHIPPED 17 Oct on Pete's override; see "NSW variance" under Model, open), and the place to try width + tails together: errors are HEAVY-TAILED everywhere (0.57% of non-IND-seat cells miss by 4+ sim
   sds, ~100x a bell curve; kurtosis 20). A fat-tailed per-cell error (fitted time-forward) is the general fix for
@@ -250,18 +255,16 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
 - OPEN: revisit candidate-count weighting now the VEC final list is in (nominations DONE 10 Nov, DECISIONS 2026-11-10).
 - **28 Nov, once vic2026 has votes in `candidacies.csv`**: set `MC_LIVE_EL=""` in `rebuild_forecasts.sh` (the live
   bucket split row, SHIPPED 10 Nov; the fit stops with `MC0!` otherwise).
-- SHIPPED 6 Nov evening (Pete, correctness on a tie; `AUSPOL_HTV_TABLE="researched"`; in the 7 Nov rebuild). Still OPEN: fill the 15 UNKNOWNs; an OPEN-card third state. Was: researched Coalition card order, `external/reference/htv/coalition-card-order-researched.csv`
-  (36 elections, 48 rows, pre-election sources, raw pages under `htv/raw/`, local only; 15 UNKNOWN). Disagrees with the
-  9-row `liberal-alp-grn-order.csv` on nsw2019 and nsw2023: Liberal cards were OPEN ("just vote 1"), not Greens-last, so
-  under optional preferencing Liberal votes mostly exhaust. Next: an arm reading the researched file (OPEN needs a third
-  state in `R/htv_flow.R`, not the TRUE/FALSE flag); fill the UNKNOWNs from the commissions' registered cards (sa2014 has an
-  archive.org capture of ECSA's card page). Vic 2026: re-check when cards are lodged with the VEC.
 - OPEN (idea, 6 Nov, from Griffith/Ryan 2022): a state -> federal carry of a party's own strength in the overlapping state
   booths (the Greens held Maiwar and South Brisbane before winning Griffith and Ryan; polls and model both missed by 6-8
   points). Booth transposition exists (`seat_swing_port_3c.R`, `PollingPlaceID`); size it on the corpus before building.
+  Same idea, other direction: federal results as a correlated signal for state seat lean (needs seat-boundary matching;
+  `external/reference/boundaries/` has CED 2016). Trigger: after 28 Nov.
 - **28 November 2026**: election night.
 
 ## Model, open (triaged 2026-09-19; nothing here blocks Victoria)
+
+Trigger: the post-election review after 28 Nov, unless an item names its own.
 
 - **(0) The day-before statewide forecast** decides the ledger; every
   seat inherits its miss. Evidence, all in
@@ -305,7 +308,9 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
   change needing a screen: cap CV at ~5 grouped folds (est. ~5x faster on late targets; changes nrounds), or fit targets in parallel
   processes (memory). Stage 3 (533 s) not yet broken down the same way; time it from its own log before guessing again.
 - Both branches below RECREATED 25 Oct on Pete's yes; by 10 Nov both refs were gone again (commits unreferenced), so
-  RECREATED again 10 Nov at b21fb774 / ae91f62f (local only, not pushed).
+  RECREATED again 10 Nov at b21fb774 / ae91f62f; PUSHED to origin 15 Nov so the refs cannot vanish again. Same day, the
+  four `worktree-agent-*` branches (6 and 25 Oct, the only copy of the XGB_CLASS_JUR_CAL, OTHERS_SCALE_JUR,
+  SALIENCE_STATE and LEVEL_DEAD_PARTY builds that `prereg-offbranches-1025` tests) were pushed too. Trigger: after 28 Nov.
 - Branch `fed-timing-resume-fixed` (b21fb77, unmerged, NOT through the review gate or `check_like_ci`): fixes
   the federal `PARTY_COR` loop leak (a full fed run simulates every pair with the LAST pair's matrix; dormant
   at published defaults because `AUSPOL_FORECAST_MODE=1` skips the matrix; live for fed with FORECAST_MODE=0),
@@ -333,8 +338,6 @@ table on the blog page, To Do reminders (9 Nov, HTV row, VEC email).
   members in `mp-slope-by-class.csv` 84 -> 87). OPEN: re-measure vic2010 after the next full rebuild retrains the trees.
 
 Still open:
-- Federal results as a correlated signal for state seat lean: needs
-  seat-boundary matching (`external/reference/boundaries/` has CED 2016).
 - OPEN: ITG page: a seat map (regions are in the JSON now), per-seat cards, a forecast-over-time chart.
 
 ## Awaiting Pete
