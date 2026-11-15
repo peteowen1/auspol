@@ -13,13 +13,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (10 Nov: One Nation stands in all 88 seats, so no seat-count conditioning applies; recheck for nsw2027's list); (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 15 Nov, 9:45am.** main 0.4.172, dev one docs commit ahead; CI and daily forecast green. OPEN for Pete: send
+- **Status 15 Nov, 9:45am.** main and dev 0.4.173 (PR #241); CI and daily forecast green. OPEN for Pete: send
   the VEC draft (Gmail, "RE: State Election 2026 results data feed"; no reply sent as of 15 Nov): it asks whether the
   voting-centre pages fill in during the count. Dated: Tue 17 Nov benchmark capture; 23 Nov VEC venues rerun; 25 Nov
   final salience snapshot + night dress rehearsal (The Daily Eight). PR #228 (agent docs drift, CONSTANTS.md) open.
-- IN FLIGHT 15 Nov: Liberal cards REGISTERED (VEC, 12 Nov): Labor above the Greens on 6 of 7 inner-Melbourne cards read,
-  Brunswick OPEN. vic2026 rows added to both card tables (ends the 0.67 mix, HTV2); OPEN seat rows becoming "no override"
-  in `R/htv_flow.R` (Pete chose 15 Nov). Done when: before/after live forecast walked, PR merged, daily run publishes it.
+- SHIPPED 15 Nov (PR #241, merged 10:23am; publishes with the 16 Nov 4:30am daily run): vic2026 Liberal card known, Labor
+  above the Greens (VEC registered cards); Brunswick open, keeps learned flows. OPEN: check the 16 Nov run's conclusion
+  and that `HTV1 vic2026: ... applied to 87 of 88 seats` is in its log.
 - SHIPPED 14 Nov, arm SPL (Pete's override, "Build per-side, ship live"): paid SEAT polls lose a lean toward the sponsor's
   side, each side shrunk to zero (`AUSPOL_SEAT_POLL_PAID_LEAN=1`, `plans/prereg-seat-paid-lean-2026-11-14.md`). Backtest
   neutral; live today unchanged (Hawthorn's paid poll is 15 months old). OPEN after 28 Nov: score it on vic2026.

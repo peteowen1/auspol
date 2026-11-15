@@ -4,6 +4,13 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-11-15 The Liberal card shares train on the CARD where a dated card exists, not on each election's own result; open cards get their own share (Pete: ship as a correctness fix on a tie).**
+  `AUSPOL_HTV_LABELS=hybrid`: card label per election and seat; seats with no dated card keep the result label; open share
+  partial-pooled. 18 elections with a card row: -0.0001 (SE 0.0002), none moved more than 0.003. The pure-card arm tied
+  (+0.0014, SE 0.0017) but failed its guard: nothing before 2013 has a dated card, so vic2010 lost its training (+0.032).
+  Live: Labor-above 62.1% -> 61.7%, Brunswick (open card, registered 12 Nov) 57.1%. `plans/prereg-htv-card-labels-2026-11-15.md`.
+- **2026-11-15 vic2026 Liberal card known from the VEC's registered cards: Labor above the Greens (PR #241).** 6 of 7 inner-Melbourne
+  cards read; Brunswick open. Ends the 0.67 card mix; Pascoe Vale Labor 0.347 -> 0.426, Northcote 0.163 -> 0.205.
 - **2026-11-14 On election night, two candidates of one minor class are counted separately from their counted figures (Pete: "Ship for 28 Nov").**
   Prereg PASSED on fed2022/fed2025/vic2022 replays: pooled night log loss -0.0076 (SE 0.0096), no night worse by >0.005; Monash's
   winner 0.005 -> 0.469. Gain mostly Monash (without it +0.0018, SE 0.0012). Pre-election split stays OFF (6 Nov). `plans/prereg-night-class-split-2026-11-14.md`.

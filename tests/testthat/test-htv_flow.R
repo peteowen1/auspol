@@ -28,6 +28,7 @@ test_that("no entry for the election leaves the override untouched, and an exist
 })
 
 test_that("fit_htv_flow_rows leaves the target out and labels by the observed split", {
+  withr::local_envvar(AUSPOL_HTV_LABELS = "outcome")   # the result-labelled path; hybrid (published) is in test-htv-researched.R
   d <- tempfile(); dir.create(d)
   tx <- data.table::data.table(
     election = c(rep("a2018", 4), rep("b2022", 4), rep("c2024", 4)),
@@ -42,6 +43,7 @@ test_that("fit_htv_flow_rows leaves the target out and labels by the observed sp
 })
 
 test_that("AUSPOL_HTV_RECENCY_HL weights recent elections (prereg-htv-recency-2026-10-31)", {
+  withr::local_envvar(AUSPOL_HTV_LABELS = "outcome")
   d <- tempfile(); dir.create(d)
   tx <- data.table::data.table(
     election = c(rep("a2018", 4), rep("c2024", 4)), seat = rep(c("S1", "S1", "S2", "S2"), 2), round = 3L,
@@ -91,6 +93,7 @@ test_that("htv_mix_sims takes the first p*n draws from the Labor-above run and w
 })
 
 test_that("the shipped coalition-split bundle is the only source when present (1 Nov: runner read a partial set)", {
+  withr::local_envvar(AUSPOL_HTV_LABELS = "outcome")
   d <- tempfile(); dir.create(d)
   mk <- function(el, a, g) data.table::data.table(election = el, seat = c("S1", "S1", "S2", "S2"), round = 3L,
                                                   from = "LNP", to = c("ALP", "GRN", "ALP", "GRN"), votes = c(a, g, a, g))
