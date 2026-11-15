@@ -55,6 +55,84 @@ them one after another in one PR, not in parallel.
   rows through `build_candidacies.R`; for (1) list what `fit_seats_full.R` does for a class with a
   candidate and no base (grep `NZL`, `new_ind`, `FS1L`). Must not change: anything, until the trace is
   read by Pete or Opus; this is a model change 13 days out. Half a day. Sonnet to trace, Opus to judge.
+  **CORRECTION, 15 Nov 9:50pm: part (1) of the trace below is WRONG about the cause, and so is the
+  sentence above saying "the class had no vote there last time".** All four classes stood in 2022:
+  Prahran Independents 1.14% (1 candidate), Ripon Independents 2.80% (2), Mildura Others 0.87% (1), Kew
+  Other-right 1.72% (1). Classes that newly stand DO get a share (12 seats with a new independent, all
+  above zero). The real cause, from a traced run (`AUSPOL_TRACE_SEAT=Ripon AUSPOL_OUT_SUFFIX=-traceripon`,
+  log lines `TRS0`/`TRS1`/`TRS2`):
+  `TRS0 IND last time 2.80 | own-vote substitute 0.74 | level 5.55 -> 3.56 | slope 0.907 -> base 0.00`.
+  The 2022 independents are not standing again, so their 2.80 is replaced by 0.74; the statewide
+  Independent level then falls 1.99 points and that fall is SUBTRACTED, which takes 0.74 below zero and
+  it is clipped to 0. The trees start from 0, predict -0.81, and are clipped again
+  (`R/xgb_primary_override.R:700`). No later step adds anything. So any standing class whose adjusted
+  2022 share is smaller than its statewide fall is published at exactly 0. Only Ripon was traced; the
+  other three are inferred from the same sizes.
+  It is general, not Victorian: in `output/published-predictions.csv` 123 of 19,616 backtest rows are
+  forecast at 0 while the candidate won votes (Others 60, mean won 5.9%; Other-right 35, mean 3.8%; One
+  Nation 14; Independents 10, mean 11.9% including one winner, Pilbara wa2001 at 54.6%), in 16 of 35
+  elections. Size on vic2026: four cells; Ripon is the only close seat (One Nation 32.66, Liberal/National
+  32.08) and a 2 to 3% independent vote there would come off every party in proportion, so the effect on
+  who wins is small. NOT measured.
+  Also found in the same trace and CONFIRMED by reading: `R/xgb_primary_override.R:322` sets
+  `n_cand_now := 1L` for every live row ("unknown pre-nomination") and nothing overwrites it. Nominations
+  closed on 9 Nov and 110 of the 616 vic2026 seat-classes have more than one candidate (Others 55,
+  Other-right 29, Independents 25, Liberal/National 1), so the live trees are told "one candidate" where
+  the training rows carry the real count. In the Ripon trace the feature moves each class by -0.26 to
+  -0.37 points at the value 1; what the true counts would do is NOT measured. Fix: fill it from
+  `output/candidacies.csv` when the final list is live (the same rows `historic_elected_i` already reads
+  at `:474-487`), then one suffixed run and a seat diff. 2 hours. Sonnet. Needs Pete before shipping.
+  **BUILT AND WALKED 15 Nov 10:10pm, UNCOMMITTED, switch OFF.** `AUSPOL_LIVE_N_CAND` (code in
+  `R/xgb_primary_override.R` after `:322`, log line `XNC1`; listed in `scripts/published_flags.R` at
+  "0"). One run at "1" (`AUSPOL_OUT_SUFFIX=-ncand1`) against tonight's published-setting run (`-llp1`),
+  same polls, seed and simulations. `XNC1 ... 576 of 616 seat-classes have a candidacy row, 110 with more
+  than one candidate (max 6)`. It is NOT small:
+
+  | measure | constant 1 (live now) | real counts |
+  |---|---|---|
+  | expected seats: Labor / Liberal-National / One Nation / Greens / Independents | 24.53 / 39.72 / 14.90 / 7.22 / 1.48 | 23.34 / 39.03 / 15.77 / 7.45 / 2.16 |
+  | chance of a Liberal-National majority | 30.1% | 27.9% |
+  | mean seat primary: Others / Other-right / Independents | 2.79 / 3.42 / 3.62 | 4.39 / 3.90 / 4.19 |
+  | mean seat primary: Labor / Liberal-National / One Nation | 23.56 / 30.68 / 21.08 | 22.80 / 29.91 / 20.45 |
+
+  Win probability moves by more than 2 points in 58 cells (29 seats), more than 5 in 23 cells (12 seats),
+  more than 10 in 9 cells. Largest: Essendon Independents 39.8% to 84.7% (three independents; class
+  primary 17.9 to 22.4), Ripon One Nation 71.9% to 58.5% (four Other-right candidates, 4.2 to 8.9),
+  Pascoe Vale Greens 57.9% to 69.5% (five Others candidates, 7.7 to 13.6), Footscray Labor 29.4% to 17.4%.
+  The nominal favourite changes in Sunbury (Liberal/National 49% to One Nation 51%) and Benambra
+  (three-way). Of the four zero cells, Prahran Independents become 3.9%, Mildura Others 1.4%, Ripon
+  Independents 0.8%; Kew Other-right stays 0.
+  Why it argues for shipping: every backtest row, and so the published track record, was scored with
+  the real count; the live run is the only place the constant 1 is served. Why it argues for care: the
+  three minor classes then add to 12.5% against the polls' 11.0% (they were 9.8%), and one feature moves
+  Essendon by 45 points. NOT done: `check_like_ci.R` (an `R/` file changed, so the slow half will run),
+  review, commit. Pete's call.
+  Fix (Pete chose "build and walk" on 15 Nov, before this correction): a floor for a standing class
+  whose base clips to zero, sized from what such classes won at earlier elections, in the shared base
+  function so the seven harnesses and the live run all get it; walk the four seats; screen with
+  `quick_arm.R` before shipping. Sonnet to build, Opus to size the floor. Half a day plus the screen.
+  **TRACED 15 Nov 9:40pm, read-only (code and tonight's `-llp1` run log; no new run):**
+  - (1) Exactly four cells, confirmed two ways. The run's own count line says
+    `NZL ... candidacies per class, seats now/vic2022: IND 56 ... OTH 88 ... OTH_RIGHT 80`, and the
+    published shares are above zero in 54, 87 and 79 seats: Prahran and Ripon (Independents), Mildura
+    (Others), Kew (Other-right). Each class had no vote in that seat in 2022, so its base is 0, and no
+    step gives a share to a class that newly stands: nomination zeroing only removes, the trees correct a
+    base, and the new-independent lift (`FS1L`) covers seats with a SINGLE first-time independent whose
+    cell already has a signal (2 cells, Ringwood and Williamstown; Prahran has four independents, Ripon
+    two). Nothing in the log names the four cells. Ripon is the one where it can matter: One Nation
+    32.66 against Liberal/National 32.08, with two independents at 0. Size NOT measured.
+  - (2) Michelle O'Brien is a name collision, Fowles is by design. `same_person()`
+    (`R/returning_member.R:22-38`) matches on surname, first initial and `given_stem()`, which is the
+    first TWO letters of the given name (`R/names.R:249`), across every seat in the state. "O'BRIEN,
+    Michelle" (Family First, Evelyn) therefore equals "O'BRIEN, Michael", who won Malvern in 2022 and is
+    not standing in 2026. Fowles did win a seat in 2022 (Ringwood) and the rule means "holds a seat when
+    the election is called", so his flag is what the rule intends. The flag reaches the trees as
+    `historic_elected_i` for Evelyn's Other-right class (`R/xgb_primary_override.R:474-487`): published
+    5.62%, eighth highest of 88, against a median of 3.53%. Effect NOT measured (`fit_seats_full.R` has
+    no switch to read a scratch candidate file); Evelyn is Liberal/National 41.5 against One Nation 26.1,
+    so it cannot change the favourite. Fix when someone is in that code: require the same seat, or a
+    longer stem, before a cross-seat match counts; a retrain is needed because the flag is a training
+    feature too.
 - **A4 as first written (kept for the brief).** File: `scripts/build_forecast_json.R:28-33`
   and `:83-89`, `:133-141`. Source: `external/reference/vec/2026/vec-candidates-2026.csv` (columns
   `district`, `ballot_position`, `name`, `registered_name`, `independent`). Must not change: NSW 2027
