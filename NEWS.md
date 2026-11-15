@@ -1,3 +1,7 @@
+# auspol 0.4.174
+
+- **The Liberal card shares learn from the cards, not from each election's result** (PR #242, `AUSPOL_HTV_LABELS=hybrid`, Pete: correctness fix on a tie): the card label per election and seat where a dated card exists, the result-based label only where none does, and a third fitted share for open cards (NSW 2011/2019/2023, vic2018 Northcote and Brunswick, vic2026 Brunswick). 18 elections with a card row: -0.0001 (SE 0.0002). Live: no seat moves 2+ points. `docs/plans/prereg-htv-card-labels-2026-11-15.md`.
+
 # auspol 0.4.173
 
 - **vic2026 Liberal how-to-vote card is known: Labor above the Greens** (PR #241): read from the VEC's registered cards (6 of 7 inner-Melbourne cards; Brunswick open). Replaces the 0.67 card mix. A seat-level open card now keeps that seat's learned flows. Live: Pascoe Vale Labor 0.347 -> 0.426, Northcote 0.163 -> 0.205, Footscray 0.262 -> 0.301, Preston 0.818 -> 0.843; expected seats ALP +0.27, GRN -0.27.
