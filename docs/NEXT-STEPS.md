@@ -20,10 +20,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - SHIPPED 15 Nov (PR #241, merged 10:23am; publishes with the 16 Nov 4:30am daily run): vic2026 Liberal card known, Labor
   above the Greens (VEC registered cards); Brunswick open, keeps learned flows. OPEN: check the 16 Nov run's conclusion
   and that `HTV1 vic2026: ... applied to 88 of 88 seats (labor_above=87 open=1)` and `HTV14` are in its log.
-  Also SHIPPED 15 Nov (PR #242): `AUSPOL_HTV_LABELS=hybrid` (card shares learn from the cards; open share). OPEN: the 15 UNKNOWN
-  card rows (fed2007/2010, vic2006, wa2005-2025 ...) still train on their results; each dated card found moves one to its card.
-  Source: `external/reference/htv/coalition-card-order-researched.csv`; fill from the commissions' registered cards (sa2014
-  has an archive.org capture of ECSA's card page). Done when: 0 UNKNOWN rows, or each remaining one says where it was searched.
+  Also SHIPPED 15 Nov (PR #242): `AUSPOL_HTV_LABELS=hybrid` (card shares learn from the cards; open share). OPEN: the 13 UNKNOWN
+  card rows (counted 15 Nov: fed2007/2010/2019, nsw2015, qld2012, sa2010/2014/2022, wa2001/2005/2008/2017/2025) still train
+  on their results; each dated card found moves one to its card. Source: `external/reference/htv/coalition-card-order-researched.csv`.
+  Every row was open-web searched 6 Nov; the remaining route is Wayback captures of the commissions' card pages and PDFs, dated
+  before polling day. 15 Nov: the Internet Archive went offline mid-search. Its index does hold Feb 2014 ECSA document
+  downloads in the form `edocman/?task=document.download&id=N`, so retry sa2014 ids 687 and 710-756 in that form, then ECSA
+  2022 and WAEC 2017/2025. Done when: 0 UNKNOWN rows, or each remaining one says where it was searched.
 - SHIPPED 14 Nov, arm SPL (Pete's override, "Build per-side, ship live"): paid SEAT polls lose a lean toward the sponsor's
   side, each side shrunk to zero (`AUSPOL_SEAT_POLL_PAID_LEAN=1`, `plans/prereg-seat-paid-lean-2026-11-14.md`). Backtest
   neutral; live today unchanged (Hawthorn's paid poll is 15 months old). OPEN after 28 Nov: score it on vic2026.
