@@ -37,6 +37,7 @@ moved verbatim 2026-10-24. Every row below still has something open.
 
 | Request | Status |
 |---|---|
+| "How would we know if previous candidates had open card? How do we model this without leakage?" then "go"; chose "Hybrid, rescreen" and "Ship as correctness fix" | **SHIPPED 15 Nov (PR #242, live from the 16 Nov 4:30am run).** `AUSPOL_HTV_LABELS=hybrid`: card labels from dated sources where they exist, a fitted open share. Tie on 18 elections (-0.0001, SE 0.0002); live no seat moves 2+ points. `plans/prereg-htv-card-labels-2026-11-15.md`. |
 | Brunswick's registered 2026 Liberal card is OPEN (1 Liberal, then "your choice"): model it as open, not as the statewide Labor-above order (Pete chose "Build 'open card'") | **SHIPPED 15 Nov (PR #241, live from the 16 Nov 4:30am run).** Seat-level OPEN cards keep the seat's learned flows; vic2026 statewide row Labor above Greens. Brunswick's Greens win 0.993 either way. |
 
 ## 2026-11-13

@@ -4,6 +4,15 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-11-15 "Revisit candidate-count weighting once nominations close" is CLOSED, not rescreened: it was built as the class split, which stays OFF.**
+  The 22 Aug remedy (`reviews/candidate-count-weighting-blocked-2026-08-22.md`) became `AUSPOL_CLASS_SPLIT`, REFUSED twice on
+  35 elections on 6 Nov (+0.0022 SE 0.0013; with search interest +0.0016 SE 0.0011), and Pete closed it pending a new design.
+  The backtests already used each election's real nominations, so the VEC's final list adds nothing to that verdict; a rescreen
+  would read the same per-candidate predictions (`minor-candidate-oof-resid-v2.csv`, unchanged by the 9 Nov newcomer lift,
+  which acts on seat shares) and the prereg's one rescreen is used. Live size, from `minor-candidate-oof-resid-v2-live.csv`:
+  75 of 88 vic2026 seats have a minor class with 2+ candidates (109 seat-classes), median junior 2.6 points, largest 7.4; only
+  Kew's class reaches 15% (IND 21.9, junior 2.8). Told Pete 15 Nov.
+
 - **2026-11-15 The Liberal card shares train on the CARD where a dated card exists, not on each election's own result; open cards get their own share (Pete: ship as a correctness fix on a tie).**
   `AUSPOL_HTV_LABELS=hybrid`: card label per election and seat; seats with no dated card keep the result label; open share
   partial-pooled. 18 elections with a card row: -0.0001 (SE 0.0002), none moved more than 0.003. The pure-card arm tied
