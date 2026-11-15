@@ -420,6 +420,9 @@ CLASSIFY <- list(
   AUSPOL_HTV_TABLE = paste(
     "UNIVERSAL via R/: read inside htv_order_table() (R/htv_flow.R), which htv_flow_override() and htv_card_p() call",
     "in every harness and fit_seats_full.R. SHIPPED researched 2026-11-06 (plans/prereg-htv-researched-2026-11-06.md)."),
+  AUSPOL_HTV_LABELS = paste(
+    "UNIVERSAL via R/: read inside htv_labels_mode() from fit_htv_flow_rows() (R/htv_flow.R), which htv_flow_override()",
+    "calls in every harness and fit_seats_full.R. EXPERIMENT 2026-11-15 (plans/prereg-htv-card-labels-2026-11-15.md)."),
   AUSPOL_LEADER_BEFORE_BLEND = paste(
     "UNIVERSAL via R/: read inside leader_seat_apply() (R/leader_seat.R), which every harness (six + NT) and",
     "fit_seats_full.R call twice (pre and post blend). SHIPPED \"1\" 7 Nov (20k run 7 Nov 2am; plans/prereg-leader-before-blend-2026-11-06.md)."),

@@ -45,8 +45,8 @@ htv_order_table <- function(path = NULL) {
 #' Reads `external/reference/htv/coalition-card-order-researched.csv` (columns `election`, `seat` ("ALL", a seat, or
 #' seats separated by ";"), `party`, `order`, `confidence`, `source_url`, ...) and returns the shape
 #' [htv_order_table()] returns: one row per election and seat with a HIGH or MED confidence Liberal / LNP / CLP card
-#' that orders the two (`GRN_ABOVE_ALP` TRUE, `ALP_ABOVE_GRN` FALSE), plus seat-level `OPEN` cards as `NA` (that
-#' seat keeps its learned flows rather than the election's ALL row). Prints HTV13 with what it kept and dropped.
+#' that orders the two (`GRN_ABOVE_ALP` TRUE, `ALP_ABOVE_GRN` FALSE), plus `OPEN` cards as `NA` (statewide or seat;
+#' an open seat does not take the election's ALL row). Prints HTV13 with what it kept and dropped.
 #' @param path The researched CSV.
 #' @return data.table `election`, `seat`, `greens_above_labor`, `source`; NULL with a message when the file is absent.
 #' @export
@@ -59,9 +59,10 @@ htv_researched_table <- function(path = file.path("external", "reference", "htv"
   # A SEAT-level OPEN card (15 Nov 2026, Pete: Brunswick vic2026, "1 Liberal, then your choice") is kept with NA, so
   # htv_flow_override() leaves that seat's learned flows alone instead of giving it the election's ALL row. An OPEN ALL
   # row stays dropped: with no statewide order there is nothing for a seat to inherit, which is the same as no row.
+  # A statewide OPEN row is kept too (15 Nov, prereg-htv-card-labels-2026-11-15.md): it trains and receives the open
+  # share under AUSPOL_HTV_LABELS=card; under "outcome" (published) an NA row applies to no seat, as when it was dropped.
   map <- c(GRN_ABOVE_ALP = TRUE, ALP_ABOVE_GRN = FALSE, OPEN = NA)
-  keep <- d$party %in% c("LIB", "LNP", "CLP") & d$confidence %in% c("HIGH", "MED") & d$order %in% names(map) &
-    !(d$order == "OPEN" & d$seat == "ALL")
+  keep <- d$party %in% c("LIB", "LNP", "CLP") & d$confidence %in% c("HIGH", "MED") & d$order %in% names(map)
   k <- d[keep]
   seats <- strsplit(as.character(k$seat), ";", fixed = TRUE)
   out <- data.table::data.table(election = rep(k$election, lengths(seats)), seat = trimws(unlist(seats)),
@@ -69,7 +70,7 @@ htv_researched_table <- function(path = file.path("external", "reference", "htv"
                                 source = rep(k$source_url, lengths(seats)))
   dup <- out[duplicated(out[, c("election", "seat"), with = FALSE])]
   if (nrow(dup)) stop("researched HTV table has two kept rows for: ", paste(unique(paste(dup$election, dup$seat)), collapse = ", "), call. = FALSE)
-  cat(sprintf("HTV13 researched card table: %d rows kept (%d elections; %d open seat card(s): no override there), %d dropped (statewide open/no card/split/unknown/low confidence or not Liberal)\n",
+  cat(sprintf("HTV13 researched card table: %d rows kept (%d elections; %d open card row(s)), %d dropped (no card/split/unknown/low confidence or not Liberal)\n",
               nrow(out), data.table::uniqueN(out$election), sum(is.na(out$greens_above_labor)), sum(!keep)))
   out
 }
@@ -84,6 +85,20 @@ htv_researched_table <- function(path = file.path("external", "reference", "htv"
 #' @return data.table: election, alp_share, n_seats, label.
 #' @export
 htv_observed_splits <- function(dir = file.path("external", "elections")) {
+  sp <- htv_seat_splits(dir)
+  if (is.null(sp)) return(NULL)
+  out <- sp[, list(alp_share = 100 * sum(alp) / sum(tot), n_seats = data.table::uniqueN(seat)), by = election]
+  out[, label := ifelse(alp_share < 50, "greens_above", "labor_above")]
+  out[order(election)]
+}
+
+#' Liberal votes to ALP and to ALP+GRN per election and seat, where both are alive
+#'
+#' The seat-level counts behind [htv_observed_splits()], which sums them per election.
+#' @inheritParams htv_observed_splits
+#' @return data.table election, seat, alp (votes to ALP), tot (votes to ALP or GRN); NULL when there are none.
+#' @export
+htv_seat_splits <- function(dir = file.path("external", "elections")) {
   # THE SHIPPED BUNDLE IS THE ONLY SOURCE WHEN PRESENT (1 Nov 2026). The forecast runner fetches only some
   # transfers files, so the published card fit read 35% Liberal->ALP (greens-above) while the backtests read 37.9%
   # from all 13, and the scenario job 40%, which failed every What-If publish from 31 Oct (CSC7). The Coalition-split
@@ -107,10 +122,65 @@ htv_observed_splits <- function(dir = file.path("external", "elections")) {
   if (!nrow(tx)) return(NULL)
   both <- tx[, list(nn = data.table::uniqueN(to)), by = list(election, seat, round)][nn == 2L]
   tx <- merge(tx, both[, list(election, seat, round)], by = c("election", "seat", "round"))
-  out <- tx[, list(alp_share = 100 * sum(votes[to == "ALP"]) / sum(votes), n_seats = data.table::uniqueN(seat)),
-            by = election]
-  out[, label := ifelse(alp_share < 50, "greens_above", "labor_above")]
-  out[order(election)]
+  tx[, list(alp = sum(votes[to == "ALP"]), tot = sum(votes)), by = list(election, seat)]
+}
+
+#' Which labels train the card shares: `AUSPOL_HTV_LABELS`
+#'
+#' `"outcome"` (published): each earlier election is labelled by its own observed split (under 50% to Labor is
+#' Greens-above). `"card"`: labels come from the card table, per election and seat, with a third label `open`
+#' (`docs/plans/prereg-htv-card-labels-2026-11-15.md`).
+#' @return `"outcome"` or `"card"`.
+#' @export
+htv_labels_mode <- function() {
+  v <- Sys.getenv("AUSPOL_HTV_LABELS", "outcome")   # the published value (scripts/published_flags.R)
+  if (!v %in% c("outcome", "card")) stop("HTV14! AUSPOL_HTV_LABELS must be outcome or card, not '", v, "'", call. = FALSE)
+  v
+}
+
+#' Card shares from card-labelled cells, partial-pooled (AUSPOL_HTV_LABELS=card)
+#'
+#' Each earlier (election, seat) split takes the label of its card: the seat's row, else the election's ALL row, else
+#' it is left out. Cells are (election, label); each label's share is the recency- and seat-weighted mean of its
+#' cells, shrunk toward the pooled mean by `tau^2 / (tau^2 + se^2)`.
+#' @param target_election Target; only earlier elections train.
+#' @param sp [htv_seat_splits()] result. @param tab Card table ([htv_order_table()] shape).
+#' @param hl Recency half-life in years.
+#' @return list(greens_above, labor_above, open, n = cells table, shrink = per-label table); NULL with no cells.
+#' @export
+htv_card_label_shares <- function(target_election, sp, tab, hl = htv_recency_hl()) {
+  if (is.null(sp) || is.null(tab) || !nrow(sp) || !nrow(tab)) return(NULL)
+  sp <- data.table::as.data.table(sp); tab <- data.table::as.data.table(tab)
+  sp <- sp[elections_before(sp$election, target_election)]
+  lab_of <- function(x) ifelse(is.na(x), "open", ifelse(x, "greens_above", "labor_above"))
+  seat_rows <- tab[tab$seat != "ALL", list(election, seat, seat_label = lab_of(greens_above_labor))]
+  all_rows <- tab[tab$seat == "ALL", list(election, all_label = lab_of(greens_above_labor))]
+  sp <- merge(sp, seat_rows, by = c("election", "seat"), all.x = TRUE)
+  sp <- merge(sp, all_rows, by = "election", all.x = TRUE)
+  sp[, label := data.table::fifelse(!is.na(seat_label), seat_label, all_label)]
+  sp <- sp[!is.na(sp$label)]
+  if (!nrow(sp)) return(NULL)
+  cells <- sp[, list(alp_share = 100 * sum(alp) / sum(tot), n_seats = .N), by = list(election, label)]
+  yr <- function(x) suppressWarnings(as.numeric(sub("^.*?([0-9]{4})$", "\\1", x)))
+  age <- yr(target_election) - yr(cells$election)
+  rw <- if (hl > 0) 0.5^(pmax(0, age) / hl) else rep(1, length(age))
+  rw[!is.finite(rw)] <- 1
+  cells[, w := n_seats * rw]
+  mu <- sum(cells$alp_share * cells$w) / sum(cells$w)
+  by_lab <- cells[, list(m = sum(alp_share * w) / sum(w), k = .N,
+                         v = if (.N > 1L) sum(w * (alp_share - sum(alp_share * w) / sum(w))^2) / sum(w) * .N / (.N - 1L) else NA_real_,
+                         neff = sum(w)^2 / sum(w^2)), by = label]
+  v_pool <- if (any(is.finite(by_lab$v))) mean(by_lab$v[is.finite(by_lab$v)]) else stats::var(cells$alp_share)
+  if (!is.finite(v_pool)) v_pool <- 0
+  by_lab[!is.finite(v), v := v_pool]
+  by_lab[, se2 := v / neff]
+  tau2 <- if (nrow(by_lab) > 1L) max(0, stats::var(by_lab$m) - mean(by_lab$se2)) else 0
+  by_lab[, wt := if (tau2 > 0) tau2 / (tau2 + se2) else 0]
+  by_lab[, share := mu + wt * (m - mu)]
+  pick <- function(l) { r <- by_lab[by_lab$label == l]; if (nrow(r)) r$share else NA_real_ }
+  cat(sprintf("HTV14 %s card-labelled shares (pooled %.1f%%, tau^2 %.1f): %s\n", target_election, mu, tau2,
+              paste(sprintf("%s %.1f%% (raw %.1f, %d cells, shrink w %.2f)", by_lab$label, by_lab$share, by_lab$m, by_lab$k, by_lab$wt), collapse = "; ")))
+  list(greens_above = pick("greens_above"), labor_above = pick("labor_above"), open = pick("open"), n = cells, shrink = by_lab)
 }
 
 #' Fit the two Liberal-to-ALP shares the card order selects between
@@ -129,6 +199,8 @@ htv_observed_splits <- function(dir = file.path("external", "elections")) {
 #' @return list(greens_above = ALP share, labor_above = ALP share, n = table).
 #' @export
 fit_htv_flow_rows <- function(target_election, dir = file.path("external", "elections"), min_seats = 2L) {
+  # AUSPOL_HTV_LABELS=card: labels from the card table, not the result; a third (open) share; shrinkage, no min_seats.
+  if (identical(htv_labels_mode(), "card")) return(htv_card_label_shares(target_election, htv_seat_splits(dir), htv_order_table()))
   obs <- htv_observed_splits(dir)
   if (is.null(obs)) return(NULL)
   obs <- obs[elections_before(obs$election, target_election) & obs$n_seats >= min_seats]   # time-forward
@@ -142,7 +214,7 @@ fit_htv_flow_rows <- function(target_election, dir = file.path("external", "elec
   rw[!is.finite(rw)] <- 1   # a label with no 4-digit year (test fixtures) keeps the plain weight
   obs$w <- obs$n_seats * rw
   f <- function(lab) { s <- obs[obs$label == lab]; if (!nrow(s)) NA_real_ else sum(s$alp_share * s$w) / sum(s$w) }
-  list(greens_above = f("greens_above"), labor_above = f("labor_above"), n = obs)
+  list(greens_above = f("greens_above"), labor_above = f("labor_above"), open = NA_real_, n = obs)
 }
 
 #' Probability the Liberal card puts Labor above the Greens, for an election whose card is not yet known
@@ -222,8 +294,9 @@ htv_flow_override <- function(ov, fm, target_election, seats, table = NULL, rows
   for (s in seats) {
     above <- if (s %in% seat_entry$seat) seat_entry[seat_entry$seat == s]$greens_above_labor[1]
              else if (nrow(all_entry)) all_entry$greens_above_labor[1] else NA
-    if (is.na(above)) next
-    share <- share_for(above)
+    # An open card (NA) takes the open share when one is fitted (AUSPOL_HTV_LABELS=card); otherwise the seat keeps its flows.
+    if (is.na(above) && !is.finite(if (is.null(fr$open)) NA_real_ else fr$open)) next
+    share <- if (is.na(above)) fr$open else share_for(above)
     if (!is.finite(share)) { skipped_na <- c(skipped_na, s); next }
     L <- if (!is.null(out[[s]])) out[[s]] else fm$conditional
     touched <- FALSE
@@ -236,14 +309,15 @@ htv_flow_override <- function(ov, fm, target_election, seats, table = NULL, rows
       r[["ALP"]] <- tot * share / 100; r[["GRN"]] <- tot * (1 - share / 100)
       L[[k]] <- r; touched <- TRUE
     }
-    if (touched) { out[[s]] <- L; applied <- applied + 1L; orders <- c(orders, if (above) "greens_above" else "labor_above") }
+    if (touched) { out[[s]] <- L; applied <- applied + 1L; orders <- c(orders, if (is.na(above)) "open" else if (above) "greens_above" else "labor_above") }
   }
   if (!is.null(ov)) for (a in setdiff(names(attributes(ov)), "names")) attr(out, a) <- attr(ov, a)
   if (length(skipped_na)) cat(sprintf("HTV0! %d seat(s) skipped because their card share is NA: %s\n", length(skipped_na), paste(utils::head(skipped_na, 8), collapse = ", ")))
-  attr(out, "htv") <- list(applied = applied, share = fr[c("greens_above", "labor_above")], order = table(orders), skipped_na = skipped_na)
-  cat(sprintf("HTV1 %s: Liberal card applied to %d of %d seats (%s); fitted Liberal->ALP share when ALP+GRN alive: greens-above %.0f%%, labor-above %.0f%%\n",
+  attr(out, "htv") <- list(applied = applied, share = fr[intersect(c("greens_above", "labor_above", "open"), names(fr))], order = table(orders), skipped_na = skipped_na)
+  cat(sprintf("HTV1 %s: Liberal card applied to %d of %d seats (%s); fitted Liberal->ALP share when ALP+GRN alive: greens-above %.0f%%, labor-above %.0f%%, open %s\n",
               target_election, applied, length(seats), paste(sprintf("%s=%d", names(table(orders)), as.integer(table(orders))), collapse = " "),
-              fr$greens_above, fr$labor_above))
+              fr$greens_above, fr$labor_above,
+              if (is.finite(if (is.null(fr$open)) NA_real_ else fr$open)) sprintf("%.0f%%", fr$open) else "none"))
   # Nothing applied (e.g. an election with only open seat cards, vic2018): hand back the caller's own value. `out`
   # would be an empty list when ov is NULL, which simulate_seat_contests() rejects as a wrong-length override.
   if (applied == 0L) return(ov)

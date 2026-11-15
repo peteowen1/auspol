@@ -18,6 +18,6 @@ data.table \code{election}, \code{seat}, \code{greens_above_labor}, \code{source
 Reads \code{external/reference/htv/coalition-card-order-researched.csv} (columns \code{election}, \code{seat} ("ALL", a seat, or
 seats separated by ";"), \code{party}, \code{order}, \code{confidence}, \code{source_url}, ...) and returns the shape
 \code{\link[=htv_order_table]{htv_order_table()}} returns: one row per election and seat with a HIGH or MED confidence Liberal / LNP / CLP card
-that orders the two (\code{GRN_ABOVE_ALP} TRUE, \code{ALP_ABOVE_GRN} FALSE), plus seat-level \code{OPEN} cards as \code{NA} (that
-seat keeps its learned flows rather than the election's ALL row). Prints HTV13 with what it kept and dropped.
+that orders the two (\code{GRN_ABOVE_ALP} TRUE, \code{ALP_ABOVE_GRN} FALSE), plus \code{OPEN} cards as \code{NA} (statewide or seat;
+an open seat does not take the election's ALL row). Prints HTV13 with what it kept and dropped.
 }
