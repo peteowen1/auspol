@@ -113,3 +113,27 @@ Screen: same command, same 18 elections, `AUSPOL_HTV_LABELS=hybrid`, `--reuse` (
 unchanged by this commit; the canary decides). Same primary, guard (no election worse by more than 2 SE of its own
 seats; leave-one-election-out sign) and decision rule as above. Unacceptable: a gain that rests on vic2010 or qld2020
 returning to baseline (that is the gap closing, not an improvement) -- so the decision is read on the 16 others too.
+
+## RESULT, amendment 1 (2026-11-15 1:07pm, 1,000 sims, the 18; baseline 017393a99047 reused by canary in fed/vic/nsw/qld/sa, wa2013 rebuilt): A TIE. To Pete.
+
+Seat-winner log loss, 1,746 seats: 0.2847 -> 0.2846, -0.0001 (SE 0.0002, clustered on election), within 1 SE. AEF-7
+ledger subset (622 seats): +0.0002 (SE 0.0002). 15 of 18 changed; HD1 confirmed the arm applied.
+
+| Election | Seats moved | Change |
+|---|---|---|
+| qld2024 | 4 | +0.0015 |
+| vic2018 | 10 | +0.0012 |
+| nsw2019, vic2010 | 4, 4 | +0.0003 each |
+| fed2025 | 5 | +0.0002 |
+| nsw2023, qld2015 | 3, 4 | +0.0001 each |
+| qld2017, fed2016, sa2026 | 2, 7, 0 | 0.0000 |
+| fed2022, qld2020 | 2, 6 | -0.0001 each |
+| vic2022 | 7 | -0.0004 |
+| fed2013 | 8 | -0.0018 |
+| vic2014 | 13 | -0.0027 |
+
+- The card arm's data gap is closed: vic2010 +0.0003 (card arm +0.0323), qld2020 -0.0001 (+0.0064).
+- Guard: no election moves more than 0.003 (own-seat SEs not printed); leave-one-election-out FAILS on noise (dropping
+  fed2013 flips the sign of a -0.0001 total).
+- Unacceptable-win check (gain resting on vic2010/qld2020 returning): not triggered; there is no gain.
+- Live vic2026 (dry run): Labor-above 62.1% -> 61.7%, open (Brunswick) 57.1%.
