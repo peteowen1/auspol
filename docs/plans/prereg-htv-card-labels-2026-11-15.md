@@ -137,3 +137,13 @@ ledger subset (622 seats): +0.0002 (SE 0.0002). 15 of 18 changed; HD1 confirmed 
   fed2013 flips the sign of a -0.0001 total).
 - Unacceptable-win check (gain resting on vic2010/qld2020 returning): not triggered; there is no gain.
 - Live vic2026 (dry run): Labor-above 62.1% -> 61.7%, open (Brunswick) 57.1%.
+
+### CORRECTION to both RESULTS (2026-11-15 ~5:30pm, review of the ship diff)
+
+Both screens ran with a bug: a seat the card table does not name was given the OPEN share when the election had seat
+rows and no ALL row. Only vic2018 has that shape (two open seat rows, its LOW ALL row dropped), so 86 uncarded vic2018
+seats took the open share. Fixed in bb8e5bb2 (test added; it fails without the fix). vic2018 rescreened under the fix,
+hybrid against `outcome`, 1,000 sims, same seed: 0.2606 -> 0.2619, +0.0013, 2 seats moved (Brunswick, Northcote; was
++0.0012 with 10 moved). Recomputed by hand, the hybrid pooled total stays -0.0001 to four places: the tie stands. The
+card arm's vic2018 row (-0.0018) is also contaminated and was not rerun (that arm is not shipping). The other 17
+elections all have an ALL row and are unaffected.
