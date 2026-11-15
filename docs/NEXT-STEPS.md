@@ -13,10 +13,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (10 Nov: One Nation stands in all 88 seats, so no seat-count conditioning applies; recheck for nsw2027's list); (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 15 Nov, 9:45am.** main and dev 0.4.174 (PRs #241, #242); CI and daily forecast green. OPEN for Pete: send
-  the VEC draft (Gmail, "RE: State Election 2026 results data feed"; no reply sent as of 15 Nov): it asks whether the
-  voting-centre pages fill in during the count. Dated: Tue 17 Nov benchmark capture; 23 Nov VEC venues rerun; 25 Nov
-  final salience snapshot + night dress rehearsal (The Daily Eight). PR #228 (CONSTANTS.md drift) merged 15 Nov.
+- **Status 15 Nov, 7:15pm.** main 0.4.175 (PR #243, benchmark capture fixes; dev ahead by docs only); CI green. OPEN for
+  Pete: send the VEC draft (Gmail, "RE: State Election 2026 results data feed"; unsent as of 15 Nov): it asks whether the
+  voting-centre pages fill in during the count. Dated (all in The Daily Eight): Mon 16 Nov check the daily run's HTV lines;
+  Tue 17 Nov benchmark capture (VPN OFF; Betfair has 2 real seat books of 88); 23 Nov VEC venues rerun; 25 Nov final
+  salience snapshot + night dress rehearsal.
 - SHIPPED 15 Nov (PR #241, merged 10:23am; publishes with the 16 Nov 4:30am daily run): vic2026 Liberal card known, Labor
   above the Greens (VEC registered cards); Brunswick open, keeps learned flows. OPEN: check the 16 Nov run's conclusion
   and that `HTV1 vic2026: ... applied to 88 of 88 seats (labor_above=87 open=1)` and `HTV14` are in its log.
@@ -26,7 +27,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   Every row was open-web searched 6 Nov; the remaining route is Wayback captures of the commissions' card pages and PDFs, dated
   before polling day. 15 Nov: the Internet Archive went offline mid-search. Its index does hold Feb 2014 ECSA document
   downloads in the form `edocman/?task=document.download&id=N`, so retry sa2014 ids 687 and 710-756 in that form, then ECSA
-  2022 and WAEC 2017/2025. Done when: 0 UNKNOWN rows, or each remaining one says where it was searched.
+  2022 and WAEC 2017/2025. PARKED 15 Nov until after 28 Nov (the archive kept dropping; the whole card-label change was
+  -0.0001 SE 0.0002, so these rows cannot move vic2026). Done when: 0 UNKNOWN rows, or each says where it was searched.
 - SHIPPED 14 Nov, arm SPL (Pete's override, "Build per-side, ship live"): paid SEAT polls lose a lean toward the sponsor's
   side, each side shrunk to zero (`AUSPOL_SEAT_POLL_PAID_LEAN=1`, `plans/prereg-seat-paid-lean-2026-11-14.md`). Backtest
   neutral; live today unchanged (Hawthorn's paid poll is 15 months old). OPEN after 28 Nov: score it on vic2026.
