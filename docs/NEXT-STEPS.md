@@ -252,7 +252,6 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
 
 ## Dated, cannot move
 
-- OPEN: revisit candidate-count weighting now the VEC final list is in (nominations DONE 10 Nov, DECISIONS 2026-11-10).
 - **28 Nov, once vic2026 has votes in `candidacies.csv`**: set `MC_LIVE_EL=""` in `rebuild_forecasts.sh` (the live
   bucket split row, SHIPPED 10 Nov; the fit stops with `MC0!` otherwise).
 - OPEN (idea, 6 Nov, from Griffith/Ryan 2022): a state -> federal carry of a party's own strength in the overlapping state
