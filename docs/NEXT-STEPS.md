@@ -15,15 +15,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
 - **Status 15 Nov, 11:05pm.** main 0.4.177 (PR #244 site candidate names from the VEC list; PR #245
   `AUSPOL_LIVE_N_CAND=1`, DECISIONS 2026-11-15); CI green. OPEN for Pete: send the VEC draft (Gmail, "RE: State Election
-  2026 results data feed"; unsent as of 15 Nov). Dated (Daily Eight): Mon 16 Nov check the daily run (next item); Tue 17 Nov
+  2026 results data feed"; unsent as of 15 Nov). Dated (Daily Eight): Tue 17 Nov
   benchmark capture (VPN OFF); 23 Nov VEC venues rerun; 25 Nov final salience snapshot + night dress rehearsal.
-- DONE Mon 16 Nov 7:30am: the 4:30am run (43741480657) concluded success with `XNC1 ... 110 with more than one candidate`,
-  `FJ4 candidate names from: vec (734 rows)`, `FJ5 named cells: 575 of 575`, `HTV1 ... (labor_above=87 open=1)`, `HTV14`;
-  site built 4:38am at `30b6435`, Labor 23.34 expected seats, Croydon's Liberal is Toby Wooldridge.
-- OPEN, visible on the site since 16 Nov (from PR #244): where a class has several candidates the seat card names the FIRST
-  ON THE BALLOT, not the one the vote belongs to. Essendon shows "Ava Adams" as the 85% Independent favourite; the class's
-  vote is Oscar Yildiz's carried personal vote. Fix in `scripts/build_forecast_json.R` (order by sitting, then the
-  candidate with a carried or prior vote, then ballot). Done when Essendon names Yildiz. 1-2 hours. Before 28 Nov.
+- FIXED on dev 16 Nov, not yet on main: where a class has several candidates the seat card named the FIRST ON THE BALLOT.
+  `scripts/build_forecast_json.R` now orders sitting member, then best earlier vote share, then ballot (`FJ6` log line);
+  21 of 576 cards change, Essendon names Oscar Yildiz (23.5, Pascoe Vale 2018). OPEN: merge, then check the next daily
+  run's site shows Yildiz.
 - OPEN, 15 Nov full review (`reviews/FABLE-FULL-REVIEW-2026-11-15.md`, "Pick up from here" is the work list; Pete's four
   answers are in DECISIONS 2026-11-15). Not built, in order: A1-A3 (`forecast.yaml`: manual runs skip the what-if jobs, quiet
   five false warnings, alarm on a NEW validation failure; `fit_nsw.R` has failed unseen since 13 Nov), A5 (poll-layer log
@@ -35,9 +32,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   not found (item C1: print the mean seat share after each step beside `FP0`). Trigger: (3) before 28 Nov (a
   half-day trace, changes no number); (1) and (2) at the post-election review unless Pete asks sooner.
 - SHIPPED 15 Nov (PR #241, merged 10:23am; publishes with the 16 Nov 4:30am daily run): vic2026 Liberal card known, Labor
-  above the Greens (VEC registered cards); Brunswick open, keeps learned flows. OPEN: check the 16 Nov run's conclusion
-  and that `HTV1 vic2026: ... applied to 88 of 88 seats (labor_above=87 open=1)` and `HTV14` are in its log.
-  Also SHIPPED 15 Nov (PR #242): `AUSPOL_HTV_LABELS=hybrid` (card shares learn from the cards; open share). OPEN: the 13 UNKNOWN
+  above the Greens (VEC registered cards); Brunswick open, keeps learned flows. Live in the 16 Nov 4:30am run
+  (43741480657: `HTV1 ... labor_above=87 open=1`, `HTV14`). Also SHIPPED 15 Nov (PR #242): `AUSPOL_HTV_LABELS=hybrid` (card shares learn from the cards; open share). OPEN: the 13 UNKNOWN
   card rows (counted 15 Nov: fed2007/2010/2019, nsw2015, qld2012, sa2010/2014/2022, wa2001/2005/2008/2017/2025) still train
   on their results; each dated card found moves one to its card. Source: `external/reference/htv/coalition-card-order-researched.csv`.
   Every row was open-web searched 6 Nov; the remaining route is Wayback captures of the commissions' card pages and PDFs, dated
