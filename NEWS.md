@@ -1,3 +1,7 @@
+# auspol 0.4.175
+
+- **The vic2026 benchmark capture reads every Betfair chunk and drops books that are not markets** (PR #243): Betfair now lists all 88 seats, fetched 10 markets a request; the three capture readers (`snapshot_benchmarks.R`, `compare_bookmaker_odds.R`, `value_odds_vic2026.R`) read only the newest file and would have scored 9 seats. They now share `scripts/benchmark_books.R`. Books with one price (which devigged to certainty), over 150%, or a 1.01-style placeholder are dropped and counted (`VBK2!`): 15 Nov Betfair keeps 2 of 88 seats, Sportsbet all 88. Seat names match ignoring hyphens ("South West Coast"); "Green" is the Greens. Scripts only; the forecast is unchanged.
+
 # auspol 0.4.174
 
 - **The Liberal card shares learn from the cards, not from each election's result** (PR #242, `AUSPOL_HTV_LABELS=hybrid`, Pete: correctness fix on a tie): the card label per election and seat where a dated card exists, the result-based label only where none does, and a third fitted share for open cards (NSW 2011/2019/2023, vic2018 Northcote and Brunswick, vic2026 Brunswick). 18 elections with a card row: -0.0001 (SE 0.0002). Live: no seat moves 2+ points. `docs/plans/prereg-htv-card-labels-2026-11-15.md`.
