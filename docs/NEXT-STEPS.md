@@ -13,11 +13,24 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (10 Nov: One Nation stands in all 88 seats, so no seat-count conditioning applies; recheck for nsw2027's list); (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 15 Nov, 7:15pm.** main 0.4.175 (PR #243, benchmark capture fixes; dev ahead by docs only); CI green. OPEN for
-  Pete: send the VEC draft (Gmail, "RE: State Election 2026 results data feed"; unsent as of 15 Nov): it asks whether the
-  voting-centre pages fill in during the count. Dated (all in The Daily Eight): Mon 16 Nov check the daily run's HTV lines;
-  Tue 17 Nov benchmark capture (VPN OFF; Betfair has 2 real seat books of 88); 23 Nov VEC venues rerun; 25 Nov final
-  salience snapshot + night dress rehearsal.
+- **Status 15 Nov, 11:05pm.** main 0.4.177 (PR #244 site candidate names from the VEC list; PR #245
+  `AUSPOL_LIVE_N_CAND=1`, DECISIONS 2026-11-15); CI green. OPEN for Pete: send the VEC draft (Gmail, "RE: State Election
+  2026 results data feed"; unsent as of 15 Nov). Dated (Daily Eight): Mon 16 Nov check the daily run (next item); Tue 17 Nov
+  benchmark capture (VPN OFF); 23 Nov VEC venues rerun; 25 Nov final salience snapshot + night dress rehearsal.
+- OPEN, Mon 16 Nov: read the 4:30am run's conclusion and log. Done when the log has `XNC1 n_cand_now from the final list for
+  vic2026: ... 110 with more than one candidate`, `FJ4  candidate names from: vec (734 rows)`, `FJ5  named cells: 572 of 572`
+  and the `HTV1`/`HTV14` lines below, and the site shows Labor near 23.3 expected seats (was 24.3) and Croydon's Liberal as
+  Toby Wooldridge. An `XNC1!` line for nsw2027 is expected (provisional list).
+- OPEN, 15 Nov full review (`reviews/FABLE-FULL-REVIEW-2026-11-15.md`, "Pick up from here" is the work list; Pete's four
+  answers are in DECISIONS 2026-11-15). Not built, in order: A1-A3 (`forecast.yaml`: manual runs skip the what-if jobs, quiet
+  five false warnings, alarm on a NEW validation failure; `fit_nsw.R` has failed unseen since 13 Nov), A5 (poll-layer log
+  lines), A6 + blog (tiles show the forecast's level; relabel the two-party line). Trigger: before 28 Nov for A3, A6.
+- OPEN, model, found 15 Nov (same review, item A7; each needs Pete before shipping): (1) a standing class whose adjusted
+  2022 share is below its statewide fall is clipped to 0 at the base (Kew Other-right still 0%; 123 of 19,616 backtest rows);
+  (2) Evelyn's Michelle O'Brien carries Michael O'Brien's "elected" flag (`given_stem()` is two letters, `R/names.R:249`;
+  needs a retrain); (3) the 88 seats' minor classes add to 12.5 against the polls' 11.0 since PR #245, Labor +0.3: cause
+  not found (item C1: print the mean seat share after each step beside `FP0`). Trigger: (3) before 28 Nov (a
+  half-day trace, changes no number); (1) and (2) at the post-election review unless Pete asks sooner.
 - SHIPPED 15 Nov (PR #241, merged 10:23am; publishes with the 16 Nov 4:30am daily run): vic2026 Liberal card known, Labor
   above the Greens (VEC registered cards); Brunswick open, keeps learned flows. OPEN: check the 16 Nov run's conclusion
   and that `HTV1 vic2026: ... applied to 88 of 88 seats (labor_above=87 open=1)` and `HTV14` are in its log.
