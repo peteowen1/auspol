@@ -28,6 +28,9 @@ ELECTIONS <- list(
     # Tracked Wikipedia candidate table: leading candidate per class and the
     # list of seats the chamber has but the simulation dropped.
     candidates_file = file.path("external", "reference", "wikipedia", "vic2026-candidates.csv"),
+    # `source` value of the commission's final list in output/candidacies.csv (nominations closed 9 Nov 2026):
+    # names come from there once those rows exist. NA = no final list yet, Wikipedia names are used.
+    final_source = "vec",
     # Legislative Council region per district (Wikipedia, tracked): the ITG
     # page groups the seat table and a map by it.
     region_file = file.path("external", "reference", "vec", "vic-district-regions.csv")),
@@ -45,6 +48,7 @@ ELECTIONS <- list(
     json_stem = "forecast-nsw2027",
     history_stem = "forecast-history-nsw2027",   # separate file: the shared name would mix NSW rows into Victoria's chart
     candidates_file = file.path("external", "reference", "wikipedia", "nsw2027-candidates.csv"),  # parse_wikipedia_candidates.py ... nsw2027 (2026-10-08)
+    final_source = NA_character_,    # nominations not closed: Wikipedia names
     # Hand-coded 2026-10-09 (Pete chose ~8 hand regions): NSW has no upper-house
     # regions, so these are Sydney in five parts plus four regional groups,
     # assigned from each district's position (ABS SED 2022 boundaries).
@@ -87,6 +91,50 @@ if (!is.null(cands) && exists("classify_party")) cands[, party := classify_party
 if (!is.null(cands) && !"party" %in% names(cands)) {
   suppressMessages(devtools::load_all(quiet = TRUE)); cands[, party := classify_party(party_raw)]
 }
+# THE FINAL NOMINATIONS, once the commission has published them (2026-11-15). The Wikipedia table above is a
+# provisional list: on 15 Nov it had 380 names against the VEC's 734, left 219 of 572 seat cards' party rows
+# with no name, and named a Liberal in Croydon who did not nominate. output/candidacies.csv carries the
+# commission's list (source == CFG$final_source) with the SAME party class the model uses, ballot order, and
+# who holds the seat (historic_elected); the daily workflow downloads it with the models. When those rows
+# exist they replace the Wikipedia names; an election with no final list yet keeps Wikipedia.
+pretty_name <- function(x) {   # "MCRAE, Ross" -> "Ross McRae"; "DAVINDER KAUR" -> "Davinder Kaur"
+  cap <- function(s) {
+    s <- gsub("(^|[ '-])([[:alpha:]])", "\\1\\U\\2", tolower(s), perl = TRUE)
+    gsub("\\bMc([[:alpha:]])", "Mc\\U\\1", s, perl = TRUE)
+  }
+  has_comma <- grepl(",", x, fixed = TRUE)
+  sur <- trimws(sub(",.*$", "", x)); giv <- trimws(sub("^[^,]*,", "", x))
+  ifelse(has_comma, paste(giv, cap(sur)), cap(trimws(x)))
+}
+CAND_SOURCE <- if (is.null(cands)) "none" else "wikipedia"
+cc_f <- Sys.getenv("AUSPOL_CAND_OUT", file.path(OUT, "candidacies.csv"))   # the builder's own override, for a scratch copy
+if (!is.null(CFG$final_source) && !is.na(CFG$final_source) && file.exists(cc_f)) {
+  cc <- fread(cc_f, showProgress = FALSE, encoding = "UTF-8",
+              select = c("election", "seat", "name", "party", "historic_elected", "ballot_position", "source"))
+  keep_cc <- cc$election == ELECTION & cc$source == CFG$final_source
+  cc <- cc[which(keep_cc)]
+  if (nrow(cc)) {
+    # `sitting` (holds THIS seat) stays with the Wikipedia table, matched on seat and the last word of the
+    # surname. historic_elected is not that: on 15 Nov it was TRUE for 69 candidates against 67 sitting members,
+    # the extra two being Preston's independent William Fowles and Evelyn's Family First candidate Michelle
+    # O'Brien, neither of whom holds the seat they are standing in (Lambert and Vallence do).
+    last_word <- function(x) tolower(sub("^.*[ ]", "", trimws(x)))
+    wiki_sit <- if (!is.null(cands) && "sitting" %in% names(cands))
+      paste(cands$seat, last_word(cands$name))[which(cands$sitting %in% c(TRUE, "TRUE"))] else character(0)
+    fin <- data.table(seat = cc$seat, name = pretty_name(cc$name), party = cc$party,
+                      sitting = paste(cc$seat, last_word(sub(",.*$", "", cc$name))) %in% wiki_sit,
+                      ballot = as.integer(cc$ballot_position))
+    cat(sprintf("FJ4  sitting members: %d of the %d the Wikipedia table lists are on the final list\n",
+                sum(fin$sitting), length(wiki_sit)))
+    # the sitting member first, then ballot order: the first name of a class is the one the card shows
+    fin <- fin[order(fin$seat, fin$party, -fin$sitting, fin$ballot)]
+    no_list <- setdiff(shares$seat, fin$seat)
+    if (length(no_list)) stop("FJ4! ", ELECTION, ": the final candidate list has no rows for ", length(no_list),
+                              " published seat(s): ", paste(no_list, collapse = ", "))
+    cands <- fin; CAND_SOURCE <- CFG$final_source
+  }
+}
+cat(sprintf("FJ4  candidate names from: %s (%d rows)\n", CAND_SOURCE, if (is.null(cands)) 0L else nrow(cands)))
 
 # Region per district (CFG$region_file): the ITG page groups the seat table and a map by it.
 reg_f <- CFG$region_file
@@ -137,12 +185,25 @@ seat_rows <- lapply(shares$seat, function(s) {
          primary = round(sh[[p]], 2),
          primary_q = prim_q(s, p),
          candidate = if (length(nm)) nm[1] else NULL,
+         candidates = I(nm),   # every candidate of the class, the card's name first; always a JSON array
          sitting = if (!is.null(cands) && length(nm)) isTRUE(cands[seat == s & party == p]$sitting[1]) else NULL)
   })
   ps <- ps[order(-vapply(ps, `[[`, numeric(1), "win_prob"))]
   list(seat = s, region = region_of(s), favourite = ps[[1]]$party, favourite_prob = ps[[1]]$win_prob,
        final_two = final_two(s), parties = ps)
 })
+
+# Named cells: a party row with a vote and no name is a card with a blank. With the final list in hand the four
+# classes that stand almost everywhere must be named in at least 95% of the cells they have a vote in.
+.cells <- rbindlist(lapply(seat_rows, function(sr) rbindlist(lapply(sr$parties, function(q)
+  data.table(seat = sr$seat, party = q$party, voted = isTRUE(q$primary > 0), named = !is.null(q$candidate))))))
+.voted <- .cells[which(.cells$voted)]
+.main <- .voted[which(.voted$party %in% c("ALP", "LNP", "GRN", "ONP"))]
+cat(sprintf("FJ5  named cells: %d of %d with a vote (ALP/LNP/GRN/ONP %d of %d); %d cell(s) carry a name and no vote\n",
+            sum(.voted$named), nrow(.voted), sum(.main$named), nrow(.main), sum(.cells$named & !.cells$voted)))
+if (!identical(CAND_SOURCE, "wikipedia") && !identical(CAND_SOURCE, "none") && nrow(.main) && mean(.main$named) < 0.95)
+  stop(sprintf("FJ5! %s: only %d of %d ALP/LNP/GRN/ONP cells with a vote have a candidate name from the final list",
+               ELECTION, sum(.main$named), nrow(.main)))
 
 # chamber block from the simulation totals
 q <- function(x) as.list(round(stats::quantile(x, c(0.05, 0.25, 0.5, 0.75, 0.95)), 1))
