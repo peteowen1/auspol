@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (320 switches from `published_flags.R`, 7 entry points)
+## Switch parity (321 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -168,6 +168,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_LIVE_LEVEL_ANCHOR` | yes | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_LIVE_LEVEL_PRED_TREND` | yes | NO | NO | NO | NO | NO | NO | level_recent.R |
 | `AUSPOL_LIVE_LEVEL_SPLIT` | yes | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_LIVE_N_CAND` | NO | NO | NO | NO | NO | NO | NO | xgb_primary_override.R |
 | `AUSPOL_LIVE_SEATPREV_RAW` | yes | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_MAJOR_DEPARTED` | yes | yes | yes | yes | yes | yes | yes |  |
 | `AUSPOL_MAJOR_SLOPE` | yes | yes | yes | yes | yes | yes | yes |  |
@@ -193,7 +194,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_NIGHT_DUMP` | NO | yes | yes | yes | yes | yes | yes |  |
 | `AUSPOL_NIGHT_REPLAY_FRAC` | NO | NO | NO | NO | NO | yes | NO | night_update.R |
 | `AUSPOL_NIGHT_TCP` | NO | NO | NO | NO | NO | yes | NO |  |
-| `AUSPOL_NOM_LIVE` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R |
+| `AUSPOL_NOM_LIVE` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R, xgb_primary_override.R |
 | `AUSPOL_NOM_LIVE_FILE` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R |
 | `AUSPOL_NOM_ZERO` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R |
 | `AUSPOL_NOM_ZERO_ORDER` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R |
@@ -473,6 +474,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_LIVE_LEVEL_ANCHOR`** (intentional / dead experiment): OFF since 2026-09-30 (v56), LIVE-ONLY by design: read only in fit_seats_full.R. The un-anchored level scored better over all 22 elections, and published_flags.R says backtests and live now both use the un-anchored recipe (AUSPOL_LEVEL_RECIPE='live').
 - **`AUSPOL_LIVE_LEVEL_PRED_TREND`** (intentional / dead experiment): DIAGNOSTIC, off (audit F12, plans/prereg-live-level-pred-2026-10-25.md), LIVE-ONLY by design: read in R/level_recent.R (live_level_pred_trend), called only from fit_seats_full.R (LLP1), which then serves the xgb layer the pre-blend level. The harnesses' trees read level_pred from output/level-pred.csv, which has no blend, so they have no mismatch to remove.
 - **`AUSPOL_LIVE_LEVEL_SPLIT`** (**adopted, shared-function wiring**): SHIPPED 2026-10-18 as a train/serve fix, LIVE-ONLY by design: read only in fit_seats_full.R, which serves the xgb layer a level_pred split by bucket_split_ratio(). The harnesses read level_pred from output/level-pred.csv, built by the same function.
+- **`AUSPOL_LIVE_N_CAND`** (**adopted, shared-function wiring**): SHIPPED 2026-11-15, LIVE ONLY by design: xgb_primary_predict_live() (R/xgb_primary_override.R) serves n_cand_now as the candidate count from the final nomination list. The harnesses read the as-at predictions, whose feature rows (fit_xgb_primary_v6.R) already carry the real count, so there is nothing for a harness to honour. docs/reviews/FABLE-FULL-REVIEW-2026-11-15.md item A7.
 - **`AUSPOL_LIVE_SEATPREV_RAW`** (**adopted, shared-function wiring**): SHIPPED 2026-10-19 as a train/serve fix, LIVE-ONLY by design: read only in fit_seats_full.R, which serves the xgb layer seat_prev_pcv from the raw prior-election matrix, as fit_xgb_primary_v6.R trains it.
 - **`AUSPOL_MAJOR_SLOPES`** (intentional / dead experiment): HARNESS-ONLY ARM, off: NSW harness only; never shipped, so not ported.
 - **`AUSPOL_MINOR_ADDITIVE`** (**adopted, shared-function wiring**): SHIPPED, LIVE ONLY by design: fit_seats_full.R's minor-field block moves IND/OTH_RIGHT/OTH by points. The five state harnesses already do this with no switch (backtest_candidate_vic.R:644-648 and siblings); the federal harness has its own copy, AUSPOL_MINOR_ADDITIVE_FED. plans/prereg-minor-additive-2026-10-25.md.
@@ -690,8 +692,8 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR4  every AUSPOL_* switch read in code (425) is registered (302) or listed as not a model switch (123).
+MR4  every AUSPOL_* switch read in code (426) is registered (303) or listed as not a model switch (123).
 
 
 
-MR2  every non-universal switch (289 of 320) has a recorded classification.
+MR2  every non-universal switch (290 of 321) has a recorded classification.

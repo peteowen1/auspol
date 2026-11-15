@@ -4,6 +4,17 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-11-15 `AUSPOL_LIVE_N_CAND=1` SHIPPED (Pete: "Ship it", after a live walk): the live trees get the real number of candidates per class and seat.**
+  `R/xgb_primary_override.R:322` served `n_cand_now = 1` for every live row ("unknown pre-nomination") while every training
+  and backtest row carries the real count; nominations closed 9 Nov and 110 of vic2026's 616 seat-classes have more than one
+  candidate. Walk, constant 1 against real counts, same polls and seed, 20,000 sims: expected seats ALP 24.53 -> 23.34, LNP
+  39.72 -> 39.03, ONP 14.90 -> 15.77, IND 1.48 -> 2.16; P(LNP majority) 30.1% -> 27.9%; win probability moves by more than 5
+  points in 23 cells (12 seats), largest Essendon IND 39.8% -> 84.7%. Known cost, accepted: the three minor classes' seat
+  means add to 12.5 against the polls' 11.0 (were 9.8). Live only; no backtest number moves. Evidence and the rest of that
+  session's findings: `reviews/FABLE-FULL-REVIEW-2026-11-15.md` (item A7). Same day, also from that review, Pete chose: leave
+  `AUSPOL_LIVE_LEVEL_PRED_TREND=1` (re-walked at a 0.9-point gap: one cell over 2 points); relabel the site's two-party line
+  as implied from primaries and add the polls' own figures; show the forecast's level in the party tiles; list the
+  `fit_nsw.R` noise-limit failure as known until after 28 Nov. The last three are NOT built yet.
 - **2026-11-15 "Revisit candidate-count weighting once nominations close" is CLOSED, not rescreened: it was built as the class split, which stays OFF.**
   The 22 Aug remedy (`reviews/candidate-count-weighting-blocked-2026-08-22.md`) became `AUSPOL_CLASS_SPLIT`, REFUSED twice on
   35 elections on 6 Nov (+0.0022 SE 0.0013; with search interest +0.0016 SE 0.0011), and Pete closed it pending a new design.

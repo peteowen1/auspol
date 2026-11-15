@@ -320,6 +320,24 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
     rows[, n_cand_prev := ifelse(is.na(idx), 0L, n_prev$N[idx])]
   }
   rows[, n_cand_now := 1L]   # unknown pre-nomination; matches the backtest fallback
+  # AUSPOL_LIVE_N_CAND ("1" = on, SHIPPED 2026-11-15 on Pete's "Ship it" after the walk; "0" = the old constant): once the nomination
+  # list is FINAL (nom_live_on(): the list the zeroing trusts), n_cand_now is the number of candidates of the
+  # class in the seat, as every training row carries it (fit_xgb_primary_v6.R: `.N` by seat and party, 1 where
+  # the class has no row). Until then the constant 1 above stays: a provisional list under-counts. Found
+  # 15 Nov 2026: 110 of vic2026's 616 seat-classes had more than one candidate and all were served as 1.
+  .lnc <- Sys.getenv("AUSPOL_LIVE_N_CAND", "1")
+  if (!.lnc %in% c("0", "1")) stop("AUSPOL_LIVE_N_CAND must be \"0\" or \"1\", not ", .lnc)
+  if (identical(.lnc, "1")) {
+    if (file.exists(cf) && exists("cand_now", inherits = FALSE) && nrow(cand_now) && nom_live_on(target_election)) {
+      .ncn <- cand_now[, list(n_now = .N), by = list(seat, party)]
+      .ix <- match(key_now, paste(.ncn$seat, .ncn$party))
+      .val <- ifelse(is.na(.ix), 1L, .ncn$n_now[.ix])
+      rows[, n_cand_now := .val]
+      cat(sprintf("XNC1 n_cand_now from the final list for %s: %d of %d seat-classes have a candidacy row, %d with more than one candidate (max %d)\n",
+                  target_election, sum(!is.na(.ix)), nrow(rows), sum(.val > 1L), max(.val)))
+    } else cat(sprintf("XNC1! AUSPOL_LIVE_N_CAND=1 but %s has no final nomination list (AUSPOL_NOM_LIVE) -- n_cand_now stays 1 for every row\n",
+                       target_election))
+  }
   # AUSPOL_XGB_CONTEST: who stands, from the confirmed nomination list (AUSPOL_NOM_LIVE=1, the list the zeroing
   # uses). Before it loads, every class is assumed to stand everywhere (stands_i 1, level_contested = level_pred),
   # which is what the live forecast assumes today. prereg-contest-features-2026-10-20.md.
