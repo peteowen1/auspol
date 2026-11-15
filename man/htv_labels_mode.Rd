@@ -10,8 +10,9 @@ htv_labels_mode()
 \code{"outcome"}, \code{"card"} or \code{"hybrid"}.
 }
 \description{
-\code{"outcome"} (published): each earlier election is labelled by its own observed split (under 50\% to Labor is
+\code{"outcome"} (published until 15 Nov 2026): each earlier election is labelled by its own observed split (under 50\% to Labor is
 Greens-above). \code{"card"}: labels come from the card table, per election and seat, with a third label \code{open}
 (\verb{docs/plans/prereg-htv-card-labels-2026-11-15.md}). \code{"hybrid"} (amendment 1): the card label where a dated card
-exists; seats with none are labelled by their election's pooled result, as under \code{"outcome"}.
+exists; seats with none are labelled by their election's pooled result, as under \code{"outcome"}. Published since
+15 Nov 2026 (a tie, -0.0001 SE 0.0002 over 18 elections; shipped by Pete as a correctness fix).
 }

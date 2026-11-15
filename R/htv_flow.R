@@ -127,14 +127,15 @@ htv_seat_splits <- function(dir = file.path("external", "elections")) {
 
 #' Which labels train the card shares: `AUSPOL_HTV_LABELS`
 #'
-#' `"outcome"` (published): each earlier election is labelled by its own observed split (under 50% to Labor is
+#' `"outcome"` (published until 15 Nov 2026): each earlier election is labelled by its own observed split (under 50% to Labor is
 #' Greens-above). `"card"`: labels come from the card table, per election and seat, with a third label `open`
 #' (`docs/plans/prereg-htv-card-labels-2026-11-15.md`). `"hybrid"` (amendment 1): the card label where a dated card
-#' exists; seats with none are labelled by their election's pooled result, as under `"outcome"`.
+#' exists; seats with none are labelled by their election's pooled result, as under `"outcome"`. Published since
+#' 15 Nov 2026 (a tie, -0.0001 SE 0.0002 over 18 elections; shipped by Pete as a correctness fix).
 #' @return `"outcome"`, `"card"` or `"hybrid"`.
 #' @export
 htv_labels_mode <- function() {
-  v <- Sys.getenv("AUSPOL_HTV_LABELS", "outcome")   # the published value (scripts/published_flags.R)
+  v <- Sys.getenv("AUSPOL_HTV_LABELS", "hybrid")   # the published value (scripts/published_flags.R; SHIPPED 15 Nov, was "outcome")
   if (!v %in% c("outcome", "card", "hybrid")) stop("HTV14! AUSPOL_HTV_LABELS must be outcome, card or hybrid, not '", v, "'", call. = FALSE)
   v
 }
