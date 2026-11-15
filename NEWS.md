@@ -1,3 +1,7 @@
+# auspol 0.4.177
+
+- **The live trees get the real number of candidates per class and seat** (PR #245, `AUSPOL_LIVE_N_CAND=1`, Pete: "Ship it" after a live walk): `xgb_primary_predict_live()` served `n_cand_now = 1` for every live row while every training and backtest row carries the real count; 110 of vic2026's 616 seat-classes have more than one candidate. Once the nomination list is final the count comes from `output/candidacies.csv` (`XNC1`); a provisional list keeps 1. Live walk, same polls and seed: expected seats ALP 24.53 -> 23.34, LNP 39.72 -> 39.03, ONP 14.90 -> 15.77, IND 1.48 -> 2.16; P(LNP majority) 30.1% -> 27.9%; Essendon IND 39.8% -> 84.7%. No backtest number moves.
+
 # auspol 0.4.176
 
 - **The site's candidate names come from the VEC's final list** (PR #244): `scripts/build_forecast_json.R` read names from a Wikipedia table last regenerated 16 Oct, which left 219 of 572 seat-party cells with a vote unnamed on the 15 Nov forecast and named a Liberal in Croydon who did not nominate. It now reads the commission's rows of `output/candidacies.csv` (572 of 572 named), keeps `sitting` from the Wikipedia table (67 of 67), adds a `candidates` array per party row, and stops (`FJ5!`) when under 95% of ALP/LNP/GRN/ONP cells are named. No forecast number changes. Also adds the 15 Nov full review (`docs/reviews/FABLE-FULL-REVIEW-2026-11-15.md`).
