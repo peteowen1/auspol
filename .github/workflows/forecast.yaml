@@ -733,6 +733,9 @@ jobs:
       # on a green run with nothing new it only writes "Alarm not raised".
       - name: Raise an alarm
         if: ${{ !cancelled() && (github.event_name == 'schedule' || inputs.daily || inputs.alarm_test) }}
+        # Observational: a gh hiccup here must not turn a published green run red (the gate would then let
+        # the fallback schedule rerun and republish the whole day).
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -804,7 +807,7 @@ jobs:
               STAGES="(run.log does not exist -- the job failed before the pipeline step)"
             fi
           fi
-          BODY=$(printf '%s\n\n```\n%s\n```\n\n## What failed\n\n```\n%s\n```\n\nRun: %s\n\nThis issue is raised only for failures NOT already listed in `.github/known-failures.txt`, so everything under "NEW failures" above is something that changed. If one of them is a failure to live with rather than fix, add its token to that file WITH A REASON -- the alarm will then stay quiet about it and tell you when it stops failing.\n\nThis issue is reused for every consecutive alarm rather than opening a new one. Close it when the run is green again.' \
+          BODY=$(printf '%s\n\n```\n%s\n```\n\n## What failed\n\n```\n%s\n```\n\nRun: %s\n\nThis issue is raised only for failures NOT already listed in `.github/known-failures.txt`, so everything under "NEW failures" above is something that changed. If one of them is a failure to live with rather than fix, add its token to that file WITH A REASON -- the alarm will then stay quiet about it and tell you when it stops failing.\n\nThis issue is reused for every consecutive alarm rather than opening a new one. Close it when the new failures are fixed or listed.' \
                  "$HEADLINE" "$STAGES" "$DIFF" "$RUN_URL")
           # EXACT title match, filtered client-side. `--search ... in:title` is
           # fuzzy and this repo already has an open issue whose title contains
