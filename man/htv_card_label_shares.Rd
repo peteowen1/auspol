@@ -15,7 +15,9 @@ htv_card_label_shares(
 \arguments{
 \item{target_election}{Target; only earlier elections train.}
 
-\item{sp}{\code{\link[=htv_seat_splits]{htv_seat_splits()}} result. @param tab Card table (\code{\link[=htv_order_table]{htv_order_table()}} shape).}
+\item{sp}{\code{\link[=htv_seat_splits]{htv_seat_splits()}} result.}
+
+\item{tab}{Card table (\code{\link[=htv_order_table]{htv_order_table()}} shape).}
 
 \item{hl}{Recency half-life in years.}
 

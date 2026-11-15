@@ -146,7 +146,8 @@ htv_labels_mode <- function() {
 #' it is left out. Cells are (election, label); each label's share is the recency- and seat-weighted mean of its
 #' cells, shrunk toward the pooled mean by `tau^2 / (tau^2 + se^2)`.
 #' @param target_election Target; only earlier elections train.
-#' @param sp [htv_seat_splits()] result. @param tab Card table ([htv_order_table()] shape).
+#' @param sp [htv_seat_splits()] result.
+#' @param tab Card table ([htv_order_table()] shape).
 #' @param hl Recency half-life in years.
 #' @param fallback_outcome TRUE (`hybrid`): seats with no card label are labelled by their election's pooled split
 #'   among those seats (under 50% to Labor is Greens-above) instead of being left out.
@@ -305,8 +306,11 @@ htv_flow_override <- function(ov, fm, target_election, seats, table = NULL, rows
   out <- if (is.null(ov)) list() else ov
   applied <- 0L; orders <- character(0); skipped_na <- character(0)
   for (s in seats) {
+    # No seat row and no ALL row: the table says nothing about this seat, which is NOT an open card (review 15 Nov:
+    # vic2018 has only two open seat rows, and its other 86 seats were taking the open share). Leave it alone.
+    if (!(s %in% seat_entry$seat) && !nrow(all_entry)) next
     above <- if (s %in% seat_entry$seat) seat_entry[seat_entry$seat == s]$greens_above_labor[1]
-             else if (nrow(all_entry)) all_entry$greens_above_labor[1] else NA
+             else all_entry$greens_above_labor[1]
     # An open card (NA) takes the open share when one is fitted (AUSPOL_HTV_LABELS=card); otherwise the seat keeps its flows.
     if (is.na(above) && !is.finite(if (is.null(fr$open)) NA_real_ else fr$open)) next
     share <- if (is.na(above)) fr$open else share_for(above)

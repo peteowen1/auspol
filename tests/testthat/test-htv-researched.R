@@ -83,6 +83,12 @@ test_that("an open card takes the open share only when one is fitted", {
   expect_equal(with_open[["A"]][["LNP|ALP,GRN"]][["ALP"]], 0.63)
   no_open <- htv_flow_override(NULL, fm, "x2026", c("A", "B"), table = tab, rows = list(greens_above = 35, labor_above = 63, open = NA_real_))
   expect_null(no_open[["B"]])
+  # seat rows only, no ALL row (vic2018): a seat the table does not name is NOT an open card and is left alone
+  seat_only <- data.table::data.table(election = "x2018", seat = "B", greens_above_labor = NA)
+  o <- htv_flow_override(NULL, fm, "x2018", c("A", "B"), table = seat_only, rows = list(greens_above = 35, labor_above = 63, open = 57))
+  expect_equal(o[["B"]][["LNP|ALP,GRN"]][["ALP"]], 0.57)
+  expect_null(o[["A"]])
+  expect_equal(attr(o, "htv")$applied, 1L)
 })
 
 test_that("AUSPOL_HTV_LABELS refuses an unknown value", {
