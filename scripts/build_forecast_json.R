@@ -249,6 +249,40 @@ man_f <- Filter(file.exists, c(file.path(OUT, "shipped", "MANIFEST.json"), file.
 man <- if (length(man_f)) jsonlite::fromJSON(man_f[1]) else NULL
 if (is.null(man)) cat("FJ1! no MANIFEST.json found -- models_promoted_at will be null
 ")
+# THE STATEWIDE VOTE THE FORECAST USES (2026-11-16, review A6 / Issue 4; Pete's B2: the site's party tiles show
+# it). fit_seats_full.R's FP0 line is the blended level every seat starts from; the page's tiles showed the
+# poll trend (build_page.R's fp_now), 0.9 apart for Labor on 15 Nov. forecast_level is that FP0 file;
+# seats_mean is the plain average of the seat primaries (not voter-weighted), which is what the 88 seats add to.
+lev_f <- file.path(OUT, sprintf("statewide-level-%s%s.csv", CFG$file_tag, SUF))
+statewide <- NULL
+if (!file.exists(lev_f)) {
+  cat(sprintf("FJ7! %s missing -- published WITHOUT the statewide block\n", lev_f))
+} else {
+  # fit_seats_full.R writes the level a few minutes BEFORE the seat files, so it is always a little older;
+  # more than 2 hours older means it came from another run, and the tiles would show a different forecast.
+  lag_h <- as.numeric(difftime(file.mtime(f_shares), file.mtime(lev_f), units = "hours"))
+  if (lag_h > 2) stop(sprintf("FJ7! %s is %.1f hours older than %s: not the same run", lev_f, lag_h, f_shares))
+  LEV <- fread(lev_f, showProgress = FALSE)
+  if (anyDuplicated(LEV$party) || !nrow(LEV)) stop("FJ7! ", lev_f, ": empty or duplicated parties")
+  # The level's OTH is every minor class together (FP0 has LNP ALP GRN ONP OTH); the seats split it into
+  # IND, OTH and OTH_RIGHT, so the seat columns the level does not name are added into its OTH.
+  seat_cols <- setdiff(names(shares), "seat")
+  fold <- setdiff(seat_cols, LEV$party)
+  if (length(fold) && !"OTH" %in% LEV$party) stop("FJ7! ", lev_f, " has no OTH to hold seat classes ", paste(fold, collapse = ", "))
+  sw_parties <- intersect(LEV$party, c(seat_cols, "OTH"))
+  if (!length(sw_parties)) stop("FJ7! ", lev_f, ": no party in common with ", f_shares)
+  seat_mean_of <- function(p) {
+    cols <- if (p == "OTH") union(intersect("OTH", seat_cols), fold) else p
+    mean(rowSums(as.matrix(shares[, cols, with = FALSE])))
+  }
+  statewide <- lapply(sw_parties, function(p) list(
+    party = p, forecast_level = round(LEV$level[match(p, LEV$party)], 2),
+    seats_mean = round(seat_mean_of(p), 2)))
+  cat(sprintf("FJ7  seat classes counted in OTH: %s\n", paste(union(intersect("OTH", seat_cols), fold), collapse = ", ")))
+  cat(sprintf("FJ7  statewide forecast level vs seat mean: %s\n",
+              paste(vapply(statewide, function(r) sprintf("%s %.2f/%.2f", r$party, r$forecast_level, r$seats_mean), ""),
+                    collapse = ", ")))
+}
 doc <- list(
   election = CFG$election, election_date = CFG$election_date, built_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z"),
   git_sha = gitsha, models_promoted_at = if (!is.null(man)) man$promoted_at else NULL,
@@ -262,6 +296,7 @@ doc <- list(
   chamber_seats = CHAMBER, seats_simulated = n_seats, seats_not_simulated = I(excluded),   # I(): always a JSON array, even for one seat
   majority = majority, n_sims = nrow(sims),
   chamber = list(parties = chamber, p_hung = round(hung, 4), p_onp_balance_of_power = round(onp_bop, 4), p_tie_most = p_tie_most),
+  statewide = statewide,
   seats = seat_rows)
 out_f <- file.path(OUT, sprintf("%s%s.json", CFG$json_stem, SUF))   # a suffixed (diagnostic) run never overwrites the published name
 writeLines(jsonlite::toJSON(doc, auto_unbox = TRUE, null = "null", na = "null", digits = 4), out_f)   # numeric NA (a same-class final two) as null, not the string "NA"
