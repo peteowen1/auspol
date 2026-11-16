@@ -27,8 +27,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   in `.github/known-failures.txt` per B3, NL3 lines deleted; `test_failure_signature.sh` 5e grep fixed, broken since
   9 Oct). OPEN: merge, then check the next daily run's summary says "Alarm not raised". A6 BUILT 16 Nov: the
   forecast JSON carries `statewide` (`forecast_level` = FP0, `seats_mean` = plain seat average, minor classes folded
-  into OTH; `FJ7`); blog half (tiles read `forecast_level`) is the `inthegame-blog` session's. Not built: A5
-  (poll-layer log lines), the two-party line relabel (B1, Issue 5).
+  into OTH; `FJ7`); blog half (tiles read `forecast_level`) is the `inthegame-blog` session's. B1 / Issue 5 repo half BUILT 16 Nov:
+  `polls_tpp` (each poll's own Labor two-party figure, `R/poll_tpp_dots.R`, `PG10`) in vic and nsw2027 page data;
+  the relabel and dots are the `inthegame-blog` session's. Not built: A5 (poll-layer log lines).
 - OPEN, model, found 15 Nov (same review, item A7; each needs Pete before shipping): (1) a standing class whose adjusted
   2022 share is below its statewide fall is clipped to 0 at the base (Kew Other-right still 0%; 123 of 19,616 backtest rows);
   (2) Evelyn's Michelle O'Brien carries Michael O'Brien's "elected" flag (`given_stem()` is two letters, `R/names.R:249`;

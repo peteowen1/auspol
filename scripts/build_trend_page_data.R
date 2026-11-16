@@ -85,7 +85,7 @@ out <- list(
   meta = list(as_of = as.character(Sys.Date()), election = as.character(POLL_DAY),
               days_out = as.integer(POLL_DAY - Sys.Date()),
               latest_poll = as.character(max(cp$date)), n_polls_cycle = nrow(cp)),
-  trend = series, polls = pl, fp_now = fp_now, scorecard = scorecard,
+  trend = series, polls = pl, polls_tpp = poll_tpp_dots(cp), fp_now = fp_now, scorecard = scorecard,
   leaders = leader_page_data(ELECTION))   # display only (R/leader_ratings.R)
 json <- toJSON(out, auto_unbox = TRUE, digits = 6, na = "null", null = "null")
 # Same escaping as build_page.R: the leader rows carry text scraped from Wikipedia, and a page may inline this JSON.
