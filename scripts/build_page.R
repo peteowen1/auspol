@@ -143,6 +143,11 @@ pl <- rbindlist(lapply(c("ALP", "LNP", "GRN", "ONP", "OTH"), function(p) {
   data.table(party = p, date = as.character(v$date), firm = v$firm,
              v = round(v$v, 1))
 }))
+# Each poll's OWN published Labor two-party figure (2026-11-16, review Issue 5, Pete's B1): the chart's TPP_ALP
+# line is implied from the primary trends and past preference flows, not fitted to these, so the page plots them
+# as dots beside it. A separate array so `polls` (one row per poll per party) keeps its shape.
+pl_tpp <- poll_tpp_dots(cp)
+cat(sprintf("PG10 published two-party figures: %d of %d polls\n", nrow(pl_tpp), nrow(cp)))
 # The ten most recent polls the trend above is fitted on (Pete, 2026-10-17: "There should be a list of 10 most
 # recent polls on the website"), newest first, by fieldwork midpoint. Same `cp` as the chart, so the list and the
 # forecast cannot disagree about which polls exist. Labor two-party is the pollster's own published figure.
@@ -461,7 +466,7 @@ out <- list(
              trend_fit = round(flow_hat, 1), z = round(flow_z, 2),
              method = onp_est$model, years = onp_est$years,
              se = round(onp_est$se, 2)),
-  trend = series, polls = pl, recent = recent,
+  trend = series, polls = pl, polls_tpp = pl_tpp, recent = recent,
   # Every party's fit against its own recent polls, so the page can say which
   # party is worst-tracked and by how much without anyone retyping it.
   track = {
