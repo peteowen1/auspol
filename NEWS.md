@@ -1,3 +1,7 @@
+# auspol 0.4.180
+
+- **`SMN1` prints the mean seat share after every stage of the live forecast** (PR #248, review C1): it found that the xgb trees take vic2026's minor total from 9.32 to 12.59 against an 11.0 level, 2.7 points of it from the live candidate count (PR #245). Left as is: the 35 published backtests under-call minor classes, more so with more candidates (DECISIONS 2026-11-16). No forecast number changes.
+
 # auspol 0.4.179
 
 - **The forecast JSON carries the statewide vote the forecast uses** (PR #247, review A6, Pete's B2): a new `statewide` block gives each party's `forecast_level` (the `FP0` level every seat starts from, from `output/statewide-level-<tag>.csv`) and `seats_mean` (the plain average of the seat primaries, minor classes folded into OTH). The site's tiles showed the poll trend, 0.9 points off for Labor on 15 Nov. `FJ7` stops the build on a level file from another run. No forecast number changes.
