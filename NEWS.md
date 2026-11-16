@@ -1,3 +1,7 @@
+# auspol 0.4.179
+
+- **The forecast JSON carries the statewide vote the forecast uses** (PR #247, review A6, Pete's B2): a new `statewide` block gives each party's `forecast_level` (the `FP0` level every seat starts from, from `output/statewide-level-<tag>.csv`) and `seats_mean` (the plain average of the seat primaries, minor classes folded into OTH). The site's tiles showed the poll trend, 0.9 points off for Labor on 15 Nov. `FJ7` stops the build on a level file from another run. No forecast number changes.
+
 # auspol 0.4.178
 
 - **Seat cards name the candidate the class's vote belongs to** (PR #246): where a class has several candidates, `scripts/build_forecast_json.R` named the first on the ballot, so Essendon showed Ava Adams as the 85% Independent favourite while the vote is Oscar Yildiz's (23.5 in Pascoe Vale 2018). Order is now sitting member, best earlier vote share in `output/candidacies.csv`, then ballot; 21 of 576 vic2026 cards change (`FJ6`). No forecast number changes.
