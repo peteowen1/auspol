@@ -1,3 +1,7 @@
+# auspol 0.4.182
+
+- **Poll layering says when a date-window match carries different numbers, and which of our rows the trend does not read** (PR #250, review A5): `poll_layer()` pairs one firm's polls within 4 days whatever their numbers. `PZ6` names each matched pair whose majors differ by more than 3 points and which row was kept; `PZ7` lists our rows not read (suspect, or lost a disputed pair). Both go in the daily run summary. Log only: the poll set is unchanged. On the 15 Nov polls the vic2026 cycle has none.
+
 # auspol 0.4.181
 
 - **The page data carries each poll's own two-party figure** (PR #249, review Issue 5, Pete's B1): `polls_tpp` (`date`, `firm`, `v`) in `vic-page-data.json` and `nsw2027-page-data.json`, from `R/poll_tpp_dots.R`, so the site can plot the published figures beside its two-party line, which is implied from the primary trends and past flows (Vic 47.55 against the latest six polls' 44.5). No existing field changes.
