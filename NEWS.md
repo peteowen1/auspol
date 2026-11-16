@@ -1,3 +1,7 @@
+# auspol 0.4.183
+
+- **The 2018 Victorian booth tables no longer carry phantom booths** (PR #251): the VEC's 2018 voting-centre pages have blank rows of a raw non-breaking space, which `scripts/fetch_booths_vic2022.R` read as an "ordinary" booth with no votes in every district (992 first-preference and 352 two-candidate rows; 10 reached the Narracan election-night reference). Rebuilt from the cached pages: only those rows go, vote totals identical. `scripts/build_data_registry.R` walks each `external/reference/` folder once instead of three times (same output). No forecast number changes.
+
 # auspol 0.4.182
 
 - **Poll layering says when a date-window match carries different numbers, and which of our rows the trend does not read** (PR #250, review A5): `poll_layer()` pairs one firm's polls within 4 days whatever their numbers. `PZ6` names each matched pair whose majors differ by more than 3 points and which row was kept; `PZ7` lists our rows not read (suspect, or lost a disputed pair). Both go in the daily run summary. Log only: the poll set is unchanged. On the 15 Nov polls the vic2026 cycle has none.
