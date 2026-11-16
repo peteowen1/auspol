@@ -69,12 +69,13 @@ L <- c(L, "## Raw commission downloads (`external/reference/`)\n")
 for (d in sort(basename(list.dirs(file.path("external", "reference"), recursive = FALSE)))) {
   p <- file.path("external", "reference", d)
   if (!dir.exists(p)) next
-  f <- list.files(p, recursive = TRUE)
+  # One recursive walk and one file.info() per folder (was three walks and three file.info() calls: 16 Nov 2026,
+  # a 2-minute registry ran past 17 minutes on a busy disk, and the walks are the only expensive part).
+  f <- list.files(p, recursive = TRUE)   # relative to p: the "e.g." line below prints these
   if (!length(f)) { L <- c(L, sprintf("- **%s/** -- empty\n", d)); next }
-  tot <- sum(file.info(list.files(p, recursive = TRUE, full.names = TRUE))$size,
-             na.rm = TRUE)
-  empt <- list.files(p, recursive = TRUE, full.names = TRUE)
-  empt <- basename(empt[!is.na(file.info(empt)$size) & file.info(empt)$size == 0])
+  fsz <- file.info(file.path(p, f))$size
+  tot <- sum(fsz, na.rm = TRUE)
+  empt <- basename(f[!is.na(fsz) & fsz == 0])
   L <- c(L, sprintf("- **%s/** -- %d files, %s%s", d, length(f), human(tot),
                     if (length(empt))
                       sprintf(". **%d ZERO-BYTE: %s**", length(empt),
