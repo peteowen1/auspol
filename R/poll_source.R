@@ -548,6 +548,19 @@ poll_layer <- function(ae, region, path = NULL, window = 4L) {
     if (!is.null(differ)) { differ$tpp <- tpp; differ$err_ours <- round(e_o, 1); differ$err_ae <- round(e_a, 1)
                             differ$kept <- ifelse(use_ours[j], "ours", "ae") }
   }
+  # PZ6 (review 2026-11-15, Issue 8): a pair is matched on firm and a date window whatever its numbers, so two
+  # different polls of one firm a few days apart can be paired and one of them lost. Say so for every pair whose
+  # majors differ by more than 3 points, with which row was kept. Log only: nothing here changes the pairing.
+  if (length(pair_o)) {
+    d3 <- vapply(seq_along(pair_o), function(j) {
+      d <- abs(unlist(ours[pair_o[j], majors, with = FALSE]) - unlist(ae[pair_a[j], majors, with = FALSE]))
+      if (any(is.finite(d))) max(d, na.rm = TRUE) else NA_real_ }, 0)
+    for (j in which(d3 > 3)) message(sprintf(
+      "PZ6 date-window match with different numbers [%s]: %s %s (ours %s) vs AE %s %s (%s %s / %s): differ by %.1f, kept %s",
+      region, ours$firm_raw[pair_o[j]], format(ours$date[pair_o[j]]), ours$origin[pair_o[j]], ae$firm[pair_a[j]],
+      format(ae$date[pair_a[j]]), paste(majors, collapse = "/"), fmt(ours, pair_o[j]), fmt(ae, pair_a[j]), d3[j],
+      if (use_ours[j]) "ours" else "AE"))
+  }
   # matched: our numbers (where kept) under AE's label and date
   po <- pair_o[use_ours]; pa <- pair_a[use_ours]
   # Provenance of every output row, for the move-off-AE audit (scripts/audit_ae_dependence.R): where its numbers
@@ -578,6 +591,18 @@ poll_layer <- function(ae, region, path = NULL, window = 4L) {
   # unmatched ours: label of the same firm's nearest AE poll, else our own text
   extra <- ours[!used_o]
   n_suspect_dropped <- sum(extra$check == "suspect")
+  # PZ7 (review 2026-11-15, Issue 8): every row of ours whose numbers the trend does not read, newest first.
+  # An unmatched suspect row is a poll left out altogether; a matched one only loses its numbers to AE's copy.
+  lost_o <- pair_o[!use_ours]
+  why <- c(ifelse(ours$check[lost_o] == "suspect", "suspect, AE's copy kept", "lost a disputed pair, AE's copy kept"),
+           rep("suspect, no other copy: LEFT OUT", n_suspect_dropped))
+  drop_i <- c(lost_o, which(!used_o)[extra$check == "suspect"])
+  if (length(drop_i)) {
+    ord <- order(ours$date[drop_i], decreasing = TRUE)
+    items <- sprintf("%s %s (%s)", format(ours$date[drop_i][ord]), ours$firm_raw[drop_i][ord], why[ord])
+    message(sprintf("PZ7 our rows not read [%s]: %d; newest %s%s", region, length(items),
+                    paste(utils::head(items, 10), collapse = "; "), if (length(items) > 10) "; ..." else ""))
+  }
   extra <- extra[extra$check != "suspect"]   # no second copy to check against: a row that fails its own check is left out
   # An unmatched row of ours missing a party that AE's polls within 60 days do report: its Others holds that
   # party too, so Others is blanked rather than read as Others.
