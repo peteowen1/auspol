@@ -1,3 +1,7 @@
+# auspol 0.4.181
+
+- **The page data carries each poll's own two-party figure** (PR #249, review Issue 5, Pete's B1): `polls_tpp` (`date`, `firm`, `v`) in `vic-page-data.json` and `nsw2027-page-data.json`, from `R/poll_tpp_dots.R`, so the site can plot the published figures beside its two-party line, which is implied from the primary trends and past flows (Vic 47.55 against the latest six polls' 44.5). No existing field changes.
+
 # auspol 0.4.180
 
 - **`SMN1` prints the mean seat share after every stage of the live forecast** (PR #248, review C1): it found that the xgb trees take vic2026's minor total from 9.32 to 12.59 against an 11.0 level, 2.7 points of it from the live candidate count (PR #245). Left as is: the 35 published backtests under-call minor classes, more so with more candidates (DECISIONS 2026-11-16). No forecast number changes.
