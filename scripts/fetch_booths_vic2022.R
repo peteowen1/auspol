@@ -56,7 +56,7 @@ parse_vc <- function(f, district, kind) {
     # A RAW non-breaking space (U+00A0, not the entity) survives trimws(): the 2018 pages carry blank rows of it,
     # which became an "ordinary" booth named U+00A0 with NA votes in every district (992 rows; 10 reached the
     # Narracan night reference). Found 2026-11-16.
-    trimws(gsub(" ", " ", v, fixed = TRUE)) })
+    trimws(gsub(intToUtf8(160L), " ", v, fixed = TRUE)) })
   names_row <- cells[[1]]; party_row <- cells[[2]]
   cc <- which(nzchar(names_row)); cc <- cc[cc > 1]      # candidate columns: a name in row 1
   cands <- names_row[cc]; parties <- party_row[cc]
