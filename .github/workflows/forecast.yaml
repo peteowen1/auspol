@@ -495,7 +495,7 @@ jobs:
             # run_all.R's regex instead of a second hand-kept list, since two
             # independently-maintained copies of the same pattern is exactly
             # how it drifted the first time.
-            grep -E "^[A-Z]{1,3}[0-9]+[a-c]?[ !]" run.log | head -40 || echo "(none captured)"
+            grep -E "^[A-Z]{1,3}[0-9]+[a-c]?[ !]" run.log | grep -vE "^PZ[67] " | head -40 || echo "(none captured)"
             echo '```'
             # Poll layering (review 2026-11-15, Issue 8): pairs matched on the date window with different numbers
             # (PZ6) and our rows the trend does not read (PZ7), so a new poll lost in the last week is visible.
