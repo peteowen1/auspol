@@ -80,7 +80,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `gh release download forecast-latest -p night-state-vic-2026.rds -D output`, then `night_runner.R --state=output/night-state-vic-2026.rds
   --ref=output/booths-vic2026-ref.csv --council-lean=output/council-fp-2022.csv`. Live page https://inthegame.blog/politics/live
   (find my seat live, #166 closed 5 Nov). OPEN, in order:
-  1-2. Check the live-page popup at 390/1280 px and the 38 Narracan-only 2018 names against the 2026 polling places.
+  1-2. DONE 16 Nov except 390 px (this machine's Chrome would not shrink; Pete to check on his phone): popup right at
+     1280 px; Narracan 29 of 32 2026 centres match a 2018 booth, the 3 Pakenham joint centres show as new ("no 2022
+     result" wording sent to ITG); 11 2018 booths closed. Junk U+00A0 rows fixed (PR #251) and the night-inputs copy
+     of `booths-vic2026-ref.csv` replaced 16 Nov 6:39pm (Pete's yes).
   3. Navbar link. "Called" rule TESTED 10 Nov on the 7 simulated replays (`reviews/night-called-rule-2026-11-10.md`):
      keep 0.99 with 10% counted; its 3 wrong calls (Melbourne, Monash 2025; Mirani 2024) survive any threshold, so the
      fix is the final-pair defect below. OPEN: confirm on the real fed2022/fed2025/vic2022 nights, after the replay seat-names fix above (vic2022 rerun).
