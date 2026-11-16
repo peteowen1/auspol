@@ -32,9 +32,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - OPEN, model, found 15 Nov (same review, item A7; each needs Pete before shipping): (1) a standing class whose adjusted
   2022 share is below its statewide fall is clipped to 0 at the base (Kew Other-right still 0%; 123 of 19,616 backtest rows);
   (2) Evelyn's Michelle O'Brien carries Michael O'Brien's "elected" flag (`given_stem()` is two letters, `R/names.R:249`;
-  needs a retrain); (3) the 88 seats' minor classes add to 12.5 against the polls' 11.0 since PR #245, Labor +0.3: cause
-  not found (item C1: print the mean seat share after each step beside `FP0`). Trigger: (3) before 28 Nov (a
-  half-day trace, changes no number); (1) and (2) at the post-election review unless Pete asks sooner.
+  needs a retrain); (3) TRACED 16 Nov (C1, `SMN1` log line per stage in `fit_seats_full.R`;
+  DECISIONS 2026-11-16): the xgb trees take the minor total 9.32 -> 12.59, and 2.7 of that is the live candidate
+  count (`AUSPOL_LIVE_N_CAND=0` gives 9.88). No change: on the 35 published backtests minors are UNDER-called
+  (signed -0.69 / -1.47 / -2.66 points per class at 1 / 2 / 3+ candidates; 29 of 35 pairs under on the seat
+  total). Labor's +0.3 is the One Nation fill (22.39 -> 22.81). (1) and (2) at the post-election review unless
+  Pete asks sooner.
 - SHIPPED 15 Nov (PR #241, merged 10:23am; publishes with the 16 Nov 4:30am daily run): vic2026 Liberal card known, Labor
   above the Greens (VEC registered cards); Brunswick open, keeps learned flows. Live in the 16 Nov 4:30am run
   (43741480657: `HTV1 ... labor_above=87 open=1`, `HTV14`). Also SHIPPED 15 Nov (PR #242): `AUSPOL_HTV_LABELS=hybrid` (card shares learn from the cards; open share). OPEN: the 13 UNKNOWN

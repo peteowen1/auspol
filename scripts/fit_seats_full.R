@@ -1334,9 +1334,17 @@ shares <- mat22
 # class level then and now, the slope). For walking one seat's forecast end to end.
 .TRACE_SEAT <- Sys.getenv("AUSPOL_TRACE_SEAT", "")
 if (nzchar(.TRACE_SEAT) && !.TRACE_SEAT %in% rownames(mat22)) stop("AUSPOL_TRACE_SEAT=", .TRACE_SEAT, " is not a seat of ", TGT)
-.trace <- function(stage, m = shares) if (nzchar(.TRACE_SEAT))
-  cat(sprintf("TRS1 %-26s %s | %s | sum %.2f\n", stage, .TRACE_SEAT,
-              paste(sprintf("%s %.2f", colnames(m), m[.TRACE_SEAT, ]), collapse = "  "), sum(m[.TRACE_SEAT, ])))
+.trace <- function(stage, m = shares) {
+  # SMN1, always printed (2026-11-16, review C1): the plain mean over seats after the same stage, minor classes
+  # together as MIN (IND + OTH + OTH_RIGHT, the level's OTH), to find which stage moves the seats off FP0.
+  .mn <- colMeans(m)
+  .min_cols <- intersect(c("IND", "OTH", "OTH_RIGHT"), colnames(m))
+  cat(sprintf("SMN1 %-30s %s | MIN %.2f\n", stage,
+              paste(sprintf("%s %.2f", names(.mn), .mn), collapse = "  "), sum(.mn[.min_cols])))
+  if (nzchar(.TRACE_SEAT))
+    cat(sprintf("TRS1 %-26s %s | %s | sum %.2f\n", stage, .TRACE_SEAT,
+                paste(sprintf("%s %.2f", colnames(m), m[.TRACE_SEAT, ]), collapse = "  "), sum(m[.TRACE_SEAT, ])))
+}
 .trace_base <- function(p, x_own, lvl_prev, lvl_now, sl) if (nzchar(.TRACE_SEAT)) {
   i <- match(.TRACE_SEAT, rownames(mat22))
   cat(sprintf("TRS0 %-9s last time %.2f | own-vote substitute %.2f | level %.2f -> %.2f | slope %.3f -> base %.2f\n",
@@ -1485,6 +1493,7 @@ if (.departed_hold) {
 if (!is.null(.nis)) shares <- .nis else if (!identical(new_ind_mode(), "0"))
   cat(sprintf("BV1n!! new_ind_shrink_apply() FAILED%s -- the new-independent shrink is NOT applied to this forecast\n",
               .reason("new_ind")))
+.trace("new-independent shrink")
 # The trees were TRAINED on a per-class statewide level (scripts/build_level_pred.R -> forecast_statewide_for(),
 # which splits the unpolled bucket with bucket_split_ratio()), but were served `state_mean`, which carries only the
 # classes the polls report: IND and OTH_RIGHT got level_pred 0 and OTH the whole bucket (vic2026: 0 / 0 / 11.47
@@ -1582,6 +1591,7 @@ shares <- level_conserve_apply(shares, .lc_level, TGT, stage = "base", target = 
 # zeroing line). NOT wrapped in tryCatch/.try(): with the switch on (or set to a bad value) ANY failure STOPS the
 # run, whatever AUSPOL_NOM_LIVE says, so a forecast asked for the pre-xgb zero is never published without it.
 # Off ("0"), the call returns before anything that can fail.
+.trace("level conserve (base)")
 .nzp_before <- shares
 shares <- zero_unnominated_live_pre_xgb(shares, fm, TGT, prior = PREV)
 .nzp_cells <- nomination_zeroed_cells(.nzp_before, shares)

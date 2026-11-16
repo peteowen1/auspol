@@ -4,6 +4,8 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-11-16 The vic2026 seats' minor total (12.5 against the level's 11.0) is left as is: traced to the trees seeing the real candidate count, the direction past results support.** `SMN1` (mean seat share after each stage of `fit_seats_full.R`): the trees move IND+OTH+OTH_RIGHT 9.32 -> 12.59; with `AUSPOL_LIVE_N_CAND=0` 9.88. On `output/published-predictions.csv` (35 pairs) minor classes are under-called, more so with more candidates (-0.69, -1.47, -2.66 points at 1, 2, 3+; SE ~0.8, clustered on pair). Review item C1 (`reviews/FABLE-FULL-REVIEW-2026-11-15.md`). Claude's call, reported to Pete; no number changes.
+
 - **2026-11-15 `AUSPOL_LIVE_N_CAND=1` SHIPPED (Pete: "Ship it", after a live walk): the live trees get the real number of candidates per class and seat.**
   `R/xgb_primary_override.R:322` served `n_cand_now = 1` for every live row ("unknown pre-nomination") while every training
   and backtest row carries the real count; nominations closed 9 Nov and 110 of vic2026's 616 seat-classes have more than one
