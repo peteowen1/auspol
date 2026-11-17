@@ -16,7 +16,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - **Status 17 Nov, 7pm.** main 0.4.183, PRs #247-#251 merged 16 Nov; CI green. Checked on the 17 Nov 4:30am daily run
   (43919094896): Essendon names Yildiz, `statewide` and `polls_tpp` (vic 49, nsw 12) are in the live R2 files, and
   the alarm step printed "No alarm" (only known failure: `fit_nsw.R` sigma_obs). PR #252 merged 8:49pm
-  (0.4.184, VEC results file for the scorer). Dated, a session runs each: 23 Nov VEC venues rerun; 25 Nov final
+  (0.4.184, VEC results file for the scorer); PR #253 merged 18 Nov 9:15am (0.4.185, night checks, per-state
+  Liberal card shares refused and off). Dated, a session runs each: 23 Nov VEC venues rerun; 25 Nov final
   salience snapshot + night dress rehearsal; 27 Nov final benchmark capture (Pete: VPN off).
 - OPEN, 15 Nov full review (`reviews/FABLE-FULL-REVIEW-2026-11-15.md`, "Pick up from here" is the work list; DECISIONS
   2026-11-15). A1-A3, A5, A6, B1 shipped and seen live 17 Nov (above). Done when: the rest of "Pick up from here" is
