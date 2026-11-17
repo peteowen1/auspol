@@ -13,12 +13,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (10 Nov: One Nation stands in all 88 seats, so no seat-count conditioning applies; recheck for nsw2027's list); (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 17 Nov, 7pm.** main 0.4.183, PRs #247-#251 merged 16 Nov; CI green. Checked on the 17 Nov 4:30am daily run
-  (43919094896): Essendon names Yildiz, `statewide` and `polls_tpp` (vic 49, nsw 12) are in the live R2 files, and
-  the alarm step printed "No alarm" (only known failure: `fit_nsw.R` sigma_obs). PR #252 merged 8:49pm
-  (0.4.184, VEC results file for the scorer); PR #253 merged 18 Nov 9:15am (0.4.185, night checks, per-state
-  Liberal card shares refused and off). Dated, a session runs each: 23 Nov VEC venues rerun; 25 Nov final
-  salience snapshot + night dress rehearsal; 27 Nov final benchmark capture (Pete: VPN off).
+- **Status 18 Nov, 11am.** main 0.4.185 (PR #253 merged 9:15am, CI green on fd897745); `dev` is ahead by queue
+  edits only. Phone check of the live page passed (Pete, 18 Nov). Dated, a session runs each: 23 Nov VEC venues
+  rerun; 25 Nov final salience snapshot + night dress rehearsal; 27 Nov merge inthegame-blog#1239 (navbar link)
+  and the final benchmark capture (Pete: VPN off).
 - OPEN, 15 Nov full review (`reviews/FABLE-FULL-REVIEW-2026-11-15.md`, "Pick up from here" is the work list; DECISIONS
   2026-11-15). A1-A3, A5, A6, B1 shipped and seen live 17 Nov (above). Done when: the rest of "Pick up from here" is
   done or parked with a trigger.
