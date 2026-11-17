@@ -79,7 +79,7 @@ for (k in seq_along(files)) {
                   alp_exp = round(mean(alp), 2), alp_lo = unname(quantile(alp, 0.05)), alp_hi = unname(quantile(alp, 0.95)),
                   p_alp_majority = round(mean(alp >= 45), 4), p_alp_largest = round(mean(alp > apply(oth, 1, max)), 4),
                   log_loss = round(mean(-log(pmax(sc$prob, 1e-6))), 4), right = sum(sc$prob > 0.5), n = nrow(sc))
-  summ[[length(summ) + 1]] <- s; wp[, time := tm]; seat_rows[[length(seat_rows) + 1]] <- wp
+  summ[[length(summ) + 1]] <- s; wp[, `:=`(time = tm, counted = round(unname(cnt[seat]), 4))]; seat_rows[[length(seat_rows) + 1]] <- wp   # counted: the seat's share counted (the page's "called" rule needs 10%)
   nt <- attr(r$sim, "night_tcp"); if (!is.null(nt) && nrow(nt)) tcp_rows_out[[length(tcp_rows_out) + 1]] <- data.table::as.data.table(nt)[, time := tm]   # per-seat pair share, prior/posterior (pair_r v2 trace)
   cat(sprintf("NRV2 %s seats updated %d (mean counted %.1f%%, 2CP %d) | ALP %.1f (%g-%g) P(maj) %.3f P(largest) %.3f | log loss %.4f, right %d/%d\n",
               s$time, s$seats_updated, s$mean_counted, s$tcp_seats, s$alp_exp, s$alp_lo, s$alp_hi, s$p_alp_majority, s$p_alp_largest,

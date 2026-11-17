@@ -108,7 +108,7 @@ for (k in seq_along(at)) {
     log_loss = round(mean(-log(pmax(sc$prob, 1e-6))), 4), right = sum(sc$prob > 0.5), n = nrow(sc),
     wentworth_ind = round(sum(wp$prob[wp$seat == "Wentworth" & wp$party == "IND"]), 4),
     wentworth_counted = round(100 * unname(cnt["Wentworth"]), 1))
-  wp[, time := tm[k]]; seat_rows[[length(seat_rows) + 1]] <- wp
+  wp[, `:=`(time = tm[k], counted = round(unname(cnt[seat]), 4))]; seat_rows[[length(seat_rows) + 1]] <- wp   # counted: the seat's share counted (the page's "called" rule needs 10%)
   nt <- attr(r$sim, "night_tcp"); if (!is.null(nt) && nrow(nt)) tcp_rows_out[[length(tcp_rows_out) + 1]] <- data.table::as.data.table(nt)[, time := tm[k]]   # per-seat pair share, prior/posterior (pair_r v2 trace)
   # EVERY pair on screen (not maverick at this snapshot), right or wrong, at the same information level: its share
   # of the draws and whether it is the declared pair. The calibration data for pair_cal (prereg-night-pair-cal-
