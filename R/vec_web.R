@@ -168,10 +168,11 @@ vec_web_elected <- function(path) {
   none <- list(name = NA_character_, party = NA_character_)
   if (!length(blk)) return(none)
   nm <- regmatches(blk, regexpr("(?s)<b>.*?</b>", blk, perl = TRUE))
-  nm <- if (length(nm)) trimws(gsub("\\s+", " ", gsub("(?s)<[^>]+>", "", nm, perl = TRUE))) else ""
+  txt <- function(x) trimws(gsub("\\s+", " ", xml2::xml_text(xml2::read_html(paste0("<p>", x, "</p>")))))   # decodes every entity
+  nm <- if (length(nm)) txt(nm) else ""
   if (!nzchar(nm)) return(none)
   pt <- regmatches(blk, regexpr("(?s)<em>.*?</em>", blk, perl = TRUE))
-  pt <- if (length(pt)) trimws(gsub("\\s+", " ", gsub("&#39;|&rsquo;", "'", gsub("&amp;", "&", gsub("(?s)<[^>]+>", "", pt, perl = TRUE))))) else ""
+  pt <- if (length(pt)) txt(pt) else ""
   list(name = nm, party = if (nzchar(pt)) pt else "Independent")
 }
 

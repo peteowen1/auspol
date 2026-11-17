@@ -54,9 +54,16 @@ rows <- lapply(seq_len(nrow(m)), function(i) {
   e <- if (!is.na(e_tcp$name)) e_tcp else e_fp
   page <- if (!is.na(e_tcp$name)) "2cp" else if (!is.na(e_fp$name)) "fp" else NA_character_
   if (!is.na(e$name)) {
-    dc <- cands[district == d, name]
-    if (!norm(e$name) %in% norm(dc))
-      stop(sprintf("VRS4! %s: elected member '%s' is not one of the district's %d candidates", d, e$name, length(dc)))
+    dist_now <- d
+    dcand <- cands[district == dist_now]
+    hit <- match(norm(e$name), norm(dcand$name))
+    if (is.na(hit))
+      stop(sprintf("VRS4! %s: elected member '%s' is not one of the district's %d candidates", d, e$name, nrow(dcand)))
+    # a blank party on the page reads as "Independent"; the candidate list must agree, or a layout change that drops
+    # the party would score a party member as IND without a word
+    if (identical(e$party, "Independent") && !identical(tolower(dcand$independent[hit]), "yes"))
+      stop(sprintf("VRS4! %s: the page gives '%s' no party, but the candidate list has them standing for '%s'",
+                   d, e$name, dcand$registered_name[hit]))
   }
   data.table(district = d, winner = if (is.na(e$party)) "" else e$party,
              status = if (is.na(e$name)) "pending" else "declared", elected = if (is.na(e$name)) "" else e$name, page = page)
