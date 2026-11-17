@@ -88,7 +88,7 @@ for (k in seq_along(files)) {
   if (!is.null(flag("stop-after")) && length(summ) >= as.integer(flag("stop-after"))) { cat("NRV5 --stop-after reached: stopping with partial files only (a kill, for testing --resume)\n"); quit(save = "no", status = 0) }
 }
 S <- rbindlist(summ); fwrite(S, file.path(out_dir, sprintf("%s-%s-summary.csv", pair_lbl, label)))
-W <- rbindlist(seat_rows); fwrite(W, file.path(out_dir, sprintf("%s-%s-seats.csv", pair_lbl, label)))
+W <- rbindlist(seat_rows, fill = TRUE); fwrite(W, file.path(out_dir, sprintf("%s-%s-seats.csv", pair_lbl, label)))
 if (length(tcp_rows_out)) fwrite(rbindlist(tcp_rows_out, fill = TRUE), file.path(out_dir, sprintf("%s-%s-tcp.csv", pair_lbl, label)))
 ckpt_clear(out_dir, ck_prefix, ck_kinds)
 if (nrow(S) && all(S$n == 0)) stop("NRV3! no winners scored: vic2022 rows missing from output/published-predictions.csv")

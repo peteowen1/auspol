@@ -143,7 +143,7 @@ for (k in seq_along(at)) {
   if (!is.null(flag("stop-after")) && length(summ) >= as.integer(flag("stop-after"))) { cat("NRF7 --stop-after reached: stopping with partial files only (a kill, for testing --resume)\n"); quit(save = "no", status = 0) }
 }
 S <- rbindlist(summ); fwrite(S, file.path(out_dir, sprintf("%s-%s-summary.csv", pair_lbl, label)))
-fwrite(rbindlist(seat_rows), file.path(out_dir, sprintf("%s-%s-seats.csv", pair_lbl, label)))
+fwrite(rbindlist(seat_rows, fill = TRUE), file.path(out_dir, sprintf("%s-%s-seats.csv", pair_lbl, label)))
 if (length(tcp_rows_out)) fwrite(rbindlist(tcp_rows_out, fill = TRUE), file.path(out_dir, sprintf("%s-%s-tcp.csv", pair_lbl, label)))
 if (length(pairs_out)) { PO <- rbindlist(pairs_out)
   cat(sprintf("NRF6 pairs file: %d rows, %d seats, %d wrong (not the declared pair); median share right %.3f, wrong %.3f\n", nrow(PO),
