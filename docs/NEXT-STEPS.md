@@ -15,9 +15,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
 - **Status 17 Nov, 7pm.** main 0.4.183, PRs #247-#251 merged 16 Nov; CI green. Checked on the 17 Nov 4:30am daily run
   (43919094896): Essendon names Yildiz, `statewide` and `polls_tpp` (vic 49, nsw 12) are in the live R2 files, and
-  the alarm step printed "No alarm" (only known failure: `fit_nsw.R` sigma_obs). OPEN for Pete: send the VEC draft
-  (Gmail, "RE: State Election 2026 results data feed"; unsent as of 15 Nov). Dated (Daily Eight): 23 Nov VEC venues
-  rerun; 25 Nov final salience snapshot + night dress rehearsal; 27 Nov final benchmark capture.
+  the alarm step printed "No alarm" (only known failure: `fit_nsw.R` sigma_obs). PR #252 merged 8:49pm
+  (0.4.184, VEC results file for the scorer). Dated, a session runs each: 23 Nov VEC venues rerun; 25 Nov final
+  salience snapshot + night dress rehearsal; 27 Nov final benchmark capture (Pete: VPN off).
 - OPEN, 15 Nov full review (`reviews/FABLE-FULL-REVIEW-2026-11-15.md`, "Pick up from here" is the work list; DECISIONS
   2026-11-15). A1-A3, A5, A6, B1 shipped and seen live 17 Nov (above). Done when: the rest of "Pick up from here" is
   done or parked with a trigger.
@@ -45,8 +45,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   neutral; live today unchanged (Hawthorn's paid poll is 15 months old). OPEN after 28 Nov: score it on vic2026.
 - OPEN, NIGHT SOURCE (before 28 Nov): the VEC REFUSED the feed (11 Nov); the night runs on the VEC WEBSITE
   (`R/vec_web.R`, `scripts/fetch_vec_web_snapshot.R`, `night_cycle(source_type = "web")`, `cand_ref = "copy"`). Still open:
-  (1) the 2026 results index URL is only known on the night (the fetcher takes --index); (2) whether the pages fill in
-  during the count (Pete's unsent VEC draft); re-download the VEC venues spreadsheet the week of the election and rerun
+  (1) the 2026 results index URL is only known on the night (the fetcher takes --index); (2) ASSUMED (Pete, 17 Nov;
+  DECISIONS): the pages fill in during the count, as the VEC's first reply implied; draft not sent. Re-download the VEC venues spreadsheet the week of the election and rerun
   `scripts/build_vec_places_2026.R` + the geocoder (23 Nov, Daily Eight). Built/done detail moved 15 Nov to
   `backlog/journal-2026-11-11-queue-history.md`.
 - IN FLIGHT 9 Nov (Pete chose the levers): first-time-independent under-call. Six levers mapped in
