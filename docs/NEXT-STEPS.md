@@ -136,9 +136,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   17 elections led by sa2026 59.7, fed2019 59.0, wa2025 57.4; Victoria's own labor_above cells are 66.8 (2010), 67.8
   (2014), 57.1 (2018, 2 seats); federal pooled 69-70% 2016-22, 79% 2025. Pete chose "Prereg + screen it": `AUSPOL_HTV_JUR_SHRINK=1`
   (off; prereg `plans/prereg-htv-jur-shrink-2026-11-17.md`, committed 736e9e90 before any score; vic2026 61.7 -> 64.0).
-  SCREEN RUNNING detached since 9:37pm 17 Nov: `deciding-runs/20261117-2137-htv-jur-screen/` (1,000 sims, all 22, one
-  worker, fresh baseline; ~2-4 h). Next: read its marker and `results.txt`, apply the prereg's rule, take the
-  result to Pete. Does NOT fix Melbourne fed2025 (60.5): that is a seat-level effect, a separate idea. Melbourne also: afternoon GRN 47.5 vs actual 39.5 (ALP 21.7 vs 31.3). Idea: seat-level
+  REFUSED 17 Nov 11:30pm (35 elections: +0.0002, SE 0.0002; vic2014 +0.0044, vic2022 +0.0023; DECISIONS). Still
+  open, after 28 Nov: Melbourne fed2025 is a SEAT-level effect (Liberal voters follow the card harder where the
+  Greens are the threat); trace which vic2014 seats the per-state arm hurt before designing that one. Melbourne also: afternoon GRN 47.5 vs actual 39.5 (ALP 21.7 vs 31.3). Idea: seat-level
   how-to-vote cards as a flow input: DONE (`AUSPOL_HTV_FLOW`; `AUSPOL_HTV_CARD_P=0.67` mixes both Liberal cards for
   vic2026; `AUSPOL_HTV_RECENCY_HL` SHIPPED 1 Nov). The card-day row is under "Dated, cannot move".
   Box Hill (our ALP 0.86 vs Sportsbet 0.25) traced to the proportional One Nation fill: `reviews/boxhill-trace-2026-11-01.md`,
