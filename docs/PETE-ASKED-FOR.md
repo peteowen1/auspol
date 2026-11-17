@@ -33,6 +33,12 @@ moved verbatim 2026-10-24. Every row below still has something open.
 
 ---
 
+## 2026-11-17
+
+| Request | Status |
+|---|---|
+| Liberal flow to Labor over Greens (vic2026 61.7%, pooled from 17 elections; Victoria's own Labor-above elections 66.8/67.8; Melbourne fed2025 used 60.3, actual 79.3): chose "Prereg + screen it" (a per-state level in the shrinkage), before 28 Nov | **NOT SHIPPING, told Pete 17 Nov 11:35pm:** built (`AUSPOL_HTV_JUR_SHRINK`, off) and screened on all 35 elections: worse (+0.0002, SE 0.0002), and both Victorian elections it touched worse (vic2014 +0.0044, vic2022 +0.0023), the case the prereg named unacceptable. `plans/prereg-htv-jur-shrink-2026-11-17.md` RESULT. vic2026 keeps 61.7. |
+
 ## 2026-11-15
 
 | Request | Status |

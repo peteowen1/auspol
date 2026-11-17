@@ -15,9 +15,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
 - **Status 17 Nov, 7pm.** main 0.4.183, PRs #247-#251 merged 16 Nov; CI green. Checked on the 17 Nov 4:30am daily run
   (43919094896): Essendon names Yildiz, `statewide` and `polls_tpp` (vic 49, nsw 12) are in the live R2 files, and
-  the alarm step printed "No alarm" (only known failure: `fit_nsw.R` sigma_obs). OPEN for Pete: send the VEC draft
-  (Gmail, "RE: State Election 2026 results data feed"; unsent as of 15 Nov). Dated (Daily Eight): 23 Nov VEC venues
-  rerun; 25 Nov final salience snapshot + night dress rehearsal; 27 Nov final benchmark capture.
+  the alarm step printed "No alarm" (only known failure: `fit_nsw.R` sigma_obs). PR #252 merged 8:49pm
+  (0.4.184, VEC results file for the scorer). Dated, a session runs each: 23 Nov VEC venues rerun; 25 Nov final
+  salience snapshot + night dress rehearsal; 27 Nov final benchmark capture (Pete: VPN off).
 - OPEN, 15 Nov full review (`reviews/FABLE-FULL-REVIEW-2026-11-15.md`, "Pick up from here" is the work list; DECISIONS
   2026-11-15). A1-A3, A5, A6, B1 shipped and seen live 17 Nov (above). Done when: the rest of "Pick up from here" is
   done or parked with a trigger.
@@ -45,8 +45,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   neutral; live today unchanged (Hawthorn's paid poll is 15 months old). OPEN after 28 Nov: score it on vic2026.
 - OPEN, NIGHT SOURCE (before 28 Nov): the VEC REFUSED the feed (11 Nov); the night runs on the VEC WEBSITE
   (`R/vec_web.R`, `scripts/fetch_vec_web_snapshot.R`, `night_cycle(source_type = "web")`, `cand_ref = "copy"`). Still open:
-  (1) the 2026 results index URL is only known on the night (the fetcher takes --index); (2) whether the pages fill in
-  during the count (Pete's unsent VEC draft); re-download the VEC venues spreadsheet the week of the election and rerun
+  (1) the 2026 results index URL is only known on the night (the fetcher takes --index); (2) ASSUMED (Pete, 17 Nov;
+  DECISIONS): the pages fill in during the count, as the VEC's first reply implied; draft not sent. Re-download the VEC venues spreadsheet the week of the election and rerun
   `scripts/build_vec_places_2026.R` + the geocoder (23 Nov, Daily Eight). Built/done detail moved 15 Nov to
   `backlog/journal-2026-11-11-queue-history.md`.
 - IN FLIGHT 9 Nov (Pete chose the levers): first-time-independent under-call. Six levers mapped in
@@ -69,9 +69,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   --ref=output/booths-vic2026-ref.csv --council-lean=output/council-fp-2022.csv`. Live page https://inthegame.blog/politics/live
   (find my seat live, #166 closed 5 Nov). OPEN, in order:
   1-2. OPEN for Pete: the 390 px check of the live page on his phone (the rest done 16 Nov, journal).
-  3. Navbar link. "Called" rule TESTED 10 Nov on the 7 simulated replays (`reviews/night-called-rule-2026-11-10.md`):
-     keep 0.99 with 10% counted; its 3 wrong calls (Melbourne, Monash 2025; Mirani 2024) survive any threshold, so the
-     fix is the final-pair defect below. OPEN: confirm on the real fed2022/fed2025/vic2022 nights, after the replay seat-names fix above (vic2022 rerun).
+  3. Navbar link. "Called" rule 0.99 with 10% counted CONFIRMED 17 Nov on the real fed2022/fed2025/vic2022 nights
+     (`reviews/night-called-rule-real-nights-2026-11-17.md`): one wrong call, Melbourne fed2025 (a Liberal-flow
+     miss, not the final-pair defect: see FLOW MEANS); the gate blocks Fowler 2022 and Mildura 2022 (called at 0.3% and 0.9% counted).
   4. 25 Nov trial (no 2CP): with real 2026 centre names, compare each counted early centre with its own 2022 upper-house lean,
      re-test `--early-partial=1` (off; it made the approximated replay worse), and take the expected early total from the
      VEC's published attendance. Upper-house model designed, not built (`plans/upper-house-night-model.md`).
@@ -131,7 +131,14 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `--tcp-own-fp` built, OFF (needs flow uncertainty in the draws; `plans/prereg-flow-sd-2026-10-31.md` REFUSED).
 - OPEN, FLOW MEANS in non-classic contests (31 Oct, Melbourne/Monash fed2025): Liberal -> Labor-over-Greens is 60.4 in
   EVERY seat checked (Melbourne, Monash, Wills, Cooper); in 2025 the Liberal how-to-vote put the Greens last and Labor
-  won Melbourne on it. Melbourne also: afternoon GRN 47.5 vs actual 39.5 (ALP 21.7 vs 31.3). Idea: seat-level
+  won Melbourne on it. 17 Nov: SIZED. Melbourne got 79.3% (AEC), and that miss is the night's one wrong call
+  (`reviews/night-called-rule-real-nights-2026-11-17.md`). The "labor_above" share (vic2026 live 61.7%, `HTV14`) pools
+  17 elections led by sa2026 59.7, fed2019 59.0, wa2025 57.4; Victoria's own labor_above cells are 66.8 (2010), 67.8
+  (2014), 57.1 (2018, 2 seats); federal pooled 69-70% 2016-22, 79% 2025. Pete chose "Prereg + screen it": `AUSPOL_HTV_JUR_SHRINK=1`
+  (off; prereg `plans/prereg-htv-jur-shrink-2026-11-17.md`, committed 736e9e90 before any score; vic2026 61.7 -> 64.0).
+  REFUSED 17 Nov 11:30pm (35 elections: +0.0002, SE 0.0002; vic2014 +0.0044, vic2022 +0.0023; DECISIONS). Still
+  open, after 28 Nov: Melbourne fed2025 is a SEAT-level effect (Liberal voters follow the card harder where the
+  Greens are the threat); trace which vic2014 seats the per-state arm hurt before designing that one. Melbourne also: afternoon GRN 47.5 vs actual 39.5 (ALP 21.7 vs 31.3). Idea: seat-level
   how-to-vote cards as a flow input: DONE (`AUSPOL_HTV_FLOW`; `AUSPOL_HTV_CARD_P=0.67` mixes both Liberal cards for
   vic2026; `AUSPOL_HTV_RECENCY_HL` SHIPPED 1 Nov). The card-day row is under "Dated, cannot move".
   Box Hill (our ALP 0.86 vs Sportsbet 0.25) traced to the proportional One Nation fill: `reviews/boxhill-trace-2026-11-01.md`,
