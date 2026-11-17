@@ -88,7 +88,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   Chrome step (`scripts/ges_read_calls.js`; plan Amendment 1), rerun the script, commit the calls folder, rerun
   `scripts/build_data_registry.R`. Scorer BUILT 23 Oct: `Rscript scripts/score_benchmarks_vic2026.R --results=<csv>`
   (`district, winner, status`; winner as the VEC prints the party) once every district is declared; `--dry-run` passes
-  its known answer now (ours 88/88 against its own favourites). Still to build: the VEC 2026 results file itself.
+  its known answer now (ours 88/88 against its own favourites). Results file BUILT 17 Nov: on the night,
+  `Rscript scripts/build_vec_results_2026.R --source=<web snapshot root>` (reads each page's "Elected member" block;
+  undeclared districts written `pending`; VRS3!/VRS4! proven on broken snapshots), then the scorer on its output.
   Roy Morgan dropped 21 Oct (no seat winners) (`plans/external-benchmark-vic2026-2026-10-20.md`).
 
 - Builds from 26 Oct branches (`mp-slope-shrink-1025` SHIPPED 30 Oct and `ind-overcall-1025` both merged into dev; only

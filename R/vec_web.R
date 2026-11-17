@@ -153,6 +153,28 @@ vec_web_booth_table <- function(fp, tcp = NULL, places = NULL, include_late = FA
   list(live = live[], counted = counted[], tcp = tc[], unmapped = character(), n_placeholder_booths = n_placeholder, n_unlisted_booths = n_unlisted)
 }
 
+#' The elected member named on a VEC results page
+#'
+#' Every 2026 district results page (first preferences or two-candidate) carries an "Elected member" block once the
+#' VEC declares the district: the member's name in bold, the party in italics under it (blank for an independent).
+#' @param path Saved HTML of a district results page.
+#' @return `list(name, party)`; both `NA` when the page names no elected member (not yet declared). An independent's
+#'   blank party is returned as "Independent". Stops (VWB1) on a truncated page.
+#' @export
+vec_web_elected <- function(path) {
+  h <- paste(readLines(path, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
+  if (!grepl("</html>", h, fixed = TRUE)) stop("VWB1! ", basename(path), ": page truncated (no closing tag)", call. = FALSE)
+  blk <- regmatches(h, regexpr("(?s)<h2>\\s*Elected member\\s*</h2>.*?</p>", h, perl = TRUE))
+  none <- list(name = NA_character_, party = NA_character_)
+  if (!length(blk)) return(none)
+  nm <- regmatches(blk, regexpr("(?s)<b>.*?</b>", blk, perl = TRUE))
+  nm <- if (length(nm)) trimws(gsub("\\s+", " ", gsub("(?s)<[^>]+>", "", nm, perl = TRUE))) else ""
+  if (!nzchar(nm)) return(none)
+  pt <- regmatches(blk, regexpr("(?s)<em>.*?</em>", blk, perl = TRUE))
+  pt <- if (length(pt)) trimws(gsub("\\s+", " ", gsub("&#39;|&rsquo;", "'", gsub("&amp;", "&", gsub("(?s)<[^>]+>", "", pt, perl = TRUE))))) else ""
+  list(name = nm, party = if (nzchar(pt)) pt else "Independent")
+}
+
 #' Newest complete website snapshot
 #'
 #' A website snapshot is a folder `<source>/<YYYYMMDD_HHMMSS>/` written by `scripts/fetch_vec_web_snapshot.R`: one
