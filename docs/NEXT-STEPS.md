@@ -13,26 +13,14 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (10 Nov: One Nation stands in all 88 seats, so no seat-count conditioning applies; recheck for nsw2027's list); (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 15 Nov, 11:05pm.** main 0.4.177 (PR #244 site candidate names from the VEC list; PR #245
-  `AUSPOL_LIVE_N_CAND=1`, DECISIONS 2026-11-15); CI green. OPEN for Pete: send the VEC draft (Gmail, "RE: State Election
-  2026 results data feed"; unsent as of 15 Nov). Dated (Daily Eight): Tue 17 Nov
-  benchmark capture (VPN OFF); 23 Nov VEC venues rerun; 25 Nov final salience snapshot + night dress rehearsal.
-- FIXED on dev 16 Nov, not yet on main: where a class has several candidates the seat card named the FIRST ON THE BALLOT.
-  `scripts/build_forecast_json.R` now orders sitting member, then best earlier vote share, then ballot (`FJ6` log line);
-  21 of 576 cards change, Essendon names Oscar Yildiz (23.5, Pascoe Vale 2018). OPEN: merge, then check the next daily
-  run's site shows Yildiz.
-- OPEN, 15 Nov full review (`reviews/FABLE-FULL-REVIEW-2026-11-15.md`, "Pick up from here" is the work list; Pete's four
-  answers are in DECISIONS 2026-11-15). A1-A3 BUILT on dev 16 Nov (manual runs skip the what-if jobs; five false
-  warnings gated on their switches; the alarm step now runs on green daily runs too; `fit_nsw.R`'s sigma_obs failure
-  in `.github/known-failures.txt` per B3, NL3 lines deleted; `test_failure_signature.sh` 5e grep fixed, broken since
-  9 Oct). OPEN: merge, then check the next daily run's summary says "Alarm not raised". A6 BUILT 16 Nov: the
-  forecast JSON carries `statewide` (`forecast_level` = FP0, `seats_mean` = plain seat average, minor classes folded
-  into OTH; `FJ7`); blog half (tiles read `forecast_level`) is the `inthegame-blog` session's. B1 / Issue 5 repo half BUILT 16 Nov:
-  `polls_tpp` (each poll's own Labor two-party figure, `R/poll_tpp_dots.R`, `PG10`) in vic and nsw2027 page data;
-  blog half built 16 Nov (inthegame-blog PR #1217, also the party tiles on
-  `statewide[].forecast_level`). OPEN: check both on the live page after the 17 Nov daily run. A5 BUILT 16 Nov (`PZ6` date-window pairs
-  differing by more than 3 points, `PZ7` our rows not read, both in the run summary): vic2026 cycle has 0 PZ6
-  lines (3 on record, 2010 and 2022).
+- **Status 17 Nov, 7pm.** main 0.4.183, PRs #247-#251 merged 16 Nov; CI green. Checked on the 17 Nov 4:30am daily run
+  (43919094896): Essendon names Yildiz, `statewide` and `polls_tpp` (vic 49, nsw 12) are in the live R2 files, and
+  the alarm step printed "No alarm" (only known failure: `fit_nsw.R` sigma_obs). OPEN for Pete: send the VEC draft
+  (Gmail, "RE: State Election 2026 results data feed"; unsent as of 15 Nov). Dated (Daily Eight): 23 Nov VEC venues
+  rerun; 25 Nov final salience snapshot + night dress rehearsal; 27 Nov final benchmark capture.
+- OPEN, 15 Nov full review (`reviews/FABLE-FULL-REVIEW-2026-11-15.md`, "Pick up from here" is the work list; DECISIONS
+  2026-11-15). A1-A3, A5, A6, B1 shipped and seen live 17 Nov (above). Done when: the rest of "Pick up from here" is
+  done or parked with a trigger.
 - OPEN, model, found 15 Nov (same review, item A7; each needs Pete before shipping): (1) a standing class whose adjusted
   2022 share is below its statewide fall is clipped to 0 at the base (Kew Other-right still 0%; 123 of 19,616 backtest rows);
   (2) Evelyn's Michelle O'Brien carries Michael O'Brien's "elected" flag (`given_stem()` is two letters, `R/names.R:249`;
@@ -80,10 +68,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `gh release download forecast-latest -p night-state-vic-2026.rds -D output`, then `night_runner.R --state=output/night-state-vic-2026.rds
   --ref=output/booths-vic2026-ref.csv --council-lean=output/council-fp-2022.csv`. Live page https://inthegame.blog/politics/live
   (find my seat live, #166 closed 5 Nov). OPEN, in order:
-  1-2. DONE 16 Nov except 390 px (this machine's Chrome would not shrink; Pete to check on his phone): popup right at
-     1280 px; Narracan 29 of 32 2026 centres match a 2018 booth, the 3 Pakenham joint centres show as new ("no 2022
-     result" wording sent to ITG); 11 2018 booths closed. Junk U+00A0 rows fixed (PR #251) and the night-inputs copy
-     of `booths-vic2026-ref.csv` replaced 16 Nov 6:39pm (Pete's yes).
+  1-2. OPEN for Pete: the 390 px check of the live page on his phone (the rest done 16 Nov, journal).
   3. Navbar link. "Called" rule TESTED 10 Nov on the 7 simulated replays (`reviews/night-called-rule-2026-11-10.md`):
      keep 0.99 with 10% counted; its 3 wrong calls (Melbourne, Monash 2025; Mirani 2024) survive any threshold, so the
      fix is the final-pair defect below. OPEN: confirm on the real fed2022/fed2025/vic2022 nights, after the replay seat-names fix above (vic2022 rerun).
@@ -97,8 +82,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   bases (other classes over-called -2.9, SE 0.84; Narracan Greens is the live case).
 
 
-- OPEN, DATED (Tue 27 Oct, 3, 10, 17 and Fri 27 Nov): vic2026 benchmark capture. Built and run 22 Oct (all four
-  sources, `docs/benchmarks/vic2026/2026-10-22/`). Each date: `Rscript scripts/snapshot_benchmarks.R`, plus the GES
+- OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. 17 Nov done: 6 sources (TAB not
+  saved: Chrome blocked the download on api.beta.tab.com.au; Betfair has no Victorian markets). On 27 Nov, if the TAB
+  download is blocked again, check Chrome's download prompt for that site first. Each date: `Rscript scripts/snapshot_benchmarks.R`, plus the GES
   Chrome step (`scripts/ges_read_calls.js`; plan Amendment 1), rerun the script, commit the calls folder, rerun
   `scripts/build_data_registry.R`. Scorer BUILT 23 Oct: `Rscript scripts/score_benchmarks_vic2026.R --results=<csv>`
   (`district, winner, status`; winner as the VEC prints the party) once every district is declared; `--dry-run` passes
