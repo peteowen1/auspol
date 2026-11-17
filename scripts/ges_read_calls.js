@@ -21,7 +21,7 @@
     b > 150 && b > r ? "LIB" :
     r > 200 && g >= 70 && g <= 120 && b < 40 ? "ONP" :
     r > 190 && g < 70 ? "ALP" :
-    r >= 100 && r <= 160 && g >= 125 && g <= 180 && b < 130 ? "NAT" : "UNK";
+    r >= 85 && r <= 160 && g >= 110 && g <= 180 && b < 130 && g > r ? "NAT" : "UNK";   // r 85: darker NAT shade #5f764b, 17 Nov
   const hex = (r, g, b) => "#" + [r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("");
   const centre = (f) => { const xs = [], ys = []; const w = (a) => typeof a[0] === "number" ? (xs.push(a[0]), ys.push(a[1])) : a.forEach(w);
     w(f.geometry.coordinates); return [xs.reduce((s, v) => s + v) / xs.length, ys.reduce((s, v) => s + v) / ys.length]; };

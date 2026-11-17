@@ -136,3 +136,15 @@
   under optional preferencing Liberal votes mostly exhaust. Next: an arm reading the researched file (OPEN needs a third
   state in `R/htv_flow.R`, not the TRUE/FALSE flag); fill the UNKNOWNs from the commissions' registered cards (sa2014 has an
   archive.org capture of ECSA's card page). Vic 2026: re-check when cards are lodged with the VEC.
+
+## Moved from NEXT-STEPS 17 Nov (15 Nov review items, merged 16 Nov, seen live 17 Nov)
+
+- FIXED 16 Nov: where a class has several candidates the seat card named the FIRST ON THE BALLOT.
+  `scripts/build_forecast_json.R` now orders sitting member, then best earlier vote share, then ballot (`FJ6` log line);
+  21 of 576 cards change, Essendon names Oscar Yildiz (23.5, Pascoe Vale 2018).
+- A1-A3 BUILT 16 Nov (manual runs skip the what-if jobs; five false warnings gated on their switches; the alarm step
+  now runs on green daily runs too; `fit_nsw.R`'s sigma_obs failure in `.github/known-failures.txt` per B3, NL3 lines
+  deleted; `test_failure_signature.sh` 5e grep fixed, broken since 9 Oct). A6 BUILT 16 Nov: the forecast JSON carries
+  `statewide` (`forecast_level` = FP0, `seats_mean` = plain seat average, minor classes folded into OTH; `FJ7`). B1 /
+  Issue 5 BUILT 16 Nov: `polls_tpp` (`R/poll_tpp_dots.R`, `PG10`) in vic and nsw2027 page data; blog half inthegame-blog
+  PR #1217. A5 BUILT 16 Nov (`PZ6`, `PZ7` in the run summary): vic2026 cycle has 0 PZ6 lines (3 on record, 2010 and 2022).

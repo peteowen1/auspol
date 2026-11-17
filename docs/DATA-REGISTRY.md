@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-11-16 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-11-17 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
@@ -138,7 +138,7 @@ cannot pass as a working one.
   - e.g. prior-results.csv
 - **anchor-supplement/** -- 5 files, 12 KB
   - e.g. election-cycles-extra.csv, poll-data-act.csv, poll-data-nt.csv, poll-data-tas.csv
-- **benchmarks/** -- 309 files, 78.9 MB
+- **benchmarks/** -- 340 files, 88.5 MB
   - e.g. vic2026-extra/2026-10-24/betfair/markets-1.240828208-113207.json, vic2026-extra/2026-10-24/manifest.tsv, vic2026-extra/2026-10-24/sportsbet/event-10277242-markets-113206.json, vic2026-extra/2026-10-24/sportsbet/event-10952080-markets-113206.json
 - **boundaries/** -- 85 files, 849.9 MB
   - e.g. AEC-2025-esri.zip, AEC_2025/AUS_ELB_region.dbf, AEC_2025/AUS_ELB_region.prj, AEC_2025/AUS_ELB_region.shp

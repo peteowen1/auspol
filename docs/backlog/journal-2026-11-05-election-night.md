@@ -38,3 +38,10 @@ stay in the hub's stub; this is the full history and evidence.
      inthegame.blog/politics/live (ITG #1144 dev, #1147 main); CSP fix #1149, no-bias #1151, suggestions as you type #1152 (live 6:55pm). Pete checked it on his phone 5 Nov 7:09pm; #166 CLOSED. Live page hero bar: majority line no longer over a label (ITG #1154, live 5 Nov 7:29pm).
   5. Trial 25 Nov (no 2CP); the upper-house model.
   Dated: the satellite basemap's Esri key (Pete's account, basemaps only, pay-as-you-go off) expires 27/10/2027.
+
+## Moved from NEXT-STEPS 17 Nov (night items 1-2, done 16 Nov)
+
+1-2. DONE 16 Nov except 390 px (this machine's Chrome would not shrink; Pete to check on his phone): popup right at
+1280 px; Narracan 29 of 32 2026 centres match a 2018 booth, the 3 Pakenham joint centres show as new ("no 2022
+result" wording sent to ITG); 11 2018 booths closed. Junk U+00A0 rows fixed (PR #251) and the night-inputs copy
+of `booths-vic2026-ref.csv` replaced 16 Nov 6:39pm (Pete's yes).

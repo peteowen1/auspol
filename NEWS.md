@@ -1,3 +1,7 @@
+# auspol 0.4.184
+
+- **A results file for scoring the Victorian forecasts after 28 Nov** (PR #252): `scripts/build_vec_results_2026.R` turns a VEC results website snapshot into the `district, winner, status` file `scripts/score_benchmarks_vic2026.R` reads, using the "Elected member" block on each district's pages (`vec_web_elected()`, new export). A district naming nobody is `pending`, never guessed; it stops when the two pages disagree (`VRS3!`), the member is not on that district's ballot, or a blank party contradicts the candidate list (`VRS4!`). `scripts/ges_read_calls.js` reads a darker National shade (Lowan, Ovens Valley). No forecast number changes.
+
 # auspol 0.4.183
 
 - **The 2018 Victorian booth tables no longer carry phantom booths** (PR #251): the VEC's 2018 voting-centre pages have blank rows of a raw non-breaking space, which `scripts/fetch_booths_vic2022.R` read as an "ordinary" booth with no votes in every district (992 first-preference and 352 two-candidate rows; 10 reached the Narracan election-night reference). Rebuilt from the cached pages: only those rows go, vote totals identical. `scripts/build_data_registry.R` walks each `external/reference/` folder once instead of three times (same output). No forecast number changes.
