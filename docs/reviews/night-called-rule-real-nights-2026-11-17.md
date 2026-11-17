@@ -4,9 +4,16 @@ Follows `night-called-rule-2026-11-10.md`, which tested the live page's rule (a 
 0.99 or more with 10% or more counted) on simulated nights only. This checks it on the three real nights we can
 replay: fed2022 and fed2025 (`scripts/night_replay_feed.R`) and vic2022 (`scripts/night_replay_vec.R`).
 
-**Result: the rule makes one wrong call across the three real nights, Melbourne fed2025 (Greens, won by Labor).** That is
-the known final-pair defect (draws with a different final pair are never corrected), and the same seat the simulated
-test found. No threshold removes it. Decision unchanged: keep 0.99 with 10% counted.
+**Result: the rule makes one wrong call across the three real nights, Melbourne fed2025 (Greens, won by Labor).** The
+same seat the simulated test found. No threshold removes it. Decision unchanged: keep 0.99 with 10% counted.
+
+**Melbourne is NOT the final-pair defect** (corrected the same evening, after tracing it). The AEC counted Greens v
+Liberal all night, the model correctly ignored that pair (0.3% of draws had it, `fed2025-split-pairs.csv`), and its draws
+had Labor v Greens, the real final two. It gave the Greens that contest because the Liberal flow it used, Labor over
+Greens, was 60.3% (`state-fed2025.rds`, `htv_ov$Melbourne[["LNP|ALP+GRN"]]`, the same in Wills, Cooper, Macnamara);
+the AEC distribution gave 79.3% (18,253 of 23,023). With no count of the real pair on the night, that flow decided the
+seat. Pooled over every federal seat the Liberal share to Labor over Greens was 70.1% (2016), 70.1% (2019), 69.3% (2022),
+79.3% (2025). The same fitted share drives the vic2026 forecast (61.7%, `HTV14`); see NEXT-STEPS "FLOW MEANS".
 
 ## Runs
 

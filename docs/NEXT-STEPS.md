@@ -70,8 +70,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (find my seat live, #166 closed 5 Nov). OPEN, in order:
   1-2. OPEN for Pete: the 390 px check of the live page on his phone (the rest done 16 Nov, journal).
   3. Navbar link. "Called" rule 0.99 with 10% counted CONFIRMED 17 Nov on the real fed2022/fed2025/vic2022 nights
-     (`reviews/night-called-rule-real-nights-2026-11-17.md`): one wrong call, Melbourne fed2025, the final-pair
-     defect below; the gate blocks Fowler 2022 and Mildura 2022 (called at 0.3% and 0.9% counted).
+     (`reviews/night-called-rule-real-nights-2026-11-17.md`): one wrong call, Melbourne fed2025 (a Liberal-flow
+     miss, not the final-pair defect: see FLOW MEANS); the gate blocks Fowler 2022 and Mildura 2022 (called at 0.3% and 0.9% counted).
   4. 25 Nov trial (no 2CP): with real 2026 centre names, compare each counted early centre with its own 2022 upper-house lean,
      re-test `--early-partial=1` (off; it made the approximated replay worse), and take the expected early total from the
      VEC's published attendance. Upper-house model designed, not built (`plans/upper-house-night-model.md`).
@@ -131,7 +131,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `--tcp-own-fp` built, OFF (needs flow uncertainty in the draws; `plans/prereg-flow-sd-2026-10-31.md` REFUSED).
 - OPEN, FLOW MEANS in non-classic contests (31 Oct, Melbourne/Monash fed2025): Liberal -> Labor-over-Greens is 60.4 in
   EVERY seat checked (Melbourne, Monash, Wills, Cooper); in 2025 the Liberal how-to-vote put the Greens last and Labor
-  won Melbourne on it. Melbourne also: afternoon GRN 47.5 vs actual 39.5 (ALP 21.7 vs 31.3). Idea: seat-level
+  won Melbourne on it. 17 Nov: SIZED. Melbourne got 79.3% (AEC), and that miss is the night's one wrong call
+  (`reviews/night-called-rule-real-nights-2026-11-17.md`). The "labor_above" share (vic2026 live 61.7%, `HTV14`) pools
+  17 elections led by sa2026 59.7, fed2019 59.0, wa2025 57.4; Victoria's own labor_above cells are 66.8 (2010), 67.8
+  (2014), 57.1 (2018, 2 seats); federal pooled 69-70% 2016-22, 79% 2025. Candidate fix: a jurisdiction level in the
+  shrinkage (each state's cells shrunk toward the label mean). Needs Pete before a screen. Melbourne also: afternoon GRN 47.5 vs actual 39.5 (ALP 21.7 vs 31.3). Idea: seat-level
   how-to-vote cards as a flow input: DONE (`AUSPOL_HTV_FLOW`; `AUSPOL_HTV_CARD_P=0.67` mixes both Liberal cards for
   vic2026; `AUSPOL_HTV_RECENCY_HL` SHIPPED 1 Nov). The card-day row is under "Dated, cannot move".
   Box Hill (our ALP 0.86 vs Sportsbet 0.25) traced to the proportional One Nation fill: `reviews/boxhill-trace-2026-11-01.md`,
