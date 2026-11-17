@@ -189,10 +189,57 @@ htv_card_label_shares <- function(target_election, sp, tab, hl = htv_recency_hl(
   tau2 <- if (nrow(by_lab) > 1L) max(0, stats::var(by_lab$m) - mean(by_lab$se2)) else 0
   by_lab[, wt := if (tau2 > 0) tau2 / (tau2 + se2) else 0]
   by_lab[, share := mu + wt * (m - mu)]
-  pick <- function(l) { r <- by_lab[by_lab$label == l]; if (nrow(r)) r$share else NA_real_ }
   cat(sprintf("HTV14 %s card-labelled shares (pooled %.1f%%, tau^2 %.1f): %s\n", target_election, mu, tau2,
               paste(sprintf("%s %.1f%% (raw %.1f, %d cells, shrink w %.2f)", by_lab$label, by_lab$share, by_lab$m, by_lab$k, by_lab$wt), collapse = "; ")))
+  jur <- if (htv_jur_shrink_on()) htv_jur_adjust(cells, by_lab, target_election) else NULL
+  if (!is.null(jur)) by_lab <- merge(by_lab, jur[, list(label, adj)], by = "label", all.x = TRUE) else by_lab[, adj := 0]
+  by_lab[is.na(adj), adj := 0]
+  by_lab[, share := share + adj]
+  pick <- function(l) { r <- by_lab[by_lab$label == l]; if (nrow(r)) r$share else NA_real_ }
   list(greens_above = pick("greens_above"), labor_above = pick("labor_above"), open = pick("open"), n = cells, shrink = by_lab)
+}
+
+#' Per-jurisdiction level in the card shares: `AUSPOL_HTV_JUR_SHRINK`
+#'
+#' `"1"`: each card share is moved toward the target jurisdiction's own cells, partial-pooled
+#' (`docs/plans/prereg-htv-jur-shrink-2026-11-17.md`). `"0"` (published): no jurisdiction level.
+#' @return `TRUE` when on.
+#' @export
+htv_jur_shrink_on <- function() {
+  v <- Sys.getenv("AUSPOL_HTV_JUR_SHRINK", "0")
+  if (!v %in% c("0", "1")) stop("HTV15! AUSPOL_HTV_JUR_SHRINK must be 0 or 1, not '", v, "'", call. = FALSE)
+  identical(v, "1")
+}
+
+#' Jurisdiction adjustment to the card shares
+#'
+#' Cells are grouped by (label, jurisdiction), the jurisdiction being the election name without its year (`fed`,
+#' `vic`, ...). Each group's weighted mean deviates from its label's weighted mean; the deviation is shrunk by
+#' `tau_j^2 / (tau_j^2 + se_j^2)`, where `se_j^2` is the pooled within-group cell variance over the group's effective
+#' number of cells and `tau_j^2` the method-of-moments between-group variance (mean squared deviation less mean
+#' `se_j^2`, floored at 0). Only the target's own jurisdiction is returned; a label with no cell there gets no adjustment.
+#' @param cells,by_lab From [htv_card_label_shares()]: cells with `election, label, alp_share, w`; per-label `m`.
+#' @param target_election Target election.
+#' @return data.table `label, adj` (points added to the label's share) for the target's jurisdiction, or `NULL`.
+#' @export
+htv_jur_adjust <- function(cells, by_lab, target_election) {
+  jof <- function(x) sub("[0-9]+$", "", x)
+  cj <- data.table::copy(cells)[, jur := jof(election)]
+  g <- cj[, list(mj = sum(alp_share * w) / sum(w), k = .N, neff = sum(w)^2 / sum(w^2),
+                 vw = if (.N > 1L) sum(w * (alp_share - sum(alp_share * w) / sum(w))^2) / sum(w) * .N / (.N - 1L) else NA_real_),
+          by = list(label, jur)]
+  g <- merge(g, by_lab[, list(label, m)], by = "label")
+  v_in <- if (any(is.finite(g$vw))) stats::weighted.mean(g$vw[is.finite(g$vw)], g$k[is.finite(g$vw)] - 1L) else NA_real_
+  if (!is.finite(v_in)) { cat(sprintf("HTV15 %s jurisdiction level: no group with two cells, no adjustment\n", target_election)); return(NULL) }
+  g[, se2 := v_in / neff][, dev := mj - m]
+  tau2j <- max(0, mean(g$dev^2) - mean(g$se2))
+  g[, wj := if (tau2j > 0) tau2j / (tau2j + se2) else 0][, adj := wj * dev]
+  tj <- jof(target_election); out <- g[jur == tj]
+  cat(sprintf("HTV15 %s jurisdiction level (within-group var %.1f, tau_j^2 %.1f, %d groups): %s\n", target_election, v_in, tau2j, nrow(g),
+              if (nrow(out)) paste(sprintf("%s %s mean %.1f vs label %.1f, %d cells, w %.2f, adj %+.1f", out$label, tj, out$mj, out$m, out$k, out$wj, out$adj), collapse = "; ")
+              else paste0("no ", tj, " cells, no adjustment")))
+  if (!nrow(out)) return(NULL)
+  out[, list(label, adj)]
 }
 
 #' Fit the two Liberal-to-ALP shares the card order selects between

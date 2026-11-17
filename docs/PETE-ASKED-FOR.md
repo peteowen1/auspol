@@ -33,6 +33,12 @@ moved verbatim 2026-10-24. Every row below still has something open.
 
 ---
 
+## 2026-11-17
+
+| Request | Status |
+|---|---|
+| Liberal flow to Labor over Greens (vic2026 61.7%, pooled from 17 elections; Victoria's own Labor-above elections 66.8/67.8; Melbourne fed2025 used 60.3, actual 79.3): chose "Prereg + screen it" (a per-state level in the shrinkage), before 28 Nov | **IN PROGRESS 17 Nov.** Prereg, then quick_arm screen on AEF-7 and all 22 overnight; ships only on a pass, with the vic2026 seats it moves shown to Pete first. |
+
 ## 2026-11-15
 
 | Request | Status |

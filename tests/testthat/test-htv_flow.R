@@ -109,3 +109,21 @@ test_that("the shipped coalition-split bundle is the only source when present (1
   # the diagnostic exclusion still reads the files (it names files, which the bundle cannot honour)
   withr::with_envvar(c(AUSPOL_HTV_EXCLUDE = "nothing.csv"), expect_true(is.na(fit_htv_flow_rows("zzz", dir = d)$greens_above)))
 })
+
+test_that("htv_jur_adjust pulls a label toward the target state's own cells, shrunk, and only there", {
+  cells <- data.table::data.table(
+    election = c("vic2010", "vic2014", "sa2018", "sa2022", "wa2013", "wa2017", "vic2006", "wa2021"),
+    label = c(rep("labor_above", 6), "greens_above", "greens_above"),
+    alp_share = c(68, 67, 58, 59, 50, 52, 29, 43), w = 1)
+  by_lab <- cells[, list(m = mean(alp_share)), by = label]
+  a <- suppressMessages(capture.output(r <- htv_jur_adjust(cells, by_lab, "vic2026")))
+  la <- r$adj[r$label == "labor_above"]
+  expect_gt(la, 0)                                                  # Victoria sits above the label mean ...
+  expect_lt(la, 67.5 - by_lab[label == "labor_above", m])           # ... and is shrunk, not taken whole
+  expect_null(suppressMessages({ capture.output(z <- htv_jur_adjust(cells, by_lab, "nsw2027")); z }))  # no nsw cells
+  # equal states: no between-state variance, so no adjustment
+  flat <- data.table::copy(cells)[, alp_share := ifelse(label == "labor_above", 60, 36)]
+  capture.output(r0 <- htv_jur_adjust(flat, flat[, list(m = mean(alp_share)), by = label], "vic2026"))
+  expect_true(all(r0$adj == 0))
+  withr::with_envvar(c(AUSPOL_HTV_JUR_SHRINK = "2"), expect_error(htv_jur_shrink_on(), "HTV15!"))
+})
