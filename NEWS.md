@@ -1,3 +1,7 @@
+# auspol 0.4.185
+
+- **Election-night checks and a refused switch** (PR #253): the 0.99-with-10%-counted called rule makes no wrong calls to 8pm on the real replayed nights; Melbourne fed2025's one wrong call is traced to a Liberal preference-flow miss (60.3% used, 79.3% actual). The federal and Victorian replays now write each seat's `counted` share. A per-state level in the Liberal how-to-vote card shares (`htv_jur_adjust()`, `AUSPOL_HTV_JUR_SHRINK`) was built and refused on its pre-registration (both Victorian elections worse), so it ships off. No forecast number changes.
+
 # auspol 0.4.184
 
 - **A results file for scoring the Victorian forecasts after 28 Nov** (PR #252): `scripts/build_vec_results_2026.R` turns a VEC results website snapshot into the `district, winner, status` file `scripts/score_benchmarks_vic2026.R` reads, using the "Elected member" block on each district's pages (`vec_web_elected()`, new export). A district naming nobody is `pending`, never guessed; it stops when the two pages disagree (`VRS3!`), the member is not on that district's ballot, or a blank party contradicts the candidate list (`VRS4!`). `scripts/ges_read_calls.js` reads a darker National shade (Lowan, Ovens Valley). No forecast number changes.
