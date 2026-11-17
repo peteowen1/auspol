@@ -69,7 +69,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `gh release download forecast-latest -p night-state-vic-2026.rds -D output`, then `night_runner.R --state=output/night-state-vic-2026.rds
   --ref=output/booths-vic2026-ref.csv --council-lean=output/council-fp-2022.csv`. Live page https://inthegame.blog/politics/live
   (find my seat live, #166 closed 5 Nov). OPEN, in order:
-  1-2. OPEN for Pete: the 390 px check of the live page on his phone (the rest done 16 Nov, journal).
+  1-2. DONE: Pete checked the live page at 390 px on 18 Nov, "Looks good!" (the rest done 16 Nov, journal).
   3. Navbar link. "Called" rule 0.99 with 10% counted CONFIRMED 17 Nov on the real fed2022/fed2025/vic2022 nights
      (`reviews/night-called-rule-real-nights-2026-11-17.md`): one wrong call, Melbourne fed2025 (a Liberal-flow
      miss, not the final-pair defect: see FLOW MEANS); the gate blocks Fowler 2022 and Mildura 2022 (called at 0.3% and 0.9% counted).
