@@ -35,3 +35,31 @@ on flows; The Swing Is On agrees on Box Hill, Eltham, Bentleigh, Mordialloc), Me
 (the books are HIGHER on One Nation than us), Hastings, Frankston, Macedon, Wendouree, Carrum, Narre
 Warren South (the One Nation pattern), Bendigo East (the Nationals' 2025 federal swing deliberately
 not carried: Port 3C, 28 Oct, Pete's call).
+
+## Trace: the same forecast with search interest off (19 Nov, 8:59-9:09am)
+
+Worktree `C:\dev\auspol-wt-sal` at fee0174d, own copy of `output/`. Two `fit_seats_full.R` runs at the published
+configuration, seed 42: `AUSPOL_OUT_SUFFIX=salon` (today's `salience-v6.csv`, prints `XG5 salience corpus found for
+vic2026: 546 of 616`) and `saloff` (the same file minus its 685 vic2026 rows, prints `XG5! no salience corpus yet`).
+The `salon` run reproduces the published forecast (Narracan ONP 0.75, Essendon IND 0.65; the same 21 seats differ
+from the books). Win probability 0-1.
+
+| Seat | On | Off | Books (TAB / Sportsbet) |
+|---|---|---|---|
+| Essendon | IND 0.65, LNP 0.15, ALP 0.11 | IND 0.02, LNP 0.39, ALP 0.40 | LNP 0.47, ALP 0.34 |
+| Benambra | ONP 0.38, IND 0.32, LNP 0.30 | LNP 0.75, ONP 0.25 | LNP 0.80 / 0.78 |
+| Narracan | ONP 0.75, LNP 0.25 | ONP 0.52, LNP 0.48 | LNP 0.83 / 0.86 |
+| Hawthorn | LNP 0.61, IND 0.39 | LNP 0.98 | LNP |
+| Kew | LNP 0.80, IND 0.19 | LNP 0.97 | LNP |
+
+Expected seats on / off: ALP 23.4 / 25.1, LNP 39.1 / 40.5, GRN 7.5 / 7.1, ONP 15.8 / 14.9, IND 1.9 / 0.2.
+52 of 88 seats move more than 0.02; favourites differing from the books 21 -> 19; mean largest gap 18.2 -> 15.9 points.
+
+So the independents' chances are almost entirely search interest (Essendon's 65% is not the class split: off, it
+is 2%), as are Benambra, Hawthorn and Kew, and about half of Narracan. The One Nation pattern mostly survives.
+
+Two corrections to the agents: Ben Lucas's value in the file the model reads is small (jump 0.077); Narracan moves on
+Wayne Farnham's -2.94. Negative jumps like Farnham's and Steve Martin's (-5.0) are ordinary: -2.94 recurs as a floor
+in almost every training election. What is unusual is vic2026's POSITIVE tail: p99 5.92 and 20 rows above 1, against
+p99 at most 0.5 in every earlier Victorian election except vic2014. The 12 Nov rank-mapping maps vic2026 onto the
+POOLED corpus, whose positive tail is mostly WA (p99 up to 19). Whether that is the intended scale is the open question.
