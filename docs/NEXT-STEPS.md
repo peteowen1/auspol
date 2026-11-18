@@ -82,6 +82,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   bases (other classes over-called -2.9, SE 0.84; Narracan Greens is the live case).
 
 
+- OPEN for Pete (found 18 Nov): Essendon IND 0.85 is three independents (Yildiz, Adams, Mohamud) simulated as one
+  candidate; 7 of the trees' +13 points are `n_cand_now` and Adams' council vote. 25 of 88 seats have 2+ independents.
+  Walk it with Pete, then size it on backtests. `reviews/essendon-ind-trace-2026-11-18.md`.
 - OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. 17 Nov done: 6 sources (TAB not
   saved: Chrome blocked the download on api.beta.tab.com.au; Betfair has no Victorian markets). On 27 Nov, if the TAB
   download is blocked again, check Chrome's download prompt for that site first. Each date: `Rscript scripts/snapshot_benchmarks.R`, plus the GES
