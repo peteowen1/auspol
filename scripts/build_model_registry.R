@@ -425,6 +425,10 @@ CLASSIFY <- list(
   AUSPOL_CLASS_SPLIT_SD = paste(
     "UNIVERSAL via R/: read inside class_split_fit_pts() (R/class_split.R) through coalition_split_args(); inert unless",
     "the points mode is on. EXPERIMENT 2026-11-18 (prereg-ind-split-points Amendment 1), default pooled."),
+  AUSPOL_CLASS_SPLIT_GATE = paste(
+    "UNIVERSAL via R/: read inside class_split_gate() from class_split_args() (R/class_split.R) through",
+    "coalition_split_args(); points modes only. SHIPPED 2026-11-18 as cred2 (prereg-ind-split-points Amendment 2, Pete's",
+    "override of guard 1): split only seats with 2+ independents who have a record."),
   AUSPOL_HTV_JUR_SHRINK = paste(
     "UNIVERSAL via R/: read inside htv_jur_shrink_on() from htv_card_label_shares() (R/htv_flow.R), which every",
     "harness and fit_seats_full.R reach through the HTV flow. REFUSED 2026-11-17, stays 0 (plans/prereg-htv-jur-shrink-2026-11-17.md)."),

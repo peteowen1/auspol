@@ -112,6 +112,22 @@ class_split_mode <- function() {
   m
 }
 
+#' Which seats the points-mode class split may touch
+#'
+#' Reads `AUSPOL_CLASS_SPLIT_GATE`: `"none"` (default, every seat with 2+
+#' independents) or `"cred2"` (only seats where two or more of them have a
+#' record: MP, councillor, or an earlier 5%+ non-major vote).
+#' docs/plans/prereg-ind-split-points-2026-11-18.md, Amendment 2.
+#' @return `"none"` or `"cred2"`.
+#' @export
+class_split_gate <- function() {
+  g <- Sys.getenv("AUSPOL_CLASS_SPLIT_GATE", "none")
+  if (!nzchar(g)) g <- "none"
+  if (!g %in% c("none", "cred2"))
+    stop("AUSPOL_CLASS_SPLIT_GATE must be \"none\" or \"cred2\"; got \"", g, "\"", call. = FALSE)
+  g
+}
+
 # `f`, the share of an excluded same-class candidate's votes that reach the other, per class, from EARLIER elections'
 # same-class exclusions, shrunk by jurisdiction as coalition_f(). A class with none takes the all-class rate.
 # Attribute n_events: how many exclusions it was fitted on.
@@ -176,7 +192,7 @@ class_split_fit_pts <- function(target_election, mode = class_split_mode(), cand
   if (is.null(cand)) cand <- data.table::fread(out_path("ind-split-candidates.csv"), encoding = "UTF-8")
   d <- data.table::as.data.table(cand)
   empty <- list(seats = data.frame(seat = character(0), cls = character(0), r = numeric(0), pts = numeric(0),
-                                   sd = numeric(0), f = numeric(0), n_cand = integer(0)),
+                                   sd = numeric(0), f = numeric(0), n_cand = integer(0), n_cred = integer(0)),
                 sd = NA_real_, f = NA_real_, n_hist = 0L, n_target = 0L, missing = !tgt_el %in% d$election)
   hist <- d[d$year < tgt_year & is.finite(d$share)]
   if (!nrow(hist)) return(empty)
@@ -221,6 +237,7 @@ class_split_fit_pts <- function(target_election, mode = class_split_mode(), cand
     x[, {
       o <- order(-get("eo"), get("name"))[2]
       list(pts = get("ea")[o], pts_b = get("es")[o], jnone = get("cred")[o] == "none", n_cand = .N,
+           n_cred = sum(get("cred") != "none"),
            r_act = if (all(is.finite(get("share")))) sort(get("share"), decreasing = TRUE)[2] / sum(get("share")) else NA_real_,
            our_cls = get("our_cls")[1])
     }, by = c("election", "seat")]
@@ -250,7 +267,7 @@ class_split_fit_pts <- function(target_election, mode = class_split_mode(), cand
   tj <- junior(tg)
   out$seats <- data.frame(seat = tj$seat, cls = "IND", r = NA_real_, pts = tj$pts, pts_b = tj$pts_b,
                           sd = unname(ifelse(tj$jnone, sd_j["none"], sd_j["cred"])), f = f_ind,
-                          n_cand = tj$n_cand, stringsAsFactors = FALSE)
+                          n_cand = tj$n_cand, n_cred = tj$n_cred, stringsAsFactors = FALSE)
   out$sd_junior <- sd_j
   out$n_target <- nrow(tj)
   out
@@ -294,7 +311,11 @@ class_split_args <- function(target_election, seat_names) {
       if (!"sd_mode" %in% names(fz) || !identical(unique(fz[["sd_mode"]]), want_sd))
         stop("CLS2! ", frz, " was built for spread ", paste(unique(fz[["sd_mode"]]), collapse = "/"), ", this run asks for ", want_sd,
              ": rerun scripts/build_ind_split_inputs.R with the same AUSPOL_CLASS_SPLIT_SD")
-      fit <- list(seats = as.data.frame(fz[, c("seat", "cls", "r", "pts", "pts_b", "sd", "f", "n_cand")]),
+      if (class_split_gate() != "none" && !"n_cred" %in% names(fz))
+        stop("CLS2! ", frz, " has no n_cred column, which AUSPOL_CLASS_SPLIT_GATE=", class_split_gate(),
+             " needs: rerun scripts/build_ind_split_inputs.R")
+      keep <- intersect(c("seat", "cls", "r", "pts", "pts_b", "sd", "f", "n_cand", "n_cred"), names(fz))
+      fit <- list(seats = as.data.frame(fz[, keep, with = FALSE]),
                   sd = fz$sd[1], f = stats::setNames(fz$f[1], "IND"), n_hist = fz$n_hist[1], n_target = nrow(fz),
                   missing = FALSE, b = fz$b[1], carry = c(same = fz$carry_same[1], other = fz$carry_other[1]),
                   pts = stats::setNames(c(fz$i_none[1], fz$i_MP[1], fz$i_prior5[1], fz$i_councillor[1]),
@@ -310,6 +331,18 @@ class_split_args <- function(target_election, seat_names) {
   cls <- stats::setNames(rep(NA_character_, length(seat_names)), seat_names)
   r <- na; sdv <- na; f <- na; pts <- na; pts_b <- na
   s <- fit$seats[fit$seats$seat %in% seat_names & is.finite(fit$seats$f), ]
+  # AMENDMENT 2 (18 Nov; AUSPOL_CLASS_SPLIT_GATE = "cred2", points modes only): split only where two or more of the
+  # seat's independents have a record (MP, councillor, earlier 5%+ non-major vote). A seat whose other independents
+  # have no record keeps one class: that is where every ungated split lost (Kooyong 2022, Indi 2025).
+  gate <- class_split_gate()
+  if (gate == "cred2") {
+    if (mode == "pred") stop("AUSPOL_CLASS_SPLIT_GATE=cred2 needs a points mode (AUSPOL_CLASS_SPLIT_MODE=pts_cred or pts_carry)")
+    if (!"n_cred" %in% names(s)) stop("CLS3! the class-split fit has no n_cred column: the gate cannot be applied")
+    n0 <- nrow(s)
+    s <- s[!is.na(s$n_cred) & s$n_cred >= 2L, ]
+    cat(sprintf("CLS3 class split %s gate cred2: %d of %d seats kept (2+ independents with a record)%s\n", target_election,
+                nrow(s), n0, if (nrow(s)) paste0(": ", paste(utils::head(s$seat, 8), collapse = ", ")) else ""))
+  }
   cls[s$seat] <- s$cls; r[s$seat] <- s$r; sdv[s$seat] <- s$sd; f[s$seat] <- s$f
   if (mode != "pred") {
     pts[s$seat] <- s$pts; pts_b[s$seat] <- s$pts_b

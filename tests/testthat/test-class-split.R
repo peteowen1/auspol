@@ -196,6 +196,57 @@ test_that("class_split_args reads a frozen fit with no transfers or candidate fi
   expect_error(class_split_args("x2026", c("A", "B")), "built for spread pooled")
 })
 
+test_that("the cred2 gate splits only seats with 2+ credentialed independents, and refuses what it cannot gate", {
+  root <- file.path(tempdir(), "cls-gate"); dir.create(file.path(root, "output"), recursive = TRUE, showWarnings = FALSE)
+  file.create(file.path(root, "DESCRIPTION"))
+  fz <- data.table::data.table(mode = "pts_carry", sd_mode = "pooled", seat = c("A", "B", "C"), cls = "IND",
+                               r = NA_real_, pts = c(2.6, 1.1, 4.0), pts_b = 0.09, sd = 0.15, f = 0.44, n_cand = c(3L, 2L, 2L),
+                               n_cred = c(2L, 1L, 0L), n_hist = 400L, b = 0.09, carry_same = 0.8, carry_other = 0.58,
+                               i_none = 1.1, i_MP = 1.6, i_prior5 = 1.8, i_councillor = 2.6)
+  data.table::fwrite(fz, file.path(root, "output", "ind-split-fit-x2026.csv"))
+  withr::local_options(auspol.root = root)
+  withr::local_envvar(AUSPOL_CLASS_SPLIT = "1", AUSPOL_CLASS_SPLIT_MODE = "pts_carry", AUSPOL_CLASS_SPLIT_SD = "pooled")
+  rm(list = ls(envir = .cls_cache), envir = .cls_cache)
+  # ungated: all three seats split
+  capture.output(a0 <- class_split_args("x2026", c("A", "B", "C")))
+  expect_equal(sum(is.finite(a0$cls_pts)), 3L)
+  # gated: only A (two credentialed independents); B and C keep one class
+  withr::local_envvar(AUSPOL_CLASS_SPLIT_GATE = "cred2")
+  out <- capture.output(a <- class_split_args("x2026", c("A", "B", "C")))
+  expect_equal(unname(a$cls_pts["A"]), 2.6)
+  expect_true(all(is.na(a$cls_pts[c("B", "C")])))
+  expect_true(all(is.na(a$cls[c("B", "C")])))
+  expect_true(any(grepl("CLS3 .* 1 of 3 seats kept", out)))
+  # no seat passes: no split at all
+  capture.output(n <- class_split_args("x2026", c("B", "C")))
+  expect_null(n)
+  # a frozen fit without n_cred cannot be gated: refused, never silently ungated
+  data.table::fwrite(fz[, !"n_cred"], file.path(root, "output", "ind-split-fit-x2026.csv"))
+  Sys.setFileTime(file.path(root, "output", "ind-split-fit-x2026.csv"), Sys.time() + 5)
+  rm(list = ls(envir = .cls_cache), envir = .cls_cache)
+  expect_error(class_split_args("x2026", c("A", "B")), "no n_cred column")
+  # the fraction mode has no credentials: the gate is refused there
+  withr::local_envvar(AUSPOL_CLASS_SPLIT_MODE = "pred")
+  expect_error(class_split_gate_check <- class_split_args("x2026", c("A")), "needs a points mode|needs")
+  withr::local_envvar(AUSPOL_CLASS_SPLIT_GATE = "bogus")
+  expect_error(class_split_gate(), "must be")
+})
+
+test_that("class_split_fit_pts counts each seat's credentialed independents", {
+  mk <- function(el, yr, seat, nm, sh, cred, oc = 30) data.table::data.table(
+    election = el, year = yr, seat = seat, name = nm, cls = "IND", share = sh, cred = cred,
+    prior_nonmajor = NA_real_, prior_same_seat = FALSE, n_ind = 2L, our_cls = oc)
+  hist <- data.table::rbindlist(lapply(1:12, function(i) rbind(
+    mk("x2010", 2010L, paste0("s", i), "A", 20 + i, "MP", oc = 25 + i),
+    mk("x2010", 2010L, paste0("s", i), "B", if (i %% 2) 6 else 2, if (i %% 2) "councillor" else "none", oc = 25 + i))))
+  tgt <- rbind(mk("x2014", 2014L, "two", "P", NA, "MP"), mk("x2014", 2014L, "two", "Q", NA, "councillor"),
+               mk("x2014", 2014L, "two", "R", NA, "none"),
+               mk("x2014", 2014L, "one", "S", NA, "MP"), mk("x2014", 2014L, "one", "T", NA, "none"))
+  tx <- data.table::data.table(election = "x2010", seat = "s1", round = 1L, from = "IND", to = c("IND", "ALP"), votes = c(30, 70))
+  a <- class_split_fit_pts("x2014", "pts_cred", cand = rbind(hist, tgt), transfers = tx)
+  expect_equal(a$seats$n_cred[match(c("two", "one"), a$seats$seat)], c(2L, 1L))
+})
+
 test_that("by_junior spread is the class-weighted RMSE per junior group, pooled under 5 seats", {
   mk <- function(el, yr, seat, nm, sh, cred, oc) data.table::data.table(
     election = el, year = yr, seat = seat, name = nm, cls = "IND", share = sh, cred = cred,

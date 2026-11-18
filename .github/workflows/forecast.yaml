@@ -257,6 +257,15 @@ jobs:
           if [ "$(pflag AUSPOL_DEPARTED_FED)" != "0" ]; then
             gh release download shipped-models -p departed-fed-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no departed-fed-vic2026.csv -- the forecast runs WITHOUT the departed-member blend"
           fi
+          # AUSPOL_CLASS_SPLIT (published "1" with pts_carry + the cred2 gate, shipped 2026-11-18): the points split
+          # reads a frozen fit per live election (scripts/build_ind_split_inputs.R; this runner has no transfers
+          # corpus to refit it). fit_seats_full.R stops without it, so a missing file fails here with the reason.
+          if [ "$(pflag AUSPOL_CLASS_SPLIT)" = "1" ] && [ "$(pflag AUSPOL_CLASS_SPLIT_MODE)" != "pred" ]; then
+            for f in ind-split-fit-vic2026.csv ind-split-fit-nsw2027.csv; do
+              gh release download shipped-models -p "$f" -D output --clobber || { echo "::error::shipped-models has no $f -- AUSPOL_CLASS_SPLIT_MODE needs it (scripts/build_ind_split_inputs.R, then upload)"; exit 1; }
+              test -s "output/$f" || { echo "::error::$f downloaded empty"; exit 1; }
+            done
+          fi
           # AUSPOL_ONP_ORDER (published "senate_rank", shipped 2026-10-26): fit_seats_full.R stops without
           # the district Senate One Nation shares, so a missing table fails HERE with the reason.
           ONP_ORDER=$(Rscript -e 'source("scripts/published_flags.R"); cat(PUBLISHED_FLAGS[["AUSPOL_ONP_ORDER"]])')
