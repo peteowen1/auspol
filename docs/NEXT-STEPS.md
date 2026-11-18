@@ -82,10 +82,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   bases (other classes over-called -2.9, SE 0.84; Narracan Greens is the live case).
 
 
-- OPEN, DATED 19 Nov: gated independent split shipped 18 Nov (Essendon 0.85 -> 0.65; Pete's override, prereg
-  Amendment 2). Done when: the 19 Nov daily run on `main` is green with `CLS3 ... 2 of 25 seats kept`; the Edge Board
-  Essendon "known defect" note is updated; inthegame-blog's seat-page note (#1243, on dev only) is narrowed or removed
-  (Essendon is now split; ask ITG first); worktree `C:\dev\auspol-wt-indk` removed after unlinking its junctions.
+- OPEN, DATED 19 Nov: gated independent split LIVE 18 Nov 10:11pm (PR #254, run 44290629004; Essendon 0.85 -> 0.65).
+  Done when: the 19 Nov daily run on `main` is green; the Edge Board Essendon "known defect" note is updated; and
+  inthegame-blog's seat-page note (#1243, dev only, never on main) is narrowed or removed (ask ITG first).
 - OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. 17 Nov done: 6 sources (TAB not
   saved: Chrome blocked the download on api.beta.tab.com.au; Betfair has no Victorian markets). On 27 Nov, if the TAB
   download is blocked again, check Chrome's download prompt for that site first. Each date: `Rscript scripts/snapshot_benchmarks.R`, plus the GES
