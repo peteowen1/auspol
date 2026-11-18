@@ -1224,6 +1224,9 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
           .tot <- shares[cbind(which(.pu), match(.cc[.pu], parties))]
           .cr[.pu] <- ifelse(is.finite(.tot) & .tot > 0, pmin(pmax((.cp[.pu] + .cb[.pu] * .tot) / .tot, 0.01), 0.5), NA_real_)
         }
+        # a class with no column still reaches the no-column count below, as in the fraction mode
+        .pn <- is.na(.cr) & is.finite(.cp) & !is.na(.cc) & !.cc %in% parties
+        .cr[.pn] <- 0.25
       }
       want <- !is.na(.cc) & !is.na(.cr)
       overlap <- want & split_cls > 0L

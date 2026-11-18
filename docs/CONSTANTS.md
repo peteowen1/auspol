@@ -598,6 +598,20 @@ Two candidates of one minor class (IND, OTH, OTH_RIGHT) counted separately by th
 | class side-stream seed | `(seed * 7919 + 1299709) mod 2^31-1` | **COMPUTATIONAL**: drawn after the Coalition's, so Coalition seats are byte-identical. |
 | one split per seat | Coalition first, else the class with the largest junior prediction | **CHOSEN** (version one; the count holds one hidden candidate). |
 
+Points mode (`AUSPOL_CLASS_SPLIT_MODE` = `pts_cred` / `pts_carry`, 2026-11-18, off; independents only; `class_split_fit_pts()`;
+`plans/prereg-ind-split-points-2026-11-18.md`):
+
+| Constant | Value | Status |
+|---|---|---|
+| junior points intercept by credential | vic2026: none 1.13, MP 1.61, prior5 1.80, councillor 2.61 | **ESTIMATED** time-forward from second-placed independents, shrunk to the pooled mean (`w = tau^2/(tau^2+se^2)`). |
+| `b`, points per point of class forecast | vic2026: 0.092 | **ESTIMATED** time-forward, one `lm` over earlier elections, floored at 0. |
+| carry (pts_carry) | vic2026: same seat 0.797, other seat 0.585 | **ESTIMATED** time-forward as sum(vote) / sum(earlier non-major vote); a missing cell takes the pooled ratio. |
+| `prior5` cut | an earlier non-major vote of 5%+ | **CHOSEN** (a credential label; the carry arm uses the vote itself). |
+| credential order | MP, councillor (elected before that year), prior5, none | **CHOSEN**. |
+| fraction bounds | (0.01, 0.5) of the run's class share | **COMPUTATIONAL**, as the fraction mode. |
+| minimum earlier second-placed independents | 10 (fit), 5 (spread) | **COMPUTATIONAL**; a shortfall gives no split and prints in `CLS1`. |
+| order without a class forecast | median earlier class forecast (vic2026 has none in the inputs file) | **COMPUTATIONAL**: orders candidates only; the fraction uses the run's own shares. |
+
 ## Seat-composition spread (`AUSPOL_COMPOSITION_SD`, built 2026-10-17, SHIPPED 2026-10-17 with the error distribution on Pete's override; `plans/prereg-composition-spread-2026-10-17.md`; `R/size_sd.R`)
 
 | Constant | Where | Value | Status |

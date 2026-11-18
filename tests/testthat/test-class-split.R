@@ -137,22 +137,41 @@ test_that("class_split_fit_pts fits on earlier elections only and orders by carr
   mk <- function(el, yr, seat, nm, sh, cred, prior = NA_real_, oc = 30) data.table::data.table(
     election = el, year = yr, seat = seat, name = nm, cls = "IND", share = sh, cred = cred,
     prior_nonmajor = prior, prior_same_seat = FALSE, n_ind = 2L, our_cls = oc)
+  # earlier election: every leader carried exactly half of an earlier vote in ANOTHER seat (carry 0.5); councillor
+  # juniors poll about 6, uncredentialed ones about 2, so the credential cells really differ (tau^2 > 0)
   hist <- data.table::rbindlist(lapply(1:12, function(i) rbind(
-    mk("x2010", 2010L, paste0("s", i), "A", 20 + i, "none", oc = 20 + i),
-    mk("x2010", 2010L, paste0("s", i), "B", 2 + (i %% 3), if (i %% 2) "councillor" else "none", oc = 20 + i))))
-  # a LATER election with absurd juniors must not move the fit for x2014
+    mk("x2010", 2010L, paste0("s", i), "A", 20 + i, "prior5", prior = 2 * (20 + i), oc = 25 + i),
+    mk("x2010", 2010L, paste0("s", i), "B", if (i %% 2) 6 + (i %% 3) / 3 else 2 + (i %% 3) / 3,
+       if (i %% 2) "councillor" else "none", oc = 25 + i))))
+  # a LATER election with absurd juniors and an absurd carry (50 from an earlier 1) must not move the x2014 fit
   later <- data.table::rbindlist(lapply(1:12, function(i) rbind(
-    mk("x2018", 2018L, paste0("s", i), "A", 20, "none"), mk("x2018", 2018L, paste0("s", i), "B", 19, "none"))))
+    mk("x2018", 2018L, paste0("s", i), "A", 50, "prior5", prior = 1), mk("x2018", 2018L, paste0("s", i), "B", 19, "none"))))
   tgt <- rbind(mk("x2014", 2014L, "t", "Known", NA, "prior5", prior = 20), mk("x2014", 2014L, "t", "Coun", NA, "councillor"),
                mk("x2014", 2014L, "t", "New", NA, "none"))
   tx <- data.table::data.table(election = "x2010", seat = "s1", round = 1L, from = "IND", to = c("IND", "ALP"), votes = c(30, 70))
   a <- class_split_fit_pts("x2014", "pts_carry", cand = rbind(hist, tgt), transfers = tx)
   b <- class_split_fit_pts("x2014", "pts_carry", cand = rbind(hist, later, tgt), transfers = tx)
+  expect_equal(unname(a$carry), c(0.5, 0.5))          # no same-seat case: "same" takes the pooled 0.5
+  expect_equal(a$carry, b$carry)
   expect_equal(a$pts, b$pts)
   expect_equal(a$seats$pts, b$seats$pts)
-  # the carried-vote candidate leads, so the junior is the councillor (slope b), not the carried one (slope 0)
+  expect_gt(unname(a$pts["councillor"]), unname(a$pts["none"]) + 1)
+  # Known expects 0.5 x 20 = 10 with no class term and leads; the junior is the councillor (slope b)
   expect_equal(nrow(a$seats), 1L)
   expect_equal(a$seats$pts_b, a$b)
   expect_equal(a$seats$pts, unname(a$pts["councillor"]))
+  # under pts_cred the carried vote is ignored: Known is just a prior5 credential
+  k <- class_split_fit_pts("x2014", "pts_cred", cand = rbind(hist, tgt), transfers = tx)
+  expect_true(all(is.na(k$carry)))
   expect_error(class_split_fit_pts("x2014", "pred", cand = hist), "pts_cred or pts_carry")
+})
+
+test_that("points mode counts a class with no column as skipped, as the fraction mode does", {
+  sh <- matrix(c(40, 40, 20), nrow = 1, dimnames = list("x", c("ALP", "LNP", "IND")))
+  cs <- c(no_cs("x"), list(cls = c(x = "OTH_RIGHT"), cls_r = c(x = NA_real_), cls_sd = c(x = 0.1), cls_f = c(x = 0.3),
+                           cls_pts = c(x = 2), cls_pts_b = c(x = 0.1)))
+  s <- simulate_seat_contests(sh, cls_fm(), party_sd = c(ALP = 0, LNP = 0, IND = 0), n_sims = 20, seed = 1,
+                              coalition_split = cs)
+  expect_equal(s$class_split$n_seats, 0L)
+  expect_equal(s$class_split$skipped_no_column, 1L)
 })
