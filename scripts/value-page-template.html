@@ -83,33 +83,23 @@ section > p, .verdict p{max-width:80ch}
 </header>
 
 <section class="verdict">
-  <strong>Usable now, not finished.</strong>
-  <p style="margin-top:6px">The forecast publishes daily, CI is green and it beats AE Forecasts on the seven-election track record. But candidate nominations do not close until <b>9 November</b>, several screens are queued but not run, and three known defects sit exactly in the seats where we disagree most with the bookies. Treat the value list below as a shortlist to check, not a list to bet.</p>
+  <strong>We see a hung parliament; the bookies and AE Forecasts lean to a Coalition majority.</strong>
+  <p style="margin-top:6px">Every forecast has Labor on about 23–24 seats. The split is how many Coalition seats One Nation takes. Our biggest lone calls (One Nation in Hastings, Narracan and Bendigo East, the independent in Essendon) are where the model is most likely to be wrong, as well as where the prices differ most. Treat the value list below as a list of disagreements to check, not a list to bet.</p>
 </section>
 
 <section>
-  <h2>Readiness checklist</h2>
-  <p class="sub">Written by hand on 28 Oct; not regenerated with the data.</p>
-  <div class="grid">
-    <div class="card"><h3><span class="pill ok">Ready</span> Model and publishing</h3><ul>
-      <li>Daily forecast run succeeded 27 Oct 05:45 UTC (the two runs before it failed).</li>
-      <li>R CMD check green on <code>dev</code> and <code>main</code>, 27 Oct.</li>
-      <li>All 88 districts simulated, none dropped.</li>
-      <li>One Nation now ranked on the 2025 Senate vote (shipped 26 Oct), which fixed the Niddrie and Essendon over-calls.</li>
-    </ul></div>
-    <div class="card"><h3><span class="pill warn">Partly</span> Data scraped</h3><ul>
-      <li>Polls: live from the anchor clone each run.</li>
-      <li>Odds and rival forecasts captured 22, 24, 27 Oct. Next dated captures 3, 10, 17, 27 Nov. TAB and GES need a Chrome step each time.</li>
-      <li>Candidates: pre-nomination list only. <b>Nominations close 9 Nov, 12 noon</b>; the final list changes the forecast.</li>
-      <li>Search-interest (salience) data: 0 of 101 batches usable yet (campaign has not started). Final snapshot 25–27 Nov. CI publish has no salience corpus yet.</li>
-    </ul></div>
-    <div class="card"><h3><span class="pill bad">Not done</span> Features tested</h3><ul>
-      <li>Not every feature is tested. Queued, not run: level-conserve, seat-swing port 3C, width arms A0/A1, departed arm B.</li>
-      <li>Two built branches still need <code>check_like_ci.R</code>: <code>ind-overcall-1025</code>, <code>mp-slope-shrink-1025</code>.</li>
-      <li>Returning independents: Ali Cupper (Mildura) still gets 2.7%; fix not shipped.</li>
-      <li>The results file the benchmark scorer needs on election night is not built.</li>
-    </ul></div>
-  </div>
+  <h2>Against the other forecasts</h2>
+  <p class="sub">Expected seats out of 88: each forecast's win probabilities added up over the districts (45 is a majority). Captured 18 Nov; this table is written by hand and does not update with the data below.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Forecast</th><th class="n">Labor</th><th class="n">Coalition</th><th class="n">Greens</th><th class="n">One Nation</th><th class="n">Ind + other</th><th class="n">Same favourite as ours</th></tr></thead>
+    <tbody>
+      <tr><td><b>Ours</b></td><td class="n">23.3</td><td class="n"><b>39.0</b></td><td class="n">7.5</td><td class="n">15.8</td><td class="n">2.4</td><td class="n">88 of 88</td></tr>
+      <tr><td>The Swing Is On</td><td class="n">24.0</td><td class="n">39.3</td><td class="n">5.6</td><td class="n">17.9</td><td class="n">1.1</td><td class="n">59 of 88</td></tr>
+      <tr><td>TAB (margin removed)</td><td class="n">23.5</td><td class="n">44.3</td><td class="n">5.3</td><td class="n">12.9</td><td class="n">1.1</td><td class="n">65 of 87</td></tr>
+      <tr><td>Sportsbet (margin removed)</td><td class="n">22.8</td><td class="n">44.8</td><td class="n">5.2</td><td class="n">13.6</td><td class="n">1.6</td><td class="n">68 of 88</td></tr>
+      <tr><td>AE Forecasts</td><td class="n">24.1</td><td class="n"><b>49.5</b></td><td class="n">5.1</td><td class="n">8.3</td><td class="n">1.0</td><td class="n">60 of 88</td></tr>
+    </tbody></table></div>
+  <p class="sub" style="margin-top:8px">Sources: <code>docs/benchmarks/vic2026/2026-11-18/*-calls.csv</code>. GES gives favourites only and was not captured on 18 Nov.</p>
 </section>
 
 <section>
@@ -155,14 +145,14 @@ section > p, .verdict p{max-width:80ch}
     <span id="count" class="sub"></span>
   </div>
   <div class="scroll" style="max-height:620px"><table>
-    <thead><tr><th>Seat</th><th>Back</th><th class="n">Best price</th><th>Book</th><th class="n">Bookies' prob</th><th class="n">Our prob</th><th class="n">Edge</th><th class="n">¼ Kelly stake</th><th>Grade</th><th>Why</th></tr></thead>
+    <thead><tr><th>Seat</th><th>Back</th><th class="n">Best price</th><th>Book</th><th class="n">Bookies' prob</th><th class="n">Our prob</th><th class="n">Edge</th><th>Grade</th><th>Why</th></tr></thead>
     <tbody id="rows"></tbody>
   </table></div>
-  <p class="foot" style="margin-top:8px">Bookies' prob is the margin-removed probability (power method), averaged over the books pricing that seat. ¼ Kelly stake is the share of a betting bank, a quarter of the full Kelly amount, which is still aggressive for a model that has not seen a 20% One Nation vote. Ripon is left out: Sportsbet and TAB price Liberal and Nationals separately there and we forecast them as one Coalition class. A named independent is matched to our whole independent class.</p>
+  <p class="foot" style="margin-top:8px">Bookies' prob is the margin-removed probability (power method), averaged over the books pricing that seat. The grades and notes come from the 25 and 28 Oct reviews and have not been rechecked since. Ripon is left out: Sportsbet and TAB price Liberal and Nationals separately there and we forecast them as one Coalition class. A named independent is matched to our whole independent class.</p>
 </section>
 
 <section class="foot">
-  <p>Sources: <code>forecast-latest</code> release assets <code>forecast-vic2026.json</code>, <code>seat-probs-vic-2026.csv</code>; odds via <code>oddsdata</code> (Sportsbet competition 9519, Betfair search 2378961), TAB raw from <code>external/reference/benchmarks/vic2026/2026-10-27/tab/</code>; history from <code>output/backtest-vs-market-seats.csv</code>; known defects from <code>docs/reviews/market-disagreement-vic2026-2026-10-25.md</code> and <code>docs/NEXT-STEPS.md</code>. Not betting advice; a model check.</p>
+  <p>Sources: <code>forecast-latest</code> release assets <code>forecast-vic2026.json</code>, <code>seat-probs-vic-2026.csv</code>; odds via <code>oddsdata</code> (Sportsbet competition 9519, Betfair search 2378961), TAB raw saved from Chrome into <code>external/reference/benchmarks/vic2026/&lt;date&gt;/tab/</code>; history from <code>output/backtest-vs-market-seats.csv</code>; known defects from <code>docs/reviews/market-disagreement-vic2026-2026-10-25.md</code> and <code>docs/NEXT-STEPS.md</code>. Not betting advice; a model check.</p>
 </section>
 </div>
 
@@ -177,10 +167,10 @@ const REVIEW = {
   "GLEN WAVERLEY":{v:"Unknown",t:"Same group as Box Hill. Federal 2025 swing in its booths +4.53 to Labor; 2022 Labor under-called by 2.6. We have it as a coin toss (0.50); the bookies 0.12.",w:["Same three steps as Box Hill."]},
   "ASHWOOD":{v:"Unknown",t:"Same group as Box Hill. Federal 2025 swing +2.54 to Labor; 2022 Labor under-called by 5.1.",w:["Same three steps as Box Hill."]},
   "BAYSWATER":{v:"Unknown, bookies probably closer",t:"Labor's member is departing and we already favour the Liberal (0.70). The value is Labor at $12: we say 0.22, the bookies 0.05. Federal 2025 swing +5.63 to Labor, the largest of the group.",w:["Same three steps as Box Hill, plus check the departing-member slope (0.62) on this seat."]},
-  "HASTINGS":{v:"Wait for nominations",t:"No One Nation candidate is named yet; we simulate a generic one at 29.8%. The bookies may be pricing a weak or absent candidate. In SA 2026 our One Nation win probabilities were calibrated and we under-called its vote, the opposite of the bookies' view here (one election, five winners).",w:["Recheck the day nominations close (9 Nov, 12 noon)."]},
+  "HASTINGS":{v:"Unknown",t:"One Nation's candidate is Peter Angelico (named after nominations closed 9 Nov). On 28 Oct, before any candidate was named, we simulated a generic one at 29.8% and the bookies may have been pricing a weak or absent one. In SA 2026 our One Nation win probabilities were calibrated and we under-called its vote, the opposite of the bookies' view here (one election, five winners).",w:["Not rechecked since the candidate was named."]},
   "NARRACAN":{v:"Not a baseline defect (corrected 28 Oct)",t:"Labor and Greens only match to two decimals (10.1148 and 10.1145). Labor's 10.1 comes from its 2018 share (35.5) carried forward, and is plausible: Labor took 17.3% in these booths at the 2025 federal election. The Greens' 10.1 is probably 4 to 5 points high, because their 2023 base was inflated by Labor's absence (6.0 in 2018, 4.4 federally in 2025), but that barely moves One Nation against the Liberal. The real driver: One Nation's Senate vote here ranks 3rd of 88.",w:["Same spread sensitivity run as Eureka.","Later: measure the inflated-base effect on backtest seats where a major re-entered."]},
   "EUREKA":{v:"Probably too confident; not from the spread setting",w2:"Measured 28 Oct: One Nation stays 0.77 to 0.93 across the concentration setting 0.30 to 0.43.",t:"Both sides favour One Nation (us 0.87, bookies 0.46). Our number comes from Eureka sitting near the top of the Senate ranking, mapped onto the top of SA 2026's spread of One Nation shares. Measured 28 Oct: One Nation stays at 0.77 to 0.93 across the concentration setting 0.30 to 0.43, so the setting does not explain the gap.",w:["Pooling Qld 2017 into the spread needs code: the spread is fixed to SA 2026's seat shares (fit_seats_full.R:781). Not built."]},
-  "CRANBOURNE":{v:"Unknown; a small push toward the bookies",t:"The bookies favour One Nation (0.45); we give it 0.22 and Labor 0.76. The 2022 other-right vote here was 14.9%, and our model does not use it: One Nation's share comes only from the 2025 Senate ranking. In SA 2026, One Nation beat our forecast by about 0.45 points per point of previous other-right vote. Across all 20 elections the effect is much smaller: 0.04 points per point (SE 0.015), worth about 0.4 points of One Nation here. Not enough to explain the gap. No One Nation candidate named yet.",w:["Recheck after nominations close (9 Nov).","Optional: a shrunk other-right term, worth about 0.4 points here."]}
+  "CRANBOURNE":{v:"Unknown; a small push toward the bookies",t:"The bookies favour One Nation (0.45); we give it 0.22 and Labor 0.76. The 2022 other-right vote here was 14.9%, and our model does not use it: One Nation's share comes only from the 2025 Senate ranking. In SA 2026, One Nation beat our forecast by about 0.45 points per point of previous other-right vote. Across all 20 elections the effect is much smaller: 0.04 points per point (SE 0.015), worth about 0.4 points of One Nation here. Not enough to explain the gap. One Nation's candidate is Andrew Hirst (named after nominations closed 9 Nov).",w:["Not rechecked since the candidate was named.","Optional: a shrunk other-right term, worth about 0.4 points here."]}
 };
 // seat|class -> [grade, reason]
 const NOTES = {
@@ -194,8 +184,8 @@ const NOTES = {
   "Northcote|GRN":["Known defect","Same high-Greens over-call (Northcote named)."],
   "Pascoe Vale|GRN":["Contested","Pascoe Vale is one of the independent re-stand targets still open (ind-overcall-1025)."],
   "Narracan|ONP":["Contested","One Nation's 2025 Senate vote here ranks 3rd of 88, so it lands near the top of SA 2026's spread: the same question as Eureka. Click the seat."],
-  "Hastings|ONP":["Contested","No One Nation candidate named yet; we simulate a generic one. Recheck after nominations close 9 Nov."],
-  "Cranbourne|ALP":["Contested","Bookies favour One Nation (45%), we give it 22%. No One Nation candidate named yet; 2022 other-right vote was 14.9%. Click the seat."],
+  "Hastings|ONP":["Contested","Bookies favour the Liberal; One Nation's candidate (Peter Angelico) was named after the 28 Oct review, which has not been redone. Click the seat."],
+  "Cranbourne|ALP":["Contested","Bookies favour One Nation (45%), we give it 22%. 2022 other-right vote was 14.9%. Figures from the 28 Oct review. Click the seat."],
   "Mildura|LNP":["Known defect","Returning independent Ali Cupper gets 2.7%; the fix is not shipped."],
   "Shepparton|LNP":["Contested","Bookies give One Nation 41%, we give 10%. Not yet traced; independents in this seat are an open item."],
   "Box Hill|ALP":["Contested","Bookies price a uniform swing off Labor. Our One Nation fill hands Labor back most of its loss in low-One-Nation seats. In 2022 we under-called Labor here."],
@@ -226,10 +216,9 @@ function render(){
     const [gr,why]=note(r);
     if(g==="Clean"&&gr!=="Clean") continue;
     if(g==="noDefect"&&gr==="Known defect") continue;
-    const kelly=Math.max(0,(ours*price-1)/(price-1))/4;
-    out.push(`<tr><td>${seatBtn(seat)}</td><td><span class="dot" style="background:var(${col[c]||"--ind"})"></span>${esc(sel)}</td><td class="n">${price.toFixed(2)}</td><td>${esc({sportsbet:"Sportsbet",tab:"TAB",betfair:"Betfair"}[book]||book)}${nb>1?"":" (only book)"}</td><td class="n">${pct(mkt)}</td><td class="n">${pct(ours)}</td><td class="n">+${edge.toFixed(2)}</td><td class="n">${(100*kelly).toFixed(1)}%</td><td><span class="grade ${cls[gr]}">${gr}</span></td><td class="why">${esc(why)}</td></tr>`);
+    out.push(`<tr><td>${seatBtn(seat)}</td><td><span class="dot" style="background:var(${col[c]||"--ind"})"></span>${esc(sel)}</td><td class="n">${price.toFixed(2)}</td><td>${esc({sportsbet:"Sportsbet",tab:"TAB",betfair:"Betfair"}[book]||book)}${nb>1?"":" (only book)"}</td><td class="n">${pct(mkt)}</td><td class="n">${pct(ours)}</td><td class="n">+${edge.toFixed(2)}</td><td><span class="grade ${cls[gr]}">${gr}</span></td><td class="why">${esc(why)}</td></tr>`);
   }
-  $("rows").innerHTML = out.join("") || `<tr><td colspan="10" class="sub">No selections pass these filters. Lower the minimum edge or widen the grade.</td></tr>`;
+  $("rows").innerHTML = out.join("") || `<tr><td colspan="9" class="sub">No selections pass these filters. Lower the minimum edge or widen the grade.</td></tr>`;
   $("count").textContent = out.length+" selections";
 }
 function esc(s){ return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
@@ -264,7 +253,7 @@ function showSeat(key){
     px = `<div><h4>Bookmaker prices</h4><div class="scroll"><table><thead><tr><th>Outcome</th><th class="n">Sportsbet</th><th class="n">TAB</th><th class="n">Betfair</th><th class="n">Bookies' prob</th><th class="n">Our prob</th><th class="n">Edge at best</th></tr></thead><tbody>${px}</tbody></table></div><p class="sub" style="margin-top:6px">Bookies' prob is margin removed, averaged over the books that list the outcome. Edge = our prob × best price − 1.</p></div>`;
   } else px = `<p class="sub">No bookmaker prices this seat yet.</p>`;
   const rv = REVIEW[key];
-  const review = rv ? `<div class="review"><h4>Contested: ${esc(rv.v)}</h4><p style="margin:0">${esc(rv.t)}</p><ol>${rv.w.map(x=>`<li>${esc(x)}</li>`).join("")}</ol></div>` : "";
+  const review = rv ? `<div class="review"><h4>Contested (review of 28 Oct; its numbers are from then): ${esc(rv.v)}</h4><p style="margin:0">${esc(rv.t)}</p><ol>${rv.w.map(x=>`<li>${esc(x)}</li>`).join("")}</ol></div>` : "";
   $("dlg-body").innerHTML = `
     <div class="dlg-head"><div><div class="eyebrow">${esc(s.r)}</div><h2 id="dlg-title">${esc(s.n)}</h2></div><button type="button" class="close" id="dlg-close">Close</button></div>
     ${review}
