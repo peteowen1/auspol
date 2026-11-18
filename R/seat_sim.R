@@ -1212,6 +1212,22 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
       } else if (length(.cc) != nseat) stop("coalition_split$cls must be named by seat or length ", nseat)
       .cc <- as.character(.cc)
       .cr <- .by_seat(cs$cls_r, "cls_r"); .csd <- .by_seat(cs$cls_sd, "cls_sd"); .cf <- .by_seat(cs$cls_f, "cls_f")
+      # POINTS MODE (AUSPOL_CLASS_SPLIT_MODE pts_*, class_split_fit_pts()): the junior arrives as expected points,
+      # and its fraction is those points over THIS run's forecast of the class in that seat, so the split follows
+      # the forecast it is applied to. Same (0.01, 0.5) bounds as the fraction mode.
+      if (!is.null(cs$cls_pts)) {
+        .cp <- .by_seat(cs$cls_pts, "cls_pts")
+        .cb <- if (is.null(cs$cls_pts_b)) rep(0, nseat) else .by_seat(cs$cls_pts_b, "cls_pts_b")
+        .cb[!is.finite(.cb)] <- 0
+        .pu <- is.na(.cr) & is.finite(.cp) & !is.na(.cc) & .cc %in% parties
+        if (any(.pu)) {
+          .tot <- shares[cbind(which(.pu), match(.cc[.pu], parties))]
+          .cr[.pu] <- ifelse(is.finite(.tot) & .tot > 0, pmin(pmax((.cp[.pu] + .cb[.pu] * .tot) / .tot, 0.01), 0.5), NA_real_)
+        }
+        # a class with no column still reaches the no-column count below, as in the fraction mode
+        .pn <- is.na(.cr) & is.finite(.cp) & !is.na(.cc) & !.cc %in% parties
+        .cr[.pn] <- 0.25
+      }
       want <- !is.na(.cc) & !is.na(.cr)
       overlap <- want & split_cls > 0L
       nocol <- want & !overlap & !(.cc %in% parties)

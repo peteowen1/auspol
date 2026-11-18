@@ -13,11 +13,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (10 Nov: One Nation stands in all 88 seats, so no seat-count conditioning applies; recheck for nsw2027's list); (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 17 Nov, 7pm.** main 0.4.183, PRs #247-#251 merged 16 Nov; CI green. Checked on the 17 Nov 4:30am daily run
-  (43919094896): Essendon names Yildiz, `statewide` and `polls_tpp` (vic 49, nsw 12) are in the live R2 files, and
-  the alarm step printed "No alarm" (only known failure: `fit_nsw.R` sigma_obs). PR #252 merged 8:49pm
-  (0.4.184, VEC results file for the scorer). Dated, a session runs each: 23 Nov VEC venues rerun; 25 Nov final
-  salience snapshot + night dress rehearsal; 27 Nov final benchmark capture (Pete: VPN off).
+- **Status 18 Nov, 11am.** main 0.4.185 (PR #253 merged 9:15am, CI green on fd897745); `dev` is ahead by queue
+  edits only. Phone check of the live page passed (Pete, 18 Nov). Dated, a session runs each: 23 Nov VEC venues
+  rerun; 25 Nov final salience snapshot + night dress rehearsal; 27 Nov merge inthegame-blog#1239 (navbar link)
+  and the final benchmark capture (Pete: VPN off).
 - OPEN, 15 Nov full review (`reviews/FABLE-FULL-REVIEW-2026-11-15.md`, "Pick up from here" is the work list; DECISIONS
   2026-11-15). A1-A3, A5, A6, B1 shipped and seen live 17 Nov (above). Done when: the rest of "Pick up from here" is
   done or parked with a trigger.
@@ -68,8 +67,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `gh release download forecast-latest -p night-state-vic-2026.rds -D output`, then `night_runner.R --state=output/night-state-vic-2026.rds
   --ref=output/booths-vic2026-ref.csv --council-lean=output/council-fp-2022.csv`. Live page https://inthegame.blog/politics/live
   (find my seat live, #166 closed 5 Nov). OPEN, in order:
-  1-2. OPEN for Pete: the 390 px check of the live page on his phone (the rest done 16 Nov, journal).
-  3. Navbar link. "Called" rule 0.99 with 10% counted CONFIRMED 17 Nov on the real fed2022/fed2025/vic2022 nights
+  1-2. DONE: Pete checked the live page at 390 px on 18 Nov, "Looks good!" (the rest done 16 Nov, journal).
+  3. Navbar link: BUILT 18 Nov on inthegame-blog branch `feat/politics-live-nav-2`, PR #1239 (264d638f, Politics menu
+     "Victoria 2026: election night live"); 27 Nov a session merges its PR into `dev`, then `dev`→`main`. "Called" rule 0.99 with 10% counted CONFIRMED 17 Nov on the real fed2022/fed2025/vic2022 nights
      (`reviews/night-called-rule-real-nights-2026-11-17.md`): one wrong call, Melbourne fed2025 (a Liberal-flow
      miss, not the final-pair defect: see FLOW MEANS); the gate blocks Fowler 2022 and Mildura 2022 (called at 0.3% and 0.9% counted).
   4. 25 Nov trial (no 2CP): with real 2026 centre names, compare each counted early centre with its own 2022 upper-house lean,
@@ -82,6 +82,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   bases (other classes over-called -2.9, SE 0.84; Narracan Greens is the live case).
 
 
+- OPEN, DATED 19 Nov: gated independent split shipped 18 Nov (Essendon 0.85 -> 0.65; Pete's override, prereg
+  Amendment 2). Done when: the 19 Nov daily run on `main` is green with `CLS3 ... 2 of 25 seats kept`; the Edge Board
+  Essendon "known defect" note is updated; inthegame-blog's seat-page note (#1243, on dev only) is narrowed or removed
+  (Essendon is now split; ask ITG first); worktree `C:\dev\auspol-wt-indk` removed after unlinking its junctions.
 - OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. 17 Nov done: 6 sources (TAB not
   saved: Chrome blocked the download on api.beta.tab.com.au; Betfair has no Victorian markets). On 27 Nov, if the TAB
   download is blocked again, check Chrome's download prompt for that site first. Each date: `Rscript scripts/snapshot_benchmarks.R`, plus the GES

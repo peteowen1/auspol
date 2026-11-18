@@ -1,6 +1,6 @@
 # Model registry
 
-**Generated 2026-11-15 by `scripts/build_model_registry.R`. Do not hand-edit** --
+**Generated 2026-11-18 by `scripts/build_model_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate whenever a switch is added to
 `published_flags.R` or a harness's wiring changes.
 
@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (321 switches from `published_flags.R`, 7 entry points)
+## Switch parity (325 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -58,6 +58,9 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_CENSUS_FILE` | NO | NO | NO | NO | NO | NO | NO | demographic_residual.R |
 | `AUSPOL_CLASS_CONSERVE` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R |
 | `AUSPOL_CLASS_SPLIT` | NO | NO | NO | NO | NO | NO | NO | class_split.R |
+| `AUSPOL_CLASS_SPLIT_GATE` | NO | NO | NO | NO | NO | NO | NO | class_split.R |
+| `AUSPOL_CLASS_SPLIT_MODE` | NO | NO | NO | NO | NO | NO | NO | class_split.R |
+| `AUSPOL_CLASS_SPLIT_SD` | NO | NO | NO | NO | NO | NO | NO | class_split.R |
 | `AUSPOL_CLASS_SPLIT_SRC` | NO | NO | NO | NO | NO | NO | NO | class_split.R |
 | `AUSPOL_CLOSE_PROPORTIONAL` | yes | NO | NO | NO | NO | NO | NO | forecast_mode.R |
 | `AUSPOL_COALITION_SPLIT` | NO | NO | NO | NO | NO | NO | NO | coalition_split.R |
@@ -132,6 +135,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_HTV_CARD_P` | NO | NO | NO | NO | NO | NO | NO | htv_flow.R |
 | `AUSPOL_HTV_EXCLUDE` | NO | NO | NO | NO | NO | NO | NO | htv_flow.R |
 | `AUSPOL_HTV_FLOW` | yes | yes | yes | yes | yes | yes | yes | htv_flow.R |
+| `AUSPOL_HTV_JUR_SHRINK` | NO | NO | NO | NO | NO | NO | NO | htv_flow.R |
 | `AUSPOL_HTV_LABELS` | NO | NO | NO | NO | NO | NO | NO | htv_flow.R |
 | `AUSPOL_HTV_RECENCY_HL` | NO | NO | NO | NO | NO | NO | NO | htv_flow.R |
 | `AUSPOL_HTV_TABLE` | NO | NO | NO | NO | NO | NO | NO | htv_flow.R |
@@ -381,6 +385,9 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_CENSUS_FILE`** (intentional / dead experiment): DIAGNOSTIC 2026-10-13: alternative census-features table via census_features_path() (R/demographic_residual.R), read by every demographic correction -- universal in practice; published empty.
 - **`AUSPOL_CLASS_CONSERVE`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: read by class_conserve_on() inside zero_unnominated() (R/nomination_zero.R), which every harness and fit_seats_full.R (zero_unnominated_live) reach. plans/prereg-partial-contest-2026-10-19.md
 - **`AUSPOL_CLASS_SPLIT`** (intentional / dead experiment): UNIVERSAL via R/: read inside class_split_args() (R/class_split.R) through coalition_split_args(), which every harness (six + NT) and fit_seats_full.R call. EXPERIMENT, default 0 (plans/prereg-class-split-2026-11-06.md); no vic2026 per-candidate predictions yet, so the live forecast would get no class split even at 1.
+- **`AUSPOL_CLASS_SPLIT_GATE`** (intentional / dead experiment): UNIVERSAL via R/: read inside class_split_gate() from class_split_args() (R/class_split.R) through coalition_split_args(); points modes only. SHIPPED 2026-11-18 as cred2 (prereg-ind-split-points Amendment 2, Pete's override of guard 1): split only seats with 2+ independents who have a record.
+- **`AUSPOL_CLASS_SPLIT_MODE`** (intentional / dead experiment): UNIVERSAL via R/: read inside class_split_mode() from class_split_args() (R/class_split.R) through coalition_split_args(); inert unless AUSPOL_CLASS_SPLIT=1. EXPERIMENT 2026-11-18, default pred (plans/prereg-ind-split-points-2026-11-18.md): pts_cred / pts_carry size the junior independent by expected points.
+- **`AUSPOL_CLASS_SPLIT_SD`** (intentional / dead experiment): UNIVERSAL via R/: read inside class_split_fit_pts() (R/class_split.R) through coalition_split_args(); inert unless the points mode is on. EXPERIMENT 2026-11-18 (prereg-ind-split-points Amendment 1), default pooled.
 - **`AUSPOL_CLASS_SPLIT_SRC`** (intentional / dead experiment): UNIVERSAL via R/: read inside class_split_src() (R/class_split.R) through coalition_split_args(); inert unless AUSPOL_CLASS_SPLIT=1. EXPERIMENT: which per-candidate predictions file the class split reads (prereg amendment 1).
 - **`AUSPOL_CLOSE_PROPORTIONAL`** (intentional / dead experiment): ARM, not shipped (default 0; plans/prereg-close-proportional-2026-09-28.md). Read in R/forecast_mode.R (federal harness path) and fit_seats_full.R (the live LL1 step). Off, so the four state harnesses not reaching it changes nothing.
 - **`AUSPOL_COALITION_SPLIT`** (intentional / dead experiment): UNIVERSAL via R/: read inside coalition_split_args() (R/coalition_split.R), which every harness (six + NT) and fit_seats_full.R call at their simulate_seat_contests() site, so the per-harness greps cannot see it. SHIPPED (1) 2026-10-17 on Pete's call; 20k deciding run passed every clause (reviews/lib-nat-plumbing-2026-10-16.md).
@@ -441,6 +448,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_HISTORIC_ELECTED_BACKFILL`** (**adopted, shared-function wiring**): SHIPPED 2026-09-15 on judgement (costs 0.0141 pooled RMSE in the backtest, but vic2026 is never a training pair so the 62 returning members can only move the live forecast, which the backtest cannot see). Read ONCE at build time by scripts/build_candidacies.R and baked into output/candidacies.csv, so no harness reads it at runtime; reversible by rebuilding candidacies with the flag off.
 - **`AUSPOL_HTV_CARD_P`** (intentional / dead experiment): LIVE ONLY by design: fit_seats_full.R mixes the two card runs when the target has no how-to-vote row (htv_card_p(), htv_mix_sims(), R/htv_flow.R) and the target's REGION has an entry ('vic=0.67': nsw2027 gets none). The night runner mixes the same way from the saved state's htv_card. Backtest targets all have known cards, so no harness reads it.
 - **`AUSPOL_HTV_EXCLUDE`** (intentional / dead experiment): DIAGNOSTIC 2026-10-13: leaves named transfer files out of the how-to-vote fit (R/htv_flow.R) to attribute a new file's effect; published empty. Read inside R/ via htv_flow_override() -- universal in practice.
+- **`AUSPOL_HTV_JUR_SHRINK`** (intentional / dead experiment): UNIVERSAL via R/: read inside htv_jur_shrink_on() from htv_card_label_shares() (R/htv_flow.R), which every harness and fit_seats_full.R reach through the HTV flow. REFUSED 2026-11-17, stays 0 (plans/prereg-htv-jur-shrink-2026-11-17.md).
 - **`AUSPOL_HTV_LABELS`** (intentional / dead experiment): UNIVERSAL via R/: read inside htv_labels_mode() from fit_htv_flow_rows() (R/htv_flow.R), which htv_flow_override() calls in every harness and fit_seats_full.R. SHIPPED hybrid 2026-11-15 (plans/prereg-htv-card-labels-2026-11-15.md).
 - **`AUSPOL_HTV_RECENCY_HL`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: read in fit_htv_flow_rows() (R/htv_flow.R), which every harness and fit_seats_full.R reach through htv_flow_override(). plans/prereg-htv-recency-2026-10-31.md
 - **`AUSPOL_HTV_TABLE`** (intentional / dead experiment): UNIVERSAL via R/: read inside htv_order_table() (R/htv_flow.R), which htv_flow_override() and htv_card_p() call in every harness and fit_seats_full.R. SHIPPED researched 2026-11-06 (plans/prereg-htv-researched-2026-11-06.md).
@@ -692,8 +700,8 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR4  every AUSPOL_* switch read in code (426) is registered (303) or listed as not a model switch (123).
+MR4  every AUSPOL_* switch read in code (430) is registered (307) or listed as not a model switch (123).
 
 
 
-MR2  every non-universal switch (290 of 321) has a recorded classification.
+MR2  every non-universal switch (294 of 325) has a recorded classification.

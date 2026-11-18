@@ -1,3 +1,7 @@
+# auspol 0.4.186
+
+- **Independents split where two have a record** (PR #254): a seat's independents are no longer always simulated as one candidate. Where two or more of them have a record (sitting MP, councillor, or an earlier 5%+ vote), the junior's expected vote is split off at the count (`AUSPOL_CLASS_SPLIT=1`, `_MODE=pts_carry`, `_GATE=cred2`). Essendon's independent chance falls from 0.85 to 0.65 and Sydenham's from 0.014 to 0.003; no other seat moves. Shipped on Pete's override of one pre-registered guard (won seats +0.0058, SE 0.0050). The daily run downloads the frozen fits from `shipped-models`.
+
 # auspol 0.4.185
 
 - **Election-night checks and a refused switch** (PR #253): the 0.99-with-10%-counted called rule makes no wrong calls to 8pm on the real replayed nights; Melbourne fed2025's one wrong call is traced to a Liberal preference-flow miss (60.3% used, 79.3% actual). The federal and Victorian replays now write each seat's `counted` share. A per-state level in the Liberal how-to-vote card shares (`htv_jur_adjust()`, `AUSPOL_HTV_JUR_SHRINK`) was built and refused on its pre-registration (both Victorian elections worse), so it ships off. No forecast number changes.

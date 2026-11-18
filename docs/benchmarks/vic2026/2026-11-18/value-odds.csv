@@ -1,0 +1,502 @@
+seat,selection,class,best_price,book,nbook,mkt_p,our_p,edge
+Williamstown,Greens,GRN,101,tab,2,0.0067,0.0901,8.095
+Essendon,Other,OTHER,9,tab,1,0.0749,0.8475,6.6275
+Ringwood,Greens,GRN,81,tab,2,0.0049,0.0849,5.8809
+Essendon,Independent (Oscar Yildiz),IND,7.5,sportsbet,1,0.0951,0.8475,5.3562
+Geelong,Greens,GRN,101,tab,2,0.0079,0.0538,4.4338
+Monbulk,One Nation,ONP,17,tab,2,0.0565,0.3112,4.2895
+Ashwood,Labor,ALP,11,tab,2,0.0717,0.3953,3.3483
+Narracan,One Nation,ONP,4.5,sportsbet,2,0.1367,0.7488,2.3694
+Box Hill,Labor,ALP,4.33,sportsbet,2,0.1983,0.7628,2.3029
+Footscray,Other,OTHER,26,tab,1,0.0176,0.1242,2.2292
+Benambra,Any Other,OTHER,10,sportsbet,1,0.0525,0.3204,2.204
+Hawthorn,Other,OTHER,7.5,tab,1,0.0591,0.3879,1.9092
+Hawthorn,Independent (Shima Ibuki),IND,7.5,sportsbet,1,0.0606,0.3878,1.9089
+Bendigo East,One Nation,ONP,4.75,tab,2,0.1664,0.574,1.7263
+Ivanhoe,Greens,GRN,17,tab,2,0.0323,0.158,1.686
+Macedon,Other,OTHER,51,tab,1,0.0088,0.0494,1.5194
+Ringwood,Labor,ALP,7,tab,2,0.1119,0.3524,1.4671
+Sydenham,Any Other,OTHER,101,tab,2,0.0103,0.0244,1.4594
+Albert Park,Greens,GRN,5,sportsbet,2,0.1652,0.4898,1.449
+Macedon,Any Other,OTHER,46,sportsbet,1,0.0097,0.0494,1.2724
+Hastings,One Nation,ONP,3.5,sportsbet,2,0.208,0.647,1.2643
+Benambra,Other,OTHER,7,tab,1,0.0675,0.3204,1.2428
+Werribee,Liberal,LNP,3.6,sportsbet,2,0.2222,0.61,1.196
+South Barwon,Labor,ALP,6,tab,2,0.1375,0.3451,1.0706
+Niddrie,One Nation,ONP,19,tab,2,0.0401,0.1079,1.0501
+Bentleigh,Labor,ALP,4,sportsbet,2,0.2117,0.5028,1.0114
+Footscray,Greens,GRN,2.7,sportsbet,2,0.3038,0.7003,0.8908
+Carrum,One Nation,ONP,5,sportsbet,2,0.162,0.3755,0.8775
+Footscray,Any Other,OTHER,15,sportsbet,1,0.0382,0.1242,0.863
+Narre Warren North,Labor,ALP,2.35,tab,2,0.4033,0.7711,0.8121
+Frankston,One Nation,ONP,4.2,sportsbet,2,0.2041,0.4214,0.7697
+Mulgrave,Labor,ALP,1.91,sportsbet,2,0.4784,0.9224,0.7618
+Kew,Other,OTHER,9,tab,1,0.0366,0.1944,0.7492
+Benambra,One Nation,ONP,4.5,tab,2,0.1419,0.3836,0.726
+Murray Plains,One Nation,ONP,5.75,tab,2,0.1157,0.2971,0.7083
+Essendon,Greens,GRN,67,tab,2,0.0147,0.0253,0.6951
+Glen Waverley,Labor,ALP,6,sportsbet,2,0.1004,0.281,0.6863
+Greenvale,Liberal,LNP,5,sportsbet,2,0.1431,0.3304,0.6522
+Kew,Independent (Sophie Torney),IND,8.5,sportsbet,1,0.0359,0.1944,0.652
+Pascoe Vale,Greens,GRN,2.37,sportsbet,2,0.3745,0.695,0.647
+Ashwood,Greens,GRN,101,tab,2,0.0031,0.0159,0.6059
+Eureka,One Nation,ONP,1.83,sportsbet,2,0.5305,0.8695,0.5912
+Cranbourne,Labor,ALP,2.8,sportsbet,2,0.334,0.5676,0.5894
+Thomastown,One Nation,ONP,5.5,tab,2,0.1137,0.289,0.5892
+Mordialloc,Labor,ALP,2.55,tab,2,0.3271,0.6212,0.5842
+Mill Park,One Nation,ONP,2.9,tab,2,0.297,0.537,0.5572
+Macedon,One Nation,ONP,3.75,sportsbet,2,0.2154,0.4054,0.5204
+South Barwon,Greens,GRN,67,tab,2,0.0074,0.0226,0.5108
+Geelong,One Nation,ONP,9,tab,2,0.0843,0.1661,0.4949
+Prahran,Greens,GRN,1.63,tab,2,0.5748,0.891,0.4524
+Melton,Coalition,LNP,2.75,tab,1,0.2821,0.5234,0.4392
+Preston,Any Other,OTHER,41,tab,2,0.0205,0.035,0.435
+Sydenham,One Nation,ONP,1.83,sportsbet,2,0.488,0.757,0.3854
+Sunbury,Liberal,LNP,3.3,tab,2,0.258,0.4164,0.374
+St Albans,Labor,ALP,1.83,sportsbet,2,0.5189,0.7438,0.3611
+Mildura,Nationals,LNP,1.44,tab,2,0.7004,0.941,0.355
+Narre Warren South,One Nation,ONP,2.8,tab,2,0.3296,0.4838,0.3545
+Pakenham,One Nation,ONP,1.45,sportsbet,2,0.6452,0.9189,0.3324
+Lara,One Nation,ONP,4,tab,2,0.2071,0.3279,0.3116
+Eltham,Labor,ALP,2.63,sportsbet,2,0.3237,0.4984,0.3109
+Oakleigh,Labor,ALP,1.45,sportsbet,2,0.6446,0.9028,0.3091
+Broadmeadows,Liberal,LNP,15,sportsbet,2,0.0212,0.0849,0.2742
+Macedon,Labor,ALP,6,sportsbet,2,0.1291,0.2124,0.2741
+Melton,Liberal,LNP,2.4,sportsbet,1,0.3557,0.5234,0.256
+Clarinda,Labor,ALP,1.45,sportsbet,2,0.7117,0.8588,0.2453
+Thomastown,Liberal,LNP,8,sportsbet,2,0.0678,0.1542,0.2336
+Kororoit,One Nation,ONP,3.3,sportsbet,2,0.2422,0.3709,0.224
+Wendouree,Liberal,LNP,3.6,sportsbet,2,0.2746,0.3398,0.2233
+Mill Park,Liberal,LNP,4.5,tab,2,0.1951,0.2686,0.2085
+Richmond,Greens,GRN,1.22,sportsbet,2,0.7925,0.9886,0.2062
+Bundoora,Labor,ALP,1.37,tab,2,0.6885,0.8589,0.1767
+Polwarth,Liberal,LNP,1.2,sportsbet,2,0.8329,0.9786,0.1744
+Oakleigh,Greens,GRN,36,sportsbet,2,0.0145,0.0326,0.1736
+Wendouree,One Nation,ONP,2.75,tab,2,0.3089,0.4237,0.1652
+Bayswater,Labor,ALP,15,tab,2,0.0264,0.0775,0.1618
+Northcote,Greens,GRN,1.36,tab,2,0.717,0.8343,0.1346
+Shepparton,Nationals,LNP,1.2,sportsbet,2,0.7999,0.9372,0.1247
+Melbourne,Greens,GRN,1.12,sportsbet,2,0.8652,0.9946,0.1139
+Bellarine,Liberal,LNP,1.83,sportsbet,2,0.5131,0.6086,0.1136
+Berwick,Any Other,OTHER,101,tab,2,0.0034,0.0109,0.1009
+Dandenong,Labor,ALP,1.11,sportsbet,2,0.8807,0.981,0.0889
+Laverton,Labor,ALP,1.12,sportsbet,2,0.8894,0.9688,0.085
+Kalkallo,Labor,ALP,1.22,sportsbet,2,0.8121,0.889,0.0846
+Bass,One Nation,ONP,3.5,tab,2,0.2255,0.3096,0.0836
+Broadmeadows,One Nation,ONP,9,tab,2,0.0498,0.1194,0.0746
+Brunswick,Greens,GRN,1.08,sportsbet,3,0.9258,0.993,0.0724
+Ovens Valley,Nationals,LNP,1.15,tab,2,0.8642,0.9284,0.0677
+Lowan,National,LNP,1.12,tab,1,0.8659,0.9508,0.0649
+Lowan,Nationals,LNP,1.11,sportsbet,1,0.8654,0.9508,0.0554
+South-West Coast,Liberal,LNP,1.07,sportsbet,2,0.9152,0.9792,0.0477
+Euroa,Nationals,LNP,1.2,sportsbet,1,0.7897,0.8718,0.0462
+Bendigo East,Labor,ALP,19,tab,2,0.0264,0.055,0.044
+Ringwood,Any Other,OTHER,26,sportsbet,2,0.0146,0.04,0.04
+Gippsland South,National,LNP,1.15,tab,1,0.839,0.9016,0.0368
+Point Cook,Labor,ALP,1.8,sportsbet,2,0.5188,0.5716,0.0289
+Morwell,Nationals,LNP,1.83,sportsbet,2,0.5055,0.5608,0.0264
+Warrandyte,Liberal,LNP,1.03,sportsbet,2,0.9627,0.9922,0.022
+Croydon,Liberal,LNP,1.08,sportsbet,2,0.9037,0.9452,0.0208
+Rowville,Liberal,LNP,1.06,sportsbet,2,0.9449,0.9622,0.0199
+Malvern,Liberal,LNP,1.03,sportsbet,2,0.9696,0.99,0.0198
+Caulfield,Liberal,LNP,1.03,sportsbet,3,0.9754,0.9892,0.0188
+Evelyn,Liberal,LNP,1.06,sportsbet,3,0.933,0.9571,0.0146
+Brighton,Liberal,LNP,1.02,sportsbet,2,0.9773,0.9931,0.013
+Bulleen,Liberal,LNP,1.02,sportsbet,2,0.9686,0.9906,0.0104
+Gippsland South,Nationals,LNP,1.12,sportsbet,2,0.8861,0.9016,0.0097
+Nepean,Liberal,LNP,1.03,sportsbet,2,0.9558,0.9787,0.0081
+Mornington,Liberal,LNP,1.03,sportsbet,1,0.9556,0.9775,0.0068
+Preston,Labor,ALP,1.36,sportsbet,2,0.7192,0.7388,0.0048
+Euroa,National,LNP,1.15,tab,1,0.8368,0.8718,0.0026
+Sandringham,Liberal,LNP,1.01,sportsbet,2,0.9833,0.9926,0.0025
+Gippsland East,One Nation,ONP,5,tab,3,0.1087,0.1986,-0.007
+Berwick,Liberal,LNP,1.1,tab,3,0.9029,0.8987,-0.0114
+Ivanhoe,Labor,ALP,1.3,sportsbet,2,0.7402,0.7585,-0.014
+Macedon,Greens,GRN,81,tab,2,0.0068,0.0121,-0.0159
+Tarneit,Labor,ALP,1.2,sportsbet,2,0.8261,0.8073,-0.0312
+Bendigo West,One Nation,ONP,2.25,sportsbet,2,0.4229,0.4232,-0.0477
+Bayswater,Liberal,LNP,1.07,sportsbet,1,0.9084,0.8894,-0.0483
+Eildon,Liberal,LNP,1.17,sportsbet,2,0.8338,0.8106,-0.0515
+Eildon,One Nation,ONP,5,tab,2,0.1435,0.1892,-0.0542
+Yan Yean,One Nation,ONP,2.25,sportsbet,2,0.385,0.4202,-0.0544
+Bayswater,Coalition,LNP,1.06,tab,1,0.9188,0.8894,-0.0572
+Niddrie,Labor,ALP,4.25,tab,2,0.1917,0.2169,-0.0782
+Williamstown,Labor,ALP,1.33,sportsbet,2,0.7308,0.6927,-0.0787
+Gippsland East,National,LNP,1.15,tab,1,0.8435,0.8004,-0.0796
+Point Cook,One Nation,ONP,3.5,tab,2,0.2378,0.2617,-0.0841
+Narre Warren South,Labor,ALP,3,sportsbet,2,0.3068,0.305,-0.0852
+Niddrie,Liberal,LNP,1.36,sportsbet,1,0.6875,0.6691,-0.09
+Greenvale,One Nation,ONP,2.9,tab,2,0.2823,0.3134,-0.0913
+Bellarine,Labor,ALP,2.5,tab,2,0.3448,0.3618,-0.0954
+South Barwon,Liberals,LNP,1.57,sportsbet,1,0.5895,0.576,-0.0956
+Preston,One Nation,ONP,21,sportsbet,2,0.0224,0.0429,-0.0991
+Morwell,One Nation,ONP,2.05,tab,2,0.4526,0.438,-0.1022
+Gippsland East,Nationals,LNP,1.12,sportsbet,2,0.877,0.8004,-0.1036
+Monbulk,Greens,GRN,34,tab,2,0.0221,0.0259,-0.1194
+Kororoit,Liberal,LNP,5,sportsbet,2,0.1423,0.1755,-0.1225
+Bass,Liberal,LNP,1.28,sportsbet,2,0.7423,0.6849,-0.1233
+Yan Yean,Labor,ALP,15,tab,2,0.0498,0.0579,-0.1315
+Werribee,One Nation,ONP,3.25,tab,2,0.2658,0.2661,-0.1352
+Yan Yean,Liberal,LNP,1.67,sportsbet,1,0.5407,0.514,-0.1415
+Bendigo West,Labor,ALP,2.65,tab,2,0.3314,0.3238,-0.1419
+Bendigo West,Nationals,LNP,3.6,sportsbet,2,0.2274,0.238,-0.1432
+Lara,Labor,ALP,1.33,sportsbet,2,0.7264,0.6426,-0.1453
+Williamstown,Liberal,LNP,6,tab,2,0.1368,0.1422,-0.1465
+Broadmeadows,Labor,ALP,1.08,sportsbet,2,0.9128,0.7802,-0.1573
+Box Hill,Greens,GRN,41,tab,1,0.008,0.0205,-0.1575
+Kew,Liberal,LNP,1.03,sportsbet,2,0.9558,0.8046,-0.1713
+Yan Yean,Coalition,LNP,1.6,tab,1,0.5626,0.514,-0.1775
+Carrum,Labor,ALP,2.5,tab,2,0.3433,0.3267,-0.1833
+Geelong,Labor,ALP,1.33,sportsbet,2,0.7469,0.602,-0.1993
+Glen Waverley,Liberal,LNP,1.12,sportsbet,1,0.8603,0.7121,-0.2024
+Geelong,Liberal,LNP,4.5,sportsbet,2,0.155,0.1757,-0.2094
+Glen Waverley,Coalition,LNP,1.11,tab,1,0.8727,0.7121,-0.2095
+Sunbury,One Nation,ONP,1.53,sportsbet,2,0.6326,0.5117,-0.2171
+Murray Plains,National,LNP,1.11,tab,1,0.8779,0.7029,-0.2198
+Murray Plains,Nationals,LNP,1.1,sportsbet,1,0.8737,0.7029,-0.2268
+Niddrie,Coalition,LNP,1.15,tab,1,0.8302,0.6691,-0.2305
+Eltham,Liberal,LNP,1.6,tab,2,0.5758,0.4792,-0.2333
+Melton,One Nation,ONP,1.8,sportsbet,2,0.4981,0.4208,-0.2426
+Cranbourne,One Nation,ONP,2,sportsbet,2,0.4614,0.3768,-0.2463
+Tarneit,Liberal,LNP,6.5,tab,2,0.0918,0.1129,-0.2665
+Monbulk,Liberal,LNP,1.57,sportsbet,2,0.6357,0.4581,-0.2808
+Frankston,Liberal,LNP,2,sportsbet,2,0.4435,0.3586,-0.2829
+Laverton,Greens,GRN,67,tab,1,0.0028,0.0105,-0.2965
+South Barwon,Liberal,LNP,1.22,tab,1,0.7773,0.576,-0.2972
+Cranbourne,Other,OTHER,81,tab,1,0.0049,0.0086,-0.3034
+Bundoora,Greens,GRN,67,tab,1,0.005,0.0103,-0.3099
+Kororoit,Labor,ALP,1.53,sportsbet,2,0.6046,0.4458,-0.318
+Tarneit,One Nation,ONP,9,tab,2,0.0684,0.0756,-0.32
+Ashwood,Liberal,LNP,1.15,sportsbet,2,0.8931,0.5864,-0.3257
+Thomastown,Labor,ALP,1.2,sportsbet,2,0.8099,0.5514,-0.3383
+Mornington,Any Other,OTHER,34,sportsbet,1,0.0044,0.0193,-0.3438
+Hawthorn,Liberal,LNP,1.07,sportsbet,2,0.9158,0.6096,-0.3477
+Bentleigh,Liberal,LNP,1.33,tab,2,0.7498,0.4857,-0.354
+Narre Warren South,Any Other,OTHER,81,tab,2,0.0084,0.0078,-0.3642
+Ringwood,Liberal,LNP,1.22,sportsbet,2,0.8136,0.5128,-0.3743
+Albert Park,Labor,ALP,1.67,sportsbet,2,0.5891,0.3708,-0.3808
+Albert Park,Any Other,OTHER,31,sportsbet,1,0.0174,0.0196,-0.3924
+Sydenham,Liberal,LNP,2.88,sportsbet,2,0.3334,0.209,-0.3981
+Gippsland South,One Nation,ONP,6,betfair,3,0.1051,0.0984,-0.4093
+Northcote,Labor,ALP,3.6,sportsbet,2,0.2459,0.1632,-0.4123
+Monbulk,Labor,ALP,2.9,tab,2,0.2738,0.2022,-0.4136
+Narre Warren North,One Nation,ONP,2.88,sportsbet,2,0.3782,0.2023,-0.4175
+Greenvale,Labor,ALP,1.67,sportsbet,2,0.5637,0.3481,-0.4188
+Preston,Greens,GRN,3.3,sportsbet,2,0.2196,0.1754,-0.421
+Euroa,One Nation,ONP,4.5,tab,2,0.1687,0.1274,-0.4265
+Yan Yean,Any Other,OTHER,81,tab,2,0.0068,0.0069,-0.4371
+Point Cook,Liberal,LNP,3.6,sportsbet,2,0.2258,0.1557,-0.4395
+Bendigo West,Greens,GRN,51,sportsbet,2,0.0101,0.0109,-0.4441
+St Albans,Any Other,OTHER,81,tab,2,0.0099,0.0068,-0.4452
+Wendouree,Labor,ALP,2.4,tab,2,0.4011,0.2309,-0.4457
+Mordialloc,Liberal,LNP,1.67,sportsbet,2,0.553,0.3302,-0.4485
+Carrum,Liberal,LNP,1.85,tab,2,0.4829,0.2948,-0.4547
+Frankston,Labor,ALP,2.5,sportsbet,2,0.3414,0.2128,-0.468
+Albert Park,Liberal,LNP,4.5,tab,2,0.1885,0.1158,-0.4787
+Narre Warren North,Any Other,OTHER,81,tab,2,0.0084,0.0063,-0.4857
+Albert Park,Other,OTHER,26,tab,1,0.0179,0.0196,-0.4904
+Sunbury,Labor,ALP,7.5,tab,2,0.0963,0.0677,-0.4926
+Narre Warren South,Liberal,LNP,2.5,sportsbet,2,0.3525,0.2024,-0.4941
+Williamstown,Independent (Tony Briffa),IND,13,sportsbet,1,0.0454,0.0378,-0.5086
+Pascoe Vale,Labor,ALP,1.67,sportsbet,2,0.5572,0.2934,-0.51
+Macedon,Liberal,LNP,1.5,tab,2,0.6395,0.3206,-0.519
+Werribee,Greens,GRN,101,tab,1,0.004,0.0048,-0.5202
+Niddrie,Any Other,OTHER,101,tab,2,0.004,0.0046,-0.5304
+Greenvale,Any Other,OTHER,67,tab,2,0.0082,0.007,-0.5344
+Berwick,One Nation,ONP,6,sportsbet,2,0.0913,0.0771,-0.5374
+Hastings,Liberal,LNP,1.33,sportsbet,1,0.7062,0.345,-0.5412
+St Albans,Liberal,LNP,3.5,sportsbet,2,0.2351,0.1309,-0.5419
+Bendigo East,Nationals,LNP,1.24,sportsbet,2,0.7987,0.3651,-0.5472
+Clarinda,Any Other,OTHER,21,sportsbet,1,0.0239,0.0216,-0.5474
+Clarinda,Other,OTHER,21,tab,1,0.0193,0.0216,-0.5474
+Dandenong,Other,OTHER,101,tab,1,0.0012,0.0044,-0.5556
+Williamstown,One Nation,ONP,13,tab,2,0.0525,0.0339,-0.5593
+Bundoora,Liberal,LNP,4.2,sportsbet,2,0.1968,0.1048,-0.5596
+Mill Park,Other,OTHER,67,tab,1,0.0064,0.0066,-0.5612
+Bellarine,Greens,GRN,81,tab,2,0.0073,0.0054,-0.5626
+Hastings,Coalition,LNP,1.25,tab,1,0.7501,0.345,-0.5688
+Kalkallo,Liberal,LNP,8,sportsbet,2,0.0656,0.0539,-0.5688
+St Albans,One Nation,ONP,3.75,tab,2,0.2336,0.1147,-0.5699
+Caulfield,Greens,GRN,51,tab,2,0.0028,0.0084,-0.5716
+Clarinda,Liberal,LNP,4.25,tab,2,0.2014,0.1002,-0.5744
+Lara,Greens,GRN,101,tab,1,0.0027,0.0041,-0.5859
+Rowville,Labor,ALP,26,tab,2,0.0136,0.0156,-0.5957
+Pakenham,Any Other,OTHER,81,tab,2,0.0088,0.0049,-0.6031
+Kororoit,Other,OTHER,67,tab,1,0.0057,0.0059,-0.608
+Frankston,Other,OTHER,101,tab,1,0.0041,0.0037,-0.6213
+Point Cook,Any Other,OTHER,51,tab,2,0.013,0.0074,-0.6226
+Mill Park,Labor,ALP,2,sportsbet,2,0.4976,0.186,-0.628
+Benambra,Liberal,LNP,1.22,sportsbet,2,0.7899,0.296,-0.6388
+Frankston,Greens,GRN,101,tab,1,0.0041,0.0036,-0.6414
+Cranbourne,Any Other,OTHER,41,sportsbet,1,0.0136,0.0086,-0.6474
+Kalkallo,One Nation,ONP,6.5,tab,2,0.1135,0.0537,-0.651
+Lara,Liberal,LNP,15,sportsbet,2,0.055,0.0232,-0.652
+Ovens Valley,One Nation,ONP,5,sportsbet,2,0.1105,0.0693,-0.6537
+Brighton,Greens,GRN,67,tab,2,0.0021,0.005,-0.6617
+Mill Park,Any Other,OTHER,51,sportsbet,1,0.0104,0.0066,-0.666
+Croydon,Labor,ALP,19,tab,2,0.0194,0.0175,-0.6666
+Sunbury,Any Other,OTHER,101,tab,2,0.0063,0.0032,-0.6718
+Bendigo West,Any Other,OTHER,81,tab,2,0.0082,0.004,-0.672
+Ivanhoe,Liberal,LNP,4.25,tab,2,0.1725,0.0763,-0.6757
+Malvern,Greens,GRN,41,tab,2,0.0031,0.0079,-0.6761
+Eltham,Greens,GRN,51,sportsbet,2,0.009,0.0063,-0.6762
+Bayswater,Greens,GRN,101,tab,2,0.0025,0.0032,-0.6819
+Mordialloc,Greens,GRN,101,tab,1,0.0035,0.0031,-0.6869
+Thomastown,Any Other,OTHER,67,tab,2,0.0068,0.0046,-0.6884
+St Albans,Greens,GRN,81,tab,1,0.005,0.0038,-0.6922
+Evelyn,One Nation,ONP,7.6,betfair,3,0.0497,0.0404,-0.6926
+Mulgrave,Independent (Ian Cook),IND,4.5,sportsbet,1,0.1715,0.0675,-0.6962
+Broadmeadows,Other,OTHER,41,tab,1,0.0039,0.0073,-0.7007
+South Barwon,One Nation,ONP,6.5,tab,2,0.1365,0.0457,-0.7033
+Glen Waverley,Greens,GRN,101,tab,1,0.0024,0.0029,-0.7071
+Polwarth,Greens,GRN,81,tab,2,0.0069,0.0036,-0.7084
+Narracan,Liberal,LNP,1.16,tab,2,0.8416,0.25,-0.7099
+Melton,Labor,ALP,6,sportsbet,2,0.1646,0.0482,-0.7111
+Croydon,Greens,GRN,101,tab,1,0.0015,0.0029,-0.7122
+Box Hill,Liberal,LNP,1.35,tab,2,0.7453,0.212,-0.7138
+Sandringham,Greens,GRN,51,sportsbet,2,0.0019,0.0056,-0.717
+Mordialloc,One Nation,ONP,6.5,sportsbet,2,0.1098,0.0434,-0.7182
+Prahran,Liberal,LNP,2.7,sportsbet,2,0.3475,0.1028,-0.7223
+Kororoit,Any Other,OTHER,46,sportsbet,1,0.0104,0.0059,-0.7309
+Footscray,Labor,ALP,1.53,sportsbet,2,0.6175,0.1742,-0.7335
+Shepparton,One Nation,ONP,4.33,sportsbet,2,0.1673,0.0616,-0.7335
+Eureka,Liberal,LNP,2.4,sportsbet,2,0.3466,0.1104,-0.7352
+Berwick,Labor,ALP,21,sportsbet,2,0.0154,0.0124,-0.7396
+Lowan,One Nation,ONP,5.25,tab,2,0.1231,0.0491,-0.7422
+Mildura,One Nation,ONP,4.33,sportsbet,2,0.2381,0.059,-0.7445
+Laverton,Any Other,OTHER,67,tab,2,0.0041,0.0037,-0.7521
+Melton,Any Other,OTHER,41,tab,2,0.0121,0.006,-0.754
+Eureka,Any Other,OTHER,36,sportsbet,1,0.014,0.0068,-0.7552
+Geelong,Other,OTHER,101,tab,1,0.0024,0.0024,-0.7576
+Bayswater,One Nation,ONP,8,sportsbet,2,0.0557,0.0295,-0.7644
+Clarinda,One Nation,ONP,13,tab,2,0.064,0.018,-0.766
+Werribee,Labor,ALP,2,sportsbet,2,0.4823,0.1166,-0.7669
+Rowville,Any Other,OTHER,101,tab,2,0.0037,0.0023,-0.7677
+Eureka,Other,OTHER,34,tab,1,0.0131,0.0068,-0.7688
+Wendouree,Greens,GRN,81,tab,1,0.0056,0.0028,-0.7732
+Lara,Other,OTHER,101,tab,1,0.0027,0.0022,-0.7778
+Cranbourne,Liberal,LNP,4.75,tab,2,0.1929,0.0467,-0.7782
+Croydon,Other,OTHER,67,tab,1,0.0026,0.0032,-0.789
+Broadmeadows,Greens,GRN,26,tab,1,0.0076,0.0081,-0.7894
+Northcote,Any Other,OTHER,101,tab,2,0.0082,0.0021,-0.793
+Bass,Other,OTHER,81,tab,1,0.0053,0.0026,-0.7934
+Croydon,One Nation,ONP,6.5,sportsbet,2,0.0725,0.0312,-0.7969
+Rowville,One Nation,ONP,11,tab,2,0.0375,0.0184,-0.7976
+Oakleigh,One Nation,ONP,12,tab,2,0.0537,0.0165,-0.8014
+Pakenham,Liberal,LNP,2.7,sportsbet,1,0.2986,0.0736,-0.8014
+Mill Park,Greens,GRN,101,tab,1,0.0039,0.0019,-0.803
+Pakenham,Coalition,LNP,2.65,tab,1,0.3076,0.0736,-0.8051
+Bentleigh,One Nation,ONP,21,tab,2,0.0281,0.0091,-0.8089
+Nepean,One Nation,ONP,10,sportsbet,2,0.0354,0.0187,-0.8125
+Point Cook,Greens,GRN,51,tab,1,0.0093,0.0036,-0.8164
+Bendigo East,Any Other Result,OTHER,51,tab,1,0.0064,0.0035,-0.8215
+Laverton,Liberal,LNP,34,tab,2,0.0162,0.0053,-0.8215
+Werribee,Any Other,OTHER,67,tab,2,0.0277,0.0026,-0.8258
+Melton,Greens,GRN,101,tab,2,0.0064,0.0017,-0.8283
+Kalkallo,Other,OTHER,51,tab,1,0.005,0.0034,-0.8292
+Mordialloc,Any Other,OTHER,81,tab,2,0.0083,0.0021,-0.834
+Pascoe Vale,Any Other,OTHER,51,tab,2,0.0099,0.0033,-0.8342
+Preston,Liberal,LNP,21,sportsbet,2,0.0184,0.0078,-0.8352
+Bundoora,Other,OTHER,51,tab,1,0.007,0.0032,-0.8368
+Warrandyte,Labor,ALP,36,sportsbet,2,0.0049,0.0044,-0.8398
+Dandenong,Any Other,OTHER,36,sportsbet,1,0.0075,0.0044,-0.8416
+Rowville,Greens,GRN,101,tab,1,7e-04,0.0015,-0.8434
+South-West Coast,One Nation,ONP,7.5,tab,2,0.0694,0.0206,-0.8455
+Kalkallo,Any Other,OTHER,46,sportsbet,1,0.0075,0.0034,-0.8459
+Frankston,Any Other,OTHER,41,sportsbet,1,0.0137,0.0037,-0.8462
+Williamstown,Any Other,OTHER,46,sportsbet,2,0.0506,0.0033,-0.8482
+South Barwon,Independent (Ron Nelson),IND,15,sportsbet,1,0.0419,0.0101,-0.8485
+Bundoora,One Nation,ONP,6.5,tab,2,0.1026,0.0227,-0.8521
+Eltham,One Nation,ONP,9.5,sportsbet,2,0.0819,0.0155,-0.8528
+Clarinda,Greens,GRN,101,tab,1,0.0025,0.0014,-0.8536
+Niddrie,Greens,GRN,101,tab,2,0.0052,0.0014,-0.8536
+Bulleen,Greens,GRN,41,tab,1,0.0018,0.0036,-0.8544
+Bellarine,One Nation,ONP,6,sportsbet,2,0.1233,0.0242,-0.8548
+Croydon,Any Other,OTHER,46,sportsbet,1,0.0048,0.0032,-0.8551
+Prahran,One Nation,ONP,67,tab,2,0.0102,0.0022,-0.856
+Pascoe Vale,One Nation,ONP,34,tab,2,0.0317,0.0042,-0.8589
+Wendouree,Any Other,OTHER,51,tab,2,0.0125,0.0027,-0.8598
+Bentleigh,Greens,GRN,67,tab,1,0.0062,0.0021,-0.8626
+Glen Waverley,Any Other,OTHER,101,tab,2,0.0039,0.0014,-0.8636
+Albert Park,One Nation,ONP,34,tab,2,0.0395,0.004,-0.864
+Oakleigh,Liberal,LNP,2.88,sportsbet,2,0.2737,0.047,-0.8648
+Kororoit,Greens,GRN,67,tab,1,0.0057,0.002,-0.866
+Essendon,Liberal,LNP,1.91,sportsbet,2,0.4694,0.0686,-0.869
+Essendon,Labor,ALP,2.63,sportsbet,2,0.3397,0.0484,-0.8726
+Bendigo East,Any Other,OTHER,36,sportsbet,1,0.0107,0.0035,-0.874
+Richmond,Liberal,LNP,51,tab,1,0.0067,0.0024,-0.8776
+Bundoora,Any Other,OTHER,36,sportsbet,1,0.0123,0.0032,-0.8848
+Ovens Valley,Any Other,OTHER,51,sportsbet,2,0.0194,0.0022,-0.8878
+Essendon,One Nation,ONP,11,sportsbet,2,0.0769,0.0101,-0.8884
+Geelong,Any Other,OTHER,46,sportsbet,1,0.0093,0.0024,-0.8896
+Broadmeadows,Any Other,OTHER,15,sportsbet,1,0.0209,0.0073,-0.8905
+Eureka,Labor,ALP,9,tab,2,0.107,0.0121,-0.8907
+Monbulk,Any Other,OTHER,41,tab,2,0.0118,0.0026,-0.8914
+Ringwood,One Nation,ONP,11,sportsbet,2,0.0551,0.0098,-0.8928
+Carrum,Other,OTHER,51,tab,1,0.0089,0.0021,-0.8929
+Gippsland East,Other,OTHER,101,tab,1,0.0036,0.001,-0.894
+Hawthorn,Greens,GRN,81,tab,1,0.0021,0.0013,-0.8947
+Tarneit,Greens,GRN,81,tab,1,0.0026,0.0013,-0.8947
+Tarneit,Any Other,OTHER,34,tab,2,0.0124,0.003,-0.898
+Warrandyte,Greens,GRN,51,tab,1,0.0017,0.002,-0.898
+Bulleen,Labor,ALP,21,sportsbet,2,0.0113,0.0048,-0.9002
+Eureka,Greens,GRN,81,tab,1,0.0045,0.0012,-0.9028
+Carrum,Any Other,OTHER,46,sportsbet,1,0.0106,0.0021,-0.9034
+Carrum,Greens,GRN,101,tab,1,0.0039,0.001,-0.904
+Bass,Labor,ALP,34,tab,2,0.0157,0.0027,-0.9082
+Berwick,Greens,GRN,101,tab,1,0.002,9e-04,-0.9091
+Narre Warren North,Liberal,LNP,4.5,tab,2,0.2075,0.0202,-0.9093
+Nepean,Labor,ALP,46,sportsbet,2,0.0037,0.0019,-0.9103
+Pascoe Vale,Liberal,LNP,21,sportsbet,2,0.0267,0.0043,-0.9107
+Narre Warren South,Greens,GRN,81,tab,1,0.0053,0.0011,-0.9109
+Bass,Any Other,OTHER,34,sportsbet,1,0.0118,0.0026,-0.9133
+Polwarth,One Nation,ONP,5.5,tab,2,0.1313,0.0157,-0.9139
+Sunbury,Greens,GRN,81,tab,2,0.0069,0.001,-0.915
+Laverton,One Nation,ONP,7,tab,2,0.0889,0.0118,-0.9174
+Evelyn,Other,OTHER,41,tab,1,0.0042,0.002,-0.918
+Polwarth,Any Other,OTHER,81,tab,2,0.0069,0.001,-0.919
+Greenvale,Greens,GRN,67,tab,1,0.0056,0.0012,-0.9196
+Hastings,Labor,ALP,11,tab,2,0.0529,0.0073,-0.9197
+Hastings,Greens,GRN,101,tab,2,0.0054,8e-04,-0.9242
+Evelyn,Any Other,OTHER,36,sportsbet,1,0.0056,0.002,-0.928
+Brighton,Labor,ALP,41,tab,2,0.004,0.0017,-0.9303
+Ivanhoe,One Nation,ONP,12,sportsbet,2,0.0458,0.0058,-0.9304
+Yan Yean,Greens,GRN,81,tab,2,0.0068,8e-04,-0.9312
+Dandenong,One Nation,ONP,6.5,tab,2,0.0817,0.0104,-0.9324
+Berwick,Any Other Party or Independent,OTHER,6.2,betfair,1,0.069,0.0109,-0.9324
+Glen Waverley,One Nation,ONP,26,tab,2,0.0237,0.0026,-0.9337
+Malvern,Labor,ALP,34,sportsbet,2,0.004,0.0019,-0.9337
+Ivanhoe,Any Other,OTHER,46,sportsbet,1,0.0091,0.0014,-0.9356
+Caulfield,Labor,ALP,26,tab,2,0.0068,0.0023,-0.9402
+Ivanhoe,Other,OTHER,41,tab,1,0.0094,0.0014,-0.9426
+Lara,Any Other,OTHER,26,sportsbet,1,0.0176,0.0022,-0.9428
+Sandringham,Labor,ALP,34,sportsbet,2,0.0045,0.0016,-0.9439
+Dandenong,Liberal,LNP,14,sportsbet,2,0.0326,0.004,-0.9447
+Mulgrave,Any Other,OTHER,46,sportsbet,2,0.0983,0.0012,-0.9448
+Kew,Labor,ALP,67,tab,2,0.0022,8e-04,-0.9464
+Gippsland East,Any Other,OTHER,51,sportsbet,1,0.0046,0.001,-0.9464
+Sydenham,Labor,ALP,5.5,tab,2,0.1666,0.0094,-0.9486
+Bayswater,Any Other,OTHER,101,tab,2,0.0019,5e-04,-0.9495
+Thomastown,Greens,GRN,67,tab,1,0.0034,8e-04,-0.9498
+Melbourne,Liberal,LNP,26,sportsbet,2,0.0153,0.0019,-0.9519
+Box Hill,One Nation,ONP,15,sportsbet,2,0.0291,0.0032,-0.952
+Pakenham,Labor,ALP,19,tab,2,0.0362,0.0025,-0.9525
+Mulgrave,One Nation,ONP,10,tab,2,0.0853,0.0047,-0.953
+Box Hill,Any Other,OTHER,31,sportsbet,1,0.0111,0.0014,-0.955
+Morwell,Any Other,OTHER,51,tab,2,0.0166,8e-04,-0.9592
+Narracan,Any Other,OTHER,34,sportsbet,2,0.014,0.0012,-0.9592
+Ashwood,One Nation,ONP,17,tab,2,0.0273,0.0024,-0.96
+Prahran,Labor,ALP,11,tab,2,0.0601,0.0036,-0.9604
+Hawthorn,Labor,ALP,34,sportsbet,2,0.0072,0.0012,-0.9609
+Brunswick,Labor,ALP,7,tab,2,0.0721,0.0056,-0.9611
+Euroa,Other,OTHER,51,tab,1,0.0067,8e-04,-0.9618
+Oakleigh,Any Other,OTHER,36,sportsbet,2,0.0134,0.001,-0.9622
+Richmond,Labor,ALP,4.5,tab,2,0.1706,0.0083,-0.9626
+South Barwon,Any Other,OTHER,67,sportsbet,2,0.0142,6e-04,-0.9632
+Brunswick,Liberal,LNP,81,tab,1,0.0017,4e-04,-0.9716
+Prahran,Any Other,OTHER,81,tab,2,0.0074,4e-04,-0.9716
+Shepparton,Any Other,OTHER,23,tab,2,0.0248,0.0012,-0.9724
+Euroa,Any Other,OTHER,36,sportsbet,1,0.0096,8e-04,-0.973
+Brunswick,Other,OTHER,41,tab,1,0.0045,7e-04,-0.9734
+Mornington,One Nation,ONP,8.5,sportsbet,1,0.0372,0.0031,-0.9736
+Eltham,Other,OTHER,51,tab,1,0.0082,5e-04,-0.9745
+Bass,Greens,GRN,101,tab,2,0.0079,3e-04,-0.9748
+Dandenong,Greens,GRN,101,tab,1,0.0012,3e-04,-0.9748
+Mulgrave,Greens,GRN,101,tab,1,0.0046,3e-04,-0.9748
+Northcote,One Nation,ONP,101,tab,2,0.0138,3e-04,-0.9748
+Sydenham,Greens,GRN,101,tab,1,0.0035,3e-04,-0.9748
+Polwarth,Labor,ALP,21,tab,2,0.022,0.0011,-0.9769
+Eltham,Any Other,OTHER,46,sportsbet,1,0.011,5e-04,-0.977
+Kew,Greens,GRN,81,tab,1,0.0013,3e-04,-0.9798
+Bentleigh,Other,OTHER,67,tab,1,0.0062,3e-04,-0.9799
+Footscray,One Nation,ONP,26,tab,2,0.0279,8e-04,-0.9805
+Box Hill,Other,OTHER,13,tab,1,0.0355,0.0014,-0.9812
+Melbourne,Labor,ALP,5.5,tab,2,0.1106,0.0032,-0.9821
+Nepean,Greens,GRN,51,tab,1,0.002,4e-04,-0.9822
+Cranbourne,Greens,GRN,81,tab,1,0.0049,2e-04,-0.9838
+Bulleen,One Nation,ONP,15,sportsbet,2,0.0155,0.001,-0.9842
+Evelyn,Any Other Party or Independent,OTHER,7.6,betfair,1,0.019,0.002,-0.9848
+Melbourne,One Nation,ONP,67,tab,1,0.0038,2e-04,-0.9866
+Mulgrave,Liberal,LNP,3.3,sportsbet,2,0.25,0.004,-0.987
+Footscray,Liberal,LNP,23,sportsbet,2,0.0229,6e-04,-0.9873
+Morwell,Labor,ALP,31,tab,2,0.023,4e-04,-0.9876
+Bentleigh,Any Other,OTHER,41,sportsbet,1,0.0085,3e-04,-0.9877
+Narre Warren North,Greens,GRN,81,tab,1,0.0052,1e-04,-0.9878
+Pakenham,Greens,GRN,81,tab,2,0.0066,1e-04,-0.9878
+Warrandyte,One Nation,ONP,10,sportsbet,2,0.0282,0.0012,-0.988
+Richmond,Any Other,OTHER,17,tab,2,0.0291,6e-04,-0.989
+Evelyn,Labor,ALP,26,sportsbet,2,0.0101,4e-04,-0.9896
+Nepean,Any Other,OTHER,41,tab,2,0.0042,3e-04,-0.9898
+Melbourne,Other,OTHER,67,tab,1,0.0038,2e-04,-0.99
+Northcote,Coalition,LNP,67,tab,1,0.0072,1e-04,-0.99
+Brunswick,Any Other,OTHER,15,sportsbet,1,0.02,7e-04,-0.9902
+Brunswick,One Nation,ONP,17,tab,1,0.0162,4e-04,-0.9924
+Eildon,Other,OTHER,51,tab,1,0.0064,1e-04,-0.9924
+Warrandyte,Any Other,OTHER,51,tab,2,0.0033,1e-04,-0.9924
+Lowan,Other,OTHER,67,tab,1,0.0048,1e-04,-0.9933
+Caulfield,Other,OTHER,41,tab,1,0.0015,2e-04,-0.9938
+Caulfield,Any Other,OTHER,36,sportsbet,1,0.0046,2e-04,-0.9946
+Gippsland East,Any Other Party or Independent,OTHER,5,betfair,1,0.0511,0.001,-0.9948
+Ashwood,Any Other,OTHER,51,tab,2,0.0048,1e-04,-0.9949
+Ovens Valley,Greens,GRN,101,tab,1,0.0024,0,-0.995
+Sandringham,One Nation,ONP,19,tab,2,0.0073,3e-04,-0.9952
+Melbourne,Any Other,OTHER,31,sportsbet,1,0.0103,2e-04,-0.9954
+South-West Coast,Any Other,OTHER,31,sportsbet,2,0.0101,1e-04,-0.9954
+Lowan,Any Other,OTHER,46,sportsbet,1,0.005,1e-04,-0.9954
+Bulleen,Any Other,OTHER,41,sportsbet,1,0.0035,1e-04,-0.9959
+Eildon,Greens,GRN,81,tab,1,0.0036,0,-0.996
+Brunswick,Any Other Party or Independent,OTHER,6,betfair,1,0.0361,7e-04,-0.9961
+Caulfield,Any Other Party or Independent,OTHER,26,betfair,1,0.0131,2e-04,-0.9961
+Eildon,Any Other,OTHER,26,sportsbet,1,0.0135,1e-04,-0.9961
+Brighton,Other,OTHER,67,tab,1,0.0012,0,-0.9966
+Northcote,Liberal,LNP,21,sportsbet,1,0.0231,1e-04,-0.9968
+Bulleen,Other,OTHER,26,tab,1,0.0039,1e-04,-0.9974
+Kalkallo,Greens,GRN,51,tab,1,0.005,0,-0.9974
+Ovens Valley,Labor,ALP,51,sportsbet,2,0.0047,0,-0.9974
+South-West Coast,Labor,ALP,51,sportsbet,2,0.004,0,-0.9974
+Brighton,One Nation,ONP,17,tab,2,0.0136,1e-04,-0.9983
+Brighton,Any Other,OTHER,34,sportsbet,1,0.0047,0,-0.9983
+Hawthorn,Any Other,OTHER,34,sportsbet,1,0.0074,0,-0.9983
+Malvern,Other,OTHER,34,tab,1,0.0016,0,-0.9983
+Malvern,Any Other,OTHER,23,sportsbet,1,0.0097,0,-0.9988
+Malvern,One Nation,ONP,13,sportsbet,2,0.0176,0,-0.9994
+Bellarine,Any Other,OTHER,51,tab,2,0.0115,0,-1
+Benambra,Greens,GRN,101,tab,2,0.0041,0,-1
+Benambra,Labor,ALP,101,tab,2,0.0041,0,-1
+Caulfield,One Nation,ONP,13,tab,2,0.0176,0,-1
+Eildon,Labor,ALP,41,tab,2,0.011,0,-1
+Essendon,Any Other,OTHER,21,sportsbet,1,0.0286,0,-1
+Euroa,Labor,ALP,51,tab,2,0.0085,0,-1
+Euroa,Greens,GRN,101,tab,1,0.0028,0,-1
+Evelyn,Greens,GRN,51,tab,1,0.0031,0,-1
+Gippsland East,Labor,ALP,51,tab,2,0.0068,0,-1
+Gippsland East,Greens,GRN,101,tab,1,0.0036,0,-1
+Gippsland South,Labor,ALP,51,tab,2,0.0072,0,-1
+Gippsland South,Any Other,OTHER,46,sportsbet,1,0.0051,0,-1
+Gippsland South,Other,OTHER,41,tab,1,0.0094,0,-1
+Gippsland South,Greens,GRN,101,tab,1,0.003,0,-1
+Gippsland South,Any Other Party or Independent,OTHER,6,betfair,1,0.0415,0,-1
+Glen Waverley,Independent (Nicholas Siow),IND,36,sportsbet,1,0.0086,0,-1
+Hastings,Any Other,OTHER,101,tab,2,0.0054,0,-1
+Hawthorn,One Nation,ONP,26,tab,2,0.0124,0,-1
+Kew,One Nation,ONP,41,tab,2,0.004,0,-1
+Kew,Any Other,OTHER,51,sportsbet,1,0.0022,0,-1
+Lowan,Labor,ALP,67,tab,2,0.0049,0,-1
+Lowan,Greens,GRN,101,tab,1,0.0028,0,-1
+Mildura,Independent (Ali Cupper),IND,10,sportsbet,1,0.0576,0,-1
+Mildura,Labor,ALP,67,tab,2,0.0074,0,-1
+Mildura,Any Other,OTHER,34,sportsbet,1,0.0126,0,-1
+Mildura,Other,OTHER,17,tab,1,0.0321,0,-1
+Mildura,Greens,GRN,67,tab,1,0.0061,0,-1
+Mornington,Labor,ALP,46,sportsbet,1,0.0028,0,-1
+Morwell,Greens,GRN,101,tab,1,0.0045,0,-1
+Murray Plains,Labor,ALP,101,tab,2,0.0035,0,-1
+Murray Plains,Any Other,OTHER,101,tab,2,0.0035,0,-1
+Murray Plains,Greens,GRN,101,tab,1,0.0032,0,-1
+Narracan,Labor,ALP,51,tab,2,0.0059,0,-1
+Narracan,Greens,GRN,81,tab,1,0.0035,0,-1
+Richmond,One Nation,ONP,41,tab,1,0.0088,0,-1
+Sandringham,Any Other,OTHER,36,sportsbet,2,0.0031,0,-1
+Shepparton,Labor,ALP,101,tab,2,0.0068,0,-1
+Shepparton,Greens,GRN,101,tab,1,0.0023,0,-1
+South-West Coast,Greens,GRN,67,tab,1,0.0028,0,-1
