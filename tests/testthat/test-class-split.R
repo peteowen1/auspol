@@ -195,3 +195,31 @@ test_that("class_split_args reads a frozen fit with no transfers or candidate fi
   withr::local_envvar(AUSPOL_CLASS_SPLIT_SD = "by_junior")
   expect_error(class_split_args("x2026", c("A", "B")), "built for spread pooled")
 })
+
+test_that("by_junior spread is the class-weighted RMSE per junior group, pooled under 5 seats", {
+  mk <- function(el, yr, seat, nm, sh, cred, oc) data.table::data.table(
+    election = el, year = yr, seat = seat, name = nm, cls = "IND", share = sh, cred = cred,
+    prior_nonmajor = NA_real_, prior_same_seat = FALSE, n_ind = 2L, our_cls = oc)
+  # 12 seats with an uncredentialed junior, 3 with a councillor junior (under 5: takes the pooled value)
+  hist <- data.table::rbindlist(c(
+    lapply(1:12, function(i) rbind(mk("x2010", 2010L, paste0("n", i), "A", 20, "none", 10 + 2 * i),
+                                   mk("x2010", 2010L, paste0("n", i), "B", 1 + (i %% 4), "none", 10 + 2 * i))),
+    lapply(1:3, function(i) rbind(mk("x2010", 2010L, paste0("c", i), "A", 20, "none", 30),
+                                  mk("x2010", 2010L, paste0("c", i), "B", 9, "councillor", 30)))))
+  tgt <- rbind(mk("x2014", 2014L, "t1", "P", NA, "none", NA), mk("x2014", 2014L, "t1", "Q", NA, "none", NA),
+               mk("x2014", 2014L, "t2", "R", NA, "none", NA), mk("x2014", 2014L, "t2", "S", NA, "councillor", NA))
+  tx <- data.table::data.table(election = "x2010", seat = "n1", round = 1L, from = "IND", to = c("IND", "ALP"), votes = c(30, 70))
+  withr::local_envvar(AUSPOL_CLASS_SPLIT_SD = "pooled")
+  p <- class_split_fit_pts("x2014", "pts_cred", cand = rbind(hist, tgt), transfers = tx)
+  withr::local_envvar(AUSPOL_CLASS_SPLIT_SD = "by_junior")
+  j <- class_split_fit_pts("x2014", "pts_cred", cand = rbind(hist, tgt), transfers = tx)
+  # recompute the none group's weighted RMSE by hand from the same fitted points. In the c seats the councillor is
+  # EXPECTED to lead, so their junior (by expectation) is the uncredentialed A: all 15 seats are in the none group,
+  # the credentialed group is empty and takes the pooled value.
+  hn <- hist[, .(r_act = min(share) / sum(share), oc = our_cls[1]), by = seat]
+  r_hat <- pmin(pmax((unname(j$pts["none"]) + j$b * hn$oc) / hn$oc, 0.01), 0.5)
+  expect_equal(unname(j$sd_junior["none"]), sqrt(sum(hn$oc * (hn$r_act - r_hat)^2) / sum(hn$oc)))
+  expect_equal(unname(j$sd_junior["cred"]), p$sd)          # no seats: falls back to pooled
+  expect_false(isTRUE(all.equal(unname(j$sd_junior["none"]), p$sd)))
+  expect_equal(j$seats$sd[j$seats$seat == "t1"], unname(j$sd_junior["none"]))
+})

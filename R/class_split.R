@@ -272,7 +272,7 @@ class_split_args <- function(target_election, seat_names) {
   src <- out_path(class_split_src())
   psrc <- out_path("ind-split-candidates.csv")
   tf <- list.files(file.path("external", "elections"), "transfers[.]csv$", full.names = TRUE)
-  key <- paste(target_election, mode, src, Sys.getenv("AUSPOL_COALITION_SPLIT_F", "state"),
+  key <- paste(target_election, mode, Sys.getenv("AUSPOL_CLASS_SPLIT_SD", "pooled"), src, Sys.getenv("AUSPOL_COALITION_SPLIT_F", "state"),
                if (file.exists(src)) file.mtime(src) else "nofile",
                if (mode != "pred" && file.exists(psrc)) file.mtime(psrc) else "nopts",
                if (length(tf)) max(file.mtime(tf)) else "notx")
