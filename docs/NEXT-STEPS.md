@@ -82,10 +82,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   bases (other classes over-called -2.9, SE 0.84; Narracan Greens is the live case).
 
 
-- OPEN, DATED 19 Nov: gated independent split LIVE 18 Nov (PRs #254, #255; JSON `ind_split` marks Essendon, Sydenham).
-  Done when: a 19 Nov run on `main` is green (4:30am run died on a one-off "release not found", rerun 8am; retry fix
-  `scripts/gh_retry.sh` on dev, #256 open). Seat-page note (inthegame-blog #1243 + #1246, dev only) reaches
-  prod only via my cherry-pick branch off its `main` (ITG's rule), with the navbar #1239 on 27 Nov.
+- OPEN, DATED 27 Nov: seat-page independents note (inthegame-blog #1243 + #1246) is on its dev only. Reaches prod via
+  my cherry-pick branch off its `main` (ITG's rule), with the navbar #1239. Done when: inthegame.blog Kew shows the note.
 - OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. 17 Nov done: 6 sources (TAB not
   saved: Chrome blocked the download on api.beta.tab.com.au; Betfair has no Victorian markets). On 27 Nov, if the TAB
   download is blocked again, check Chrome's download prompt for that site first. Each date: `Rscript scripts/snapshot_benchmarks.R`, plus the GES
