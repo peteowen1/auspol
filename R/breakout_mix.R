@@ -235,7 +235,7 @@ breakout_frame <- function(out_dir = out_path(),
   ed <- election_dates()
   D[, edate := as.Date(unname(ed[election]))]
   if (anyNA(D$edate)) stop("breakout_frame(): no election date for ", paste(unique(D$election[is.na(D$edate)]), collapse = ", "))
-  SV <- data.table::fread(sf, showProgress = FALSE)
+  SV <- salience_live_filter(data.table::fread(sf, showProgress = FALSE))
   SV <- unique(SV[, list(election, k = normalise_seat(seat), party)])
   D[, k := normalise_seat(seat)]
   D[, sal_present := 0L]
@@ -445,7 +445,8 @@ breakout_p_for <- function(target, frame = NULL, live_rows = NULL, cache_dir = N
                                "salience-v6.csv", "candidacies.csv"))
   srcs <- c(srcs, file.path(pkg_root(), "external", "reference", "polls", "seat-polls", "seat_polls.csv"))
   key <- paste0("frame-", digest::digest(list(.BO_CACHE_VERSION, unname(tools::md5sum(srcs[file.exists(srcs)])),
-                                             deparse(breakout_frame), deparse(.bo_add_derived)), algo = "xxhash64"))
+                                             deparse(breakout_frame), deparse(.bo_add_derived),
+                                             Sys.getenv("AUSPOL_SALIENCE_LIVE_VIC", "0")), algo = "xxhash64"))
   .bo_cached(key, function() breakout_frame(out_dir), cache_dir, disk = FALSE)
 }
 

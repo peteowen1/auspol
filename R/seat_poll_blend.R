@@ -461,7 +461,7 @@ seat_poll_model_var <- function(target_election) {
 .seat_poll_ind_salience <- function(election) {
   sf <- out_path("salience-v6.csv")
   if (!file.exists(sf)) return(data.table::data.table(sk = character(0), jump = numeric(0)))
-  sv <- data.table::fread(sf, select = c("election", "seat", "party", "jump"), showProgress = FALSE)
+  sv <- salience_live_filter(data.table::fread(sf, select = c("election", "seat", "party", "jump"), showProgress = FALSE))
   el_s <- election
   sv <- sv[sv$election == el_s & sv$party == "IND" & is.finite(sv$jump)]
   if (!nrow(sv)) return(data.table::data.table(sk = character(0), jump = numeric(0)))

@@ -148,6 +148,7 @@ governed_population <- function(election, prev_election, region,
   # times. Renamed to a value with no column-name collision.
   raw <- data.table::fread(sf, showProgress = FALSE)
   target_election <- election
+  raw <- salience_live_filter(raw, announce = identical(target_election, "vic2026"))
   SAL <- raw[raw$election == target_election]
   if (!nrow(SAL)) return(NULL)
   # SEAT NAMES ARE RESOLVED TO THE CANDIDACY CORPUS'S SPELLING, because the
@@ -490,4 +491,31 @@ salience_permit_for <- function(election, prev_election, region,
          call. = FALSE)
   }
   stats::setNames(as.logical(pv$permit), pv$seat)
+}
+
+#' Drop the live Victorian salience rows when their switch is off
+#'
+#' `AUSPOL_SALIENCE_LIVE_VIC` (`"0"` default since 19 Nov 2026, Pete): `"0"`
+#' removes the `vic2026` rows of `output/salience-v6.csv` at read time, so every
+#' reader (the live xgb features through [governed_population()], the seat-poll
+#' independent check, the breakout frame) sees no vic2026 corpus and the live
+#' forecast prints `XG5!`, exactly as if the snapshot had never been linked.
+#' `"1"` keeps them. Why off: the snapshot gave three challenger independents
+#' 0.32-0.65 (Essendon, Benambra, Hawthorn) where past challengers with the same
+#' search rise won 2 of 23 (`reviews/market-gaps-vic2026-2026-11-19/README.md`).
+#' Rows of every other election are untouched, so backtests do not move.
+#'
+#' @param raw A data.table read from `salience-v6.csv`, with an `election` column.
+#' @param announce Print the `SLF1` line saying how many rows were dropped.
+#' @return `raw`, without its vic2026 rows when the switch is `"0"`.
+#' @export
+salience_live_filter <- function(raw, announce = FALSE) {
+  v <- Sys.getenv("AUSPOL_SALIENCE_LIVE_VIC", "0")
+  if (!nzchar(v)) v <- "0"
+  if (!v %in% c("0", "1")) stop("AUSPOL_SALIENCE_LIVE_VIC must be \"0\" or \"1\", not \"", v, "\"", call. = FALSE)
+  if (v == "1" || !"election" %in% names(raw)) return(raw)
+  drop_rows <- raw[["election"]] == "vic2026"
+  if (announce) cat(sprintf("SLF1 AUSPOL_SALIENCE_LIVE_VIC=0: %d vic2026 salience row(s) dropped at read; the live forecast runs without vic2026 search interest\n",
+                            sum(drop_rows)))
+  raw[!drop_rows]
 }

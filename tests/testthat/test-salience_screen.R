@@ -244,3 +244,34 @@ test_that("prev_party for IND is this candidate's own prior vote, not another IN
   expect_equal(g$prev_party, 0)   # her own prior vote, not the previous IND's
   expect_true(g$governed)
 })
+
+test_that("AUSPOL_SALIENCE_LIVE_VIC=0 drops only the vic2026 salience rows, at every reader", {
+  raw <- data.table::data.table(keyword = c("a", "b", "c"), election = c("vic2026", "vic2022", "vic2026"),
+                                seat = c("Essendon", "Essendon", "Kew"), party = "IND", jump = c(0.875, 0.1, 3.15))
+  withr::local_envvar(AUSPOL_SALIENCE_LIVE_VIC = "0")
+  off <- salience_live_filter(raw)
+  expect_identical(off$election, "vic2022")
+  expect_output(salience_live_filter(raw, announce = TRUE), "SLF1 .* 2 vic2026 salience row")
+  withr::local_envvar(AUSPOL_SALIENCE_LIVE_VIC = "")          # empty reads as the default, off
+  expect_identical(nrow(salience_live_filter(raw)), 1L)
+  withr::local_envvar(AUSPOL_SALIENCE_LIVE_VIC = "1")
+  expect_identical(nrow(salience_live_filter(raw)), 3L)
+  withr::local_envvar(AUSPOL_SALIENCE_LIVE_VIC = "yes")
+  expect_error(salience_live_filter(raw), "must be \"0\" or \"1\"")
+
+  # the readers: the seat-poll independent check and governed_population() see no vic2026 corpus when off
+  root <- withr::local_tempdir()
+  dir.create(file.path(root, "output"))
+  data.table::fwrite(raw, file.path(root, "output", "salience-v6.csv"))
+  withr::local_options(auspol.root = root)
+  withr::local_dir(root)
+  withr::local_envvar(AUSPOL_SALIENCE_LIVE_VIC = "1")
+  expect_identical(nrow(.seat_poll_ind_salience("vic2026")), 2L)
+  withr::local_envvar(AUSPOL_SALIENCE_LIVE_VIC = "0")
+  expect_identical(nrow(.seat_poll_ind_salience("vic2026")), 0L)
+  expect_identical(nrow(.seat_poll_ind_salience("vic2022")), 1L)
+  g <- "not run"
+  printed <- capture.output(g <- governed_population("vic2026", "vic2022", "vic"))
+  expect_null(g)
+  expect_true(any(grepl("^SLF1 .* 2 vic2026 salience row", printed)))
+})

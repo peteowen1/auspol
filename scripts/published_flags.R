@@ -400,6 +400,7 @@ PUBLISHED_FLAGS <- c(
   # registry exists to prevent and which CLAUDE.md records happening twice
   # before (AUSPOL_SEAT_SD_MULT never reaching fit_seats_full.R). Its shipped
   # default lives in fit_nsw.R itself, next to the code that reads it.
+  AUSPOL_SALIENCE_LIVE_VIC   = "0",         # SHIPPED OFF 2026-11-19 (Pete: "Turn it off"): "0" drops the vic2026 rows of salience-v6.csv at read (salience_live_filter(), R/salience_screen.R; prints SLF1), so the live forecast runs without Victorian search interest (XG5!). Three challenger independents sat at 0.32-0.65 where past challengers with the same rise won 2 of 23 (reviews/market-gaps-vic2026-2026-11-19/README.md). "1" restores them, e.g. after the 25 Nov snapshot. Other elections untouched.
   AUSPOL_SALIENCE_PCTILE_NZ  = "1",         # 1 = jump_pctile is ranked among NON-ZERO jumps only
                                              # (R/salience_surge.R). `jump` is 51-81% exactly zero in
                                              # every governed field, so ranking over all of it put the tied
