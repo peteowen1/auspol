@@ -185,7 +185,7 @@ test_that("class_split_args reads a frozen fit with no transfers or candidate fi
                                i_none = 1.1, i_MP = 1.6, i_prior5 = 1.8, i_councillor = 2.6)
   data.table::fwrite(fz, file.path(root, "output", "ind-split-fit-x2026.csv"))
   withr::local_options(auspol.root = root)
-  withr::local_envvar(AUSPOL_CLASS_SPLIT = "1", AUSPOL_CLASS_SPLIT_MODE = "pts_carry")
+  withr::local_envvar(AUSPOL_CLASS_SPLIT = "1", AUSPOL_CLASS_SPLIT_MODE = "pts_carry", AUSPOL_CLASS_SPLIT_GATE = "none")
   out <- capture.output(a <- class_split_args("x2026", c("A", "B", "C")))
   expect_equal(unname(a$cls_pts[c("A", "B")]), c(2.6, 1.1))   # only the pts_carry rows, not pts_cred's 1.1 for A
   expect_true(is.na(a$cls_pts["C"]))
@@ -205,7 +205,8 @@ test_that("the cred2 gate splits only seats with 2+ credentialed independents, a
                                i_none = 1.1, i_MP = 1.6, i_prior5 = 1.8, i_councillor = 2.6)
   data.table::fwrite(fz, file.path(root, "output", "ind-split-fit-x2026.csv"))
   withr::local_options(auspol.root = root)
-  withr::local_envvar(AUSPOL_CLASS_SPLIT = "1", AUSPOL_CLASS_SPLIT_MODE = "pts_carry", AUSPOL_CLASS_SPLIT_SD = "pooled")
+  withr::local_envvar(AUSPOL_CLASS_SPLIT = "1", AUSPOL_CLASS_SPLIT_MODE = "pts_carry", AUSPOL_CLASS_SPLIT_SD = "pooled",
+                      AUSPOL_CLASS_SPLIT_GATE = "none")
   rm(list = ls(envir = .cls_cache), envir = .cls_cache)
   # ungated: all three seats split
   capture.output(a0 <- class_split_args("x2026", c("A", "B", "C")))

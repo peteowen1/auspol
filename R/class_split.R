@@ -96,17 +96,18 @@ class_split_fit <- function(target_election, oof = NULL, transfers = NULL,
 
 #' The validated `AUSPOL_CLASS_SPLIT_MODE` switch
 #'
-#' How the class split sizes the junior candidate: `"pred"` (default, the 6 Nov
+#' How the class split sizes the junior candidate: `"pred"` (the 6 Nov
 #' design: junior fraction from per-candidate predictions), `"pts_cred"` (the
 #' junior's expected vote in points from their credential, divided by the run's
 #' own forecast of the class) or `"pts_carry"` (as `pts_cred`, but a candidate
-#' with an earlier non-major vote is expected to poll a carried share of it).
+#' with an earlier non-major vote is expected to poll a carried share of it;
+#' the default, shipped 2026-11-18).
 #' docs/plans/prereg-ind-split-points-2026-11-18.md.
 #' @return One of the three modes.
 #' @export
 class_split_mode <- function() {
-  m <- Sys.getenv("AUSPOL_CLASS_SPLIT_MODE", "pred")
-  if (!nzchar(m)) m <- "pred"
+  m <- Sys.getenv("AUSPOL_CLASS_SPLIT_MODE", "pts_carry")
+  if (!nzchar(m)) m <- "pts_carry"
   if (!m %in% c("pred", "pts_cred", "pts_carry"))
     stop("AUSPOL_CLASS_SPLIT_MODE must be \"pred\", \"pts_cred\" or \"pts_carry\"; got \"", m, "\"", call. = FALSE)
   m
@@ -114,15 +115,15 @@ class_split_mode <- function() {
 
 #' Which seats the points-mode class split may touch
 #'
-#' Reads `AUSPOL_CLASS_SPLIT_GATE`: `"none"` (default, every seat with 2+
-#' independents) or `"cred2"` (only seats where two or more of them have a
+#' Reads `AUSPOL_CLASS_SPLIT_GATE`: `"none"` (every seat with 2+
+#' independents) or `"cred2"` (default, shipped 2026-11-18: only seats where two or more of them have a
 #' record: MP, councillor, or an earlier 5%+ non-major vote).
 #' docs/plans/prereg-ind-split-points-2026-11-18.md, Amendment 2.
 #' @return `"none"` or `"cred2"`.
 #' @export
 class_split_gate <- function() {
-  g <- Sys.getenv("AUSPOL_CLASS_SPLIT_GATE", "none")
-  if (!nzchar(g)) g <- "none"
+  g <- Sys.getenv("AUSPOL_CLASS_SPLIT_GATE", "cred2")
+  if (!nzchar(g)) g <- "cred2"
   if (!g %in% c("none", "cred2"))
     stop("AUSPOL_CLASS_SPLIT_GATE must be \"none\" or \"cred2\"; got \"", g, "\"", call. = FALSE)
   g
@@ -275,7 +276,7 @@ class_split_fit_pts <- function(target_election, mode = class_split_mode(), cand
 
 #' The class-split elements of the `coalition_split` argument
 #'
-#' Reads `AUSPOL_CLASS_SPLIT` (default `"0"`): anything but `"1"` returns
+#' Reads `AUSPOL_CLASS_SPLIT` (default `"1"`, shipped 2026-11-18): anything but `"1"` returns
 #' `NULL`. Prints the plumbing line `CLS1` per election.
 #'
 #' @param target_election Election label.
@@ -284,7 +285,7 @@ class_split_fit_pts <- function(target_election, mode = class_split_mode(), cand
 #'   seat (`NA` where no split).
 #' @export
 class_split_args <- function(target_election, seat_names) {
-  if (!identical(Sys.getenv("AUSPOL_CLASS_SPLIT", "0"), "1")) return(NULL)
+  if (!identical(Sys.getenv("AUSPOL_CLASS_SPLIT", "1"), "1")) return(NULL)
   mode <- class_split_mode()
   src <- out_path(class_split_src())
   psrc <- out_path("ind-split-candidates.csv")

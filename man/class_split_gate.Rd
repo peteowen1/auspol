@@ -10,8 +10,8 @@ class_split_gate()
 \code{"none"} or \code{"cred2"}.
 }
 \description{
-Reads \code{AUSPOL_CLASS_SPLIT_GATE}: \code{"none"} (default, every seat with 2+
-independents) or \code{"cred2"} (only seats where two or more of them have a
+Reads \code{AUSPOL_CLASS_SPLIT_GATE}: \code{"none"} (every seat with 2+
+independents) or \code{"cred2"} (default, shipped 2026-11-18: only seats where two or more of them have a
 record: MP, councillor, or an earlier 5\%+ non-major vote).
 docs/plans/prereg-ind-split-points-2026-11-18.md, Amendment 2.
 }

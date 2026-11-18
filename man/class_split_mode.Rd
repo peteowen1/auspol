@@ -10,10 +10,11 @@ class_split_mode()
 One of the three modes.
 }
 \description{
-How the class split sizes the junior candidate: \code{"pred"} (default, the 6 Nov
+How the class split sizes the junior candidate: \code{"pred"} (the 6 Nov
 design: junior fraction from per-candidate predictions), \code{"pts_cred"} (the
 junior's expected vote in points from their credential, divided by the run's
 own forecast of the class) or \code{"pts_carry"} (as \code{pts_cred}, but a candidate
-with an earlier non-major vote is expected to poll a carried share of it).
+with an earlier non-major vote is expected to poll a carried share of it;
+the default, shipped 2026-11-18).
 docs/plans/prereg-ind-split-points-2026-11-18.md.
 }

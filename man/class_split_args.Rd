@@ -16,6 +16,6 @@ class_split_args(target_election, seat_names)
 seat (\code{NA} where no split).
 }
 \description{
-Reads \code{AUSPOL_CLASS_SPLIT} (default \code{"0"}): anything but \code{"1"} returns
+Reads \code{AUSPOL_CLASS_SPLIT} (default \code{"1"}, shipped 2026-11-18): anything but \code{"1"} returns
 \code{NULL}. Prints the plumbing line \code{CLS1} per election.
 }
