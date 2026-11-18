@@ -510,12 +510,24 @@ salience_permit_for <- function(election, prev_election, region,
 #' @return `raw`, without its vic2026 rows when the switch is `"0"`.
 #' @export
 salience_live_filter <- function(raw, announce = FALSE) {
-  v <- Sys.getenv("AUSPOL_SALIENCE_LIVE_VIC", "0")
-  if (!nzchar(v)) v <- "0"
-  if (!v %in% c("0", "1")) stop("AUSPOL_SALIENCE_LIVE_VIC must be \"0\" or \"1\", not \"", v, "\"", call. = FALSE)
-  if (v == "1" || !"election" %in% names(raw)) return(raw)
+  if (salience_live_vic_on() || !"election" %in% names(raw)) return(raw)
   drop_rows <- raw[["election"]] == "vic2026"
   if (announce) cat(sprintf("SLF1 AUSPOL_SALIENCE_LIVE_VIC=0: %d vic2026 salience row(s) dropped at read; the live forecast runs without vic2026 search interest\n",
                             sum(drop_rows)))
   raw[!drop_rows]
+}
+
+#' Whether the live Victorian salience rows are in use (`AUSPOL_SALIENCE_LIVE_VIC`)
+#'
+#' `"0"` (default, or empty) is off, `"1"` on; anything else stops. Shared by
+#' [salience_live_filter()] and the frozen seat-poll table read in
+#' [seat_poll_blend_table()], whose `sal` column was written under the old
+#' default and must not carry vic2026 salience in past the switch.
+#' @return `TRUE` when the vic2026 rows are kept.
+#' @export
+salience_live_vic_on <- function() {
+  v <- Sys.getenv("AUSPOL_SALIENCE_LIVE_VIC", "0")
+  if (!nzchar(v)) v <- "0"
+  if (!v %in% c("0", "1")) stop("AUSPOL_SALIENCE_LIVE_VIC must be \"0\" or \"1\", not \"", v, "\"", call. = FALSE)
+  v == "1"
 }

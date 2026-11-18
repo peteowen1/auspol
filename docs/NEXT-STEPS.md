@@ -17,6 +17,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   edits only. Phone check of the live page passed (Pete, 18 Nov). Dated, a session runs each: 23 Nov VEC venues
   rerun; 25 Nov final salience snapshot + night dress rehearsal; 27 Nov merge inthegame-blog#1239 (navbar link)
   and the final benchmark capture (Pete: VPN off).
+- OPEN, DATED 25 Nov: Victorian search interest is OFF in the live forecast since 19 Nov (`AUSPOL_SALIENCE_LIVE_VIC=0`,
+  Pete). After the final snapshot, rerun the on/off walk and take it to Pete before any "1". Done when: he has chosen.
+  Evidence: `reviews/market-gaps-vic2026-2026-11-19/README.md` (challengers with the same rise won 2 of 23).
 - OPEN, 15 Nov full review (`reviews/FABLE-FULL-REVIEW-2026-11-15.md`, "Pick up from here" is the work list; DECISIONS
   2026-11-15). A1-A3, A5, A6, B1 shipped and seen live 17 Nov (above). Done when: the rest of "Pick up from here" is
   done or parked with a trigger.

@@ -275,3 +275,22 @@ test_that("AUSPOL_SALIENCE_LIVE_VIC=0 drops only the vic2026 salience rows, at e
   expect_null(g)
   expect_true(any(grepl("^SLF1 .* 2 vic2026 salience row", printed)))
 })
+
+test_that("the frozen seat-poll table (the daily run's path) honours AUSPOL_SALIENCE_LIVE_VIC", {
+  real <- file.path(pkg_root(), "output", "seat-poll-blend-vic2026.csv")
+  skip_if_not(file.exists(real), "no frozen vic2026 seat-poll table on this machine")
+  root <- withr::local_tempdir()
+  dir.create(file.path(root, "output"))
+  file.copy(real, file.path(root, "output"))
+  file.copy(file.path(pkg_root(), "DESCRIPTION"), root)
+  withr::local_options(auspol.root = root)
+  expect_false(.has_seat_predictions())                          # so the table is read frozen, as on CI
+  withr::local_envvar(AUSPOL_SALIENCE_LIVE_VIC = "1")
+  utils::capture.output(tb1 <- seat_poll_blend_table("vic2026"))
+  on <- attr(tb1, "w")$si
+  skip_if(is.null(on) || !nrow(on), "frozen table carries no independent salience")
+  withr::local_envvar(AUSPOL_SALIENCE_LIVE_VIC = "0")
+  printed <- utils::capture.output(tb0 <- seat_poll_blend_table("vic2026"))
+  expect_identical(nrow(attr(tb0, "w")$si), 0L)
+  expect_true(any(grepl("^SLF2 ", printed)))
+})

@@ -248,7 +248,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_SALIENCE_BLEND_ONCE` | yes | NO | NO | NO | NO | NO | NO | salience_surge.R |
 | `AUSPOL_SALIENCE_EXP_SD` | NO | yes | yes | yes | yes | yes | NO |  |
 | `AUSPOL_SALIENCE_EXPECTED` | yes | yes | yes | yes | yes | yes | NO |  |
-| `AUSPOL_SALIENCE_LIVE_VIC` | NO | NO | NO | NO | NO | NO | NO | breakout_mix.R, salience_screen.R |
+| `AUSPOL_SALIENCE_LIVE_VIC` | NO | NO | NO | NO | NO | NO | NO | breakout_mix.R, salience_screen.R, seat_poll_blend.R |
 | `AUSPOL_SALIENCE_PCTILE_NZ` | NO | NO | NO | NO | NO | NO | NO | salience_surge.R |
 | `AUSPOL_SALIENCE_SMOOTH` | NO | NO | NO | NO | NO | NO | NO | salience_surge.R |
 | `AUSPOL_SALIENCE_SURGE` | NO | yes | NO | NO | NO | NO | NO |  |
