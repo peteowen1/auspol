@@ -97,3 +97,17 @@ guards, not looser ones.
   likeliest outcome is the same guard-1 failure.
 - Arm: `AUSPOL_CLASS_SPLIT=1 AUSPOL_CLASS_SPLIT_MODE=pts_cred AUSPOL_CLASS_SPLIT_SD=by_junior`, same screen, same
   primary, guards and known answers. Arm K (`pts_carry`) is recorded when its screen ends but is not amended.
+
+## RESULT, arm K (`pts_carry`), 18 Nov 4:15pm: REFUSED on guard 1
+
+`deciding-runs/20261118-1404-indsplit-carry` (code 879f170b, 1,000 sims, 35 elections; arm key 1c7d6ed5df7d).
+
+| Set | Seats (elections) | Arm - base (SE) | Verdict |
+|---|---|---|---|
+| Primary: 2+ independents | 486 (35) | -0.0041 (0.0043) | within 1 SE (tie) |
+| Guard 1: seats the independents won | 93 (27) | **+0.0570 (0.0138)** | **WORSE, fails** |
+| Guard 2: all seats | 2,920 (35) | -0.0007 (0.0007) | within 1 SE; no election worse by 2 SE |
+
+quick_arm pooled 0.3033 -> 0.3029 (SE 0.0007). Same known answers as arm C (Kooyong 0.582 -> 0.445, Indi 0.965 ->
+0.852): the carried vote does not touch the seats it loses on, whose juniors have no record. (Guard-1 base differs from
+arm C's by one won seat in the set, 93 against 92, one of them at the probability floor.)
