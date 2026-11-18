@@ -17,6 +17,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   edits only. Phone check of the live page passed (Pete, 18 Nov). Dated, a session runs each: 23 Nov VEC venues
   rerun; 25 Nov final salience snapshot + night dress rehearsal; 27 Nov merge inthegame-blog#1239 (navbar link)
   and the final benchmark capture (Pete: VPN off).
+- OPEN, DATED 25 Nov: Victorian search interest is OFF in the live forecast since 19 Nov (`AUSPOL_SALIENCE_LIVE_VIC=0`,
+  Pete). After the final snapshot, rerun the on/off walk and take it to Pete before any "1". Done when: he has chosen.
+  Evidence: `reviews/market-gaps-vic2026-2026-11-19/README.md` (challengers with the same rise won 2 of 23).
 - OPEN, 15 Nov full review (`reviews/FABLE-FULL-REVIEW-2026-11-15.md`, "Pick up from here" is the work list; DECISIONS
   2026-11-15). A1-A3, A5, A6, B1 shipped and seen live 17 Nov (above). Done when: the rest of "Pick up from here" is
   done or parked with a trigger.
@@ -82,10 +85,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   bases (other classes over-called -2.9, SE 0.84; Narracan Greens is the live case).
 
 
-- OPEN, DATED 19 Nov: gated independent split LIVE 18 Nov (PRs #254, #255; JSON `ind_split` marks Essendon, Sydenham).
-  Done when: a 19 Nov run on `main` is green (4:30am run died on a one-off "release not found", rerun 8am; retry fix
-  `scripts/gh_retry.sh` on dev, #256 open). Seat-page note (inthegame-blog #1243 + #1246, dev only) reaches
-  prod only via my cherry-pick branch off its `main` (ITG's rule), with the navbar #1239 on 27 Nov.
+- OPEN, DATED 27 Nov: seat-page independents note (inthegame-blog #1243 + #1246) is on its dev only. Reaches prod via
+  my cherry-pick branch off its `main` (ITG's rule), with the navbar #1239. Done when: inthegame.blog Kew shows the note.
 - OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. 17 Nov done: 6 sources (TAB not
   saved: Chrome blocked the download on api.beta.tab.com.au; Betfair has no Victorian markets). On 27 Nov, if the TAB
   download is blocked again, check Chrome's download prompt for that site first. Each date: `Rscript scripts/snapshot_benchmarks.R`, plus the GES

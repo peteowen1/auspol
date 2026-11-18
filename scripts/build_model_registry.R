@@ -469,6 +469,10 @@ CLASSIFY <- list(
     "SHIPPED 2026-09-19 (plans/prereg-minor-defector-conserve-2026-09-19.md). Read inside personal_prior_vote()",
     "in R/candidate_returns.R: a minor-to-minor defector's origin class keeps a fitted share (~0.38) of the vote.",
     "Reaches every harness and fit_seats_full.R through that function, not by a direct harness read."),
+  AUSPOL_SALIENCE_LIVE_VIC = paste(
+    "SHIPPED OFF 2026-11-19 (Pete): salience_live_filter() in R/salience_screen.R drops the vic2026 rows of",
+    "salience-v6.csv at read in governed_population(), the seat-poll independent check and breakout_frame().",
+    "Only the live vic2026 forecast has those rows; no backtest election is touched, so the harnesses need no read."),
   AUSPOL_SALIENCE_PCTILE_NZ = paste(
     "SHIPPED 2026-09-12 (b7b5839): R/salience_surge.R ranks the salience percentile among NON-ZERO values only",
     "(docs/reviews/salience-percentile-fix-2026-09-12.md). Read in R/, reaches every caller of the surge model."),

@@ -4,6 +4,11 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-11-19 Victorian search interest OFF in the live forecast (Pete: "Turn it off")** (`AUSPOL_SALIENCE_LIVE_VIC=0`,
+  `salience_live_filter()`): it alone gave three challenger independents 0.32-0.65 (Essendon, Benambra, Hawthorn);
+  past challengers with the same rise won 2 of 23, no seat polls in two, Hawthorn's poll and YouGov against. Expected
+  seats ALP 23.4 -> 25.1, LNP 39.1 -> 40.5, ONP 15.8 -> 14.9, IND 1.9 -> 0.2. `reviews/market-gaps-vic2026-2026-11-19/README.md`.
+- **2026-11-19 Release downloads retry three times** (PR #257, `scripts/gh_retry.sh`): the 4:34am daily run died on one failed GitHub call; rerun published 8:12am with Essendon IND 0.647 (split held on its first daily run). #256 closed.
 - **2026-11-18 (evening) Gated independent split SHIPPED on Pete's override** (`AUSPOL_CLASS_SPLIT=1`, `_MODE=pts_carry`, `_GATE=cred2`): arm K only in seats with 2+ credentialed independents. Guard 1 missed by 1.16 SE (+0.0058, SE 0.0050; Mackellar, Calare 2025); primary and all-seats better. Pete: "Ship it (override guard 1)". Prereg Amendment 2; live walk `reviews/ind-split-armk-live-walk-2026-11-18.md`.
 - **2026-11-18 Several independents split by expected points (`AUSPOL_CLASS_SPLIT_MODE` pts_cred / pts_carry, `AUSPOL_CLASS_SPLIT_SD` by_junior): REFUSED, all three arms, stay OFF.**
   Ties on seats with 2+ independents (-0.003 to -0.004, SE ~0.005); worse on seats an independent won (+0.057 to +0.070,

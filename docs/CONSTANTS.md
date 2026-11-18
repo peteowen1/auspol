@@ -672,6 +672,7 @@ Existing rows for `AUSPOL_SEAT_POLL_PRIOR` (0.75), `_PRIOR_SD` (0.25), the half-
 | `AUSPOL_LIVE_SEATPREV_RAW` | `scripts/fit_seats_full.R` (`.mat22_xgb`) | "1" | Switch: the xgb layer reads the raw prior-election matrix it was trained on. |
 | `AUSPOL_SURGE_H_TF` | `scripts/fit_xgb_primary_v6.R:580` | "1" | Switch: the xgb `surge_h` feature is built from earlier canon elections only. |
 | `AUSPOL_SURGE_SOURCE` | `R/party_surge.R:95` | "none" | Switch (decided 2026-10-16): no class counts as surging in the salience screen. |
+| `AUSPOL_SALIENCE_LIVE_VIC` | `R/salience_screen.R` `salience_live_filter()` | "0" | Switch (Pete, 2026-11-19): the live vic2026 forecast runs without its search-interest rows. `reviews/market-gaps-vic2026-2026-11-19/README.md`. |
 
 ### Spread by seat size, composition and error shape (shipped 2026-10-14 and 2026-10-17)
 

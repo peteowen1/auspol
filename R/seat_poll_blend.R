@@ -461,7 +461,7 @@ seat_poll_model_var <- function(target_election) {
 .seat_poll_ind_salience <- function(election) {
   sf <- out_path("salience-v6.csv")
   if (!file.exists(sf)) return(data.table::data.table(sk = character(0), jump = numeric(0)))
-  sv <- data.table::fread(sf, select = c("election", "seat", "party", "jump"), showProgress = FALSE)
+  sv <- salience_live_filter(data.table::fread(sf, select = c("election", "seat", "party", "jump"), showProgress = FALSE))
   el_s <- election
   sv <- sv[sv$election == el_s & sv$party == "IND" & is.finite(sv$jump)]
   if (!nrow(sv)) return(data.table::data.table(sk = character(0), jump = numeric(0)))
@@ -883,7 +883,12 @@ seat_poll_blend_table <- function(target_election, write = FALSE) {
           attr(w$vm, paste0("ht_", pre)) <- x }
       }
       if ("te" %in% names(raw)) w$te <- .kv_read(raw$te[1])
-      if ("sal" %in% names(raw)) { sv <- .kv_read(raw$sal[1]); w$si <- data.table::data.table(sk = names(sv), jump = unname(sv)) }
+      if ("sal" %in% names(raw)) { sv <- .kv_read(raw$sal[1]); w$si <- data.table::data.table(sk = names(sv), jump = unname(sv))
+        # the frozen table's salience was written before AUSPOL_SALIENCE_LIVE_VIC existed: honour the switch here too
+        if (identical(target_election, "vic2026") && !salience_live_vic_on()) {
+          cat(sprintf("SLF2 AUSPOL_SALIENCE_LIVE_VIC=0: the frozen %s table's %d independent salience value(s) ignored\n", basename(cache), nrow(w$si)))
+          w$si <- w$si[0]
+        } }
     }
     if (.ind_weight_on()) {
       if (!"w_ind" %in% names(raw)) {

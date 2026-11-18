@@ -1,6 +1,6 @@
 # Model registry
 
-**Generated 2026-11-18 by `scripts/build_model_registry.R`. Do not hand-edit** --
+**Generated 2026-11-19 by `scripts/build_model_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate whenever a switch is added to
 `published_flags.R` or a harness's wiring changes.
 
@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (325 switches from `published_flags.R`, 7 entry points)
+## Switch parity (326 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -248,6 +248,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_SALIENCE_BLEND_ONCE` | yes | NO | NO | NO | NO | NO | NO | salience_surge.R |
 | `AUSPOL_SALIENCE_EXP_SD` | NO | yes | yes | yes | yes | yes | NO |  |
 | `AUSPOL_SALIENCE_EXPECTED` | yes | yes | yes | yes | yes | yes | NO |  |
+| `AUSPOL_SALIENCE_LIVE_VIC` | NO | NO | NO | NO | NO | NO | NO | breakout_mix.R, salience_screen.R, seat_poll_blend.R |
 | `AUSPOL_SALIENCE_PCTILE_NZ` | NO | NO | NO | NO | NO | NO | NO | salience_surge.R |
 | `AUSPOL_SALIENCE_SMOOTH` | NO | NO | NO | NO | NO | NO | NO | salience_surge.R |
 | `AUSPOL_SALIENCE_SURGE` | NO | yes | NO | NO | NO | NO | NO |  |
@@ -550,6 +551,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_SALIENCE_BLEND_ONCE`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: read by salience_blend_once() in R/salience_surge.R, through blend_salience_post_xgb() in the fed/nsw/qld/sa/vic harnesses and directly in fit_seats_full.R. WA and NT have no salience blend. plans/prereg-salience-blend-once-2026-10-19.md
 - **`AUSPOL_SALIENCE_EXP_SD`** (**OPEN GAP**): WA: same salience-corpus exclusion as AUSPOL_SALIENCE_EXPECTED, intentional. fit_seats_full.R: OPEN GAP, not fixed -- registered as published but sd_override is never wired into the forecast script at all (docs/reviews/pre-main-review-gate-2026-09-08.md). Currently harmless: this whole salience-variance arm is still pre-registered and undecided (docs/plans/prereg-salience-expected-and-variance-2026-09-07.md), so the switch is off everywhere. Wire it in the same commit that ships the arm, not before.
 - **`AUSPOL_SALIENCE_EXPECTED`** (intentional / dead experiment): WA has no candidate-level salience corpus at all (the WA commission files carry surnames only, no salience-v6.csv rows) -- documented, intentional exclusion.
+- **`AUSPOL_SALIENCE_LIVE_VIC`** (**adopted, shared-function wiring**): SHIPPED OFF 2026-11-19 (Pete): salience_live_filter() in R/salience_screen.R drops the vic2026 rows of salience-v6.csv at read in governed_population(), the seat-poll independent check and breakout_frame(). Only the live vic2026 forecast has those rows; no backtest election is touched, so the harnesses need no read.
 - **`AUSPOL_SALIENCE_PCTILE_NZ`** (**adopted, shared-function wiring**): SHIPPED 2026-09-12 (b7b5839): R/salience_surge.R ranks the salience percentile among NON-ZERO values only (docs/reviews/salience-percentile-fix-2026-09-12.md). Read in R/, reaches every caller of the surge model.
 - **`AUSPOL_SALIENCE_SMOOTH`** (intentional / dead experiment): Read inside R/salience_surge.R, not per-harness -- universal in practice.
 - **`AUSPOL_SALIENCE_SURGE`** (intentional / dead experiment): HARNESS-ONLY ARM, off: federal harness's hazard surge, superseded by surge-v2 (AUSPOL_SURGE_V2).
@@ -700,8 +702,8 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR4  every AUSPOL_* switch read in code (430) is registered (307) or listed as not a model switch (123).
+MR4  every AUSPOL_* switch read in code (431) is registered (308) or listed as not a model switch (123).
 
 
 
-MR2  every non-universal switch (294 of 325) has a recorded classification.
+MR2  every non-universal switch (295 of 326) has a recorded classification.

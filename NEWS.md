@@ -1,3 +1,7 @@
+# auspol 0.4.189
+
+- **Victorian forecast runs without search interest** (PR #258, Pete, 19 Nov): `AUSPOL_SALIENCE_LIVE_VIC=0` drops the vic2026 rows of `salience-v6.csv` at every reader, including the frozen seat-poll table the daily run reads (`salience_live_filter()`, `salience_live_vic_on()`; prints `SLF1`/`SLF2`). Search interest alone gave three challenger independents 32-65% where similar past candidates won 2 of 23. Expected seats: Labor 23.4 to 25.1, Liberal/National 39.1 to 40.5, One Nation 15.8 to 14.9, independents 1.9 to 0.2; Essendon's independent 65% to 2%. No backtest number changes. Review of the 21 seats where we disagree with the bookmakers: `docs/reviews/market-gaps-vic2026-2026-11-19/`.
+
 # auspol 0.4.188
 
 - **Release downloads retry** (PR #257): the daily forecast and the night backup give each `gh release download` three tries, 15 s apart (`scripts/gh_retry.sh`). The 19 Nov 4:34am run died on one failed GitHub call for a file that was there. A genuinely missing file still stops the run. No forecast number changes.
