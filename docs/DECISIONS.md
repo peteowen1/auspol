@@ -4,6 +4,7 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-11-18 (evening) Gated independent split SHIPPED on Pete's override** (`AUSPOL_CLASS_SPLIT=1`, `_MODE=pts_carry`, `_GATE=cred2`): arm K only in seats with 2+ credentialed independents. Guard 1 missed by 1.16 SE (+0.0058, SE 0.0050; Mackellar, Calare 2025); primary and all-seats better. Pete: "Ship it (override guard 1)". Prereg Amendment 2; live walk `reviews/ind-split-armk-live-walk-2026-11-18.md`.
 - **2026-11-18 Several independents split by expected points (`AUSPOL_CLASS_SPLIT_MODE` pts_cred / pts_carry, `AUSPOL_CLASS_SPLIT_SD` by_junior): REFUSED, all three arms, stay OFF.**
   Ties on seats with 2+ independents (-0.003 to -0.004, SE ~0.005); worse on seats an independent won (+0.057 to +0.070,
   SE ~0.015). Pete designed it with me and chose to rescreen once after the first refusal. `plans/prereg-ind-split-points-2026-11-18.md`.
