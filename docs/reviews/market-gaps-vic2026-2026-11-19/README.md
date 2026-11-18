@@ -63,3 +63,18 @@ Wayne Farnham's -2.94. Negative jumps like Farnham's and Steve Martin's (-5.0) a
 in almost every training election. What is unusual is vic2026's POSITIVE tail: p99 5.92 and 20 rows above 1, against
 p99 at most 0.5 in every earlier Victorian election except vic2014. The 12 Nov rank-mapping maps vic2026 onto the
 POOLED corpus, whose positive tail is mostly WA (p99 up to 19). Whether that is the intended scale is the open question.
+
+### Is the scale wrong? A third run, and the backtest
+
+vic2026 has 35% of candidates with a positive rise against 18% in the reference corpus (`link_vic2026_salience.R`
+SLK3), and the link maps positives onto positives only, so twice as many vic2026 candidates carry "big rise" values.
+Third run `salfull` (9:11-9:16am): the same snapshot ranked over ALL candidates onto the whole reference distribution
+(scratch copy of the link script, not committed). It barely moves the cases that matter: Essendon IND 0.65 -> 0.65,
+Benambra IND 0.32 -> 0.29, Hawthorn IND 0.39 -> 0.43, Narracan ONP 0.75 -> 0.65; expected IND seats 1.9 -> 1.9. So the
+sign-share skew is not the driver: the loudest few candidates (Yildiz 0.875, McKeeman 0.676) stay loudest either way.
+
+Backtest (`output/published-predictions.csv` joined to `salience-v6.csv`, 1,429 of 2,931 IND rows matched): by rise
+band, stated vs actual independent wins: zero 27.9 vs 29; 0-0.3 54.3 vs 59; 0.3-1 2.4 vs 5 (n=23); above 1 0.2 vs 0
+(n=13). No challenger without a 20%+ previous vote was ever given more than 0.13 (Delia Lawrie, Karama 2016); the ones
+who won were given 0.04 (Sharkie 2016, Steggall 2019). The live forecast gives three such challengers 0.32-0.65
+(Essendon, Benambra, Hawthorn): beyond anything the model has stated in 35 elections, in either direction.
