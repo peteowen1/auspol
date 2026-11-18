@@ -886,8 +886,7 @@ seat_poll_blend_table <- function(target_election, write = FALSE) {
       if ("sal" %in% names(raw)) { sv <- .kv_read(raw$sal[1]); w$si <- data.table::data.table(sk = names(sv), jump = unname(sv))
         # the frozen table's salience was written before AUSPOL_SALIENCE_LIVE_VIC existed: honour the switch here too
         if (identical(target_election, "vic2026") && !salience_live_vic_on()) {
-          cat(sprintf("SLF2 AUSPOL_SALIENCE_LIVE_VIC=0: the frozen %s table's %d independent salience value(s) ignored
-", basename(cache), nrow(w$si)))
+          cat(sprintf("SLF2 AUSPOL_SALIENCE_LIVE_VIC=0: the frozen %s table's %d independent salience value(s) ignored\n", basename(cache), nrow(w$si)))
           w$si <- w$si[0]
         } }
     }
