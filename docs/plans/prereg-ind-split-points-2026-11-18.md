@@ -111,3 +111,18 @@ guards, not looser ones.
 quick_arm pooled 0.3033 -> 0.3029 (SE 0.0007). Same known answers as arm C (Kooyong 0.582 -> 0.445, Indi 0.965 ->
 0.852): the carried vote does not touch the seats it loses on, whose juniors have no record. (Guard-1 base differs from
 arm C's by one won seat in the set, 93 against 92, one of them at the probability floor.)
+
+## RESULT, Amendment 1 (`pts_cred` + `by_junior` spread), 18 Nov 5:06pm: REFUSED on guard 1
+
+`deciding-runs/20261118-1527-indsplit-cred-sdj` (code 3a2153cd, 1,000 sims, 35 elections; arm key d517a524c4cd).
+
+| Set | Seats (elections) | Arm - base (SE) | Verdict |
+|---|---|---|---|
+| Primary: 2+ independents | 485 (35) | -0.0030 (0.0051) | within 1 SE (tie) |
+| Guard 1: seats the independents won | 92 (27) | **+0.0704 (0.0158)** | **WORSE, fails** |
+| Guard 2: all seats | 2,919 (35) | -0.0005 (0.0009) | within 1 SE |
+
+As stated before the rescreen: the narrower spread does not reach the cause. Kooyong 0.582 -> 0.438, Indi 0.965 ->
+0.854. Every version of the split (6 Nov twice, 18 Nov three times) fails the same guard: nothing knowable before
+polling day separates a winner's minnow co-independents from a serious second independent. All switches stay off.
+The next attempt needs a new pre-election signal for that, not a new sizing rule.

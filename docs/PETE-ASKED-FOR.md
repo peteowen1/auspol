@@ -37,7 +37,7 @@ moved verbatim 2026-10-24. Every row below still has something open.
 
 | Request | Status |
 |---|---|
-| Several independents in one seat counted as one candidate (Essendon IND 0.85 = Yildiz + Adams + Mohamud): "lets design now! need to get this in today", then "try both" on the walked design | **IN FLIGHT 18 Nov:** built off (`AUSPOL_CLASS_SPLIT_MODE` pts_cred / pts_carry, `7194dfef`, `0a3887d9`), reviewed; both arms screening on all 22 (`deciding-runs/20261118-1321-indsplit-cred`, `-1404-indsplit-carry`). `plans/prereg-ind-split-points-2026-11-18.md`. Not shipped until a pass, a traced Essendon run, CI and a green daily run. |
+| Several independents in one seat counted as one candidate (Essendon IND 0.85 = Yildiz + Adams + Mohamud): "lets design now! need to get this in today", then "try both", then "Rescreen anyway" | **NOT SHIPPING, told Pete 18 Nov 5:10pm:** three arms screened on all 35 elections (points by credential, carried vote, narrower spread), all a tie on seats with 2+ independents and all WORSE on seats an independent won (+0.057 to +0.070, SE ~0.015; Kooyong 0.58 -> 0.44). `plans/prereg-ind-split-points-2026-11-18.md`. Switches stay off; Essendon flagged on the Edge Board instead. |
 | Our view of Sportsbet's Williamstown (Liberal disendorsed) and Mildura (Cupper withdrew) markets | **ANSWERED 18 Nov:** Mildura already right (Cupper not on the VEC list, IND 0); Williamstown has no disendorsement input, Labor 0.69 already favourite, no change (Preston precedent, DECISIONS 2026-11-10). |
 
 ## 2026-11-17

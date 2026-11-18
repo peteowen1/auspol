@@ -82,9 +82,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   bases (other classes over-called -2.9, SE 0.84; Narracan Greens is the live case).
 
 
-- OPEN, IN FLIGHT (18 Nov): several independents split by expected points (Essendon IND 0.85 is three independents as
-  one). Walked with Pete, built off, two arms screening (`deciding-runs/20261118-1321-indsplit-cred`, `-1404-indsplit-carry`);
-  score with `scripts/score_ind_split_screen.R <run dir>`. `plans/prereg-ind-split-points-2026-11-18.md`.
+- OPEN, after 28 Nov: several independents in one seat are simulated as one candidate (Essendon IND 0.85). Five split
+  designs refused (6 Nov x2, 18 Nov x3), all on seats an independent WON; needs a pre-election signal separating a
+  minnow from a serious second independent. `plans/prereg-ind-split-points-2026-11-18.md`.
 - OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. 17 Nov done: 6 sources (TAB not
   saved: Chrome blocked the download on api.beta.tab.com.au; Betfair has no Victorian markets). On 27 Nov, if the TAB
   download is blocked again, check Chrome's download prompt for that site first. Each date: `Rscript scripts/snapshot_benchmarks.R`, plus the GES
