@@ -221,6 +221,8 @@ jobs:
       - name: Fetch the trained models
         run: |
           set -euo pipefail
+          # Three tries per release download (scripts/gh_retry.sh; a one-off API failure killed the 19 Nov run).
+          source scripts/gh_retry.sh
           for f in xgb-primary-v6-final.model xgb-primary-v6-final-cols.json \
                    xgb-flows-v1-final.model xgb-flows-v1-final-cols.json \
                    xgb-flows-v1-features.csv xgb-primary-v6-features.csv candidacies.csv \
@@ -626,6 +628,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -e
+          source scripts/gh_retry.sh
           for f in seat-swing-port-nsw2027.csv seat-poll-blend-nsw2027.csv leader-seat-nsw2027.csv demo-resid-nsw2027.csv council-history-nsw2027.csv; do
             gh release download shipped-models -p "$f" -D output --clobber
           done
