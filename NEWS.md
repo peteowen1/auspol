@@ -1,3 +1,7 @@
+# auspol 0.4.188
+
+- **Release downloads retry** (PR #257): the daily forecast and the night backup give each `gh release download` three tries, 15 s apart (`scripts/gh_retry.sh`). The 19 Nov 4:34am run died on one failed GitHub call for a file that was there. A genuinely missing file still stops the run. No forecast number changes.
+
 # auspol 0.4.187
 
 - **Forecast JSON says which seats' independents are split** (PR #255): each seat carries `ind_split`, from the same `class_split_args()` the forecast uses, so the seat page warns only where the Independent figure is still a sum. Left out (with `FJ8!`) when it cannot be determined. No forecast number changes.
