@@ -143,3 +143,22 @@ Leonard prior5 + Broadbent MP); Essendon 2026 has two (Yildiz prior5, Adams coun
   (checked and printed first). Same primary, guard 1 and guard 2 as above, clauses unedited; the gated set is printed
   with its seat and election counts.
 - An offline pass can refuse but not clear: shipping still needs the gate in code, a real run, and Pete's call.
+
+## RESULT, Amendment 2 (gated arm K, offline), 18 Nov 9:35pm: guard 1 FAILS narrowly; primary and guard 2 BETTER
+
+`Rscript scripts/score_ind_split_gated.R deciding-runs/20261118-1404-indsplit-carry`. Valid composite: GSS1, 2,439
+seat-elections with fewer than two independents compared, 0 differ. Gated: 32 seat-elections in 14 elections (of 486
+with 2+ independents), 5 of them won by an independent. Log loss, lower is better.
+
+| Set | Seats (elections) | Arm - base (SE) | Verdict |
+|---|---|---|---|
+| Primary: 2+ independents | 486 (35) | -0.0027 (0.0020) | BETTER (1.35 SE) |
+| Guard 1: seats the independents won | 93 (27) | **+0.0058 (0.0050)** | **WORSE by 1.16 SE: fails the 1 SE clause** |
+| Guard 2: all seats | 2,920 (35) | -0.0005 (0.0003) | BETTER; no election worse by 2 SE |
+| Gated seats only | 32 (14) | -0.0415 (0.0310) | better, 1.3 SE |
+
+Ungated arm K for reference: guard 1 +0.0570 (SE 0.0138). The gate removes 90% of the damage. What is left is two
+2025 federal seats: Mackellar (Scamps MP won 38.0; the second credential is a councillor who polled 0.6) and Calare
+(Gee MP won 23.7 against Hook, earlier 20.4, who polled 15.8). Gains: Wentworth 2019 (Phelps lost; 0.885 -> 0.725),
+Waite 2022, Monash 2025. Live vic2026 under the gate: Essendon and Sydenham split; Kew and Footscray do not (one
+credentialed independent each). Per the clause rule this goes to Pete; not shipped.
