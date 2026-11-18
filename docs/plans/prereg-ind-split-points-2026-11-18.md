@@ -66,3 +66,19 @@ Reported as its own line.
 Shipping also needs: Essendon, Kew and Footscray traced with the switch on, `check_like_ci.R`, review, and a green
 daily run. If it refuses, the fallback is a note on the Edge Board and the live page that Essendon's 85% combines
 three independents.
+
+## RESULT, arm C (`pts_cred`), 18 Nov 3:08pm: REFUSED on guard 1
+
+Deciding run `deciding-runs/20261118-1321-indsplit-cred` (code 7194dfef, 1,000 sims, all 35 elections, 70 harness
+runs, 6,383 s). Applied: seats moved in 34 of 35 elections. Scored with `scripts/score_ind_split_screen.R` (arm key
+25bac0b25a7e, baseline 945382e1244b). Seat-winner log loss, lower is better; SE clustered on election.
+
+| Set | Seats (elections) | Base | Arm - base (SE) | Verdict |
+|---|---|---|---|---|
+| Primary: 2+ independents on the ballot | 485 (35) | 0.4333 | -0.0027 (0.0047) | within 1 SE (tie) |
+| Guard 1: seats the independents won | 92 (27) | 0.6839 | **+0.0663 (0.0148)** | **WORSE, fails** |
+| Guard 2: all seats | 2,919 (35) | 0.2738 | -0.0005 (0.0008) | within 1 SE; no election worse by 2 SE |
+
+quick_arm's own pooled line agrees: 0.3033 -> 0.3034 (SE 0.0008). Known answers: Waite 0.709 -> 0.543 and Monash
+0.606 -> 0.470 fell as required; Kooyong 0.582 -> 0.433 and Indi 0.965 -> 0.845 fell by more than the 0.10 allowed.
+Same failure as 6 Nov, smaller: the split still costs the seats an independent won. Not shipped; goes to Pete.

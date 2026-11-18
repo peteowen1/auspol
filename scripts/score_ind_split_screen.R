@@ -14,7 +14,9 @@ pj <- jsonlite::fromJSON(file.path(run, "params.json"))
 cdir <- if (length(a) >= 2) a[2] else if (dir.exists(file.path(run, "cache"))) file.path(run, "cache") else file.path(pj$QuickDir, "cache")
 keys <- list.dirs(cdir, recursive = FALSE, full.names = FALSE)
 if (length(keys) != 2) stop(sprintf("ISS1! expected 2 cache keys in %s, found %d", cdir, length(keys)))
-rd <- function(k) rbindlist(lapply(list.files(file.path(cdir, k), "allprobs.csv", recursive = TRUE, full.names = TRUE), fread))
+# some harnesses write no `pair` column: take the election from the cache folder name, always
+rd <- function(k) rbindlist(lapply(list.files(file.path(cdir, k), "allprobs.csv", recursive = TRUE, full.names = TRUE),
+                                   function(f) { x <- fread(f); x[, pair := basename(dirname(f))]; x }), fill = TRUE)
 A <- rd(keys[1]); B <- rd(keys[2])
 sims <- if (!is.null(pj$Sims)) as.numeric(pj$Sims) else 1000
 cat(sprintf("ISS1 %s: keys %s (%d rows, %d elections) and %s (%d rows, %d elections); floor %.5f\n", basename(run),
