@@ -112,3 +112,47 @@ test_that("class_split_fit takes r from the predictions and sd and f from earlie
   hist_a <- c(5 / 15, 8 / 16, 3 / 15, 6 / 15, 7 / 14, 4 / 15)
   expect_equal(fit$sd, sqrt(mean((hist_a - hist_r)^2)))
 })
+
+test_that("points mode sizes the junior as (points + b x class) over the run's own class share", {
+  sh <- matrix(c(26.6, 25, 34.3, 14.1), nrow = 1, dimnames = list("Waite", c("ALP", "LNP", "IND", "GRN")))
+  psd <- c(ALP = 0, LNP = 0, IND = 0, GRN = 0)
+  fm <- cls_fm()
+  base <- c(no_cs("Waite"), list(cls = c(Waite = "IND"), cls_sd = c(Waite = 0.02), cls_f = c(Waite = 0.3)))
+  frac <- simulate_seat_contests(sh, fm, party_sd = psd, seat_sd = 0.5, n_sims = 300, seed = 3,
+                                 coalition_split = c(base, list(cls_r = c(Waite = 0.25))))
+  # 5.145 + 0.1 x 34.3 = 8.575 points of 34.3 is the same 0.25
+  pts <- simulate_seat_contests(sh, fm, party_sd = psd, seat_sd = 0.5, n_sims = 300, seed = 3,
+                                coalition_split = c(base, list(cls_r = c(Waite = NA_real_), cls_pts = c(Waite = 5.145),
+                                                               cls_pts_b = c(Waite = 0.1))))
+  expect_equal(pts$win_prob, frac$win_prob)
+  expect_equal(pts$class_split$n_seats, 1L)
+  # with no points the seat is not split at all
+  none <- simulate_seat_contests(sh, fm, party_sd = psd, seat_sd = 0.5, n_sims = 300, seed = 3,
+                                 coalition_split = c(base, list(cls_r = c(Waite = NA_real_), cls_pts = c(Waite = NA_real_))))
+  expect_equal(none$class_split$n_seats, 0L)
+  expect_equal(none$win_prob, simulate_seat_contests(sh, fm, party_sd = psd, seat_sd = 0.5, n_sims = 300, seed = 3)$win_prob)
+})
+
+test_that("class_split_fit_pts fits on earlier elections only and orders by carried vote", {
+  mk <- function(el, yr, seat, nm, sh, cred, prior = NA_real_, oc = 30) data.table::data.table(
+    election = el, year = yr, seat = seat, name = nm, cls = "IND", share = sh, cred = cred,
+    prior_nonmajor = prior, prior_same_seat = FALSE, n_ind = 2L, our_cls = oc)
+  hist <- data.table::rbindlist(lapply(1:12, function(i) rbind(
+    mk("x2010", 2010L, paste0("s", i), "A", 20 + i, "none", oc = 20 + i),
+    mk("x2010", 2010L, paste0("s", i), "B", 2 + (i %% 3), if (i %% 2) "councillor" else "none", oc = 20 + i))))
+  # a LATER election with absurd juniors must not move the fit for x2014
+  later <- data.table::rbindlist(lapply(1:12, function(i) rbind(
+    mk("x2018", 2018L, paste0("s", i), "A", 20, "none"), mk("x2018", 2018L, paste0("s", i), "B", 19, "none"))))
+  tgt <- rbind(mk("x2014", 2014L, "t", "Known", NA, "prior5", prior = 20), mk("x2014", 2014L, "t", "Coun", NA, "councillor"),
+               mk("x2014", 2014L, "t", "New", NA, "none"))
+  tx <- data.table::data.table(election = "x2010", seat = "s1", round = 1L, from = "IND", to = c("IND", "ALP"), votes = c(30, 70))
+  a <- class_split_fit_pts("x2014", "pts_carry", cand = rbind(hist, tgt), transfers = tx)
+  b <- class_split_fit_pts("x2014", "pts_carry", cand = rbind(hist, later, tgt), transfers = tx)
+  expect_equal(a$pts, b$pts)
+  expect_equal(a$seats$pts, b$seats$pts)
+  # the carried-vote candidate leads, so the junior is the councillor (slope b), not the carried one (slope 0)
+  expect_equal(nrow(a$seats), 1L)
+  expect_equal(a$seats$pts_b, a$b)
+  expect_equal(a$seats$pts, unname(a$pts["councillor"]))
+  expect_error(class_split_fit_pts("x2014", "pred", cand = hist), "pts_cred or pts_carry")
+})

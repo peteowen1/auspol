@@ -80,19 +80,8 @@ class_split_fit <- function(target_election, oof = NULL, transfers = NULL,
   if (nrow(hist) < 5L) return(empty)
   sdv <- sqrt(mean((hist$j_share / hist$all_share - hist$r)^2))
 
-  if (is.null(transfers)) transfers <- class_split_transfers(classes = classes)
-  tx <- data.table::as.data.table(transfers)
-  tx <- tx[.yr(tx$election) < tgt_year & tx$from %in% classes]
-  ev <- tx[, list(tot = sum(get("votes")), to_lnp = sum(get("votes")[get("to") == get("from")])),
-           by = c("election", "seat", "round", "from")]
-  ev <- ev[ev$to_lnp > 0 & ev$tot > 0]
-  mode <- Sys.getenv("AUSPOL_COALITION_SPLIT_F", "state")
-  f_all <- if (nrow(ev)) coalition_f(ev, .rg(tgt_el), mode) else NA_real_
-  f_by <- vapply(classes, function(k) {
-    e <- ev[ev$from == k]
-    # A class with no earlier same-class exclusion takes the all-class rate.
-    if (nrow(e)) as.numeric(coalition_f(e, .rg(tgt_el), mode)) else as.numeric(f_all)
-  }, 0)
+  f_by <- .cls_f_by(tgt_el, transfers, classes)
+  ev_n <- attr(f_by, "n_events")
   # sd and f never depend on the target's own candidates: an election with none (the night split's live vic2026,
   # whose per-candidate predictions are not in the file) still gets them, with no seats
   tgt <- agg[agg$election == tgt_el]
@@ -101,8 +90,156 @@ class_split_fit <- function(target_election, oof = NULL, transfers = NULL,
   tgt <- tgt[!duplicated(tgt$seat)]
   list(seats = data.frame(seat = tgt$seat, cls = tgt$cls, r = tgt$r, sd = rep(sdv, nrow(tgt)),
                           f = unname(f_by[tgt$cls]), n_cand = tgt$n_cand, stringsAsFactors = FALSE),
-       sd = sdv, f = f_by, n_hist = nrow(hist), n_target = nrow(tgt), n_events = nrow(ev),
+       sd = sdv, f = f_by, n_hist = nrow(hist), n_target = nrow(tgt), n_events = ev_n,
        missing = FALSE)
+}
+
+#' The validated `AUSPOL_CLASS_SPLIT_MODE` switch
+#'
+#' How the class split sizes the junior candidate: `"pred"` (default, the 6 Nov
+#' design: junior fraction from per-candidate predictions), `"pts_cred"` (the
+#' junior's expected vote in points from their credential, divided by the run's
+#' own forecast of the class) or `"pts_carry"` (as `pts_cred`, but a candidate
+#' with an earlier non-major vote is expected to poll a carried share of it).
+#' docs/plans/prereg-ind-split-points-2026-11-18.md.
+#' @return One of the three modes.
+#' @export
+class_split_mode <- function() {
+  m <- Sys.getenv("AUSPOL_CLASS_SPLIT_MODE", "pred")
+  if (!nzchar(m)) m <- "pred"
+  if (!m %in% c("pred", "pts_cred", "pts_carry"))
+    stop("AUSPOL_CLASS_SPLIT_MODE must be \"pred\", \"pts_cred\" or \"pts_carry\"; got \"", m, "\"", call. = FALSE)
+  m
+}
+
+# `f`, the share of an excluded same-class candidate's votes that reach the other, per class, from EARLIER elections'
+# same-class exclusions, shrunk by jurisdiction as coalition_f(). A class with none takes the all-class rate.
+# Attribute n_events: how many exclusions it was fitted on.
+.cls_f_by <- function(tgt_el, transfers, classes) {
+  .yr <- function(e) as.integer(sub("^[a-z]+", "", e))
+  .rg <- function(e) sub("[0-9]+$", "", e)
+  if (is.null(transfers)) transfers <- class_split_transfers(classes = classes)
+  tx <- data.table::as.data.table(transfers)
+  tx <- tx[.yr(tx$election) < .yr(tgt_el) & tx$from %in% classes]
+  ev <- tx[, list(tot = sum(get("votes")), to_lnp = sum(get("votes")[get("to") == get("from")])),
+           by = c("election", "seat", "round", "from")]
+  ev <- ev[ev$to_lnp > 0 & ev$tot > 0]
+  mode <- Sys.getenv("AUSPOL_COALITION_SPLIT_F", "state")
+  f_all <- if (nrow(ev)) coalition_f(ev, .rg(tgt_el), mode) else NA_real_
+  f_by <- vapply(classes, function(k) {
+    e <- ev[ev$from == k]
+    if (nrow(e)) as.numeric(coalition_f(e, .rg(tgt_el), mode)) else as.numeric(f_all)
+  }, 0)
+  attr(f_by, "n_events") <- nrow(ev)
+  f_by
+}
+
+# Partial pooling of cell means toward the pooled mean, w = tau^2 / (tau^2 + se^2) (CLAUDE.md: shrinkage, never a
+# min_n cliff). `x` values, `g` cell labels; returns the shrunk mean per cell, named.
+.cls_shrunk_means <- function(x, g) {
+  mu <- mean(x)
+  cell <- data.table::data.table(x = x, g = g)[, list(m = mean(x), v = stats::var(x), n = .N), by = "g"]
+  v_in <- sum((cell$n - 1) * ifelse(is.finite(cell$v), cell$v, 0)) / max(1, sum(cell$n - 1))
+  cell[, "se2" := v_in / get("n")]
+  tau2 <- max(0, sum(cell$n * (cell$m - mu)^2) / sum(cell$n) - mean(cell$se2))
+  cell[, "w" := if (tau2 > 0) tau2 / (tau2 + get("se2")) else 0]
+  stats::setNames(mu + cell$w * (cell$m - mu), cell$g)
+}
+
+#' Fit the points-based class split for one election
+#'
+#' Independents only. For every seat of `target_election` with two or more
+#' independents, each candidate's expected vote in points: the shrunk mean vote
+#' of NON-LEADING independents with the same credential (`MP`, `councillor`,
+#' `prior5`, `none`) at EARLIER elections; under `"pts_carry"` a candidate with
+#' an earlier non-major vote instead expects `carry x` that vote, `carry` the
+#' ratio of vote to earlier vote over earlier elections' candidates, fitted
+#' separately for the same seat and another seat. The junior is the
+#' second-highest expectation; the simulator divides its points by the run's own
+#' forecast of the class ([simulate_seat_contests()]). `sd` is the root mean
+#' squared error of that fraction, computed the same way on earlier elections'
+#' seats against our published-path forecast of the class. `f` as
+#' [class_split_fit()].
+#'
+#' @param target_election Election label.
+#' @param mode `"pts_cred"` or `"pts_carry"`.
+#' @param cand Candidate inputs; default `output/ind-split-candidates.csv`
+#'   (scripts/build_ind_split_inputs.R).
+#' @param transfers Same-class exclusions; default [class_split_transfers()].
+#' @return As [class_split_fit()], with `seats$pts` (the junior's expected
+#'   points) and `seats$r` NA, plus `pts` (the credential means) and `carry`.
+#' @export
+class_split_fit_pts <- function(target_election, mode = class_split_mode(), cand = NULL, transfers = NULL) {
+  if (!mode %in% c("pts_cred", "pts_carry")) stop("class_split_fit_pts: mode must be pts_cred or pts_carry")
+  tgt_el <- as.character(target_election)
+  tgt_year <- as.integer(sub("^[a-z]+", "", tgt_el))
+  if (is.null(cand)) cand <- data.table::fread(out_path("ind-split-candidates.csv"), encoding = "UTF-8")
+  d <- data.table::as.data.table(cand)
+  empty <- list(seats = data.frame(seat = character(0), cls = character(0), r = numeric(0), pts = numeric(0),
+                                   sd = numeric(0), f = numeric(0), n_cand = integer(0)),
+                sd = NA_real_, f = NA_real_, n_hist = 0L, n_target = 0L, missing = !tgt_el %in% d$election)
+  hist <- d[d$year < tgt_year & is.finite(d$share)]
+  if (!nrow(hist)) return(empty)
+  data.table::setorderv(hist, c("election", "seat", "share"), c(1L, 1L, -1L))
+  hist[, "rank" := seq_len(.N), by = c("election", "seat")]
+  # The junior's points grow with the class (checked 18 Nov: +0.091 points per point of our class forecast, t = 9 on
+  # 492 seats), so: points = credential intercept + b x class forecast. b from the second-placed independents of
+  # earlier elections against our published-path class forecast; the intercepts are the shrunk credential means of
+  # what is left.
+  jr <- hist[hist$rank == 2L & is.finite(hist$our_cls)]
+  if (nrow(jr) < 10L) return(empty)
+  b_cls <- max(0, unname(stats::coef(stats::lm(share ~ cred + our_cls, data = jr))["our_cls"]))
+  if (!is.finite(b_cls)) b_cls <- 0
+  pts_c <- .cls_shrunk_means(jr$share - b_cls * jr$our_cls, jr$cred)
+  carry <- c(same = NA_real_, other = NA_real_)
+  if (mode == "pts_carry") {
+    hc <- hist[is.finite(hist$prior_nonmajor) & hist$prior_nonmajor > 0]
+    for (k in c("same", "other")) {
+      h <- hc[(hc$prior_same_seat %in% TRUE) == (k == "same")]
+      carry[k] <- if (nrow(h)) sum(h$share) / sum(h$prior_nonmajor) else NA_real_
+    }
+    pooled <- if (nrow(hc)) sum(hc$share) / sum(hc$prior_nonmajor) else NA_real_
+    carry[!is.finite(carry)] <- pooled
+  }
+  c_mid <- stats::median(jr$our_cls)   # the class size used only to ORDER candidates where no forecast is in the file
+  # each candidate's expected points as intercept + slope x class: credential (slope b_cls), or carried vote (slope 0)
+  expect <- function(x) {
+    a <- unname(pts_c[x$cred]); a[!is.finite(a)] <- mean(jr$share - b_cls * jr$our_cls)
+    s <- rep(b_cls, nrow(x))
+    if (mode == "pts_carry" && all(is.finite(carry))) {
+      has <- is.finite(x$prior_nonmajor) & x$prior_nonmajor > 0
+      a[has] <- ifelse(x$prior_same_seat[has] %in% TRUE, carry["same"], carry["other"]) * x$prior_nonmajor[has]
+      s[has] <- 0
+    }
+    list(a = a, s = s)
+  }
+  junior <- function(x) {
+    x <- data.table::copy(x)
+    ex <- expect(x)
+    x[, c("ea", "es") := list(ex$a, ex$s)]
+    x[, "eo" := get("ea") + get("es") * ifelse(is.finite(get("our_cls")), get("our_cls"), c_mid)]
+    x[, {
+      o <- order(-get("eo"), get("name"))[2]
+      list(pts = get("ea")[o], pts_b = get("es")[o], n_cand = .N,
+           r_act = if (all(is.finite(get("share")))) sort(get("share"), decreasing = TRUE)[2] / sum(get("share")) else NA_real_,
+           our_cls = get("our_cls")[1])
+    }, by = c("election", "seat")]
+  }
+  hj <- junior(hist)
+  hj <- hj[is.finite(hj$our_cls) & hj$our_cls > 0 & is.finite(hj$r_act)]
+  if (nrow(hj) < 5L) return(empty)
+  hj[, "r" := pmin(pmax((get("pts") + get("pts_b") * get("our_cls")) / get("our_cls"), 0.01), 0.5)]
+  sdv <- sqrt(mean((hj$r_act - hj$r)^2))
+  f_ind <- unname(.cls_f_by(tgt_el, transfers, "IND")["IND"])
+  out <- c(empty[c("seats")], list(sd = sdv, f = stats::setNames(f_ind, "IND"), n_hist = nrow(hj), n_target = 0L,
+                                   missing = !tgt_el %in% d$election, pts = pts_c, carry = carry, b = b_cls))
+  tg <- d[d$election == tgt_el]
+  if (!nrow(tg)) return(out)
+  tj <- junior(tg)
+  out$seats <- data.frame(seat = tj$seat, cls = "IND", r = NA_real_, pts = tj$pts, pts_b = tj$pts_b, sd = sdv, f = f_ind,
+                          n_cand = tj$n_cand, stringsAsFactors = FALSE)
+  out$n_target <- nrow(tj)
+  out
 }
 
 #' The class-split elements of the `coalition_split` argument
@@ -117,22 +254,34 @@ class_split_fit <- function(target_election, oof = NULL, transfers = NULL,
 #' @export
 class_split_args <- function(target_election, seat_names) {
   if (!identical(Sys.getenv("AUSPOL_CLASS_SPLIT", "0"), "1")) return(NULL)
+  mode <- class_split_mode()
   src <- out_path(class_split_src())
+  psrc <- out_path("ind-split-candidates.csv")
   tf <- list.files(file.path("external", "elections"), "transfers[.]csv$", full.names = TRUE)
-  key <- paste(target_election, src, Sys.getenv("AUSPOL_COALITION_SPLIT_F", "state"),
+  key <- paste(target_election, mode, src, Sys.getenv("AUSPOL_COALITION_SPLIT_F", "state"),
                if (file.exists(src)) file.mtime(src) else "nofile",
+               if (mode != "pred" && file.exists(psrc)) file.mtime(psrc) else "nopts",
                if (length(tf)) max(file.mtime(tf)) else "notx")
   fit <- .cls_cache[[key]]
   if (is.null(fit)) {
     if (!file.exists(src)) stop("AUSPOL_CLASS_SPLIT=1 needs ", src, " (scripts/fit_minor_candidates.R)")
-    fit <- class_split_fit(target_election)
+    if (mode != "pred" && !file.exists(psrc))
+      stop("AUSPOL_CLASS_SPLIT_MODE=", mode, " needs ", psrc, " (scripts/build_ind_split_inputs.R)")
+    fit <- if (mode == "pred") class_split_fit(target_election) else class_split_fit_pts(target_election, mode)
     assign(key, fit, envir = .cls_cache)
   }
   na <- stats::setNames(rep(NA_real_, length(seat_names)), seat_names)
   cls <- stats::setNames(rep(NA_character_, length(seat_names)), seat_names)
-  r <- na; sdv <- na; f <- na
+  r <- na; sdv <- na; f <- na; pts <- na; pts_b <- na
   s <- fit$seats[fit$seats$seat %in% seat_names & is.finite(fit$seats$f), ]
   cls[s$seat] <- s$cls; r[s$seat] <- s$r; sdv[s$seat] <- s$sd; f[s$seat] <- s$f
+  if (mode != "pred") {
+    pts[s$seat] <- s$pts; pts_b[s$seat] <- s$pts_b
+    cat(sprintf("CLS2 class split %s mode %s: junior points = intercept by credential %s + %.3f x class forecast%s; mean junior intercept %.2f\n",
+                target_election, mode, paste(names(fit$pts), sprintf("%.2f", fit$pts), sep = "=", collapse = " "), fit$b,
+                if (mode == "pts_carry") sprintf("; carry same-seat %.3f, other seat %.3f", fit$carry["same"], fit$carry["other"]) else "",
+                if (nrow(s)) mean(s$pts) else NA_real_))
+  }
   miss <- setdiff(fit$seats$seat, seat_names)
   tab <- table(s$cls)
   cat(sprintf(paste0("CLS1 class split %s: %d seat(s) [%s] of %d with 2+ candidates of one minor class%s%s;",
@@ -142,7 +291,8 @@ class_split_args <- function(target_election, seat_names) {
               if (length(miss)) paste0(" (not in the simulation: ", paste(utils::head(miss, 5), collapse = ", "), ")") else "",
               fit$sd, fit$n_hist,
               if (all(is.na(fit$f))) "none" else paste(names(fit$f), sprintf("%.3f", fit$f), sep = "=", collapse = " "),
-              if (nrow(s)) mean(s$r) else NA_real_))
+              if (nrow(s) && any(is.finite(s$r))) mean(s$r, na.rm = TRUE) else NA_real_))
   if (!nrow(s)) return(NULL)
-  list(cls = cls, cls_r = r, cls_sd = sdv, cls_f = f)
+  if (mode == "pred") return(list(cls = cls, cls_r = r, cls_sd = sdv, cls_f = f))
+  list(cls = cls, cls_r = r, cls_sd = sdv, cls_f = f, cls_pts = pts, cls_pts_b = pts_b)
 }
