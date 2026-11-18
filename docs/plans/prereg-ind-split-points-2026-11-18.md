@@ -126,3 +126,20 @@ As stated before the rescreen: the narrower spread does not reach the cause. Koo
 0.854. Every version of the split (6 Nov twice, 18 Nov three times) fails the same guard: nothing knowable before
 polling day separates a winner's minnow co-independents from a serious second independent. All switches stay off.
 The next attempt needs a new pre-election signal for that, not a new sizing rule.
+
+## Amendment 2 (18 Nov 9:25pm, before scoring): split only where two or more independents have a record
+
+Pete, after seeing arm K live (Essendon 0.848 -> 0.647): "surely we can fix just this scenario ... cant we do a
+targetted fix?" Rows (`output/ind-split-candidates.csv`): every seat arm K lost on had ONE credentialed independent
+plus no-record minnows (Kooyong 2022 Ryan + Anderson 0.3, Indi 2025 Haines MP + McFarlane 1.4, Indi 2013/2016); the
+over-calls had TWO credentialed independents (Waite 2022: Duluk MP + Holmes-Ross councillor 14.6; Monash 2025:
+Leonard prior5 + Broadbent MP); Essendon 2026 has two (Yildiz prior5, Adams councillor 45.9 at Moonee Valley 2024).
+
+- Gate, one, fixed now: the split applies only to a seat-election with at least two independents whose `cred` is not
+  `none` (MP, councillor, or an earlier non-major vote of 5%+), all knowable at nominations. Elsewhere: baseline.
+- Arm: arm K (`pts_carry`) only. No thresholds swept, no second gate.
+- Scored offline from `deciding-runs/20261118-1404-indsplit-carry` caches: arm probabilities in gated seats, baseline
+  in all others. Valid only if seats with fewer than two independents are byte-identical between the two keys
+  (checked and printed first). Same primary, guard 1 and guard 2 as above, clauses unedited; the gated set is printed
+  with its seat and election counts.
+- An offline pass can refuse but not clear: shipping still needs the gate in code, a real run, and Pete's call.
