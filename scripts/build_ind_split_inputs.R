@@ -65,7 +65,7 @@ for (el in unique(out[!is.finite(share), election])) {
     f <- class_split_fit_pts(el, m, cand = out)
     if (!nrow(f$seats)) stop(sprintf("ISI2! %s %s: the fit gave no seats", el, m))
     pc <- function(k) if (k %in% names(f$pts)) unname(f$pts[k]) else NA_real_
-    data.table(mode = m, f$seats, n_hist = f$n_hist, b = f$b, carry_same = unname(f$carry["same"]),
+    data.table(mode = m, sd_mode = Sys.getenv("AUSPOL_CLASS_SPLIT_SD", "pooled"), f$seats, n_hist = f$n_hist, b = f$b, carry_same = unname(f$carry["same"]),
                carry_other = unname(f$carry["other"]), i_none = pc("none"), i_MP = pc("MP"), i_prior5 = pc("prior5"),
                i_councillor = pc("councillor"))
   }), fill = TRUE)

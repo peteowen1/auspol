@@ -82,3 +82,18 @@ runs, 6,383 s). Applied: seats moved in 34 of 35 elections. Scored with `scripts
 quick_arm's own pooled line agrees: 0.3033 -> 0.3034 (SE 0.0008). Known answers: Waite 0.709 -> 0.543 and Monash
 0.606 -> 0.470 fell as required; Kooyong 0.582 -> 0.433 and Indi 0.965 -> 0.845 fell by more than the 0.10 allowed.
 Same failure as 6 Nov, smaller: the split still costs the seats an independent won. Not shipped; goes to Pete.
+
+## Amendment 1 (18 Nov ~3:40pm, AFTER arm C's refusal above; Pete chose "Rescreen anyway")
+
+Visible addition; nothing above is edited. It favours a later answer by construction, so it is held to the same
+guards, not looser ones.
+
+- Change: the spread of the junior fraction, pooled 0.153-0.157, is fitted separately for a junior with no
+  credential and one with any, each as the RMSE over earlier seats weighted by our class forecast
+  (`AUSPOL_CLASS_SPLIT_SD=by_junior`, `class_split_fit_pts()`). fed2022: none 0.135, credentialed 0.117; fed2025:
+  0.133 / 0.133; vic2026: 0.130 / 0.143.
+- Stated before the rescreen, from a measurement Pete saw: in the group holding most won seats (no-credential
+  junior, class 15%+, 82 seats, 25 won) the spread is 0.119 against 0.156, so the expected gain is small and the
+  likeliest outcome is the same guard-1 failure.
+- Arm: `AUSPOL_CLASS_SPLIT=1 AUSPOL_CLASS_SPLIT_MODE=pts_cred AUSPOL_CLASS_SPLIT_SD=by_junior`, same screen, same
+  primary, guards and known answers. Arm K (`pts_carry`) is recorded when its screen ends but is not amended.

@@ -220,7 +220,7 @@ class_split_fit_pts <- function(target_election, mode = class_split_mode(), cand
     x[, "eo" := get("ea") + get("es") * ifelse(is.finite(get("our_cls")), get("our_cls"), c_mid)]
     x[, {
       o <- order(-get("eo"), get("name"))[2]
-      list(pts = get("ea")[o], pts_b = get("es")[o], n_cand = .N,
+      list(pts = get("ea")[o], pts_b = get("es")[o], jnone = get("cred")[o] == "none", n_cand = .N,
            r_act = if (all(is.finite(get("share")))) sort(get("share"), decreasing = TRUE)[2] / sum(get("share")) else NA_real_,
            our_cls = get("our_cls")[1])
     }, by = c("election", "seat")]
@@ -230,14 +230,28 @@ class_split_fit_pts <- function(target_election, mode = class_split_mode(), cand
   if (nrow(hj) < 5L) return(empty)
   hj[, "r" := pmin(pmax((get("pts") + get("pts_b") * get("our_cls")) / get("our_cls"), 0.01), 0.5)]
   sdv <- sqrt(mean((hj$r_act - hj$r)^2))
+  # AMENDMENT 1 (18 Nov, after arm C's refusal; AUSPOL_CLASS_SPLIT_SD = "by_junior"): the spread by the junior's
+  # credential (none / any), each the RMSE over earlier seats weighted by our class forecast, so the big-class seats a
+  # split can decide dominate; a group with under 5 seats takes the pooled value.
+  sd_mode <- Sys.getenv("AUSPOL_CLASS_SPLIT_SD", "pooled")
+  if (!sd_mode %in% c("pooled", "by_junior")) stop("AUSPOL_CLASS_SPLIT_SD must be \"pooled\" or \"by_junior\"; got \"", sd_mode, "\"")
+  sd_j <- c(none = sdv, cred = sdv)
+  if (sd_mode == "by_junior") {
+    for (g in c("none", "cred")) {
+      h <- hj[hj$jnone == (g == "none")]
+      if (nrow(h) >= 5L) sd_j[g] <- sqrt(sum(h$our_cls * (h$r_act - h$r)^2) / sum(h$our_cls))
+    }
+  }
   f_ind <- unname(.cls_f_by(tgt_el, transfers, "IND")["IND"])
   out <- c(empty[c("seats")], list(sd = sdv, f = stats::setNames(f_ind, "IND"), n_hist = nrow(hj), n_target = 0L,
                                    missing = !tgt_el %in% d$election, pts = pts_c, carry = carry, b = b_cls))
   tg <- d[d$election == tgt_el]
   if (!nrow(tg)) return(out)
   tj <- junior(tg)
-  out$seats <- data.frame(seat = tj$seat, cls = "IND", r = NA_real_, pts = tj$pts, pts_b = tj$pts_b, sd = sdv, f = f_ind,
+  out$seats <- data.frame(seat = tj$seat, cls = "IND", r = NA_real_, pts = tj$pts, pts_b = tj$pts_b,
+                          sd = unname(ifelse(tj$jnone, sd_j["none"], sd_j["cred"])), f = f_ind,
                           n_cand = tj$n_cand, stringsAsFactors = FALSE)
+  out$sd_junior <- sd_j
   out$n_target <- nrow(tj)
   out
 }
@@ -276,6 +290,10 @@ class_split_args <- function(target_election, seat_names) {
       want_mode <- mode   # never a bare `mode` inside [ ]: fz has a column of that name (CLAUDE.md NSE trap)
       fz <- fz[which(fz[["mode"]] == want_mode)]
       if (!nrow(fz)) stop("CLS2! ", frz, " has no rows for mode ", mode, ": rerun scripts/build_ind_split_inputs.R")
+      want_sd <- Sys.getenv("AUSPOL_CLASS_SPLIT_SD", "pooled")
+      if (!"sd_mode" %in% names(fz) || !identical(unique(fz[["sd_mode"]]), want_sd))
+        stop("CLS2! ", frz, " was built for spread ", paste(unique(fz[["sd_mode"]]), collapse = "/"), ", this run asks for ", want_sd,
+             ": rerun scripts/build_ind_split_inputs.R with the same AUSPOL_CLASS_SPLIT_SD")
       fit <- list(seats = as.data.frame(fz[, c("seat", "cls", "r", "pts", "pts_b", "sd", "f", "n_cand")]),
                   sd = fz$sd[1], f = stats::setNames(fz$f[1], "IND"), n_hist = fz$n_hist[1], n_target = nrow(fz),
                   missing = FALSE, b = fz$b[1], carry = c(same = fz$carry_same[1], other = fz$carry_other[1]),

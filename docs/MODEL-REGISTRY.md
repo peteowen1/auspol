@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (323 switches from `published_flags.R`, 7 entry points)
+## Switch parity (324 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -59,6 +59,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_CLASS_CONSERVE` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R |
 | `AUSPOL_CLASS_SPLIT` | NO | NO | NO | NO | NO | NO | NO | class_split.R |
 | `AUSPOL_CLASS_SPLIT_MODE` | NO | NO | NO | NO | NO | NO | NO | class_split.R |
+| `AUSPOL_CLASS_SPLIT_SD` | NO | NO | NO | NO | NO | NO | NO | class_split.R |
 | `AUSPOL_CLASS_SPLIT_SRC` | NO | NO | NO | NO | NO | NO | NO | class_split.R |
 | `AUSPOL_CLOSE_PROPORTIONAL` | yes | NO | NO | NO | NO | NO | NO | forecast_mode.R |
 | `AUSPOL_COALITION_SPLIT` | NO | NO | NO | NO | NO | NO | NO | coalition_split.R |
@@ -384,6 +385,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_CLASS_CONSERVE`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: read by class_conserve_on() inside zero_unnominated() (R/nomination_zero.R), which every harness and fit_seats_full.R (zero_unnominated_live) reach. plans/prereg-partial-contest-2026-10-19.md
 - **`AUSPOL_CLASS_SPLIT`** (intentional / dead experiment): UNIVERSAL via R/: read inside class_split_args() (R/class_split.R) through coalition_split_args(), which every harness (six + NT) and fit_seats_full.R call. EXPERIMENT, default 0 (plans/prereg-class-split-2026-11-06.md); no vic2026 per-candidate predictions yet, so the live forecast would get no class split even at 1.
 - **`AUSPOL_CLASS_SPLIT_MODE`** (intentional / dead experiment): UNIVERSAL via R/: read inside class_split_mode() from class_split_args() (R/class_split.R) through coalition_split_args(); inert unless AUSPOL_CLASS_SPLIT=1. EXPERIMENT 2026-11-18, default pred (plans/prereg-ind-split-points-2026-11-18.md): pts_cred / pts_carry size the junior independent by expected points.
+- **`AUSPOL_CLASS_SPLIT_SD`** (intentional / dead experiment): UNIVERSAL via R/: read inside class_split_fit_pts() (R/class_split.R) through coalition_split_args(); inert unless the points mode is on. EXPERIMENT 2026-11-18 (prereg-ind-split-points Amendment 1), default pooled.
 - **`AUSPOL_CLASS_SPLIT_SRC`** (intentional / dead experiment): UNIVERSAL via R/: read inside class_split_src() (R/class_split.R) through coalition_split_args(); inert unless AUSPOL_CLASS_SPLIT=1. EXPERIMENT: which per-candidate predictions file the class split reads (prereg amendment 1).
 - **`AUSPOL_CLOSE_PROPORTIONAL`** (intentional / dead experiment): ARM, not shipped (default 0; plans/prereg-close-proportional-2026-09-28.md). Read in R/forecast_mode.R (federal harness path) and fit_seats_full.R (the live LL1 step). Off, so the four state harnesses not reaching it changes nothing.
 - **`AUSPOL_COALITION_SPLIT`** (intentional / dead experiment): UNIVERSAL via R/: read inside coalition_split_args() (R/coalition_split.R), which every harness (six + NT) and fit_seats_full.R call at their simulate_seat_contests() site, so the per-harness greps cannot see it. SHIPPED (1) 2026-10-17 on Pete's call; 20k deciding run passed every clause (reviews/lib-nat-plumbing-2026-10-16.md).
@@ -696,8 +698,8 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR4  every AUSPOL_* switch read in code (428) is registered (305) or listed as not a model switch (123).
+MR4  every AUSPOL_* switch read in code (429) is registered (306) or listed as not a model switch (123).
 
 
 
-MR2  every non-universal switch (292 of 323) has a recorded classification.
+MR2  every non-universal switch (293 of 324) has a recorded classification.

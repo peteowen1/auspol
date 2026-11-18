@@ -179,7 +179,7 @@ test_that("points mode counts a class with no column as skipped, as the fraction
 test_that("class_split_args reads a frozen fit with no transfers or candidate files (the daily run's case)", {
   root <- file.path(tempdir(), "cls-frozen"); dir.create(file.path(root, "output"), recursive = TRUE, showWarnings = FALSE)
   file.create(file.path(root, "DESCRIPTION"))
-  fz <- data.table::data.table(mode = c("pts_carry", "pts_carry", "pts_cred"), seat = c("A", "B", "A"), cls = "IND",
+  fz <- data.table::data.table(mode = c("pts_carry", "pts_carry", "pts_cred"), sd_mode = "pooled", seat = c("A", "B", "A"), cls = "IND",
                                r = NA_real_, pts = c(2.6, 1.1, 1.1), pts_b = 0.09, sd = 0.15, f = 0.44, n_cand = 2L,
                                n_hist = 400L, b = 0.09, carry_same = c(0.8, 0.8, NA), carry_other = c(0.58, 0.58, NA),
                                i_none = 1.1, i_MP = 1.6, i_prior5 = 1.8, i_councillor = 2.6)
@@ -190,4 +190,8 @@ test_that("class_split_args reads a frozen fit with no transfers or candidate fi
   expect_equal(unname(a$cls_pts[c("A", "B")]), c(2.6, 1.1))   # only the pts_carry rows, not pts_cred's 1.1 for A
   expect_true(is.na(a$cls_pts["C"]))
   expect_true(any(grepl("frozen fit", out)))
+  # a frozen fit built for another spread setting is refused, not used
+  rm(list = ls(envir = .cls_cache), envir = .cls_cache)
+  withr::local_envvar(AUSPOL_CLASS_SPLIT_SD = "by_junior")
+  expect_error(class_split_args("x2026", c("A", "B")), "built for spread pooled")
 })
