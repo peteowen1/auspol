@@ -175,3 +175,19 @@ test_that("points mode counts a class with no column as skipped, as the fraction
   expect_equal(s$class_split$n_seats, 0L)
   expect_equal(s$class_split$skipped_no_column, 1L)
 })
+
+test_that("class_split_args reads a frozen fit with no transfers or candidate files (the daily run's case)", {
+  root <- file.path(tempdir(), "cls-frozen"); dir.create(file.path(root, "output"), recursive = TRUE, showWarnings = FALSE)
+  file.create(file.path(root, "DESCRIPTION"))
+  fz <- data.table::data.table(mode = c("pts_carry", "pts_carry", "pts_cred"), seat = c("A", "B", "A"), cls = "IND",
+                               r = NA_real_, pts = c(2.6, 1.1, 1.1), pts_b = 0.09, sd = 0.15, f = 0.44, n_cand = 2L,
+                               n_hist = 400L, b = 0.09, carry_same = c(0.8, 0.8, NA), carry_other = c(0.58, 0.58, NA),
+                               i_none = 1.1, i_MP = 1.6, i_prior5 = 1.8, i_councillor = 2.6)
+  data.table::fwrite(fz, file.path(root, "output", "ind-split-fit-x2026.csv"))
+  withr::local_options(auspol.root = root)
+  withr::local_envvar(AUSPOL_CLASS_SPLIT = "1", AUSPOL_CLASS_SPLIT_MODE = "pts_carry")
+  out <- capture.output(a <- class_split_args("x2026", c("A", "B", "C")))
+  expect_equal(unname(a$cls_pts[c("A", "B")]), c(2.6, 1.1))   # only the pts_carry rows, not pts_cred's 1.1 for A
+  expect_true(is.na(a$cls_pts["C"]))
+  expect_true(any(grepl("frozen fit", out)))
+})

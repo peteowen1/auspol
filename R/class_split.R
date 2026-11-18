@@ -262,12 +262,30 @@ class_split_args <- function(target_election, seat_names) {
                if (file.exists(src)) file.mtime(src) else "nofile",
                if (mode != "pred" && file.exists(psrc)) file.mtime(psrc) else "nopts",
                if (length(tf)) max(file.mtime(tf)) else "notx")
+  frz <- out_path(sprintf("ind-split-fit-%s.csv", target_election))
+  key <- paste(key, if (mode != "pred" && file.exists(frz)) file.mtime(frz) else "nofrozen")
   fit <- .cls_cache[[key]]
   if (is.null(fit)) {
-    if (!file.exists(src)) stop("AUSPOL_CLASS_SPLIT=1 needs ", src, " (scripts/fit_minor_candidates.R)")
-    if (mode != "pred" && !file.exists(psrc))
-      stop("AUSPOL_CLASS_SPLIT_MODE=", mode, " needs ", psrc, " (scripts/build_ind_split_inputs.R)")
-    fit <- if (mode == "pred") class_split_fit(target_election) else class_split_fit_pts(target_election, mode)
+    if (mode == "pred") {
+      if (!file.exists(src)) stop("AUSPOL_CLASS_SPLIT=1 needs ", src, " (scripts/fit_minor_candidates.R)")
+      fit <- class_split_fit(target_election)
+    } else if (file.exists(frz)) {
+      # FROZEN FIT for a live election (scripts/build_ind_split_inputs.R): the same class_split_fit_pts() result,
+      # written where the transfers corpus exists, so the daily forecast (which has no transfers files) runs it.
+      fz <- data.table::fread(frz)
+      want_mode <- mode   # never a bare `mode` inside [ ]: fz has a column of that name (CLAUDE.md NSE trap)
+      fz <- fz[which(fz[["mode"]] == want_mode)]
+      if (!nrow(fz)) stop("CLS2! ", frz, " has no rows for mode ", mode, ": rerun scripts/build_ind_split_inputs.R")
+      fit <- list(seats = as.data.frame(fz[, c("seat", "cls", "r", "pts", "pts_b", "sd", "f", "n_cand")]),
+                  sd = fz$sd[1], f = stats::setNames(fz$f[1], "IND"), n_hist = fz$n_hist[1], n_target = nrow(fz),
+                  missing = FALSE, b = fz$b[1], carry = c(same = fz$carry_same[1], other = fz$carry_other[1]),
+                  pts = stats::setNames(c(fz$i_none[1], fz$i_MP[1], fz$i_prior5[1], fz$i_councillor[1]),
+                                        c("none", "MP", "prior5", "councillor")))
+      cat(sprintf("CLS2 class split %s: frozen fit %s (%d seats, mode %s)\n", target_election, basename(frz), nrow(fz), mode))
+    } else {
+      if (!file.exists(psrc)) stop("AUSPOL_CLASS_SPLIT_MODE=", mode, " needs ", psrc, " (scripts/build_ind_split_inputs.R)")
+      fit <- class_split_fit_pts(target_election, mode)
+    }
     assign(key, fit, envir = .cls_cache)
   }
   na <- stats::setNames(rep(NA_real_, length(seat_names)), seat_names)

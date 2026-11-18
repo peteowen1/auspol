@@ -55,3 +55,22 @@ cat(sprintf("ISI1 our_cls present on %d of %d seat-elections with an outcome; vi
             uniqueN(out[is.finite(share), paste(election, seat)]), uniqueN(out[election == "vic2026", seat])))
 fwrite(out, "output/ind-split-candidates.csv")
 cat("ISI1 wrote output/ind-split-candidates.csv\n")
+
+# FROZEN FIT for each live election (no outcome yet), both points modes: what class_split_args() reads where the
+# transfers corpus is absent (the daily forecast on GitHub; publish with the other shipped-models inputs).
+options(auspol.root = normalizePath("."))
+suppressMessages(devtools::load_all(quiet = TRUE))
+for (el in unique(out[!is.finite(share), election])) {
+  fz <- rbindlist(lapply(c("pts_cred", "pts_carry"), function(m) {
+    f <- class_split_fit_pts(el, m, cand = out)
+    if (!nrow(f$seats)) stop(sprintf("ISI2! %s %s: the fit gave no seats", el, m))
+    pc <- function(k) if (k %in% names(f$pts)) unname(f$pts[k]) else NA_real_
+    data.table(mode = m, f$seats, n_hist = f$n_hist, b = f$b, carry_same = unname(f$carry["same"]),
+               carry_other = unname(f$carry["other"]), i_none = pc("none"), i_MP = pc("MP"), i_prior5 = pc("prior5"),
+               i_councillor = pc("councillor"))
+  }), fill = TRUE)
+  if (any(!is.finite(fz$f)) || any(!is.finite(fz$sd))) stop(sprintf("ISI2! %s: frozen fit has a missing f or sd", el))
+  fn <- sprintf("output/ind-split-fit-%s.csv", el)
+  fwrite(fz, fn)
+  cat(sprintf("ISI1 %s: frozen fit, %d seats per mode, b %.3f, sd %.3f, f %.3f -> %s\n", el, nrow(fz) / 2, fz$b[1], fz$sd[1], fz$f[1], fn))
+}
