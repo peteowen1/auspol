@@ -1,3 +1,7 @@
+# auspol 0.4.187
+
+- **Forecast JSON says which seats' independents are split** (PR #255): each seat carries `ind_split`, from the same `class_split_args()` the forecast uses, so the seat page warns only where the Independent figure is still a sum. Left out (with `FJ8!`) when it cannot be determined. No forecast number changes.
+
 # auspol 0.4.186
 
 - **Independents split where two have a record** (PR #254): a seat's independents are no longer always simulated as one candidate. Where two or more of them have a record (sitting MP, councillor, or an earlier 5%+ vote), the junior's expected vote is split off at the count (`AUSPOL_CLASS_SPLIT=1`, `_MODE=pts_carry`, `_GATE=cred2`). Essendon's independent chance falls from 0.85 to 0.65 and Sydenham's from 0.014 to 0.003; no other seat moves. Shipped on Pete's override of one pre-registered guard (won seats +0.0058, SE 0.0050). The daily run downloads the frozen fits from `shipped-models`.

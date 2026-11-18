@@ -191,6 +191,24 @@ final_two <- function(st) {
        swing_to_flip = r$swing_to_flip[1])
 }
 # per-seat block
+# WHICH SEATS' INDEPENDENTS WERE SPLIT (AUSPOL_CLASS_SPLIT, shipped 2026-11-18 with the cred2 gate): asked of the same
+# class_split_args() the forecast run used, so a page can tell a seat whose Independent figure is one candidate's
+# from one that adds several together. The R/ defaults are the published values, so a plain run here matches a plain
+# fit_seats_full.R run. If it cannot be determined, `ind_split` is left out (never guessed) and FJ8! says so.
+ind_split <- tryCatch({
+  if (!exists("class_split_args")) suppressMessages(devtools::load_all(quiet = TRUE))
+  cs <- NULL
+  invisible(utils::capture.output(cs <- class_split_args(ELECTION, shares$seat)))
+  sp <- if (is.null(cs)) character(0) else names(cs$cls)[!is.na(cs$cls) & cs$cls == "IND"]
+  cat(sprintf("FJ8 %s: independents split in %d seat(s)%s\n", ELECTION, length(sp),
+              if (length(sp)) paste0(": ", paste(sp, collapse = ", ")) else ""))
+  sp
+}, error = function(e) {
+  cat(sprintf("FJ8! %s: could not tell which seats' independents were split (%s); ind_split left out of the JSON\n",
+              ELECTION, conditionMessage(e)))
+  NULL
+})
+
 seat_rows <- lapply(shares$seat, function(s) {
   pr <- probs[seat == s]; sh <- shares[seat == s]
   cls <- parties[parties %in% names(sh)]
@@ -205,8 +223,10 @@ seat_rows <- lapply(shares$seat, function(s) {
          sitting = if (!is.null(cands) && length(nm)) isTRUE(cands[seat == s & party == p]$sitting[1]) else NULL)
   })
   ps <- ps[order(-vapply(ps, `[[`, numeric(1), "win_prob"))]
-  list(seat = s, region = region_of(s), favourite = ps[[1]]$party, favourite_prob = ps[[1]]$win_prob,
-       final_two = final_two(s), parties = ps)
+  rec <- list(seat = s, region = region_of(s), favourite = ps[[1]]$party, favourite_prob = ps[[1]]$win_prob,
+              final_two = final_two(s), parties = ps)
+  if (!is.null(ind_split)) rec$ind_split <- s %in% ind_split   # TRUE: the Independent figure is split, not summed
+  rec
 })
 
 # Named cells: a party row with a vote and no name is a card with a blank. With the final list in hand the four
