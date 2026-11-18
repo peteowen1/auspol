@@ -84,7 +84,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 - OPEN, after 28 Nov: several independents in one seat are simulated as one candidate (Essendon IND 0.85). Five split
   designs refused (6 Nov x2, 18 Nov x3), all on seats an independent WON; needs a pre-election signal separating a
-  minnow from a serious second independent. `plans/prereg-ind-split-points-2026-11-18.md`.
+  minnow from a serious second independent. `plans/prereg-ind-split-points-2026-11-18.md`. Seat-page warning
+  (2+ IND at 10%+: Essendon, Kew, Footscray) in inthegame-blog PR #1243; message ITG before it merges.
 - OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. 17 Nov done: 6 sources (TAB not
   saved: Chrome blocked the download on api.beta.tab.com.au; Betfair has no Victorian markets). On 27 Nov, if the TAB
   download is blocked again, check Chrome's download prompt for that site first. Each date: `Rscript scripts/snapshot_benchmarks.R`, plus the GES
