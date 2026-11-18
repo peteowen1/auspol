@@ -70,6 +70,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -e
+          # Three tries per release download (scripts/gh_retry.sh; a one-off API failure killed the 19 Nov forecast run).
+          source scripts/gh_retry.sh
           mkdir -p output
           gh release download forecast-latest -p night-state-vic-2026.rds -D output --clobber
           gh release download night-inputs -p booths-vic2026-ref.csv -p council-district-stats-2022.csv -D output --clobber
