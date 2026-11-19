@@ -1,3 +1,7 @@
+# auspol 0.4.191
+
+- **By-election de-swing SHIPPED** (PR #260, Pete's override, 19 Nov): `AUSPOL_BYELECTION_DESWING=1` in `published_flags.R` and as the code's default. Werribee: Liberal 63% to 28%, Labor 10% to 42% (primary Labor 25.7 to 30.9, Liberal 28.0 to 24.0); Mulgrave 96% to 95%; expected seats Liberal/National -0.3, Labor +0.3. Shipped before its pre-registered rebuild pair (20 Nov) is scored; that result is reported against the prereg criteria (Amendment 2).
+
 # auspol 0.4.190
 
 - **By-election de-swing arm, off** (PR #259, 19 Nov): `AUSPOL_BYELECTION_DESWING` ("0") moves a by-election back to the previous general election's terms by the statewide poll swing to its date before the half blend, because the base then applies the full statewide change to the blended row (`byelection_prior(deswing =)`, `byelection_deswing_on()`; prints `BYS1`). Live with it on: Werribee Liberal 63% to 28%, Labor 10% to 42%. Not shipped: the pre-registered rebuild pair is scored first (`docs/plans/prereg-byelection-deswing-2026-11-19.md`, scorer `scripts/score_byelection_deswing.R`). No published number changes.
