@@ -61,3 +61,13 @@ that did not apply, not a null.
 All pass: take to Pete with the live Werribee and Mulgrave rows walked in plain numbers; he decides
 (`AskUserQuestion`). Primary fails: refused, `DECISIONS.md`, switch stays "0". The live diff (Werribee,
 Mulgrave, expected seats) is reported with the result either way.
+
+## Amendment 1 (19 Nov, before any run; implementation only, criteria above unchanged)
+
+Pete chose "rebuild first" (19 Nov). The pair runs from a one-shot Scheduled Task `auspol-bys-rebuilds`, 20 Nov
+01:00 (waits for 8 GB free, starts by 04:00 regardless): arm then base, each a full rebuild from stage 1 at e04b6e65
+in its own worktree (`C:\dev\auspol-wt-rb1`, `-rb0`), never publishing. Markers and logs:
+`deciding-runs/20261119-bys-rebuilds/`. The baseline is rebuilt too (not an old snapshot) so the code is identical but
+for the switch. Scorer: `Rscript scripts/score_byelection_deswing.R C:/dev/auspol-wt-rb0/output C:/dev/auspol-wt-rb1/output`
+(criteria 1, 3, 4; tested 19 Nov: refuses an identical pair with BDS2!, scores a doctored arm exactly), then
+`scripts/compare_rebuild_scores.R` on the two `pooled-backtest.csv` files (criterion 2).
