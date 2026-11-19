@@ -13,10 +13,18 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (10 Nov: One Nation stands in all 88 seats, so no seat-count conditioning applies; recheck for nsw2027's list); (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 18 Nov, 11am.** main 0.4.185 (PR #253 merged 9:15am, CI green on fd897745); `dev` is ahead by queue
-  edits only. Phone check of the live page passed (Pete, 18 Nov). Dated, a session runs each: 23 Nov VEC venues
-  rerun; 25 Nov final salience snapshot + night dress rehearsal; 27 Nov merge inthegame-blog#1239 (navbar link)
-  and the final benchmark capture (Pete: VPN off).
+- **Status 19 Nov, 1pm.** main 0.4.189 (PR #258: Victorian search interest off, published 11:08am, run 44425102899 green;
+  its scenario jobs were skipped, so check the 20 Nov 4:30am run runs them). `dev` ahead by the Edge Board Essendon note and
+  the by-election de-swing arm (off). Dated, a session runs each: 23 Nov VEC venues rerun; 25 Nov final salience snapshot +
+  night dress rehearsal; 27 Nov merge inthegame-blog#1239 (navbar link) and the final benchmark capture (Pete: VPN off).
+- IN FLIGHT 19 Nov: by-election double count. The half-blended by-election row is then swung by the full statewide change,
+  so the swing to the by-election date counts twice (Werribee: LNP 63% vs Sportsbet ~22%). Arm `AUSPOL_BYELECTION_DESWING`
+  (off), prereg `plans/prereg-byelection-deswing-2026-11-19.md`. Live walk 19 Nov: Werribee LIB 63% -> 28%, ALP 10% -> 42%;
+  Mulgrave ~unchanged; seats LNP -0.3. Done when: Pete has chosen (rebuild per prereg, or ship on the proxy).
+- OPEN, from the 19 Nov market-gap review (`reviews/market-gaps-vic2026-2026-11-19/README.md`): Narracan: the Labor re-entry fill
+  RUNS (`BV1r` ALP 15.2 from vic2018, local log 19 Nov) but the forecast ends at ALP 8.9; trace which later stage takes ~6 points.
+  Done when: traced. (Mill Park CLOSED 19 Nov: Nealy's council runs are Whittlesea 2008,
+  outside the 10-year window, and Banyule 2020, which does not overlap Mill Park, so `council_any` FALSE is the rule working.)
 - OPEN, DATED 25 Nov: Victorian search interest is OFF in the live forecast since 19 Nov (`AUSPOL_SALIENCE_LIVE_VIC=0`,
   Pete). After the final snapshot, rerun the on/off walk and take it to Pete before any "1". Done when: he has chosen.
   Evidence: `reviews/market-gaps-vic2026-2026-11-19/README.md` (challengers with the same rise won 2 of 23).
@@ -86,7 +94,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 
 - OPEN, DATED 27 Nov: seat-page independents note (inthegame-blog #1243 + #1246) is on its dev only. Reaches prod via
-  my cherry-pick branch off its `main` (ITG's rule), with the navbar #1239. Done when: inthegame.blog Kew shows the note.
+  my cherry-pick branch off its `main` (ITG's rule), with the navbar #1239. Done when: the note's code is on inthegame.blog
+  (it shows only at 10%+ independent; since search interest went off on 19 Nov no seat qualifies, so no page shows it yet).
 - OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. 17 Nov done: 6 sources (TAB not
   saved: Chrome blocked the download on api.beta.tab.com.au; Betfair has no Victorian markets). On 27 Nov, if the TAB
   download is blocked again, check Chrome's download prompt for that site first. Each date: `Rscript scripts/snapshot_benchmarks.R`, plus the GES
