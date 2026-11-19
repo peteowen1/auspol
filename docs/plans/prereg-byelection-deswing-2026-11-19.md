@@ -71,3 +71,14 @@ in its own worktree (`C:\dev\auspol-wt-rb1`, `-rb0`), never publishing. Markers 
 for the switch. Scorer: `Rscript scripts/score_byelection_deswing.R C:/dev/auspol-wt-rb0/output C:/dev/auspol-wt-rb1/output`
 (criteria 1, 3, 4; tested 19 Nov: refuses an identical pair with BDS2!, scores a doctored arm exactly), then
 `scripts/compare_rebuild_scores.R` on the two `pooled-backtest.csv` files (criterion 2).
+
+## Amendment 2 (19 Nov, 4:30pm): SHIPPED on Pete's override before the rebuild pair was scored
+
+Pete, after the double count was explained with Werribee's numbers and the recommendation to wait for the
+rebuild: "Let's fix it now, please. This is urgent." The switch ships at "1" (published_flags.R and the code's
+own default). This is his override of the decision rule above, which said the pair is scored first. The pair still
+runs at 1am 20 Nov exactly as in Amendment 1 (it was pinned to commit e04b6e65 with the switch set explicitly in
+each arm, so this change cannot reach it), and its result is reported to Pete against the criteria above. If it
+fails the primary or trips the unacceptable-win clause, that goes to Pete as a reason to turn it back off.
+Evidence at ship time: the published-path proxy (slope 0.80, SE 0.28, 42 seats) and the live walk (Werribee
+Liberal 63% to 28%, Labor 10% to 42%; Mulgrave and expected seats otherwise within 0.3).

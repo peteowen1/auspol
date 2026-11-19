@@ -238,13 +238,14 @@ byelection_winner_rows <- function(election_from, election_to, results = NULL, w
 
 #' Is the by-election de-swing on?
 #'
-#' Reads `AUSPOL_BYELECTION_DESWING`: "0" (default) blends the by-election as
-#' recorded; "1" first moves it back to the previous general election's terms
-#' (see [byelection_prior()]). Anything else stops.
+#' Reads `AUSPOL_BYELECTION_DESWING`: "1" (default, shipped 2026-11-19 on
+#' Pete's override) first moves the by-election back to the previous general
+#' election's terms (see [byelection_prior()]); "0" blends it as recorded.
+#' Anything else stops.
 #' @return Logical.
 #' @export
 byelection_deswing_on <- function() {
-  v <- Sys.getenv("AUSPOL_BYELECTION_DESWING", "0"); if (!nzchar(v)) v <- "0"
+  v <- Sys.getenv("AUSPOL_BYELECTION_DESWING", "1"); if (!nzchar(v)) v <- "1"
   if (!v %in% c("0", "1")) stop("AUSPOL_BYELECTION_DESWING must be \"0\" or \"1\", not \"", v, "\"", call. = FALSE)
   v == "1"
 }

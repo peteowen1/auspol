@@ -175,7 +175,9 @@ PUBLISHED_FLAGS <- c(
                                              # replacement ("1") was REFUSED: protest swings revert (Inala, Ipswich West, Upper Hunter), error
                                              # +0.59 on 17 seats. "blend" = half by-election, half general election: error 2.78 -> 2.44 (SE
                                              # 0.24), pooled log loss 0.2945 -> 0.2936. Black 34.2 -> ~38 on ALP (actual 43.0).
-  AUSPOL_BYELECTION_DESWING  = "0",          # ARM, not shipped (docs/plans/prereg-byelection-deswing-2026-11-19.md): before the half blend,
+  AUSPOL_BYELECTION_DESWING  = "1",          # SHIPPED 2026-11-19 on Pete's override ("Let's fix it now, please. This is urgent"), BEFORE its
+                                             # pre-registered rebuild pair was scored (that pair still runs and is reported; prereg Amendment 2).
+                                             # docs/plans/prereg-byelection-deswing-2026-11-19.md: before the half blend,
                                              # move the by-election back to the previous general election's terms by the statewide poll
                                              # swing to its date, because the base then applies the FULL statewide change to the blended row
                                              # (fit_seats_full.R dev_slope from a22). Werribee 2025: ALP -10.7 / LNP +8.0 counted twice at half weight.

@@ -789,7 +789,7 @@ CLASSIFY <- list(
     "credited the median next-election share); R/cross_seat_vote.R carries a comment that this switch owns those rows.",
     "Reaches every harness and fit_seats_full.R through candidate_returns()."),
   AUSPOL_BYELECTION_DESWING = paste(
-    "ARM, default 0 (plans/prereg-byelection-deswing-2026-11-19.md). Read inside R/byelection_prior.R (byelection_deswing_on()),",
+    "SHIPPED 2026-11-19, default 1, Pete's override before the prereg rebuild (plans/prereg-byelection-deswing-2026-11-19.md). Read inside R/byelection_prior.R (byelection_deswing_on()),",
     "which fit_seats_full.R and every harness call for the by-election blend; the harness grep cannot see it."),
   AUSPOL_BYELECTION_FILL = paste(
     "REFUSED 2026-09-30 (docs/plans/prereg-byelection-fill-2026-09-30.md): only Lyne improved, xgb error +0.01. Default 0, read only",

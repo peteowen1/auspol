@@ -10,7 +10,8 @@ byelection_deswing_on()
 Logical.
 }
 \description{
-Reads \code{AUSPOL_BYELECTION_DESWING}: "0" (default) blends the by-election as
-recorded; "1" first moves it back to the previous general election's terms
-(see \code{\link[=byelection_prior]{byelection_prior()}}). Anything else stops.
+Reads \code{AUSPOL_BYELECTION_DESWING}: "1" (default, shipped 2026-11-19 on
+Pete's override) first moves the by-election back to the previous general
+election's terms (see \code{\link[=byelection_prior]{byelection_prior()}}); "0" blends it as recorded.
+Anything else stops.
 }

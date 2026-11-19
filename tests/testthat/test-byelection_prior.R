@@ -16,26 +16,26 @@ test_that("byelections_between keeps only by-elections inside the window and fla
 
 test_that("byelection_prior replaces only usable seats present in the matrix, and names the rest", {
   m <- matrix(c(50, 38, 12, 40, 30, 30), 2, byrow = TRUE, dimnames = list(c("Black", "Elsewhere"), c("LNP", "ALP", "GRN")))
-  r <- byelection_prior(m, "sa2022", "sa2026", table = tab)
+  r <- byelection_prior(m, "sa2022", "sa2026", table = tab, deswing = FALSE)
   expect_equal(unname(r["Black", ]), c(34, 48, 18))
   expect_equal(unname(r["Elsewhere", ]), c(40, 30, 30))
   a <- attr(r, "byelection")
   expect_equal(a$applied, "Black")
   expect_match(a$skipped, "Prahran")
-  expect_identical(unclass(byelection_prior(m, "vic2022", "vic2026", table = tab))[1:6], unclass(m)[1:6])
+  expect_identical(unclass(byelection_prior(m, "vic2022", "vic2026", table = tab, deswing = FALSE))[1:6], unclass(m)[1:6])
 })
 
 test_that("fill gives an absent major its prior share plus swing, taken from the non-majors", {
   m <- matrix(c(30, 30, 40, 40, 30, 30), 2, byrow = TRUE, dimnames = list(c("Prahran", "Elsewhere"), c("LNP", "ALP", "GRN")))
-  r <- byelection_prior(m, "sa2022", "sa2026", table = tab, fill = TRUE, swing = c(ALP = -10))
+  r <- byelection_prior(m, "sa2022", "sa2026", table = tab, fill = TRUE, swing = c(ALP = -10), deswing = FALSE)
   # by-election LNP 50 / GRN 50; ALP 30 - 10 = 20 comes out of GRN alone
   expect_equal(unname(r["Prahran", ]), c(50, 20, 30))
   expect_equal(sum(r["Prahran", ]), 100)
   expect_true("Prahran" %in% attr(r, "byelection")$applied)
   # off by default: skipped as before
-  expect_match(attr(byelection_prior(m, "sa2022", "sa2026", table = tab, fill = FALSE), "byelection")$skipped, "Prahran", all = FALSE)
+  expect_match(attr(byelection_prior(m, "sa2022", "sa2026", table = tab, fill = FALSE, deswing = FALSE), "byelection")$skipped, "Prahran", all = FALSE)
   # a swing larger than the minors hold is capped at what they hold
-  r2 <- byelection_prior(m, "sa2022", "sa2026", table = tab, fill = TRUE, swing = c(ALP = 40))
+  r2 <- byelection_prior(m, "sa2022", "sa2026", table = tab, fill = TRUE, swing = c(ALP = 40), deswing = FALSE)
   expect_equal(unname(r2["Prahran", ]), c(50, 50, 0))
 })
 
@@ -67,9 +67,9 @@ test_that("deswing moves the by-election back to the previous general election's
   expect_false(any(grepl("BYS1", out0)))
 })
 
-test_that("AUSPOL_BYELECTION_DESWING defaults off and rejects other values", {
-  withr::with_envvar(c(AUSPOL_BYELECTION_DESWING = NA), expect_false(byelection_deswing_on()))
-  withr::with_envvar(c(AUSPOL_BYELECTION_DESWING = ""), expect_false(byelection_deswing_on()))
-  withr::with_envvar(c(AUSPOL_BYELECTION_DESWING = "1"), expect_true(byelection_deswing_on()))
+test_that("AUSPOL_BYELECTION_DESWING defaults on (shipped 2026-11-19) and rejects other values", {
+  withr::with_envvar(c(AUSPOL_BYELECTION_DESWING = NA), expect_true(byelection_deswing_on()))
+  withr::with_envvar(c(AUSPOL_BYELECTION_DESWING = ""), expect_true(byelection_deswing_on()))
+  withr::with_envvar(c(AUSPOL_BYELECTION_DESWING = "0"), expect_false(byelection_deswing_on()))
   withr::with_envvar(c(AUSPOL_BYELECTION_DESWING = "yes"), expect_error(byelection_deswing_on(), "must be"))
 })
