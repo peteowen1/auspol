@@ -23,10 +23,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   Mulgrave ~unchanged; seats LNP -0.3. Pete chose REBUILD FIRST. OPEN, DATED 20 Nov morning: read the marker in
   `deciding-runs/20261119-bys-rebuilds/` (task 1am), score per the prereg's Amendment 1, take the result to Pete; then unlink
   the junctions listed in `junctions-{0,1}.txt` BEFORE removing `C:\dev\auspol-wt-rb0` / `-rb1`. Done when: Pete has decided.
-- OPEN, from the 19 Nov market-gap review (`reviews/market-gaps-vic2026-2026-11-19/README.md`): Narracan: the Labor re-entry fill
-  RUNS (`BV1r` ALP 15.2 from vic2018, local log 19 Nov) but the forecast ends at ALP 8.9; trace which later stage takes ~6 points.
-  Done when: traced. (Mill Park CLOSED 19 Nov: Nealy's council runs are Whittlesea 2008,
-  outside the 10-year window, and Banyule 2020, which does not overlap Mill Park, so `council_any` FALSE is the rule working.)
+- CLOSED 19 Nov, from the market-gap review (`reviews/market-gaps-vic2026-2026-11-19/README.md`): Narracan Labor 15.2 -> 8.9 is
+  four shipped steps (`AUSPOL_TRACE_SEAT=Narracan`): proportional One Nation fill -3.5 (the Box Hill mechanism, open after 28 Nov),
+  trees -0.4, seat-swing port -1.9 (federal booth swing), demographics -0.5. Mill Park: council rule working. No defect.
 - OPEN, DATED 25 Nov: Victorian search interest is OFF in the live forecast since 19 Nov (`AUSPOL_SALIENCE_LIVE_VIC=0`,
   Pete). After the final snapshot, rerun the on/off walk and take it to Pete before any "1". Done when: he has chosen.
   Evidence: `reviews/market-gaps-vic2026-2026-11-19/README.md` (challengers with the same rise won 2 of 23).
