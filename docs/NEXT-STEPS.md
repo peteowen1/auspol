@@ -20,7 +20,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - IN FLIGHT 19 Nov: by-election double count. The half-blended by-election row is then swung by the full statewide change,
   so the swing to the by-election date counts twice (Werribee: LNP 63% vs Sportsbet ~22%). Arm `AUSPOL_BYELECTION_DESWING`
   (off), prereg `plans/prereg-byelection-deswing-2026-11-19.md`. Live walk 19 Nov: Werribee LIB 63% -> 28%, ALP 10% -> 42%;
-  Mulgrave ~unchanged; seats LNP -0.3. Pete chose REBUILD FIRST. OPEN, DATED 20 Nov morning: read the marker in
+  Mulgrave ~unchanged; seats LNP -0.3. Pete chose rebuild first, then SHIPPED IT on his override (19 Nov 4:30pm, DECISIONS). OPEN, DATED 20 Nov morning: read the marker in
   `deciding-runs/20261119-bys-rebuilds/` (task 1am), score per the prereg's Amendment 1, take the result to Pete; then unlink
   the junctions listed in `junctions-{0,1}.txt` BEFORE removing `C:\dev\auspol-wt-rb0` / `-rb1`. Done when: Pete has decided.
 - CLOSED 19 Nov, from the market-gap review (`reviews/market-gaps-vic2026-2026-11-19/README.md`): Narracan Labor 15.2 -> 8.9 is
