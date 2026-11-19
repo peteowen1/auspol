@@ -9,6 +9,8 @@ a <- commandArgs(TRUE); if (length(a) != 2L) stop("usage: Rscript scripts/score_
 rd <- function(d) { f <- file.path(d, "published-predictions.csv"); if (!file.exists(f)) stop("missing ", f); fread(f, showProgress = FALSE) }
 B <- rd(a[1]); A <- rd(a[2])
 cat(sprintf("BDS0 base %s: %d rows / %d elections; arm %s: %d rows / %d elections\n", a[1], nrow(B), uniqueN(B$pair), a[2], nrow(A), uniqueN(A$pair)))
+if (!setequal(unique(B$pair), unique(A$pair))) cat(sprintf("BDS0! elections differ between base and arm: only base %s; only arm %s\n",
+  paste(setdiff(unique(B$pair), unique(A$pair)), collapse = ","), paste(setdiff(unique(A$pair), unique(B$pair)), collapse = ",")))
 # by-election seats the arm can move: both majors stood, and a non-zero ALP or LNP swing to the by-election date
 tab <- byelection_table(); dts <- election_dates(); labs <- names(dts)[order(unlist(dts))]
 cases <- list()
@@ -28,7 +30,7 @@ if (!any(moved$moved)) { cat("BDS2! the arm moved NO by-election seat: it did no
 M[, d := (arm - actual)^2 - (base - actual)^2]
 per <- M[, .(n = .N, d = sum(d)), by = pair]
 tot <- sum(per$d); G <- nrow(per)
-th <- vapply(per$pair, function(p) sum(per$d[per$pair != p]), 0)
+th <- vapply(per$pair, function(p) sum(per$d[per$pair != p]), 0) * G / (G - 1)   # leave-one-out totals rescaled to G elections
 se <- sqrt((G - 1) / G * sum((th - mean(th))^2))
 cat(sprintf("BDS3 PRIMARY squared error, arm minus base: %+.1f (SE %.1f, jackknife over %d elections; base total %.1f) => %s\n",
             tot, se, G, sum((M$base - M$actual)^2), if (tot < -se) "lower by more than 1 SE: PASS" else "FAIL"))
