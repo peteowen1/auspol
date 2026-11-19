@@ -1,3 +1,8 @@
+# auspol 0.4.190
+
+- **By-election de-swing arm, off** (PR #259, 19 Nov): `AUSPOL_BYELECTION_DESWING` ("0") moves a by-election back to the previous general election's terms by the statewide poll swing to its date before the half blend, because the base then applies the full statewide change to the blended row (`byelection_prior(deswing =)`, `byelection_deswing_on()`; prints `BYS1`). Live with it on: Werribee Liberal 63% to 28%, Labor 10% to 42%. Not shipped: the pre-registered rebuild pair is scored first (`docs/plans/prereg-byelection-deswing-2026-11-19.md`, scorer `scripts/score_byelection_deswing.R`). No published number changes.
+- Edge Board: Essendon's note now says the independent is about 2%.
+
 # auspol 0.4.189
 
 - **Victorian forecast runs without search interest** (PR #258, Pete, 19 Nov): `AUSPOL_SALIENCE_LIVE_VIC=0` drops the vic2026 rows of `salience-v6.csv` at every reader, including the frozen seat-poll table the daily run reads (`salience_live_filter()`, `salience_live_vic_on()`; prints `SLF1`/`SLF2`). Search interest alone gave three challenger independents 32-65% where similar past candidates won 2 of 23. Expected seats: Labor 23.4 to 25.1, Liberal/National 39.1 to 40.5, One Nation 15.8 to 14.9, independents 1.9 to 0.2; Essendon's independent 65% to 2%. No backtest number changes. Review of the 21 seats where we disagree with the bookmakers: `docs/reviews/market-gaps-vic2026-2026-11-19/`.
