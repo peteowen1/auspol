@@ -22,7 +22,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (off), prereg `plans/prereg-byelection-deswing-2026-11-19.md`. Live walk 19 Nov: Werribee LIB 63% -> 28%, ALP 10% -> 42%;
   Mulgrave ~unchanged; seats LNP -0.3. Pete chose REBUILD FIRST. OPEN, DATED 20 Nov morning: read the marker in
   `deciding-runs/20261119-bys-rebuilds/` (task 1am), score per the prereg's Amendment 1, take the result to Pete; then unlink
-  the junctions listed in `junctions-{0,1}.txt` BEFORE removing `C:\devuspol-wt-rb0` / `-rb1`. Done when: Pete has decided.
+  the junctions listed in `junctions-{0,1}.txt` BEFORE removing `C:\dev\auspol-wt-rb0` / `-rb1`. Done when: Pete has decided.
 - OPEN, from the 19 Nov market-gap review (`reviews/market-gaps-vic2026-2026-11-19/README.md`): Narracan: the Labor re-entry fill
   RUNS (`BV1r` ALP 15.2 from vic2018, local log 19 Nov) but the forecast ends at ALP 8.9; trace which later stage takes ~6 points.
   Done when: traced. (Mill Park CLOSED 19 Nov: Nealy's council runs are Whittlesea 2008,
