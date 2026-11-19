@@ -1,0 +1,73 @@
+# Pre-registration: de-swing a by-election before the half blend (2026-11-19)
+
+Committed BEFORE any arm run, with the switch (`AUSPOL_BYELECTION_DESWING`, default "0").
+
+## Why
+
+`AUSPOL_BYELECTION_PRIOR=blend` (shipped 2026-09-18, `prereg-byelection-prior-2026-09-18.md`) makes a seat's
+prior row half the previous general election and half the by-election. `fit_seats_full.R:1359` (and every
+harness's base_pred) then swings that row by the FULL statewide change from the previous general election to
+the target (`dev_slope(mat22, a22, state_mean)`). The by-election half already carries the statewide swing from
+the general election to the by-election date, so that part is counted twice, at half weight.
+
+Live case, Werribee: by-election 8 Feb 2025, ALP 28.9 / LNP 29.0; statewide swing to that date (90-day poll
+mean minus vic2022) ALP -10.7, LNP +8.0, GRN +2.0 (2 polls). Half of it counted twice is about ALP -5.3,
+LNP +4.0 in the seat's base. The 11:08am 19 Nov forecast: LNP 63%, ALP 10% (Sportsbet LNP ~22%).
+Mulgrave is the other live vic2026 seat the blend applies to.
+
+The 18 Sep prereg read full replacement's misses as "the by-election protest swing reverting" (Inala ALP 37
+at the by-election, 47 at the general). A double count produces the same shape. A de-swung by-election was
+never tested.
+
+## Exploration already seen (disclosed, not the test)
+
+Before this file: on `output/published-predictions.csv` (35 elections, the published path), the ALP and LNP
+cells of the 62 backtest by-election seats where both majors stood. 14 have no polls in the 90-day window
+(zero swing; the arm cannot move them). Three WA seats (Nedlands 2005, Victoria Park 2008, Rockingham 2025)
+were dropped from the check for a fault in the check itself (zero test matrix, so the LNP baseline fell to 0).
+On the remaining 82 cells / 42 seats, signed miss (actual - ours) regressed on minus half the swing:
+slope 0.80, SE 0.28 (1.0 = the double count fully explains it). Mean absolute error 4.55 -> 4.28 if the
+correction were applied directly to the published shares. This is a proxy (it ignores the xgb layer's
+response to a moved base), which is why the test below is a rebuild.
+
+## The change (one switch)
+
+`AUSPOL_BYELECTION_DESWING=1`: in `byelection_prior()`, for each polled class that stood at the by-election
+(ALP, LNP, GRN, ONP), subtract `.byelection_swing()` (the existing helper of the refused fill arm: 90-day poll
+mean before the by-election minus the previous statewide share) from its by-election share, floor at 0,
+renormalise to 100, then blend at the unchanged weight 0.5. A class with no polls moves 0. Log line `BYS1`.
+Weight, window and everything else unchanged.
+
+## How it runs
+
+One full rebuild from stage 1 with the switch exported, `AUSPOL_PUBLISH` unset, against the most recent
+full-rebuild snapshot at the same code minus this switch. (The harnesses read cached as-at tree predictions,
+`AUSPOL_XGB_PRIMARY=1`, so a `quick_arm` screen cannot see a base change; the 2026-10-05 by-election arm was
+measured the same way.) The arm must print `BYS1` with a non-zero count for the by-election pairs; Black
+sa2026's ALP base before and after is printed. A run with zero changed cells on by-election pairs is a run
+that did not apply, not a null.
+
+## Criteria (all 35 scored elections)
+
+1. **Primary**: squared error on every primary-vote cell of the by-election seats (both majors stood, swing
+   non-zero), arm minus baseline, SE clustered on election. PASS if lower by more than 1 SE.
+2. **Guard**: pooled seat log loss not worse by more than 1 SE (clustered on election).
+3. **Leave-one-election-out**: the primary is still lower with any one election dropped.
+4. **Unacceptable win**: the primary falls but the by-election seats' own seat log loss rises by more than
+   1 SE. Then it goes to Pete as a split, not shipped.
+
+## Decision rule
+
+All pass: take to Pete with the live Werribee and Mulgrave rows walked in plain numbers; he decides
+(`AskUserQuestion`). Primary fails: refused, `DECISIONS.md`, switch stays "0". The live diff (Werribee,
+Mulgrave, expected seats) is reported with the result either way.
+
+## Amendment 1 (19 Nov, before any run; implementation only, criteria above unchanged)
+
+Pete chose "rebuild first" (19 Nov). The pair runs from a one-shot Scheduled Task `auspol-bys-rebuilds`, 20 Nov
+01:00 (waits for 8 GB free, starts by 04:00 regardless): arm then base, each a full rebuild from stage 1 at e04b6e65
+in its own worktree (`C:\dev\auspol-wt-rb1`, `-rb0`), never publishing. Markers and logs:
+`deciding-runs/20261119-bys-rebuilds/`. The baseline is rebuilt too (not an old snapshot) so the code is identical but
+for the switch. Scorer: `Rscript scripts/score_byelection_deswing.R C:/dev/auspol-wt-rb0/output C:/dev/auspol-wt-rb1/output`
+(criteria 1, 3, 4; tested 19 Nov: refuses an identical pair with BDS2!, scores a doctored arm exactly), then
+`scripts/compare_rebuild_scores.R` on the two `pooled-backtest.csv` files (criterion 2).
