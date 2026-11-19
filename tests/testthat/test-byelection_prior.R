@@ -47,3 +47,29 @@ test_that("byelection_winner_rows names the by-election winner as an elected can
   expect_equal(nrow(b), 1L); expect_equal(b$party, "ALP"); expect_equal(b$surname, "DIGHTON"); expect_true(b$elected)
   expect_equal(nrow(byelection_winner_rows("vic2022", "vic2026", results = res, winners = win)), 0L)
 })
+
+test_that("deswing moves the by-election back to the previous general election's terms before blending", {
+  m <- matrix(c(50, 38, 12, 0, 40, 30, 30, 0), 2, byrow = TRUE,
+              dimnames = list(c("Black", "Elsewhere"), c("LNP", "ALP", "GRN", "ONP")))
+  # by-election LNP 34 / ALP 48 / GRN 18; statewide swing to its date ALP -10, LNP +5, ONP +8 (ONP did not stand)
+  out <- capture.output(r <- byelection_prior(m, "sa2022", "sa2026", table = tab, swing = c(ALP = -10, LNP = 5, ONP = 8), deswing = TRUE))
+  raw <- c(LNP = 29, ALP = 58, GRN = 18, ONP = 0)
+  expect_equal(r["Black", ], 100 * raw / sum(raw))
+  expect_equal(unname(r["Black", "ONP"]), 0)                         # a class that did not stand is not created
+  expect_equal(unname(r["Elsewhere", ]), c(40, 30, 30, 0))
+  expect_match(out, "BYS1", all = FALSE); expect_match(attr(r, "byelection")$deswung, "Black")
+  # half blend: the general-election row and the de-swung by-election, half each
+  capture.output(h <- byelection_prior(m, "sa2022", "sa2026", table = tab, swing = c(ALP = -10, LNP = 5), weight = 0.5, deswing = TRUE))
+  expect_equal(h["Black", ], 0.5 * m["Black", ] + 0.5 * 100 * raw / sum(raw))
+  # off: exactly the old rule, and no BYS1 line
+  out0 <- capture.output(r0 <- byelection_prior(m, "sa2022", "sa2026", table = tab, swing = c(ALP = -10, LNP = 5), deswing = FALSE))
+  expect_equal(unname(r0["Black", ]), c(34, 48, 18, 0))
+  expect_false(any(grepl("BYS1", out0)))
+})
+
+test_that("AUSPOL_BYELECTION_DESWING defaults off and rejects other values", {
+  withr::with_envvar(c(AUSPOL_BYELECTION_DESWING = NA), expect_false(byelection_deswing_on()))
+  withr::with_envvar(c(AUSPOL_BYELECTION_DESWING = ""), expect_false(byelection_deswing_on()))
+  withr::with_envvar(c(AUSPOL_BYELECTION_DESWING = "1"), expect_true(byelection_deswing_on()))
+  withr::with_envvar(c(AUSPOL_BYELECTION_DESWING = "yes"), expect_error(byelection_deswing_on(), "must be"))
+})

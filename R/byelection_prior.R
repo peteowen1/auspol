@@ -82,12 +82,20 @@ byelections_between <- function(election_from, election_to, table = NULL) {
 #'   by-election date, taken proportionally from every non-major class
 #'   (`AUSPOL_BYELECTION_FILL=1`; plans/prereg-byelection-fill-2026-09-30.md).
 #' @param swing Optional named override of that swing (party -> points).
-#' @return `mat` with attribute `byelection` = list(applied, skipped, filled, cases).
+#' @param deswing Before blending, subtract from each class that stood at the
+#'   by-election the statewide swing from `election_from` to the by-election
+#'   date, so the row is not swung twice when the base later applies the full
+#'   change to the target (`AUSPOL_BYELECTION_DESWING=1`;
+#'   plans/prereg-byelection-deswing-2026-11-19.md). Default from
+#'   [byelection_deswing_on()].
+#' @return `mat` with attribute `byelection` = list(applied, skipped, filled,
+#'   deswung, cases).
 #' @export
 byelection_prior <- function(mat, election_from, election_to, table = NULL, weight = 1,
-                             fill = identical(Sys.getenv("AUSPOL_BYELECTION_FILL", "0"), "1"), swing = NULL) {
+                             fill = identical(Sys.getenv("AUSPOL_BYELECTION_FILL", "0"), "1"), swing = NULL,
+                             deswing = byelection_deswing_on()) {
   s <- byelections_between(election_from, election_to, table = table)
-  applied <- character(0); skipped <- character(0)
+  applied <- character(0); skipped <- character(0); deswung <- character(0)
   if (identical(attr(s, "reason"), "no-table")) {
     attr(mat, "byelection") <- list(applied = applied, skipped = "NO TABLE -- nothing could apply", cases = s)
     return(mat)
@@ -116,11 +124,27 @@ byelection_prior <- function(mat, election_from, election_to, table = NULL, weig
       new[absent] <- put
       filled <- c(filled, sprintf("%s (%s)", st, paste(sprintf("%s %.1f", absent, put), collapse = ", ")))
     }
+    if (deswing) {
+      # The row is later swung by the FULL statewide change from election_from to
+      # the target, and the by-election already carries the part of that change
+      # up to its own date: take it back out, so the by-election is in
+      # election_from terms like the general-election row it is blended with.
+      # Only classes that stood (share > 0) move; a class with no polls moves 0.
+      cls <- intersect(c("ALP", "LNP", "GRN", "ONP"), names(new)[new > 0])   # the polled classes
+      sw <- .byelection_swing(election_from, election_to, rows$date[1], cls, mat, swing, use = "by-election left un-de-swung")
+      sw[!is.finite(sw)] <- 0
+      new[cls] <- pmax(0, new[cls] - sw[cls])
+      new <- 100 * new / sum(new)
+      moved <- sw[sw != 0]
+      deswung <- c(deswung, sprintf("%s (%s)", st, if (length(moved)) paste(sprintf("%s %+.1f", names(moved), -moved), collapse = ", ") else "no polls: unchanged"))
+    }
     mat[st, ] <- (1 - weight) * mat[st, ] + weight * new
     applied <- c(applied, st)
   }
   if (length(filled)) cat(sprintf("BYF1  %s: by-election absent major filled in: %s\n", election_to, paste(filled, collapse = "; ")))
-  attr(mat, "byelection") <- list(applied = applied, skipped = skipped, filled = filled, cases = s)
+  if (deswing) cat(sprintf("BYS1  %s: AUSPOL_BYELECTION_DESWING=1, %d by-election(s) moved back to %s terms by the statewide swing to their date: %s\n",
+                           election_to, length(deswung), election_from, if (length(deswung)) paste(deswung, collapse = "; ") else "none"))
+  attr(mat, "byelection") <- list(applied = applied, skipped = skipped, filled = filled, deswung = deswung, cases = s)
   mat
 }
 
@@ -131,14 +155,15 @@ byelection_prior <- function(mat, election_from, election_to, table = NULL, weig
 #' unweighted seat mean of `mat` when that is missing). Zero, said out loud,
 #' when there are no polls to read.
 #' @param swing Optional named numeric override (party -> points), for tests.
+#' @param use What a zero swing means for the caller, for the log line.
 #' @return Named numeric, points, one per party.
 #' @keywords internal
-.byelection_swing <- function(election_from, election_to, date, parties, mat, swing = NULL) {
+.byelection_swing <- function(election_from, election_to, date, parties, mat, swing = NULL, use = "absent major filled") {
   if (!is.null(swing)) return(stats::setNames(unname(swing[parties]), parties))
   reg <- sub("[0-9]{4}$", "", election_to)
   pol <- tryCatch(suppressMessages(load_polls(reg)), error = function(e) NULL)
   out <- stats::setNames(rep(0, length(parties)), parties)
-  if (is.null(pol)) { cat(sprintf("BYF1! %s: no polls readable -- absent major filled at ZERO swing\n", election_to)); return(out) }
+  if (is.null(pol)) { cat(sprintf("BYF1! %s: no polls readable -- %s at ZERO swing\n", election_to, use)); return(out) }
   d0 <- as.Date(date)
   win <- pol[which(pol$date <= d0 & pol$date > d0 - 90), ]
   pr <- tryCatch(load_prior_results(), error = function(e) NULL)
@@ -209,4 +234,17 @@ byelection_winner_rows <- function(election_from, election_to, results = NULL, w
   # look identical to the caller.
   if (length(unmatched)) cat(sprintf("BYW1! %d by-election winner(s) not matched to a results row, skipped: %s\n", length(unmatched), paste(unmatched, collapse = "; ")))
   if (is.null(out) || !nrow(out)) empty else out
+}
+
+#' Is the by-election de-swing on?
+#'
+#' Reads `AUSPOL_BYELECTION_DESWING`: "0" (default) blends the by-election as
+#' recorded; "1" first moves it back to the previous general election's terms
+#' (see [byelection_prior()]). Anything else stops.
+#' @return Logical.
+#' @export
+byelection_deswing_on <- function() {
+  v <- Sys.getenv("AUSPOL_BYELECTION_DESWING", "0"); if (!nzchar(v)) v <- "0"
+  if (!v %in% c("0", "1")) stop("AUSPOL_BYELECTION_DESWING must be \"0\" or \"1\", not \"", v, "\"", call. = FALSE)
+  v == "1"
 }

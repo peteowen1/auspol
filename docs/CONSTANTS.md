@@ -673,6 +673,7 @@ Existing rows for `AUSPOL_SEAT_POLL_PRIOR` (0.75), `_PRIOR_SD` (0.25), the half-
 | `AUSPOL_SURGE_H_TF` | `scripts/fit_xgb_primary_v6.R:580` | "1" | Switch: the xgb `surge_h` feature is built from earlier canon elections only. |
 | `AUSPOL_SURGE_SOURCE` | `R/party_surge.R:95` | "none" | Switch (decided 2026-10-16): no class counts as surging in the salience screen. |
 | `AUSPOL_SALIENCE_LIVE_VIC` | `R/salience_screen.R` `salience_live_filter()` | "0" | Switch (Pete, 2026-11-19): the live vic2026 forecast runs without its search-interest rows. `reviews/market-gaps-vic2026-2026-11-19/README.md`. |
+| `AUSPOL_BYELECTION_DESWING` | `R/byelection_prior.R` `byelection_deswing_on()` | "0" | Arm (2026-11-19): de-swing a by-election to the previous general election before the half blend; the swing is the 90-day poll mean minus the previous statewide share (`.byelection_swing()`). `plans/prereg-byelection-deswing-2026-11-19.md`. |
 
 ### Spread by seat size, composition and error shape (shipped 2026-10-14 and 2026-10-17)
 

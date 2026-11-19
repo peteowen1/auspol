@@ -11,7 +11,8 @@ byelection_prior(
   table = NULL,
   weight = 1,
   fill = identical(Sys.getenv("AUSPOL_BYELECTION_FILL", "0"), "1"),
-  swing = NULL
+  swing = NULL,
+  deswing = byelection_deswing_on()
 )
 }
 \arguments{
@@ -29,9 +30,17 @@ by-election date, taken proportionally from every non-major class
 (\code{AUSPOL_BYELECTION_FILL=1}; plans/prereg-byelection-fill-2026-09-30.md).}
 
 \item{swing}{Optional named override of that swing (party -> points).}
+
+\item{deswing}{Before blending, subtract from each class that stood at the
+by-election the statewide swing from \code{election_from} to the by-election
+date, so the row is not swung twice when the base later applies the full
+change to the target (\code{AUSPOL_BYELECTION_DESWING=1};
+plans/prereg-byelection-deswing-2026-11-19.md). Default from
+\code{\link[=byelection_deswing_on]{byelection_deswing_on()}}.}
 }
 \value{
-\code{mat} with attribute \code{byelection} = list(applied, skipped, filled, cases).
+\code{mat} with attribute \code{byelection} = list(applied, skipped, filled,
+deswung, cases).
 }
 \description{
 For every seat in \code{\link[=byelections_between]{byelections_between()}} with both majors standing and

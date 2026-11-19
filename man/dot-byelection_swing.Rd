@@ -4,10 +4,20 @@
 \alias{.byelection_swing}
 \title{Statewide swing to a party from the last general election to a date}
 \usage{
-.byelection_swing(election_from, election_to, date, parties, mat, swing = NULL)
+.byelection_swing(
+  election_from,
+  election_to,
+  date,
+  parties,
+  mat,
+  swing = NULL,
+  use = "absent major filled"
+)
 }
 \arguments{
 \item{swing}{Optional named numeric override (party -> points), for tests.}
+
+\item{use}{What a zero swing means for the caller, for the log line.}
 }
 \value{
 Named numeric, points, one per party.
