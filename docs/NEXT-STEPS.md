@@ -160,8 +160,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - OPEN, REPLAY METHOD: federal and vic2022 replay on real nights (`scripts/night_replay_feed.R`,
   `scripts/night_replay_vec.R`); the other state replays are still simulated (one block per seat, clock = 6pm + 4h x
   step). Calls at 0.99 need 20,000 sims. Tally Room "returned" times are post-recheck, not night times.
-- OPEN, small, backtest-only: does the flow estimator's known Greens -> Labor bias (3-7 points above the AEC federally)
-  shift the QLD/SA/NSW/Vic/WA state blends in `output/flows-state-blend.csv`? Evidence: `reviews/needs-pete-evidence-2026-11-08.md`.
+- OPEN, small, backtest-only: the flow estimator's Greens -> Labor bias DOES shift the state blends (sized 21 Nov 1am).
+  Against the answer keys (`flows-key-table.csv`), Greens estimates run high on 23 of 27 real keyed elections (fed2001 +11.1,
+  nsw2023 +9.3, qld2024 +7.0, wa2025 +11.9, sa2026 +15.4 on 12 seats; vic2006-18 excluded: se 0 copies, not estimates).
+  Time-forward mean bias x the blend's w gives +2.7 to +5.6 points (mean +4.2) on all 15 blended Greens rows (nsw2003/07,
+  qld2004-17, sa2002-22, vic2002). Readers: the QLD and SA harnesses only; vic2026 untouched. NEXT, after the rebuild pair
+  finishes (memory): screen a de-biased blend file on qld/sa pairs (memory `screen-an-input-file-change`). Trigger: after 28 Nov.
 - OPEN: Vic 2026 Edge Board (https://claude.ai/artifact/8U33eGJMiAbpZFSW2dsfQu) builder now in the repo:
   `scripts/build_edge_board_vic2026.R [capture.csv] [out_dir]` (EDGE_RUN=<suffix> picks our run) writes both board datasets;
   checked 1 Nov against the published files (same selections, prices, bookie probabilities, columns; seat panel identical).
