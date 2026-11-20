@@ -22,7 +22,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   missed-window guard). Rerun: task `auspol-bys-rebuilds` 21 Nov 1am (wakes the machine; refuses after 4am), folder
   `deciding-runs/20261120-bys-rebuilds/`. 21 Nov 12:45am: 5 GB free, no reboot since 16 Nov; Pete "dont need a reboot keep goin",
   so `chain.ps1` now waits for 4 GB (not 8) and writes FAILED if the deadline ends the wait (it used to start anyway).
-  OPEN, DATED 21 Nov morning: read its marker, score per Amendment 1, report to Pete.
+  STARTED 1:02am (arm `DESWING=1` in `C:\dev\auspol-wt-rb1`, then base in `-rb0`). OPEN, DATED 21 Nov morning: read its
+  marker, score per Amendment 1, report to Pete. Before removing either worktree, unlink every path in
+  `junctions-<arm>.txt` first (they point into `external/`; memory `worktree-junctions-delete-through`).
 - OPEN, DATED 25 Nov: Victorian search interest is OFF in the live forecast since 19 Nov (`AUSPOL_SALIENCE_LIVE_VIC=0`,
   Pete). After the final snapshot, rerun the on/off walk and take it to Pete before any "1". Done when: he has chosen.
   Evidence: `reviews/market-gaps-vic2026-2026-11-19/README.md` (challengers with the same rise won 2 of 23).
