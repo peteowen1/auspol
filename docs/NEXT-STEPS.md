@@ -19,17 +19,17 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - SHIPPED 19 Nov (PR #260, Pete's override): by-election de-swing `AUSPOL_BYELECTION_DESWING=1`. Live 20 Nov 4:42am forecast
   (1404a0f): Werribee ALP 42% / ONP 30% / LIB 28%; `BYS1` also moved nsw2027 Kiama (ALP -1.0, LNP +5.4), not measured. OPEN: the
   prereg rebuild pair NEVER RAN (task fired 20 Nov 5:56pm after the machine slept through 1am; stopped, 2 GB free; chain had no
-  missed-window guard). Pete chose reboot + rerun: task `auspol-bys-rebuilds` 21 Nov 1am (wakes the machine; refuses after 4am), folder
-  `deciding-runs/20261120-bys-rebuilds/`. OPEN, DATED 21 Nov morning: read its marker, score per Amendment 1, report to Pete.
-- CLOSED 19 Nov, from the market-gap review (`reviews/market-gaps-vic2026-2026-11-19/README.md`): Narracan Labor 15.2 -> 8.9 is
-  four shipped steps (`AUSPOL_TRACE_SEAT=Narracan`): proportional One Nation fill -3.5 (the Box Hill mechanism, open after 28 Nov),
-  trees -0.4, seat-swing port -1.9 (federal booth swing), demographics -0.5. Mill Park: council rule working. No defect.
+  missed-window guard). Rerun: task `auspol-bys-rebuilds` 21 Nov 1am (wakes the machine; refuses after 4am), folder
+  `deciding-runs/20261120-bys-rebuilds/`. 21 Nov 12:45am: 5 GB free, no reboot since 16 Nov; Pete "dont need a reboot keep goin",
+  so `chain.ps1` now waits for 4 GB (not 8) and writes FAILED if the deadline ends the wait (it used to start anyway).
+  OPEN, DATED 21 Nov morning: read its marker, score per Amendment 1, report to Pete.
 - OPEN, DATED 25 Nov: Victorian search interest is OFF in the live forecast since 19 Nov (`AUSPOL_SALIENCE_LIVE_VIC=0`,
   Pete). After the final snapshot, rerun the on/off walk and take it to Pete before any "1". Done when: he has chosen.
   Evidence: `reviews/market-gaps-vic2026-2026-11-19/README.md` (challengers with the same rise won 2 of 23).
 - OPEN, 15 Nov full review (`reviews/FABLE-FULL-REVIEW-2026-11-15.md`, "Pick up from here" is the work list; DECISIONS
-  2026-11-15). A1-A3, A5, A6, B1 shipped and seen live 17 Nov (above). Done when: the rest of "Pick up from here" is
-  done or parked with a trigger.
+  2026-11-15). A1-A6, B1 shipped (seen live 17 Nov); C1 traced 16 Nov (item below). PARKED, trigger after 28 Nov
+  (checked 21 Nov): C2 score the 14-day forecast (days), C3 validation stages off the publish path (edits the publish
+  workflow a week out), C4 (after 28 Nov by its own text), C5 local run 6.5 min vs 79 s; A7 (1)-(2) below.
 - OPEN, model, found 15 Nov (same review, item A7; each needs Pete before shipping): (1) a standing class whose adjusted
   2022 share is below its statewide fall is clipped to 0 at the base (Kew Other-right still 0%; 123 of 19,616 backtest rows);
   (2) Evelyn's Michelle O'Brien carries Michael O'Brien's "elected" flag (`given_stem()` is two letters, `R/names.R:249`;

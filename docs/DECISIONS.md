@@ -5,6 +5,9 @@ Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
 - **2026-11-19 By-election de-swing SHIPPED on Pete's override (`AUSPOL_BYELECTION_DESWING=1`; "Let's fix it now, please. This is urgent").** The half-blended by-election row was swung by the full statewide change, so the swing to the by-election date counted twice at half weight. Werribee Liberal 63% to 28%, Labor 10% to 42% (Sportsbet Labor ~48%). Shipped before its pre-registered rebuild pair was scored (recommended waiting one day); the pair runs 20 Nov 1am and is reported against the prereg criteria. `plans/prereg-byelection-deswing-2026-11-19.md` Amendment 2.
+- **2026-11-19 Narracan and Mill Park: no defect.** Narracan Labor 15.2 -> 8.9 is four shipped steps (`AUSPOL_TRACE_SEAT=Narracan`):
+  proportional One Nation fill -3.5 (the Box Hill mechanism, open after 28 Nov), trees -0.4, seat-swing port -1.9, demographics
+  -0.5; Mill Park is the council rule working. `reviews/market-gaps-vic2026-2026-11-19/README.md`.
 - **2026-11-19 Victorian search interest OFF in the live forecast (Pete: "Turn it off")** (`AUSPOL_SALIENCE_LIVE_VIC=0`,
   `salience_live_filter()`): it alone gave three challenger independents 0.32-0.65 (Essendon, Benambra, Hawthorn);
   past challengers with the same rise won 2 of 23, no seat polls in two, Hawthorn's poll and YouGov against. Expected
