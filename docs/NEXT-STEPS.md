@@ -19,7 +19,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - SHIPPED 19 Nov (PR #260, Pete's override): by-election de-swing `AUSPOL_BYELECTION_DESWING=1`. Live 20 Nov 4:42am forecast
   (1404a0f): Werribee ALP 42% / ONP 30% / LIB 28%; `BYS1` also moved nsw2027 Kiama (ALP -1.0, LNP +5.4), not measured. OPEN: the
   prereg rebuild pair NEVER RAN (task fired 20 Nov 5:56pm after the machine slept through 1am; stopped, 2 GB free; chain had no
-  missed-window guard). Done when: the pair runs at a quiet hour with 8 GB free (after a reboot) and is scored per Amendment 1.
+  missed-window guard). Pete chose reboot + rerun: task `auspol-bys-rebuilds` 21 Nov 1am (wakes the machine; refuses after 4am), folder
+  `deciding-runs/20261120-bys-rebuilds/`. OPEN, DATED 21 Nov morning: read its marker, score per Amendment 1, report to Pete.
 - CLOSED 19 Nov, from the market-gap review (`reviews/market-gaps-vic2026-2026-11-19/README.md`): Narracan Labor 15.2 -> 8.9 is
   four shipped steps (`AUSPOL_TRACE_SEAT=Narracan`): proportional One Nation fill -3.5 (the Box Hill mechanism, open after 28 Nov),
   trees -0.4, seat-swing port -1.9 (federal booth swing), demographics -0.5. Mill Park: council rule working. No defect.
