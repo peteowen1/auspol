@@ -13,16 +13,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (10 Nov: One Nation stands in all 88 seats, so no seat-count conditioning applies; recheck for nsw2027's list); (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 19 Nov, 1pm.** main 0.4.189 (PR #258: Victorian search interest off, published 11:08am, run 44425102899 green;
-  its scenario jobs were skipped, so check the 20 Nov 4:30am run runs them). `dev` ahead by the Edge Board Essendon note and
-  the by-election de-swing arm (off). Dated, a session runs each: 23 Nov VEC venues rerun; 25 Nov final salience snapshot +
+- **Status 20 Nov, 6pm.** main 0.4.191 (PR #260, de-swing shipped). 20 Nov 4:30am run green incl. all 18 scenario jobs
+  (44577920205). Dated, a session runs each: 23 Nov VEC venues rerun; 25 Nov final salience snapshot +
   night dress rehearsal; 27 Nov merge inthegame-blog#1239 (navbar link) and the final benchmark capture (Pete: VPN off).
-- IN FLIGHT 19 Nov: by-election double count. The half-blended by-election row is then swung by the full statewide change,
-  so the swing to the by-election date counts twice (Werribee: LNP 63% vs Sportsbet ~22%). Arm `AUSPOL_BYELECTION_DESWING`
-  (off), prereg `plans/prereg-byelection-deswing-2026-11-19.md`. Live walk 19 Nov: Werribee LIB 63% -> 28%, ALP 10% -> 42%;
-  Mulgrave ~unchanged; seats LNP -0.3. Pete chose rebuild first, then SHIPPED IT on his override (19 Nov 4:30pm, DECISIONS). OPEN, DATED 20 Nov morning: read the marker in
-  `deciding-runs/20261119-bys-rebuilds/` (task 1am), score per the prereg's Amendment 1, take the result to Pete; then unlink
-  the junctions listed in `junctions-{0,1}.txt` BEFORE removing `C:\dev\auspol-wt-rb0` / `-rb1`. Done when: Pete has decided.
+- SHIPPED 19 Nov (PR #260, Pete's override): by-election de-swing `AUSPOL_BYELECTION_DESWING=1`. Live 20 Nov 4:42am forecast
+  (1404a0f): Werribee ALP 42% / ONP 30% / LIB 28%; `BYS1` also moved nsw2027 Kiama (ALP -1.0, LNP +5.4), not measured. OPEN: the
+  prereg rebuild pair NEVER RAN (task fired 20 Nov 5:56pm after the machine slept through 1am; stopped, 2 GB free; chain had no
+  missed-window guard). Done when: the pair runs at a quiet hour with 8 GB free (after a reboot) and is scored per Amendment 1.
 - CLOSED 19 Nov, from the market-gap review (`reviews/market-gaps-vic2026-2026-11-19/README.md`): Narracan Labor 15.2 -> 8.9 is
   four shipped steps (`AUSPOL_TRACE_SEAT=Narracan`): proportional One Nation fill -3.5 (the Box Hill mechanism, open after 28 Nov),
   trees -0.4, seat-swing port -1.9 (federal booth swing), demographics -0.5. Mill Park: council rule working. No defect.
