@@ -13,18 +13,22 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (10 Nov: One Nation stands in all 88 seats, so no seat-count conditioning applies; recheck for nsw2027's list); (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 20 Nov, 6pm.** main 0.4.191 (PR #260, de-swing shipped). 20 Nov 4:30am run green incl. all 18 scenario jobs
-  (44577920205). Dated, a session runs each: 23 Nov VEC venues rerun; 25 Nov final salience snapshot +
+- **Status 21 Nov, 9:40am.** main 0.4.191 (PR #260, de-swing shipped). 21 Nov 4:30am run (44783954601): forecast
+  published 4:40am; 2 of 16 scenario jobs (vic2026 ALP polled, nsw2027 ONP polled) timed out in `setup-r` (10 min), so
+  `publish-scenarios` skipped and the scenario files stayed at 20 Nov 5:08am. Failed jobs rerun 9:30am. Dated, a session runs each: 23 Nov VEC venues rerun; 25 Nov final salience snapshot +
   night dress rehearsal; 27 Nov merge inthegame-blog#1239 (navbar link) and the final benchmark capture (Pete: VPN off).
 - SHIPPED 19 Nov (PR #260, Pete's override): by-election de-swing `AUSPOL_BYELECTION_DESWING=1`. Live 20 Nov 4:42am forecast
   (1404a0f): Werribee ALP 42% / ONP 30% / LIB 28%; `BYS1` also moved nsw2027 Kiama (ALP -1.0, LNP +5.4), not measured. OPEN: the
-  prereg rebuild pair NEVER RAN (task fired 20 Nov 5:56pm after the machine slept through 1am; stopped, 2 GB free; chain had no
-  missed-window guard). Rerun: task `auspol-bys-rebuilds` 21 Nov 1am (wakes the machine; refuses after 4am), folder
-  `deciding-runs/20261120-bys-rebuilds/`. 21 Nov 12:45am: 5 GB free, no reboot since 16 Nov; Pete "dont need a reboot keep goin",
-  so `chain.ps1` now waits for 4 GB (not 8) and writes FAILED if the deadline ends the wait (it used to start anyway).
-  STARTED 1:02am (arm `DESWING=1` in `C:\dev\auspol-wt-rb1`, then base in `-rb0`). OPEN, DATED 21 Nov morning: read its
-  marker, score per Amendment 1, report to Pete. Before removing either worktree, unlink every path in
-  `junctions-<arm>.txt` first (they point into `external/`; memory `worktree-junctions-delete-through`).
+  prereg rebuild pair HAS NOT RUN (two failed nights). 20 Nov: the task fired at 5:56pm after the machine slept. 21 Nov 1:02am:
+  both arms died in 15 s at stage 0 (`BK2!`, no BludgerTrack XML): the chain's fill went one level into `external/`, so the
+  worktrees lacked 15,012 gitignored files (polls 4,090, vec 4,321, nsw 5,888, byelections 590, htv 93, wikipedia 30).
+  FIXED 21 Nov 9:30am in `deciding-runs/20261122-bys-rebuilds/chain.ps1`: the fill recurses, and a preflight opens every
+  main `external/` file at its worktree path and refuses the arm on any gap. Smoke-tested (`-SmokeOnly`: 38,647 files, 0
+  missing, the stage-0 poll builder rc 0, worktree removed clean, `SMOKE-OK`). Both old worktrees removed (junctions first).
+  Task `auspol-bys-rebuilds` registered for 22 Nov 1am (wakes the machine, waits for 4 GB, refuses after 4am).
+  OPEN, DATED 22 Nov morning: read the marker in that folder, score per Amendment 1, report to Pete. Before removing either
+  worktree, unlink every path in `junctions-<arm>.txt` first (memory `worktree-junctions-delete-through`).
+  Known: a worktree rebuild writes stage-0 files such as `bludgertrack_polls.csv` through the junctions into this checkout's `external/`.
 - OPEN, DATED 25 Nov: Victorian search interest is OFF in the live forecast since 19 Nov (`AUSPOL_SALIENCE_LIVE_VIC=0`,
   Pete). After the final snapshot, rerun the on/off walk and take it to Pete before any "1". Done when: he has chosen.
   Evidence: `reviews/market-gaps-vic2026-2026-11-19/README.md` (challengers with the same rise won 2 of 23).
