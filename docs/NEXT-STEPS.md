@@ -374,6 +374,9 @@ Trigger: the post-election review after 28 Nov, unless an item names its own.
 - Diagnosed, not built: widening simulated variance for the majors' floor
   seats (`sd_override` into the WA harness); WA personal-vote transfer helps
   Pilbara and hurts WA overall (one seed).
+- OPEN (after 28 Nov): 17 remote branches still hold lines not in `main` (18 fully merged ones deleted 21 Nov, Pete's
+  yes). Per branch, `git merge-tree --write-tree origin/main origin/<b>` then diff against `main`: keep, land or
+  delete with Pete's yes. Only `agent/issue-40-sonnet` adds nothing. Not sized: `dev-2026-10-07-unreviewed`.
 
 ## Data and infra
 
