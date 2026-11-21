@@ -36,14 +36,21 @@ par_n <- max(1L, as.integer(flag("parallel", "4")))
 get_many <- function(urls) {
   if (par_n <= 1L || length(urls) <= 1L) return(vapply(urls, get, character(1), USE.NAMES = FALSE))
   res <- rep(NA_character_, length(urls))
-  pool <- curl::new_pool(total_con = par_n, host_con = par_n)
-  for (i in seq_along(urls)) local({ k <- i
-    h <- curl::new_handle(url = urls[k], useragent = UA, timeout = 60)
-    curl::multi_add(h, pool = pool,
-      done = function(r) { if (r$status_code == 200L) { s <- rawToChar(r$content); Encoding(s) <- "UTF-8"
-                             if (grepl("</html>", s, fixed = TRUE)) res[k] <<- s } },
-      fail = function(e) NULL) })
-  curl::multi_run(pool = pool)
+  # multiplex off: with it on, each connection carries up to 10 HTTP/2 streams, so "4" could be 40 pages in flight
+  pool <- curl::new_pool(total_con = par_n, host_con = par_n, multiplex = FALSE)
+  # GROUPS of N, each run to the end before the next is added. Adding every page at once left the ones waiting for a
+  # free connection to hit curl's 10 s connect clock while still queued: 46 of 87 pages "timed out" (21 Nov 2026).
+  for (g in split(seq_along(urls), ceiling(seq_along(urls) / par_n))) {
+    for (i in g) local({ k <- i
+      h <- curl::new_handle(url = urls[k], useragent = UA, timeout = 60)
+      curl::multi_add(h, pool = pool,
+        # an error in here (rawToChar on a body holding a NUL byte) would abort multi_run and the whole --every loop,
+        # so it costs that one page instead: NA, then VWF3 and no DONE, as the one-at-a-time path does
+        done = function(r) tryCatch({ if (r$status_code == 200L) { s <- rawToChar(r$content); Encoding(s) <- "UTF-8"
+                               if (grepl("</html>", s, fixed = TRUE)) res[k] <<- s } }, error = function(e) NULL),
+        fail = function(e) NULL) })
+    curl::multi_run(pool = pool)
+  }
   res
 }
 links <- function(h) { l <- regmatches(h, gregexpr('href="[^"#]+"', h))[[1]]; l <- unique(gsub('^href="|"$', "", l))

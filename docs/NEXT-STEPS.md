@@ -72,8 +72,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   must be the page that links every district's result page (2022: `.../2022-state-election-results`, 87 links; its
   `/results-by-district` child links none); (b) FIXED, the fetcher followed the page's read-aloud link (`//other-host/...`) as
   a VEC path, HTTP 500; (c) FIXED (Pete chose "4 at a time"): one snapshot took 297 s one page at a time; `--parallel=4`
-  (now the default) takes 8 s for discovery + 174 pages, pages identical, cycle result identical, a 404 and a dead host
-  both count as failed. So `--every` sets the load: 60 is 174 requests a minute.
+  (now the default) takes 85 s for discovery + 174 pages (about a minute a snapshot once discovery is done), pages
+  identical, cycle result identical; a 404, a dead host and a page holding a NUL byte each cost that one page. Exactly 4:
+  groups of four on plain connections (the first build ran up to 40 streams and took 8 s; review, 21 Nov).
 - IN FLIGHT 9 Nov (Pete chose the levers): first-time-independent under-call (70 of 649 single first-timers took 15%+ and
   we gave them about a third of it; 442 took under 5%, so no blanket lift). Six levers in
   `reviews/newcomer-independents-walk-2026-11-09.md` (last section). Lever 1 REFUSED twice, stays off
