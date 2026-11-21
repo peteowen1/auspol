@@ -366,6 +366,9 @@ Trigger: the post-election review after 28 Nov, unless an item names its own.
 - OPEN (after 28 Nov): 17 remote branches still hold lines not in `main` (18 fully merged ones deleted 21 Nov, Pete's
   yes). Per branch, `git merge-tree --write-tree origin/main origin/<b>` then diff against `main`: keep, land or
   delete with Pete's yes. Only `agent/issue-40-sonnet` adds nothing. Not sized: `dev-2026-10-07-unreviewed`.
+- OPEN (after 28 Nov), #192: keep every published forecast, not one per day. Today R2 has one seat-level file per day
+  (`scripts/publish_forecast_history.sh`; a same-day republish replaces it). Done when: each publish adds a dated parquet
+  to a `predictions-history` release and the previous one is still there. Needs a workflow edit (a session, not the worker).
 
 ## Data and infra
 
