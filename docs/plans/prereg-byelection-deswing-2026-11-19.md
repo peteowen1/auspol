@@ -92,6 +92,11 @@ changed between attempts. Scored from the main checkout with the two commands of
 `deciding-runs/20261122-bys-rebuilds/` (`score-byelection-deswing.txt`, `compare-rebuild-scores.txt`, both
 `pooled-backtest` files, both nsw2019 seat-probability files).
 
+Checked that the arms differ only by the switch: the `BYS1` line is in 36 of arm 1's stage logs and in none of arm
+0's. Arm 0's snapshot holds 27 fewer files (595 against 622): the as-at primary models of 9 early elections, which
+arm 0 reused from the 13 Nov cache because their inputs were unchanged (`XA2 ... CACHED, inputs unchanged`, `XA3 9 of
+35 targets reused`), while arm 1's inputs had moved and all 35 were retrained.
+
 Scored set: 19,616 rows / 35 elections in each arm; 62 by-election seats with both majors standing in 25 elections; 57
 scored (375 primary-vote cells, 23 elections), 56 of them moved by more than 0.05 points.
 
@@ -110,8 +115,10 @@ One election's seat log loss rose by more than 0.02: nsw2019, +0.0412 (0.3104 to
 Murray the Shooters, Fishers and Farmers won; the base gave them 1 win in 20,000 simulations and the arm 0, which
 scores at the 1e-6 floor (9.90 against 13.82, a difference of 3.91 over 93 seats = +0.042). The other 92 seats
 improved, 0.2062 to 0.2053. Murray's predicted Shooters primary is 4.0% in the base and 3.9% in the arm against an
-actual 40.3%: a miss in both arms that the de-swing did not cause (the half blend and the de-swing cover ALP, LNP,
-GRN and ONP only, so the Shooters' 31.5% at the October 2017 by-election is not carried). Queued separately.
+actual 40.3%: a miss in both arms that the de-swing did not cause. CAUSE NOT TRACED: the half blend does read the
+Shooters' 31.5% at the October 2017 by-election (`byelections_between("nsw2015", "nsw2019")` returns the row as
+`OTH_RIGHT`, and the blend covers every class; only the de-swing is limited to ALP, LNP, GRN, ONP), so the share is
+lost somewhere after the blend. Queued separately.
 
 Decision: under Amendment 2 only a failed primary or a tripped unacceptable-win clause would have gone to Pete as a
 reason to turn the switch off. Neither happened. `AUSPOL_BYELECTION_DESWING` stays "1".

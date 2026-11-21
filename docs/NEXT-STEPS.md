@@ -23,9 +23,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   "1" (plan RESULT section; evidence in `deciding-runs/20261122-bys-rebuilds/`; the two failed nights are in the journal).
   OPEN: worktrees `C:\dev\auspol-wt-rb0` and `-rb1` still exist. Before removing either, unlink every path in
   `junctions-<arm>.txt` first (memory `worktree-junctions-delete-through`). Done when: both gone, main `external/` file count unchanged.
-- OPEN (after 28 Nov): a by-election's minor-party result is not carried forward. Murray nsw2019: the Shooters took 31.5% at
-  the Oct 2017 by-election and won with 40.3% in 2019; both rebuild arms predicted 4.0% and gave them 0 or 1 wins in 20,000
-  (the de-swing and the half blend cover ALP, LNP, GRN, ONP only). Done when: the blend is tested for every party that stood.
+- OPEN (after 28 Nov): a by-election's minor-party result does not reach the prediction. Murray nsw2019: the Shooters took
+  31.5% at the Oct 2017 by-election and won with 40.3% in 2019; both rebuild arms predicted 4.0% and gave them 0 or 1 wins in
+  20,000. CAUSE NOT TRACED: the half blend reads the row (`byelections_between("nsw2015","nsw2019")`, `OTH_RIGHT` 31.5), so
+  the loss is after the blend. Start with `AUSPOL_TRACE_SEAT=Murray` on nsw2019. Done when: the step that drops it is named.
 - OPEN, DATED 25 Nov: Victorian search interest is OFF in the live forecast since 19 Nov (`AUSPOL_SALIENCE_LIVE_VIC=0`,
   Pete). After the final snapshot, rerun the on/off walk and take it to Pete before any "1". Done when: he has chosen.
   Evidence: `reviews/market-gaps-vic2026-2026-11-19/README.md` (challengers with the same rise won 2 of 23).
