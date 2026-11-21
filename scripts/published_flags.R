@@ -386,11 +386,16 @@ PUBLISHED_FLAGS <- c(
                                              # signal does not exist (sa2022: ONP in 5 of 47 seats) is reported and
                                              # skipped, not silently zeroed and not fatal.
                                              # docs/reviews/sa2026-onp-base-pred-diagnosis-2026-09-14.md
-  AUSPOL_ONP_CV              = "0.365",     # One Nation seat-concentration target -- partially pooled 2026-09-09
-                                             # (SA 2026's own 0.346, weight 0.83, vs corpus-typical 0.479 at
-                                             # Victoria's ~21% level). Was unset (SA's raw 0.327). Moves ONP
-                                             # median seats 9 -> 10 (90%: 3-18 -> 4-20). Pete's call: publish
-                                             # the pooled estimate, not SA's point value alone.
+  AUSPOL_ONP_CV              = "0.30",      # One Nation seat-concentration target. NARROWED 2026-11-22 from 0.365 on
+                                             # Pete's call (docs/reviews/onp-demographics-and-spread-2026-11-22.md): the
+                                             # three elections with One Nation near Victoria's level all came in narrower
+                                             # than 0.365 (actual sd/mean sa2026 0.33, qld2017 0.28, wa2017 0.28; our
+                                             # spread 1.36 to 1.44 times the actual in no-history seats). 0.30 delivers
+                                             # 0.318, about South Australia's. Live walk: One Nation 14.9 -> 12.7
+                                             # expected seats, Coalition 40.2 -> 42.4. A judgement on 3 elections.
+                                             # History: 0.365 was partially pooled 2026-09-09 (SA 2026's own 0.346,
+                                             # weight 0.83, vs a corpus-typical 0.479 that is mostly elections with
+                                             # One Nation under 10%). Before that unset (SA's raw 0.327).
                                              # docs/reviews/onp-concentration-validated-2026-09-09.md
   AUSPOL_FORECAST_MODE       = "1",          # harness-only: 1 = the statewide the seats swing toward is PREDICTED
                                              # from the poll trend plus leave-one-out fundamentals as at the day
