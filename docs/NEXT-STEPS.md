@@ -15,7 +15,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
 - **Status 21 Nov, midnight.** main 0.4.193 (PR #261 night fetcher 4 at a time, PR #262 night launcher + 20 s data
   registry). 21 Nov 4:30am forecast run green after a 9:30am rerun of 2 timed-out scenario jobs (#196 closed). Dated, a
-  session runs each: (22 Nov rebuild pair scored: de-swing passes, stays on); 23 Nov VEC venues rerun; 25 Nov final salience snapshot + night
+  session runs each: (22 Nov rebuild pair scored: de-swing passes, stays on); 23 Nov score the by-election person pair, VEC venues rerun; 25 Nov final salience snapshot + night
   dress rehearsal; 27 Nov merge inthegame-blog#1262 (ready, reviewed) and the final benchmark capture (Pete: VPN off).
 - SHIPPED 19 Nov (PR #260, Pete's override): by-election de-swing `AUSPOL_BYELECTION_DESWING=1`. Live 20 Nov 4:42am forecast
   (1404a0f): Werribee ALP 42% / ONP 30% / LIB 28%; `BYS1` also moved nsw2027 Kiama (ALP -1.0, LNP +5.4), not measured.
@@ -32,8 +32,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   was the whole OTH class at the by-election, not Hopper.) Mulgrave Ian Cook 18.8 against 18.0 (small).
   BUILT 22 Nov behind `AUSPOL_BYELECTION_PERSON` ("0" in `published_flags.R`): the person gets the same half blend,
   `plans/prereg-byelection-person-2026-11-22.md`. Live walk: Werribee One Nation 30% to 57%, Labor 42% to 23%; Mulgrave
-  barely moves; no other seat moves. 79 historical restanders counted. NOT scored on a rebuild pair. Done when: Pete has
-  chosen between a rebuild pair before 28 Nov and leaving it off until after.
+  barely moves; no other seat moves. 79 historical restanders counted. Pete chose "score it tonight" (22 Nov).
+  OPEN, DATED 23 Nov morning: task `auspol-byp-rebuilds` runs the pair at 1am (commit e5f8ed58, smoke-tested, refuses
+  after 4am; machine must stay on and logged in). Read the marker in `deciding-runs/20261123-byp-rebuilds/`; on `DONE`:
+  `Rscript scripts/score_byelection_deswing.R C:/dev/auspol-wt-rb0/output C:/dev/auspol-wt-rb1/output`, then
+  `scripts/compare_rebuild_scores.R` on the two `pooled-backtest.csv` files; report against the plan's four criteria (the
+  leave-one-election-out clause is the one that matters) and ask Pete ship or not. Copy both `published-predictions.csv`
+  files out, then unlink every path in `junctions-<arm>.txt` before removing a worktree.
 - OPEN, DATED 25 Nov: Victorian search interest is OFF in the live forecast since 19 Nov (`AUSPOL_SALIENCE_LIVE_VIC=0`,
   Pete). After the final snapshot, rerun the on/off walk and take it to Pete before any "1". Done when: he has chosen.
   Evidence: `reviews/market-gaps-vic2026-2026-11-19/README.md` (challengers with the same rise won 2 of 23).
