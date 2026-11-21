@@ -82,3 +82,36 @@ each arm, so this change cannot reach it), and its result is reported to Pete ag
 fails the primary or trips the unacceptable-win clause, that goes to Pete as a reason to turn it back off.
 Evidence at ship time: the published-path proxy (slope 0.80, SE 0.28, 42 seats) and the live walk (Werribee
 Liberal 63% to 28%, Labor 10% to 42%; Mulgrave and expected seats otherwise within 0.3).
+
+## RESULT (22 Nov 2026): all four criteria PASS; the switch stays "1"
+
+The pair ran from the Scheduled Task on its third night (22 Nov, 1:00am to 4:26am Sydney time, both arms rc 0, commit
+e04b6e65, worktree preflight 0 external files missing). Two earlier nights failed before scoring anything (20 Nov the
+machine slept; 21 Nov both arms died at stage 0 because the worktrees lacked gitignored inputs); no criterion was
+changed between attempts. Scored from the main checkout with the two commands of Amendment 1. Evidence kept in
+`deciding-runs/20261122-bys-rebuilds/` (`score-byelection-deswing.txt`, `compare-rebuild-scores.txt`, both
+`pooled-backtest` files, both nsw2019 seat-probability files).
+
+Scored set: 19,616 rows / 35 elections in each arm; 62 by-election seats with both majors standing in 25 elections; 57
+scored (375 primary-vote cells, 23 elections), 56 of them moved by more than 0.05 points.
+
+| criterion | measured | verdict |
+|---|---|---|
+| 1. Primary: squared error on the by-election seats' primary-vote cells, arm minus base | -248.9 of a base total 8,598.1 (SE 180.9, jackknife over 23 elections) | PASS (lower by more than 1 SE) |
+| 2. Guard: pooled seat log loss | 0.3170 to 0.3164, change -0.0006 (SE 0.0016; 2,931 seats / 35 elections) | PASS |
+| 3. Leave-one-election-out | still lower with any one dropped; worst -157.1 without nsw2015 | PASS |
+| 4. Unacceptable win: the by-election seats' own seat log loss | -0.0305 per seat (SE 0.0237, 57 seats) | not tripped |
+
+By election, the primary fell in 16 of 23 and rose in 7 (largest rises wa2025 +62.3, wa2005 +47.9, fed2010 +43.9;
+largest falls nsw2015 -98.6, nsw2019 -68.4, qld2024 -58.2). AEF-7 seat log loss, square-root-of-votes weights: -0.0017
+(SE 0.0009).
+
+One election's seat log loss rose by more than 0.02: nsw2019, +0.0412 (0.3104 to 0.3516). All of it is one seat. In
+Murray the Shooters, Fishers and Farmers won; the base gave them 1 win in 20,000 simulations and the arm 0, which
+scores at the 1e-6 floor (9.90 against 13.82, a difference of 3.91 over 93 seats = +0.042). The other 92 seats
+improved, 0.2062 to 0.2053. Murray's predicted Shooters primary is 4.0% in the base and 3.9% in the arm against an
+actual 40.3%: a miss in both arms that the de-swing did not cause (the half blend and the de-swing cover ALP, LNP,
+GRN and ONP only, so the Shooters' 31.5% at the October 2017 by-election is not carried). Queued separately.
+
+Decision: under Amendment 2 only a failed primary or a tripped unacceptable-win clause would have gone to Pete as a
+reason to turn the switch off. Neither happened. `AUSPOL_BYELECTION_DESWING` stays "1".

@@ -15,22 +15,17 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
 - **Status 21 Nov, midnight.** main 0.4.193 (PR #261 night fetcher 4 at a time, PR #262 night launcher + 20 s data
   registry). 21 Nov 4:30am forecast run green after a 9:30am rerun of 2 timed-out scenario jobs (#196 closed). Dated, a
-  session runs each: 22 Nov score the rebuild pair; 23 Nov VEC venues rerun; 25 Nov final salience snapshot + night
+  session runs each: (22 Nov rebuild pair scored: de-swing passes, stays on); 23 Nov VEC venues rerun; 25 Nov final salience snapshot + night
   dress rehearsal; 27 Nov merge inthegame-blog#1262 (ready, reviewed) and the final benchmark capture (Pete: VPN off).
 - SHIPPED 19 Nov (PR #260, Pete's override): by-election de-swing `AUSPOL_BYELECTION_DESWING=1`. Live 20 Nov 4:42am forecast
-  (1404a0f): Werribee ALP 42% / ONP 30% / LIB 28%; `BYS1` also moved nsw2027 Kiama (ALP -1.0, LNP +5.4), not measured. OPEN: the
-  prereg rebuild pair HAS NOT RUN (two failed nights). 20 Nov: the task fired at 5:56pm after the machine slept. 21 Nov 1:02am:
-  both arms died in 15 s at stage 0 (`BK2!`, no BludgerTrack XML): the chain's fill went one level into `external/`, so the
-  worktrees lacked 15,012 gitignored files (polls 4,090, vec 4,321, nsw 5,888, byelections 590, htv 93, wikipedia 30).
-  FIXED 21 Nov 9:30am in `deciding-runs/20261122-bys-rebuilds/chain.ps1`: the fill recurses, and a preflight opens every
-  main `external/` file at its worktree path and refuses the arm on any gap. Smoke-tested (`-SmokeOnly`: 38,647 files, 0
-  missing, the stage-0 poll builder rc 0, worktree removed clean, `SMOKE-OK`). Both old worktrees removed (junctions first).
-  Task `auspol-bys-rebuilds` registered for 22 Nov 1am (wakes the machine, waits for 4 GB, refuses after 4am).
-  OPEN, DATED 22 Nov morning: read the marker in that folder; on `DONE`, from this checkout:
-  `Rscript scripts/score_byelection_deswing.R C:/dev/auspol-wt-rb0/output C:/dev/auspol-wt-rb1/output`, then
-  `scripts/compare_rebuild_scores.R` on the two `pooled-backtest.csv` files; report to Pete against the prereg criteria. Before removing either
-  worktree, unlink every path in `junctions-<arm>.txt` first (memory `worktree-junctions-delete-through`).
-  Known: a worktree rebuild writes stage-0 files such as `bludgertrack_polls.csv` through the junctions into this checkout's `external/`.
+  (1404a0f): Werribee ALP 42% / ONP 30% / LIB 28%; `BYS1` also moved nsw2027 Kiama (ALP -1.0, LNP +5.4), not measured.
+  DONE 22 Nov: the prereg rebuild pair ran 1:00am to 4:26am (both rc 0) and PASSES all four criteria, so the switch stays
+  "1" (plan RESULT section; evidence in `deciding-runs/20261122-bys-rebuilds/`; the two failed nights are in the journal).
+  OPEN: worktrees `C:\dev\auspol-wt-rb0` and `-rb1` still exist. Before removing either, unlink every path in
+  `junctions-<arm>.txt` first (memory `worktree-junctions-delete-through`). Done when: both gone, main `external/` file count unchanged.
+- OPEN (after 28 Nov): a by-election's minor-party result is not carried forward. Murray nsw2019: the Shooters took 31.5% at
+  the Oct 2017 by-election and won with 40.3% in 2019; both rebuild arms predicted 4.0% and gave them 0 or 1 wins in 20,000
+  (the de-swing and the half blend cover ALP, LNP, GRN, ONP only). Done when: the blend is tested for every party that stood.
 - OPEN, DATED 25 Nov: Victorian search interest is OFF in the live forecast since 19 Nov (`AUSPOL_SALIENCE_LIVE_VIC=0`,
   Pete). After the final snapshot, rerun the on/off walk and take it to Pete before any "1". Done when: he has chosen.
   Evidence: `reviews/market-gaps-vic2026-2026-11-19/README.md` (challengers with the same rise won 2 of 23).

@@ -106,3 +106,20 @@ The live parts stay in `docs/NEXT-STEPS.md`; this file is history.
   (now the default) takes 85 s for discovery + 174 pages (about a minute a snapshot once discovery is done), pages
   identical, cycle result identical; a 404, a dead host and a page holding a NUL byte each cost that one page. Exactly 4:
   groups of four on plain connections (the first build ran up to 40 streams and took 8 s; review, 21 Nov).
+
+## By-election de-swing rebuild pair, the two failed nights (moved from the queue 22 Nov, once the pair was scored)
+
+- SHIPPED 19 Nov (PR #260, Pete's override): by-election de-swing `AUSPOL_BYELECTION_DESWING=1`. Live 20 Nov 4:42am forecast
+  (1404a0f): Werribee ALP 42% / ONP 30% / LIB 28%; `BYS1` also moved nsw2027 Kiama (ALP -1.0, LNP +5.4), not measured. OPEN: the
+  prereg rebuild pair HAS NOT RUN (two failed nights). 20 Nov: the task fired at 5:56pm after the machine slept. 21 Nov 1:02am:
+  both arms died in 15 s at stage 0 (`BK2!`, no BludgerTrack XML): the chain's fill went one level into `external/`, so the
+  worktrees lacked 15,012 gitignored files (polls 4,090, vec 4,321, nsw 5,888, byelections 590, htv 93, wikipedia 30).
+  FIXED 21 Nov 9:30am in `deciding-runs/20261122-bys-rebuilds/chain.ps1`: the fill recurses, and a preflight opens every
+  main `external/` file at its worktree path and refuses the arm on any gap. Smoke-tested (`-SmokeOnly`: 38,647 files, 0
+  missing, the stage-0 poll builder rc 0, worktree removed clean, `SMOKE-OK`). Both old worktrees removed (junctions first).
+  Task `auspol-bys-rebuilds` registered for 22 Nov 1am (wakes the machine, waits for 4 GB, refuses after 4am).
+  OPEN, DATED 22 Nov morning: read the marker in that folder; on `DONE`, from this checkout:
+  `Rscript scripts/score_byelection_deswing.R C:/dev/auspol-wt-rb0/output C:/dev/auspol-wt-rb1/output`, then
+  `scripts/compare_rebuild_scores.R` on the two `pooled-backtest.csv` files; report to Pete against the prereg criteria. Before removing either
+  worktree, unlink every path in `junctions-<arm>.txt` first (memory `worktree-junctions-delete-through`).
+  Known: a worktree rebuild writes stage-0 files such as `bludgertrack_polls.csv` through the junctions into this checkout's `external/`.
