@@ -27,10 +27,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   2017 by-election (31.5%) and won as Shooters in 2019 (40.3%). `own_prev_substitute()` (`R/candidate_returns.R`, called as
   `.own_x()` in every harness and `fit_seats_full.R`) replaces the class cell with `personal_prior_vote()`'s value, 18.2 x the
   non-sitting minor-switcher rate 0.230 = 4.18, whatever the half blend put there (0, 15.7 and 31.5 in all give 4.18).
-  Predicted 4.0%. LIVE vic2026, same step: Werribee Paul Hopper (OTH) took 13.6% at the Feb 2025 by-election, own-prior value
-  1.63, published OTH primary 4.7% for three candidates; Mulgrave Ian Cook 18.0 against a by-election 20.6 (small); Prahran
-  correct as is (the by-election independent is not standing). Not yet measured: what Werribee's win odds become if a
-  candidate who stood at the by-election in the same class keeps that result. Done when: that walk is shown to Pete.
+  Predicted 4.0%. LIVE vic2026, same step: Werribee Paul Hopper took 14.6% as an independent at the Feb 2025 by-election
+  and stands for The West Party (OTH); value used 1.63, published OTH primary 4.7%. (An earlier note here said 13.6%: that
+  was the whole OTH class at the by-election, not Hopper.) Mulgrave Ian Cook 18.8 against 18.0 (small).
+  BUILT 22 Nov behind `AUSPOL_BYELECTION_PERSON` ("0" in `published_flags.R`): the person gets the same half blend,
+  `plans/prereg-byelection-person-2026-11-22.md`. Live walk: Werribee One Nation 30% to 57%, Labor 42% to 23%; Mulgrave
+  barely moves; no other seat moves. 79 historical restanders counted. NOT scored on a rebuild pair. Done when: Pete has
+  chosen between a rebuild pair before 28 Nov and leaving it off until after.
 - OPEN, DATED 25 Nov: Victorian search interest is OFF in the live forecast since 19 Nov (`AUSPOL_SALIENCE_LIVE_VIC=0`,
   Pete). After the final snapshot, rerun the on/off walk and take it to Pete before any "1". Done when: he has chosen.
   Evidence: `reviews/market-gaps-vic2026-2026-11-19/README.md` (challengers with the same rise won 2 of 23).

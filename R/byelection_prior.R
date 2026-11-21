@@ -249,3 +249,71 @@ byelection_deswing_on <- function() {
   if (!v %in% c("0", "1")) stop("AUSPOL_BYELECTION_DESWING must be \"0\" or \"1\", not \"", v, "\"", call. = FALSE)
   v == "1"
 }
+
+# A by-election restander keeps that result (AUSPOL_BYELECTION_PERSON=1; called only from personal_prior_vote();
+# docs/plans/prereg-byelection-person-2026-11-22.md). `out` is that function's working table (seat, .s, party, .k,
+# own_prev_pcv, .own_prev_pcv_full, prev_party, transfer). In a seat whose by-election both majors contested (the
+# seats the blend applies to), a class that is not polled statewide (not ALP, LNP, GRN, ONP) whose lead candidate
+# stood at that by-election under a non-major label and did not win it gets
+#   weight x their by-election share + (1 - weight) x their own previous general-election vote (0 if none),
+# with no switcher discount, and the class they stood in at the by-election gives up weight x that share.
+# By-election winners keep the sitting non-major level (AUSPOL_BYELEC_LEVEL). Emits BYP1 / BYP2.
+.byelection_person_apply <- function(out, election_from, election_to, weight, kf, rn, table = NULL) {
+  MAJ <- c("ALP", "LNP", "NAT"); POLLED <- c("ALP", "LNP", "NAT", "GRN", "ONP")
+  tab <- if (is.null(table)) byelection_table() else data.table::as.data.table(table)
+  if (is.null(tab) || !nrow(tab)) { cat(sprintf("BYP1! %s: no by-election table -- AUSPOL_BYELECTION_PERSON has no input\n", election_to)); return(out) }
+  tab <- data.table::copy(tab)
+  if (!"party" %in% names(tab)) tab[, party := classify_party(party_raw)]
+  if (!inherits(tab$date, "Date")) tab[, date := as.Date(date)]
+  dates <- election_dates(); d0 <- dates[[election_from]]; d1 <- dates[[election_to]]
+  reg <- sub("[0-9]{4}$", "", election_to)
+  b <- tab[tab$region == reg & tab$date > d0 & tab$date < d1]
+  if (!nrow(b)) { cat(sprintf("BYP1  %s: AUSPOL_BYELECTION_PERSON=1, no by-election between %s and %s\n", election_to, election_from, election_to)); return(out) }
+  b <- merge(b, b[, list(date = max(date)), by = seat], by = c("seat", "date"))   # the last by-election in a seat
+  b[, by_share := 100 * pct / sum(pct), by = seat]
+  b[, both := all(c("ALP", "LNP") %in% party), by = seat]
+  toks <- strsplit(trimws(b$candidate), " ")
+  nm <- data.table::data.table(name = b$candidate,
+                               surname = vapply(toks, function(z) toupper(z[length(z)]), ""),
+                               given = vapply(toks, function(z) paste(z[-length(z)], collapse = " "), ""))
+  b[, .k := kf(nm)]
+  b[, .s := normalise_seat(seat)]
+  b[, .s2 := ifelse(.s %in% names(rn), unname(rn[.s]), .s)]
+  # Winners are flagged BEFORE the keys are aligned to `out`: the winner rows carry the unaligned key.
+  win <- tryCatch(byelection_winner_rows(election_from, election_to), error = function(e) {
+    cat(sprintf("BYP1! %s: by-election winners could not be read, so NO winner is excluded: %s\n", election_to, conditionMessage(e))); NULL })
+  wkey <- character(0)
+  if (!is.null(win) && nrow(win)) { win <- data.table::as.data.table(win); wkey <- paste(normalise_seat(win$seat), kf(win)) }
+  b[, winner := paste(.s, .k) %in% wkey]
+  align_person_keys(b, out)
+  elig <- b[b$both & nzchar(b$.k) & !b$winner & !b$party %in% MAJ]
+  done <- character(0); used <- logical(nrow(elig))
+  for (i in seq_len(nrow(out))) {
+    pty <- out$party[i]
+    if (pty %in% POLLED || !nzchar(out$.k[i])) next
+    j <- which((elig$.s == out$.s[i] | elig$.s2 == out$.s[i]) & elig$.k == out$.k[i])
+    if (!length(j)) next
+    j <- j[which.max(elig$by_share[j])]; used[j] <- TRUE
+    bys <- elig$by_share[j]; bcl <- elig$party[j]
+    gen <- out$.own_prev_pcv_full[i]; if (is.na(gen)) gen <- out$own_prev_pcv[i]; if (is.na(gen)) gen <- 0
+    was <- out$own_prev_pcv[i]; new <- weight * bys + (1 - weight) * gen
+    opp <- out$prev_party[i]; otr <- out$transfer[i]; if (is.na(otr) || is.na(opp) || opp == pty) otr <- 0
+    if (bcl == pty) {
+      ntr <- (1 - weight) * otr; npp <- if (ntr > 0) opp else NA_character_
+    } else {
+      npp <- bcl; ntr <- weight * bys + if (is.na(opp) || opp == pty || opp == bcl) (1 - weight) * otr else 0
+    }
+    data.table::set(out, i, "own_prev_pcv", new)
+    data.table::set(out, i, "prev_party", npp)
+    data.table::set(out, i, "transfer", if (is.na(npp)) NA_real_ else ntr)
+    done <- c(done, sprintf("%s/%s %s: by-election %.1f%s, previous general election %.1f -> %.1f (was %s)", out$seat[i], pty,
+                            elig$candidate[j], bys, if (bcl != pty) sprintf(" as %s", bcl) else "", gen, new,
+                            if (is.na(was)) "none" else sprintf("%.1f", was)))
+  }
+  cat(sprintf("BYP1  %s: AUSPOL_BYELECTION_PERSON=1, weight %.2f, %d by-election restander(s) keep that result: %s\n",
+              election_to, weight, length(done), if (length(done)) paste(done, collapse = "; ") else "none"))
+  left <- elig[!used & elig$by_share >= 5]
+  if (nrow(left)) cat(sprintf("BYP2  %s: by-election candidates on 5%% or more NOT matched to a class leader outside the polled classes (not standing, not the leader, or in a polled class): %s\n",
+                              election_to, paste(sprintf("%s %s %.1f (%s)", left$seat, left$candidate, left$by_share, left$party), collapse = "; ")))
+  out
+}
