@@ -81,3 +81,25 @@ elections, then all 35 as the deciding rebuild pair.
 Stop rule for the screen: if sa2026 seat log loss worsens by more than 1 SE, stop and report before running more.
 
 Decision: all pass on the rebuild pair, Pete decides with the live walk. Otherwise it stays "rank".
+
+## Screen, step 1: sa2026 alone (22 Nov, 10:29am; 1,000 simulations, baseline and arm on one seed)
+
+Applied: `ONM1 sa2026: ... 26 no-history seat(s): Senate slope 0.579, Year 12 -0.097 per sd, fitted on 784 rows / 15
+earlier elections; spread sd/mean 0.319, not forced` (the rank rule's line: CV 0.371). 92 of 329 cells changed, 21
+of 47 seats moved.
+
+| sa2026, through the trees | Rank rule | Model |
+|---|---|---|
+| Seat log loss (lower is better) | 0.2292 | 0.2275 |
+| One Nation share RMSE, all 47 seats | 4.21 | 4.26 |
+| One Nation share RMSE, the 24 seats whose One Nation cell moved | 3.83 | 3.95 |
+| Largest change in any win probability | | 0.062 |
+
+The stop rule does not fire (log loss fell; no seat near the 0.10 clause). But it is a wash: the share error is a
+touch worse and the log loss a touch better, both far inside noise for one election. The share-level gain (3.14 to
+2.76 on all 47 seats with the actual level given) does not survive the harness, where only the 26 no-history seats
+are allocated, at a level of 17.2, and the trees then correct geography themselves. That is the 1 Oct finding again,
+without the harm.
+
+Found on the way: `quick_arm.R` took 28 minutes to start because `quick_tree_sig()` called `file.info()` over
+`external/reference`; now `file.size()` and `file.mtime()`, 17.5 s, digest identical.
