@@ -341,16 +341,32 @@ onp_newseat_apply <- function(shares, target, history, order = Sys.getenv("AUSPO
   idx <- cand[!miss]; key <- key[!miss]
   old <- shares[idx, "ONP"]
   lvl <- mean(old)
-  sp <- if (is.null(cv)) onp_newseat_cv(target, lvl) else list(cv = cv, a = NA_real_, k = NA_real_, n = NA_integer_)
-  if (is.null(sp)) {
-    cat(sprintf("%s! %s: no earlier election to fit the One Nation spread on -- rule NOT applied to %d seat(s)\n", code, target, length(idx)))
-    return(shares)
+  # AUSPOL_ONP_ALLOC=model (default "rank"; docs/plans/prereg-onp-direct-model-2026-11-22.md): the seat's relativity
+  # from its Senate share and Year 12, fitted on earlier elections, with no forced spread. Where it cannot be fitted
+  # (fewer than 2 earlier elections, or the target has no census rows) the rank rule below runs and ONM1! says so.
+  mr <- NULL
+  if (identical(onp_alloc_mode(), "model") && is.null(cv)) {
+    mr <- onp_model_ratio(rownames(shares)[idx], as.numeric(key), target, lvl, lookup = lookup[idx])
+    if (is.null(mr)) cat(sprintf("ONM1! %s: AUSPOL_ONP_ALLOC=model but no fit is possible (fewer than 2 earlier elections with Senate and census rows, or no census for the target) -- the RANK rule is used for %d seat(s)\n", target, length(idx)))
+  }
+  if (!is.null(mr)) {
+    ratio <- mr$ratio
+    sp <- list(cv = stats::sd(ratio) / mean(ratio), a = NA_real_, k = NA_real_, n = NA_integer_)
+    cat(sprintf("ONM1  %s: One Nation by the DIRECT MODEL over %d no-history seat(s): Senate slope %.3f, Year 12 %.3f per sd, fitted on %d rows / %d earlier elections (%s); spread sd/mean %.3f, not forced; %d seat(s) without census at the average\n",
+                target, length(idx), mr$fit$b_s, mr$fit$b_y, mr$fit$n_rows, mr$fit$n_elections, paste(mr$fit$sources, collapse = ","), sp$cv, mr$no_census))
+  } else {
+    sp <- if (is.null(cv)) onp_newseat_cv(target, lvl) else list(cv = cv, a = NA_real_, k = NA_real_, n = NA_integer_)
+    if (is.null(sp)) {
+      cat(sprintf("%s! %s: no earlier election to fit the One Nation spread on -- rule NOT applied to %d seat(s)\n", code, target, length(idx)))
+      return(shares)
+    }
+    n <- length(idx)
+    shape <- 1 + stats::qnorm(((seq_len(n)) - 0.5) / n)
+    ratio <- onp_rank_ratio(order(key), shape, rownames(shares)[idx])
+    ratio <- onp_cv_force(ratio, sp$cv)
+    ratio <- ratio / mean(ratio)
   }
   n <- length(idx)
-  shape <- 1 + stats::qnorm(((seq_len(n)) - 0.5) / n)
-  ratio <- onp_rank_ratio(order(key), shape, rownames(shares)[idx])
-  ratio <- onp_cv_force(ratio, sp$cv)
-  ratio <- ratio / mean(ratio)
   new <- lvl * ratio
   oth <- setdiff(colnames(shares), "ONP")
   for (j in seq_along(idx)) {
@@ -368,4 +384,113 @@ onp_newseat_apply <- function(shares, target, history, order = Sys.getenv("AUSPO
   attr(shares, "onp_newseat") <- list(seats = rownames(shares)[idx], fed = k_fed,
                                       source = k_src, level = lvl, cv = sp$cv)
   shares
+}
+
+#' Read `AUSPOL_ONP_ALLOC`
+#'
+#' `"rank"` (default): hand a fixed shape out by rank and force its spread, as shipped. `"model"`: each seat's
+#' relativity comes from [onp_model_ratio()] (Senate share and Year 12, fitted on earlier elections), and nothing
+#' forces the spread. docs/plans/prereg-onp-direct-model-2026-11-22.md.
+#' @return `"rank"` or `"model"`; anything else is an error.
+#' @export
+onp_alloc_mode <- function() {
+  v <- Sys.getenv("AUSPOL_ONP_ALLOC", "rank"); if (!nzchar(v)) v <- "rank"
+  if (!v %in% c("rank", "model")) stop("AUSPOL_ONP_ALLOC must be \"rank\" or \"model\", not \"", v, "\"", call. = FALSE)
+  v
+}
+
+#' Rows to fit One Nation's seat relativity on: earlier elections only
+#'
+#' One row per seat One Nation contested, for every election in `output/candidacies.csv` dated STRICTLY before
+#' `target` with at least `min_seats` contested seats that have both a Senate One Nation share
+#' ([onp_federal_key()], `senate_rank`: the federal Senate vote before THAT election) and a census Year 12 figure.
+#' Within each election: `lv` = log(share + 1) minus its mean, `s` = log(Senate share + 0.5) minus its mean,
+#' `y12` = Year 12 completion as a z-score. Centring within the election removes the party's level, so only where
+#' the vote sits is fitted.
+#' @param target Election label.
+#' @param cand,census Optional tables (tests).
+#' @param min_seats Fewest usable seats for an election to count (the same 10 as [onp_newseat_cv()]).
+#' @return data.table(election, seat, lv, s, y12), possibly with zero rows; attribute `skipped`.
+#' @export
+onp_model_rows <- function(target, cand = NULL, census = NULL, min_seats = 10L) {
+  if (is.null(cand)) cand <- data.table::fread(out_path("candidacies.csv"), showProgress = FALSE, select = c("election", "seat", "party", "pcv"))
+  if (is.null(census)) census <- data.table::fread(census_features_path(), showProgress = FALSE, select = c("pair", "seat", "yr12_pct"))
+  cand <- data.table::as.data.table(cand); census <- data.table::as.data.table(census)
+  ko <- cand$party == "ONP" & is.finite(cand$pcv) & cand$pcv > 0
+  o <- cand[ko, list(v = sum(pcv)), by = c("election", "seat")]
+  els <- unique(o$election); els <- els[els != target & elections_before(els, target)]
+  out <- list(); skipped <- character(0)
+  for (e in els) {
+    oe <- o[o$election == e]
+    key <- tryCatch(utils::capture.output(k <- onp_federal_key(oe$seat, e, order = "senate_rank")), error = function(err) NULL)
+    if (is.null(key) || (is.list(k) && !length(k))) { skipped <- c(skipped, sprintf("%s (no Senate table)", e)); next }
+    ce <- census[census$pair == e]
+    y <- ce$yr12_pct[match(normalise_seat(oe$seat), normalise_seat(ce$seat))]
+    ok <- is.finite(as.numeric(k)) & is.finite(y)
+    if (sum(ok) < min_seats) { skipped <- c(skipped, sprintf("%s (%d usable seats)", e, sum(ok))); next }
+    sv <- log(as.numeric(k)[ok] + 0.5); yv <- y[ok]; lv <- log(oe$v[ok] + 1)
+    if (!is.finite(stats::sd(yv)) || stats::sd(yv) == 0 || stats::sd(sv) == 0) { skipped <- c(skipped, sprintf("%s (no variation)", e)); next }
+    out[[e]] <- data.table::data.table(election = e, seat = oe$seat[ok], v = oe$v[ok], lv = lv - mean(lv), s = sv - mean(sv), y12 = (yv - mean(yv)) / stats::sd(yv))
+  }
+  res <- if (length(out)) data.table::rbindlist(out) else data.table::data.table(election = character(0), seat = character(0), v = numeric(0), lv = numeric(0), s = numeric(0), y12 = numeric(0))
+  attr(res, "skipped") <- skipped
+  res
+}
+
+#' Fit One Nation's seat relativity on earlier elections
+#'
+#' A log-link count model of the seat share, `v ~ election + s + y12` (quasi-Poisson), over [onp_model_rows()]:
+#' each election has its own level (the intercept), and one Senate slope and one Year 12 effect are shared. The log
+#' link makes the effects multiplicative with no `+1` offset (a `log(share + 1)` fit, tried first on 22 Nov, makes
+#' the slope depend on the party's level: 0.08 fitted on low-vote elections against 0.41 on all). Rows weigh in by
+#' their share, so elections where One Nation polls more count for more.
+#' @param target Election label.
+#' @param rows Optional precomputed [onp_model_rows()] (tests).
+#' @param min_elections Fewest earlier elections to fit on.
+#' @return list(b_s, b_y, n_rows, n_elections, sources, skipped), or `NULL` when too few elections.
+#' @export
+onp_model_fit <- function(target, rows = NULL, min_elections = 2L) {
+  if (is.null(rows)) rows <- onp_model_rows(target)
+  ne <- length(unique(rows$election))
+  if (ne < min_elections) return(NULL)
+  rows <- data.table::copy(rows)
+  data.table::set(rows, j = "el", value = factor(rows$election))
+  m <- stats::glm(v ~ 0 + el + s + y12, data = rows, family = stats::quasipoisson())
+  b <- stats::coef(m)[c("s", "y12")]
+  if (anyNA(b)) return(NULL)
+  list(b_s = unname(b[["s"]]), b_y = unname(b[["y12"]]), n_rows = nrow(rows), n_elections = ne,
+       sources = unique(rows$election), skipped = attr(rows, "skipped"))
+}
+
+#' One Nation's seat ratios from the direct model
+#'
+#' `ratio = exp(b_s * s + b_y * y12)` divided by its mean (`level` is unused by this form and kept for callers), with `s` and `y12`
+#' built over `seats` exactly as in [onp_model_rows()]. A seat with no census row takes `y12 = 0` (the average) and
+#' is counted in the result.
+#' @param seats Seat names.
+#' @param senate Senate One Nation share for each seat (the ordering key's values).
+#' @param target Election label: the fit uses only elections before it, the census rows are its own.
+#' @param level Mean One Nation share over `seats` (points).
+#' @param lookup Names to look the census up by (renames).
+#' @param fit,census Optional precomputed fit and census table (tests).
+#' @return list(ratio = named numeric over `seats`, fit, no_census = count), or `NULL` when no fit is possible.
+#' @export
+onp_model_ratio <- function(seats, senate, target, level, lookup = seats, fit = NULL, census = NULL) {
+  if (length(senate) != length(seats)) stop("onp_model_ratio: one Senate share per seat")
+  if (anyNA(senate)) stop("onp_model_ratio: Senate share missing for ", paste(utils::head(seats[is.na(senate)], 5), collapse = ", "))
+  if (is.null(fit)) fit <- onp_model_fit(target)
+  if (is.null(fit)) return(NULL)
+  if (is.null(census)) census <- data.table::fread(census_features_path(), showProgress = FALSE, select = c("pair", "seat", "yr12_pct"))
+  census <- data.table::as.data.table(census); ce <- census[census$pair == target]
+  ck <- normalise_seat(ce$seat)
+  y <- ce$yr12_pct[match(normalise_seat(lookup), ck)]
+  y2 <- ce$yr12_pct[match(normalise_seat(seats), ck)]; y[is.na(y)] <- y2[is.na(y)]
+  have <- is.finite(y)
+  if (mean(have) < 0.9) return(NULL)
+  y12 <- rep(0, length(seats)); y12[have] <- (y[have] - mean(y[have])) / stats::sd(y[have])
+  sv <- log(as.numeric(senate) + 0.5); s <- sv - mean(sv)
+  f <- fit$b_s * s + fit$b_y * y12
+  r <- exp(f)
+  r <- r / mean(r); names(r) <- seats
+  list(ratio = r, fit = fit, no_census = sum(!have))
 }

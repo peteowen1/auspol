@@ -881,7 +881,21 @@ if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate")) {
 # can be reported at both ends of that bound instead of at one unvalidated
 # point. Unset leaves the shape exactly as measured.
 ONP_CV <- as.numeric(Sys.getenv("AUSPOL_ONP_CV", "0.365"))
-if (is.finite(ONP_CV) && ONP_CV > 0) {
+# AUSPOL_ONP_ALLOC=model (default "rank"; docs/plans/prereg-onp-direct-model-2026-11-22.md): every seat's relativity
+# comes from its Senate share and Year 12 (onp_model_ratio(), fitted on earlier elections), and the spread is NOT
+# forced. Needs the Senate ordering (its values are the model's input). Any failure stops the run: a silent fall back
+# to the rank rule would publish a forecast that says "model" and is not.
+.onm <- NULL
+if (identical(onp_alloc_mode(), "model")) {
+  if (!identical(ONP_ORDER, "senate_rank")) stop("AUSPOL_ONP_ALLOC=model needs AUSPOL_ONP_ORDER=senate_rank (the Senate shares are its input)")
+  .onm <- onp_model_ratio(rownames(mat22), .osr_k, TGT, level = state_mean[["ONP"]])
+  if (is.null(.onm)) stop("AUSPOL_ONP_ALLOC=model: no fit possible for ", TGT, " (earlier elections or census rows missing)")
+  onp_ratio <- .onm$ratio
+  cat(sprintf("ONM1  live: One Nation by the DIRECT MODEL over all %d seats: Senate slope %.3f, Year 12 %.3f per sd, fitted on %d rows / %d earlier elections (%s); spread sd/mean %.3f, not forced (AUSPOL_ONP_CV ignored); %d seat(s) without census at the average\n",
+              length(onp_ratio), .onm$fit$b_s, .onm$fit$b_y, .onm$fit$n_rows, .onm$fit$n_elections, paste(.onm$fit$sources, collapse = ","),
+              stats::sd(onp_ratio) / mean(onp_ratio), .onm$no_census))
+}
+if (is.null(.onm) && is.finite(ONP_CV) && ONP_CV > 0) {
   cur <- stats::sd(onp_ratio) / mean(onp_ratio)
   # VECTOR FIRST. pmax(0.02, x) drops x's NAMES, exactly as pmax(0.1, m) drops a
   # matrix's dim -- and onp_ratio is looked up BY SEAT NAME immediately after,
