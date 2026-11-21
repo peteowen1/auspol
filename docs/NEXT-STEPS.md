@@ -41,6 +41,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   files out, then unlink every path in `junctions-<arm>.txt` before removing a worktree.
 - OPEN (Pete's call, asked 22 Nov): One Nation's seat spread is too wide at Victoria's level (`AUSPOL_ONP_CV` 0.365; a walk at 0.30
   moves One Nation 14.9 to 12.7 seats). Census columns add nothing beyond the Senate allocation. `reviews/onp-demographics-and-spread-2026-11-22.md`.
+- OPEN (22 Nov, Pete's direction): replace One Nation's rank allocation + forced spread (`AUSPOL_ONP_CV` 0.365) with a shrunk direct model
+  (Senate share + Year 12): screen RMSE 3.44 v 3.53 over 703 seats. A 0.30 quick fix was made and reverted. `reviews/onp-demographics-and-spread-2026-11-22.md` s5.
 - OPEN, DATED 25 Nov: Victorian search interest is OFF in the live forecast since 19 Nov (`AUSPOL_SALIENCE_LIVE_VIC=0`,
   Pete). After the final snapshot, rerun the on/off walk and take it to Pete before any "1". Done when: he has chosen.
   Evidence: `reviews/market-gaps-vic2026-2026-11-19/README.md` (challengers with the same rise won 2 of 23).
