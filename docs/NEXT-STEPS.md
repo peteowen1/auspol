@@ -111,9 +111,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - OPEN, DATED 27 Nov: seat-page independents note (inthegame-blog #1243 + #1246) is on its dev only. Reaches prod via
   my cherry-pick branch off its `main` (ITG's rule), with the navbar #1239. Done when: the note's code is on inthegame.blog
   (it shows only at 10%+ independent; since search interest went off on 19 Nov no seat qualifies, so no page shows it yet).
-  Checked 21 Nov (read-only): `politics/seat.qmd` differs between its `main` and `dev` by exactly these 18 lines, so
-  cherry-picking c3e41729, 28f51c5c, d38e702f onto `main` applies clean. #1239 (264d638f, `_quarto.yml`) is cut from `dev`:
-  cherry-pick its commit too, do not merge the branch into `main`.
+  BUILT 21 Nov: DRAFT inthegame-blog PR #1262 (`feat/politics-night-prod`, into `main`): c3e41729, 28f51c5c, d38e702f and
+  the navbar 264d638f cherry-picked onto its `main` (21 added lines, 2 files; built with merge-tree + commit-tree, the
+  shared checkout untouched; ITG session told). On 27 Nov: mark it ready, check its render run is green, merge. #1239
+  still merges into its `dev`.
 - OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. 17 Nov done: 6 sources (TAB not
   saved: Chrome blocked the download on api.beta.tab.com.au; Betfair has no Victorian markets). On 27 Nov, if the TAB
   download is blocked again, check Chrome's download prompt for that site first. Each date: `Rscript scripts/snapshot_benchmarks.R`, plus the GES
