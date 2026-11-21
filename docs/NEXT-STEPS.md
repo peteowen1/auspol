@@ -74,9 +74,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (the rehearsal added `--allow-unmatched=1` only because 2022 has no Narracan page; never on the night). Found: (a) the index
   must be the page that links every district's result page (2022: `.../2022-state-election-results`, 87 links; its
   `/results-by-district` child links none); (b) FIXED, the fetcher followed the page's read-aloud link (`//other-host/...`) as
-  a VEC path, HTTP 500; (c) OPEN, speed: one snapshot is 297 s (174 pages one at a time, 1.7 s each, 0.5 s of it the pause),
-  plus 88 discovery requests once at start, so the night refreshes about every 5 min unless the 2026 index links the
-  voting-centre pages directly or pages are fetched a few at a time (Pete's call: load on the VEC site).
+  a VEC path, HTTP 500; (c) FIXED (Pete chose "4 at a time"): one snapshot took 297 s one page at a time; `--parallel=4`
+  (now the default) takes 8 s for discovery + 174 pages, pages identical, cycle result identical, a 404 and a dead host
+  both count as failed. So `--every` sets the load: 60 is 174 requests a minute.
 - IN FLIGHT 9 Nov (Pete chose the levers): first-time-independent under-call. Six levers mapped in
   `reviews/newcomer-independents-walk-2026-11-09.md` (last section). Lever 1 REFUSED twice, stays off
   (`AUSPOL_NEW_IND_SHRINK_SIGNAL`, `_SIGNAL_CAP`; `plans/prereg-new-ind-shrink-signal-2026-11-09.md`: capped -68 SE 76;
