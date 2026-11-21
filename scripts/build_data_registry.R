@@ -26,7 +26,7 @@ suppressMessages(library(data.table))
 OUT <- "docs/DATA-REGISTRY.md"
 today <- as.character(Sys.Date())
 
-sz <- function(p) if (!file.exists(p)) NA_real_ else file.info(p)$size
+sz <- function(p) if (!file.exists(p)) NA_real_ else file.size(p)   # not file.info(): see the walk below
 human <- function(b) {
   if (is.na(b)) return("--")
   if (b == 0) return("**0 BYTES**")
@@ -73,7 +73,10 @@ for (d in sort(basename(list.dirs(file.path("external", "reference"), recursive 
   # a 2-minute registry ran past 17 minutes on a busy disk, and the walks are the only expensive part).
   f <- list.files(p, recursive = TRUE)   # relative to p: the "e.g." line below prints these
   if (!length(f)) { L <- c(L, sprintf("- **%s/** -- empty\n", d)); next }
-  fsz <- file.info(file.path(p, f))$size
+  # file.size(), NOT file.info()$size. file.info() opens every file on Windows to fill columns nobody reads here:
+  # timed 21 Nov 2026 over all 34,006 files, 2,404 s against 7.5 s for file.size(), sizes identical (polls/ alone
+  # 1,326 s). That, not the walks, was why this script took 10 to 33 minutes.
+  fsz <- file.size(file.path(p, f))
   tot <- sum(fsz, na.rm = TRUE)
   empt <- basename(f[!is.na(fsz) & fsz == 0])
   L <- c(L, sprintf("- **%s/** -- %d files, %s%s", d, length(f), human(tot),
