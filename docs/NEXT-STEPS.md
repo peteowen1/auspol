@@ -27,7 +27,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   main `external/` file at its worktree path and refuses the arm on any gap. Smoke-tested (`-SmokeOnly`: 38,647 files, 0
   missing, the stage-0 poll builder rc 0, worktree removed clean, `SMOKE-OK`). Both old worktrees removed (junctions first).
   Task `auspol-bys-rebuilds` registered for 22 Nov 1am (wakes the machine, waits for 4 GB, refuses after 4am).
-  OPEN, DATED 22 Nov morning: read the marker in that folder, score per Amendment 1, report to Pete. Before removing either
+  OPEN, DATED 22 Nov morning: read the marker in that folder; on `DONE`, from this checkout:
+  `Rscript scripts/score_byelection_deswing.R C:/dev/auspol-wt-rb0/output C:/dev/auspol-wt-rb1/output`, then
+  `scripts/compare_rebuild_scores.R` on the two `pooled-backtest.csv` files; report to Pete against the prereg criteria. Before removing either
   worktree, unlink every path in `junctions-<arm>.txt` first (memory `worktree-junctions-delete-through`).
   Known: a worktree rebuild writes stage-0 files such as `bludgertrack_polls.csv` through the junctions into this checkout's `external/`.
 - OPEN, DATED 25 Nov: Victorian search interest is OFF in the live forecast since 19 Nov (`AUSPOL_SALIENCE_LIVE_VIC=0`,
