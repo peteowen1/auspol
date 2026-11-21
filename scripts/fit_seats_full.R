@@ -880,7 +880,7 @@ if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate")) {
 # AUSPOL_ONP_CV rescales the ratio about 1 to hit a stated CV, so the seat range
 # can be reported at both ends of that bound instead of at one unvalidated
 # point. Unset leaves the shape exactly as measured.
-ONP_CV <- as.numeric(Sys.getenv("AUSPOL_ONP_CV", "0.30"))   # 0.365 until 2026-11-22; see published_flags.R
+ONP_CV <- as.numeric(Sys.getenv("AUSPOL_ONP_CV", "0.365"))
 if (is.finite(ONP_CV) && ONP_CV > 0) {
   cur <- stats::sd(onp_ratio) / mean(onp_ratio)
   # VECTOR FIRST. pmax(0.02, x) drops x's NAMES, exactly as pmax(0.1, m) drops a

@@ -39,8 +39,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `scripts/compare_rebuild_scores.R` on the two `pooled-backtest.csv` files; report against the plan's four criteria (the
   leave-one-election-out clause is the one that matters) and ask Pete ship or not. Copy both `published-predictions.csv`
   files out, then unlink every path in `junctions-<arm>.txt` before removing a worktree.
-- DECIDED 22 Nov (Pete): `AUSPOL_ONP_CV` 0.365 to 0.30 (One Nation 14.9 to 12.7 seats); census columns add nothing beyond the Senate
-  allocation. `reviews/onp-demographics-and-spread-2026-11-22.md`. OPEN until the next published forecast shows it (check `CN1` in the run log).
+- OPEN (Pete's call, asked 22 Nov): One Nation's seat spread is too wide at Victoria's level (`AUSPOL_ONP_CV` 0.365; a walk at 0.30
+  moves One Nation 14.9 to 12.7 seats). Census columns add nothing beyond the Senate allocation. `reviews/onp-demographics-and-spread-2026-11-22.md`.
 - OPEN, DATED 25 Nov: Victorian search interest is OFF in the live forecast since 19 Nov (`AUSPOL_SALIENCE_LIVE_VIC=0`,
   Pete). After the final snapshot, rerun the on/off walk and take it to Pete before any "1". Done when: he has chosen.
   Evidence: `reviews/market-gaps-vic2026-2026-11-19/README.md` (challengers with the same rise won 2 of 23).

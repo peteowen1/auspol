@@ -138,7 +138,7 @@ constant absent from this file is a bug in this file.
 | `SEAT_SD` | 3.5 | `fit_seats_full.R` | **ESTIMATED** |
 | `ONP_B1 = -0.0968` | `fit_seats_full.R` | Greens-share coefficient for the One Nation ordering | **RETIRED 2026-08-20 as the ordering rule.** On NSW 2023 it reached Spearman +0.331 against the actual One Nation ordering and MAE 3.287 -- *worse* than a uniform allocation's 2.595. Replaced by each district's transposed federal One Nation vote (+0.814, MAE 1.594). See `reviews/onp-allocation-federal-2026-08-20.md`. |
 | `ONP_CAP = 80` | `fit_seats_full.R` | Ceiling on any district's One Nation share | **SANITY BOUND, not a modelling choice.** Inert on real data (the maximum allocation is 33.0). It exists so a future statewide forecast times the largest quantile ratio cannot exceed 100 and drive the fill negative. |
-| One Nation spread (`AUSPOL_ONP_CV`) | SA 2026 observed, partially pooled | `fit_seats_full.R` | **0.30 since 2026-11-22 (Pete's call)**: the three elections with One Nation near Victoria's level were narrower than 0.365 (sa2026 0.33, qld2017 0.28, wa2017 0.28); `reviews/onp-demographics-and-spread-2026-11-22.md`. Was 0.365 from 2026-09-09, see below and `reviews/onp-concentration-validated-2026-09-09.md` |
+| One Nation spread (`AUSPOL_ONP_CV`) | SA 2026 observed, partially pooled | `fit_seats_full.R` | **ESTIMATED, ADOPTED 2026-09-09 at CV 0.365** — see below and `reviews/onp-concentration-validated-2026-09-09.md` |
 | per-party statewide sd | from the trend | `fit_seats_full.R` | **ESTIMATED** |
 | `N_SIMS` | 20000 | `fit_seats_full.R` | FIXED, no modelling content |
 | S5 median-gap bound | 5 seats | `fit_seats_full.R` | **FIXED** — pre-registered |
@@ -215,11 +215,6 @@ Pete's call, 2026-09-09: publish the uncertainty rather than a bare point —
 this row's status line and the seat range above are the record of that, and
 `AUSPOL_ONP_CV=0.365` is now a **published default** in
 `scripts/published_flags.R`, not a diagnostic override.
-
-**SUPERSEDED 2026-11-22: the published value is 0.30** (Pete's call). The pooling above pulled SA up toward a
-corpus norm drawn mostly from elections where One Nation polled under 10%; at Victoria's level the actual spreads
-are 0.28 to 0.33. Live walk at 0.30 (delivers 0.318): One Nation 14.9 to 12.7 expected seats.
-`reviews/onp-demographics-and-spread-2026-11-22.md`.
 
 ## 4c. Missing until 2026-08-21, and why that matters
 
