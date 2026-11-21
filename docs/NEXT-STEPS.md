@@ -46,16 +46,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (signed -0.69 / -1.47 / -2.66 points per class at 1 / 2 / 3+ candidates; 29 of 35 pairs under on the seat
   total). Labor's +0.3 is the One Nation fill (22.39 -> 22.81). (1) and (2) at the post-election review unless
   Pete asks sooner.
-- SHIPPED 15 Nov (PR #241, merged 10:23am; publishes with the 16 Nov 4:30am daily run): vic2026 Liberal card known, Labor
-  above the Greens (VEC registered cards); Brunswick open, keeps learned flows. Live in the 16 Nov 4:30am run
-  (43741480657: `HTV1 ... labor_above=87 open=1`, `HTV14`). Also SHIPPED 15 Nov (PR #242): `AUSPOL_HTV_LABELS=hybrid` (card shares learn from the cards; open share). OPEN: the 13 UNKNOWN
-  card rows (counted 15 Nov: fed2007/2010/2019, nsw2015, qld2012, sa2010/2014/2022, wa2001/2005/2008/2017/2025) still train
-  on their results; each dated card found moves one to its card. Source: `external/reference/htv/coalition-card-order-researched.csv`.
-  Every row was open-web searched 6 Nov; the remaining route is Wayback captures of the commissions' card pages and PDFs, dated
-  before polling day. 15 Nov: the Internet Archive went offline mid-search. Its index does hold Feb 2014 ECSA document
-  downloads in the form `edocman/?task=document.download&id=N`, so retry sa2014 ids 687 and 710-756 in that form, then ECSA
-  2022 and WAEC 2017/2025. PARKED 15 Nov until after 28 Nov (the archive kept dropping; the whole card-label change was
-  -0.0001 SE 0.0002, so these rows cannot move vic2026). Done when: 0 UNKNOWN rows, or each says where it was searched.
+- OPEN, PARKED until after 28 Nov: 13 UNKNOWN how-to-vote card rows (fed2007/2010/2019, nsw2015, qld2012,
+  sa2010/2014/2022, wa2001/2005/2008/2017/2025) still train on their results; each dated card found moves one to its card.
+  Source: `external/reference/htv/coalition-card-order-researched.csv`. Route: Wayback captures of the commissions' card
+  pages and PDFs, dated before polling day; retry sa2014 ids 687 and 710-756 as `edocman/?task=document.download&id=N`,
+  then ECSA 2022 and WAEC 2017/2025. Cannot move vic2026 (the whole card-label change was -0.0001, SE 0.0002).
+  Done when: 0 UNKNOWN rows, or each says where it was searched. What shipped 15 Nov (PR #241 Brunswick open card, PR #242
+  `AUSPOL_HTV_LABELS=hybrid`) and the search history: `backlog/journal-2026-11-21-queue-history.md`.
 - SHIPPED 14 Nov, arm SPL (Pete's override, "Build per-side, ship live"): paid SEAT polls lose a lean toward the sponsor's
   side, each side shrunk to zero (`AUSPOL_SEAT_POLL_PAID_LEAN=1`, `plans/prereg-seat-paid-lean-2026-11-14.md`). Backtest
   neutral; live today unchanged (Hawthorn's paid poll is 15 months old). OPEN after 28 Nov: score it on vic2026.
@@ -77,16 +74,15 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   a VEC path, HTTP 500; (c) FIXED (Pete chose "4 at a time"): one snapshot took 297 s one page at a time; `--parallel=4`
   (now the default) takes 8 s for discovery + 174 pages, pages identical, cycle result identical, a 404 and a dead host
   both count as failed. So `--every` sets the load: 60 is 174 requests a minute.
-- IN FLIGHT 9 Nov (Pete chose the levers): first-time-independent under-call. Six levers mapped in
+- IN FLIGHT 9 Nov (Pete chose the levers): first-time-independent under-call (70 of 649 single first-timers took 15%+ and
+  we gave them about a third of it; 442 took under 5%, so no blanket lift). Six levers in
   `reviews/newcomer-independents-walk-2026-11-09.md` (last section). Lever 1 REFUSED twice, stays off
-  (`AUSPOL_NEW_IND_SHRINK_SIGNAL`, `_SIGNAL_CAP`; `plans/prereg-new-ind-shrink-signal-2026-11-09.md`: capped -68 SE 76;
-  uncapped 35-election log loss +0.0022, the base-level factor double counts the trees). Lever 2 SHIPPED 9 Nov (PR #211, published 9:50pm): `AUSPOL_NEW_IND_LIFT=1` (`R/new_ind_lift.R`; prereg `plans/prereg-new-ind-lift-2026-11-09.md`), additive +2.4 to +5.1 points fitted on earlier PUBLISHED shares (pre-lift column `ours_prelift`); 20k: sq err -790 SE 687, log loss +0.0000. Live: Ringwood, Williamstown ~3.5 -> ~7. Next levers: spread signal term; council data gaps. Checked 12 Nov: Qld 2008 IS on disk and parses clean (`parse_ecq_council.py --include-2008`: 422 rows, all checks pass) but is PARTIAL: mayors for ~73 councils, councillors for 5 (Townsville, Sunshine Coast, Cairns, Brisbane, Bundaberg). Adding it as-is would mark every qld2009 seat covered, so a 2009 candidate who stood for councillor elsewhere would read as never-stood: coverage must become per council (councils overlapping the seat that have councillor pages that year), not per state-year (`build_council_history.py:218`). Noosa 2014 (Bolton, the motivating case) is not on disk at all: the 2014 de-amalgamation elections (Noosa, Douglas, Livingstone, Mareeba) need fetching. OPEN for Pete: betting odds as an input (he
-  leans no; four elections of odds on disk). Seat-poll weight for new INDs PARKED (vic2026 has one seat poll).
-  Background: 70 of 649 single first-timers took 15%+
-  and we gave them about a third of it (Mackellar 18.6 v 38.1, Shepparton vic2014 7.0 v 35.2); 442 took under 5%, so no
-  blanket lift (`reviews/newcomer-independents-walk-2026-11-09.md`). CORRECTED 9 Nov: the "generic 4-8%" was the
-  per-candidate side model, which reaches seats only via the class split (OFF). `AUSPOL_MC_EXTRA=sal` has no route to the forecast that helps (screened 7 Nov; DECISIONS 2026-11-07;
-  `reviews/aef7-gap-and-sal-screen-2026-11-07.md` section 1). Refits take 73 s with `AUSPOL_MC_ROUNDS_FROM`.
+  (`AUSPOL_NEW_IND_SHRINK_SIGNAL`). Lever 2 SHIPPED 9 Nov (PR #211, `AUSPOL_NEW_IND_LIFT=1`). Next levers: the spread signal
+  term; council data gaps. Qld 2008 is on disk but PARTIAL (councillors for 5 councils), so coverage must become per council,
+  not per state-year (`build_council_history.py:218`), before it is added; the 2014 de-amalgamation elections (Noosa,
+  Douglas, Livingstone, Mareeba) need fetching. OPEN for Pete: betting odds as an input (he leans no; four elections of
+  odds on disk). Seat-poll weight for new INDs PARKED (vic2026 has one seat poll). `AUSPOL_MC_EXTRA=sal` has no route to
+  the forecast that helps (DECISIONS 2026-11-07). Numbers and history: `backlog/journal-2026-11-21-queue-history.md`.
 - OPEN, TCP error vs AEF: goal met (ledger 3.654 vs AEF 3.727, n 667, PR #205); history moved verbatim 12 Nov to
   `backlog/journal-2026-11-11-queue-history.md`. Still open: seat flow persistence for the states (needs state TCP
   histories). PARKED, trigger "before `AUSPOL_UPSET_FLOOR` is turned on" (now "0"): the upset-floor fit drops reused
@@ -146,39 +142,24 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   time-forward "seat polls under-call new independents" term (5 of 10 polled new independents under-called by
   9-22 points: Mayo, Warringah, Kooyong, Mackellar, Mount Gambier). Seat polls already reach new independents:
   mean miss 23.4 before the blend, 11.6 published, 10 seats (Wakehurst published 30.0, not 13.7).
-- OPEN, NIGHT MODEL (before 28 Nov). Live defaults: `pair_cal` v2 (11 Nov) and the night class split (14 Nov, PR #239;
-  restated PASS after the Forde replay fix, PR #240). OPEN: see the class split run in the 25 Nov dress rehearsal
-  (NW23/NW24 lines; Daily Eight 25 Nov). Preregs: `plans/prereg-night-pair-cal-2026-11-11.md`,
-  `plans/prereg-night-class-split-2026-11-14.md`; history in `backlog/journal-2026-11-11-queue-history.md`.
-  Mirani qld2024 traced 11 Nov: (1) FIXED, classify_party() filed bare codes (LNP/ALP/LIB/KAP in the qld/sa/vic2006-10
-  booth 2CP files) as OTH, so the counted pair was never matched (qld2024 half-count log loss 0.2296 -> 0.1668).
-  (2) `cand_ref` (by-candidate booth reference, Pete's choice) FAILED its prereg 11 Nov and stays OFF (7f921437):
-  Monash 2025 got worse (moving Broadbent's Liberal votes left the new Liberal with no reference). Mirani still wrong at
-  full count. The COPY version (Pete's choice) PASSED 11 Nov (sim -0.033, real -0.0017, both ~1 SE;
-  Mirani and Monash carry it), kept OFF as an option: weak evidence (design chosen after the move run). Live use needs
-  candidate names in the night booth table. Pete chose 11 Nov: ON for 28 Nov if switchers exist; they do (7 of 112
-  returning same-seat candidates changed class: Caulfield, Frankston, Lara, Laverton, Morwell, Mulgrave, Werribee).
-  DONE 11 Nov: the website source defaults `cand_ref` to "copy" (`R/night_runner.R:697`). Replays now write
-  every step and take `--resume=1` (9300e7df); since 12 Nov a resume with different flags or AUSPOL_* settings stops (NRC3,
-  `<prefix>.settings.txt` beside the partial files).
-  History: `backlog/journal-2026-11-11-queue-history.md`.
-  Also open: statewide draws shrink by the national mean counted, not the seat's; projection sd floors at 0.26;
-  `--tcp-own-fp` built, OFF (needs flow uncertainty in the draws; `plans/prereg-flow-sd-2026-10-31.md` REFUSED).
-- OPEN, FLOW MEANS in non-classic contests (31 Oct, Melbourne/Monash fed2025): Liberal -> Labor-over-Greens is 60.4 in
-  EVERY seat checked (Melbourne, Monash, Wills, Cooper); in 2025 the Liberal how-to-vote put the Greens last and Labor
-  won Melbourne on it. 17 Nov: SIZED. Melbourne got 79.3% (AEC), and that miss is the night's one wrong call
-  (`reviews/night-called-rule-real-nights-2026-11-17.md`). The "labor_above" share (vic2026 live 61.7%, `HTV14`) pools
-  17 elections led by sa2026 59.7, fed2019 59.0, wa2025 57.4; Victoria's own labor_above cells are 66.8 (2010), 67.8
-  (2014), 57.1 (2018, 2 seats); federal pooled 69-70% 2016-22, 79% 2025. Pete chose "Prereg + screen it": `AUSPOL_HTV_JUR_SHRINK=1`
-  (off; prereg `plans/prereg-htv-jur-shrink-2026-11-17.md`, committed 736e9e90 before any score; vic2026 61.7 -> 64.0).
-  REFUSED 17 Nov 11:30pm (35 elections: +0.0002, SE 0.0002; vic2014 +0.0044, vic2022 +0.0023; DECISIONS). Still
-  open, after 28 Nov: Melbourne fed2025 is a SEAT-level effect (Liberal voters follow the card harder where the
-  Greens are the threat); trace which vic2014 seats the per-state arm hurt before designing that one. Melbourne also: afternoon GRN 47.5 vs actual 39.5 (ALP 21.7 vs 31.3). Idea: seat-level
-  how-to-vote cards as a flow input: DONE (`AUSPOL_HTV_FLOW`; `AUSPOL_HTV_CARD_P=0.67` mixes both Liberal cards for
-  vic2026; `AUSPOL_HTV_RECENCY_HL` SHIPPED 1 Nov). The card-day row is under "Dated, cannot move".
-  Box Hill (our ALP 0.86 vs Sportsbet 0.25) traced to the proportional One Nation fill: `reviews/boxhill-trace-2026-11-01.md`,
-  walked with Pete 10 Nov: no change to the One Nation spread (DECISIONS 2026-11-10); the fill itself stays open here.
-  Evidence: `reviews/night-replay-real-feed-2026-10-31.md`, `reviews/night-replay-fed-2026-10-30.md`.
+- OPEN, NIGHT MODEL (before 28 Nov). Live defaults: `pair_cal` v2 (11 Nov), the night class split (14 Nov, PR #239, #240),
+  and on the website source `cand_ref = "copy"` (`R/night_runner.R:697`; Pete 11 Nov: on for 28 Nov, 7 returning candidates
+  changed class). Class split SEEN on the website source in the 21 Nov dry run (NW23/NW24; NIGHT SOURCE item); the 25 Nov
+  rehearsal repeats it on the final state (Daily Eight 25 Nov). Replays take `--resume=1`; a resume with different flags or
+  AUSPOL_* settings stops (NRC3). Also open: Mirani qld2024 still wrong at full count; statewide draws shrink by the
+  national mean counted, not the seat's; projection sd floors at 0.26; `--tcp-own-fp` built, OFF (needs flow uncertainty
+  in the draws; `plans/prereg-flow-sd-2026-10-31.md` REFUSED). Preregs: `plans/prereg-night-pair-cal-2026-11-11.md`,
+  `plans/prereg-night-class-split-2026-11-14.md`. History (Mirani trace, the two `cand_ref` preregs):
+  `backlog/journal-2026-11-21-queue-history.md`, `backlog/journal-2026-11-11-queue-history.md`.
+- OPEN, FLOW MEANS in non-classic contests, after 28 Nov: Liberal -> Labor-over-Greens is one pooled share in every seat
+  (vic2026 live 61.7%, `HTV14`); Melbourne fed2025 got 79.3% (AEC), and that miss is the night's one wrong call
+  (`reviews/night-called-rule-real-nights-2026-11-17.md`). The per-state shrink `AUSPOL_HTV_JUR_SHRINK` was REFUSED 17 Nov
+  (`plans/prereg-htv-jur-shrink-2026-11-17.md`; DECISIONS). Open: it is a SEAT-level effect (Liberal voters follow the card
+  harder where the Greens are the threat); trace which vic2014 seats the per-state arm hurt before designing that one.
+  Also open: the proportional One Nation fill behind Box Hill (our ALP 0.86 vs Sportsbet 0.25,
+  `reviews/boxhill-trace-2026-11-01.md`; no change to the One Nation spread, DECISIONS 2026-11-10). Evidence:
+  `reviews/night-replay-real-feed-2026-10-31.md`, `reviews/night-replay-fed-2026-10-30.md`; the sized numbers by state:
+  `backlog/journal-2026-11-21-queue-history.md`.
 - OPEN, REPLAY METHOD: federal and vic2022 replay on real nights (`scripts/night_replay_feed.R`,
   `scripts/night_replay_vec.R`); the other state replays are still simulated (one block per seat, clock = 6pm + 4h x
   step). Calls at 0.99 need 20,000 sims. Tally Room "returned" times are post-recheck, not night times.
@@ -221,22 +202,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `AUSPOL_HARNESS_SW_DRAWS=1`; what ships is `=net` (F4), so they test a superseded setting. The question they carry
   stands: is the statewide spread `AUSPOL_FP_EXTRA_SD` 2.419 (fitted on the scored elections, a mild leak) too wide
   for states? Rewrite as `net` arms with a time-forward value before any screen.
-- OPEN, DATED (final snapshot 25-27 Nov is the one that ships, per Pete 27 Oct; earlier weekly ones from ~3 Nov are
-  for watching only, not the forecast): vic2026 salience snapshots. 11 Nov snapshot (to 11 Nov): 734 candidates, 733
-  fetched, 526 linked to the Carroll scale (148 batches) -- linking works now the campaign has started. 26 Oct snapshot fetched, 0 of 101 batches linkable. All 500 candidates fetched
-  18 Oct (window to 6 Oct), but that is before the campaign: nobody's search interest is rising yet (Premier 1.1 in the
-  last 8 weeks vs 9.3 before), so batches cannot be linked and `jump` is not comparable with the backtests' polling-day
-  values. Each refresh is ONE command since 13 Nov: `bash scripts/salience_vic2026_snapshot.sh <window end>` (all four steps
-  on one date, anchor checked against leaders.csv; tested 13 Nov on the cached 11 Nov window: byte-identical corpus), then stage 9.
-  The steps it runs: `AUSPOL_SALIENCE_TO=<date> Rscript scripts/fetch_salience_vic2026_full.R` (~100 requests,
-  resumable; anchor Ben Carroll since 4 Nov: Allan was replaced as Premier 28 Jul 2026 and her series linked 0 of 101
-  batches; check the anchor against `leaders.csv` before each snapshot), then the LADDER (ships 13 Nov, DECISIONS):
-  `AUSPOL_SALIENCE_TO=<date> Rscript scripts/fetch_salience_vic2026_ladder.R` (~100 requests, ~12 min, 2 passes; read
-  VJ6 link quality afterwards: 11 Nov gave shared peak median 56, 0 steps over 1.5x; batch factors on the last 8 weeks:
-  no representative between 0 and 0.5 in the ladder, 24 of 148 under 0.5 in their own batch, all near-zero rises), then `scripts/build_vic2026_salience_jump.R`
-  with the SAME `AUSPOL_SALIENCE_TO` (without it the builder falls back to 6 Oct and finds 0 batches)
-  (output/vic2026-salience-jump.csv), then `scripts/link_vic2026_salience.R`. Connected to the live forecast 13 Nov
-  (0646dbc8); the 15 Nov local run prints `XG5 salience corpus found for vic2026: 546 of 616 seat-classes matched`.
+- OPEN, DATED (final snapshot 25-27 Nov is the one that ships, per Pete 27 Oct): vic2026 salience snapshots. ONE command:
+  `bash scripts/salience_vic2026_snapshot.sh <window end>` (fetch, ladder, jump and link on one date; anchor Ben Carroll,
+  checked against `leaders.csv`), then stage 9. Afterwards read the VJ6 link quality (11 Nov: shared peak median 56, 0 steps
+  over 1.5x) and the forecast's `XG5` line (15 Nov: 546 of 616 seat-classes matched). Running a step by hand: give every
+  step the SAME `AUSPOL_SALIENCE_TO`, or the builder falls back to 6 Oct and finds 0 batches. Last snapshot 11 Nov: 734
+  candidates, 733 fetched, 526 linked. Live use is OFF (`AUSPOL_SALIENCE_LIVE_VIC=0`, the 25 Nov item above). The four
+  steps and earlier snapshots: `backlog/journal-2026-11-21-queue-history.md`.
 - OPEN F8, F13, F17, F19 (F5, F7, F9 REFUSED; F10 and F12 SHIPPED, DECISIONS 30 Oct / `AUSPOL_LIVE_LEVEL_PRED_TREND`;
   F14, F15 were design notes, no task; F16 NOT PASSED 29 Oct; F18 walk 1 done; IND override shipped as arm H): post-xgb
   tables fitted on residuals the shares no longer carry (F8; arms R and N exhausted), HTV overwriting xgb flows (F13: no
