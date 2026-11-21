@@ -27,7 +27,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   main `external/` file at its worktree path and refuses the arm on any gap. Smoke-tested (`-SmokeOnly`: 38,647 files, 0
   missing, the stage-0 poll builder rc 0, worktree removed clean, `SMOKE-OK`). Both old worktrees removed (junctions first).
   Task `auspol-bys-rebuilds` registered for 22 Nov 1am (wakes the machine, waits for 4 GB, refuses after 4am).
-  OPEN, DATED 22 Nov morning: read the marker in that folder, score per Amendment 1, report to Pete. Before removing either
+  OPEN, DATED 22 Nov morning: read the marker in that folder; on `DONE`, from this checkout:
+  `Rscript scripts/score_byelection_deswing.R C:/dev/auspol-wt-rb0/output C:/dev/auspol-wt-rb1/output`, then
+  `scripts/compare_rebuild_scores.R` on the two `pooled-backtest.csv` files; report to Pete against the prereg criteria. Before removing either
   worktree, unlink every path in `junctions-<arm>.txt` first (memory `worktree-junctions-delete-through`).
   Known: a worktree rebuild writes stage-0 files such as `bludgertrack_polls.csv` through the junctions into this checkout's `external/`.
 - OPEN, DATED 25 Nov: Victorian search interest is OFF in the live forecast since 19 Nov (`AUSPOL_SALIENCE_LIVE_VIC=0`,
@@ -62,13 +64,25 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   DECISIONS): the pages fill in during the count, as the VEC's first reply implied; draft not sent. Re-download the VEC venues spreadsheet the week of the election and rerun
   `scripts/build_vec_places_2026.R` + the geocoder (23 Nov, Daily Eight). Built/done detail moved 15 Nov to
   `backlog/journal-2026-11-11-queue-history.md`.
+  VENUES, 21 Nov: the VEC reissued the spreadsheet ("correct as at 20th Nov 12:00pm"); saved raw in
+  `voting-locations/raw-20261121-1140/` and rebuilt: 1,852 election-day centres (was 1,851: Warrandyte / Ringwood Heights
+  added, none removed), 310 early centres (same). Gippsland East / Bundalaguah moved venue (Primary School, 627 -> Myrtlebank
+  Hall, 795 Maffra-Sale Road) but keeps its 2022 booth's map position by name: move its dot by hand. Geocoder: 0 new
+  requests, 359 of 359 placed (run it as plain `python`; `-I` hides the user-installed shapely). Night cycle passes on the
+  new list. STILL TO DO 23 Nov: check the page's "correct as at" line again (compare `Last-Modified` with
+  `raw-20261121-1140/headers-xlsx.txt`; rerun only if it moved), then the blog's booths build
+  (`C:/dev/inthegame-blog/politics/night-maps/build-booths-2026.py`), which still has 1,851 centres.
   DRY RUN 21 Nov 11am (`deciding-runs/20261121-night-rehearsal/`: raw pages, logs, JSON), 2022 pages under today's 2026 state:
   fetch 87 districts / 174 pages, then one cycle OK in 68 s (87 of 88 seats updated, parse 17 s, simulate 40 s); `NW23` and
   `NW24` both printed, so the class split runs on the website source. THE WEBSITE COMMAND (the runbook below is the feed's and
   stops on `NW9!` without `--turnout`):
   `Rscript scripts/fetch_vec_web_snapshot.R --index=<results page> --out=<dir>/web --every=<s>` beside
   `Rscript scripts/night_loop.R --every=60 --source-type=web --source=<dir>/web --archive=<dir>/archive --state=<night-state-vic-2026.rds> --ref=output/booths-vic2026-ref.csv --council-lean=output/council-fp-2022.csv --turnout=output/council-district-stats-2022.csv --enrolment=external/reference/vec/2026/enrolment/enrolment-2026.csv --places=external/reference/vec/2026/voting-locations/places-2026.csv --out=<json> --upload-key=auspol/night/vic2026.json`
-  (the rehearsal added `--allow-unmatched=1` only because 2022 has no Narracan page; never on the night). Found: (a) the index
+  (the rehearsal added `--allow-unmatched=1` only because 2022 has no Narracan page; never on the night).
+  ONE COMMAND since 21 Nov: `bash scripts/night_vic2026.sh <results index URL> <work dir> [--upload] [--every=90]` runs both
+  with those flags (downloads the state into the work dir; upload is OFF unless `--upload`; a fetcher that dies stops the
+  loop at once with `NV8!`). Rehearsal: add `--dry-2022 --max-cycles=1` (tested 21 Nov: one cycle, rc 0; a wrong index
+  gives `NV8!` in 4 s). The 25 Nov rehearsal should use it, without `--upload`. Found: (a) the index
   must be the page that links every district's result page (2022: `.../2022-state-election-results`, 87 links; its
   `/results-by-district` child links none); (b) FIXED, the fetcher followed the page's read-aloud link (`//other-host/...`) as
   a VEC path, HTTP 500; (c) FIXED (Pete chose "4 at a time"): one snapshot took 297 s one page at a time; `--parallel=4`
@@ -90,8 +104,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   elections under REBUILD_ONLY (fix spec in the journal). Low: `fit_nsw.R`/`fit_federal.R`/`fit_vic.R` read same-year flows.
 - **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** History, DONE list and replay evidence:
   `backlog/journal-2026-11-05-election-night.md` (moved verbatim 6 Nov); plan `plans/election-night-booth-model.md`. Runbook:
-  `gh release download forecast-latest -p night-state-vic-2026.rds -D output`, then `night_runner.R --state=output/night-state-vic-2026.rds
-  --ref=output/booths-vic2026-ref.csv --council-lean=output/council-fp-2022.csv`. Live page https://inthegame.blog/politics/live
+  `gh release download forecast-latest -p night-state-vic-2026.rds -D <dir>`, then the fetcher and loop exactly as written
+  under NIGHT SOURCE ("THE WEBSITE COMMAND"; the feed-era three-flag command that stood here stops on `NW9!`). Live page https://inthegame.blog/politics/live
   (find my seat live, #166 closed 5 Nov). OPEN, in order:
   1-2. DONE: Pete checked the live page at 390 px on 18 Nov, "Looks good!" (the rest done 16 Nov, journal).
   3. Navbar link: BUILT 18 Nov on inthegame-blog branch `feat/politics-live-nav-2`, PR #1239 (264d638f, Politics menu
@@ -111,9 +125,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - OPEN, DATED 27 Nov: seat-page independents note (inthegame-blog #1243 + #1246) is on its dev only. Reaches prod via
   my cherry-pick branch off its `main` (ITG's rule), with the navbar #1239. Done when: the note's code is on inthegame.blog
   (it shows only at 10%+ independent; since search interest went off on 19 Nov no seat qualifies, so no page shows it yet).
-  Checked 21 Nov (read-only): `politics/seat.qmd` differs between its `main` and `dev` by exactly these 18 lines, so
-  cherry-picking c3e41729, 28f51c5c, d38e702f onto `main` applies clean. #1239 (264d638f, `_quarto.yml`) is cut from `dev`:
-  cherry-pick its commit too, do not merge the branch into `main`.
+  BUILT 21 Nov: DRAFT inthegame-blog PR #1262 (`feat/politics-night-prod`, into `main`): c3e41729, 28f51c5c, d38e702f and
+  the navbar 264d638f cherry-picked onto its `main` (21 added lines, 2 files; built with merge-tree + commit-tree, the
+  shared checkout untouched). ITG agreed 21 Nov and lists it as the 27 Nov merge in place of #1239. Before the merge it
+  needs a code review and ITG's design check (it touches a `.qmd` and `_quarto.yml`); then mark it ready, check its
+  render run is green, merge, and close #1239 (same nav commit).
 - OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. 17 Nov done: 6 sources (TAB not
   saved: Chrome blocked the download on api.beta.tab.com.au; Betfair has no Victorian markets). On 27 Nov, if the TAB
   download is blocked again, check Chrome's download prompt for that site first. Each date: `Rscript scripts/snapshot_benchmarks.R`, plus the GES

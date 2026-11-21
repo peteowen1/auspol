@@ -1,3 +1,8 @@
+# auspol 0.4.193
+
+- **Election night in one command** (PR #262, 21 Nov): `bash scripts/night_vic2026.sh <results index URL> <work dir>` starts the VEC website fetcher and the night loop with every flag the website source needs (the 21 Nov dry run of the three-flag runbook stopped on `NW9!` for want of `--turnout`). Upload to the live page is off unless `--upload` is passed; `--dry-2022` rehearses on the 2022 pages and refuses `--upload`; a fetcher that dies stops the loop at once (`NV8!`). Untested until the 2026 results pages exist: the 2026 index URL, and `--upload`.
+- **Data registry builds in 20 seconds, not 10 to 33 minutes**: `scripts/build_data_registry.R` reads sizes with `file.size()` instead of `file.info()`, which opens every file on Windows (2,404 s against 7.5 s over 34,006 files, sizes identical, registry byte-identical).
+
 # auspol 0.4.192
 
 - **Election-night fetcher takes four pages at a time** (PR #261, Pete, 21 Nov): `scripts/fetch_vec_web_snapshot.R --parallel=4` (the default) fetches the VEC results pages in groups of four; a full fetch of the 2022 pages is 85 s against 297 s for the pages alone one at a time, with every page identical. A failed or malformed page costs that page, never the loop. Links to other hosts (`//host/...`) are no longer followed as VEC paths. Found in a dry run of the night on the website source (one cycle 68 s, class split on). No forecast number changes.
