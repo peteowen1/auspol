@@ -86,3 +86,23 @@ The live parts stay in `docs/NEXT-STEPS.md`; this file is history.
   with the SAME `AUSPOL_SALIENCE_TO` (without it the builder falls back to 6 Oct and finds 0 batches)
   (output/vic2026-salience-jump.csv), then `scripts/link_vic2026_salience.R`. Connected to the live forecast 13 Nov
   (0646dbc8); the 15 Nov local run prints `XG5 salience corpus found for vic2026: 546 of 616 seat-classes matched`.
+
+## Night source, dry run detail (moved from the queue 21 Nov, midnight)
+
+  DRY RUN 21 Nov 11am (`deciding-runs/20261121-night-rehearsal/`: raw pages, logs, JSON), 2022 pages under today's 2026 state:
+  fetch 87 districts / 174 pages, then one cycle OK in 68 s (87 of 88 seats updated, parse 17 s, simulate 40 s); `NW23` and
+  `NW24` both printed, so the class split runs on the website source. THE WEBSITE COMMAND (the runbook below is the feed's and
+  stops on `NW9!` without `--turnout`):
+  `Rscript scripts/fetch_vec_web_snapshot.R --index=<results page> --out=<dir>/web --every=<s>` beside
+  `Rscript scripts/night_loop.R --every=60 --source-type=web --source=<dir>/web --archive=<dir>/archive --state=<night-state-vic-2026.rds> --ref=output/booths-vic2026-ref.csv --council-lean=output/council-fp-2022.csv --turnout=output/council-district-stats-2022.csv --enrolment=external/reference/vec/2026/enrolment/enrolment-2026.csv --places=external/reference/vec/2026/voting-locations/places-2026.csv --out=<json> --upload-key=auspol/night/vic2026.json`
+  (the rehearsal added `--allow-unmatched=1` only because 2022 has no Narracan page; never on the night).
+  ONE COMMAND since 21 Nov: `bash scripts/night_vic2026.sh <results index URL> <work dir> [--upload] [--every=90]` runs both
+  with those flags (downloads the state into the work dir; upload is OFF unless `--upload`; a fetcher that dies stops the
+  loop at once with `NV8!`). Rehearsal: add `--dry-2022 --max-cycles=1` (tested 21 Nov: one cycle, rc 0; a wrong index
+  gives `NV8!` in 4 s). The 25 Nov rehearsal should use it, without `--upload`. Found: (a) the index
+  must be the page that links every district's result page (2022: `.../2022-state-election-results`, 87 links; its
+  `/results-by-district` child links none); (b) FIXED, the fetcher followed the page's read-aloud link (`//other-host/...`) as
+  a VEC path, HTTP 500; (c) FIXED (Pete chose "4 at a time"): one snapshot took 297 s one page at a time; `--parallel=4`
+  (now the default) takes 85 s for discovery + 174 pages (about a minute a snapshot once discovery is done), pages
+  identical, cycle result identical; a 404, a dead host and a page holding a NUL byte each cost that one page. Exactly 4:
+  groups of four on plain connections (the first build ran up to 40 streams and took 8 s; review, 21 Nov).

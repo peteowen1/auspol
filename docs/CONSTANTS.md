@@ -567,7 +567,7 @@ These reach only `fit_federal.R` / `fit_nsw.R` / `fit_vic.R`, whose outputs the 
 | Constant | Value | Status |
 |---|---|---|
 | `house_adjust` in `unfold_others()` | TRUE | **CHOSEN** structure: impute the firm's own fitted house effect (shrunk by the trend model's `sigma_house_pts` prior), not the all-firm trend. |
-| One Nation unprompted `discount` | fitted each run (FFD1; `scripts/fit_federal.R:312-359`, consumed by `R/fold.R:153`) | **ESTIMATED**, inverse-variance pooled over every firm-cycle that both names and folds One Nation (2 firms, 2025 cycle, as of 2026-10-15). Fitted on the same within-firm gap FF1 checks, so FF1 cannot validate it until a second cycle has such firms. |
+| One Nation unprompted `discount` | fitted each run (FFD1; `scripts/fit_federal.R:312-359`, consumed by `unfold_others()` in `R/fold.R`) | **ESTIMATED**, inverse-variance pooled over every firm-cycle that both names and folds One Nation (2 firms, 2025 cycle, as of 2026-10-15). Fitted on the same within-firm gap FF1 checks, so FF1 cannot validate it until a second cycle has such firms. |
 | `FD_ITER`, `FD_TOL` in `fit_federal.R` | 4 iterations, 0.002 | **COMPUTATIONAL**: the discount is re-estimated after a refit until the pooled increment is below 0.2% of the imputed share; failing to converge stops the script. |
 
 ## Coalition split (`AUSPOL_COALITION_SPLIT`, built 2026-10-16, SHIPPED 2026-10-17 with `_F=state`; `R/coalition_split.R`)
