@@ -69,8 +69,8 @@ L <- c(L, "## Raw commission downloads (`external/reference/`)\n")
 for (d in sort(basename(list.dirs(file.path("external", "reference"), recursive = FALSE)))) {
   p <- file.path("external", "reference", d)
   if (!dir.exists(p)) next
-  # One recursive walk and one file.info() per folder (was three walks and three file.info() calls: 16 Nov 2026,
-  # a 2-minute registry ran past 17 minutes on a busy disk, and the walks are the only expensive part).
+  # One recursive walk and one size lookup per folder (was three walks and three file.info() calls: 16 Nov 2026,
+  # a 2-minute registry ran past 17 minutes on a busy disk; that note blamed the walks, wrongly, see below).
   f <- list.files(p, recursive = TRUE)   # relative to p: the "e.g." line below prints these
   if (!length(f)) { L <- c(L, sprintf("- **%s/** -- empty\n", d)); next }
   # file.size(), NOT file.info()$size. file.info() opens every file on Windows to fill columns nobody reads here:
