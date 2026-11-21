@@ -15,7 +15,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
 - **Status 21 Nov, 9:40am.** main 0.4.191 (PR #260, de-swing shipped). 21 Nov 4:30am run (44783954601): forecast
   published 4:40am; 2 of 16 scenario jobs (vic2026 ALP polled, nsw2027 ONP polled) timed out in `setup-r` (10 min), so
-  `publish-scenarios` skipped and the scenario files stayed at 20 Nov 5:08am. Failed jobs rerun 9:30am. Dated, a session runs each: 23 Nov VEC venues rerun; 25 Nov final salience snapshot +
+  `publish-scenarios` skipped and the scenario files stayed at 20 Nov 5:08am. Failed jobs rerun 9:30am: green, both scenario
+  files republished 9:50am. Dated, a session runs each: 23 Nov VEC venues rerun; 25 Nov final salience snapshot +
   night dress rehearsal; 27 Nov merge inthegame-blog#1239 (navbar link) and the final benchmark capture (Pete: VPN off).
 - SHIPPED 19 Nov (PR #260, Pete's override): by-election de-swing `AUSPOL_BYELECTION_DESWING=1`. Live 20 Nov 4:42am forecast
   (1404a0f): Werribee ALP 42% / ONP 30% / LIB 28%; `BYS1` also moved nsw2027 Kiama (ALP -1.0, LNP +5.4), not measured. OPEN: the
@@ -64,6 +65,18 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   DECISIONS): the pages fill in during the count, as the VEC's first reply implied; draft not sent. Re-download the VEC venues spreadsheet the week of the election and rerun
   `scripts/build_vec_places_2026.R` + the geocoder (23 Nov, Daily Eight). Built/done detail moved 15 Nov to
   `backlog/journal-2026-11-11-queue-history.md`.
+  DRY RUN 21 Nov 11am (`deciding-runs/20261121-night-rehearsal/`: raw pages, logs, JSON), 2022 pages under today's 2026 state:
+  fetch 87 districts / 174 pages, then one cycle OK in 68 s (87 of 88 seats updated, parse 17 s, simulate 40 s); `NW23` and
+  `NW24` both printed, so the class split runs on the website source. THE WEBSITE COMMAND (the runbook below is the feed's and
+  stops on `NW9!` without `--turnout`):
+  `Rscript scripts/fetch_vec_web_snapshot.R --index=<results page> --out=<dir>/web --every=<s>` beside
+  `Rscript scripts/night_loop.R --every=60 --source-type=web --source=<dir>/web --archive=<dir>/archive --state=<night-state-vic-2026.rds> --ref=output/booths-vic2026-ref.csv --council-lean=output/council-fp-2022.csv --turnout=output/council-district-stats-2022.csv --enrolment=external/reference/vec/2026/enrolment/enrolment-2026.csv --places=external/reference/vec/2026/voting-locations/places-2026.csv --out=<json> --upload-key=auspol/night/vic2026.json`
+  (the rehearsal added `--allow-unmatched=1` only because 2022 has no Narracan page; never on the night). Found: (a) the index
+  must be the page that links every district's result page (2022: `.../2022-state-election-results`, 87 links; its
+  `/results-by-district` child links none); (b) FIXED, the fetcher followed the page's read-aloud link (`//other-host/...`) as
+  a VEC path, HTTP 500; (c) OPEN, speed: one snapshot is 297 s (174 pages one at a time, 1.7 s each, 0.5 s of it the pause),
+  plus 88 discovery requests once at start, so the night refreshes about every 5 min unless the 2026 index links the
+  voting-centre pages directly or pages are fetched a few at a time (Pete's call: load on the VEC site).
 - IN FLIGHT 9 Nov (Pete chose the levers): first-time-independent under-call. Six levers mapped in
   `reviews/newcomer-independents-walk-2026-11-09.md` (last section). Lever 1 REFUSED twice, stays off
   (`AUSPOL_NEW_IND_SHRINK_SIGNAL`, `_SIGNAL_CAP`; `plans/prereg-new-ind-shrink-signal-2026-11-09.md`: capped -68 SE 76;
@@ -101,6 +114,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - OPEN, DATED 27 Nov: seat-page independents note (inthegame-blog #1243 + #1246) is on its dev only. Reaches prod via
   my cherry-pick branch off its `main` (ITG's rule), with the navbar #1239. Done when: the note's code is on inthegame.blog
   (it shows only at 10%+ independent; since search interest went off on 19 Nov no seat qualifies, so no page shows it yet).
+  Checked 21 Nov (read-only): `politics/seat.qmd` differs between its `main` and `dev` by exactly these 18 lines, so
+  cherry-picking c3e41729, 28f51c5c, d38e702f onto `main` applies clean. #1239 (264d638f, `_quarto.yml`) is cut from `dev`:
+  cherry-pick its commit too, do not merge the branch into `main`.
 - OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. 17 Nov done: 6 sources (TAB not
   saved: Chrome blocked the download on api.beta.tab.com.au; Betfair has no Victorian markets). On 27 Nov, if the TAB
   download is blocked again, check Chrome's download prompt for that site first. Each date: `Rscript scripts/snapshot_benchmarks.R`, plus the GES

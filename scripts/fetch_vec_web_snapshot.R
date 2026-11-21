@@ -30,6 +30,9 @@ get <- function(u) { Sys.sleep(pause)
                 error = function(e) NA_character_)
   if (is.na(r) || !grepl("</html>", r, fixed = TRUE)) NA_character_ else r }
 links <- function(h) { l <- regmatches(h, gregexpr('href="[^"#]+"', h))[[1]]; l <- unique(gsub('^href="|"$', "", l))
+  # "//other-host/..." is another site (the page's read-aloud link carries this page's own address in its query, so it
+  # passed the "district" + "result" filter and was fetched from the VEC as a path: HTTP 500, 21 Nov rehearsal)
+  l <- l[!startsWith(l, "//")]
   ifelse(grepl("^https?://", l), l, paste0(base, ifelse(startsWith(l, "/"), "", "/"), l)) }
 vc_links <- function(l) list(fp = l[grepl("district-results-by-voting-centre$", l, ignore.case = TRUE)],
                              tcp = l[grepl("2cp-results-by-voting-centre$", l, ignore.case = TRUE)])
