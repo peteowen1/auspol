@@ -62,6 +62,14 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   DECISIONS): the pages fill in during the count, as the VEC's first reply implied; draft not sent. Re-download the VEC venues spreadsheet the week of the election and rerun
   `scripts/build_vec_places_2026.R` + the geocoder (23 Nov, Daily Eight). Built/done detail moved 15 Nov to
   `backlog/journal-2026-11-11-queue-history.md`.
+  VENUES, 21 Nov: the VEC reissued the spreadsheet ("correct as at 20th Nov 12:00pm"); saved raw in
+  `voting-locations/raw-20261121-1140/` and rebuilt: 1,852 election-day centres (was 1,851: Warrandyte / Ringwood Heights
+  added, none removed), 310 early centres (same). Gippsland East / Bundalaguah moved venue (Primary School, 627 -> Myrtlebank
+  Hall, 795 Maffra-Sale Road) but keeps its 2022 booth's map position by name: move its dot by hand. Geocoder: 0 new
+  requests, 359 of 359 placed (run it as plain `python`; `-I` hides the user-installed shapely). Night cycle passes on the
+  new list. STILL TO DO 23 Nov: check the page's "correct as at" line again (compare `Last-Modified` with
+  `raw-20261121-1140/headers-xlsx.txt`; rerun only if it moved), then the blog's booths build
+  (`C:/dev/inthegame-blog/politics/night-maps/build-booths-2026.py`), which still has 1,851 centres.
   DRY RUN 21 Nov 11am (`deciding-runs/20261121-night-rehearsal/`: raw pages, logs, JSON), 2022 pages under today's 2026 state:
   fetch 87 districts / 174 pages, then one cycle OK in 68 s (87 of 88 seats updated, parse 17 s, simulate 40 s); `NW23` and
   `NW24` both printed, so the class split runs on the website source. THE WEBSITE COMMAND (the runbook below is the feed's and
