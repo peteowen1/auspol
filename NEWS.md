@@ -1,3 +1,7 @@
+# auspol 0.4.192
+
+- **Election-night fetcher takes four pages at a time** (PR #261, Pete, 21 Nov): `scripts/fetch_vec_web_snapshot.R --parallel=4` (the default) fetches the VEC results pages in groups of four; a full fetch of the 2022 pages is 85 s against 297 s for the pages alone one at a time, with every page identical. A failed or malformed page costs that page, never the loop. Links to other hosts (`//host/...`) are no longer followed as VEC paths. Found in a dry run of the night on the website source (one cycle 68 s, class split on). No forecast number changes.
+
 # auspol 0.4.191
 
 - **By-election de-swing SHIPPED** (PR #260, Pete's override, 19 Nov): `AUSPOL_BYELECTION_DESWING=1` in `published_flags.R` and as the code's default. Werribee: Liberal 63% to 28%, Labor 10% to 42% (primary Labor 25.7 to 30.9, Liberal 28.0 to 24.0); Mulgrave 96% to 95%; expected seats Liberal/National -0.3, Labor +0.3. Shipped before its pre-registered rebuild pair (20 Nov) is scored; that result is reported against the prereg criteria (Amendment 2).

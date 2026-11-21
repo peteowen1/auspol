@@ -2,7 +2,7 @@
 # and pointed to the website, which it says matches the feed and updates as often).
 #
 #   Rscript scripts/fetch_vec_web_snapshot.R --index=<results page URL> --out=<snapshot root>
-#       [--districts=external/reference/vec/2026/vec-candidates-2026.csv | Name1,Name2] [--every=0] [--max-cycles=0]
+#       [--districts=external/reference/vec/2026/vec-candidates-2026.csv | Name1,Name2] [--every=0] [--max-cycles=0] [--parallel=4]
 #
 # From --index it finds every district's two "results by voting centre" pages (first preferences, two-candidate):
 # directly if the index links to them, else through the district result pages it links to (one level). Each district in
@@ -29,7 +29,34 @@ get <- function(u) { Sys.sleep(pause)
   r <- tryCatch({ con <- url(u, headers = c("User-Agent" = UA)); on.exit(close(con)); paste(readLines(con, warn = FALSE, encoding = "UTF-8"), collapse = "\n") },
                 error = function(e) NA_character_)
   if (is.na(r) || !grepl("</html>", r, fixed = TRUE)) NA_character_ else r }
+# --parallel=N (default 4; Pete, 21 Nov 2026): up to N pages in flight at once. One at a time a snapshot of 174 pages
+# took 297 s (1.7 s a page), so the night refreshed every 5 minutes. --parallel=1 is the old one-at-a-time path with
+# its pause. Same completeness rule either way: a page without its closing </html> counts as failed.
+par_n <- max(1L, as.integer(flag("parallel", "4")))
+get_many <- function(urls) {
+  if (par_n <= 1L || length(urls) <= 1L) return(vapply(urls, get, character(1), USE.NAMES = FALSE))
+  res <- rep(NA_character_, length(urls))
+  # multiplex off: with it on, each connection carries up to 10 HTTP/2 streams, so "4" could be 40 pages in flight
+  pool <- curl::new_pool(total_con = par_n, host_con = par_n, multiplex = FALSE)
+  # GROUPS of N, each run to the end before the next is added. Adding every page at once left the ones waiting for a
+  # free connection to hit curl's 10 s connect clock while still queued: 46 of 87 pages "timed out" (21 Nov 2026).
+  for (g in split(seq_along(urls), ceiling(seq_along(urls) / par_n))) {
+    for (i in g) local({ k <- i
+      h <- curl::new_handle(url = urls[k], useragent = UA, timeout = 60)
+      curl::multi_add(h, pool = pool,
+        # an error in here (rawToChar on a body holding a NUL byte) would abort multi_run and the whole --every loop,
+        # so it costs that one page instead: NA, then VWF3 and no DONE, as the one-at-a-time path does
+        done = function(r) tryCatch({ if (r$status_code == 200L) { s <- rawToChar(r$content); Encoding(s) <- "UTF-8"
+                               if (grepl("</html>", s, fixed = TRUE)) res[k] <<- s } }, error = function(e) NULL),
+        fail = function(e) NULL) })
+    curl::multi_run(pool = pool)
+  }
+  res
+}
 links <- function(h) { l <- regmatches(h, gregexpr('href="[^"#]+"', h))[[1]]; l <- unique(gsub('^href="|"$', "", l))
+  # "//other-host/..." is another site (the page's read-aloud link carries this page's own address in its query, so it
+  # passed the "district" + "result" filter and was fetched from the VEC as a path: HTTP 500, 21 Nov rehearsal)
+  l <- l[!startsWith(l, "//")]
   ifelse(grepl("^https?://", l), l, paste0(base, ifelse(startsWith(l, "/"), "", "/"), l)) }
 vc_links <- function(l) list(fp = l[grepl("district-results-by-voting-centre$", l, ignore.case = TRUE)],
                              tcp = l[grepl("2cp-results-by-voting-centre$", l, ignore.case = TRUE)])
@@ -43,7 +70,7 @@ discover <- function() {
     dl <- l[grepl("district", l, ignore.case = TRUE) & grepl("result", l, ignore.case = TRUE) & !grepl("voting-centre", l, ignore.case = TRUE)]
     dl <- dl[startsWith(dl, base)]
     cat(sprintf("VWF2 index has no voting-centre links; following %d district result page(s)\n", length(dl)))
-    for (u in dl) { hh <- get(u); if (is.na(hh)) next; vv <- vc_links(links(hh)); v$fp <- c(v$fp, vv$fp); v$tcp <- c(v$tcp, vv$tcp) }
+    for (hh in get_many(dl)) { if (is.na(hh)) next; vv <- vc_links(links(hh)); v$fp <- c(v$fp, vv$fp); v$tcp <- c(v$tcp, vv$tcp) }
   }
   fp <- unique(v$fp); tcp <- unique(v$tcp)
   m <- data.table(district = districts, s = slug(districts))
@@ -59,10 +86,11 @@ one_snapshot <- function(m) {
   stamp <- format(as.POSIXct(Sys.time(), tz = "Australia/Melbourne"), "%Y%m%d_%H%M%S", tz = "Australia/Melbourne")
   d <- file.path(out, stamp); dir.create(d, recursive = TRUE, showWarnings = FALSE)
   bad <- character(0)
-  for (i in seq_len(nrow(m))) for (k in c("fp", "tcp")) {
-    u <- m[[paste0(k, "_url")]][i]; f <- sprintf("%s-%s.html", m$s[i], if (k == "fp") "fp" else "2cp")
-    h <- get(u); if (is.na(h)) { bad <- c(bad, paste(m$district[i], k)); next }
-    writeLines(h, file.path(d, f), useBytes = TRUE)
+  jobs <- rbind(m[, list(district, u = fp_url, f = paste0(s, "-fp.html"), k = "fp")], m[, list(district, u = tcp_url, f = paste0(s, "-2cp.html"), k = "tcp")])
+  pages <- get_many(jobs$u)
+  for (i in seq_len(nrow(jobs))) {
+    if (is.na(pages[i])) { bad <- c(bad, paste(jobs$district[i], jobs$k[i])); next }
+    writeLines(pages[i], file.path(d, jobs$f[i]), useBytes = TRUE)
   }
   if (length(bad)) { cat(sprintf("VWF3! %s: %d page(s) failed (%s); no DONE, the runner keeps the previous snapshot\n", stamp, length(bad),
                                  paste(utils::head(bad, 5), collapse = "; "))); return(invisible(FALSE)) }
