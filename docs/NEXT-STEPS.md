@@ -22,10 +22,15 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   DONE 22 Nov: the prereg rebuild pair ran 1:00am to 4:26am (both rc 0) and PASSES all four criteria, so the switch stays
   "1" (plan RESULT section; evidence in `deciding-runs/20261122-bys-rebuilds/`; the two failed nights are in the journal).
   Both rebuild worktrees removed 22 Nov (53 junctions each unlinked first; main `external/` 38,651 files before and after).
-- OPEN (after 28 Nov): a by-election's minor-party result does not reach the prediction. Murray nsw2019: the Shooters took
-  31.5% at the Oct 2017 by-election and won with 40.3% in 2019; both rebuild arms predicted 4.0% and gave them 0 or 1 wins in
-  20,000. CAUSE NOT TRACED: the half blend reads the row (`byelections_between("nsw2015","nsw2019")`, `OTH_RIGHT` 31.5), so
-  the loss is after the blend. Start with `AUSPOL_TRACE_SEAT=Murray` on nsw2019. Done when: the step that drops it is named.
+- OPEN (Pete to decide before or after 28 Nov): a candidate's own earlier general-election vote overwrites their by-election
+  result. CAUSE PROVEN 22 Nov on Murray nsw2019: Helen Dalton ran as an independent in 2015 (18.2%), as Shooters at the Oct
+  2017 by-election (31.5%) and won as Shooters in 2019 (40.3%). `own_prev_substitute()` (`R/candidate_returns.R`, called as
+  `.own_x()` in every harness and `fit_seats_full.R`) replaces the class cell with `personal_prior_vote()`'s value, 18.2 x the
+  non-sitting minor-switcher rate 0.230 = 4.18, whatever the half blend put there (0, 15.7 and 31.5 in all give 4.18).
+  Predicted 4.0%. LIVE vic2026, same step: Werribee Paul Hopper (OTH) took 13.6% at the Feb 2025 by-election, own-prior value
+  1.63, published OTH primary 4.7% for three candidates; Mulgrave Ian Cook 18.0 against a by-election 20.6 (small); Prahran
+  correct as is (the by-election independent is not standing). Not yet measured: what Werribee's win odds become if a
+  candidate who stood at the by-election in the same class keeps that result. Done when: that walk is shown to Pete.
 - OPEN, DATED 25 Nov: Victorian search interest is OFF in the live forecast since 19 Nov (`AUSPOL_SALIENCE_LIVE_VIC=0`,
   Pete). After the final snapshot, rerun the on/off walk and take it to Pete before any "1". Done when: he has chosen.
   Evidence: `reviews/market-gaps-vic2026-2026-11-19/README.md` (challengers with the same rise won 2 of 23).
