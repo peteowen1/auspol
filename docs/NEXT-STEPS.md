@@ -21,8 +21,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (1404a0f): Werribee ALP 42% / ONP 30% / LIB 28%; `BYS1` also moved nsw2027 Kiama (ALP -1.0, LNP +5.4), not measured.
   DONE 22 Nov: the prereg rebuild pair ran 1:00am to 4:26am (both rc 0) and PASSES all four criteria, so the switch stays
   "1" (plan RESULT section; evidence in `deciding-runs/20261122-bys-rebuilds/`; the two failed nights are in the journal).
-  OPEN: worktrees `C:\dev\auspol-wt-rb0` and `-rb1` still exist. Before removing either, unlink every path in
-  `junctions-<arm>.txt` first (memory `worktree-junctions-delete-through`). Done when: both gone, main `external/` file count unchanged.
+  Both rebuild worktrees removed 22 Nov (53 junctions each unlinked first; main `external/` 38,651 files before and after).
 - OPEN (after 28 Nov): a by-election's minor-party result does not reach the prediction. Murray nsw2019: the Shooters took
   31.5% at the Oct 2017 by-election and won with 40.3% in 2019; both rebuild arms predicted 4.0% and gave them 0 or 1 wins in
   20,000. CAUSE NOT TRACED: the half blend reads the row (`byelections_between("nsw2015","nsw2019")`, `OTH_RIGHT` 31.5), so
