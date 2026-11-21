@@ -103,3 +103,35 @@ without the harm.
 
 Found on the way: `quick_arm.R` took 28 minutes to start because `quick_tree_sig()` called `file.info()` over
 `external/reference`; now `file.size()` and `file.mtime()`, 17.5 s, digest identical.
+
+## Screen, step 2: 12 One Nation elections (22 Nov, 10:44am) -- PRIMARY FAILS; the switch stays "rank"
+
+`quick_arm.R "AUSPOL_ONP_ALLOC=model" --pairs=sa2026,qld2017,qld2020,qld2024,wa2017,wa2025,nsw2019,nsw2023,sa2022,fed2019,fed2022,vic2022`,
+1,000 simulations, one seed. Log: `deciding-runs/20261122-onp-spread-walk/qa-onp-all.log`. `ONM1` printed for 11
+elections; wa2017 printed `ONM1!` (census gap) and ran the rank rule, byte-identical to its baseline. 751 of 7,469
+cells changed.
+
+| Criterion | Result | Verdict |
+|---|---|---|
+| 1. Applied | 11 of 12 elections, 751 cells | yes |
+| 2. Primary: squared error on the changed cells | 17,370.8 to 17,720.4, +349.5 (+2%), SE 208.7 over 11 elections | FAIL (worse by 1.7 SE) |
+| 3. Guard: seat log loss, 1,067 seats | 0.2664 to 0.2679, +0.0015 (SE 0.0016) | within 1 SE |
+| 5. Unacceptable win | sa2026 -0.0017, qld2024 0.0000; largest win-probability change 0.089 (qld2017) | not tripped |
+
+By election, squared-error change on changed cells then seat log loss change: qld2017 -60.3, +0.0184; fed2019
++179.6, +0.0005; nsw2019 +65.0, 0; sa2026 +50.6, -0.0017; qld2020 +27.6, -0.0006; nsw2023 +24.6, 0; qld2024 +24.1,
+0; wa2025 +20.3, +0.0001; fed2022 +12.4, -0.0004; sa2022 +5.2, 0; vic2022 +0.5, 0. Worse on shares in 10 of 11.
+
+Reading: the allocation scored by itself favours the model (2.53 to 2.43, better in 8 of 10). Through the full
+model it does not, because the tree step already moves One Nation's seats toward where the Senate vote and the seat's
+history say they belong; a second, different statement of the same geography in front of it adds error. This is the
+1 Oct result again with a better-specified model. No rebuild pair is run and no further form is tried (fixed above).
+
+What was given to it: 2 features (Senate share, Year 12) chosen from 7 census columns and 4 Senate class shares
+after the 7-column version did worse at share level (3.99 against 3.85); linear on the log scale; one pooled fit;
+no simulation uncertainty. NOT tried, and the honest next version if this is picked up after the election: the
+Senate share and within-election Year 12 as inputs to the tree step itself, which is where the geography is
+actually decided.
+
+Caveat for Victoria: backtests allocate only the no-history seats (26 of 46 in sa2026), Victoria all 88, so the
+backtests under-test the live case; the live walk was not run because the arm failed its primary.

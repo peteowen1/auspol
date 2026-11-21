@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (328 switches from `published_flags.R`, 7 entry points)
+## Switch parity (329 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -213,6 +213,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_NSW_EXHAUST_TF` | NO | NO | yes | NO | NO | NO | NO |  |
 | `AUSPOL_NSW_THIN_WALK` | NO | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_NT_TRANSFER` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_ONP_ALLOC` | yes | NO | NO | NO | NO | NO | NO | onp_newseat.R |
 | `AUSPOL_ONP_CONC_SD` | NO | NO | NO | yes | yes | NO | NO |  |
 | `AUSPOL_ONP_CV` | yes | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_ONP_FILL` | yes | NO | NO | NO | NO | NO | NO |  |
@@ -519,6 +520,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_NSW_EXHAUST_TF`** (intentional / dead experiment): HARNESS-ONLY, SHIPPED "1" 8 Nov 2026 (leak fix): NSW harness reads exhaust rates only from elections before the target; "0" is the 7 Nov read of the target year's own row.
 - **`AUSPOL_NSW_THIN_WALK`** (intentional / dead experiment): NOT A PUBLISHED-CONFIG SWITCH: read by scripts/fit_nsw.R (the NSW poll-trend validation stage), which does not source published_flags.R. The comment block in published_flags.R says why it is deliberately unregistered.
 - **`AUSPOL_NT_TRANSFER`** (intentional / dead experiment): HARNESS-ONLY, NT: forces candidate transfer on/off; empty (published) keeps it tied to the slope mode.
+- **`AUSPOL_ONP_ALLOC`** (intentional / dead experiment): ARM, "rank" shipped. "model" (One Nation's no-history seats from a pooled Senate-share + Year 12 model, no forced spread) was REFUSED on its screen 2026-11-22: squared error on 751 changed cells +2% (1.7 SE), seat log loss flat (docs/plans/prereg-onp-direct-model-2026-11-22.md). Reaches every harness through onp_newseat_apply() in R/onp_newseat.R and fit_seats_full.R directly.
 - **`AUSPOL_ONP_CONC_SD`** (**adopted, shared-function wiring**): SHIPPED 2026-09-14 ('auto') for the harnesses that model a One Nation seat concentration from federal booth-transposed votes: qld and sa (where One Nation contests every seat). fed/nsw/vic/wa have no ONP concentration mechanism, and fit_seats_full.R has its own live ONP path; a gap only if One Nation's Victorian seat spread is ever driven from this switch (the VIC2022 IND-coupling regression is the reason it is not: docs/reviews/sa2026-onp-base-pred-diagnosis-2026-09-14.md).
 - **`AUSPOL_ONP_CV`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R). ADOPTED 2026-09-09 at 0.365, partially pooled (docs/reviews/onp-concentration-validated-2026-09-09.md) -- moves the live Victorian One Nation median seat count 9 -> 10. The highest-stakes switch this registry tracks; was previously mislabelled "federal" here, which is wrong -- fit_seats_full.R is the Victorian forecast, not a federal one.
 - **`AUSPOL_ONP_FILL`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R -- how the other classes fill One Nation's seat-level gap). No harness has a One Nation fill step, so "uniform_major" cannot be backtested (docs/plans/prereg-onp-fill-uniform-2026-10-25.md).
@@ -706,8 +708,8 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR4  every AUSPOL_* switch read in code (433) is registered (310) or listed as not a model switch (123).
+MR4  every AUSPOL_* switch read in code (434) is registered (311) or listed as not a model switch (123).
 
 
 
-MR2  every non-universal switch (297 of 328) has a recorded classification.
+MR2  every non-universal switch (298 of 329) has a recorded classification.

@@ -891,7 +891,7 @@ if (identical(onp_alloc_mode(), "model")) {
   .onm <- onp_model_ratio(rownames(mat22), .osr_k, TGT, level = state_mean[["ONP"]])
   if (is.null(.onm)) stop("AUSPOL_ONP_ALLOC=model: no fit possible for ", TGT, " (earlier elections or census rows missing)")
   onp_ratio <- .onm$ratio
-  cat(sprintf("ONM1  live: One Nation by the DIRECT MODEL over all %d seats: Senate slope %.3f, Year 12 %.3f per sd, fitted on %d rows / %d earlier elections (%s); spread sd/mean %.3f, not forced (AUSPOL_ONP_CV ignored); %d seat(s) without census at the average\n",
+  cat(sprintf("ONM2  live: One Nation by the DIRECT MODEL over all %d seats: Senate slope %.3f, Year 12 %.3f per sd, fitted on %d rows / %d earlier elections (%s); spread sd/mean %.3f, not forced (AUSPOL_ONP_CV ignored); %d seat(s) without census at the average\n",
               length(onp_ratio), .onm$fit$b_s, .onm$fit$b_y, .onm$fit$n_rows, .onm$fit$n_elections, paste(.onm$fit$sources, collapse = ","),
               stats::sd(onp_ratio) / mean(onp_ratio), .onm$no_census))
 }
