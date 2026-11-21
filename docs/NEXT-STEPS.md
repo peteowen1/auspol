@@ -113,8 +113,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (it shows only at 10%+ independent; since search interest went off on 19 Nov no seat qualifies, so no page shows it yet).
   BUILT 21 Nov: DRAFT inthegame-blog PR #1262 (`feat/politics-night-prod`, into `main`): c3e41729, 28f51c5c, d38e702f and
   the navbar 264d638f cherry-picked onto its `main` (21 added lines, 2 files; built with merge-tree + commit-tree, the
-  shared checkout untouched; ITG session told). On 27 Nov: mark it ready, check its render run is green, merge. #1239
-  still merges into its `dev`.
+  shared checkout untouched). ITG agreed 21 Nov and lists it as the 27 Nov merge in place of #1239. Before the merge it
+  needs a code review and ITG's design check (it touches a `.qmd` and `_quarto.yml`); then mark it ready, check its
+  render run is green, merge, and close #1239 (same nav commit).
 - OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. 17 Nov done: 6 sources (TAB not
   saved: Chrome blocked the download on api.beta.tab.com.au; Betfair has no Victorian markets). On 27 Nov, if the TAB
   download is blocked again, check Chrome's download prompt for that site first. Each date: `Rscript scripts/snapshot_benchmarks.R`, plus the GES
