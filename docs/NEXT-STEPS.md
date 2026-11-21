@@ -100,8 +100,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   elections under REBUILD_ONLY (fix spec in the journal). Low: `fit_nsw.R`/`fit_federal.R`/`fit_vic.R` read same-year flows.
 - **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** History, DONE list and replay evidence:
   `backlog/journal-2026-11-05-election-night.md` (moved verbatim 6 Nov); plan `plans/election-night-booth-model.md`. Runbook:
-  `gh release download forecast-latest -p night-state-vic-2026.rds -D output`, then `night_runner.R --state=output/night-state-vic-2026.rds
-  --ref=output/booths-vic2026-ref.csv --council-lean=output/council-fp-2022.csv`. Live page https://inthegame.blog/politics/live
+  `gh release download forecast-latest -p night-state-vic-2026.rds -D <dir>`, then the fetcher and loop exactly as written
+  under NIGHT SOURCE ("THE WEBSITE COMMAND"; the feed-era three-flag command that stood here stops on `NW9!`). Live page https://inthegame.blog/politics/live
   (find my seat live, #166 closed 5 Nov). OPEN, in order:
   1-2. DONE: Pete checked the live page at 390 px on 18 Nov, "Looks good!" (the rest done 16 Nov, journal).
   3. Navbar link: BUILT 18 Nov on inthegame-blog branch `feat/politics-live-nav-2`, PR #1239 (264d638f, Politics menu
