@@ -1,3 +1,11 @@
+# auspol 0.4.196
+
+No change to the published forecast. Election-night tooling only.
+
+- **The Actions backup runs the website night** (22 Nov): `.github/workflows/night-backup.yaml` gains sources `web` (the night; needs the VEC results index URL) and `web-2022` (rehearsal on the 2022 pages, test key only), both running `scripts/night_vic2026.sh`. The feed-era "source live" could not run, so a dead laptop on 28 Nov had no fallback. Passed on a GitHub runner on the 2022 pages (run 44984447331: two cycles, each uploaded to the test key, 87 of 88 seats).
+- **The night fetcher retries only the failed pages** (`scripts/fetch_vec_web_snapshot.R`, `VWF6`, `--retries`, default 3 rounds after 5/15/30 s) and says why pages failed (`VWF5!`). One failed page of 174 used to void the whole snapshot; the VEC site answers a GitHub runner with HTTP 999 on 56-74 pages a fetch. A clean fetch makes no extra requests.
+- **`scripts/night_vic2026.sh`**: `--upload-key=KEY` (a non-live file under `auspol/night/`), `--parallel=N`, and `python3` where there is no `python`. **`scripts/publish_night_inputs.sh`** bundles the machine-local inputs the website night reads onto the `night-inputs` release; rerun it after the venues, candidate or enrolment files change.
+
 # auspol 0.4.195
 
 No change to the published forecast: the new switch ships off.
