@@ -13,7 +13,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (10 Nov: One Nation stands in all 88 seats, so no seat-count conditioning applies; recheck for nsw2027's list); (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 21 Nov, midnight.** main 0.4.193 (PR #261 night fetcher 4 at a time, PR #262 night launcher + 20 s data
+- **Status 22 Nov, 11:45am.** main 0.4.194 (PR #263: two off switches, `AUSPOL_BYELECTION_PERSON` and `AUSPOL_ONP_ALLOC`; PR #261 night fetcher 4 at a time, PR #262 night launcher + 20 s data
   registry). 21 Nov 4:30am forecast run green after a 9:30am rerun of 2 timed-out scenario jobs (#196 closed). Dated, a
   session runs each: (22 Nov rebuild pair scored: de-swing passes, stays on); 23 Nov score the by-election person pair, VEC venues rerun; 25 Nov final salience snapshot + night
   dress rehearsal; 27 Nov merge inthegame-blog#1262 (ready, reviewed) and the final benchmark capture (Pete: VPN off).
