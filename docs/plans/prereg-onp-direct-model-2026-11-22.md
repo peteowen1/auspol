@@ -135,3 +135,47 @@ actually decided.
 
 Caveat for Victoria: backtests allocate only the no-history seats (26 of 46 in sa2026), Victoria all 88, so the
 backtests under-test the live case; the live walk was not run because the arm failed its primary.
+
+## Why it loses through the full model (Pete asked, 22 Nov 11am): traced, and my first explanation was wrong
+
+"The tree step already places One Nation's vote" was a guess. The trees have no Senate or census input, and they are
+trained with this allocation OFF (`post_xgb_switches()`: stage 1 runs the rule "0"), so in training every no-history
+seat carries the same One Nation number. What the cached screen runs show, on the seats the arm moved (spread =
+sd / mean of the One Nation primary):
+
+| Election | Actual spread | Rank rule: in, out of the trees | Model: in, out of the trees | Slope of actual on final prediction, rank / model (1.0 right, above 1 = too flat) |
+|---|---|---|---|---|
+| sa2026 | 0.28 | 0.371, 0.28 | 0.319, 0.23 | 1.09 / 1.33 |
+| qld2017 | 0.27 | 0.374, 0.38 | 0.244, 0.29 | 0.82 / 1.08 |
+| fed2019 | 0.60 | 0.463, 0.42 | 0.251, 0.26 | 2.02 / 3.41 |
+| qld2020 | 0.65 | 0.529, 0.38 | n/a, 0.32 | 2.00 / 2.31 |
+| nsw2019 | 0.31 | 0.468, 0.45 | n/a, 0.25 | 1.06 / 1.91 |
+
+Three separate reasons, none of them "the idea is wrong":
+
+1. **The tree step squashes the spread where it has training data like the target.** sa2026: the rank rule goes in
+   too wide (0.371) and comes out right (0.28); the model goes in right (0.319) and comes out too flat (0.23). The
+   over-wide forced spread is, by accident, pre-compensating for that squash.
+2. **Early targets get a thin, flat fit.** The Senate slope is 0.14 fitted before qld2017 and 0.25 before fed2019,
+   against 0.58 with every election. So for fed2019, qld2020 and nsw2019 the model is far too flat going in. That
+   is where most of the +2% comes from (fed2019 alone +179.6 of +349.5), and it does not apply to Victoria, which is
+   fitted on all 16 elections.
+3. **The level miss swamps the shape.** Mean prediction against actual on these seats: sa2026 17.1 v 20.3, qld2017
+   14.0 v 19.4, fed2019 4.1 v 6.8. Both rules share it.
+
+qld2017, the one high-level election where the trees do not squash, favours the model on shape (final spread 0.29
+against an actual 0.27; the rank rule 0.38) and on share RMSE (6.05 v 6.14).
+
+So the screen tested "swap the input and leave the trees as trained", which is not the strongest version. The
+strongest version trains the tree step WITH the modelled allocation in its base (the allocation in stage 1 of the
+rebuild), so the trees learn corrections to it instead of to a flat number. That is a rebuild pair, not a screen.
+
+## Live walk, vic2026 (22 Nov 11:14am; `deciding-runs/20261122-onp-spread-walk/`, suffix `-onm`)
+
+`ONM2 live: ... Senate slope 0.577, Year 12 -0.095, 831 rows / 16 elections; spread 0.380, not forced`. Final One
+Nation primary: spread 0.39 (published 0.38), top five 38.1 (34.6), median 18.7 (19.9), bottom five 8.3 (6.9). No
+squash in Victoria. Expected seats: One Nation 14.90 to 14.42, Labor 25.44 to 26.68, Coalition 40.15 to 39.34.
+The vote moves from outer-suburban seats to rural ones: Sydenham 23.2 to 20.3, Narre Warren South 24.6 to 22.0, Mill
+Park 24.5 to 22.3; Morwell 35.7 to 41.6, Murray Plains 34.2 to 37.5, Narracan 34.9 to 37.5. Favourites: Morwell and
+Melton to One Nation; Sydenham and Hastings to Liberal; Carrum and Narre Warren South to Labor. Morwell One Nation
+0.48 to 0.90.

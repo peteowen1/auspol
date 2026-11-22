@@ -346,6 +346,8 @@ onp_newseat_apply <- function(shares, target, history, order = Sys.getenv("AUSPO
   # (fewer than 2 earlier elections, or the target has no census rows) the rank rule below runs and ONM1! says so.
   mr <- NULL
   if (identical(onp_alloc_mode(), "model") && is.null(cv)) {
+    # The model is fitted on SENATE shares; a House key would be read as one.
+    if (!identical(order, "senate_rank")) stop("AUSPOL_ONP_ALLOC=model needs AUSPOL_ONP_ORDER=senate_rank (the Senate shares are its input); got ", order, call. = FALSE)
     mr <- onp_model_ratio(rownames(shares)[idx], as.numeric(key), target, lvl, lookup = lookup[idx])
     if (is.null(mr)) cat(sprintf("ONM1! %s: AUSPOL_ONP_ALLOC=model but no fit is possible (fewer than 2 earlier elections with Senate and census rows, or no census for the target) -- the RANK rule is used for %d seat(s)\n", target, length(idx)))
   }
