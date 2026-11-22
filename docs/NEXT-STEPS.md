@@ -13,10 +13,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (10 Nov: One Nation stands in all 88 seats, so no seat-count conditioning applies; recheck for nsw2027's list); (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 22 Nov, 1:40pm.** main 0.4.195 (PR #263, #264: three off switches, `AUSPOL_BYELECTION_PERSON`, `AUSPOL_ONP_ALLOC`, `AUSPOL_ONP_IN_TRAINING`; PR #261 night fetcher 4 at a time, PR #262 night launcher + 20 s data
-  registry). 21 Nov 4:30am forecast run green after a 9:30am rerun of 2 timed-out scenario jobs (#196 closed). Dated, a
-  session runs each: (22 Nov rebuild pair scored: de-swing passes, stays on); 23 Nov score the by-election person pair, VEC venues rerun; 25 Nov final salience snapshot + night
-  dress rehearsal; 27 Nov merge inthegame-blog#1262 (ready, reviewed) and the final benchmark capture (Pete: VPN off).
+- **Status 22 Nov, 1:55pm.** main 0.4.195 (PR #263, #264: three switches, all OFF: `AUSPOL_BYELECTION_PERSON`, `AUSPOL_ONP_ALLOC`,
+  `AUSPOL_ONP_IN_TRAINING`). Published forecast unchanged today. Two one-shot tasks registered (machine on and logged in, 4 GB free at 1am):
+  `auspol-byp-rebuilds` 23 Nov, `auspol-onp-rebuilds` 24 Nov. Dated, a session runs each: 23 Nov score the by-election pair + VEC venues recheck and
+  blog booths; 24 Nov score the One Nation arms; 25 Nov final salience snapshot + its on/off walk to Pete; 27 Nov merge inthegame-blog#1262 and the
+  final benchmark capture (Pete: VPN off). Leftover scratch (junctions inside; unlink before deleting, or `quick_arm.R --clean`):
+  `%TEMP%/auspol-quickarm` (old, no marker file, so the tool refuses it) and `%TEMP%/auspol-quickarm-onm` (today's, via `AUSPOL_QUICK_DIR`).
 - OPEN, DATED 23 Nov morning: by-election person rule (`AUSPOL_BYELECTION_PERSON`, off; `plans/prereg-byelection-person-2026-11-22.md`). Task
   `auspol-byp-rebuilds` runs the pair at 1am (commit e5f8ed58; machine on and logged in). On `DONE` in `deciding-runs/20261123-byp-rebuilds/`:
   `Rscript scripts/score_byelection_deswing.R C:/dev/auspol-wt-rb0/output C:/dev/auspol-wt-rb1/output`, then `scripts/compare_rebuild_scores.R`
