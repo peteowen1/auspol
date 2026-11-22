@@ -1,6 +1,6 @@
 # ELECTION-NIGHT BACKUP RUNNER (map #148): break-glass. Nothing starts it on its own. If the laptop running
 # scripts/night_vic2026.sh dies on the night, press "Run workflow" (Actions > Election-night backup) with key
-# auspol/night/vic2026.json, source web, index = the VEC page linking every district's result page, minutes 330.
+# auspol/night/vic2026.json, source web, index = the VEC page linking every district's result page, minutes 330, parallel 2.
 # It runs the SAME one command here (the website fetcher plus the night loop), writing the live file after each new
 # snapshot, until it has run for `minutes` or the job's 6-hour limit. Allow about 10 minutes for R setup before the
 # first cycle. Only one writer at a time: stop the laptop's command before starting this, and stop this before
@@ -42,10 +42,10 @@ on:
         description: "Seconds between fetches of the VEC pages (at least 10; one fetch of 174 pages takes about a minute)"
         default: "90"
       parallel:
-        description: "web sources: VEC pages in flight at once. 4 is the laptop's setting; the VEC answered a runner with HTTP 999 at 4 (22 Nov)"
+        description: "web sources: VEC pages in flight at once. 2 passed from a runner (22 Nov; the VEC blocks some pages with HTTP 999 and the retry recovers them); 4 was blocked outright; 1 took over 9 minutes a fetch"
         type: choice
         options: ["1", "2", "4"]
-        default: "1"
+        default: "2"
 
 # One group per key: a test run never queues ahead of a break-glass run on the live key, and two runs on the same key never
 # write at once (a newer dispatch replaces an older one still queued).
@@ -74,7 +74,8 @@ jobs:
             echo "::error::source $SOURCE is test data: it may only write the test key, not auspol/night/vic2026.json"; exit 1
           fi
           if [ "$SOURCE" = "web" ]; then
-            case "$INDEX" in https://www.vec.vic.gov.au/*) ;; *) echo "::error::source web needs index = a https://www.vec.vic.gov.au/ results page (got '$INDEX')"; exit 1 ;; esac
+            # any VEC host over https: the 2026 results may not sit on www (the address is only known on the night)
+            case "$INDEX" in https://vec.vic.gov.au/*|https://*.vec.vic.gov.au/*) ;; *) echo "::error::source web needs index = a https://...vec.vic.gov.au/ results page (got '$INDEX')"; exit 1 ;; esac
           fi
 
       - uses: r-lib/actions/setup-r@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2

@@ -55,7 +55,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   neutral; live today unchanged (Hawthorn's paid poll is 15 months old). OPEN after 28 Nov: score it on vic2026.
 - OPEN, NIGHT BACKUP (built 22 Nov, 3:35pm; on `dev`, the repo's default branch, so "Run workflow" uses it): if the laptop
   dies on the night, Actions > "Election-night backup" with key `auspol/night/vic2026.json`, source `web`, index = the results
-  index URL, minutes 330, parallel 2. It runs THE NIGHT COMMAND on a GitHub runner. PASSED on the 2022 pages, run 44984447331
+  index URL, minutes 330, parallel 2 (the default). It runs THE NIGHT COMMAND on a GitHub runner. PASSED on the 2022 pages, run 44984447331
   (test key): 2 cycles in 12 min, each uploaded (`NWU3`, the first upload ever made by the night code), 87 of 88 seats, class
   split identical to the laptop's (`NW23` sd0 0.214, f IND 0.443 OTH 0.226 OTH_RIGHT 0.352). Refresh there is about 4-5 min, not
   90 s: the VEC site answers the runner with HTTP 999 on 56-74 of 174 pages a fetch, and the fetcher's new retry of failed
@@ -63,7 +63,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   2:38pm). STILL TO DO: (1) 23 Nov, after the venues recheck, and after any change to the candidate or enrolment files or a
   rebuild that rewrites `minor-candidate-oof-resid-v2.csv`: `bash scripts/publish_night_inputs.sh --upload` (the runner reads
   those from the `night-inputs` release; its `NBI2` sha1 lines must equal the script's `NBI1`). (2) 25 Nov rehearsal: one
-  `web-2022` run after the laptop's. UNTESTED: source `web` with the live key (same code path, different key), a full
+  `web-2022` run of 45-60 minutes after the laptop's; pass = no snapshot ends in `VWF3!` (the pass above is TWO cycles; at 4
+  in flight the blocks grew from 74 to 174 of 174 pages by the third fetch, so whether 2 holds for hours is not known). UNTESTED: source `web` with the live key (same code path, different key), a full
   330-minute run (saved files about 3.5 MB a snapshot zipped). The 2026 results page is not up (404, 22 Nov 2:17pm).
 - OPEN, NIGHT SOURCE (before 28 Nov): the VEC REFUSED the feed (11 Nov); the night runs on the VEC WEBSITE
   (`R/vec_web.R`, `scripts/fetch_vec_web_snapshot.R`, `night_cycle(source_type = "web")`, `cand_ref = "copy"`). Still open:
@@ -80,12 +81,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `raw-20261121-1140/headers-xlsx.txt`; rerun only if it moved), then the blog's booths build
   (`C:/dev/inthegame-blog/politics/night-maps/build-booths-2026.py`), which still has 1,851 centres.
   DRY RUN 21 Nov passed on the 2022 pages (one cycle 68 s, 87 of 88 seats, class split on); REPEATED 22 Nov 1:44pm on `main` 0.4.195 with
-  the one command: rc 0 in 3 min 5 s, 174 pages for 87 districts, JSON of 88 seats written (312 KB), nothing uploaded. ON `main` since 0.4.193, THE
+  the one command: rc 0 in 3 min 5 s, 174 pages for 87 districts, JSON of 88 seats written (312 KB), nothing uploaded; REPEATED 3:37pm on `dev` 044c2c5c with `--upload-key=auspol/night/test-vic2026.json`: rc 0, uploaded (`NWU3`), test file stamped 20261122_153733. ON `main` since 0.4.193, THE
   NIGHT COMMAND: `bash scripts/night_vic2026.sh <results index URL> <work dir> [--upload] [--every=90]` (fetcher 4 pages at
   a time + loop with every website flag; upload OFF unless `--upload`; a dead fetcher stops the loop, `NV8!`). Rehearsal
   (25 Nov, no `--upload`): add `--dry-2022 --max-cycles=1`. The index must be the page linking every district's result
-  page (2022: `.../2022-state-election-results`; its `/results-by-district` child links none). UNTESTED: the 2026 index
-  and page layout, `--upload`, a keyboard Ctrl+C. Long-hand commands and findings, verbatim:
+  page (2022: `.../2022-state-election-results`; its `/results-by-district` child links none). BRANCH: the laptop runs the night from this checkout on `dev`; `main` (0.4.195) lacks the 22 Nov fetcher retry (`VWF6`) and `--upload-key` until the next PR. UNTESTED: the 2026 index
+  and page layout, `--upload` to the LIVE key (the test key works from the laptop and from the runner, 22 Nov), a keyboard Ctrl+C. Long-hand commands and findings, verbatim:
   `backlog/journal-2026-11-21-queue-history.md` ("Night source, dry run detail").
 - IN FLIGHT 9 Nov (Pete chose the levers): first-time-independent under-call (70 of 649 single first-timers took 15%+ and
   we gave them about a third of it; 442 took under 5%, so no blanket lift). Six levers in
