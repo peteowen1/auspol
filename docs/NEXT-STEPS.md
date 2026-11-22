@@ -62,7 +62,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   added, none removed), 310 early centres (same). Gippsland East / Bundalaguah moved venue (Primary School, 627 -> Myrtlebank
   Hall, 795 Maffra-Sale Road) but keeps its 2022 booth's map position by name: move its dot by hand. Geocoder: 0 new
   requests, 359 of 359 placed (run it as plain `python`; `-I` hides the user-installed shapely). Night cycle passes on the
-  new list. STILL TO DO 23 Nov: check the page's "correct as at" line again (compare `Last-Modified` with
+  new list. Rechecked 22 Nov 12:25pm: same file link, same `Last-Modified` (unchanged). STILL TO DO 23 Nov: check the page's "correct as at" line again (compare `Last-Modified` with
   `raw-20261121-1140/headers-xlsx.txt`; rerun only if it moved), then the blog's booths build
   (`C:/dev/inthegame-blog/politics/night-maps/build-booths-2026.py`), which still has 1,851 centres.
   DRY RUN 21 Nov passed on the 2022 pages (one cycle 68 s, 87 of 88 seats, class split on). ON `main` since 0.4.193, THE
