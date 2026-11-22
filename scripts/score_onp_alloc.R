@@ -11,6 +11,8 @@ B <- rd(a[1]); A <- rd(a[2])
 cat(sprintf("OAS0 base %s: %d rows / %d elections; arm %s: %d rows / %d elections\n", a[1], nrow(B), uniqueN(B$pair), a[2], nrow(A), uniqueN(A$pair)))
 if (!setequal(unique(B$pair), unique(A$pair))) cat(sprintf("OAS0! elections differ: only base %s; only arm %s\n",
   paste(setdiff(unique(B$pair), unique(A$pair)), collapse = ","), paste(setdiff(unique(A$pair), unique(B$pair)), collapse = ",")))
+# An arm missing an election (a harness died) must not be scored on what is left as if it were whole.
+if (!setequal(unique(B$pair), unique(A$pair))) quit(status = 2)
 key <- c("pair", "seat", "party")
 if (anyDuplicated(B[, ..key]) || anyDuplicated(A[, ..key])) stop("OAS0! duplicated (pair, seat, party) rows")
 M <- merge(B[, .(pair, seat, party, actual, won, base = ours, p_base = p_win)], A[, .(pair, seat, party, arm = ours, p_arm = p_win)], by = key)
@@ -25,7 +27,10 @@ S[, d := (arm - actual)^2 - (base - actual)^2]
 pe <- S[, .(cells = .N, base_sq = sum((base - actual)^2), change = sum(d)), by = pair]
 G <- nrow(pe); tot <- sum(pe$change)
 loo <- tot - pe$change
-se <- if (G >= 2) sqrt((G - 1) / G * sum((loo - mean(loo))^2)) else NA_real_
+# The statistic is a TOTAL over elections, so each leave-one-out total is rescaled to G elections before the
+# jackknife (as score_byelection_deswing.R does); unscaled, the SE comes out (G-1)/G too small (review, 22 Nov).
+th <- loo * G / (G - 1)
+se <- if (G >= 2) sqrt((G - 1) / G * sum((th - mean(th))^2)) else NA_real_
 cat(sprintf("OAS2 PRIMARY squared error on the moved One Nation cells, arm minus base: %+.1f of a base total %.1f (%+.1f%%), SE %.1f (jackknife over %d elections) => %s\n",
             tot, sum(pe$base_sq), 100 * tot / sum(pe$base_sq), se, G,
             if (!is.finite(se)) "NO SE (fewer than 2 elections)" else if (tot < -se) "lower by more than 1 SE: PASS" else if (tot > se) "HIGHER by more than 1 SE: FAIL" else "within 1 SE: FAIL (not lower by more than 1 SE)"))

@@ -205,6 +205,9 @@ whether the MODEL earns it or only the training change does.
 Scorer: `Rscript scripts/score_onp_alloc.R <base output> <arm output>` (dry-run 22 Nov: an identical pair is
 refused with `OAS1!`; an arm doctored halfway to the truth on sa2026's 46 One Nation cells scores -623.4, the value
 computed by hand), then `scripts/compare_rebuild_scores.R` on the two `pooled-backtest.csv` files.
+Scorer corrected the same day, before any rebuild (review): its SE was (G-1)/G too small because the leave-one-out
+totals were not rescaled to G elections, and an arm missing an election now exits 2 instead of scoring the rest.
+Re-tested on a three-election doctored arm: total -1228.8 and SE 1957.3, both equal to the hand computation.
 
 Criteria, m against b (and r against b reported the same way):
 
