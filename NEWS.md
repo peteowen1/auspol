@@ -1,3 +1,10 @@
+# auspol 0.4.195
+
+No change to the published forecast: the new switch ships off.
+
+- **`AUSPOL_ONP_IN_TRAINING`, off** (22 Nov, Pete: "why is the model worse, it feels like it should be better"): at "1", stage 1 of `rebuild_forecasts.sh` runs One Nation's allocation instead of pinning it off, so the as-at trees train on a base that already carries it, and `post_xgb_switches()` stops listing the two One Nation switches. The 22 Nov screen had swapped the direct model in under trees trained on a flat One Nation number; this is the fair test. Three rebuilds (model in training, rank in training, shipped) run 24 Nov. `docs/plans/prereg-onp-direct-model-2026-11-22.md`, Amendment 1.
+- **`scripts/score_onp_alloc.R`**: scores a rebuild pair on One Nation's seat primary (squared error on the moved cells with a jackknife SE over elections, leave-one-election-out, the sa2026 / qld2024 seat log loss clause, seats One Nation won). Dry-run: refuses an identical pair; scores a doctored arm at the hand-computed -623.4.
+
 # auspol 0.4.194
 
 No change to the published forecast: both new switches ship off.

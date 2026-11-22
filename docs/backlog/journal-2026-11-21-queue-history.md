@@ -123,3 +123,32 @@ The live parts stay in `docs/NEXT-STEPS.md`; this file is history.
   `scripts/compare_rebuild_scores.R` on the two `pooled-backtest.csv` files; report to Pete against the prereg criteria. Before removing either
   worktree, unlink every path in `junctions-<arm>.txt` first (memory `worktree-junctions-delete-through`).
   Known: a worktree rebuild writes stage-0 files such as `bludgertrack_polls.csv` through the junctions into this checkout's `external/`.
+
+## De-swing result, the by-election person finding, and the 0.30 spread note (moved from the queue 22 Nov, 12:20pm)
+
+The third item below was already out of date when moved: the 0.30 spread change was made and reverted on 22 Nov, and the One Nation direct model replaced it (see `plans/prereg-onp-direct-model-2026-11-22.md`).
+
+- SHIPPED 19 Nov (PR #260, Pete's override): by-election de-swing `AUSPOL_BYELECTION_DESWING=1`. Live 20 Nov 4:42am forecast
+  (1404a0f): Werribee ALP 42% / ONP 30% / LIB 28%; `BYS1` also moved nsw2027 Kiama (ALP -1.0, LNP +5.4), not measured.
+  DONE 22 Nov: the prereg rebuild pair ran 1:00am to 4:26am (both rc 0) and PASSES all four criteria, so the switch stays
+  "1" (plan RESULT section; evidence in `deciding-runs/20261122-bys-rebuilds/`; the two failed nights are in the journal).
+  Both rebuild worktrees removed 22 Nov (53 junctions each unlinked first; main `external/` 38,651 files before and after).
+- OPEN (Pete to decide before or after 28 Nov): a candidate's own earlier general-election vote overwrites their by-election
+  result. CAUSE PROVEN 22 Nov on Murray nsw2019: Helen Dalton ran as an independent in 2015 (18.2%), as Shooters at the Oct
+  2017 by-election (31.5%) and won as Shooters in 2019 (40.3%). `own_prev_substitute()` (`R/candidate_returns.R`, called as
+  `.own_x()` in every harness and `fit_seats_full.R`) replaces the class cell with `personal_prior_vote()`'s value, 18.2 x the
+  non-sitting minor-switcher rate 0.230 = 4.18, whatever the half blend put there (0, 15.7 and 31.5 in all give 4.18).
+  Predicted 4.0%. LIVE vic2026, same step: Werribee Paul Hopper took 14.6% as an independent at the Feb 2025 by-election
+  and stands for The West Party (OTH); value used 1.63, published OTH primary 4.7%. (An earlier note here said 13.6%: that
+  was the whole OTH class at the by-election, not Hopper.) Mulgrave Ian Cook 18.8 against 18.0 (small).
+  BUILT 22 Nov behind `AUSPOL_BYELECTION_PERSON` ("0" in `published_flags.R`): the person gets the same half blend,
+  `plans/prereg-byelection-person-2026-11-22.md`. Live walk: Werribee One Nation 30% to 57%, Labor 42% to 23%; Mulgrave
+  barely moves; no other seat moves. 79 historical restanders counted. Pete chose "score it tonight" (22 Nov).
+  OPEN, DATED 23 Nov morning: task `auspol-byp-rebuilds` runs the pair at 1am (commit e5f8ed58, smoke-tested, refuses
+  after 4am; machine must stay on and logged in). Read the marker in `deciding-runs/20261123-byp-rebuilds/`; on `DONE`:
+  `Rscript scripts/score_byelection_deswing.R C:/dev/auspol-wt-rb0/output C:/dev/auspol-wt-rb1/output`, then
+  `scripts/compare_rebuild_scores.R` on the two `pooled-backtest.csv` files; report against the plan's four criteria (the
+  leave-one-election-out clause is the one that matters) and ask Pete ship or not. Copy both `published-predictions.csv`
+  files out, then unlink every path in `junctions-<arm>.txt` before removing a worktree.
+- OPEN (Pete's call, asked 22 Nov): One Nation's seat spread is too wide at Victoria's level (`AUSPOL_ONP_CV` 0.365; a walk at 0.30
+  moves One Nation 14.9 to 12.7 seats). Census columns add nothing beyond the Senate allocation. `reviews/onp-demographics-and-spread-2026-11-22.md`.

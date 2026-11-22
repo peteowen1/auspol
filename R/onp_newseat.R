@@ -496,3 +496,18 @@ onp_model_ratio <- function(seats, senate, target, level, lookup = seats, fit = 
   r <- r / mean(r); names(r) <- seats
   list(ratio = r, fit = fit, no_census = sum(!have))
 }
+
+#' Read `AUSPOL_ONP_IN_TRAINING`
+#'
+#' `"0"` (default): One Nation's no-history allocation is applied AFTER the as-at trees are trained (stage 1 of
+#' `rebuild_forecasts.sh` pins it off), as shipped. `"1"`: stage 1 runs it, so the trees train on a base that
+#' already carries the allocation, and [post_xgb_switches()] no longer lists its two switches. Only a full rebuild
+#' from stage 1 can honour `"1"`; set on a later stage alone it only relabels the switches.
+#' docs/plans/prereg-onp-direct-model-2026-11-22.md, Amendment 1.
+#' @return `TRUE` for `"1"`, `FALSE` for `"0"`; anything else is an error.
+#' @export
+onp_in_training <- function() {
+  v <- Sys.getenv("AUSPOL_ONP_IN_TRAINING", "0"); if (!nzchar(v)) v <- "0"
+  if (!v %in% c("0", "1")) stop("AUSPOL_ONP_IN_TRAINING must be \"0\" or \"1\", not \"", v, "\"", call. = FALSE)
+  identical(v, "1")
+}

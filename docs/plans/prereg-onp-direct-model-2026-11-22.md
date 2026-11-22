@@ -179,3 +179,49 @@ The vote moves from outer-suburban seats to rural ones: Sydenham 23.2 to 20.3, N
 Park 24.5 to 22.3; Morwell 35.7 to 41.6, Murray Plains 34.2 to 37.5, Narracan 34.9 to 37.5. Favourites: Morwell and
 Melton to One Nation; Sydenham and Hastings to Liberal; Carrum and Narre Warren South to Labor. Morwell One Nation
 0.48 to 0.90.
+
+## Amendment 1 (22 Nov, noon; written before any rebuild): the fair test, trees trained on the allocation
+
+Pete: "why is the model worse, it feels like it should be better", then "go" on this test. The screen above swapped
+the model in under trees trained with the allocation OFF (a flat One Nation number in every no-history seat). The
+original criteria and result above stand unedited; this adds a different experiment.
+
+New switch `AUSPOL_ONP_IN_TRAINING` ("0"): at "1", stage 1 of `rebuild_forecasts.sh` runs One Nation's allocation
+at its published values instead of pinning it off, so the as-at trees train on a base that already carries it, and
+`post_xgb_switches()` stops listing the two One Nation switches.
+
+Three full rebuilds from stage 1 at one commit, each in its own worktree, never publishing
+(`deciding-runs/20261124-onp-rebuilds/chain.ps1`, task `auspol-onp-rebuilds`, 24 Nov 1am):
+
+| Arm | `AUSPOL_ONP_IN_TRAINING` | `AUSPOL_ONP_ALLOC` | What it is |
+|---|---|---|---|
+| m | 1 | model | Pete's version: the trees learn corrections to the modelled allocation |
+| r | 1 | rank | the control: the trees learn corrections to the shipped rank rule |
+| b | 0 | rank | the shipped configuration, rebuilt |
+
+The control is there because arm m changes two things against b. m against b is the ship question; m against r says
+whether the MODEL earns it or only the training change does.
+
+Scorer: `Rscript scripts/score_onp_alloc.R <base output> <arm output>` (dry-run 22 Nov: an identical pair is
+refused with `OAS1!`; an arm doctored halfway to the truth on sa2026's 46 One Nation cells scores -623.4, the value
+computed by hand), then `scripts/compare_rebuild_scores.R` on the two `pooled-backtest.csv` files.
+Scorer corrected the same day, before any rebuild (review): its SE was (G-1)/G too small because the leave-one-out
+totals were not rescaled to G elections, and an arm missing an election now exits 2 instead of scoring the rest.
+Re-tested on a three-election doctored arm: total -1228.8 and SE 1957.3, both equal to the hand computation.
+
+Criteria, m against b (and r against b reported the same way):
+
+1. **Applied**: `ONT1` in the arm's driver log, `ONM1` in its stage-1 and stage-6 logs, and `OAS1` counts moved cells.
+2. **Primary**: squared error on the One Nation cells the arm moved, arm minus base, SE by jackknife over elections.
+   PASS if lower by more than 1 SE.
+3. **Leave-one-election-out**: still lower with any one election dropped.
+4. **Guard**: pooled seat log loss not worse by more than 1 SE.
+5. **Unacceptable win**: sa2026 or qld2024 seat log loss up by more than 1 SE over seats, or a seat One Nation won
+   losing more than 0.10 of its win probability. Then to Pete as a split.
+
+Known limits, stated now: early targets still get a thin, flat fit (slope 0.14 before qld2017), which training on
+the allocation does not fix; and backtests allocate only no-history seats while Victoria allocates all 88.
+
+Decision: m passes all against b, Pete decides whether it ships for 28 Nov (it would need the arm's trees promoted
+and a publish, on the Tuesday). m fails the primary or the leave-one-out: it stays off for the election. If r
+passes and m does not, that is reported as a result about the training change, not shipped.
