@@ -122,3 +122,23 @@ Decision rule: all pass, Pete decides whether it ships before 28 Nov, with the W
 (the walk takes Hopper's vote from Labor and Liberal, none from One Nation; no historical case tests that).
 Primary or leave-one-out fails: it stays "0" for the election and the refusal is reported to him. Clause 4
 tripped: to Pete as a split.
+
+## Rebuild pair RESULT (23 Nov 2026; both rebuilds rc 0, 1:23am-5:52am, code e5f8ed58, 20,000 sims)
+
+Scored 8:40am from the main checkout with the two commands above. Files: `deciding-runs/20261123-byp-rebuilds/`
+(`score-byelection.txt`, `compare-rebuild-scores.txt`). Applied: 52 of the 57 scored by-election seats moved by more
+than 0.05 points (`BDS2`).
+
+1. **Primary PASS (narrowly).** Squared error on 375 primary-vote cells of 57 by-election seats in 23 elections: -1463.9
+   (SE 1395.9, jackknife over elections; base total 8349.2). nsw2019 alone is -1396.8 (Murray, Dalton).
+2. **Leave-one-election-out PASS.** Still lower with any one election dropped; the worst case, without nsw2019, is -70.2.
+   As foreseen above, the other restanders are worth very little: under 1% of the base error.
+3. **Guard PASS.** Pooled seat log loss 0.3164 -> 0.3125 (-0.0038, SE 0.0039), 2,931 seats / 35 elections.
+4. **Not tripped.** The by-election seats' own seat log loss falls, -0.1978 per seat (SE 0.1988, 57 seats).
+
+Reported, not criteria: AEF-7 seat log loss +0.0009 (SE 0.0006, beyond 1 SE, 5 of 7 worse); nt2024 +0.0302 (the only
+election worse by more than 0.02); nsw2019 -0.1218.
+
+Decision rule applied: all four pass, and Pete agreed on 22 Nov at 10:30pm that it ships if they do ("Score at 8am,
+pre-agreed"), with the Werribee caveat shown to him (the walk takes Hopper's vote from Labor and Liberal, none from One
+Nation). SHIPPED: `AUSPOL_BYELECTION_PERSON="1"`, with the trees from the arm-1 rebuild.
