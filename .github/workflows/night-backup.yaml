@@ -75,7 +75,11 @@ jobs:
           fi
           if [ "$SOURCE" = "web" ]; then
             # any VEC host over https: the 2026 results may not sit on www (the address is only known on the night)
-            case "$INDEX" in https://vec.vic.gov.au/*|https://*.vec.vic.gov.au/*) ;; *) echo "::error::source web needs index = a https://...vec.vic.gov.au/ results page (got '$INDEX')"; exit 1 ;; esac
+            # The HOST is compared, not the whole address: a glob over the URL let https://other.site/x.vec.vic.gov.au/ through.
+            case "$INDEX" in https://*) ;; *) echo "::error::source web needs an https:// index (got '$INDEX')"; exit 1 ;; esac
+            case "$INDEX" in *@*) echo "::error::index must not contain @"; exit 1 ;; esac
+            host="${INDEX#https://}"; host="${host%%/*}"; host="${host%%[?#]*}"; host="${host%%:*}"
+            case "$host" in vec.vic.gov.au|*.vec.vic.gov.au) ;; *) echo "::error::index host '$host' is not a VEC host (vec.vic.gov.au)"; exit 1 ;; esac
           fi
 
       - uses: r-lib/actions/setup-r@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
