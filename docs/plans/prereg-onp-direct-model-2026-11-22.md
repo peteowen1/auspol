@@ -225,3 +225,11 @@ the allocation does not fix; and backtests allocate only no-history seats while 
 Decision: m passes all against b, Pete decides whether it ships for 28 Nov (it would need the arm's trees promoted
 and a publish, on the Tuesday). m fails the primary or the leave-one-out: it stays off for the election. If r
 passes and m does not, that is reported as a result about the training change, not shipped.
+
+## Amendment 2 (23 Nov 2026, 9:10am; before any arm ran)
+
+`AUSPOL_BYELECTION_PERSON` shipped "1" this morning (its rebuild pair passed). The chain was written at commit f4c3cb1d,
+where that switch defaults to "0", so all three arms now set `AUSPOL_BYELECTION_PERSON=1` explicitly: m, r and b all run
+what ships, and the comparison is unchanged in kind (it touches by-election restanders, not One Nation's allocation).
+Pete asked (22 Nov, 10:30pm) to run this test overnight rather than on 24 Nov; it starts 23 Nov about 9:15am instead.
+The original clauses above are unedited.
