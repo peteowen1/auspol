@@ -2,7 +2,7 @@
 # and pointed to the website, which it says matches the feed and updates as often).
 #
 #   Rscript scripts/fetch_vec_web_snapshot.R --index=<results page URL> --out=<snapshot root>
-#       [--districts=external/reference/vec/2026/vec-candidates-2026.csv | Name1,Name2] [--every=0] [--max-cycles=0] [--parallel=4]
+#       [--districts=external/reference/vec/2026/vec-candidates-2026.csv | Name1,Name2] [--every=0] [--max-cycles=0] [--parallel=4] [--retries=3]
 #
 # From --index it finds every district's two "results by voting centre" pages (first preferences, two-candidate):
 # directly if the index links to them, else through the district result pages it links to (one level). Each district in
@@ -33,6 +33,7 @@ get <- function(u) { Sys.sleep(pause)
 # took 297 s (1.7 s a page), so the night refreshed every 5 minutes. --parallel=1 is the old one-at-a-time path with
 # its pause. Same completeness rule either way: a page without its closing </html> counts as failed.
 par_n <- max(1L, as.integer(flag("parallel", "4")))
+retries <- max(0L, as.integer(flag("retries", "3")))   # retry rounds for the failed pages of a snapshot; 0 = none
 get_many <- function(urls) {
   if (par_n <= 1L || length(urls) <= 1L) return(vapply(urls, get, character(1), USE.NAMES = FALSE))
   res <- rep(NA_character_, length(urls)); why <- rep("no reply", length(urls))
@@ -55,8 +56,7 @@ get_many <- function(urls) {
   # WHY a page failed, counted by cause (22 Nov 2026: from a GitHub runner 52-74 of 174 pages failed every snapshot
   # and the cause had been thrown away, so the log could not say whether it was a block, a timeout or a short page)
   if (anyNA(res)) { t <- sort(table(why[is.na(res)]), decreasing = TRUE)
-    cat(sprintf("VWF5! %d of %d page(s) failed: %s
-", sum(is.na(res)), length(urls), paste(sprintf("%d x %s", as.integer(t), names(t)), collapse = "; "))) }
+    cat(sprintf("VWF5! %d of %d page(s) failed: %s\n", sum(is.na(res)), length(urls), paste(sprintf("%d x %s", as.integer(t), names(t)), collapse = "; "))) }
   res
 }
 links <- function(h) { l <- regmatches(h, gregexpr('href="[^"#]+"', h))[[1]]; l <- unique(gsub('^href="|"$', "", l))
@@ -94,6 +94,15 @@ one_snapshot <- function(m) {
   bad <- character(0)
   jobs <- rbind(m[, list(district, u = fp_url, f = paste0(s, "-fp.html"), k = "fp")], m[, list(district, u = tcp_url, f = paste0(s, "-2cp.html"), k = "tcp")])
   pages <- get_many(jobs$u)
+  # RETRY ONLY THE FAILED PAGES (22 Nov 2026): one failed page of 174 voids the whole snapshot, and the VEC site
+  # answers bursts with HTTP 999 (4 to 74 pages a snapshot from a GitHub runner). Up to --retries rounds (default 3),
+  # waiting 5, 15, then 30 s first. Pages that arrived are never fetched again, so a clean snapshot is unchanged.
+  for (r in seq_len(retries)) {
+    again <- which(is.na(pages)); if (!length(again)) break
+    Sys.sleep(c(5, 15, 30)[min(r, 3L)])
+    pages[again] <- get_many(jobs$u[again])
+    cat(sprintf("VWF6 %s: retry %d of %d page(s), %d still failed\n", stamp, r, length(again), sum(is.na(pages))))
+  }
   for (i in seq_len(nrow(jobs))) {
     if (is.na(pages[i])) { bad <- c(bad, paste(jobs$district[i], jobs$k[i])); next }
     writeLines(pages[i], file.path(d, jobs$f[i]), useBytes = TRUE)
