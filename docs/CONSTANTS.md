@@ -567,7 +567,7 @@ These reach only `fit_federal.R` / `fit_nsw.R` / `fit_vic.R`, whose outputs the 
 | Constant | Value | Status |
 |---|---|---|
 | `house_adjust` in `unfold_others()` | TRUE | **CHOSEN** structure: impute the firm's own fitted house effect (shrunk by the trend model's `sigma_house_pts` prior), not the all-firm trend. |
-| One Nation unprompted `discount` | fitted each run (FFD1; `scripts/fit_federal.R:312-359`, consumed by `R/fold.R:153`) | **ESTIMATED**, inverse-variance pooled over every firm-cycle that both names and folds One Nation (2 firms, 2025 cycle, as of 2026-10-15). Fitted on the same within-firm gap FF1 checks, so FF1 cannot validate it until a second cycle has such firms. |
+| One Nation unprompted `discount` | fitted each run (FFD1; `scripts/fit_federal.R:312-359`, consumed by `unfold_others()` in `R/fold.R`) | **ESTIMATED**, inverse-variance pooled over every firm-cycle that both names and folds One Nation (2 firms, 2025 cycle, as of 2026-10-15). Fitted on the same within-firm gap FF1 checks, so FF1 cannot validate it until a second cycle has such firms. |
 | `FD_ITER`, `FD_TOL` in `fit_federal.R` | 4 iterations, 0.002 | **COMPUTATIONAL**: the discount is re-estimated after a refit until the pooled increment is below 0.2% of the imputed share; failing to converge stops the script. |
 
 ## Coalition split (`AUSPOL_COALITION_SPLIT`, built 2026-10-16, SHIPPED 2026-10-17 with `_F=state`; `R/coalition_split.R`)
@@ -674,6 +674,8 @@ Existing rows for `AUSPOL_SEAT_POLL_PRIOR` (0.75), `_PRIOR_SD` (0.25), the half-
 | `AUSPOL_SURGE_SOURCE` | `R/party_surge.R:95` | "none" | Switch (decided 2026-10-16): no class counts as surging in the salience screen. |
 | `AUSPOL_SALIENCE_LIVE_VIC` | `R/salience_screen.R` `salience_live_filter()` | "0" | Switch (Pete, 2026-11-19): the live vic2026 forecast runs without its search-interest rows. `reviews/market-gaps-vic2026-2026-11-19/README.md`. |
 | `AUSPOL_BYELECTION_DESWING` | `R/byelection_prior.R` `byelection_deswing_on()` | "1" | SHIPPED 2026-11-19 on Pete's override, before its rebuild pair was scored: de-swing a by-election to the previous general election before the half blend; the swing is the 90-day poll mean minus the previous statewide share (`.byelection_swing()`). `plans/prereg-byelection-deswing-2026-11-19.md`. |
+| `AUSPOL_ONP_ALLOC` | `R/onp_newseat.R` `onp_alloc_mode()`, `onp_model_fit()` | "rank" | Switch. "model" = One Nation's no-history seats from a count model on Senate share and Year 12, fitted on earlier elections (10+ usable seats per election, 2+ elections, 90% census cover: the only constants). REFUSED on its screen 2026-11-22. `plans/prereg-onp-direct-model-2026-11-22.md`. |
+| `AUSPOL_BYELECTION_PERSON` | `R/byelection_prior.R` `.byelection_person_apply()`, read in `personal_prior_vote()` | "0" | Switch, OFF (built 2026-11-22, rebuild pair pending): a non-major lead candidate who lost the seat's by-election keeps weight x that share + (1 - weight) x their previous general-election vote. The weight is the by-election blend's own (0.5 under "blend"), not a new constant. `plans/prereg-byelection-person-2026-11-22.md`. |
 
 ### Spread by seat size, composition and error shape (shipped 2026-10-14 and 2026-10-17)
 

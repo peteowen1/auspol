@@ -175,6 +175,11 @@ PUBLISHED_FLAGS <- c(
                                              # replacement ("1") was REFUSED: protest swings revert (Inala, Ipswich West, Upper Hunter), error
                                              # +0.59 on 17 seats. "blend" = half by-election, half general election: error 2.78 -> 2.44 (SE
                                              # 0.24), pooled log loss 0.2945 -> 0.2936. Black 34.2 -> ~38 on ALP (actual 43.0).
+  AUSPOL_BYELECTION_PERSON   = "0",          # OFF, built 2026-11-22 for a live walk only (docs/plans/prereg-byelection-person-2026-11-22.md):
+                                             # a non-major lead candidate who stood at the seat's by-election and lost keeps
+                                             # half that share plus half their own previous general-election vote, instead of
+                                             # the general-election vote alone overwriting the half blend (Murray nsw2019:
+                                             # Dalton 31.5 at the by-election, 4.2 used, 38.8 polled). Not scored on a rebuild pair.
   AUSPOL_BYELECTION_DESWING  = "1",          # SHIPPED 2026-11-19 on Pete's override ("Let's fix it now, please. This is urgent"), BEFORE its
                                              # pre-registered rebuild pair was scored (that pair still runs and is reported; prereg Amendment 2).
                                              # docs/plans/prereg-byelection-deswing-2026-11-19.md: before the half blend,
@@ -332,6 +337,12 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_UPSET_FLOOR         = "0",          # TESTING 2026-10-02: time-forward upset insurance for minor contenders (R/upset_floor.R, stage 6b). plans/prereg-upset-floor-2026-10-02.md
   AUSPOL_ONP_ORDER           = "senate_rank", # SHIPPED 2026-10-26 on Pete's call (prereg-onp-newseat-rule-2026-10-25.md, arm B with AUSPOL_ONP_NEWSEAT_RULE=1; B v A not worse by 1 SE; his override of the leave-one-out clause): order One Nation by the earlier federal Senate vote. POST-XGB (post_xgb_switches()): stage 1 runs "federal". Was "federal". "senate" REFUSED 2026-10-01 (plans/prereg-onp-senate-2026-10-01.md): SA 2026 seat log loss +1.7 SE.
                                              # "senate_rank" built 2026-10-25 (plans/prereg-onp-senate-rank-2026-10-25.md): ordering only, spread kept; live + sa/qld/nsw/wa harnesses (R/onp_order.R).
+  AUSPOL_ONP_ALLOC           = "rank",       # ARM, built 2026-11-22 (Pete: "forcing the spread is way more hacky than just modelling";
+                                             # docs/plans/prereg-onp-direct-model-2026-11-22.md). "model" = a no-history seat's One Nation
+                                             # relativity comes from its Senate share and Year 12 completion, fitted on earlier elections
+                                             # (onp_model_ratio(), R/onp_newseat.R), instead of a fixed shape handed out by rank and forced
+                                             # to a spread; AUSPOL_ONP_CV is then ignored. Acts only inside the AUSPOL_ONP_NEWSEAT_RULE
+                                             # step, so it is post-xgb like that switch. Not scored yet.
   AUSPOL_ONP_NEWSEAT_RULE    = "1",          # SHIPPED 2026-10-26 with AUSPOL_ONP_ORDER=senate_rank (arm B, Pete's call; all 35: -0.0014 SE 0.0015). POST-XGB: stage 1 runs "0". Built 2026-10-25 (plans/prereg-onp-newseat-rule-2026-10-25.md; reviews/onp-newseat-parity-2026-10-25.md): "1" = in seats where One Nation had NO vote at the previous state election, its share is allocated by rank on the earlier federal House (AUSPOL_ONP_ORDER=federal) or Senate (senate_rank) One Nation vote with a time-forward CV, mean kept -- the live forecast's method, now in all seven harnesses (R/onp_newseat.R). Live unchanged at both values (every Victorian seat is such a seat already).
   AUSPOL_ONP_FIX             = "1",
   AUSPOL_ONP_FILL            = "prop",       # TESTING 2026-10-25 "uniform_major" (plans/prereg-onp-fill-uniform-2026-10-25.md): One Nation's seat gap filled by the statewide draw betas, not by size. LIVE ONLY (fit_seats_full.R); no harness has the fill.

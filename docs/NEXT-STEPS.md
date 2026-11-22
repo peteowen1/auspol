@@ -13,25 +13,36 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (10 Nov: One Nation stands in all 88 seats, so no seat-count conditioning applies; recheck for nsw2027's list); (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 21 Nov, 9:40am.** main 0.4.191 (PR #260, de-swing shipped). 21 Nov 4:30am run (44783954601): forecast
-  published 4:40am; 2 of 16 scenario jobs (vic2026 ALP polled, nsw2027 ONP polled) timed out in `setup-r` (10 min), so
-  `publish-scenarios` skipped and the scenario files stayed at 20 Nov 5:08am. Failed jobs rerun 9:30am: green, both scenario
-  files republished 9:50am. Dated, a session runs each: 23 Nov VEC venues rerun; 25 Nov final salience snapshot +
-  night dress rehearsal; 27 Nov merge inthegame-blog#1239 (navbar link) and the final benchmark capture (Pete: VPN off).
+- **Status 21 Nov, midnight.** main 0.4.193 (PR #261 night fetcher 4 at a time, PR #262 night launcher + 20 s data
+  registry). 21 Nov 4:30am forecast run green after a 9:30am rerun of 2 timed-out scenario jobs (#196 closed). Dated, a
+  session runs each: (22 Nov rebuild pair scored: de-swing passes, stays on); 23 Nov score the by-election person pair, VEC venues rerun; 25 Nov final salience snapshot + night
+  dress rehearsal; 27 Nov merge inthegame-blog#1262 (ready, reviewed) and the final benchmark capture (Pete: VPN off).
 - SHIPPED 19 Nov (PR #260, Pete's override): by-election de-swing `AUSPOL_BYELECTION_DESWING=1`. Live 20 Nov 4:42am forecast
-  (1404a0f): Werribee ALP 42% / ONP 30% / LIB 28%; `BYS1` also moved nsw2027 Kiama (ALP -1.0, LNP +5.4), not measured. OPEN: the
-  prereg rebuild pair HAS NOT RUN (two failed nights). 20 Nov: the task fired at 5:56pm after the machine slept. 21 Nov 1:02am:
-  both arms died in 15 s at stage 0 (`BK2!`, no BludgerTrack XML): the chain's fill went one level into `external/`, so the
-  worktrees lacked 15,012 gitignored files (polls 4,090, vec 4,321, nsw 5,888, byelections 590, htv 93, wikipedia 30).
-  FIXED 21 Nov 9:30am in `deciding-runs/20261122-bys-rebuilds/chain.ps1`: the fill recurses, and a preflight opens every
-  main `external/` file at its worktree path and refuses the arm on any gap. Smoke-tested (`-SmokeOnly`: 38,647 files, 0
-  missing, the stage-0 poll builder rc 0, worktree removed clean, `SMOKE-OK`). Both old worktrees removed (junctions first).
-  Task `auspol-bys-rebuilds` registered for 22 Nov 1am (wakes the machine, waits for 4 GB, refuses after 4am).
-  OPEN, DATED 22 Nov morning: read the marker in that folder; on `DONE`, from this checkout:
+  (1404a0f): Werribee ALP 42% / ONP 30% / LIB 28%; `BYS1` also moved nsw2027 Kiama (ALP -1.0, LNP +5.4), not measured.
+  DONE 22 Nov: the prereg rebuild pair ran 1:00am to 4:26am (both rc 0) and PASSES all four criteria, so the switch stays
+  "1" (plan RESULT section; evidence in `deciding-runs/20261122-bys-rebuilds/`; the two failed nights are in the journal).
+  Both rebuild worktrees removed 22 Nov (53 junctions each unlinked first; main `external/` 38,651 files before and after).
+- OPEN (Pete to decide before or after 28 Nov): a candidate's own earlier general-election vote overwrites their by-election
+  result. CAUSE PROVEN 22 Nov on Murray nsw2019: Helen Dalton ran as an independent in 2015 (18.2%), as Shooters at the Oct
+  2017 by-election (31.5%) and won as Shooters in 2019 (40.3%). `own_prev_substitute()` (`R/candidate_returns.R`, called as
+  `.own_x()` in every harness and `fit_seats_full.R`) replaces the class cell with `personal_prior_vote()`'s value, 18.2 x the
+  non-sitting minor-switcher rate 0.230 = 4.18, whatever the half blend put there (0, 15.7 and 31.5 in all give 4.18).
+  Predicted 4.0%. LIVE vic2026, same step: Werribee Paul Hopper took 14.6% as an independent at the Feb 2025 by-election
+  and stands for The West Party (OTH); value used 1.63, published OTH primary 4.7%. (An earlier note here said 13.6%: that
+  was the whole OTH class at the by-election, not Hopper.) Mulgrave Ian Cook 18.8 against 18.0 (small).
+  BUILT 22 Nov behind `AUSPOL_BYELECTION_PERSON` ("0" in `published_flags.R`): the person gets the same half blend,
+  `plans/prereg-byelection-person-2026-11-22.md`. Live walk: Werribee One Nation 30% to 57%, Labor 42% to 23%; Mulgrave
+  barely moves; no other seat moves. 79 historical restanders counted. Pete chose "score it tonight" (22 Nov).
+  OPEN, DATED 23 Nov morning: task `auspol-byp-rebuilds` runs the pair at 1am (commit e5f8ed58, smoke-tested, refuses
+  after 4am; machine must stay on and logged in). Read the marker in `deciding-runs/20261123-byp-rebuilds/`; on `DONE`:
   `Rscript scripts/score_byelection_deswing.R C:/dev/auspol-wt-rb0/output C:/dev/auspol-wt-rb1/output`, then
-  `scripts/compare_rebuild_scores.R` on the two `pooled-backtest.csv` files; report to Pete against the prereg criteria. Before removing either
-  worktree, unlink every path in `junctions-<arm>.txt` first (memory `worktree-junctions-delete-through`).
-  Known: a worktree rebuild writes stage-0 files such as `bludgertrack_polls.csv` through the junctions into this checkout's `external/`.
+  `scripts/compare_rebuild_scores.R` on the two `pooled-backtest.csv` files; report against the plan's four criteria (the
+  leave-one-election-out clause is the one that matters) and ask Pete ship or not. Copy both `published-predictions.csv`
+  files out, then unlink every path in `junctions-<arm>.txt` before removing a worktree.
+- OPEN (Pete's call, asked 22 Nov): One Nation's seat spread is too wide at Victoria's level (`AUSPOL_ONP_CV` 0.365; a walk at 0.30
+  moves One Nation 14.9 to 12.7 seats). Census columns add nothing beyond the Senate allocation. `reviews/onp-demographics-and-spread-2026-11-22.md`.
+- DONE 22 Nov, refused on its screen: One Nation by a direct model (Senate share + Year 12, `AUSPOL_ONP_ALLOC`, stays "rank"): share error +2%
+  (1.7 SE) through the trees, log loss flat. Forecast unchanged at `AUSPOL_ONP_CV` 0.365. `plans/prereg-onp-direct-model-2026-11-22.md`.
 - OPEN, DATED 25 Nov: Victorian search interest is OFF in the live forecast since 19 Nov (`AUSPOL_SALIENCE_LIVE_VIC=0`,
   Pete). After the final snapshot, rerun the on/off walk and take it to Pete before any "1". Done when: he has chosen.
   Evidence: `reviews/market-gaps-vic2026-2026-11-19/README.md` (challengers with the same rise won 2 of 23).
@@ -72,23 +83,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   new list. STILL TO DO 23 Nov: check the page's "correct as at" line again (compare `Last-Modified` with
   `raw-20261121-1140/headers-xlsx.txt`; rerun only if it moved), then the blog's booths build
   (`C:/dev/inthegame-blog/politics/night-maps/build-booths-2026.py`), which still has 1,851 centres.
-  DRY RUN 21 Nov 11am (`deciding-runs/20261121-night-rehearsal/`: raw pages, logs, JSON), 2022 pages under today's 2026 state:
-  fetch 87 districts / 174 pages, then one cycle OK in 68 s (87 of 88 seats updated, parse 17 s, simulate 40 s); `NW23` and
-  `NW24` both printed, so the class split runs on the website source. THE WEBSITE COMMAND (the runbook below is the feed's and
-  stops on `NW9!` without `--turnout`):
-  `Rscript scripts/fetch_vec_web_snapshot.R --index=<results page> --out=<dir>/web --every=<s>` beside
-  `Rscript scripts/night_loop.R --every=60 --source-type=web --source=<dir>/web --archive=<dir>/archive --state=<night-state-vic-2026.rds> --ref=output/booths-vic2026-ref.csv --council-lean=output/council-fp-2022.csv --turnout=output/council-district-stats-2022.csv --enrolment=external/reference/vec/2026/enrolment/enrolment-2026.csv --places=external/reference/vec/2026/voting-locations/places-2026.csv --out=<json> --upload-key=auspol/night/vic2026.json`
-  (the rehearsal added `--allow-unmatched=1` only because 2022 has no Narracan page; never on the night).
-  ONE COMMAND since 21 Nov: `bash scripts/night_vic2026.sh <results index URL> <work dir> [--upload] [--every=90]` runs both
-  with those flags (downloads the state into the work dir; upload is OFF unless `--upload`; a fetcher that dies stops the
-  loop at once with `NV8!`). Rehearsal: add `--dry-2022 --max-cycles=1` (tested 21 Nov: one cycle, rc 0; a wrong index
-  gives `NV8!` in 4 s). The 25 Nov rehearsal should use it, without `--upload`. Found: (a) the index
-  must be the page that links every district's result page (2022: `.../2022-state-election-results`, 87 links; its
-  `/results-by-district` child links none); (b) FIXED, the fetcher followed the page's read-aloud link (`//other-host/...`) as
-  a VEC path, HTTP 500; (c) FIXED (Pete chose "4 at a time"): one snapshot took 297 s one page at a time; `--parallel=4`
-  (now the default) takes 85 s for discovery + 174 pages (about a minute a snapshot once discovery is done), pages
-  identical, cycle result identical; a 404, a dead host and a page holding a NUL byte each cost that one page. Exactly 4:
-  groups of four on plain connections (the first build ran up to 40 streams and took 8 s; review, 21 Nov).
+  DRY RUN 21 Nov passed on the 2022 pages (one cycle 68 s, 87 of 88 seats, class split on). ON `main` since 0.4.193, THE
+  NIGHT COMMAND: `bash scripts/night_vic2026.sh <results index URL> <work dir> [--upload] [--every=90]` (fetcher 4 pages at
+  a time + loop with every website flag; upload OFF unless `--upload`; a dead fetcher stops the loop, `NV8!`). Rehearsal
+  (25 Nov, no `--upload`): add `--dry-2022 --max-cycles=1`. The index must be the page linking every district's result
+  page (2022: `.../2022-state-election-results`; its `/results-by-district` child links none). UNTESTED: the 2026 index
+  and page layout, `--upload`, a keyboard Ctrl+C. Long-hand commands and findings, verbatim:
+  `backlog/journal-2026-11-21-queue-history.md` ("Night source, dry run detail").
 - IN FLIGHT 9 Nov (Pete chose the levers): first-time-independent under-call (70 of 649 single first-timers took 15%+ and
   we gave them about a third of it; 442 took under 5%, so no blanket lift). Six levers in
   `reviews/newcomer-independents-walk-2026-11-09.md` (last section). Lever 1 REFUSED twice, stays off
@@ -105,7 +106,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - **Election-night live model, map https://github.com/peteowen1/auspol/issues/148.** History, DONE list and replay evidence:
   `backlog/journal-2026-11-05-election-night.md` (moved verbatim 6 Nov); plan `plans/election-night-booth-model.md`. Runbook:
   `gh release download forecast-latest -p night-state-vic-2026.rds -D <dir>`, then the fetcher and loop exactly as written
-  under NIGHT SOURCE ("THE WEBSITE COMMAND"; the feed-era three-flag command that stood here stops on `NW9!`). Live page https://inthegame.blog/politics/live
+  under NIGHT SOURCE ("THE NIGHT COMMAND"; the feed-era three-flag command that stood here stops on `NW9!`). Live page https://inthegame.blog/politics/live
   (find my seat live, #166 closed 5 Nov). OPEN, in order:
   1-2. DONE: Pete checked the live page at 390 px on 18 Nov, "Looks good!" (the rest done 16 Nov, journal).
   3. Navbar link: BUILT 18 Nov on inthegame-blog branch `feat/politics-live-nav-2`, PR #1239 (264d638f, Politics menu
@@ -127,9 +128,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (it shows only at 10%+ independent; since search interest went off on 19 Nov no seat qualifies, so no page shows it yet).
   BUILT 21 Nov: DRAFT inthegame-blog PR #1262 (`feat/politics-night-prod`, into `main`): c3e41729, 28f51c5c, d38e702f and
   the navbar 264d638f cherry-picked onto its `main` (21 added lines, 2 files; built with merge-tree + commit-tree, the
-  shared checkout untouched). ITG agreed 21 Nov and lists it as the 27 Nov merge in place of #1239. Before the merge it
-  needs a code review and ITG's design check (it touches a `.qmd` and `_quarto.yml`); then mark it ready, check its
-  render run is green, merge, and close #1239 (same nav commit).
+  shared checkout untouched). ITG agreed 21 Nov and lists it as the 27 Nov merge in place of #1239. ITG reviewed and
+  design-checked it 21 Nov at head 84d9e8d5 (0 important; PASS at 400/760/desktop); its check of the live forecast: the
+  note shows on 0 of 88 seats (highest unsplit independent total Macedon 5.6%, against the 10% bar). On 27 Nov: mark it
+  ready, check its render run is green, merge, close #1239 (same nav commit). Any new commit to the branch: tell ITG.
 - OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. 17 Nov done: 6 sources (TAB not
   saved: Chrome blocked the download on api.beta.tab.com.au; Betfair has no Victorian markets). On 27 Nov, if the TAB
   download is blocked again, check Chrome's download prompt for that site first. Each date: `Rscript scripts/snapshot_benchmarks.R`, plus the GES
@@ -160,7 +162,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   9-22 points: Mayo, Warringah, Kooyong, Mackellar, Mount Gambier). Seat polls already reach new independents:
   mean miss 23.4 before the blend, 11.6 published, 10 seats (Wakehurst published 30.0, not 13.7).
 - OPEN, NIGHT MODEL (before 28 Nov). Live defaults: `pair_cal` v2 (11 Nov), the night class split (14 Nov, PR #239, #240),
-  and on the website source `cand_ref = "copy"` (`R/night_runner.R:697`; Pete 11 Nov: on for 28 Nov, 7 returning candidates
+  and on the website source `cand_ref = "copy"` (`.night_cand_ref_cfg()`, `R/night_runner.R`; Pete 11 Nov: on for 28 Nov, 7 returning candidates
   changed class). Class split SEEN on the website source in the 21 Nov dry run (NW23/NW24; NIGHT SOURCE item); the 25 Nov
   rehearsal repeats it on the final state (Daily Eight 25 Nov). Replays take `--resume=1`; a resume with different flags or
   AUSPOL_* settings stops (NRC3). Also open: Mirani qld2024 still wrong at full count; statewide draws shrink by the
@@ -373,6 +375,12 @@ Trigger: the post-election review after 28 Nov, unless an item names its own.
 - Diagnosed, not built: widening simulated variance for the majors' floor
   seats (`sd_override` into the WA harness); WA personal-vote transfer helps
   Pilbara and hurts WA overall (one seed).
+- OPEN (after 28 Nov): 17 remote branches still hold lines not in `main` (18 fully merged ones deleted 21 Nov, Pete's
+  yes). Per branch, `git merge-tree --write-tree origin/main origin/<b>` then diff against `main`: keep, land or
+  delete with Pete's yes. Only `agent/issue-40-sonnet` adds nothing. Not sized: `dev-2026-10-07-unreviewed`.
+- OPEN (after 28 Nov), #192: keep every published forecast, not one per day. Today R2 has one seat-level file per day
+  (`scripts/publish_forecast_history.sh`; a same-day republish replaces it). Done when: each publish adds a dated parquet
+  to a `predictions-history` release and the previous one is still there. Needs a workflow edit (a session, not the worker).
 
 ## Data and infra
 

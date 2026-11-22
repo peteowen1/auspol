@@ -314,9 +314,12 @@ quick_tree_sig <- function(dir) {
   if (!dir.exists(dir)) return(quick_unreadable(dir))
   f <- sort(list.files(dir, recursive = TRUE, all.files = TRUE, no.. = TRUE))
   if (!length(f)) return(quick_md5(paste0("empty:", dir)))
-  i <- file.info(file.path(dir, f))
-  if (anyNA(i$size) || anyNA(i$mtime)) return(quick_unreadable(dir))
-  quick_md5(paste(f, i$size, as.integer(i$mtime), sep = ":", collapse = "|"))
+  # file.size() and file.mtime(), NOT file.info(): on Windows file.info() opens every file. Over external/reference
+  # (34,006 files) that was 2,404 s against 7.5 s on 21 Nov 2026, and it made one screen's start-up 28 minutes on
+  # 22 Nov. Same two values, so the digest is unchanged.
+  p <- file.path(dir, f); sz <- file.size(p); mt <- file.mtime(p)
+  if (anyNA(sz) || anyNA(mt)) return(quick_unreadable(dir))
+  quick_md5(paste(f, sz, as.integer(mt), sep = ":", collapse = "|"))
 }
 
 QUICK_MARKER <- ".quick-arm-root"

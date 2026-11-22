@@ -1,6 +1,6 @@
 # Model registry
 
-**Generated 2026-11-19 by `scripts/build_model_registry.R`. Do not hand-edit** --
+**Generated 2026-11-22 by `scripts/build_model_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate whenever a switch is added to
 `published_flags.R` or a harness's wiring changes.
 
@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (327 switches from `published_flags.R`, 7 entry points)
+## Switch parity (329 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -54,7 +54,8 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_BYELECTION_DESWING` | NO | NO | NO | NO | NO | NO | NO | byelection_prior.R |
 | `AUSPOL_BYELECTION_FILL` | NO | NO | NO | NO | NO | NO | NO | byelection_prior.R |
 | `AUSPOL_BYELECTION_MP` | NO | NO | NO | NO | NO | NO | NO | byelection_prior.R, candidate_returns.R |
-| `AUSPOL_BYELECTION_PRIOR` | yes | yes | yes | yes | yes | yes | yes | byelection_prior.R |
+| `AUSPOL_BYELECTION_PERSON` | NO | NO | NO | NO | NO | NO | NO | byelection_prior.R, candidate_returns.R |
+| `AUSPOL_BYELECTION_PRIOR` | yes | yes | yes | yes | yes | yes | yes | byelection_prior.R, candidate_returns.R |
 | `AUSPOL_BYELECTION_RESULTS` | NO | NO | NO | NO | NO | NO | NO | byelection_prior.R, new_ind_shrink.R |
 | `AUSPOL_CENSUS_FILE` | NO | NO | NO | NO | NO | NO | NO | demographic_residual.R |
 | `AUSPOL_CLASS_CONSERVE` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R |
@@ -212,6 +213,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_NSW_EXHAUST_TF` | NO | NO | yes | NO | NO | NO | NO |  |
 | `AUSPOL_NSW_THIN_WALK` | NO | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_NT_TRANSFER` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_ONP_ALLOC` | yes | NO | NO | NO | NO | NO | NO | onp_newseat.R |
 | `AUSPOL_ONP_CONC_SD` | NO | NO | NO | yes | yes | NO | NO |  |
 | `AUSPOL_ONP_CV` | yes | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_ONP_FILL` | yes | NO | NO | NO | NO | NO | NO |  |
@@ -384,6 +386,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_BYELECTION_DESWING`** (**adopted, shared-function wiring**): SHIPPED 2026-11-19, default 1, Pete's override before the prereg rebuild (plans/prereg-byelection-deswing-2026-11-19.md). Read inside R/byelection_prior.R (byelection_deswing_on()), which fit_seats_full.R and every harness call for the by-election blend; the harness grep cannot see it.
 - **`AUSPOL_BYELECTION_FILL`** (intentional / dead experiment): REFUSED 2026-09-30 (docs/plans/prereg-byelection-fill-2026-09-30.md): only Lyne improved, xgb error +0.01. Default 0, read only as an argument default in R/byelection_prior.R, so a refused experiment with no reason to be wired anywhere.
 - **`AUSPOL_BYELECTION_MP`** (**adopted, shared-function wiring**): SHIPPED 2026-09-19 (plans/prereg-byelection-mp-2026-09-19.md). Read inside R/candidate_returns.R at the top of candidate_returns(): a by-election winner (external/reference/byelections/byelection-winners.csv) is the sitting member for every identity test. Reaches all six harnesses and fit_seats_full.R through that function.
+- **`AUSPOL_BYELECTION_PERSON`** (intentional / dead experiment): OFF ("0"), built 2026-11-22; reaches every harness and fit_seats_full.R through personal_prior_vote() in R/candidate_returns.R, which is why the entry-point columns read NO. A by-election restander keeps half that result (docs/plans/prereg-byelection-person-2026-11-22.md); rebuild pair registered for 23 Nov.
 - **`AUSPOL_BYELECTION_RESULTS`** (intentional / dead experiment): DATA PATH, "" = the shipped by-election table; a path points the two readers at another copy (screens of a data completion).
 - **`AUSPOL_CENSUS_FILE`** (intentional / dead experiment): DIAGNOSTIC 2026-10-13: alternative census-features table via census_features_path() (R/demographic_residual.R), read by every demographic correction -- universal in practice; published empty.
 - **`AUSPOL_CLASS_CONSERVE`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: read by class_conserve_on() inside zero_unnominated() (R/nomination_zero.R), which every harness and fit_seats_full.R (zero_unnominated_live) reach. plans/prereg-partial-contest-2026-10-19.md
@@ -517,6 +520,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_NSW_EXHAUST_TF`** (intentional / dead experiment): HARNESS-ONLY, SHIPPED "1" 8 Nov 2026 (leak fix): NSW harness reads exhaust rates only from elections before the target; "0" is the 7 Nov read of the target year's own row.
 - **`AUSPOL_NSW_THIN_WALK`** (intentional / dead experiment): NOT A PUBLISHED-CONFIG SWITCH: read by scripts/fit_nsw.R (the NSW poll-trend validation stage), which does not source published_flags.R. The comment block in published_flags.R says why it is deliberately unregistered.
 - **`AUSPOL_NT_TRANSFER`** (intentional / dead experiment): HARNESS-ONLY, NT: forces candidate transfer on/off; empty (published) keeps it tied to the slope mode.
+- **`AUSPOL_ONP_ALLOC`** (intentional / dead experiment): ARM, "rank" shipped. "model" (One Nation's no-history seats from a pooled Senate-share + Year 12 model, no forced spread) was REFUSED on its screen 2026-11-22: squared error on 751 changed cells +2% (1.7 SE), seat log loss flat (docs/plans/prereg-onp-direct-model-2026-11-22.md). Reaches every harness through onp_newseat_apply() in R/onp_newseat.R and fit_seats_full.R directly.
 - **`AUSPOL_ONP_CONC_SD`** (**adopted, shared-function wiring**): SHIPPED 2026-09-14 ('auto') for the harnesses that model a One Nation seat concentration from federal booth-transposed votes: qld and sa (where One Nation contests every seat). fed/nsw/vic/wa have no ONP concentration mechanism, and fit_seats_full.R has its own live ONP path; a gap only if One Nation's Victorian seat spread is ever driven from this switch (the VIC2022 IND-coupling regression is the reason it is not: docs/reviews/sa2026-onp-base-pred-diagnosis-2026-09-14.md).
 - **`AUSPOL_ONP_CV`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R). ADOPTED 2026-09-09 at 0.365, partially pooled (docs/reviews/onp-concentration-validated-2026-09-09.md) -- moves the live Victorian One Nation median seat count 9 -> 10. The highest-stakes switch this registry tracks; was previously mislabelled "federal" here, which is wrong -- fit_seats_full.R is the Victorian forecast, not a federal one.
 - **`AUSPOL_ONP_FILL`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R -- how the other classes fill One Nation's seat-level gap). No harness has a One Nation fill step, so "uniform_major" cannot be backtested (docs/plans/prereg-onp-fill-uniform-2026-10-25.md).
@@ -704,8 +708,8 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR4  every AUSPOL_* switch read in code (432) is registered (309) or listed as not a model switch (123).
+MR4  every AUSPOL_* switch read in code (434) is registered (311) or listed as not a model switch (123).
 
 
 
-MR2  every non-universal switch (296 of 327) has a recorded classification.
+MR2  every non-universal switch (298 of 329) has a recorded classification.

@@ -1038,6 +1038,18 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
   # 2010 did the same into OTH_RIGHT for 2013. NA when nothing moves.
   if (!"transfer" %in% names(out)) out[, transfer := NA_real_]
   out[!is.na(own_prev_pcv) & is.na(transfer), transfer := .own_prev_pcv_full]
+  # A BY-ELECTION RESTANDER KEEPS THAT RESULT (AUSPOL_BYELECTION_PERSON, default "0" = nothing happens here;
+  # docs/plans/prereg-byelection-person-2026-11-22.md). Without it the substitution of this function's value into
+  # the class cell overwrites the by-election half blend with the person's PREVIOUS GENERAL ELECTION vote (Murray
+  # nsw2019: Dalton 31.5 at the by-election, 4.18 used, 38.8 polled). Before the conserve block, so a transfer set
+  # here is conserved like any other.
+  .bp_mode <- Sys.getenv("AUSPOL_BYELECTION_PERSON", "0"); if (!nzchar(.bp_mode)) .bp_mode <- "0"
+  if (!.bp_mode %in% c("0", "1")) stop("AUSPOL_BYELECTION_PERSON must be \"0\" or \"1\", not \"", .bp_mode, "\"", call. = FALSE)
+  .bp_prior <- Sys.getenv("AUSPOL_BYELECTION_PRIOR", "blend")   # same default as published_flags.R ships
+  if (identical(.bp_mode, "1") && .bp_prior %in% c("1", "blend")) {
+    out <- .byelection_person_apply(out, election_from, election_to, weight = if (identical(.bp_prior, "blend")) 0.5 else 1,
+                                    kf = kf, rn = rn)
+  }
   # MINOR-TO-MINOR CONSERVE (AUSPOL_MINOR_DEFECT_CONSERVE=1): the origin
   # class keeps a fitted share of the defector's own prior vote instead of
   # losing all of it. Fitted leave-target-out inside this function so every

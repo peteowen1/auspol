@@ -1,3 +1,12 @@
+# auspol 0.4.194
+
+No change to the published forecast: both new switches ship off.
+
+- **By-election de-swing passes its pre-registered rebuild pair and stays on** (22 Nov): squared error on the 57 by-election seats' primary votes -248.9 of 8,598.1 (SE 180.9, 23 elections), still lower with any one election dropped, pooled seat log loss 0.3170 to 0.3164 over 2,931 seats. `docs/plans/prereg-byelection-deswing-2026-11-19.md` RESULT.
+- **By-election person rule, off** (`AUSPOL_BYELECTION_PERSON` "0"): a lead candidate's previous general-election vote overwrote the by-election half blend (Murray nsw2019: Helen Dalton 31.5% at the by-election, 4.2 used, 38.8 polled). With the switch on, a non-major lead candidate who lost the seat's by-election gets the same half blend on their own vote. Live walk: Werribee One Nation 30% to 57%, nothing else of note. A rebuild pair scores it on 23 Nov. `docs/plans/prereg-byelection-person-2026-11-22.md`.
+- **One Nation direct model, off and refused** (`AUSPOL_ONP_ALLOC` "rank"; Pete's request): "model" takes a no-history seat's One Nation relativity from its Senate share and Year 12 completion, fitted on earlier elections, instead of a shape handed out by rank and forced to a spread. Better scored alone (RMSE 2.53 to 2.43, 10 elections); through the full model squared error on 751 changed cells is 2% worse (1.7 SE) and seat log loss flat. `docs/plans/prereg-onp-direct-model-2026-11-22.md`, `docs/reviews/onp-demographics-and-spread-2026-11-22.md`.
+- **`quick_arm.R` starts in 17 seconds, not 28 minutes**: `quick_tree_sig()` reads sizes and times with `file.size()` and `file.mtime()` instead of `file.info()`, which opens every file on Windows; the digest is identical.
+
 # auspol 0.4.193
 
 - **Election night in one command** (PR #262, 21 Nov): `bash scripts/night_vic2026.sh <results index URL> <work dir>` starts the VEC website fetcher and the night loop with every flag the website source needs (the 21 Nov dry run of the three-flag runbook stopped on `NW9!` for want of `--turnout`). Upload to the live page is off unless `--upload` is passed; `--dry-2022` rehearses on the 2022 pages and refuses `--upload`; a fetcher that dies stops the loop at once (`NV8!`). Untested until the 2026 results pages exist: the 2026 index URL, and `--upload`.
