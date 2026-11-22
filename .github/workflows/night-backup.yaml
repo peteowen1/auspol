@@ -41,6 +41,11 @@ on:
       every:
         description: "Seconds between fetches of the VEC pages (at least 10; one fetch of 174 pages takes about a minute)"
         default: "90"
+      parallel:
+        description: "web sources: VEC pages in flight at once. 4 is the laptop's setting; the VEC answered a runner with HTTP 999 at 4 (22 Nov)"
+        type: choice
+        options: ["1", "2", "4"]
+        default: "1"
 
 # One group per key: a test run never queues ahead of a break-glass run on the live key, and two runs on the same key never
 # write at once (a newer dispatch replaces an older one still queued).
@@ -147,6 +152,7 @@ jobs:
           ALLOW: ${{ steps.src.outputs.allow }}
           SOURCE: ${{ inputs.source }}
           INDEX: ${{ inputs.index }}
+          PARALLEL: ${{ inputs.parallel }}
           GH_TOKEN: ${{ github.token }}
         run: |
           set -u
@@ -176,7 +182,7 @@ jobs:
               DRYARG=(--dry-2022)
               INDEX="https://www.vec.vic.gov.au/results/state-election-results/2022-state-election-results"
             fi
-            timeout "${MINUTES}m" bash scripts/night_vic2026.sh "$INDEX" night-work --upload-key="$KEY" --every="$EVERY" "${DRYARG[@]}" || rc=$?
+            timeout "${MINUTES}m" bash scripts/night_vic2026.sh "$INDEX" night-work --upload-key="$KEY" --every="$EVERY" --parallel="$PARALLEL" "${DRYARG[@]}" || rc=$?
             echo "--- fetch.log, last lines"; tail -n 5 night-work/fetch.log || true
           fi
           [ "$rc" -eq 124 ] && { echo "loop stopped after ${MINUTES} minutes, as asked"; rc=0; }

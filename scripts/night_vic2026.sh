@@ -2,7 +2,7 @@
 # ELECTION NIGHT, VICTORIA 2026, ONE COMMAND: the website fetcher and the night loop with the flags the website
 # source needs (21 Nov 2026 dry run: the three-flag runbook stopped on NW9! for want of --turnout).
 #
-#   bash scripts/night_vic2026.sh <results index URL> <work dir> [--upload] [--upload-key=KEY] [--every=90] [--max-cycles=N] [--dry-2022]
+#   bash scripts/night_vic2026.sh <results index URL> <work dir> [--upload] [--upload-key=KEY] [--every=90] [--max-cycles=N] [--dry-2022] [--parallel=4]
 #
 #   <results index URL>  the VEC page that links EVERY district's result page (2022's was
 #                        .../2022-state-election-results; its /results-by-district child links none)
@@ -12,6 +12,8 @@
 #   --upload-key=KEY     publish each good cycle to another file under auspol/night/ instead (tests, and the Actions
 #                        backup's test key auspol/night/test-vic2026.json, which the live page never reads).
 #   --every=N            seconds between fetches (default 90; one fetch of 174 pages takes about a minute)
+#   --parallel=N         pages in flight at once (default 4). 1 = one at a time with a pause, about 5 minutes a fetch:
+#                        for an address the VEC site rate-limits (HTTP 999 from a GitHub runner, 22 Nov 2026).
 #   --max-cycles=N       stop both after N snapshots / N cycles (tests)
 #   --dry-2022           rehearsal on the 2022 pages: drops Narracan (no 2022 page) and passes --allow-unmatched=1.
 #                        Refuses --upload and the live key.
@@ -19,11 +21,11 @@
 # Run from the repo root. Today's afternoon forecast state is downloaded into <work dir> (never into output/).
 # The fetcher runs in the background and is stopped when the loop ends or this script is interrupted (Ctrl+C).
 set -u
-[ $# -ge 2 ] || { sed -n 2,18p "$0"; exit 2; }
+[ $# -ge 2 ] || { sed -n 2,22p "$0"; exit 2; }
 INDEX="$1"; WORK="$2"; shift 2
-UPLOAD=0; EVERY=90; MAXC=0; DRY=0; LIVE_KEY=auspol/night/vic2026.json; KEY=""
+UPLOAD=0; EVERY=90; MAXC=0; DRY=0; PAR=4; LIVE_KEY=auspol/night/vic2026.json; KEY=""
 for a in "$@"; do case "$a" in
-  --upload) UPLOAD=1; KEY="$LIVE_KEY" ;; --upload-key=*) UPLOAD=1; KEY="${a#*=}" ;; --every=*) EVERY="${a#*=}" ;; --max-cycles=*) MAXC="${a#*=}" ;; --dry-2022) DRY=1 ;;
+  --upload) UPLOAD=1; KEY="$LIVE_KEY" ;; --upload-key=*) UPLOAD=1; KEY="${a#*=}" ;; --every=*) EVERY="${a#*=}" ;; --max-cycles=*) MAXC="${a#*=}" ;; --parallel=*) PAR="${a#*=}" ;; --dry-2022) DRY=1 ;;
   *) echo "NV1! unknown argument: $a"; exit 2 ;; esac; done
 [ "$DRY" = 1 ] && [ "$KEY" = "$LIVE_KEY" ] && { echo "NV1! --dry-2022 with the live key would put 2022 results on the live page; refusing"; exit 2; }
 [ "$UPLOAD" = 1 ] && [ -z "$KEY" ] && { echo "NV1! --upload-key= needs a key"; exit 2; }
@@ -40,7 +42,7 @@ gh release download forecast-latest -p night-state-vic-2026.rds -D "$WORK" --clo
 [ -s "$STATE" ] || { echo "NV3! night state missing after download: $STATE"; exit 1; }
 echo "NV3  night state $(wc -c < "$STATE") bytes, release asset updated $(gh release view forecast-latest --json assets -q '.assets[] | select(.name=="night-state-vic-2026.rds") | .updatedAt')"
 
-FETCH_ARGS=(--index="$INDEX" --out="$WORK/web" --every="$EVERY" --max-cycles="$MAXC")
+FETCH_ARGS=(--index="$INDEX" --out="$WORK/web" --every="$EVERY" --max-cycles="$MAXC" --parallel="$PAR")
 LOOP_ARGS=(--every=30 --max-cycles="$MAXC" --source-type=web --source="$WORK/web" --archive="$WORK/archive" --state="$STATE"
            --ref="$REF" --council-lean="$LEAN" --turnout="$TURN" --enrolment="$ENR" --places="$PLACES" --out="$WORK/forecast-night.json")
 if [ "$DRY" = 1 ]; then

@@ -92,8 +92,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `backlog/journal-2026-11-05-election-night.md` (moved verbatim 6 Nov); plan `plans/election-night-booth-model.md`. Runbook:
   `gh release download forecast-latest -p night-state-vic-2026.rds -D <dir>`, then the fetcher and loop exactly as written
   under NIGHT SOURCE ("THE NIGHT COMMAND"; the feed-era three-flag command that stood here stops on `NW9!`). Live page https://inthegame.blog/politics/live
-  (find my seat live, #166 closed 5 Nov). OPEN, in order:
-  1-2. DONE: Pete checked the live page at 390 px on 18 Nov, "Looks good!" (the rest done 16 Nov, journal).
+  (find my seat live, #166 closed 5 Nov). OPEN, in order (1-2 done 18 Nov):
   3. Navbar link: BUILT 18 Nov on inthegame-blog branch `feat/politics-live-nav-2`, PR #1239 (264d638f, Politics menu
      "Victoria 2026: election night live"); 27 Nov a session merges its PR into `dev`, then `dev`→`main`. "Called" rule 0.99 with 10% counted CONFIRMED 17 Nov on the real fed2022/fed2025/vic2022 nights
      (`reviews/night-called-rule-real-nights-2026-11-17.md`): one wrong call, Melbourne fed2025 (a Liberal-flow
@@ -347,16 +346,13 @@ Trigger: the post-election review after 28 Nov, unless an item names its own.
   training. Its skip-if-current cache only helps when base_pred is unchanged, which a model change never is. Options, each a model
   change needing a screen: cap CV at ~5 grouped folds (est. ~5x faster on late targets; changes nrounds), or fit targets in parallel
   processes (memory). Stage 3 (533 s) not yet broken down the same way; time it from its own log before guessing again.
-- Both branches below RECREATED 25 Oct on Pete's yes; by 10 Nov both refs were gone again (commits unreferenced), so
-  RECREATED again 10 Nov at b21fb774 / ae91f62f; PUSHED to origin 15 Nov so the refs cannot vanish again. Same day, the
-  four `worktree-agent-*` branches (6 and 25 Oct, the only copy of the XGB_CLASS_JUR_CAL, OTHERS_SCALE_JUR,
-  SALIENCE_STATE and LEVEL_DEAD_PARTY builds that `prereg-offbranches-1025` tests) were pushed too. Trigger: after 28 Nov.
 - Branch `fed-timing-resume-fixed` (b21fb77, unmerged, NOT through the review gate or `check_like_ci`): fixes
   the federal `PARTY_COR` loop leak (a full fed run simulates every pair with the LAST pair's matrix; dormant
   at published defaults because `AUSPOL_FORECAST_MODE=1` skips the matrix; live for fed with FORECAST_MODE=0),
   adds per-pair timing and an opt-in resume cache (`AUSPOL_FED_RESUME=1`). Ran live: outputs byte-identical.
   Untested: more than one pair, a kill mid-run. `FLOW_SD` has the same loop leak, unfixed (dormant,
-  `AUSPOL_FLOW_SD_BY_SOURCE` default 0). Also `instrument-backtest-fed-timing` (ae91f62), paused.
+  `AUSPOL_FLOW_SD_BY_SOURCE` default 0). Also `instrument-backtest-fed-timing` (ae91f62), paused. Both refs are on
+  origin (checked 22 Nov). Trigger: after 28 Nov.
 - Diagnosed, not built: widening simulated variance for the majors' floor
   seats (`sd_override` into the WA harness); WA personal-vote transfer helps
   Pilbara and hurts WA overall (one seed).
@@ -368,11 +364,6 @@ Trigger: the post-election review after 28 Nov, unless an item names its own.
   to a `predictions-history` release and the previous one is still there. Needs a workflow edit (a session, not the worker).
 
 ## Data and infra
-
-Closed 2026-09-19/20 (DATA-REGISTRY, DECISIONS): poll snapshot + zero-byte
-guard, empty-column dictionary failure, vic2022 VEC-official TCP truth,
-Tasmanian primaries table and state-swing prior rows, district-to-region
-table on the blog page, To Do reminders (9 Nov, HTV row, VEC email).
 
 - OPEN (5 Nov): `output/candidacies.csv` has `elected` NA on all 459 vic2006 rows, so vic2010 gets no departed-member
   or sitting-member flags. Builder FIXED on dev (winners from `vec-2006-vic-tcp-basis.csv`, BC7v; ALP 55, LNP 32, IND 1).

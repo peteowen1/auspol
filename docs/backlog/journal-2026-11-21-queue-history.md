@@ -152,3 +152,11 @@ The third item below was already out of date when moved: the 0.30 spread change 
   files out, then unlink every path in `junctions-<arm>.txt` before removing a worktree.
 - OPEN (Pete's call, asked 22 Nov): One Nation's seat spread is too wide at Victoria's level (`AUSPOL_ONP_CV` 0.365; a walk at 0.30
   moves One Nation 14.9 to 12.7 seats). Census columns add nothing beyond the Senate allocation. `reviews/onp-demographics-and-spread-2026-11-22.md`.
+
+## Branch refs recreated and pushed (moved from the queue 22 Nov, 2:25pm; "Harness and pipeline hygiene")
+
+- Both branches below RECREATED 25 Oct on Pete's yes; by 10 Nov both refs were gone again (commits unreferenced), so
+  RECREATED again 10 Nov at b21fb774 / ae91f62f; PUSHED to origin 15 Nov so the refs cannot vanish again. Same day, the
+  four `worktree-agent-*` branches (6 and 25 Oct, the only copy of the XGB_CLASS_JUR_CAL, OTHERS_SCALE_JUR,
+  SALIENCE_STATE and LEVEL_DEAD_PARTY builds that `prereg-offbranches-1025` tests) were pushed too. Trigger: after 28 Nov.
+  (The branches are `fed-timing-resume-fixed` and `instrument-backtest-fed-timing`; both on origin, checked 22 Nov.)
