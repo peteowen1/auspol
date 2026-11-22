@@ -37,7 +37,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - OPEN, model, found 15 Nov (same review, item A7; each needs Pete before shipping): (1) a standing class whose adjusted
   2022 share is below its statewide fall is clipped to 0 at the base (Kew Other-right still 0%; 123 of 19,616 backtest rows);
   (2) Evelyn's Michelle O'Brien carries Michael O'Brien's "elected" flag (`given_stem()` is two letters, `R/names.R:249`;
-  needs a retrain); (3) TRACED 16 Nov (C1, `SMN1` log line per stage in `fit_seats_full.R`;
+  needs a retrain). SIZED 22 Nov: the only wrong flag of 69 in vic2026 (the other 7 without a full-name match are by-election
+  winners or Will/William Fowles); she is forecast 6.2% (Family First 5.3% there in 2022), 0.26% to win, Vallence 97%, so it
+  cannot move the seat. In past state elections 3 of 1,824 flagged rows join two different people (Jack/Jason O'Brien
+  qld2012, Matthew/Mark Robinson qld2024, Gayle/Gabrielle Williams vic2022); a full-first-name rule must keep the nickname
+  pairs it would otherwise break (Joe/Joseph Kelly, Steve/Stephen McGhie). Stays after 28 Nov; (3) TRACED 16 Nov (C1, `SMN1` log line per stage in `fit_seats_full.R`;
   DECISIONS 2026-11-16): the xgb trees take the minor total 9.32 -> 12.59, and 2.7 of that is the live candidate
   count (`AUSPOL_LIVE_N_CAND=0` gives 9.88). No change: on the 35 published backtests minors are UNDER-called
   (signed -0.69 / -1.47 / -2.66 points per class at 1 / 2 / 3+ candidates; 29 of 35 pairs under on the seat
