@@ -13,7 +13,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (10 Nov: One Nation stands in all 88 seats, so no seat-count conditioning applies; recheck for nsw2027's list); (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 22 Nov, 1:55pm.** main 0.4.195 (PR #263, #264: three switches, all OFF: `AUSPOL_BYELECTION_PERSON`, `AUSPOL_ONP_ALLOC`,
+- **Status 22 Nov, 5:15pm.** main 0.4.196 (PR #265: election-night backup and fetcher retry; PR #263, #264: three switches, all OFF: `AUSPOL_BYELECTION_PERSON`, `AUSPOL_ONP_ALLOC`,
   `AUSPOL_ONP_IN_TRAINING`). Published forecast unchanged today. Two one-shot tasks registered (machine on and logged in, 4 GB free at 1am):
   `auspol-byp-rebuilds` 23 Nov, `auspol-onp-rebuilds` 24 Nov. Dated, a session runs each: 23 Nov score the by-election pair + VEC venues recheck and
   blog booths; 24 Nov score the One Nation arms; 25 Nov final salience snapshot + its on/off walk to Pete; 27 Nov merge inthegame-blog#1262 and the
@@ -53,19 +53,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - SHIPPED 14 Nov, arm SPL (Pete's override, "Build per-side, ship live"): paid SEAT polls lose a lean toward the sponsor's
   side, each side shrunk to zero (`AUSPOL_SEAT_POLL_PAID_LEAN=1`, `plans/prereg-seat-paid-lean-2026-11-14.md`). Backtest
   neutral; live today unchanged (Hawthorn's paid poll is 15 months old). OPEN after 28 Nov: score it on vic2026.
-- OPEN, NIGHT BACKUP (built 22 Nov, 3:35pm; on `dev`, the repo's default branch, so "Run workflow" uses it): if the laptop
-  dies on the night, Actions > "Election-night backup" with key `auspol/night/vic2026.json`, source `web`, index = the results
-  index URL, minutes 330, parallel 2 (the default). It runs THE NIGHT COMMAND on a GitHub runner. PASSED on the 2022 pages, run 44984447331
-  (test key): 2 cycles in 12 min, each uploaded (`NWU3`, the first upload ever made by the night code), 87 of 88 seats, class
-  split identical to the laptop's (`NW23` sd0 0.214, f IND 0.443 OTH 0.226 OTH_RIGHT 0.352). Refresh there is about 4-5 min, not
-  90 s: the VEC site answers the runner with HTTP 999 on 56-74 of 174 pages a fetch, and the fetcher's new retry of failed
-  pages (`VWF6`, 3 rounds) recovers them. The laptop is not blocked (4 back-to-back fetches, 90 s apart, 0 failures, 22 Nov
-  2:38pm). STILL TO DO: (1) 23 Nov, after the venues recheck, and after any change to the candidate or enrolment files or a
-  rebuild that rewrites `minor-candidate-oof-resid-v2.csv`: `bash scripts/publish_night_inputs.sh --upload` (the runner reads
-  those from the `night-inputs` release; its `NBI2` sha1 lines must equal the script's `NBI1`). (2) 25 Nov rehearsal: one
-  `web-2022` run of 45-60 minutes after the laptop's; pass = no snapshot ends in `VWF3!` (the pass above is TWO cycles; at 4
-  in flight the blocks grew from 74 to 174 of 174 pages by the third fetch, so whether 2 holds for hours is not known). UNTESTED: source `web` with the live key (same code path, different key), a full
-  330-minute run (saved files about 3.5 MB a snapshot zipped). The 2026 results page is not up (404, 22 Nov 2:17pm).
+- OPEN, NIGHT BACKUP (built 22 Nov; on `main` 0.4.196, PR #265): if the laptop dies on the night, Actions > "Election-night
+  backup" with key `auspol/night/vic2026.json`, source `web`, index = the results index URL, minutes 330 (parallel 2 is the default).
+  PASSED on the 2022 pages, test key, run 44984447331 (2 cycles; refresh there is 4-5 min because the VEC answers the runner with
+  HTTP 999 and the fetcher retries, `VWF6`). STILL TO DO: (1) 23 Nov after the venues recheck, and after any change to the candidate
+  or enrolment files: `bash scripts/publish_night_inputs.sh --upload` (the runner's `NBI2` sha1 lines must equal the script's `NBI1`);
+  (2) 25 Nov: one `web-2022` run of 45-60 min after the laptop's rehearsal, pass = no snapshot ends in `VWF3!` (whether 2 pages in
+  flight holds for hours is not known). UNTESTED: the live key, a 330-minute run. Detail: `backlog/journal-2026-11-21-queue-history.md`.
 - OPEN, NIGHT SOURCE (before 28 Nov): the VEC REFUSED the feed (11 Nov); the night runs on the VEC WEBSITE
   (`R/vec_web.R`, `scripts/fetch_vec_web_snapshot.R`, `night_cycle(source_type = "web")`, `cand_ref = "copy"`). Still open:
   (1) the 2026 results index URL is only known on the night (the fetcher takes --index); (2) ASSUMED (Pete, 17 Nov;
@@ -85,7 +79,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   NIGHT COMMAND: `bash scripts/night_vic2026.sh <results index URL> <work dir> [--upload] [--every=90]` (fetcher 4 pages at
   a time + loop with every website flag; upload OFF unless `--upload`; a dead fetcher stops the loop, `NV8!`). Rehearsal
   (25 Nov, no `--upload`): add `--dry-2022 --max-cycles=1`. The index must be the page linking every district's result
-  page (2022: `.../2022-state-election-results`; its `/results-by-district` child links none). BRANCH: the laptop runs the night from this checkout on `dev`; `main` (0.4.195) lacks the 22 Nov fetcher retry (`VWF6`) and `--upload-key` until the next PR. UNTESTED: the 2026 index
+  page (2022: `.../2022-state-election-results`; its `/results-by-district` child links none). UNTESTED: the 2026 index
   and page layout, `--upload` to the LIVE key (the test key works from the laptop and from the runner, 22 Nov), a keyboard Ctrl+C. Long-hand commands and findings, verbatim:
   `backlog/journal-2026-11-21-queue-history.md` ("Night source, dry run detail").
 - IN FLIGHT 9 Nov (Pete chose the levers): first-time-independent under-call (70 of 649 single first-timers took 15%+ and
@@ -330,9 +324,10 @@ Trigger: the post-election review after 28 Nov, unless an item names its own.
   still to walk with Pete (questions in the review). Refused arms:
   `prereg-fundamentals-drop-fed-aligned`, `prereg-phantom-minor-vote`.
 
-- **NSW variance / floor seats**: per-cell fat tails already SHIP (`AUSPOL_ERROR_DIST=1`, `scripts/published_flags.R`,
-  17 Oct; excess kurtosis 2.8-18 by class). Pete (26 Oct): first count floor seats (winner under 1%) under the
-  shipped config on all 22; build a seat-level variance multiplier only if they remain.
+- **NSW variance / floor seats**: per-cell fat tails already SHIP (`AUSPOL_ERROR_DIST=1`, 17 Oct). COUNTED 22 Nov (Pete's 26 Oct ask;
+  13 Nov rebuild, 35 elections, 2,931 seats): 21 seats (0.72%) gave the winner under 1%, 19.8% of pooled seat log loss; 16 of 21
+  winners are IND or minor-right, and 99%+ favourites lost 5 of 776, so these are emergence misses, not narrow width (my read; Pete
+  told 22 Nov, no decision asked). Detail: `backlog/journal-2026-11-21-queue-history.md` ("Floor seats"). Trigger: post-election review.
 - **One Nation in Victoria**: polls ~25%, Nepean by-election 24.5%,
   concentration fitted on one election (sa2026). `AUSPOL_ONP_CONC_SD` fixes
   sa2026 but regresses vic2022 (IND coupling); MacKillop's boundary mismatch.
