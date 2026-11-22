@@ -65,3 +65,15 @@ test_that("a seat without census sits at the average, and too little census is n
   expect_null(onp_model_ratio(seats, rep(5, 20), "zz2099", level = 20, fit = fit, census = cen[1:10]))
   expect_error(onp_model_ratio(seats, c(NA, rep(5, 19)), "zz2099", level = 20, fit = fit, census = cen), "missing")
 })
+
+test_that("AUSPOL_ONP_IN_TRAINING takes the two One Nation switches out of the post-xgb list, and only those", {
+  withr::local_envvar(AUSPOL_ONP_NEWSEAT_RULE = "1", AUSPOL_ONP_ORDER = "senate_rank", AUSPOL_ONP_IN_TRAINING = "0")
+  off <- post_xgb_switches()
+  expect_true(all(c("AUSPOL_ONP_NEWSEAT_RULE", "AUSPOL_ONP_ORDER") %in% names(off)))
+  withr::local_envvar(AUSPOL_ONP_IN_TRAINING = "1")
+  on <- post_xgb_switches()
+  expect_false(any(c("AUSPOL_ONP_NEWSEAT_RULE", "AUSPOL_ONP_ORDER") %in% names(on)))
+  expect_identical(on, off[!names(off) %in% c("AUSPOL_ONP_NEWSEAT_RULE", "AUSPOL_ONP_ORDER")])
+  withr::local_envvar(AUSPOL_ONP_IN_TRAINING = "yes")
+  expect_error(onp_in_training(), "must be")
+})

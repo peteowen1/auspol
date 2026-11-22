@@ -51,6 +51,9 @@ post_xgb_switches <- function() {
            AUSPOL_IND_GAP_RESTAND = ind_gap_restand_mode(),
            # the as-at trees were trained on the points-form base
            AUSPOL_SWING_FORM = if (identical(swing_form_mode(), "points")) "0" else swing_form_mode())
+  # AUSPOL_ONP_IN_TRAINING=1: One Nation's allocation is deliberately IN the training base (stage 1 runs it), so
+  # its two switches are not post-xgb under that setting. docs/plans/prereg-onp-direct-model-2026-11-22.md.
+  if (onp_in_training()) cur <- cur[!names(cur) %in% c("AUSPOL_ONP_NEWSEAT_RULE", "AUSPOL_ONP_ORDER")]
   cur[cur != "0"]
 }
 

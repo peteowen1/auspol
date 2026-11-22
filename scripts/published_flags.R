@@ -343,6 +343,9 @@ PUBLISHED_FLAGS <- c(
                                              # (onp_model_ratio(), R/onp_newseat.R), instead of a fixed shape handed out by rank and forced
                                              # to a spread; AUSPOL_ONP_CV is then ignored. Acts only inside the AUSPOL_ONP_NEWSEAT_RULE
                                              # step, so it is post-xgb like that switch. Not scored yet.
+  AUSPOL_ONP_IN_TRAINING     = "0",          # ARM, built 2026-11-22 (prereg-onp-direct-model-2026-11-22.md, Amendment 1): "1" = stage 1 of a
+                                             # rebuild runs One Nation's allocation, so the as-at trees TRAIN on a base that carries it, and
+                                             # post_xgb_switches() drops the two One Nation switches. Needs a full rebuild from stage 1.
   AUSPOL_ONP_NEWSEAT_RULE    = "1",          # SHIPPED 2026-10-26 with AUSPOL_ONP_ORDER=senate_rank (arm B, Pete's call; all 35: -0.0014 SE 0.0015). POST-XGB: stage 1 runs "0". Built 2026-10-25 (plans/prereg-onp-newseat-rule-2026-10-25.md; reviews/onp-newseat-parity-2026-10-25.md): "1" = in seats where One Nation had NO vote at the previous state election, its share is allocated by rank on the earlier federal House (AUSPOL_ONP_ORDER=federal) or Senate (senate_rank) One Nation vote with a time-forward CV, mean kept -- the live forecast's method, now in all seven harnesses (R/onp_newseat.R). Live unchanged at both values (every Victorian seat is such a seat already).
   AUSPOL_ONP_FIX             = "1",
   AUSPOL_ONP_FILL            = "prop",       # TESTING 2026-10-25 "uniform_major" (plans/prereg-onp-fill-uniform-2026-10-25.md): One Nation's seat gap filled by the statewide draw betas, not by size. LIVE ONLY (fit_seats_full.R); no harness has the fill.
