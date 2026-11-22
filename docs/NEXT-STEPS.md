@@ -8,12 +8,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
-- **Status 22 Nov, 5:15pm.** main 0.4.196 (PR #265: election-night backup and fetcher retry; PR #263, #264: three switches, all OFF: `AUSPOL_BYELECTION_PERSON`, `AUSPOL_ONP_ALLOC`,
-  `AUSPOL_ONP_IN_TRAINING`). Published forecast unchanged today. Two one-shot tasks registered (machine on and logged in, 4 GB free at 1am):
-  `auspol-byp-rebuilds` 23 Nov, `auspol-onp-rebuilds` 24 Nov. Dated, a session runs each: 23 Nov score the by-election pair + VEC venues recheck and
-  blog booths; 24 Nov score the One Nation arms; 25 Nov final salience snapshot + its on/off walk to Pete; 27 Nov merge inthegame-blog#1262 and the
-  final benchmark capture (Pete: VPN off). Leftover scratch (junctions inside; unlink before deleting, or `quick_arm.R --clean`):
-  `%TEMP%/auspol-quickarm` (old, no marker file, so the tool refuses it) and `%TEMP%/auspol-quickarm-onm` (today's, via `AUSPOL_QUICK_DIR`).
+- **Status 22 Nov, 10:10pm.** main 0.4.196 (PR #265, election-night backup + fetcher retry). Published forecast unchanged.
+  One-shot tasks `auspol-byp-rebuilds` 23 Nov 1am and `auspol-onp-rebuilds` 24 Nov 1am need 4 GB free (2.2 GB at 10:10pm). Dated: 23 Nov
+  by-election pair score, venues recheck, `publish_night_inputs.sh --upload`, blog booths; 24 Nov One Nation arms; 25 Nov salience walk +
+  both night rehearsals; 27 Nov inthegame-blog#1262 + benchmark capture. Scratch with junctions inside (unlink first, or `quick_arm.R --clean`):
+  `%TEMP%/auspol-quickarm`, `%TEMP%/auspol-quickarm-onm`.
 - OPEN, DATED 23 Nov morning: by-election person rule (`AUSPOL_BYELECTION_PERSON`, off; `plans/prereg-byelection-person-2026-11-22.md`). Task
   `auspol-byp-rebuilds` runs the pair at 1am (commit e5f8ed58; machine on and logged in). On `DONE` in `deciding-runs/20261123-byp-rebuilds/`:
   `Rscript scripts/score_byelection_deswing.R C:/dev/auspol-wt-rb0/output C:/dev/auspol-wt-rb1/output`, then `scripts/compare_rebuild_scores.R`
@@ -364,7 +363,7 @@ Trigger: the post-election review after 28 Nov, unless an item names its own.
 - OPEN (after 28 Nov): 17 remote branches still hold lines not in `main` (18 fully merged ones deleted 21 Nov, Pete's
   yes). Per branch, `git merge-tree --write-tree origin/main origin/<b>` then diff against `main`: keep, land or
   delete with Pete's yes. Only `agent/issue-40-sonnet` adds nothing. Not sized: `dev-2026-10-07-unreviewed`.
-- OPEN (after 28 Nov), poll weighting by type, company and age: CLOSED 4 Nov, not shipping (told Pete; DECISIONS 2026-11-04).
+- OPEN, trigger after 28 Nov: poll weighting by type, company and age, CLOSED 4 Nov, not shipping (told Pete; DECISIONS 2026-11-04).
   All six arms refused on 38 elections (`plans/prereg-poll-lean-2026-11-02.md`). Re-test sponsor lean after vic2026 (the
   first completed election with party-commissioned polls labelled); recheck seat-count conditioning on nsw2027's list. Seat-poll side
   PARKED 5 Nov (`AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
