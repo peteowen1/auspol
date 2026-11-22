@@ -1,3 +1,9 @@
+# auspol 0.4.197
+
+Changes the published forecast.
+
+- **By-election person rule ON** (`AUSPOL_BYELECTION_PERSON="1"`, 23 Nov): a non-major lead candidate who stood at the seat's by-election and lost keeps half that share plus half their own previous general-election vote, instead of the general-election vote alone overwriting the by-election half blend. Its pre-registered rebuild pair passed all four checks (by-election seats' squared error -1463.9, SE 1395.9; still lower without any one election, worst -70.2 without nsw2019; pooled seat log loss 0.3164 -> 0.3125, SE 0.0039), and Pete agreed beforehand that it ships if they did. Almost all of the gain is Murray nsw2019 (Helen Dalton); AEF-7 is slightly worse (+0.0009, SE 0.0006). Live: Werribee moves from Labor (42%) to One Nation (57%). The trees shipped with it are the ones trained with the rule on. `docs/plans/prereg-byelection-person-2026-11-22.md`.
+
 # auspol 0.4.196
 
 No change to the published forecast. Election-night tooling only.

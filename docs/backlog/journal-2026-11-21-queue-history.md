@@ -160,3 +160,35 @@ The third item below was already out of date when moved: the 0.30 spread change 
   four `worktree-agent-*` branches (6 and 25 Oct, the only copy of the XGB_CLASS_JUR_CAL, OTHERS_SCALE_JUR,
   SALIENCE_STATE and LEVEL_DEAD_PARTY builds that `prereg-offbranches-1025` tests) were pushed too. Trigger: after 28 Nov.
   (The branches are `fed-timing-resume-fixed` and `instrument-backtest-fed-timing`; both on origin, checked 22 Nov.)
+
+## Night backup, as first written (moved from the queue 22 Nov, 5:15pm)
+
+- OPEN, NIGHT BACKUP (built 22 Nov, 3:35pm; on `dev`, the repo's default branch, so "Run workflow" uses it): if the laptop
+  dies on the night, Actions > "Election-night backup" with key `auspol/night/vic2026.json`, source `web`, index = the results
+  index URL, minutes 330, parallel 2 (the default). It runs THE NIGHT COMMAND on a GitHub runner. PASSED on the 2022 pages, run 44984447331
+  (test key): 2 cycles in 12 min, each uploaded (`NWU3`, the first upload ever made by the night code), 87 of 88 seats, class
+  split identical to the laptop's (`NW23` sd0 0.214, f IND 0.443 OTH 0.226 OTH_RIGHT 0.352). Refresh there is about 4-5 min, not
+  90 s: the VEC site answers the runner with HTTP 999 on 56-74 of 174 pages a fetch, and the fetcher's new retry of failed
+  pages (`VWF6`, 3 rounds) recovers them. The laptop is not blocked (4 back-to-back fetches, 90 s apart, 0 failures, 22 Nov
+  2:38pm). STILL TO DO: (1) 23 Nov, after the venues recheck, and after any change to the candidate or enrolment files or a
+  rebuild that rewrites `minor-candidate-oof-resid-v2.csv`: `bash scripts/publish_night_inputs.sh --upload` (the runner reads
+  those from the `night-inputs` release; its `NBI2` sha1 lines must equal the script's `NBI1`). (2) 25 Nov rehearsal: one
+  `web-2022` run of 45-60 minutes after the laptop's; pass = no snapshot ends in `VWF3!` (the pass above is TWO cycles; at 4
+  in flight the blocks grew from 74 to 174 of 174 pages by the third fetch, so whether 2 holds for hours is not known). UNTESTED: source `web` with the live key (same code path, different key), a full
+  330-minute run (saved files about 3.5 MB a snapshot zipped). The 2026 results page is not up (404, 22 Nov 2:17pm).
+
+## Floor seats, the count (moved from the queue 22 Nov, 5:15pm)
+
+- **NSW variance / floor seats**: per-cell fat tails already SHIP (`AUSPOL_ERROR_DIST=1`, `scripts/published_flags.R`,
+  17 Oct; excess kurtosis 2.8-18 by class). Pete (26 Oct): first count floor seats (winner under 1%) under the
+  shipped config; build a seat-level variance multiplier only if they remain. COUNTED 22 Nov on the 13 Nov rebuild
+  (newest per-seat files in `output/`, code d938ce2; 35 elections, 2,931 seats; later shipped changes not in it):
+  21 seats (0.72%) gave the winner under 1%, 6 of them 0 of 20,000 sims; they are 19.8% of pooled seat log loss
+  (0.3175 with them, 0.2564 without). 22 of 35 elections have none; qld2017 has 4, fed2013 3. 16 of 21 winners are
+  IND or minor-right (Katter, Palmer, Shooters, new independents), 2 are sitting-IND seats called IND that a major
+  took. Favourites at 99%+ lost 5 of 776 (0.64%), at 95-99% 18 of 849 (2.12%): overall width is not too narrow, so a
+  seat-level variance multiplier is the wrong tool; these are emergence misses (a party or person given no path).
+  NOT told to Pete as a decision yet: my read, his call. List: session scratch `floor-seats.csv`, regenerate from
+  `output/pooled-backtest.csv`'s files (`prob`/`p` < 0.01). Trigger: the post-election review.
+
+The 21 seats: `docs/reviews/floor-seats-2026-11-22.csv` (pair, seat, winner, our call, probability given to the winner).

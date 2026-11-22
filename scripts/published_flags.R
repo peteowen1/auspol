@@ -175,11 +175,11 @@ PUBLISHED_FLAGS <- c(
                                              # replacement ("1") was REFUSED: protest swings revert (Inala, Ipswich West, Upper Hunter), error
                                              # +0.59 on 17 seats. "blend" = half by-election, half general election: error 2.78 -> 2.44 (SE
                                              # 0.24), pooled log loss 0.2945 -> 0.2936. Black 34.2 -> ~38 on ALP (actual 43.0).
-  AUSPOL_BYELECTION_PERSON   = "0",          # OFF, built 2026-11-22 for a live walk only (docs/plans/prereg-byelection-person-2026-11-22.md):
+  AUSPOL_BYELECTION_PERSON   = "1",          # SHIPPED 2026-11-23 (rebuild pair passed all four checks; Pete pre-agreed). Was "0". (docs/plans/prereg-byelection-person-2026-11-22.md):
                                              # a non-major lead candidate who stood at the seat's by-election and lost keeps
                                              # half that share plus half their own previous general-election vote, instead of
                                              # the general-election vote alone overwriting the half blend (Murray nsw2019:
-                                             # Dalton 31.5 at the by-election, 4.2 used, 38.8 polled). Not scored on a rebuild pair.
+                                             # Dalton 31.5 at the by-election, 4.2 used, 38.8 polled). Pair: by-election seats -1463.9 (SE 1395.9), pooled 0.3164 -> 0.3125.
   AUSPOL_BYELECTION_DESWING  = "1",          # SHIPPED 2026-11-19 on Pete's override ("Let's fix it now, please. This is urgent"), BEFORE its
                                              # pre-registered rebuild pair was scored (that pair still runs and is reported; prereg Amendment 2).
                                              # docs/plans/prereg-byelection-deswing-2026-11-19.md: before the half blend,

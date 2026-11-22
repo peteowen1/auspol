@@ -5,7 +5,8 @@
 #   bash scripts/night_vic2026.sh <results index URL> <work dir> [--upload] [--upload-key=KEY] [--every=90] [--max-cycles=N] [--dry-2022] [--parallel=4]
 #
 #   <results index URL>  the VEC page that links EVERY district's result page (2022's was
-#                        .../2022-state-election-results; its /results-by-district child links none)
+#                        .../2022-state-election-results; its /results-by-district child links none), or
+#                        auto (find 2026's on https://www.vec.vic.gov.au/results/state-election-results) / auto:YEAR
 #   <work dir>           snapshots in <work dir>/web, raw archive in /archive, logs and the JSON beside them
 #   --upload             publish each good cycle to the live page's file (auspol/night/vic2026.json). Off by default,
 #                        so a rehearsal can never overwrite the live page.
@@ -21,7 +22,7 @@
 # Run from the repo root. Today's afternoon forecast state is downloaded into <work dir> (never into output/).
 # The fetcher runs in the background and is stopped when the loop ends or this script is interrupted (Ctrl+C).
 set -u
-[ $# -ge 2 ] || { sed -n 2,22p "$0"; exit 2; }
+[ $# -ge 2 ] || { sed -n 2,23p "$0"; exit 2; }
 INDEX="$1"; WORK="$2"; shift 2
 UPLOAD=0; EVERY=90; MAXC=0; DRY=0; PAR=4; LIVE_KEY=auspol/night/vic2026.json; KEY=""
 for a in "$@"; do case "$a" in
@@ -35,6 +36,21 @@ V=external/reference/vec/2026
 REF=output/booths-vic2026-ref.csv; LEAN=output/council-fp-2022.csv; TURN=output/council-district-stats-2022.csv
 ENR=$V/enrolment/enrolment-2026.csv; PLACES=$V/voting-locations/places-2026.csv; CANDS=$V/vec-candidates-2026.csv
 for f in "$REF" "$LEAN" "$TURN" "$ENR" "$PLACES" "$CANDS"; do [ -s "$f" ] || { echo "NV2! missing or empty input: $f"; exit 1; }; done
+
+# auto: the VEC's results landing page links each state election's results page, named inconsistently
+# (2018: /2018-state-election, 2022: /2022-state-election-results), so take the one link that starts with the year.
+# Not found means the page is not up yet: say so and stop, rather than run on a guessed address.
+case "$INDEX" in auto|auto:[0-9][0-9][0-9][0-9])
+  YR=2026; [ "$INDEX" != auto ] && YR="${INDEX#auto:}"
+  LAND=https://www.vec.vic.gov.au/results/state-election-results
+  PAGE=$(curl -fsSL --retry 3 --max-time 60 -A "auspol election-night reader (personal, non-commercial)" "$LAND") \
+    || { echo "NV0! could not read $LAND"; exit 1; }
+  HITS=$(printf '%s' "$PAGE" | grep -oE "href=\"/results/state-election-results/${YR}-[a-z-]*\"" | sort -u | sed -E 's/^href="|"$//g')
+  N=$(printf '%s' "$HITS" | grep -c . || true)
+  [ "$N" = 1 ] || { echo "NV0! $N link(s) on $LAND start with /results/state-election-results/${YR}- (need exactly 1): ${HITS:-none}"; exit 1; }
+  INDEX="https://www.vec.vic.gov.au$HITS"
+  echo "NV0  index found: $INDEX" ;;
+esac
 
 mkdir -p "$WORK/web" "$WORK/archive"
 STATE="$WORK/night-state-vic-2026.rds"

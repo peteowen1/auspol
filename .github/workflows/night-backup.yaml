@@ -33,7 +33,7 @@ on:
         options: ["web-2022", "web", "sample"]
         default: "web-2022"
       index:
-        description: "source web only (ignored otherwise; web-2022 uses the 2022 page): the VEC results page that links every district's result page"
+        description: "source web only (ignored otherwise; web-2022 uses the 2022 page): auto (find it on the VEC results page), or the VEC results page that links every district's result page"
         default: ""
       minutes:
         description: "How long to keep polling, in minutes, 1 to 330 (a larger value is cut to 330)"
@@ -73,7 +73,8 @@ jobs:
           if [ "$SOURCE" != "web" ] && [ "$KEY" = "auspol/night/vic2026.json" ]; then
             echo "::error::source $SOURCE is test data: it may only write the test key, not auspol/night/vic2026.json"; exit 1
           fi
-          if [ "$SOURCE" = "web" ]; then
+          # index "auto": night_vic2026.sh finds the year's page on the VEC results landing page itself (NV0)
+          if [ "$SOURCE" = "web" ] && [ "$INDEX" != "auto" ]; then
             # any VEC host over https: the 2026 results may not sit on www (the address is only known on the night)
             # The HOST is compared, not the whole address: a glob over the URL let https://other.site/x.vec.vic.gov.au/ through.
             # The value is never printed until its host is known to be plain a-z 0-9 . - (a newline in an echoed
