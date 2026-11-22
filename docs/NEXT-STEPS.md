@@ -53,6 +53,18 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - SHIPPED 14 Nov, arm SPL (Pete's override, "Build per-side, ship live"): paid SEAT polls lose a lean toward the sponsor's
   side, each side shrunk to zero (`AUSPOL_SEAT_POLL_PAID_LEAN=1`, `plans/prereg-seat-paid-lean-2026-11-14.md`). Backtest
   neutral; live today unchanged (Hawthorn's paid poll is 15 months old). OPEN after 28 Nov: score it on vic2026.
+- OPEN, NIGHT BACKUP (built 22 Nov, 3:35pm; on `dev`, the repo's default branch, so "Run workflow" uses it): if the laptop
+  dies on the night, Actions > "Election-night backup" with key `auspol/night/vic2026.json`, source `web`, index = the results
+  index URL, minutes 330, parallel 2. It runs THE NIGHT COMMAND on a GitHub runner. PASSED on the 2022 pages, run 44984447331
+  (test key): 2 cycles in 12 min, each uploaded (`NWU3`, the first upload ever made by the night code), 87 of 88 seats, class
+  split identical to the laptop's (`NW23` sd0 0.214, f IND 0.443 OTH 0.226 OTH_RIGHT 0.352). Refresh there is about 4-5 min, not
+  90 s: the VEC site answers the runner with HTTP 999 on 56-74 of 174 pages a fetch, and the fetcher's new retry of failed
+  pages (`VWF6`, 3 rounds) recovers them. The laptop is not blocked (4 back-to-back fetches, 90 s apart, 0 failures, 22 Nov
+  2:38pm). STILL TO DO: (1) 23 Nov, after the venues recheck, and after any change to the candidate or enrolment files or a
+  rebuild that rewrites `minor-candidate-oof-resid-v2.csv`: `bash scripts/publish_night_inputs.sh --upload` (the runner reads
+  those from the `night-inputs` release; its `NBI2` sha1 lines must equal the script's `NBI1`). (2) 25 Nov rehearsal: one
+  `web-2022` run after the laptop's. UNTESTED: source `web` with the live key (same code path, different key), a full
+  330-minute run (saved files about 3.5 MB a snapshot zipped). The 2026 results page is not up (404, 22 Nov 2:17pm).
 - OPEN, NIGHT SOURCE (before 28 Nov): the VEC REFUSED the feed (11 Nov); the night runs on the VEC WEBSITE
   (`R/vec_web.R`, `scripts/fetch_vec_web_snapshot.R`, `night_cycle(source_type = "web")`, `cand_ref = "copy"`). Still open:
   (1) the 2026 results index URL is only known on the night (the fetcher takes --index); (2) ASSUMED (Pete, 17 Nov;

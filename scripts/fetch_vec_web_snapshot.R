@@ -33,7 +33,8 @@ get <- function(u) { Sys.sleep(pause)
 # took 297 s (1.7 s a page), so the night refreshed every 5 minutes. --parallel=1 is the old one-at-a-time path with
 # its pause. Same completeness rule either way: a page without its closing </html> counts as failed.
 par_n <- max(1L, as.integer(flag("parallel", "4")))
-retries <- max(0L, as.integer(flag("retries", "3")))   # retry rounds for the failed pages of a snapshot; 0 = none
+retries <- suppressWarnings(as.integer(flag("retries", "3"))); if (is.na(retries)) stop("VWF1! --retries must be a whole number")
+retries <- max(0L, retries)   # retry rounds for the failed pages of a snapshot; 0 = none
 get_many <- function(urls) {
   if (par_n <= 1L || length(urls) <= 1L) return(vapply(urls, get, character(1), USE.NAMES = FALSE))
   res <- rep(NA_character_, length(urls)); why <- rep("no reply", length(urls))
