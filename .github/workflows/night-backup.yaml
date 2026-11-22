@@ -33,7 +33,7 @@ on:
         options: ["web-2022", "web", "sample"]
         default: "web-2022"
       index:
-        description: "source web only: the VEC results page that links every district's result page"
+        description: "source web only (ignored otherwise; web-2022 uses the 2022 page): the VEC results page that links every district's result page"
         default: ""
       minutes:
         description: "How long to keep polling, in minutes, 1 to 330 (a larger value is cut to 330)"

@@ -35,7 +35,7 @@ get <- function(u) { Sys.sleep(pause)
 par_n <- max(1L, as.integer(flag("parallel", "4")))
 get_many <- function(urls) {
   if (par_n <= 1L || length(urls) <= 1L) return(vapply(urls, get, character(1), USE.NAMES = FALSE))
-  res <- rep(NA_character_, length(urls))
+  res <- rep(NA_character_, length(urls)); why <- rep("no reply", length(urls))
   # multiplex off: with it on, each connection carries up to 10 HTTP/2 streams, so "4" could be 40 pages in flight
   pool <- curl::new_pool(total_con = par_n, host_con = par_n, multiplex = FALSE)
   # GROUPS of N, each run to the end before the next is added. Adding every page at once left the ones waiting for a
@@ -47,10 +47,16 @@ get_many <- function(urls) {
         # an error in here (rawToChar on a body holding a NUL byte) would abort multi_run and the whole --every loop,
         # so it costs that one page instead: NA, then VWF3 and no DONE, as the one-at-a-time path does
         done = function(r) tryCatch({ if (r$status_code == 200L) { s <- rawToChar(r$content); Encoding(s) <- "UTF-8"
-                               if (grepl("</html>", s, fixed = TRUE)) res[k] <<- s } }, error = function(e) NULL),
-        fail = function(e) NULL) })
+                               if (grepl("</html>", s, fixed = TRUE)) res[k] <<- s else why[k] <<- sprintf("HTTP 200 without </html> (%d bytes)", length(r$content))
+                             } else why[k] <<- paste("HTTP", r$status_code) }, error = function(e) why[k] <<- paste("unreadable body:", conditionMessage(e))),
+        fail = function(e) why[k] <<- as.character(e)[1]) })
     curl::multi_run(pool = pool)
   }
+  # WHY a page failed, counted by cause (22 Nov 2026: from a GitHub runner 52-74 of 174 pages failed every snapshot
+  # and the cause had been thrown away, so the log could not say whether it was a block, a timeout or a short page)
+  if (anyNA(res)) { t <- sort(table(why[is.na(res)]), decreasing = TRUE)
+    cat(sprintf("VWF5! %d of %d page(s) failed: %s
+", sum(is.na(res)), length(urls), paste(sprintf("%d x %s", as.integer(t), names(t)), collapse = "; "))) }
   res
 }
 links <- function(h) { l <- regmatches(h, gregexpr('href="[^"#]+"', h))[[1]]; l <- unique(gsub('^href="|"$', "", l))
