@@ -27,6 +27,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - OPEN, DATED 24 Nov morning: One Nation direct model, fair test. Task `auspol-onp-rebuilds` (1am, 3 arms m/r/b, commit f4c3cb1d, about 5 h)
   in `deciding-runs/20261124-onp-rebuilds/`; on `DONE` score m and r against b with `scripts/score_onp_alloc.R`, per
   `plans/prereg-onp-direct-model-2026-11-22.md` Amendment 1 (the 22 Nov screen refused it under untrained trees). Worktrees `-rbm/-rbr/-rbb`.
+- OPEN, needs Pete (22 Nov 8:45pm): the two Lighthouse polls reach the trend at their Wikipedia publication dates (13 and
+  20 Nov), not fieldwork (19 Oct-1 Nov and 2-15 Nov per AusPoll), and the 13 Nov one looks like a repeat of the 19 Oct-1 Nov
+  poll already in (n 1,351 vs 1,289, two parties 1 point apart). Live runs, same seed: re-dating alone moves every party
+  under 0.03 points; dropping the repeat moves One Nation +0.18 points and +0.42 expected seats, no favourite changes.
+  Files: `deciding-runs/20261122-lighthouse-dates/`. Agenda C/Antenna (22 Nov) left out: Bonham does not aggregate it.
 - OPEN, DATED 25 Nov: Victorian search interest is OFF in the live forecast since 19 Nov (`AUSPOL_SALIENCE_LIVE_VIC=0`,
   Pete). After the final snapshot, rerun the on/off walk and take it to Pete before any "1". Done when: he has chosen.
   Evidence: `reviews/market-gaps-vic2026-2026-11-19/README.md` (challengers with the same rise won 2 of 23).
