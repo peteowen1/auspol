@@ -8,11 +8,6 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
-- CLOSED 4 Nov, NOT SHIPPING (told Pete): poll weighting by type, company and age. All six arms refused on 38
-  elections (`plans/prereg-poll-lean-2026-11-02.md`; DECISIONS 2026-11-04). OPEN triggers: (a) MOOT for vic2026
-  (10 Nov: One Nation stands in all 88 seats, so no seat-count conditioning applies; recheck for nsw2027's list); (b) after vic2026, re-test sponsor lean
-  (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
-  `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
 - **Status 22 Nov, 5:15pm.** main 0.4.196 (PR #265: election-night backup and fetcher retry; PR #263, #264: three switches, all OFF: `AUSPOL_BYELECTION_PERSON`, `AUSPOL_ONP_ALLOC`,
   `AUSPOL_ONP_IN_TRAINING`). Published forecast unchanged today. Two one-shot tasks registered (machine on and logged in, 4 GB free at 1am):
   `auspol-byp-rebuilds` 23 Nov, `auspol-onp-rebuilds` 24 Nov. Dated, a session runs each: 23 Nov score the by-election pair + VEC venues recheck and
@@ -369,6 +364,10 @@ Trigger: the post-election review after 28 Nov, unless an item names its own.
 - OPEN (after 28 Nov): 17 remote branches still hold lines not in `main` (18 fully merged ones deleted 21 Nov, Pete's
   yes). Per branch, `git merge-tree --write-tree origin/main origin/<b>` then diff against `main`: keep, land or
   delete with Pete's yes. Only `agent/issue-40-sonnet` adds nothing. Not sized: `dev-2026-10-07-unreviewed`.
+- OPEN (after 28 Nov), poll weighting by type, company and age: CLOSED 4 Nov, not shipping (told Pete; DECISIONS 2026-11-04).
+  All six arms refused on 38 elections (`plans/prereg-poll-lean-2026-11-02.md`). Re-test sponsor lean after vic2026 (the
+  first completed election with party-commissioned polls labelled); recheck seat-count conditioning on nsw2027's list. Seat-poll side
+  PARKED 5 Nov (`AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
 - OPEN (after 28 Nov), #192: keep every published forecast, not one per day. Today R2 has one seat-level file per day
   (`scripts/publish_forecast_history.sh`; a same-day republish replaces it). Done when: each publish adds a dated parquet
   to a `predictions-history` release and the previous one is still there. Needs a workflow edit (a session, not the worker).
@@ -387,7 +386,3 @@ Trigger: the post-election review after 28 Nov, unless an item names its own.
 Still open:
 - OPEN: ITG page: a seat map (regions are in the JSON now), per-seat cards, a forecast-over-time chart.
 
-## Awaiting Pete
-
-Two walks, no decisions (departed-rate answered 29 Oct, census 27 Oct, Box Hill / Ashwood / Glen Waverley 10 Nov;
-DECISIONS): Morwell (F18 walk 1, prediction 3), wa2017 and fed2019 (item (0)).
