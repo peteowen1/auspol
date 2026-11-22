@@ -1,15 +1,22 @@
 # ELECTION-NIGHT BACKUP RUNNER (map #148): break-glass. Nothing starts it on its own. If the laptop running
-# scripts/night_loop.R dies on the night, press "Run workflow" (Actions > Election-night backup) with key
-# auspol/night/vic2026.json and source live; it takes over the same loop here, writing the live file after each new
-# snapshot, until it has run for `minutes` or the job's 6-hour limit. Only one writer at a time: stop the laptop's
-# loop before starting this, and stop this before restarting the laptop.
+# scripts/night_vic2026.sh dies on the night, press "Run workflow" (Actions > Election-night backup) with key
+# auspol/night/vic2026.json, source web, index = the VEC page linking every district's result page, minutes 330, parallel 2.
+# It runs the SAME one command here (the website fetcher plus the night loop), writing the live file after each new
+# snapshot, until it has run for `minutes` or the job's 6-hour limit. Allow about 10 minutes for R setup before the
+# first cycle. Only one writer at a time: stop the laptop's command before starting this, and stop this before
+# restarting the laptop.
 #
-# Tests: source sample (the VEC's public 2026 sample feed, 6 districts, so --allow-unmatched=1) with the default
-# test key, which the live page never reads; view it with ?nightsrc=https://data.inthegame.blog/auspol/night/test-vic2026.json
+# Sources (the VEC refused the results feed on 11 Nov 2026, so the night reads the VEC WEBSITE):
+#   web       the night. Needs `index`. The only source allowed to write the live key.
+#   web-2022  rehearsal on the 2022 result pages (87 districts, Narracan dropped); test key only.
+#   sample    the VEC's public 2026 sample FEED (6 districts); the feed path, kept for its tests; test key only.
+# The test key is never read by the live page; view it with ?nightsrc=https://data.inthegame.blog/auspol/night/test-vic2026.json
 #
 # Inputs it downloads, since none is in git: the night state (forecast-latest release, written by fit_seats_full.R
-# every daily run; polling day's copy is the afternoon forecast), and the 2022 booth and turnout tables (night-inputs
-# release). Source live is NOT BUILT: the VEC feed comes from a SharePoint site with a token, details from 4 Nov.
+# every daily run; polling day's copy is the afternoon forecast), the 2022 booth and turnout tables, and for the web
+# sources night-web-inputs.tar.gz (venues, enrolment, candidates, the One Nation booth lean and the class split's
+# inputs; scripts/publish_night_inputs.sh builds it, and must be rerun when any of them changes), all on the
+# night-inputs release.
 name: Election-night backup
 
 on:
@@ -21,16 +28,24 @@ on:
         options: ["auspol/night/test-vic2026.json", "auspol/night/vic2026.json"]
         default: "auspol/night/test-vic2026.json"
       source:
-        description: "Snapshots: sample (VEC 2026 sample feed, for tests) or live (the VEC feed; not built until access details arrive)"
+        description: "web (the night, VEC website; needs index), web-2022 (rehearsal on the 2022 pages) or sample (VEC 2026 sample feed)"
         type: choice
-        options: ["sample", "live"]
-        default: "sample"
+        options: ["web-2022", "web", "sample"]
+        default: "web-2022"
+      index:
+        description: "source web only (ignored otherwise; web-2022 uses the 2022 page): the VEC results page that links every district's result page"
+        default: ""
       minutes:
         description: "How long to keep polling, in minutes, 1 to 330 (a larger value is cut to 330)"
         default: "10"
       every:
-        description: "Seconds between polls (at least 10)"
-        default: "60"
+        description: "Seconds between fetches of the VEC pages (at least 10; one fetch of 174 pages takes about a minute)"
+        default: "90"
+      parallel:
+        description: "web sources: VEC pages in flight at once. 2 passed from a runner (22 Nov; the VEC blocks some pages with HTTP 999 and the retry recovers them); 4 was blocked outright; 1 took over 9 minutes a fetch"
+        type: choice
+        options: ["1", "2", "4"]
+        default: "2"
 
 # One group per key: a test run never queues ahead of a break-glass run on the live key, and two runs on the same key never
 # write at once (a newer dispatch replaces an older one still queued).
@@ -48,12 +63,28 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - name: Refuse the live key with the sample feed
-        # the sample is test data: it must never reach the file the public page reads
-        if: inputs.source == 'sample' && inputs.key == 'auspol/night/vic2026.json'
+      - name: Refuse the live key with test data, and source web without an index
+        # sample and web-2022 are test data: they must never reach the file the public page reads
+        env:
+          SOURCE: ${{ inputs.source }}
+          KEY: ${{ inputs.key }}
+          INDEX: ${{ inputs.index }}
         run: |
-          echo "::error::source sample may only write the test key, not auspol/night/vic2026.json"
-          exit 1
+          if [ "$SOURCE" != "web" ] && [ "$KEY" = "auspol/night/vic2026.json" ]; then
+            echo "::error::source $SOURCE is test data: it may only write the test key, not auspol/night/vic2026.json"; exit 1
+          fi
+          if [ "$SOURCE" = "web" ]; then
+            # any VEC host over https: the 2026 results may not sit on www (the address is only known on the night)
+            # The HOST is compared, not the whole address: a glob over the URL let https://other.site/x.vec.vic.gov.au/ through.
+            # The value is never printed until its host is known to be plain a-z 0-9 . - (a newline in an echoed
+            # value could write its own ::workflow-command:: line), so the first three refusals say what, not which.
+            case "$INDEX" in *[!!-~]*|"") echo "::error::source web needs index: an https:// address with no spaces or control characters"; exit 1 ;; esac
+            case "$INDEX" in https://*) ;; *) echo "::error::source web needs an https:// index"; exit 1 ;; esac
+            case "$INDEX" in *@*) echo "::error::index must not contain @"; exit 1 ;; esac
+            host="${INDEX#https://}"; host="${host%%/*}"; host="${host%%[?#]*}"; host="${host%%:*}"
+            case "$host" in *[!a-z0-9.-]*) echo "::error::index host has a character outside a-z 0-9 . - (type it in lower case)"; exit 1 ;; esac
+            case "$host" in vec.vic.gov.au|*.vec.vic.gov.au) ;; *) echo "::error::index host '$host' is not a VEC host (vec.vic.gov.au)"; exit 1 ;; esac
+          fi
 
       - uses: r-lib/actions/setup-r@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
         with:
@@ -62,7 +93,7 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
         with:
-          extra-packages: any::devtools, any::jsonlite, any::xml2
+          extra-packages: any::devtools, any::jsonlite, any::xml2, any::curl
           needs: check
 
       - name: Download the night state and the 2022 inputs
@@ -77,8 +108,17 @@ jobs:
           gh release download night-inputs -p booths-vic2026-ref.csv -p council-district-stats-2022.csv -D output --clobber
           # Upper-house booth lean for parties new to a seat (One Nation): optional. Absent from the release, the loop runs
           # without it and says so (NW15!), as the night model did before 30 Oct.
-          gh release download night-inputs -p council-fp-2022.csv -D output --clobber \
-            || echo "::warning::night-inputs has no council-fp-2022.csv: the backup runs WITHOUT the One Nation booth lean"
+          if [ "${{ inputs.source }}" = "sample" ]; then
+            gh release download night-inputs -p council-fp-2022.csv -D output --clobber \
+              || echo "::warning::night-inputs has no council-fp-2022.csv: the backup runs WITHOUT the One Nation booth lean"
+          else
+            # the website night's machine-local inputs, unpacked at their repo paths (scripts/publish_night_inputs.sh).
+            # Required: without them night_vic2026.sh stops (NV2!) or the class split goes off (NW23!).
+            gh release download night-inputs -p night-web-inputs.tar.gz -D . --clobber
+            tar -xzf night-web-inputs.tar.gz
+            echo "NBI2  bundle uploaded $(gh release view night-inputs --json assets -q '.assets[] | select(.name=="night-web-inputs.tar.gz") | .updatedAt')"
+            tar -tzf night-web-inputs.tar.gz | xargs sha1sum | sed 's/^/NBI2  /'
+          fi
           # published_flags.R's startup check (validate_flow_arm) refuses to run without the shipped flow models' manifest;
           # the night never uses the flow models themselves (the night state carries the flows), so the manifest alone is enough.
           # Tag read from the published flags, as forecast.yaml does, so a new flow tag cannot leave this behind
@@ -103,8 +143,7 @@ jobs:
             echo "dir=$dir" >> "$GITHUB_OUTPUT"; echo "allow=1" >> "$GITHUB_OUTPUT"
             ls "$dir" | head -n 5
           else
-            echo "::error::source live is not built yet: the VEC feed fetch needs the SharePoint access details (from 4 Nov)"
-            exit 1
+            echo "website source: night_vic2026.sh fetches its own snapshots"
           fi
 
       - name: Install wrangler
@@ -120,6 +159,10 @@ jobs:
           MINUTES: ${{ inputs.minutes }}
           EVERY: ${{ inputs.every }}
           ALLOW: ${{ steps.src.outputs.allow }}
+          SOURCE: ${{ inputs.source }}
+          INDEX: ${{ inputs.index }}
+          PARALLEL: ${{ inputs.parallel }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -u
           case "$MINUTES" in ''|*[!0-9]*) echo "::error::minutes must be a whole number"; exit 1 ;; esac
@@ -131,16 +174,30 @@ jobs:
           [ "$MINUTES" -le 330 ] || MINUTES=330
           # timeout ends the loop after MINUTES; exit 124 is that planned stop, not a failure (`|| rc=$?`: run steps use bash -e)
           rc=0
-          LEAN=()
-          [ -s output/council-fp-2022.csv ] && LEAN=(--council-lean=output/council-fp-2022.csv)
-          timeout "${MINUTES}m" Rscript scripts/night_loop.R --every="$EVERY" --source="$SRC" --archive=night-archive \
-            --state=output/night-state-vic-2026.rds --ref=output/booths-vic2026-ref.csv \
-            --turnout=output/council-district-stats-2022.csv --out=night-out/vic2026.json \
-            "${LEAN[@]}" --allow-unmatched="${ALLOW:-0}" --upload-key="$KEY" || rc=$?
+          if [ "$SOURCE" = "sample" ]; then
+            LOG=night-archive/night-loop.log
+            LEAN=()
+            [ -s output/council-fp-2022.csv ] && LEAN=(--council-lean=output/council-fp-2022.csv)
+            timeout "${MINUTES}m" Rscript scripts/night_loop.R --every="$EVERY" --source="$SRC" --archive=night-archive \
+              --state=output/night-state-vic-2026.rds --ref=output/booths-vic2026-ref.csv \
+              --turnout=output/council-district-stats-2022.csv --out=night-out/vic2026.json \
+              "${LEAN[@]}" --allow-unmatched="${ALLOW:-0}" --upload-key="$KEY" || rc=$?
+          else
+            # THE NIGHT COMMAND, as on the laptop (it downloads the night state itself, into night-work/).
+            # TERM from timeout reaches the script's trap, which stops the fetcher and the loop.
+            LOG=night-work/archive/night-loop.log
+            DRYARG=()
+            if [ "$SOURCE" = "web-2022" ]; then
+              DRYARG=(--dry-2022)
+              INDEX="https://www.vec.vic.gov.au/results/state-election-results/2022-state-election-results"
+            fi
+            timeout "${MINUTES}m" bash scripts/night_vic2026.sh "$INDEX" night-work --upload-key="$KEY" --every="$EVERY" --parallel="$PARALLEL" "${DRYARG[@]}" || rc=$?
+            echo "--- fetch.log, last lines"; tail -n 5 night-work/fetch.log || true
+          fi
           [ "$rc" -eq 124 ] && { echo "loop stopped after ${MINUTES} minutes, as asked"; rc=0; }
-          grep -E "OK |FAILED|NWU|NWL" night-archive/night-loop.log | tail -n 20 || true
+          grep -E "OK |FAILED|NWU|NWL|NW23|NW24" "$LOG" | tail -n 20 || true
           # the loop logs a failed upload and carries on; a run whose uploads all failed must not look green
-          if ! grep -q "NWU3  uploaded" night-archive/night-loop.log; then echo "::error::no cycle was uploaded"; exit 1; fi
+          if ! grep -q "NWU3  uploaded" "$LOG"; then echo "::error::no cycle was uploaded"; exit 1; fi
           exit $rc
 
       - name: Keep the raw snapshots and the log
@@ -151,5 +208,6 @@ jobs:
           path: |
             night-archive/
             night-out/
+            night-work/
           if-no-files-found: warn
           retention-days: 30

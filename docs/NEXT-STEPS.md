@@ -13,10 +13,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (10 Nov: One Nation stands in all 88 seats, so no seat-count conditioning applies; recheck for nsw2027's list); (b) after vic2026, re-test sponsor lean
   (first completed election with party-commissioned polls labelled). Seat-poll side PARKED 5 Nov (told Pete;
   `AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- **Status 22 Nov, 11:45am.** main 0.4.194 (PR #263: two off switches, `AUSPOL_BYELECTION_PERSON` and `AUSPOL_ONP_ALLOC`; PR #261 night fetcher 4 at a time, PR #262 night launcher + 20 s data
-  registry). 21 Nov 4:30am forecast run green after a 9:30am rerun of 2 timed-out scenario jobs (#196 closed). Dated, a
-  session runs each: (22 Nov rebuild pair scored: de-swing passes, stays on); 23 Nov score the by-election person pair, VEC venues rerun; 25 Nov final salience snapshot + night
-  dress rehearsal; 27 Nov merge inthegame-blog#1262 (ready, reviewed) and the final benchmark capture (Pete: VPN off).
+- **Status 22 Nov, 1:55pm.** main 0.4.195 (PR #263, #264: three switches, all OFF: `AUSPOL_BYELECTION_PERSON`, `AUSPOL_ONP_ALLOC`,
+  `AUSPOL_ONP_IN_TRAINING`). Published forecast unchanged today. Two one-shot tasks registered (machine on and logged in, 4 GB free at 1am):
+  `auspol-byp-rebuilds` 23 Nov, `auspol-onp-rebuilds` 24 Nov. Dated, a session runs each: 23 Nov score the by-election pair + VEC venues recheck and
+  blog booths; 24 Nov score the One Nation arms; 25 Nov final salience snapshot + its on/off walk to Pete; 27 Nov merge inthegame-blog#1262 and the
+  final benchmark capture (Pete: VPN off). Leftover scratch (junctions inside; unlink before deleting, or `quick_arm.R --clean`):
+  `%TEMP%/auspol-quickarm` (old, no marker file, so the tool refuses it) and `%TEMP%/auspol-quickarm-onm` (today's, via `AUSPOL_QUICK_DIR`).
 - OPEN, DATED 23 Nov morning: by-election person rule (`AUSPOL_BYELECTION_PERSON`, off; `plans/prereg-byelection-person-2026-11-22.md`). Task
   `auspol-byp-rebuilds` runs the pair at 1am (commit e5f8ed58; machine on and logged in). On `DONE` in `deciding-runs/20261123-byp-rebuilds/`:
   `Rscript scripts/score_byelection_deswing.R C:/dev/auspol-wt-rb0/output C:/dev/auspol-wt-rb1/output`, then `scripts/compare_rebuild_scores.R`
@@ -51,6 +53,19 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - SHIPPED 14 Nov, arm SPL (Pete's override, "Build per-side, ship live"): paid SEAT polls lose a lean toward the sponsor's
   side, each side shrunk to zero (`AUSPOL_SEAT_POLL_PAID_LEAN=1`, `plans/prereg-seat-paid-lean-2026-11-14.md`). Backtest
   neutral; live today unchanged (Hawthorn's paid poll is 15 months old). OPEN after 28 Nov: score it on vic2026.
+- OPEN, NIGHT BACKUP (built 22 Nov, 3:35pm; on `dev`, the repo's default branch, so "Run workflow" uses it): if the laptop
+  dies on the night, Actions > "Election-night backup" with key `auspol/night/vic2026.json`, source `web`, index = the results
+  index URL, minutes 330, parallel 2 (the default). It runs THE NIGHT COMMAND on a GitHub runner. PASSED on the 2022 pages, run 44984447331
+  (test key): 2 cycles in 12 min, each uploaded (`NWU3`, the first upload ever made by the night code), 87 of 88 seats, class
+  split identical to the laptop's (`NW23` sd0 0.214, f IND 0.443 OTH 0.226 OTH_RIGHT 0.352). Refresh there is about 4-5 min, not
+  90 s: the VEC site answers the runner with HTTP 999 on 56-74 of 174 pages a fetch, and the fetcher's new retry of failed
+  pages (`VWF6`, 3 rounds) recovers them. The laptop is not blocked (4 back-to-back fetches, 90 s apart, 0 failures, 22 Nov
+  2:38pm). STILL TO DO: (1) 23 Nov, after the venues recheck, and after any change to the candidate or enrolment files or a
+  rebuild that rewrites `minor-candidate-oof-resid-v2.csv`: `bash scripts/publish_night_inputs.sh --upload` (the runner reads
+  those from the `night-inputs` release; its `NBI2` sha1 lines must equal the script's `NBI1`). (2) 25 Nov rehearsal: one
+  `web-2022` run of 45-60 minutes after the laptop's; pass = no snapshot ends in `VWF3!` (the pass above is TWO cycles; at 4
+  in flight the blocks grew from 74 to 174 of 174 pages by the third fetch, so whether 2 holds for hours is not known). UNTESTED: source `web` with the live key (same code path, different key), a full
+  330-minute run (saved files about 3.5 MB a snapshot zipped). The 2026 results page is not up (404, 22 Nov 2:17pm).
 - OPEN, NIGHT SOURCE (before 28 Nov): the VEC REFUSED the feed (11 Nov); the night runs on the VEC WEBSITE
   (`R/vec_web.R`, `scripts/fetch_vec_web_snapshot.R`, `night_cycle(source_type = "web")`, `cand_ref = "copy"`). Still open:
   (1) the 2026 results index URL is only known on the night (the fetcher takes --index); (2) ASSUMED (Pete, 17 Nov;
@@ -65,12 +80,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   new list. Rechecked 22 Nov 12:25pm: same file link, same `Last-Modified` (unchanged). STILL TO DO 23 Nov: check the page's "correct as at" line again (compare `Last-Modified` with
   `raw-20261121-1140/headers-xlsx.txt`; rerun only if it moved), then the blog's booths build
   (`C:/dev/inthegame-blog/politics/night-maps/build-booths-2026.py`), which still has 1,851 centres.
-  DRY RUN 21 Nov passed on the 2022 pages (one cycle 68 s, 87 of 88 seats, class split on). ON `main` since 0.4.193, THE
+  DRY RUN 21 Nov passed on the 2022 pages (one cycle 68 s, 87 of 88 seats, class split on); REPEATED 22 Nov 1:44pm on `main` 0.4.195 with
+  the one command: rc 0 in 3 min 5 s, 174 pages for 87 districts, JSON of 88 seats written (312 KB), nothing uploaded; REPEATED 3:37pm on `dev` 044c2c5c with `--upload-key=auspol/night/test-vic2026.json`: rc 0, uploaded (`NWU3`), test file stamped 20261122_153733. ON `main` since 0.4.193, THE
   NIGHT COMMAND: `bash scripts/night_vic2026.sh <results index URL> <work dir> [--upload] [--every=90]` (fetcher 4 pages at
   a time + loop with every website flag; upload OFF unless `--upload`; a dead fetcher stops the loop, `NV8!`). Rehearsal
   (25 Nov, no `--upload`): add `--dry-2022 --max-cycles=1`. The index must be the page linking every district's result
-  page (2022: `.../2022-state-election-results`; its `/results-by-district` child links none). UNTESTED: the 2026 index
-  and page layout, `--upload`, a keyboard Ctrl+C. Long-hand commands and findings, verbatim:
+  page (2022: `.../2022-state-election-results`; its `/results-by-district` child links none). BRANCH: the laptop runs the night from this checkout on `dev`; `main` (0.4.195) lacks the 22 Nov fetcher retry (`VWF6`) and `--upload-key` until the next PR. UNTESTED: the 2026 index
+  and page layout, `--upload` to the LIVE key (the test key works from the laptop and from the runner, 22 Nov), a keyboard Ctrl+C. Long-hand commands and findings, verbatim:
   `backlog/journal-2026-11-21-queue-history.md` ("Night source, dry run detail").
 - IN FLIGHT 9 Nov (Pete chose the levers): first-time-independent under-call (70 of 649 single first-timers took 15%+ and
   we gave them about a third of it; 442 took under 5%, so no blanket lift). Six levers in
@@ -89,8 +105,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `backlog/journal-2026-11-05-election-night.md` (moved verbatim 6 Nov); plan `plans/election-night-booth-model.md`. Runbook:
   `gh release download forecast-latest -p night-state-vic-2026.rds -D <dir>`, then the fetcher and loop exactly as written
   under NIGHT SOURCE ("THE NIGHT COMMAND"; the feed-era three-flag command that stood here stops on `NW9!`). Live page https://inthegame.blog/politics/live
-  (find my seat live, #166 closed 5 Nov). OPEN, in order:
-  1-2. DONE: Pete checked the live page at 390 px on 18 Nov, "Looks good!" (the rest done 16 Nov, journal).
+  (find my seat live, #166 closed 5 Nov). OPEN, in order (1-2 done 18 Nov):
   3. Navbar link: BUILT 18 Nov on inthegame-blog branch `feat/politics-live-nav-2`, PR #1239 (264d638f, Politics menu
      "Victoria 2026: election night live"); 27 Nov a session merges its PR into `dev`, then `dev`→`main`. "Called" rule 0.99 with 10% counted CONFIRMED 17 Nov on the real fed2022/fed2025/vic2022 nights
      (`reviews/night-called-rule-real-nights-2026-11-17.md`): one wrong call, Melbourne fed2025 (a Liberal-flow
@@ -344,16 +359,13 @@ Trigger: the post-election review after 28 Nov, unless an item names its own.
   training. Its skip-if-current cache only helps when base_pred is unchanged, which a model change never is. Options, each a model
   change needing a screen: cap CV at ~5 grouped folds (est. ~5x faster on late targets; changes nrounds), or fit targets in parallel
   processes (memory). Stage 3 (533 s) not yet broken down the same way; time it from its own log before guessing again.
-- Both branches below RECREATED 25 Oct on Pete's yes; by 10 Nov both refs were gone again (commits unreferenced), so
-  RECREATED again 10 Nov at b21fb774 / ae91f62f; PUSHED to origin 15 Nov so the refs cannot vanish again. Same day, the
-  four `worktree-agent-*` branches (6 and 25 Oct, the only copy of the XGB_CLASS_JUR_CAL, OTHERS_SCALE_JUR,
-  SALIENCE_STATE and LEVEL_DEAD_PARTY builds that `prereg-offbranches-1025` tests) were pushed too. Trigger: after 28 Nov.
 - Branch `fed-timing-resume-fixed` (b21fb77, unmerged, NOT through the review gate or `check_like_ci`): fixes
   the federal `PARTY_COR` loop leak (a full fed run simulates every pair with the LAST pair's matrix; dormant
   at published defaults because `AUSPOL_FORECAST_MODE=1` skips the matrix; live for fed with FORECAST_MODE=0),
   adds per-pair timing and an opt-in resume cache (`AUSPOL_FED_RESUME=1`). Ran live: outputs byte-identical.
   Untested: more than one pair, a kill mid-run. `FLOW_SD` has the same loop leak, unfixed (dormant,
-  `AUSPOL_FLOW_SD_BY_SOURCE` default 0). Also `instrument-backtest-fed-timing` (ae91f62), paused.
+  `AUSPOL_FLOW_SD_BY_SOURCE` default 0). Also `instrument-backtest-fed-timing` (ae91f62), paused. Both refs are on
+  origin (checked 22 Nov). Trigger: after 28 Nov.
 - Diagnosed, not built: widening simulated variance for the majors' floor
   seats (`sd_override` into the WA harness); WA personal-vote transfer helps
   Pilbara and hurts WA overall (one seed).
@@ -365,11 +377,6 @@ Trigger: the post-election review after 28 Nov, unless an item names its own.
   to a `predictions-history` release and the previous one is still there. Needs a workflow edit (a session, not the worker).
 
 ## Data and infra
-
-Closed 2026-09-19/20 (DATA-REGISTRY, DECISIONS): poll snapshot + zero-byte
-guard, empty-column dictionary failure, vic2022 VEC-official TCP truth,
-Tasmanian primaries table and state-swing prior rows, district-to-region
-table on the blog page, To Do reminders (9 Nov, HTV row, VEC email).
 
 - OPEN (5 Nov): `output/candidacies.csv` has `elected` NA on all 459 vic2006 rows, so vic2010 gets no departed-member
   or sitting-member flags. Builder FIXED on dev (winners from `vec-2006-vic-tcp-basis.csv`, BC7v; ALP 55, LNP 32, IND 1).
