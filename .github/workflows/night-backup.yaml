@@ -79,6 +79,7 @@ jobs:
             case "$INDEX" in https://*) ;; *) echo "::error::source web needs an https:// index (got '$INDEX')"; exit 1 ;; esac
             case "$INDEX" in *@*) echo "::error::index must not contain @"; exit 1 ;; esac
             host="${INDEX#https://}"; host="${host%%/*}"; host="${host%%[?#]*}"; host="${host%%:*}"
+            case "$host" in *[!a-z0-9.-]*) echo "::error::index host '$host' has a character outside a-z 0-9 . - (type it in lower case)"; exit 1 ;; esac
             case "$host" in vec.vic.gov.au|*.vec.vic.gov.au) ;; *) echo "::error::index host '$host' is not a VEC host (vec.vic.gov.au)"; exit 1 ;; esac
           fi
 
