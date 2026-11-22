@@ -65,7 +65,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   new list. Rechecked 22 Nov 12:25pm: same file link, same `Last-Modified` (unchanged). STILL TO DO 23 Nov: check the page's "correct as at" line again (compare `Last-Modified` with
   `raw-20261121-1140/headers-xlsx.txt`; rerun only if it moved), then the blog's booths build
   (`C:/dev/inthegame-blog/politics/night-maps/build-booths-2026.py`), which still has 1,851 centres.
-  DRY RUN 21 Nov passed on the 2022 pages (one cycle 68 s, 87 of 88 seats, class split on). ON `main` since 0.4.193, THE
+  DRY RUN 21 Nov passed on the 2022 pages (one cycle 68 s, 87 of 88 seats, class split on); REPEATED 22 Nov 1:44pm on `main` 0.4.195 with
+  the one command: rc 0 in 3 min 5 s, 174 pages for 87 districts, JSON of 88 seats written (312 KB), nothing uploaded. ON `main` since 0.4.193, THE
   NIGHT COMMAND: `bash scripts/night_vic2026.sh <results index URL> <work dir> [--upload] [--every=90]` (fetcher 4 pages at
   a time + loop with every website flag; upload OFF unless `--upload`; a dead fetcher stops the loop, `NV8!`). Rehearsal
   (25 Nov, no `--upload`): add `--dry-2022 --max-cycles=1`. The index must be the page linking every district's result
