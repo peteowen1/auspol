@@ -300,6 +300,10 @@ CLASSIFY <- list(
   AUSPOL_SEAT_POLL_HEAVY_TAIL = paste(
     "ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
     "reach). plans/prereg-seat-poll-heavy-tail-2026-10-18.md"),
+  AUSPOL_SEAT_POLL_MRP_PATTERN = paste(
+    "SHIPPED 2026-11-23 (Pete, on the AEF-7 screen), UNIVERSAL via R/: read inside R/seat_poll_blend.R (re-centring,",
+    "MRP half-life, mrp_extra.csv), which every harness and fit_seats_full.R reach; the live election's anchor is applied in",
+    "seat_poll_blend_apply() from the frozen table. plans/prereg-mrp-seat-pattern-2026-11-23.md"),
   AUSPOL_SEAT_POLL_CORRECTIONS = paste(
     "SHIPPED 2026-10-18 (data fix), UNIVERSAL via R/: read inside R/seat_poll_blend.R's seat-poll reader, which every harness",
     "and fit_seats_full.R reach."),

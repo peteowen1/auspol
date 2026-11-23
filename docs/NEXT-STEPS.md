@@ -8,12 +8,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
-- **Status 23 Nov, 6pm.** main 0.4.200. Live (5:37pm): by-election person rule ON, One Nation MODELLED allocation ON (Pete's
-  override of its refusal), final_twos in the forecast file. Search interest off for the election. Dated: 25 Nov both night rehearsals +
-  the night runner's live final-two split (Pete said build it, 23 Nov); 26 Nov venues recheck; 27 Nov inthegame-blog#1262 + benchmark capture.
+- **Status 23 Nov, 8pm.** main 0.4.201 (PR #271 merged: final_twos in the night file, 2022 replay 88 seats OK). Live (5:37pm): by-election
+  person rule ON, One Nation MODELLED allocation ON (Pete's override), final_twos in the forecast file. Search interest off. Dated: 25 Nov
+  both night rehearsals (check the night file's final_twos on the test key); 26 Nov venues recheck; 27 Nov inthegame-blog#1262 + benchmark capture.
   Rebuild worktrees `C:/dev/auspol-wt-rb0`, `-rb1`, `-rbm`, `-rbr`, `-rbb` (junction lists in their deciding-runs folders): unlink before removing.
-- OPEN, after 28 Nov: One Nation allocation. The modelled version was REFUSED 23 Nov (DECISIONS); training the trees on the
-  rank rule cut One Nation's cell error 5% but hurt sa2026 and pooled log loss. Score both on vic2026 once results are in.
+- OPEN, after 28 Nov: One Nation allocation. The modelled version is LIVE on Pete's override of its refusal (23 Nov, DECISIONS);
+  the rank rule with retrained trees stays off. Score both on vic2026 once results are in.
 - OPEN, 15 Nov full review (`reviews/FABLE-FULL-REVIEW-2026-11-15.md`, "Pick up from here" is the work list; DECISIONS
   2026-11-15). A1-A6, B1 shipped (seen live 17 Nov); C1 traced 16 Nov (item below). PARKED, trigger after 28 Nov
   (checked 21 Nov): C2 score the 14-day forecast (days), C3 validation stages off the publish path (edits the publish
@@ -43,8 +43,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   neutral; live today unchanged (Hawthorn's paid poll is 15 months old). OPEN after 28 Nov: score it on vic2026.
 - OPEN, DATED 23 Nov and 25 Nov, NIGHT BACKUP (on `main` 0.4.196, PR #265): if the laptop dies on the night, Actions >
   "Election-night backup", key `auspol/night/vic2026.json`, source `web`, index = the results index URL, minutes 330. Passed on the
-  2022 pages (run 44984447331, 2 cycles, 4-5 min refresh). TO DO: 23 Nov after the venues recheck (and after any candidate or
-  enrolment file change) `bash scripts/publish_night_inputs.sh --upload`; 25 Nov one `web-2022` run of 45-60 min, pass = no snapshot
+  2022 pages (run 44984447331, 2 cycles, 4-5 min refresh). TO DO: after the 26 Nov venues recheck, if any bundled file changed,
+  `bash scripts/publish_night_inputs.sh --upload` (23 Nov 8:45pm: the uploaded bundle matches all 18 local files); 25 Nov one `web-2022` run of 45-60 min, pass = no snapshot
   ends in `VWF3!`. Done when: both are run. UNTESTED: the live key, a 330-minute run. Detail: `backlog/journal-2026-11-21-queue-history.md`.
 - OPEN, NIGHT SOURCE (before 28 Nov): the VEC REFUSED the feed (11 Nov); the night runs on the VEC WEBSITE
   (`R/vec_web.R`, `scripts/fetch_vec_web_snapshot.R`, `night_cycle(source_type = "web")`, `cand_ref = "copy"`). Still open:
@@ -286,6 +286,14 @@ Verbatim in `backlog/journal-2026-09-27-to-10-05.md` (handover detail in `HANDOV
 is folded into the sections below (Model open, Hygiene, Data and infra); nothing live is left only in the journal.
 
 ## Dated, cannot move
+
+- **24 Nov, first daily run after the MRP pattern ships** (`AUSPOL_SEAT_POLL_MRP_PATTERN=1`, 23 Nov): read the run's
+  log for `SPMA vic2026 ... 351 cells` and `SPPB vic2026 ... over 353 cells`. Without `SPMA`, the shipped
+  `seat-poll-blend-vic2026.csv`'s seat deviations were blended as levels: re-upload the arm-off copy (byte-identical
+  backup of the 23 Nov asset in the session scratchpad; rebuild with `blendtab2.R` from `auspol-wt-rbm` inputs otherwise).
+- **After 28 Nov: the 35-election deciding run for the MRP pattern**, which Pete chose to ship without
+  (`deciding_run.ps1 -Arm "AUSPOL_SEAT_POLL_MRP_PATTERN=1" -Base "AUSPOL_SEAT_POLL_MRP_PATTERN=0"`). The baseline must pin
+  the switch off now that it ships. Record the result in `plans/prereg-mrp-seat-pattern-2026-11-23.md`.
 
 - **28 Nov, once vic2026 has votes in `candidacies.csv`**: set `MC_LIVE_EL=""` in `rebuild_forecasts.sh` (the live
   bucket split row, SHIPPED 10 Nov; the fit stops with `MC0!` otherwise).
