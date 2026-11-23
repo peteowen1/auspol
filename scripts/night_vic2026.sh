@@ -23,7 +23,7 @@
 # Run from the repo root. Today's afternoon forecast state is downloaded into <work dir> (never into output/).
 # The fetcher runs in the background and is stopped when the loop ends or this script is interrupted (Ctrl+C).
 set -u
-[ $# -ge 2 ] || { sed -n 2,23p "$0"; exit 2; }
+[ $# -ge 2 ] || { sed -n 2,24p "$0"; exit 2; }
 INDEX="$1"; WORK="$2"; shift 2
 UPLOAD=0; EVERY=90; MAXC=0; DRY=0; PAR=4; LIVE_KEY=auspol/night/vic2026.json; KEY=""; RETRIES=3; RPAUSE=5,15,30
 for a in "$@"; do case "$a" in
