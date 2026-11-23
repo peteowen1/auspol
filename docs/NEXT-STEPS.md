@@ -291,6 +291,19 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
   Points would mean seat deviations blended as levels: roll back with
   `deciding-runs/20261123-mrp-pattern/shipped-before-mrp-seat-poll-blend-vic2026.csv`. `FJ9!` naming the switch is expected
   until the next rebuild. Done when: the 24 Nov scheduled run passes this. Detail: DECISIONS 2026-11-23.
+  PASSED on the 24 Nov 4:30am run (45228420242): blend step ALP 23.55 -> 23.47, LNP 30.36 -> 30.40, ONP 20.50 -> 20.58;
+  `SPM4 ... 351 cells kept, 0 dropped`. The ~9:20am run only needs the same glance.
+- OPEN, NEEDS PETE (found 24 Nov 7:40am): the per-seat flow model sends preferences TOWARD One Nation in One Nation
+  contests, against the cards and the one election that measured it. Live night state (forecast-latest), median over 88
+  seats against the pooled table: Labor between Liberal and One Nation 55.1% to Liberal (pooled 65.5; sa2026 actual 71.5 on
+  2 seats, all 6 rows 63.4); Liberal between Labor and One Nation 26.1% to Labor (pooled 31.8; actual 32.4 on 14 rows, 11
+  of them sa2026); Greens between Labor and One Nation 70.9% to Labor (pooled 80.4; actual 79.9 on 12 rows, all sa2026).
+  Labor's registered Ripon card numbers One Nation LAST (12 of 12, Liberals 8 and 9;
+  `external/reference/htv/raw/vic2026/vec-cards-2026-11-24/`). SIZED: the whole flow model off (pooled table everywhere)
+  moves One Nation 14.9 -> 9.7 expected seats, Labor 25.6 -> 30.7, Coalition flat (local live fit, files in the session
+  scratchpad). But that arm changes EVERY key, and it is worse on the backtest: quick_arm sa2026/qld2024/fed2025 at 1,000
+  sims, log loss 0.2746 -> 0.2823 (+0.0078, SE 0.0062), worse on all three. So the fix, if any, is a targeted arm on the
+  three One Nation keys only (prereg, all harnesses), not turning the model off.
 - **After 28 Nov: the 35-election deciding run for the MRP pattern**, which Pete chose to ship without
   (`deciding_run.ps1 -Arm "AUSPOL_SEAT_POLL_MRP_PATTERN=1" -Base "AUSPOL_SEAT_POLL_MRP_PATTERN=0"`). The baseline must pin
   the switch off now that it ships. Record the result in `plans/prereg-mrp-seat-pattern-2026-11-23.md`.

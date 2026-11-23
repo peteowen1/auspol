@@ -1,0 +1,453 @@
+district,call_class,prob
+Albert Park,ALP,0.51685
+Albert Park,GRN,0.32455
+Albert Park,LNP,0.1526
+Albert Park,ONP,0.0042
+Albert Park,IND,0.0018
+Ashwood,ALP,0.5278
+Ashwood,LNP,0.456
+Ashwood,GRN,0.0138
+Ashwood,ONP,0.00205
+Ashwood,OTH_RIGHT,0.00035
+Bass,LNP,0.6778
+Bass,ONP,0.31665
+Bass,OTH_RIGHT,0.00285
+Bass,ALP,0.0025
+Bass,GRN,2e-04
+Bayswater,LNP,0.8334
+Bayswater,ALP,0.10455
+Bayswater,ONP,0.05795
+Bayswater,GRN,0.00295
+Bayswater,OTH_RIGHT,0.00115
+Bellarine,LNP,0.66505
+Bellarine,ALP,0.28545
+Bellarine,ONP,0.0445
+Bellarine,GRN,0.005
+Benambra,LNP,0.79055
+Benambra,ONP,0.20575
+Benambra,OTH_RIGHT,0.00265
+Benambra,IND,0.00105
+Bendigo East,ONP,0.57525
+Bendigo East,LNP,0.3624
+Bendigo East,ALP,0.05675
+Bendigo East,OTH_RIGHT,0.003
+Bendigo East,GRN,0.00215
+Bendigo East,IND,0.00045
+Bendigo West,ONP,0.4828
+Bendigo West,LNP,0.28635
+Bendigo West,ALP,0.2165
+Bendigo West,GRN,0.01065
+Bendigo West,OTH_RIGHT,0.0036
+Bendigo West,OTH,1e-04
+Bentleigh,LNP,0.51455
+Bentleigh,ALP,0.4735
+Bentleigh,ONP,0.00885
+Bentleigh,GRN,0.0026
+Bentleigh,OTH_RIGHT,5e-04
+Berwick,LNP,0.9215
+Berwick,ONP,0.0583
+Berwick,ALP,0.0142
+Berwick,OTH_RIGHT,0.00475
+Berwick,GRN,0.00125
+Box Hill,ALP,0.7145
+Box Hill,LNP,0.25645
+Box Hill,GRN,0.0246
+Box Hill,ONP,0.00285
+Box Hill,OTH_RIGHT,0.0016
+Brighton,LNP,0.99285
+Brighton,GRN,0.0052
+Brighton,ALP,0.0017
+Brighton,ONP,2e-04
+Brighton,OTH_RIGHT,5e-05
+Broadmeadows,ALP,0.742
+Broadmeadows,ONP,0.14225
+Broadmeadows,LNP,0.1031
+Broadmeadows,GRN,0.00705
+Broadmeadows,OTH_RIGHT,0.00335
+Broadmeadows,OTH,0.00205
+Broadmeadows,IND,2e-04
+Brunswick,GRN,0.9915
+Brunswick,ALP,0.0069
+Brunswick,LNP,0.00065
+Brunswick,OTH,5e-04
+Brunswick,ONP,4e-04
+Brunswick,IND,5e-05
+Bulleen,LNP,0.9907
+Bulleen,ALP,0.00545
+Bulleen,GRN,0.0025
+Bulleen,ONP,0.00115
+Bulleen,OTH_RIGHT,0.00015
+Bulleen,IND,5e-05
+Bundoora,ALP,0.789
+Bundoora,LNP,0.15825
+Bundoora,ONP,0.0393
+Bundoora,GRN,0.01015
+Bundoora,OTH_RIGHT,0.0033
+Carrum,ALP,0.3528
+Carrum,LNP,0.34725
+Carrum,ONP,0.2968
+Carrum,OTH_RIGHT,0.0024
+Carrum,GRN,0.00075
+Caulfield,LNP,0.9871
+Caulfield,GRN,0.00895
+Caulfield,ALP,0.00355
+Caulfield,ONP,2e-04
+Caulfield,OTH_RIGHT,0.00015
+Caulfield,IND,5e-05
+Clarinda,ALP,0.7688
+Clarinda,LNP,0.19755
+Clarinda,ONP,0.0281
+Clarinda,OTH_RIGHT,0.0029
+Clarinda,GRN,0.0018
+Clarinda,IND,0.00085
+Cranbourne,ALP,0.4925
+Cranbourne,ONP,0.427
+Cranbourne,LNP,0.0716
+Cranbourne,OTH_RIGHT,0.0087
+Cranbourne,GRN,2e-04
+Croydon,LNP,0.94925
+Croydon,ONP,0.02555
+Croydon,ALP,0.01875
+Croydon,OTH_RIGHT,0.00325
+Croydon,GRN,0.0032
+Dandenong,ALP,0.9768
+Dandenong,ONP,0.01385
+Dandenong,OTH_RIGHT,0.0047
+Dandenong,LNP,0.0044
+Dandenong,GRN,0.00025
+Eildon,LNP,0.8877
+Eildon,ONP,0.1114
+Eildon,OTH_RIGHT,7e-04
+Eildon,ALP,1e-04
+Eildon,GRN,1e-04
+Eltham,ALP,0.52285
+Eltham,LNP,0.44815
+Eltham,ONP,0.0215
+Eltham,GRN,0.00695
+Eltham,OTH_RIGHT,0.00055
+Essendon,LNP,0.41655
+Essendon,ALP,0.40065
+Essendon,GRN,0.112
+Essendon,ONP,0.05195
+Essendon,IND,0.01885
+Eureka,ONP,0.73005
+Eureka,LNP,0.24185
+Eureka,ALP,0.02075
+Eureka,IND,0.00365
+Eureka,OTH_RIGHT,0.00265
+Eureka,GRN,0.00105
+Euroa,LNP,0.6881
+Euroa,ONP,0.31115
+Euroa,OTH_RIGHT,0.00075
+Evelyn,LNP,0.97655
+Evelyn,ONP,0.02005
+Evelyn,OTH_RIGHT,0.00195
+Evelyn,ALP,0.0012
+Evelyn,GRN,0.00025
+Footscray,ALP,0.51495
+Footscray,GRN,0.46775
+Footscray,IND,0.01205
+Footscray,ONP,0.00235
+Footscray,LNP,0.00125
+Footscray,OTH_RIGHT,0.00125
+Footscray,OTH,4e-04
+Frankston,LNP,0.4562
+Frankston,ALP,0.29885
+Frankston,ONP,0.23275
+Frankston,GRN,0.00875
+Frankston,OTH_RIGHT,0.0034
+Frankston,IND,5e-05
+Geelong,ALP,0.6431
+Geelong,LNP,0.20535
+Geelong,ONP,0.1191
+Geelong,GRN,0.0297
+Geelong,OTH_RIGHT,0.00275
+Gippsland East,LNP,0.78335
+Gippsland East,ONP,0.21585
+Gippsland East,OTH_RIGHT,8e-04
+Gippsland South,LNP,0.74815
+Gippsland South,ONP,0.25185
+Glen Waverley,LNP,0.72785
+Glen Waverley,ALP,0.265
+Glen Waverley,GRN,0.0028
+Glen Waverley,ONP,0.00265
+Glen Waverley,OTH_RIGHT,0.0017
+Greenvale,ALP,0.4628
+Greenvale,LNP,0.33015
+Greenvale,ONP,0.1963
+Greenvale,OTH_RIGHT,0.00795
+Greenvale,GRN,0.00175
+Greenvale,IND,0.00105
+Hastings,LNP,0.5781
+Hastings,ONP,0.41095
+Hastings,ALP,0.01005
+Hastings,GRN,9e-04
+Hawthorn,LNP,0.98395
+Hawthorn,GRN,0.007
+Hawthorn,IND,0.00555
+Hawthorn,ALP,0.00335
+Hawthorn,ONP,1e-04
+Hawthorn,OTH_RIGHT,5e-05
+Ivanhoe,ALP,0.80475
+Ivanhoe,LNP,0.0971
+Ivanhoe,GRN,0.0908
+Ivanhoe,ONP,0.0062
+Ivanhoe,OTH_RIGHT,0.00115
+Kalkallo,ALP,0.87725
+Kalkallo,ONP,0.06725
+Kalkallo,LNP,0.052
+Kalkallo,OTH_RIGHT,0.00335
+Kalkallo,GRN,0.00015
+Kew,LNP,0.97865
+Kew,IND,0.02095
+Kew,ALP,2e-04
+Kew,GRN,2e-04
+Kororoit,ALP,0.4695
+Kororoit,ONP,0.2712
+Kororoit,LNP,0.24965
+Kororoit,OTH_RIGHT,0.00695
+Kororoit,GRN,0.0025
+Kororoit,OTH,2e-04
+Lara,ALP,0.494
+Lara,ONP,0.4739
+Lara,LNP,0.02615
+Lara,GRN,0.0036
+Lara,OTH_RIGHT,0.00235
+Laverton,ALP,0.9615
+Laverton,ONP,0.0185
+Laverton,LNP,0.0085
+Laverton,GRN,0.00685
+Laverton,OTH_RIGHT,0.0038
+Laverton,OTH,0.00085
+Lowan,LNP,0.8683
+Lowan,ONP,0.13165
+Lowan,OTH_RIGHT,5e-05
+Macedon,ONP,0.4363
+Macedon,LNP,0.3358
+Macedon,ALP,0.1674
+Macedon,IND,0.0468
+Macedon,GRN,0.01135
+Macedon,OTH_RIGHT,0.00235
+Malvern,LNP,0.98785
+Malvern,GRN,0.0092
+Malvern,ALP,0.0026
+Malvern,ONP,2e-04
+Malvern,OTH_RIGHT,1e-04
+Malvern,IND,5e-05
+Melbourne,GRN,0.99365
+Melbourne,ALP,0.0042
+Melbourne,LNP,0.0019
+Melbourne,ONP,0.00015
+Melbourne,OTH,5e-05
+Melbourne,OTH_RIGHT,5e-05
+Melton,ONP,0.58705
+Melton,LNP,0.38015
+Melton,ALP,0.0271
+Melton,OTH_RIGHT,0.0046
+Melton,GRN,0.001
+Melton,IND,1e-04
+Mildura,LNP,0.91655
+Mildura,ONP,0.0834
+Mildura,OTH_RIGHT,5e-05
+Mill Park,ONP,0.4146
+Mill Park,LNP,0.3845
+Mill Park,ALP,0.19265
+Mill Park,OTH_RIGHT,0.00425
+Mill Park,GRN,0.00215
+Mill Park,IND,0.00185
+Monbulk,LNP,0.551
+Monbulk,ALP,0.24
+Monbulk,ONP,0.17565
+Monbulk,GRN,0.03055
+Monbulk,OTH_RIGHT,0.0028
+Mordialloc,ALP,0.59115
+Mordialloc,LNP,0.3743
+Mordialloc,ONP,0.0296
+Mordialloc,GRN,0.00305
+Mordialloc,OTH_RIGHT,0.0019
+Mornington,LNP,0.9906
+Mornington,ONP,0.0046
+Mornington,IND,0.0041
+Mornington,GRN,0.00045
+Mornington,ALP,0.00025
+Morwell,ONP,0.7289
+Morwell,LNP,0.2706
+Morwell,ALP,0.00025
+Morwell,OTH_RIGHT,0.00025
+Mulgrave,ALP,0.93405
+Mulgrave,IND,0.02475
+Mulgrave,LNP,0.02125
+Mulgrave,ONP,0.01635
+Mulgrave,OTH_RIGHT,0.0031
+Mulgrave,GRN,5e-04
+Murray Plains,LNP,0.5703
+Murray Plains,ONP,0.4292
+Murray Plains,OTH_RIGHT,5e-04
+Narracan,ONP,0.6217
+Narracan,LNP,0.376
+Narracan,OTH_RIGHT,0.0023
+Narre Warren North,ALP,0.70765
+Narre Warren North,ONP,0.2593
+Narre Warren North,LNP,0.0263
+Narre Warren North,OTH_RIGHT,0.0066
+Narre Warren North,GRN,0.00015
+Narre Warren South,ALP,0.41795
+Narre Warren South,ONP,0.30325
+Narre Warren South,LNP,0.26945
+Narre Warren South,OTH_RIGHT,0.00835
+Narre Warren South,GRN,0.001
+Nepean,LNP,0.9792
+Nepean,ONP,0.0182
+Nepean,ALP,0.0023
+Nepean,GRN,2e-04
+Nepean,OTH_RIGHT,1e-04
+Niddrie,LNP,0.64645
+Niddrie,ALP,0.2654
+Niddrie,ONP,0.08205
+Niddrie,OTH_RIGHT,0.0046
+Niddrie,GRN,0.0015
+Northcote,GRN,0.6683
+Northcote,ALP,0.33
+Northcote,OTH_RIGHT,0.0013
+Northcote,ONP,0.00025
+Northcote,LNP,0.00015
+Oakleigh,ALP,0.94595
+Oakleigh,LNP,0.02455
+Oakleigh,GRN,0.0235
+Oakleigh,ONP,0.005
+Oakleigh,OTH_RIGHT,0.001
+Ovens Valley,LNP,0.8823
+Ovens Valley,ONP,0.11625
+Ovens Valley,OTH_RIGHT,0.00135
+Ovens Valley,ALP,5e-05
+Ovens Valley,GRN,5e-05
+Pakenham,ONP,0.898
+Pakenham,LNP,0.094
+Pakenham,OTH_RIGHT,0.00335
+Pakenham,ALP,0.00325
+Pakenham,IND,0.00115
+Pakenham,GRN,0.00025
+Pascoe Vale,GRN,0.54755
+Pascoe Vale,ALP,0.44115
+Pascoe Vale,LNP,0.00465
+Pascoe Vale,ONP,0.00405
+Pascoe Vale,OTH_RIGHT,0.00215
+Pascoe Vale,OTH,0.00045
+Point Cook,ALP,0.6073
+Point Cook,LNP,0.19615
+Point Cook,ONP,0.18595
+Point Cook,OTH_RIGHT,0.00725
+Point Cook,GRN,0.0033
+Point Cook,OTH,5e-05
+Polwarth,LNP,0.97525
+Polwarth,ONP,0.0193
+Polwarth,GRN,0.00295
+Polwarth,ALP,0.0013
+Polwarth,OTH_RIGHT,0.0012
+Prahran,GRN,0.85255
+Prahran,LNP,0.1401
+Prahran,ALP,0.00575
+Prahran,ONP,0.0015
+Prahran,IND,1e-04
+Preston,ALP,0.83105
+Preston,GRN,0.1204
+Preston,ONP,0.02355
+Preston,IND,0.01055
+Preston,LNP,0.0094
+Preston,OTH_RIGHT,0.00295
+Preston,OTH,0.0021
+Richmond,GRN,0.9872
+Richmond,ALP,0.00905
+Richmond,LNP,0.00345
+Richmond,OTH_RIGHT,0.00015
+Richmond,ONP,1e-04
+Richmond,OTH,5e-05
+Ringwood,LNP,0.5222
+Ringwood,ALP,0.40355
+Ringwood,GRN,0.0525
+Ringwood,ONP,0.015
+Ringwood,OTH_RIGHT,0.0045
+Ringwood,IND,0.00225
+Ripon,ONP,0.76695
+Ripon,LNP,0.2217
+Ripon,OTH_RIGHT,0.0088
+Ripon,ALP,0.00255
+Rowville,LNP,0.95745
+Rowville,ALP,0.02405
+Rowville,ONP,0.01315
+Rowville,OTH_RIGHT,0.00285
+Rowville,GRN,0.0025
+Sandringham,LNP,0.9908
+Sandringham,GRN,0.0057
+Sandringham,ALP,0.0029
+Sandringham,ONP,6e-04
+Shepparton,LNP,0.94225
+Shepparton,ONP,0.0574
+Shepparton,IND,0.00035
+South Barwon,LNP,0.5731
+South Barwon,ALP,0.35075
+South Barwon,ONP,0.05635
+South Barwon,GRN,0.01775
+South Barwon,IND,0.00125
+South Barwon,OTH_RIGHT,8e-04
+South-West Coast,LNP,0.98115
+South-West Coast,ONP,0.01865
+South-West Coast,OTH_RIGHT,0.00015
+South-West Coast,GRN,5e-05
+St Albans,ALP,0.63475
+St Albans,LNP,0.1796
+St Albans,ONP,0.1755
+St Albans,OTH_RIGHT,0.00715
+St Albans,GRN,0.0029
+St Albans,OTH,1e-04
+Sunbury,ONP,0.4794
+Sunbury,LNP,0.4493
+Sunbury,ALP,0.0674
+Sunbury,OTH_RIGHT,0.00285
+Sunbury,GRN,0.001
+Sunbury,OTH,5e-05
+Sydenham,LNP,0.48315
+Sydenham,ONP,0.48115
+Sydenham,ALP,0.0211
+Sydenham,OTH_RIGHT,0.01335
+Sydenham,IND,0.00065
+Sydenham,GRN,0.00055
+Sydenham,OTH,5e-05
+Tarneit,ALP,0.84105
+Tarneit,LNP,0.115
+Tarneit,ONP,0.03965
+Tarneit,OTH_RIGHT,0.0034
+Tarneit,GRN,9e-04
+Thomastown,ALP,0.569
+Thomastown,ONP,0.23865
+Thomastown,LNP,0.1873
+Thomastown,OTH_RIGHT,0.0042
+Thomastown,GRN,0.00085
+Warrandyte,LNP,0.99195
+Warrandyte,ALP,0.00485
+Warrandyte,GRN,0.00175
+Warrandyte,ONP,0.00125
+Warrandyte,OTH_RIGHT,2e-04
+Wendouree,LNP,0.3861
+Wendouree,ONP,0.385
+Wendouree,ALP,0.2242
+Wendouree,OTH_RIGHT,0.0027
+Wendouree,GRN,0.002
+Werribee,ONP,0.48875
+Werribee,LNP,0.25765
+Werribee,ALP,0.24785
+Werribee,GRN,0.00295
+Werribee,OTH_RIGHT,0.0024
+Werribee,IND,3e-04
+Werribee,OTH,1e-04
+Williamstown,ALP,0.75495
+Williamstown,LNP,0.1274
+Williamstown,GRN,0.0642
+Williamstown,ONP,0.04275
+Williamstown,IND,0.00625
+Williamstown,OTH_RIGHT,0.00445
+Yan Yean,LNP,0.69995
+Yan Yean,ONP,0.20525
+Yan Yean,ALP,0.0915
+Yan Yean,OTH_RIGHT,0.00215
+Yan Yean,GRN,0.00115
