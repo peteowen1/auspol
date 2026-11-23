@@ -233,3 +233,47 @@ where that switch defaults to "0", so all three arms now set `AUSPOL_BYELECTION_
 what ships, and the comparison is unchanged in kind (it touches by-election restanders, not One Nation's allocation).
 Pete asked (22 Nov, 10:30pm) to run this test overnight rather than on 24 Nov; it starts 23 Nov about 9:15am instead.
 The original clauses above are unedited.
+
+## Ship steps if arm m passes (written 23 Nov 3:40pm, before scoring; Pete: ships if it passes)
+
+1. Score: `Rscript scripts/score_onp_alloc.R C:/dev/auspol-wt-rbb/output C:/dev/auspol-wt-rbm/output`, the same for `-rbr`,
+   then `Rscript scripts/compare_rebuild_scores.R C:/dev/auspol-wt-rbb/output/pooled-backtest.csv C:/dev/auspol-wt-rbm/output/pooled-backtest.csv`.
+   Check criterion 1 first (`ONT1` in `deciding-runs/20261124-onp-rebuilds/rebuild-m.log`, `ONM1` in the stage-1 and stage-6 logs, `OAS1`).
+2. On a pass, in one commit: `AUSPOL_ONP_ALLOC = "model"` and `AUSPOL_ONP_IN_TRAINING = "1"` in `scripts/published_flags.R`;
+   the inline defaults in `R/onp_newseat.R:399` ("rank" -> "model") and `:510` ("0" -> "1"); `scripts/rebuild_forecasts.sh:306`
+   reads `${AUSPOL_ONP_IN_TRAINING:-0}` (flip to `:-1`); regenerate `docs/MODEL-REGISTRY.md`; NEWS; this file's RESULT.
+3. `check_like_ci.R`, one Sonnet review, PR, CI, merge.
+4. Publish arm m's trees: from `C:/dev/auspol-wt-rbm`, `AUSPOL_ONP_IN_TRAINING=1 AUSPOL_ONP_ALLOC=model AUSPOL_BYELECTION_PERSON=1
+   AUSPOL_REBUILD_FROM=9 AUSPOL_PUBLISH=1 bash scripts/rebuild_forecasts.sh`; read the release MANIFEST back (flags show model / 1 / 1,
+   since promote now records the run's values only from the 23 Nov fix onward: the worktree is at f4c3cb1d, so CORRECT the manifest's
+   three flags by hand as for the by-election publish).
+5. `gh workflow run forecast.yaml --ref main -f scenarios=true`; read the conclusion; check `FJ9` in its log says every switch matches.
+6. Tell Pete and the ITG session: pass/fail, shipped or not, expected seats before and after.
+On a fail: the switches stay; RESULT written; Pete and ITG told.
+
+## RESULT, fair test (23 Nov 2026; three rebuilds rc 0, 9:11am-3:47pm, code f4c3cb1d, every arm with AUSPOL_BYELECTION_PERSON=1)
+
+Scored 3:50pm with the commands above. Files: `deciding-runs/20261124-onp-rebuilds/` (`score-onp-m.txt`, `score-onp-r.txt`,
+`compare-m.txt`, `compare-r.txt`). Applied: `ONT1` in arms m and r, absent in b; m moved 669 One Nation cells in 16 elections.
+
+**Arm m (the modelled allocation, trees trained on it) against b: FAILS, stays off.**
+1. Applied: yes.
+2. Primary FAIL: squared error on the moved One Nation cells -138.5 of 9644.9 (-1.4%), SE 255.6 (16 elections).
+3. Leave-one-election-out FAIL: without qld2020 it is +47.9 (fed2019 alone +122.1).
+4. Guard pass: pooled seat log loss 0.3125 -> 0.3130 (+0.0004, SE 0.0007).
+5. Not tripped: sa2026 -0.0024, qld2024 +0.0005 (SE 0.0034 / 0.0033); no seat One Nation won lost more than 0.10.
+Reported, not a criterion: AEF-7 seat log loss -0.0018 (SE 0.0010, 6 of 7 better); share RMSE 2.851 -> 2.840.
+
+**Arm r (the shipped rank rule, trees trained on it) against b: primary PASS (-450.3, SE 204.1), leave-one-out PASS
+(worst -250.0), but clause 5 TRIPS (sa2026 +0.0036, SE 0.0026) and the guard FAILS (pooled +0.0016, SE 0.0014; nsw2019
++0.0437).** By the decision rule a result about the training change, not shipped.
+
+Decision rule applied: m fails the primary and the leave-one-out, so it stays "rank" / "0" for the election, and the
+refusal goes to Pete. Both arms are reported to him with the AEF-7 line.
+
+## Amendment 3: Pete's override (23 Nov 2026, about 5:40pm; the RESULT above stands unedited)
+
+Shown the result in plain words (modelled version: SA 2026 slightly better, One Nation cells -1.4% within noise and not
+lower without qld2020, seat calls +0.0004 within noise; "not reliably better at anything"), Pete: "cool lets ship this ---
+i dont like the rank rule really". SHIPPED on his override: `AUSPOL_ONP_ALLOC="model"`, `AUSPOL_ONP_IN_TRAINING="1"`, with
+arm m's trees (`C:/dev/auspol-wt-rbm`). The refusal is the measured result; the ship is his call, not a pass.

@@ -11,13 +11,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - **Status 23 Nov, 9:30am.** main 0.4.197 (PR #267: by-election person rule ON, trees from its rebuild published 9:18am;
   night command finds the results page itself, `auto`). Search interest stays off. In flight: One Nation fair test (about 4pm).
   Venues rechecked 23 Nov 10am: unchanged (Last-Modified 20 Nov), backup bundle matches; booth file rebuilt (+Ringwood Heights)
-  landed on inthegame-blog dev 489485b1 (ITG; goes with its next push; Bundalaguah stays on the 2022 dot). Dated: 25 Nov both night rehearsals; 27 Nov
+  landed on inthegame-blog (Bundalaguah at Pete's Google Maps point since 6dc96f83). Dated: 25 Nov both night rehearsals (on the test
+  page also check the address search lists 3 nearest centres, ITG 3592b69a; our night runner does not read that file); 27 Nov
   inthegame-blog#1262 + benchmark capture. Scratch with junctions inside (unlink first): `%TEMP%/auspol-quickarm`, `%TEMP%/auspol-quickarm-onm`;
   rebuild worktrees `C:/dev/auspol-wt-rb0`, `-rb1` (junction lists in `deciding-runs/20261123-byp-rebuilds/`).
-- OPEN, IN FLIGHT 23 Nov from 9:11am: One Nation direct model, fair test (3 arms m/r/b, about 2 h 15 min each, so about
-  4:00pm). Task `auspol-onp-rebuilds`, `deciding-runs/20261124-onp-rebuilds/`; every arm runs the shipped by-election switch (plan
-  Amendment 2). On `DONE`: `scripts/score_onp_alloc.R` m and r against b, per `plans/prereg-onp-direct-model-2026-11-22.md`. Pete
-  asked to run it now. Pete (23 Nov 9:55am): ships if it passes, even after his post (same rule as the by-election one).
+- OPEN, after 28 Nov: One Nation allocation. The modelled version was REFUSED 23 Nov (DECISIONS); training the trees on the
+  rank rule cut One Nation's cell error 5% but hurt sa2026 and pooled log loss. Score both on vic2026 once results are in.
 - OPEN, 15 Nov full review (`reviews/FABLE-FULL-REVIEW-2026-11-15.md`, "Pick up from here" is the work list; DECISIONS
   2026-11-15). A1-A6, B1 shipped (seen live 17 Nov); C1 traced 16 Nov (item below). PARKED, trigger after 28 Nov
   (checked 21 Nov): C2 score the 14-day forecast (days), C3 validation stages off the publish path (edits the publish
@@ -113,6 +112,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   design-checked it 21 Nov at head 84d9e8d5 (0 important; PASS at 400/760/desktop); its check of the live forecast: the
   note shows on 0 of 88 seats (highest unsplit independent total Macedon 5.6%, against the 10% bar). On 27 Nov: mark it
   ready, check its render run is green, merge, close #1239 (same nav commit). Any new commit to the branch: tell ITG.
+- OPEN, DATED Thu 26 Nov: VEC venues recheck (off Pete's Daily Eight, 23 Nov). Compare the spreadsheet's `Last-Modified` with
+  `raw-20261121-1140/headers-xlsx.txt` (20 Nov 02:02 GMT); only if it moved: save raw, `scripts/build_vec_places_2026.R`, the geocoder,
+  `bash scripts/publish_night_inputs.sh --upload`, and hand ITG a rebuilt booth file. Done when: checked and, if moved, all four done.
+- DONE 23 Nov (was DATED 25 Nov, off Pete's Daily Eight): final search-interest snapshot taken (window to 21 Nov) and walked; Pete kept
+  it OFF for the election, so no publish is needed before the 27 Nov capture (DECISIONS 2026-11-23).
 - OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. 17 Nov done: 6 sources (TAB not
   saved: Chrome blocked the download on api.beta.tab.com.au; Betfair has no Victorian markets). On 27 Nov, if the TAB
   download is blocked again, check Chrome's download prompt for that site first. Each date: `Rscript scripts/snapshot_benchmarks.R`, plus the GES
@@ -356,9 +360,6 @@ Trigger: the post-election review after 28 Nov, unless an item names its own.
   All six arms refused on 38 elections (`plans/prereg-poll-lean-2026-11-02.md`). Re-test sponsor lean after vic2026 (the
   first completed election with party-commissioned polls labelled); recheck seat-count conditioning on nsw2027's list. Seat-poll side
   PARKED 5 Nov (`AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- OPEN, found 23 Nov: the published forecast ran on trees promoted 13 Nov until 9:18am 23 Nov, so every pre-tree change shipped
-  in between (by-election de-swing 19 Nov) ran on trees not trained with it; rebuild pairs were scored but never published.
-  Done when: the daily run warns when `models_promoted_at` is older than the newest pre-tree switch change in `published_flags.R`.
 - OPEN (after 28 Nov), #192: keep every published forecast, not one per day. Today R2 has one seat-level file per day
   (`scripts/publish_forecast_history.sh`; a same-day republish replaces it). Done when: each publish adds a dated parquet
   to a `predictions-history` release and the previous one is still there. Needs a workflow edit (a session, not the worker).

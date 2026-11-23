@@ -881,7 +881,7 @@ if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate")) {
 # can be reported at both ends of that bound instead of at one unvalidated
 # point. Unset leaves the shape exactly as measured.
 ONP_CV <- as.numeric(Sys.getenv("AUSPOL_ONP_CV", "0.365"))
-# AUSPOL_ONP_ALLOC=model (default "rank"; docs/plans/prereg-onp-direct-model-2026-11-22.md): every seat's relativity
+# AUSPOL_ONP_ALLOC=model (default "model" since 23 Nov 2026; docs/plans/prereg-onp-direct-model-2026-11-22.md): every seat's relativity
 # comes from its Senate share and Year 12 (onp_model_ratio(), fitted on earlier elections), and the spread is NOT
 # forced. Needs the Senate ordering (its values are the model's input). Any failure stops the run: a silent fall back
 # to the rank rule would publish a forecast that says "model" and is not.
@@ -2212,6 +2212,42 @@ stopifnot(!is.null(.fp), identical(dimnames(.fp)[[2]], rownames(shares)))
              t(setNames(round(q, 2), paste0("leader_tcp_", .qn))),
              swing_to_flip = round(q[3] - 50, 2))
 }))
+# EVERY FINAL-TWO PAIR IN 1%+ OF RUNS (Pete, 23 Nov 2026: "for any combo above 1% maybe? dont need to show all 100
+# possible combos"), for the seat panel. Same draws and the same rules as .tcp above: `a` is whichever of the pair
+# wins it more often, a_tcp its 2CP over the runs with that pair only, blank for a same-class pair. .tcp's single
+# pair is the first row of each seat here (checked below), so seats[].final_two is unchanged.
+.TCP_PAIR_MIN <- 0.01   # docs/CONSTANTS.md: display threshold, not a model constant
+tryCatch({
+.pairs <- rbindlist(lapply(seq_len(ncol(sim$tcp_winner)), function(j) {
+  w <- sim$tcp_winner[, j]; r <- sim$tcp_runnerup[, j]; sh2 <- sim$tcp_share[, j]
+  ok <- !is.na(w) & !is.na(r) & is.finite(sh2)
+  if (!any(ok)) return(NULL)
+  pair <- ifelse(w < r, paste(w, r, sep = "|"), paste(r, w, sep = "|"))
+  tb <- table(pair[ok])   # names in alphabetical order, so which.max() above takes the first of a tie: keep that order
+  tb <- tb[order(-as.numeric(tb), names(tb))]
+  tb <- tb[as.numeric(tb) / length(w) >= .TCP_PAIR_MIN | names(tb) == names(tb)[1]]
+  rbindlist(lapply(names(tb), function(pr) {
+    k <- ok & pair == pr
+    ab <- strsplit(pr, "|", fixed = TRUE)[[1]]
+    lead <- ab[which.max(c(sum(w[k] == ab[1]), sum(w[k] == ab[2])))]
+    other <- ab[-match(lead, ab)]
+    q <- stats::quantile(100 * ifelse(w[k] == lead, sh2[k], 1 - sh2[k]), c(0.05, 0.5, 0.95), names = FALSE)
+    if (identical(lead, other)) q[] <- NA_real_
+    data.table(seat = colnames(sim$tcp_winner)[j], a = lead, b = other, p_pair = round(mean(k), 4),
+               a_tcp_q05 = round(q[1], 2), a_tcp_q50 = round(q[2], 2), a_tcp_q95 = round(q[3], 2))
+  }))
+}))
+.first <- .pairs[!duplicated(.pairs$seat)]
+.chk <- merge(.first, .tcp[, .(seat, leader, other, p_pair, leader_tcp_q50)], by = "seat", suffixes = c("", ".tcp"))
+# A display table: a mismatch says so (TCP2!) and never stops the published forecast.
+.same <- .chk$a == .chk$leader & .chk$b == .chk$other & .chk$p_pair == .chk$p_pair.tcp &
+  ((is.na(.chk$a_tcp_q50) & is.na(.chk$leader_tcp_q50)) | (!is.na(.chk$a_tcp_q50) & .chk$a_tcp_q50 %in% .chk$leader_tcp_q50 & .chk$a_tcp_q50 == .chk$leader_tcp_q50))
+.same[is.na(.same)] <- FALSE
+cat(sprintf("TCP2%s final-two pairs at %.0f%%+ of runs: %d over %d seats (most in one seat: %d); the first per seat equals final_two in %d of %d%s\n",
+            if (all(.same) && nrow(.chk) == nrow(.tcp)) "" else "!", 100 * .TCP_PAIR_MIN, nrow(.pairs), uniqueN(.pairs$seat),
+            max(.pairs[, .N, by = seat]$N), sum(.same), nrow(.tcp), if (all(.same)) "" else paste0(": differs in ", paste(head(.chk$seat[!.same], 5), collapse = ", "))))
+fwrite(.pairs, sprintf("output/seat-tcp-pairs-%s%s.csv", TARGET$out_stem, OUT_SUFFIX))
+}, error = function(e) cat(sprintf("TCP2! final-two pairs table not written (the forecast carries on): %s\n", conditionMessage(e))))
 stopifnot(nrow(.tcp) == nrow(shares), anyDuplicated(.prim[, .(seat, party)]) == 0L)
 fwrite(.prim, sprintf("output/seat-primary-ranges-%s%s.csv", TARGET$out_stem, OUT_SUFFIX))
 fwrite(.tcp, sprintf("output/seat-tcp-ranges-%s%s.csv", TARGET$out_stem, OUT_SUFFIX))

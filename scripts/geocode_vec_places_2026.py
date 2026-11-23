@@ -165,6 +165,25 @@ for r in need:
                    else 'manual point outside its district (%s)' % dist_key)
     out.append(row)
 
+# MOVED VENUES (23 Nov 2026): a centre whose name matches a 2022 booth takes that booth's position in the booths build
+# unless an ok row here says otherwise. When the venue moved (Gippsland East / Bundalaguah: Primary School -> Myrtlebank
+# Hall), its hand-placed row in places-2026-manual.csv is written here directly, with no lookup, under the same district
+# test, so a rerun keeps it. Without this, the manual file was read only for centres with no 2022 match.
+need_keys = {(norm(r['district']), norm(r['booth'])) for r in need}
+for r in rows:
+    k = (norm(r['district']), norm(r['booth']))
+    m = M.get(k)
+    if not m or k in need_keys: continue
+    a = addr(r)
+    dist_key = host.get(a, norm(r['district'])) if r['joint'] == 'JVC' else norm(r['district'])
+    la, lo = float(m['la']), float(m['lo'])
+    inside = dist_key in D and D[dist_key].contains(Point(lo, la))
+    out.append(dict(out[0], district=r['district'], booth=r['booth'], joint=r['joint'], venue=r['Venue Name'].strip(),
+                    address='%s, %s, %s' % a, check_district=dist_key, method='manual-moved', la=round(la, 5), lo=round(lo, 5),
+                    display_name=m['source'], n_results=0, ok=inside,
+                    reason='moved venue: hand-placed over the 2022 booth position' if inside else 'manual point outside its district (%s)' % dist_key))
+    print('GV6 moved venue %s / %s: hand-placed %.5f, %.5f, inside its district: %s' % (r['district'], r['booth'], la, lo, inside))
+
 with open(os.path.join(ROOT, 'places-2026-geo.csv') + '.tmp', 'w', encoding='utf-8', newline='') as o:
     w = csv.DictWriter(o, fieldnames=list(out[0].keys())); w.writeheader(); w.writerows(out)
 os.replace(os.path.join(ROOT, 'places-2026-geo.csv') + '.tmp', os.path.join(ROOT, 'places-2026-geo.csv'))

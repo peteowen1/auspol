@@ -1,3 +1,10 @@
+# auspol 0.4.199
+
+Changes the published forecast.
+
+- **One Nation's seat allocation is the modelled version** (`AUSPOL_ONP_ALLOC="model"`, `AUSPOL_ONP_IN_TRAINING="1"`, 23 Nov, Pete's override): each seat's One Nation share comes from its Senate vote and Year 12 completion, fitted on earlier elections, with no forced spread, and the trees are trained on it. Its fair test refused it (One Nation cells -1.4%, SE 2.7%, not lower without qld2020; seat log loss +0.0004, SE 0.0007); Pete shipped it over that. `docs/plans/prereg-onp-direct-model-2026-11-22.md` Amendment 3.
+- **Every final-two pair in 1%+ of runs** (`seats[].final_twos` in `forecast-vic2026.json`: a, b, p_pair, a_tcp q05/q50/q95, conditional on the pair; `seat-tcp-pairs-*.csv`; `TCP2`). The first pair per seat is `final_two` (checked in all 88 seats). For the seat panel (Pete, 23 Nov).
+
 # auspol 0.4.198
 
 No change to the published numbers.

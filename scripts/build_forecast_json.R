@@ -190,6 +190,18 @@ final_two <- function(st) {
        leader_tcp = as.list(setNames(unlist(r[1, paste0("leader_tcp_", .qcols), with = FALSE]), .qcols)),
        swing_to_flip = r$swing_to_flip[1])
 }
+# Every final-two pair in 1%+ of runs (fit_seats_full.R TCP2; Pete 23 Nov), most likely first; final_two above is
+# the first of these. A missing file (an older fit) publishes [] and says so.
+pairs_f <- file.path(OUT, sprintf("seat-tcp-pairs-%s%s.csv", CFG$file_tag, SUF))
+TPAIRS <- if (file.exists(pairs_f)) fread(pairs_f, showProgress = FALSE) else NULL
+if (is.null(TPAIRS)) cat(sprintf("FJ1! %s missing -- seats published with final_twos []\n", basename(pairs_f)))
+final_twos <- function(st) {
+  if (is.null(TPAIRS)) return(I(list()))
+  r <- TPAIRS[which(TPAIRS$seat == st)]
+  # file order: most runs first, ties in the order final_two used, so final_twos[0] is final_two
+  I(lapply(seq_len(nrow(r)), function(i) list(a = r$a[i], b = r$b[i], p_pair = r$p_pair[i],
+    a_tcp = if (is.na(r$a_tcp_q50[i])) NULL else list(q05 = r$a_tcp_q05[i], q50 = r$a_tcp_q50[i], q95 = r$a_tcp_q95[i]))))
+}
 # per-seat block
 # WHICH SEATS' INDEPENDENTS WERE SPLIT (AUSPOL_CLASS_SPLIT, shipped 2026-11-18 with the cred2 gate): asked of the same
 # class_split_args() the forecast run used, so a page can tell a seat whose Independent figure is one candidate's
@@ -224,7 +236,7 @@ seat_rows <- lapply(shares$seat, function(s) {
   })
   ps <- ps[order(-vapply(ps, `[[`, numeric(1), "win_prob"))]
   rec <- list(seat = s, region = region_of(s), favourite = ps[[1]]$party, favourite_prob = ps[[1]]$win_prob,
-              final_two = final_two(s), parties = ps)
+              final_two = final_two(s), final_twos = final_twos(s), parties = ps)
   if (!is.null(ind_split)) rec$ind_split <- s %in% ind_split   # TRUE: the Independent figure is split, not summed
   rec
 })

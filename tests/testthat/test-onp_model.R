@@ -10,8 +10,10 @@ mk_rows <- function(b_s = 0.6, b_y = -0.1, elections = c(a = 3, b = 8, c = 20), 
   }))
 }
 
-test_that("the switch reads rank by default and refuses a typo", {
+test_that("the switch reads model by default (shipped 23 Nov 2026) and refuses a typo", {
   withr::local_envvar(AUSPOL_ONP_ALLOC = NA)
+  expect_identical(onp_alloc_mode(), "model")
+  withr::local_envvar(AUSPOL_ONP_ALLOC = "rank")
   expect_identical(onp_alloc_mode(), "rank")
   withr::local_envvar(AUSPOL_ONP_ALLOC = "model")
   expect_identical(onp_alloc_mode(), "model")
