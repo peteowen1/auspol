@@ -341,7 +341,7 @@ onp_newseat_apply <- function(shares, target, history, order = Sys.getenv("AUSPO
   idx <- cand[!miss]; key <- key[!miss]
   old <- shares[idx, "ONP"]
   lvl <- mean(old)
-  # AUSPOL_ONP_ALLOC=model (default "rank"; docs/plans/prereg-onp-direct-model-2026-11-22.md): the seat's relativity
+  # AUSPOL_ONP_ALLOC=model (default "model" since 23 Nov 2026; docs/plans/prereg-onp-direct-model-2026-11-22.md): the seat's relativity
   # from its Senate share and Year 12, fitted on earlier elections, with no forced spread. Where it cannot be fitted
   # (fewer than 2 earlier elections, or the target has no census rows) the rank rule below runs and ONM1! says so.
   mr <- NULL
@@ -390,13 +390,14 @@ onp_newseat_apply <- function(shares, target, history, order = Sys.getenv("AUSPO
 
 #' Read `AUSPOL_ONP_ALLOC`
 #'
-#' `"rank"` (default): hand a fixed shape out by rank and force its spread, as shipped. `"model"`: each seat's
-#' relativity comes from [onp_model_ratio()] (Senate share and Year 12, fitted on earlier elections), and nothing
-#' forces the spread. docs/plans/prereg-onp-direct-model-2026-11-22.md.
+#' `"model"` (default since 23 Nov 2026, shipped on Pete's override): each seat's relativity comes from
+#' [onp_model_ratio()] (Senate share and Year 12, fitted on earlier elections), and nothing forces the spread.
+#' `"rank"`: hand a fixed shape out by rank and force its spread, as shipped until then.
+#' docs/plans/prereg-onp-direct-model-2026-11-22.md.
 #' @return `"rank"` or `"model"`; anything else is an error.
 #' @export
 onp_alloc_mode <- function() {
-  v <- Sys.getenv("AUSPOL_ONP_ALLOC", "rank"); if (!nzchar(v)) v <- "rank"
+  v <- Sys.getenv("AUSPOL_ONP_ALLOC", "model"); if (!nzchar(v)) v <- "model"
   if (!v %in% c("rank", "model")) stop("AUSPOL_ONP_ALLOC must be \"rank\" or \"model\", not \"", v, "\"", call. = FALSE)
   v
 }
@@ -507,7 +508,7 @@ onp_model_ratio <- function(seats, senate, target, level, lookup = seats, fit = 
 #' @return `TRUE` for `"1"`, `FALSE` for `"0"`; anything else is an error.
 #' @export
 onp_in_training <- function() {
-  v <- Sys.getenv("AUSPOL_ONP_IN_TRAINING", "0"); if (!nzchar(v)) v <- "0"
+  v <- Sys.getenv("AUSPOL_ONP_IN_TRAINING", "1"); if (!nzchar(v)) v <- "1"
   if (!v %in% c("0", "1")) stop("AUSPOL_ONP_IN_TRAINING must be \"0\" or \"1\", not \"", v, "\"", call. = FALSE)
   identical(v, "1")
 }

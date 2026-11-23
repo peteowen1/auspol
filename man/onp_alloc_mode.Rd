@@ -10,7 +10,8 @@ onp_alloc_mode()
 \code{"rank"} or \code{"model"}; anything else is an error.
 }
 \description{
-\code{"rank"} (default): hand a fixed shape out by rank and force its spread, as shipped. \code{"model"}: each seat's
-relativity comes from \code{\link[=onp_model_ratio]{onp_model_ratio()}} (Senate share and Year 12, fitted on earlier elections), and nothing
-forces the spread. docs/plans/prereg-onp-direct-model-2026-11-22.md.
+\code{"model"} (default since 23 Nov 2026, shipped on Pete's override): each seat's relativity comes from
+\code{\link[=onp_model_ratio]{onp_model_ratio()}} (Senate share and Year 12, fitted on earlier elections), and nothing forces the spread.
+\code{"rank"}: hand a fixed shape out by rank and force its spread, as shipped until then.
+docs/plans/prereg-onp-direct-model-2026-11-22.md.
 }

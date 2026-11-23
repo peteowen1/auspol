@@ -270,3 +270,10 @@ Reported, not a criterion: AEF-7 seat log loss -0.0018 (SE 0.0010, 6 of 7 better
 
 Decision rule applied: m fails the primary and the leave-one-out, so it stays "rank" / "0" for the election, and the
 refusal goes to Pete. Both arms are reported to him with the AEF-7 line.
+
+## Amendment 3: Pete's override (23 Nov 2026, about 5:40pm; the RESULT above stands unedited)
+
+Shown the result in plain words (modelled version: SA 2026 slightly better, One Nation cells -1.4% within noise and not
+lower without qld2020, seat calls +0.0004 within noise; "not reliably better at anything"), Pete: "cool lets ship this ---
+i dont like the rank rule really". SHIPPED on his override: `AUSPOL_ONP_ALLOC="model"`, `AUSPOL_ONP_IN_TRAINING="1"`, with
+arm m's trees (`C:/dev/auspol-wt-rbm`). The refusal is the measured result; the ship is his call, not a pass.
