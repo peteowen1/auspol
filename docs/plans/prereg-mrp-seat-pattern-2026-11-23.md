@@ -110,3 +110,14 @@ three Accent/RedBridge releases in one election, as the decision rule warned.
   25.60, ONP 14.68 -> 14.91, GRN 7.13 -> 7.09. No seat changes favourite.
 - Direct-poll clause: Pakenham (DemosAU 4-8 Nov, ONP 40) ONP 32.9 -> 33.3, toward
   the direct poll. Not outweighed.
+
+## Result, AEF-7 screen (`quick_arm.R "AUSPOL_SEAT_POLL_MRP_PATTERN=1"`, 1,000 sims, code tf607a2f)
+
+Seat-winner log loss, lower is better, 681 seats in 7 elections: 0.2526 -> 0.2421,
+change -0.0105 (SE 0.0101, clustered on election) => BETTER by more than 1 SE.
+Share-level squared error on the 1,335 changed cells -9% (SE too wide to call).
+Per election: fed2025 0.3353 -> 0.2864 (-0.0489), sa2026 -0.0047, fed2022
++0.0026 (worse; its one MRP is two weeks out, so re-centring removes level
+information it had), nsw2023 0.0000; qld2024, vic2022, wa2025 byte-identical.
+Most of the gain is one election (fed2025), which per the standing rule is not a
+refusal by itself; the 35-election deciding run is the ship test.
