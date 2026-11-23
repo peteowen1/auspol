@@ -129,3 +129,13 @@ Offered: run the 35-election deciding run tonight and ship tomorrow if it holds
 "ship now on the 7-election screen".** The deciding run named in this plan as
 the ship test was therefore NOT run before shipping; it is queued in
 `docs/NEXT-STEPS.md` as the after-the-fact check.
+
+## Shipped (23 Nov 2026, 10:09pm)
+
+PR #272 merged after review (four findings fixed, round two clean) and CI green.
+Only `seat-poll-blend-vic2026.csv` was re-promoted on `shipped-models`: built
+from the inputs the shipped models came from (`auspol-wt-rbm`, arm m), whose
+arm-off copy is byte-identical to the asset it replaced. Uploaded md5
+cb5e3bc1..., verified by download. First live run 45162697096 (dispatched
+10:10pm). NB the live-walk figures above came from this checkout's `output/`,
+not arm m's trees; the first live run is the real with/without.
