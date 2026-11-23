@@ -1,3 +1,9 @@
+# auspol 0.4.202
+
+Changes the published seat forecast (seat-poll blend only; no statewide change).
+
+- **MRP releases vote on how seats differ, not on party levels, and decay at their own fitted half-life** (`AUSPOL_SEAT_POLL_MRP_PATTERN`, shipped 23 Nov on Pete's call). Each MRP release is re-centred on our own level, so it moves seats relative to one another; MRP polls get their own half-life (vic2026: 37 days; other polls 64, one half-life of 21 before). YouGov's July Victorian MRP (88 seats, `scripts/parse_yougov_mrp_seats.R`) is now read. AEF-7 seat log loss 0.2526 -> 0.2421 (SE 0.0101). Live: no seat changes favourite; expected seats Coalition +0.7, Labor -0.9, One Nation +0.2.
+
 # auspol 0.4.201
 
 No change to the published forecast; election-night file only.
