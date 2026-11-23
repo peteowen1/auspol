@@ -28,9 +28,16 @@ test_that("a live MRP release's seat deviations are anchored on the run's own sh
   expect_equal(mean(alp$poll), mean(shares[, "ALP"]))             # deviations summing to 0 leave the mean alone
   onp <- out[out$class == "ONP"]
   expect_equal(onp$seat, c("Alpha", "Beta"))                      # Gamma's ONP share is 0: not blended, not in the anchor
-  expect_equal(onp$poll, c(3, -1) + mean(c(40, 30)))
+  expect_equal(mean(onp$poll), mean(shares[onp$seat, "ONP"]))     # dropping Gamma must not move the class mean (review)
+  expect_equal(onp$poll, c(3, -1) - mean(c(3, -1)) + mean(c(40, 30)))
   expect_equal(out[out$class == "LNP"]$poll, 33)                  # direct polls untouched
   expect_true(all(out$type %in% c("mrp", "direct")))
+})
+
+test_that("the anchor stops when no MRP cell matches the shares (label mismatch), instead of dropping the release", {
+  shares <- matrix(c(30, 70), nrow = 1, dimnames = list("Alpha", c("ALP", "LNP")))
+  tb <- data.table::data.table(seat = "Alpha", class = "L/NP", type = "mrp_dev", poll = 2, n_polls = 1L, n_mrp = 1L, wsum = 0.01)
+  expect_error(utils::capture.output(.seat_poll_mrp_anchor(tb, shares, "test")), "SPMA!")
 })
 
 test_that("the arm switch refuses values it does not know", {

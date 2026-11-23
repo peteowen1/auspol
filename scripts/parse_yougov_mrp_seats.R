@@ -111,14 +111,14 @@ miss <- rows$seat[!normalise_seat(rows$seat) %in% normalise_seat(ours)]
 if (length(ours) != 88L || length(miss)) stop("YGM2! seat names not matching vic2026 (", length(ours), " districts): ", paste(miss, collapse = ", "))
 cat("YGM2 all 88 seat names match vic2026 districts\n")
 # the earlier winner-only extract (parse_yougov.py) as an independent second reading
-if (file.exists("external/reference/yougov-seats.csv")) {
-  old <- fread("external/reference/yougov-seats.csv")
-  m <- merge(rows[, list(k = normalise_seat(seat), proj_winner)], old[, list(k = normalise_seat(seat), winner)], by = "k")
-  dis <- m[m$proj_winner != m$winner]
-  cat(sprintf("YGM3 winner agrees with yougov-seats.csv in %d of %d matched seats%s\n", nrow(m) - nrow(dis), nrow(m),
-              if (nrow(dis)) paste0(": DISAGREE ", paste(dis$k, dis$proj_winner, dis$winner, collapse = "; ")) else ""))
-  if (nrow(dis)) stop("YGM3! the two extracts disagree on the projected winner")
-}
+# (required: a check that can be skipped, or pass on zero comparisons, is not a check -- review 23 Nov)
+if (!file.exists("external/reference/yougov-seats.csv")) stop("YGM3! external/reference/yougov-seats.csv missing: rebuild it with scripts/parse_yougov.py first")
+old <- fread("external/reference/yougov-seats.csv")
+m <- merge(rows[, list(k = normalise_seat(seat), proj_winner)], old[, list(k = normalise_seat(seat), winner)], by = "k")
+dis <- m[!(m$proj_winner %in% m$winner) | is.na(m$winner) | is.na(m$proj_winner) | m$proj_winner != m$winner]
+cat(sprintf("YGM3 winner agrees with yougov-seats.csv in %d of %d matched seats%s\n", nrow(m) - nrow(dis), nrow(m),
+            if (nrow(dis)) paste0(": DISAGREE ", paste(dis$k, dis$proj_winner, dis$winner, collapse = "; ")) else ""))
+if (nrow(m) != 88L || nrow(dis)) stop("YGM3! the two extracts match on ", nrow(m), " of 88 seats and disagree on ", nrow(dis))
 
 src_dir <- "external/reference/polls/seat-polls/raw/sources"
 dir.create(src_dir, recursive = TRUE, showWarnings = FALSE)
@@ -136,6 +136,9 @@ long <- long[, list(fp = sum(fp)), by = setdiff(names(long), "fp")]
 # supplementary election, so the MRP (built on 2022 results) prints Labor 0% there. Dropped and listed.
 zero <- long$party %in% c("ALP", "L/NP", "GRN", "ONP") & long$fp == 0
 cat(sprintf("YGM6 %d zero cell(s) for a major party dropped: %s\n", sum(zero), paste(long$seat[zero], long$party[zero], collapse = "; ")))
+# exactly the one known case: any other zero is more likely a figure the extract missed than a party not standing
+if (!identical(paste(long$seat[zero], long$party[zero]), "Narracan ALP"))
+  stop("YGM6! unexpected zero cells for a major party (only Narracan ALP is explained): ", paste(long$seat[zero], long$party[zero], collapse = "; "))
 long <- long[!zero]
 setcolorder(long, c("election", "seat", "pollster", "client", "fieldwork_start", "fieldwork_end", "date_raw", "published",
                     "sample_n", "party", "fp", "tcp_party_a", "tcp_party_b", "tcp_a", "source_url", "row_type", "seat_name"))
