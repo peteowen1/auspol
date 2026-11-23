@@ -275,6 +275,15 @@ jobs:
             gh release download shipped-models -p onp-senate-vic2026.csv -D output --clobber || { echo "::error::shipped-models has no onp-senate-vic2026.csv -- AUSPOL_ONP_ORDER=$ONP_ORDER needs it (scripts/build_onp_senate.R; promote_rebuild.R uploads it at stage 9)"; exit 1; }
             test -s output/onp-senate-vic2026.csv || { echo "::error::onp-senate-vic2026.csv downloaded empty"; exit 1; }
           fi
+          # AUSPOL_ONP_ALLOC (published "model", 23 Nov 2026): One Nation's seat model is fitted at run time on earlier
+          # elections' Senate shares and Year 12 completion, two tables this runner cannot build. The first run after it
+          # shipped stopped in fit_seats_full.R for want of census-features.csv; a missing table now fails here.
+          if [ "$(pflag AUSPOL_ONP_ALLOC)" = "model" ]; then
+            for f in census-features.csv senate-by-division-class.csv; do
+              gh release download shipped-models -p "$f" -D output --clobber || { echo "::error::shipped-models has no $f -- AUSPOL_ONP_ALLOC=model needs it (promote_rebuild.R ships it)"; exit 1; }
+              test -s "output/$f" || { echo "::error::$f downloaded empty"; exit 1; }
+            done
+          fi
           # AUSPOL_DEPARTED_SUCCESSOR (published "1"): fit_seats_full.R stops without the rate
           # table, and running with the switch off would trip its published-filename guard,
           # so a missing table fails here, loudly, and yesterday's forecast stays live.

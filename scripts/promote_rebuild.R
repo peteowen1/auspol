@@ -70,6 +70,13 @@ if (.flag("AUSPOL_ONP_ORDER") %in% c("senate", "senate_rank")) {   # senate_rank
   if (!file.exists(file.path(OUT, "onp-senate-vic2026.csv"))) stop("AUSPOL_ONP_ORDER=", .flag("AUSPOL_ONP_ORDER"), " but output/onp-senate-vic2026.csv is missing -- run scripts/build_onp_senate.R")
   .arm_tables <- c(.arm_tables, "onp-senate-vic2026.csv")
 }
+# And One Nation's seat model (AUSPOL_ONP_ALLOC=model, 23 Nov 2026): fitted at run time on earlier elections' Senate
+# shares by division and Year 12 completion, which the daily run cannot build; its first run stopped without them.
+if (identical(.flag("AUSPOL_ONP_ALLOC"), "model")) {
+  for (.f in c("census-features.csv", "senate-by-division-class.csv"))
+    if (!file.exists(file.path(OUT, .f))) stop("AUSPOL_ONP_ALLOC=model but output/", .f, " is missing")
+  .arm_tables <- c(.arm_tables, "census-features.csv", "senate-by-division-class.csv")
+}
 # And the Senate geography features (AUSPOL_XGB_SENATE=1): Victoria's slice of
 # the district Senate table, which the daily run reads in place of the AEC files.
 if (.flag("AUSPOL_XGB_SENATE") %in% c("1", "minor", "dev")) {
