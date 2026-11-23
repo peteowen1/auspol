@@ -43,4 +43,6 @@ per seat party \code{primary_prior} (the afternoon first preference, so the page
 (the VEC's two-candidate count where the update used it, else \code{null}: \code{vec_share_a} is the RAW counted share of \code{a} over \code{a} + \code{b}
 in the booths reported, \code{flow_share_a} the flow-based projection of the final share from first preferences and flow, \code{model_share_a} the
 simulated posterior mean, and \code{wrong_pair} TRUE when the VEC's pair is not one the model expected).
+Added 23 Nov 2026 for the seat panel: per seat \code{final_twos} (\code{\link[=night_final_twos]{night_final_twos()}}, the afternoon file's shape) and
+\code{final_two$leader_tcp} (the leader's 2CP share in percent over the draws with that pair: q05, q50, q95; \code{null} for a same-class pair).
 }
