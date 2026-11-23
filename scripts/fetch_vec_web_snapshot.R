@@ -107,7 +107,10 @@ one_snapshot <- function(m) {
     Sys.sleep(c(5, 15, 30)[min(r, 3L)])
     pages[again] <- get_many(jobs$u[again])
     cat(sprintf("VWF6 %s: retry %d of %d page(s), %d still failed\n", stamp, r, length(again), sum(is.na(pages))))
-    if (sum(is.na(pages)) == length(again)) { refused <- TRUE; break }
+    # refused = nothing recovered AND a quarter or more of the snapshot still missing: a wholesale block. A few pages
+    # that stay missing (one not yet published) keep the old short retries and --every (review, 24 Nov: one 404 among
+    # 174 would otherwise cost the laptop a 5-20 minute cooldown on the night)
+    if (sum(is.na(pages)) == length(again)) { refused <- length(again) >= 0.25 * nrow(jobs); break }
   }
   for (i in seq_len(nrow(jobs))) {
     if (is.na(pages[i])) { bad <- c(bad, paste(jobs$district[i], jobs$k[i])); next }
@@ -122,8 +125,9 @@ one_snapshot <- function(m) {
   invisible(TRUE)
 }
 
-# --cooldown=N (default 300 s): after a snapshot whose last retry recovered nothing (the site refusing us), wait N seconds
-# before the next one instead of --every, doubling each time it happens again (to 4N), back to --every after a success.
+# --cooldown=N (default 300 s): after a snapshot whose last retry recovered nothing with a quarter or more of its pages
+# missing (the site refusing us), wait N seconds (or --every if longer) before the next one, doubling each time it
+# happens again (to 4N), back to --every after any other result.
 cooldown <- as.numeric(flag("cooldown", "300")); if (is.na(cooldown) || cooldown < 0) stop("VWF1! --cooldown must be a number of seconds")
 m <- discover(); n <- 0L; strikes <- 0L
 repeat {
