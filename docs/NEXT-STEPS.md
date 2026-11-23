@@ -16,7 +16,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - OPEN, IN FLIGHT 23 Nov from 9:11am: One Nation direct model, fair test (3 arms m/r/b, about 2 h 15 min each, so about
   4:00pm). Task `auspol-onp-rebuilds`, `deciding-runs/20261124-onp-rebuilds/`; every arm runs the shipped by-election switch (plan
   Amendment 2). On `DONE`: `scripts/score_onp_alloc.R` m and r against b, per `plans/prereg-onp-direct-model-2026-11-22.md`. Pete
-  asked to run it now; whether a pass may change the forecast after his post is still his to say.
+  asked to run it now. Pete (23 Nov 9:55am): ships if it passes, even after his post (same rule as the by-election one).
 - OPEN, 15 Nov full review (`reviews/FABLE-FULL-REVIEW-2026-11-15.md`, "Pick up from here" is the work list; DECISIONS
   2026-11-15). A1-A6, B1 shipped (seen live 17 Nov); C1 traced 16 Nov (item below). PARKED, trigger after 28 Nov
   (checked 21 Nov): C2 score the 14-day forecast (days), C3 validation stages off the publish path (edits the publish
@@ -355,6 +355,9 @@ Trigger: the post-election review after 28 Nov, unless an item names its own.
   All six arms refused on 38 elections (`plans/prereg-poll-lean-2026-11-02.md`). Re-test sponsor lean after vic2026 (the
   first completed election with party-commissioned polls labelled); recheck seat-count conditioning on nsw2027's list. Seat-poll side
   PARKED 5 Nov (`AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
+- OPEN, found 23 Nov: the published forecast ran on trees promoted 13 Nov until 9:18am 23 Nov, so every pre-tree change shipped
+  in between (by-election de-swing 19 Nov) ran on trees not trained with it; rebuild pairs were scored but never published.
+  Done when: the daily run warns when `models_promoted_at` is older than the newest pre-tree switch change in `published_flags.R`.
 - OPEN (after 28 Nov), #192: keep every published forecast, not one per day. Today R2 has one seat-level file per day
   (`scripts/publish_forecast_history.sh`; a same-day republish replaces it). Done when: each publish adds a dated parquet
   to a `predictions-history` release and the previous one is still there. Needs a workflow edit (a session, not the worker).
