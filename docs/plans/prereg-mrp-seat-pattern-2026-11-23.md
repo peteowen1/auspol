@@ -77,3 +77,36 @@ Ship goes to Pete with these facts beside it: the release was commissioned by
 Common Threads, a pro-Treaty group; its fieldwork predates the change of
 premier and the close of nominations; and the shipped
 `seat-poll-blend-vic2026.csv` on the public release would carry its 88 seats.
+
+## Result, stage 0 (added 2026-11-23, text above unedited): PASSED
+
+Scratch script (regression of `actual - ours` on the re-centred pattern, class
+fixed effects, SE clustered on seat; `ours = xgb_pred_seat`). Slope, lower 0 =
+no information, 1 = take the pattern at face value:
+
+| releases | median days out | cells | seats | slope | SE |
+|---|---|---|---|---|---|
+| <= 60 days | 14 | 1,786 | 301 | 0.346 | 0.038 |
+| 61-140 days | 80 | 596 | 150 | 0.293 | 0.046 |
+| > 140 days | 249 | 960 | 150 | 0.171 | 0.043 |
+
+At 140+ days by class: ALP 0.150 (0.069), LNP 0.166 (0.055), GRN 0.221 (0.070).
+One Nation cannot be measured there (the 2024 Accent releases name it in one
+seat). Known answers: final YouGov release (4 days out) 0.421 (0.075); the same
+release with the pattern shuffled within class 0.015 (0.070). The 140+ band is
+three Accent/RedBridge releases in one election, as the decision rule warned.
+
+## Result, live walk (stage 1 built, switch off; `fit_seats_full.R` with suffixed outputs)
+
+- SPMH: vic2026 MRP half-life 37 days, other polls 64 (one half-life of 21
+  without the arm). The arm therefore also re-weights the two direct polls.
+- SPMA anchors: ALP 23.6, GRN 14.9, LNP 29.9, ONP 20.2. SPPB pull median 0.07
+  over 353 cells, below the stage-0 slope of 0.17 at that age.
+- Mean change per class over 88 seats: ALP -0.06, LNP +0.04, ONP +0.03, GRN
+  0.00 points (the re-centring holds). 42 seats move > 0.5 points in some
+  class, 14 > 1 point; largest Morwell ONP 41.6 -> 39.0, Mildura ONP 37.3 ->
+  35.4, Benambra ONP 32.2 -> 30.4, Ovens Valley ONP 29.2 -> 30.7.
+- Expected seats (sum of win probabilities): LNP 39.29 -> 39.96, ALP 26.46 ->
+  25.60, ONP 14.68 -> 14.91, GRN 7.13 -> 7.09. No seat changes favourite.
+- Direct-poll clause: Pakenham (DemosAU 4-8 Nov, ONP 40) ONP 32.9 -> 33.3, toward
+  the direct poll. Not outweighed.
