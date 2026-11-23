@@ -39,13 +39,13 @@ on:
         description: "How long to keep polling, in minutes, 1 to 330 (a larger value is cut to 330)"
         default: "10"
       every:
-        description: "Seconds between fetches of the VEC pages (at least 10; one fetch of 174 pages takes about a minute)"
-        default: "90"
+        description: "Seconds between fetches of the VEC pages (at least 10). Default 300: on 24 Nov a runner fetching every 90 s was refused (HTTP 999) on every page for 45 minutes"
+        default: "300"
       parallel:
-        description: "web sources: VEC pages in flight at once. 2 passed from a runner (22 Nov; the VEC blocks some pages with HTTP 999 and the retry recovers them); 4 was blocked outright; 1 took over 9 minutes a fetch"
+        description: "web sources: VEC pages in flight at once. 1 (default since 24 Nov, over 9 minutes a fetch) is the gentlest; 2 passed on 22 Nov but was blocked outright on 24 Nov; 4 was blocked outright"
         type: choice
         options: ["1", "2", "4"]
-        default: "2"
+        default: "1"
 
 # One group per key: a test run never queues ahead of a break-glass run on the live key, and two runs on the same key never
 # write at once (a newer dispatch replaces an older one still queued).
