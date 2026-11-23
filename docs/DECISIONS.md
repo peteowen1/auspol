@@ -4,6 +4,7 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-11-23 The forecast names switches that moved since its trees were trained (PR #268, `FJ9!`, `models_flag_drift`).** The 3-day age warning had fired daily for a week unread. The manifest now records the values the rebuild used; today's release manifest was corrected by hand to the trained values (original kept in `deciding-runs/20261123-manifest-fix/`).
 - **2026-11-23 One Nation modelled allocation ships today if its fair test passes, even after Pete posts the forecast (Pete).** Three-arm rebuild started 9:11am (about 4pm). `plans/prereg-onp-direct-model-2026-11-22.md` Amendments 1-2.
 - **2026-11-23 Live forecast moved to trees trained 23 Nov (were 13 Nov).** Published with the by-election rule: expected seats Coalition 40.4 -> 40.6, Labor 25.4 -> 24.2, One Nation 14.6 -> 16.3; 8 favourites changed (the rule alone moves Werribee and Mulgrave; the rest is the tree refresh and new polls, not split).
 - **2026-11-23 vic2026 search interest stays OFF for the election (Pete: "Keep it off").** Final snapshot (Google to 21 Nov) walked on against off: on, independents 0.2 -> 2.6 expected seats (Essendon 2% -> 48%, Hawthorn 1% -> 44%, Mornington 1% -> 28%), 9 favourite changes; the same pattern that turned it off on 19 Nov (past challengers with that rise won 2 of 23). `deciding-runs/20261123-salience-walk/`.

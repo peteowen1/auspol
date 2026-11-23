@@ -356,9 +356,6 @@ Trigger: the post-election review after 28 Nov, unless an item names its own.
   All six arms refused on 38 elections (`plans/prereg-poll-lean-2026-11-02.md`). Re-test sponsor lean after vic2026 (the
   first completed election with party-commissioned polls labelled); recheck seat-count conditioning on nsw2027's list. Seat-poll side
   PARKED 5 Nov (`AUSPOL_SEAT_POLL_FIRM_FLOOR` stays "0"; see "Seat polls: PARKED").
-- OPEN, found 23 Nov: the published forecast ran on trees promoted 13 Nov until 9:18am 23 Nov, so every pre-tree change shipped
-  in between (by-election de-swing 19 Nov) ran on trees not trained with it; rebuild pairs were scored but never published.
-  Done when: the daily run warns when `models_promoted_at` is older than the newest pre-tree switch change in `published_flags.R`.
 - OPEN (after 28 Nov), #192: keep every published forecast, not one per day. Today R2 has one seat-level file per day
   (`scripts/publish_forecast_history.sh`; a same-day republish replaces it). Done when: each publish adds a dated parquet
   to a `predictions-history` release and the previous one is still there. Needs a workflow edit (a session, not the worker).
