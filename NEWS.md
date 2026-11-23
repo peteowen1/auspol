@@ -1,3 +1,10 @@
+# auspol 0.4.203
+
+No change to the published forecast; election-night backup and log lines.
+
+- **The election-night backup survives the VEC website's request limit.** A GitHub runner fetching every 90 s was refused (HTTP 999) on every page for 45 minutes on 24 Nov. The fetcher now keeps a snapshot's pages and retries the missing ones after `--retry-pause` (backup: 120 s, up to 6 times; laptop unchanged), and cools down after a wholesale refusal (`VWF7!`). The backup defaults to one page at a time every 5 minutes. Rehearsal on the 2022 pages: 4 of 4 snapshots, all uploaded.
+- **The MRP seat-pattern log codes end in a digit (`SPM1`-`SPM4`)**, so the daily run's log keeps them.
+
 # auspol 0.4.202
 
 Changes the published seat forecast (seat-poll blend only; no statewide change).
