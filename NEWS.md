@@ -1,3 +1,10 @@
+# auspol 0.4.198
+
+No change to the published numbers.
+
+- **The forecast names every switch that moved since its trees were trained** (`FJ9!` in the daily log, `models_flag_drift` in `forecast-vic2026.json`). Until 23 Nov the site ran on trees promoted 13 Nov while switches that change what the trees learn from were flipped; the age warning fired daily and was not read. Advisory only: it never stops the forecast.
+- **The shipped manifest records the switch values the rebuild used**, not the settings file's (`scripts/promote_rebuild.R`, plus `differs_from_file`). The 23 Nov manifest had recorded `AUSPOL_BYELECTION_PERSON` 0 for trees trained at 1.
+
 # auspol 0.4.197
 
 Changes the published forecast.

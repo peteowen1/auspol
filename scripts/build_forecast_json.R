@@ -303,9 +303,28 @@ if (!file.exists(lev_f)) {
               paste(vapply(statewide, function(r) sprintf("%s %.2f/%.2f", r$party, r$forecast_level, r$seats_mean), ""),
                     collapse = ", ")))
 }
+# SWITCHES THAT MOVED SINCE THE TREES WERE TRAINED (FJ9!, 23 Nov 2026). The site ran on trees promoted 13 Nov until
+# 23 Nov while switches that change what the trees learn from were flipped on main; the age warning fired daily and
+# was not read. This names each switch whose shipped value differs from the value in the trees' manifest, and the
+# JSON carries the list, so anyone reading the forecast sees it. Not every switch acts before the trees: a listed one
+# may be harmless (post-xgb), but only a retrain or a check of that switch says so. Manifests from before 23 Nov
+# recorded the settings file, not the run's values (scripts/promote_rebuild.R).
+flag_drift <- NULL
+# Advisory only: an error here (an odd manifest value, the settings file not found) prints FJ9! and never stops the forecast.
+if (!is.null(man) && !is.null(man$flags)) tryCatch({
+  if (!exists("PUBLISHED_FLAGS")) source(file.path("scripts", "published_flags.R"))
+  .now <- vapply(names(PUBLISHED_FLAGS), function(n) as.character(PUBLISHED_FLAGS[[n]]), "")
+  .was <- vapply(names(PUBLISHED_FLAGS), function(n) if (is.null(man$flags[[n]])) NA_character_ else as.character(man$flags[[n]]), "")
+  .d <- names(.now)[is.na(.was) | .was != .now]
+  flag_drift <- lapply(.d, function(n) list(switch = n, trees = unname(.was[n]), now = unname(.now[n])))
+  if (length(.d)) cat(sprintf("FJ9! %d switch(es) differ from the shipped trees' manifest (promoted %s): %s -- retrain, or check each acts after the trees\n",
+                              length(.d), man$promoted_at, paste(sprintf("%s %s->%s", .d, ifelse(is.na(.was[.d]), "(absent)", .was[.d]), .now[.d]), collapse = ", ")))
+  else cat(sprintf("FJ9  every shipped switch matches the trees' manifest (promoted %s)\n", man$promoted_at))
+}, error = function(e) { flag_drift <<- NULL; cat(sprintf("FJ9! could not compare the switches with the trees' manifest: %s\n", conditionMessage(e))) })
 doc <- list(
   election = CFG$election, election_date = CFG$election_date, built_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z"),
   git_sha = gitsha, models_promoted_at = if (!is.null(man)) man$promoted_at else NULL,
+  models_flag_drift = I(if (is.null(flag_drift)) list() else flag_drift),   # I(): always an array
   # The track record the ITG page quotes, straight from the promoted models' manifest
   # (AEF-7 ledger), so the page's numbers move with every publish instead of being typed in.
   track_record = if (!is.null(man) && !is.null(man$aef7)) c(man$aef7, list(pairs = man$pairs, seat_elections = man$seat_elections)) else NULL,
