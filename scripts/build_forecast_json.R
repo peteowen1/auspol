@@ -310,7 +310,8 @@ if (!file.exists(lev_f)) {
 # may be harmless (post-xgb), but only a retrain or a check of that switch says so. Manifests from before 23 Nov
 # recorded the settings file, not the run's values (scripts/promote_rebuild.R).
 flag_drift <- NULL
-if (!is.null(man) && !is.null(man$flags)) {
+# Advisory only: an error here (an odd manifest value, the settings file not found) prints FJ9! and never stops the forecast.
+if (!is.null(man) && !is.null(man$flags)) tryCatch({
   if (!exists("PUBLISHED_FLAGS")) source(file.path("scripts", "published_flags.R"))
   .now <- vapply(names(PUBLISHED_FLAGS), function(n) as.character(PUBLISHED_FLAGS[[n]]), "")
   .was <- vapply(names(PUBLISHED_FLAGS), function(n) if (is.null(man$flags[[n]])) NA_character_ else as.character(man$flags[[n]]), "")
@@ -319,7 +320,7 @@ if (!is.null(man) && !is.null(man$flags)) {
   if (length(.d)) cat(sprintf("FJ9! %d switch(es) differ from the shipped trees' manifest (promoted %s): %s -- retrain, or check each acts after the trees\n",
                               length(.d), man$promoted_at, paste(sprintf("%s %s->%s", .d, ifelse(is.na(.was[.d]), "(absent)", .was[.d]), .now[.d]), collapse = ", ")))
   else cat(sprintf("FJ9  every shipped switch matches the trees' manifest (promoted %s)\n", man$promoted_at))
-}
+}, error = function(e) { flag_drift <<- NULL; cat(sprintf("FJ9! could not compare the switches with the trees' manifest: %s\n", conditionMessage(e))) })
 doc <- list(
   election = CFG$election, election_date = CFG$election_date, built_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z"),
   git_sha = gitsha, models_promoted_at = if (!is.null(man)) man$promoted_at else NULL,
