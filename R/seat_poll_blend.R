@@ -64,6 +64,8 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
   env <- Sys.getenv(); env <- env[startsWith(names(env), "AUSPOL_")]
   sp <- file.path(pkg_root(), "external", "reference", "polls", "seat-polls")
   files <- c(file.path(sp, c("seat_polls.csv", "hand_keyed_primaries.csv", "poll_methods.csv", "mrp_candidates.csv", "seat_poll_corrections.csv")),
+             # stamped only under the arm, so the default key (and so the default cache) is unchanged
+             if (.seat_poll_mrp_pattern_on()) file.path(sp, "mrp_extra.csv") else character(0),
              out_path(c("candidacies.csv", "endorsement-features.csv", "xgb-primary-asat-predictions.csv", "forecasts.csv")),
              # Under AUSPOL_POSTXGB_RESID_NET=1 current_seat_predictions() also reads the port's inputs;
              # stamped only then, so the default key (and so the default cache) is unchanged.
@@ -167,6 +169,7 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
                  .n0 = suppressWarnings(as.numeric(sample_n[1])),
                  .client = as.character(client[1])), by = poll_id]
   per_poll <- merge(per_poll, pf, by = "poll_id")
+  if (.seat_poll_mrp_pattern_on()) per_poll <- .seat_poll_mrp_recentre(per_poll, el_arg)
   # MRP sample sizes are the NATIONAL survey (YouGov fed2025: 10,822), not the seat's.
   per_poll$n_seat[per_poll$mrp] <- NA_real_
   per_poll$group <- ifelse(per_poll$mrp, "mrp", ifelse(per_poll$sponsored, "sponsored", "direct"))
@@ -204,9 +207,86 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
   }
   per_poll$wt <- .seat_poll_cell_weights(per_poll, seat_poll_decay_params(el_arg))
   per_poll$type <- ifelse(per_poll$mrp, "mrp", "direct")
+  if (".dev" %in% names(per_poll)) per_poll$type[per_poll$.dev %in% TRUE] <- "mrp_dev"   # arm MRP_PATTERN, live election
   by_cols <- if (by_type) c("seat", "class", "type") else c("seat", "class")
   if (.seat_poll_firm_shared_on()) return(.seat_poll_firm_shared_cells(per_poll, seat_poll_decay_params(el_arg), by_cols))
   per_poll[, list(poll = sum(wt * fp) / sum(wt), n_polls = .N, n_mrp = sum(mrp), wsum = sum(wt)), by = by_cols]
+}
+
+# AUSPOL_SEAT_POLL_MRP_PATTERN (ARM, docs/plans/prereg-mrp-seat-pattern-2026-11-23.md): an MRP release votes
+# only on how a seat differs from the release's other seats, re-centred on OUR level, and MRP polls get their
+# own half-life (seat_poll_decay_params()). Also reads mrp_extra.csv (MRP releases no scrape carries).
+.seat_poll_mrp_pattern_on <- function() .seat_poll_onoff("AUSPOL_SEAT_POLL_MRP_PATTERN", "0")
+
+#' Re-centre each MRP release on our own level (arm MRP_PATTERN)
+#'
+#' For each release (pollster + fieldwork end) and class, over the seats where
+#' our pre-blend share (`xgb_pred_seat`, [current_seat_predictions()]) is
+#' above 0: `fp - mean(fp) + mean(ours)`. A release's level error is removed and
+#' only its seat pattern is kept. MRP rows with no share of ours to anchor on
+#' are dropped. Direct polls are untouched. Prints SPMP.
+#' @keywords internal
+.seat_poll_mrp_recentre <- function(pp, election) {
+  if (!any(pp$mrp)) return(pp)
+  f <- current_seat_predictions()
+  if (is.null(f)) stop("AUSPOL_SEAT_POLL_MRP_PATTERN=1 needs our seat predictions (output/forecasts.csv) to re-centre MRP releases")
+  el_lab <- election
+  fe <- f[f$election == el_lab]
+  pp$.rel <- paste(pp$.pollster, pp$.fw)
+  pp$.dev <- FALSE
+  if (!nrow(fe)) {
+    # The live election has no predictions on file (they are this run's own shares): its MRP rows are stored as
+    # the release's seat DEVIATIONS (type "mrp_dev") and seat_poll_blend_apply() adds the mean of that run's
+    # shares over the same seats. One release only, so that mean is the release's own seat set.
+    nr <- length(unique(pp$.rel[pp$mrp]))
+    if (nr > 1L) stop("AUSPOL_SEAT_POLL_MRP_PATTERN=1: ", election, " has ", nr, " MRP releases and no predictions to anchor them on")
+    m <- pp$mrp
+    pm <- stats::ave(pp$fp, pp$.rel, pp$class, FUN = mean)
+    pp$fp[m] <- pp$fp[m] - pm[m]
+    pp$.dev[m] <- TRUE
+    cat(sprintf("SPMP %s MRP pattern: no predictions on file, %d MRP cells stored as seat deviations (re-centred on the run's own shares at apply)\n",
+                election, sum(m)))
+    return(pp)
+  }
+  ours <- fe$xgb_pred_seat[match(paste(normalise_seat(pp$seat), pp$class), paste(normalise_seat(fe$seat), fe$party))]
+  ok <- !pp$mrp | (is.finite(ours) & ours > 0)
+  n_drop <- sum(!ok)
+  pp <- pp[ok]; ours <- ours[ok]
+  m <- pp$mrp
+  pm <- stats::ave(pp$fp, pp$.rel, pp$class, FUN = mean)
+  om <- stats::ave(ours, pp$.rel, pp$class, FUN = mean)
+  shift <- om - pm
+  rel_shift <- unique(data.table::data.table(rel = pp$.rel[m], class = pp$class[m], shift = shift[m]))
+  pp$fp[m] <- pp$fp[m] + shift[m]
+  cat(sprintf("SPMP %s MRP pattern: %d release(s) re-centred on our level (%d MRP cells without a share of ours dropped); level shift by class: %s\n",
+              election, length(unique(pp$.rel[m])), n_drop,
+              paste(rel_shift[, list(s = sprintf("%s %+.1f", class[1], mean(shift))), by = class]$s, collapse = ", ")))
+  pp
+}
+
+#' Anchor an MRP release's seat deviations on this run's shares (arm MRP_PATTERN, live election)
+#'
+#' Rows of type `mrp_dev` hold `fp - release mean`; each class gets the mean of
+#' `shares` over the same seats (share above 0) added, so the release moves
+#' seats relative to one another and leaves the class's mean where it is.
+#' Prints SPMA with the anchor per class.
+#' @keywords internal
+.seat_poll_mrp_anchor <- function(tb, shares, target_election) {
+  d <- tb$type == "mrp_dev"
+  i <- match(normalise_seat(tb$seat), normalise_seat(rownames(shares)))
+  j <- match(tb$class, colnames(shares))
+  sh <- rep(NA_real_, nrow(tb))
+  ok <- !is.na(i) & !is.na(j)
+  sh[ok] <- shares[cbind(i[ok], j[ok])]
+  use <- d & is.finite(sh) & sh > 0
+  # the release mean was taken over every seat it covers, so the anchor is too: a cell whose share is 0 here is
+  # left out of the anchor and is not blended either (no phantom candidates)
+  anc <- tapply(sh[use], tb$class[use], mean)
+  tb$poll[d] <- tb$poll[d] + unname(anc[tb$class[d]])
+  tb$type[d] <- "mrp"
+  cat(sprintf("SPMA %s MRP pattern anchored on this run's shares: %d cells; anchor by class %s\n", target_election, sum(d),
+              paste(sprintf("%s %.1f", names(anc), anc), collapse = ", ")))
+  tb[!(d & !use)]
 }
 
 .seat_poll_decay_on <- function() {
@@ -507,7 +587,9 @@ SEAT_POLL_N_FALLBACK <- 600        # seat sample when no earlier direct poll rec
     m <- unname(p$firm_mult[pp$firm]); m[!is.finite(m)] <- 1
     fl <- fl * m
   }
-  list(r = 0.5^(pp$days / p$H), sv = sv, fl = fl)
+  # arm MRP_PATTERN: MRP polls decay at their own fitted half-life
+  hl <- if (!is.null(p$H_mrp) && is.finite(p$H_mrp)) ifelse(pp$mrp, p$H_mrp, p$H) else p$H
+  list(r = 0.5^(pp$days / hl), sv = sv, fl = fl)
 }
 
 # named numeric vector <-> "a=1;b=2" in one CSV cell (the frozen blend table)
@@ -640,11 +722,16 @@ seat_poll_decay_params <- function(target_election) {
     sv <- ifelse(rows$mrp, 0, rows$fp * (100 - rows$fp) / nn)
     r2 <- (rows$fp - rows$actual)^2 - sv
     H <- SEAT_POLL_HALFLIFE_PRIOR
+    # arm MRP_PATTERN: MRP polls (re-centred on our level by .seat_poll_mrp_recentre()) get their own half-life,
+    # fitted by the same profile likelihood and prior, alternating with H
+    pat <- .seat_poll_mrp_pattern_on() && any(rows$mrp)
+    Hm <- if (pat) SEAT_POLL_HALFLIFE_PRIOR else NA_real_
+    hl_of <- function(h, hm) if (pat) ifelse(rows$mrp, hm, h) else h
     grid <- exp(seq(log(7), log(730), length.out = 60))
     U <- length(unique(rows$unit))
     cell <- paste(rows$unit, rows$class)
     for (it in 1:3) {
-      rec <- 0.5^(rows$days / H)
+      rec <- 0.5^(rows$days / hl_of(H, Hm))
       pool_n <- U
       pool <- (pool_n * max(1, sum(rec * r2) / sum(rec)) + SEAT_POLL_FLOOR_K * SEAT_POLL_FLOOR_PRIOR) / (pool_n + SEAT_POLL_FLOOR_K)
       fl <- vapply(grp, function(g) {
@@ -656,19 +743,20 @@ seat_poll_decay_params <- function(target_election) {
         raw <- max(1, sum(rec[i] * r2[i]) / sum(rec[i]))
         (ng * raw + SEAT_POLL_FLOOR_K * pg) / (ng + SEAT_POLL_FLOOR_K)
       }, numeric(1))
-      obj <- vapply(grid, function(h) {
-        w <- 0.5^(rows$days / h) / (sv + fl[rows$group])
+      prof <- function(h, hm, h_pr) {
+        w <- 0.5^(rows$days / hl_of(h, hm)) / (sv + fl[rows$group])
         avg <- tapply(w * rows$fp, cell, sum) / tapply(w, cell, sum)
         act <- tapply(rows$actual, cell, `[`, 1)
         sse <- sum((avg - act[names(avg)])^2)
-        0.5 * U * log(sse / length(avg)) + (log(h) - log(SEAT_POLL_HALFLIFE_PRIOR))^2 / (2 * SEAT_POLL_HALFLIFE_LOGSD^2)
-      }, numeric(1))
-      H <- grid[which.min(obj)]
+        0.5 * U * log(sse / length(avg)) + (log(h_pr) - log(SEAT_POLL_HALFLIFE_PRIOR))^2 / (2 * SEAT_POLL_HALFLIFE_LOGSD^2)
+      }
+      H <- grid[which.min(vapply(grid, function(h) prof(h, Hm, h), numeric(1)))]
+      if (pat) Hm <- grid[which.min(vapply(grid, function(hm) prof(H, hm, hm), numeric(1)))]
     }
     # POLLSTER TRACK RECORD: each firm's recency-weighted (poll - actual)^2
     # minus sampling variance, over its group floor, shrunk toward 1 by
     # SEAT_POLL_FLOOR_K pseudo seat-elections. An unnamed pollster has none.
-    rec <- 0.5^(rows$days / H)
+    rec <- 0.5^(rows$days / hl_of(H, Hm))
     ratio <- pmax(r2, 0) / fl[rows$group]
     firms <- setdiff(unique(rows$firm), "")
     fm <- vapply(firms, function(k) {
@@ -679,6 +767,11 @@ seat_poll_decay_params <- function(target_election) {
     }, numeric(1))
     out <- list(H = H, floor = fl, n_fill = n_fill, n_units = U, n_polls = length(unique(paste(rows$unit, rows$poll_id))),
                 firm_mult = fm)
+    if (pat) {
+      out$H_mrp <- Hm
+      cat(sprintf("SPMH %s MRP pattern half-life %.0f days (other polls %.0f; %d earlier MRP poll-cells, ages %.0f-%.0f days)\n",
+                  target_election, Hm, H, sum(rows$mrp), min(rows$days[rows$mrp]), max(rows$days[rows$mrp])))
+    }
     if (.seat_poll_firm_on() && length(fm))
       cat(sprintf("SPF  %s pollster floor multipliers (1 = its group's floor): %s\n", target_election,
                   paste(sprintf("%s %.2f", names(fm), fm), collapse = ", ")))
@@ -941,6 +1034,7 @@ seat_poll_blend_apply <- function(shares, target_election) {
   }
   tb <- seat_poll_blend_table(target_election)
   w <- attr(tb, "w")
+  if ("type" %in% names(tb) && any(tb$type == "mrp_dev")) tb <- .seat_poll_mrp_anchor(tb, shares, target_election)
   perpoll <- identical(Sys.getenv("AUSPOL_SEAT_POLL_MATCH", "class"), "perpoll")
   ind_on <- .ind_weight_on()
   if (ind_on && perpoll) stop("AUSPOL_SEAT_POLL_IND_WEIGHT=1 needs AUSPOL_SEAT_POLL_MATCH=class (per-poll cells carry no direct/MRP type)")
@@ -1179,13 +1273,24 @@ seat_poll_weights_split <- function(target_election) {
   # `f` and its hand-keyed sibling are stamped themselves: a caller may pass
   # any file (a test's tempfile), not only the repo copy (review, 2026-10-10).
   key <- paste("FILE", f, .seat_poll_memo_key("", 0, FALSE, FALSE, FALSE,
-               extra = c(f, file.path(dirname(f), c("hand_keyed_primaries.csv", "seat_poll_corrections.csv")))), sep = "#")
+               extra = c(f, file.path(dirname(f), c("hand_keyed_primaries.csv", "seat_poll_corrections.csv",
+                                                    if (.seat_poll_mrp_pattern_on()) "mrp_extra.csv")))), sep = "#")
   .seat_poll_memoised(key, function() .read_seat_polls_file_impl(f))
 }
 
 #' @keywords internal
 .read_seat_polls_file_impl <- function(f) {
   s <- .seat_poll_coalition_dedup(.seat_poll_apply_corrections(data.table::fread(f, showProgress = FALSE), f))
+  # arm MRP_PATTERN: MRP releases no scrape carries (scripts/parse_yougov_mrp_seats.R), same columns; gitignored
+  xf <- file.path(dirname(f), "mrp_extra.csv")
+  if (.seat_poll_mrp_pattern_on() && file.exists(xf)) {
+    x <- data.table::fread(xf, showProgress = FALSE)
+    if (length(setdiff(names(s), names(x))) || anyDuplicated(paste(x$election, x$seat_name, x$pollster, x$fieldwork_end, x$party)))
+      stop(xf, ": columns differ from ", basename(f), " or a poll repeats a party")
+    cat(sprintf("SPMX MRP releases appended from %s: %d rows (%s)\n", basename(xf), nrow(x),
+                paste(unique(paste(x$election, x$pollster, x$fieldwork_end, sprintf("%d seats", data.table::uniqueN(x$seat_name)))), collapse = "; ")))
+    s <- data.table::rbindlist(list(s, x[, names(s), with = FALSE]), use.names = TRUE)
+  }
   v <- Sys.getenv("AUSPOL_SEAT_POLL_HANDKEYED", "1")
   if (!v %in% c("0", "1")) stop("AUSPOL_SEAT_POLL_HANDKEYED must be \"0\" or \"1\", not ", v)
   if (v == "0") return(s)
