@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-11-23 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-11-24 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
@@ -138,7 +138,7 @@ cannot pass as a working one.
   - e.g. prior-results.csv
 - **anchor-supplement/** -- 5 files, 12 KB
   - e.g. election-cycles-extra.csv, poll-data-act.csv, poll-data-nt.csv, poll-data-tas.csv
-- **benchmarks/** -- 377 files, 98.1 MB
+- **benchmarks/** -- 425 files, 107.7 MB
   - e.g. vic2026-extra/2026-10-24/betfair/markets-1.240828208-113207.json, vic2026-extra/2026-10-24/manifest.tsv, vic2026-extra/2026-10-24/sportsbet/event-10277242-markets-113206.json, vic2026-extra/2026-10-24/sportsbet/event-10952080-markets-113206.json
 - **boundaries/** -- 85 files, 849.9 MB
   - e.g. AEC-2025-esri.zip, AEC_2025/AUS_ELB_region.dbf, AEC_2025/AUS_ELB_region.prj, AEC_2025/AUS_ELB_region.shp
@@ -162,7 +162,7 @@ cannot pass as a working one.
   - e.g. raw/2020/BallotPaperVersions.txt, raw/2020/BrindabellaTotal.txt, raw/2020/Candidates.txt, raw/2020/DataDescriptions.pdf
 - **historical-odds/** -- 34 files, 784 KB
   - e.g. afe2025/betr_electorate_data.json, afe2025/betr_wide.csv, afe2025/market_odds.json, afe2025/sportsbet_wide.csv
-- **htv/** -- 95 files, 60.0 MB
+- **htv/** -- 96 files, 61.9 MB
   - e.g. coalition-card-order-researched.csv, liberal-alp-grn-order.csv, raw/fed2007/vee-how-to-vote-2007.html, raw/fed2010/andrewnorton-2010-08-16.html
 - **leaders/** -- 2 files, 66 KB
   - e.g. leaders-supplement.csv, leaders.csv

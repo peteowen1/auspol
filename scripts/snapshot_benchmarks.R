@@ -153,7 +153,7 @@ if (!DERIVE_ONLY) {
   TSIO <- "https://theswingison.com"
   get("theswingison", paste0(TSIO, "/track-polls/vic26"), "vic26.html", has_text("tap-default-result\\.js"))
   get("theswingison", paste0(TSIO, "/data/vic/tap-default-result.js"), "tap-default-result.js",
-      has_text(sprintf('window\\.TAP_DEFAULT_RESULT = \\{"days":.*"date":"%s"', DAY)))
+      has_text(sprintf('window\\.TAP_DEFAULT_RESULT = \\{"days":.*"date":"(%s|%s)"', DAY, format(as.Date(DAY) + 1L))))   # Sydney dates, see VB14
 
   # Bookmakers and the exchange, through oddsdata, which writes raw files and manifest rows itself. Last, because
   # get() rewrites the manifest from memory and would drop rows appended behind its back.
@@ -314,6 +314,13 @@ if (file.exists(tf)) {
   js <- read_txt(tf)
   tj <- fromJSON(sub(";\\s*$", "", sub("^[\\s\\S]*?window\\.TAP_DEFAULT_RESULT = ", "", js, perl = TRUE)), simplifyVector = FALSE)
   dd <- Filter(function(d) identical(d$date, DAY), tj$days)
+  # Its entries carry SYDNEY dates and DAY is the UTC date, so a capture between midnight and 11am Sydney finds the
+  # buffer already starting at DAY + 1 (24 Nov 2026 6:46am: entries 24-30 Nov, DAY 23 Nov). Take that entry, and say so.
+  if (!length(dd)) {
+    day_syd <- format(as.Date(DAY) + 1L)
+    dd <- Filter(function(d) identical(d$date, day_syd), tj$days)
+    if (length(dd) == 1L) cat(sprintf("VB14 The Swing Is On has no entry dated %s (UTC); using %s, its Sydney date\n", DAY, day_syd))
+  }
   if (length(dd) != 1L) stop(sprintf("VB14! The Swing Is On has %d entries dated %s", length(dd), DAY))
   swc <- dd[[1]]$mcResult$seatWinCounts
   if (is.null(swc)) stop("VB14! The Swing Is On entry has no mcResult$seatWinCounts")
@@ -349,7 +356,7 @@ if (requireNamespace("oddsdata", quietly = TRUE)) {
     sportsbet = function() { f <- newest("sportsbet", "^event-.*-markets-.*\\.json$"); if (is.na(f)) NULL else
       oddsdata::sb_parse_markets(read_txt(f), "seat-betting")[, seat := market] },
     tab = function() { f <- newest("tab", "^Politics-Victorian-Politics.*\\.json$"); if (is.na(f)) NULL else
-      oddsdata::tab_parse_markets(read_txt(f))[market == "Seat Winner"][, seat := sub(" State Election$", "", event)] },
+      bk_tab_seats(oddsdata::tab_parse_markets(read_txt(f))) },
     betfair = function() { o <- bk_read_betfair(raw("betfair"), read_txt); if (is.null(o)) NULL else   # every chunk file
       o[event == "Individual Electorates"][, seat := sub("^Seat of ", "", market)] })
   for (src in names(parsers)) {

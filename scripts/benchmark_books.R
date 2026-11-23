@@ -10,6 +10,28 @@
 # where a file is not in the manifest): reading only the newest file scored one chunk's seats and dropped the rest
 # with nothing said. Prints the fetch-time range of the files used, so a market kept from an older run is visible.
 # Returns the parsed table with `file` and `fetched` columns.
+bk_tab_seats <- function(o) {
+  # TAB's seat-winner markets, one row per price, with `seat` set. Two layouts:
+  #   to 18 Nov 2026: one match per seat, named after it ("Bendigo East State Election"), selections "Labor";
+  #   from 24 Nov 2026: one match "Vic Seats" holding all 88 markets, selections "Labor (Albert Park)".
+  # The seat comes from the match name in the first and from the bracket in the selection in the second, and the
+  # bracket is stripped so party names read the same in both.
+  o <- o[o$market == "Seat Winner"]
+  br <- grepl("\\(([^()]+)\\)\\s*$", o$selection)
+  o[, seat := ifelse(br, sub("^.*\\(([^()]+)\\)\\s*$", "\\1", selection), sub(" State Election$", "", event))]
+  o[, selection := sub("\\s*\\([^()]+\\)\\s*$", "", selection)]
+  # TAB's own misspellings in the 24 Nov 2026 layout, mapped by hand (each checked against its market's seat list):
+  tab_alias <- c("Narre Warren Nrth" = "Narre Warren North", "NarreWarren Nrth" = "Narre Warren North",
+                 "Narre Warren Sth" = "Narre Warren South", "Prahan" = "Prahran", "Tarmeit" = "Tarneit")
+  hit <- o$seat %in% names(tab_alias)
+  o[hit, seat := unname(tab_alias[seat])]
+  per_mkt <- o[, list(n_seat = data.table::uniqueN(seat)), by = "market_id"]
+  if (any(per_mkt$n_seat > 1L)) stop("VBK4! TAB market(s) naming more than one seat after aliasing: ",
+                                      paste(per_mkt$market_id[per_mkt$n_seat > 1L], collapse = ", "))
+  if (any(o$event == "Vic Seats" & !br)) stop("VBK4! TAB 'Vic Seats' selection without a bracketed seat name")
+  o
+}
+
 bk_read_betfair <- function(dir, rd) {
   fs <- list.files(dir, "^markets-.*\\.json$", full.names = TRUE)
   if (!length(fs)) return(NULL)

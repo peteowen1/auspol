@@ -33,7 +33,7 @@ newest <- function(src, pat) {
 }
 books <- list(
   sportsbet = function(f) sb_parse_markets(rd(f), "x")[, seat := market],
-  tab       = function(f) tab_parse_markets(rd(f))[market == "Seat Winner"][, seat := sub(" State Election$", "", event)],
+  tab       = function(f) bk_tab_seats(tab_parse_markets(rd(f))),
   betfair   = function(f) bf_parse_prices(rd(f))[event == "Individual Electorates"][, seat := sub("^Seat of ", "", market)]
 )
 pats <- c(sportsbet = "^event-.*-markets-.*json$", tab = "^Politics-Victorian-Politics.*\\.json$", betfair = "^markets-.*json$")
