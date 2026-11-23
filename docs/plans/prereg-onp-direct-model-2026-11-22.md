@@ -233,3 +233,20 @@ where that switch defaults to "0", so all three arms now set `AUSPOL_BYELECTION_
 what ships, and the comparison is unchanged in kind (it touches by-election restanders, not One Nation's allocation).
 Pete asked (22 Nov, 10:30pm) to run this test overnight rather than on 24 Nov; it starts 23 Nov about 9:15am instead.
 The original clauses above are unedited.
+
+## Ship steps if arm m passes (written 23 Nov 3:40pm, before scoring; Pete: ships if it passes)
+
+1. Score: `Rscript scripts/score_onp_alloc.R C:/dev/auspol-wt-rbb/output C:/dev/auspol-wt-rbm/output`, the same for `-rbr`,
+   then `Rscript scripts/compare_rebuild_scores.R C:/dev/auspol-wt-rbb/output/pooled-backtest.csv C:/dev/auspol-wt-rbm/output/pooled-backtest.csv`.
+   Check criterion 1 first (`ONT1` in `deciding-runs/20261124-onp-rebuilds/rebuild-m.log`, `ONM1` in the stage-1 and stage-6 logs, `OAS1`).
+2. On a pass, in one commit: `AUSPOL_ONP_ALLOC = "model"` and `AUSPOL_ONP_IN_TRAINING = "1"` in `scripts/published_flags.R`;
+   the inline defaults in `R/onp_newseat.R:399` ("rank" -> "model") and `:510` ("0" -> "1"); `scripts/rebuild_forecasts.sh:306`
+   reads `${AUSPOL_ONP_IN_TRAINING:-0}` (flip to `:-1`); regenerate `docs/MODEL-REGISTRY.md`; NEWS; this file's RESULT.
+3. `check_like_ci.R`, one Sonnet review, PR, CI, merge.
+4. Publish arm m's trees: from `C:/dev/auspol-wt-rbm`, `AUSPOL_ONP_IN_TRAINING=1 AUSPOL_ONP_ALLOC=model AUSPOL_BYELECTION_PERSON=1
+   AUSPOL_REBUILD_FROM=9 AUSPOL_PUBLISH=1 bash scripts/rebuild_forecasts.sh`; read the release MANIFEST back (flags show model / 1 / 1,
+   since promote now records the run's values only from the 23 Nov fix onward: the worktree is at f4c3cb1d, so CORRECT the manifest's
+   three flags by hand as for the by-election publish).
+5. `gh workflow run forecast.yaml --ref main -f scenarios=true`; read the conclusion; check `FJ9` in its log says every switch matches.
+6. Tell Pete and the ITG session: pass/fail, shipped or not, expected seats before and after.
+On a fail: the switches stay; RESULT written; Pete and ITG told.
