@@ -279,7 +279,9 @@ jobs:
           # elections' Senate shares and Year 12 completion, two tables this runner cannot build. The first run after it
           # shipped stopped in fit_seats_full.R for want of census-features.csv; a missing table now fails here.
           if [ "$(pflag AUSPOL_ONP_ALLOC)" = "model" ]; then
-            for f in census-features.csv senate-by-division-class.csv; do
+            # federal elections fit through senate-by-division-class; state elections through the two by-district tables
+            # (onp_senate_key, R/onp_order.R). Without the last two every state election was skipped silently (review).
+            for f in census-features.csv senate-by-division-class.csv senate-onp-by-district.csv senate-by-district-class.csv; do
               gh release download shipped-models -p "$f" -D output --clobber || { echo "::error::shipped-models has no $f -- AUSPOL_ONP_ALLOC=model needs it (promote_rebuild.R ships it)"; exit 1; }
               test -s "output/$f" || { echo "::error::$f downloaded empty"; exit 1; }
             done
