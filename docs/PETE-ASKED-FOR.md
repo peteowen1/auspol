@@ -33,6 +33,13 @@ moved verbatim 2026-10-24. Every row below still has something open.
 
 ---
 
+## 2026-11-24
+
+| Request | Status |
+|---|---|
+| Model ready for Saturday? Candidates confirmed? Comparison to Sportsbet / TAB / AE Forecasts / The Swing Is On; storylines; incumbents losing; biggest swings; MRP impact; reply to Antony Green's geography piece | **ANSWERED 24 Nov 6:55am** in chat. Bookie columns are 18 Nov: today's Sportsbet/Betfair capture is blocked by the VPN (Pete: "bookies scrape last"); TAB and The Swing Is On go with it after 11am (UTC date). GES read and committed (23 Nov folder). |
+| One Nation preference keys lean toward One Nation (found answering the above); Pete chose "Build targeted fix today" | **BUILT, OFF; told Pete 24 Nov ~8:45am:** `AUSPOL_ONP_FLOW_KEYS` (arms cond, cond2). Both refused on 35 elections: A worse (+0.0004, SE 0.0003), B a tie (+0.0001, SE 0.0001), and both worse on sa2026 (+0.0128 / +0.0082), losing the seats One Nation actually won. Live model unchanged. `plans/prereg-onp-flow-keys-2026-11-24.md` RESULT. |
+
 ## 2026-11-18
 
 | Request | Status |

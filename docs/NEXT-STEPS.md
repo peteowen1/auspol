@@ -304,6 +304,10 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
   scratchpad). But that arm changes EVERY key, and it is worse on the backtest: quick_arm sa2026/qld2024/fed2025 at 1,000
   sims, log loss 0.2746 -> 0.2823 (+0.0078, SE 0.0062), worse on all three. So the fix, if any, is a targeted arm on the
   three One Nation keys only (prereg, all harnesses), not turning the model off.
+  BUILT AND REFUSED 24 Nov 8:40am (Pete chose "build targeted fix today"): `AUSPOL_ONP_FLOW_KEYS` cond / cond2, both worse on
+  sa2026 (+0.0128 / +0.0082) where they lost the seats One Nation won; pooled +0.0004 (SE 0.0003) / +0.0001 (SE 0.0001).
+  Switch stays "0". OPEN after 28 Nov: the flow-only oracle, to tell whether the trees' lean offsets under-called One
+  Nation primaries (`plans/prereg-onp-flow-keys-2026-11-24.md` RESULT).
 - **After 28 Nov: the 35-election deciding run for the MRP pattern**, which Pete chose to ship without
   (`deciding_run.ps1 -Arm "AUSPOL_SEAT_POLL_MRP_PATTERN=1" -Base "AUSPOL_SEAT_POLL_MRP_PATTERN=0"`). The baseline must pin
   the switch off now that it ships. Record the result in `plans/prereg-mrp-seat-pattern-2026-11-23.md`.

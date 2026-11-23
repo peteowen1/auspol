@@ -45,3 +45,22 @@ Both act in the one shared function, so all harnesses and the published forecast
 
 - 1,000 sims floors winner probabilities at 0.0005; a far-tail change is invisible (CLAUDE.md quick_arm limit).
 - No 20,000-sim deciding run before 28 Nov (time); the screen decides, Pete's call if it is close.
+
+## RESULT (24 Nov 8:40am): both arms REFUSED. Live model unchanged.
+
+`quick_arm.R --pairs=all`, 1,000 sims, 35 elections, 2,931 seats; seat-winner log loss, lower is better, SE clustered on
+election.
+
+| Arm | elections changed | pooled change | sa2026 change | verdict |
+|---|---|---|---|---|
+| A `cond` | 16 of 35 | +0.0004 (SE 0.0003), worse by more than 1 SE | +0.0128 | refused: primary fails, and the sa2026 clause |
+| B `cond2` | 2 of 35 (sa2026, fed2025) | +0.0001 (SE 0.0001), within 1 SE | +0.0082 | refused: the sa2026 clause |
+
+Where arm A lost on sa2026: the seats One Nation actually WON. Hammond (won ONP) 0.638 -> 0.471, Ngadjuri 0.944 -> 0.861,
+MacKillop 0.380 -> 0.357, Narungga 0.317 -> 0.307. The tree flows that lean toward One Nation gave those seats more of
+their real result than the history rates did. Most likely reason, NOT tested here: the trees' lean offsets One Nation
+primaries that the model under-calls (minors under-called 29 of 35 pairs, NEXT-STEPS A7 (3)); the flow-only oracle
+(`scripts/score_flows_oracle.R`, primaries taken out) would separate the two. After 28 Nov.
+
+`AUSPOL_ONP_FLOW_KEYS` stays in the code at "0": the new branch is skipped entirely at "0", so the published forecast
+and every harness are unchanged.

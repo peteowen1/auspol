@@ -430,6 +430,28 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
   pred <- pmax(0, predict(model, X))
   ALLR[, pred := pred]
 
+  # ONE NATION KEYS FROM THE HISTORY RATE (AUSPOL_ONP_FLOW_KEYS, default "0" =
+  # unchanged). The trees have 6-14 training rows per One Nation key and lean
+  # toward One Nation against both the cards and the measured splits (vic2026:
+  # Labor between Liberal and One Nation 55% to Liberal, measured 63-72%).
+  # "cond": every key whose survivors include ONP takes cond_rate, the
+  # time-forward recency-weighted rate the trees are built on; "cond2": only
+  # two-survivor keys with ONP. A key whose rates sum to 0 keeps the trees.
+  # docs/plans/prereg-onp-flow-keys-2026-11-24.md
+  .onp_mode <- Sys.getenv("AUSPOL_ONP_FLOW_KEYS", "0")
+  if (!.onp_mode %in% c("0", "cond", "cond2"))
+    stop("AUSPOL_ONP_FLOW_KEYS must be 0, cond or cond2, not '", .onp_mode, "'", call. = FALSE)
+  if (!identical(.onp_mode, "0")) {
+    .has_onp <- vapply(strsplit(ALLR$surv, "+", fixed = TRUE), function(s) "ONP" %in% s, logical(1))
+    .hit <- .has_onp & (identical(.onp_mode, "cond") | ALLR$n_survivors == 2L)
+    .grp <- paste(ALLR$seat_i, ALLR$from, ALLR$surv)
+    .ok <- .hit & stats::ave(ALLR$cond_rate * .hit, .grp, FUN = sum) > 0
+    ALLR[.ok, pred := cond_rate]
+    cat(sprintf("ONK1 %s: One Nation flow keys from the history rate (%s): %d of %d rows over %d keys replaced; %d key-seat cells kept the trees (no history rate)\n",
+                target_election, .onp_mode, sum(.ok), nrow(ALLR), data.table::uniqueN(paste(ALLR$from[.ok], ALLR$surv[.ok])),
+                data.table::uniqueN(.grp[.hit & !.ok])))
+  }
+
   out <- vector("list", length(seats)); names(out) <- seats
   for (si in seq_along(seats)) {
     seat_rows <- ALLR[ALLR$seat_i == si]

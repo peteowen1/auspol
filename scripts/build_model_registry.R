@@ -1087,7 +1087,12 @@ CLASSIFY <- list(
   AUSPOL_SEAT_POLL_PAID_LEAN = paste(
     "SHIPPED 2026-11-14 as Pete's override (plans/prereg-seat-paid-lean-2026-11-14.md amendment 3). Read in",
     "R/seat_paid_lean.R from .seat_poll_shares_impl() in R/seat_poll_blend.R, which every harness and fit_seats_full.R",
-    "reach through seat_poll_shares() (SPQ1/SPQ2 lines).")
+    "reach through seat_poll_shares() (SPQ1/SPQ2 lines)."),
+  # ---- Added 2026-11-24.
+  AUSPOL_ONP_FLOW_KEYS = paste(
+    "DEAD EXPERIMENT, off: both arms (cond, cond2) refused on 35 elections 24 Nov (plans/prereg-onp-flow-keys-2026-11-24.md).",
+    "Read in R/xgb_flow_override.R inside xgb_flow_conditional_override_for(), which every harness and fit_seats_full.R",
+    "call for per-seat flows (ONK1 line).")
 )
 
 fmt_row <- function(sw) {
