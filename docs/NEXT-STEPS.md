@@ -8,8 +8,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
-- **Status 23 Nov, 8pm.** main 0.4.201 (PR #271 merged: final_twos in the night file, 2022 replay 88 seats OK). Live (5:37pm): by-election
-  person rule ON, One Nation MODELLED allocation ON (Pete's override), final_twos in the forecast file. Search interest off. Dated: 25 Nov
+- **Status 23 Nov, 11pm.** main 0.4.202 (PR #272: MRP seat pattern). Live (10:35pm, run 45162697096): MRP seat pattern ON (July
+  YouGov MRP in; Pete shipped on the 7-election screen), by-election person rule ON, One Nation MODELLED allocation ON (Pete's
+  override), final_twos in the forecast file. Search interest off. Dated: 25 Nov
   both night rehearsals (check the night file's final_twos on the test key); 26 Nov venues recheck; 27 Nov inthegame-blog#1262 + benchmark capture.
   Rebuild worktrees `C:/dev/auspol-wt-rb0`, `-rb1`, `-rbm`, `-rbr`, `-rbb` (junction lists in their deciding-runs folders): unlink before removing.
 - OPEN, after 28 Nov: One Nation allocation. The modelled version is LIVE on Pete's override of its refusal (23 Nov, DECISIONS);
@@ -57,9 +58,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   added, none removed), 310 early centres (same). Gippsland East / Bundalaguah moved venue (Primary School, 627 -> Myrtlebank
   Hall, 795 Maffra-Sale Road) but keeps its 2022 booth's map position by name: move its dot by hand. Geocoder: 0 new
   requests, 359 of 359 placed (run it as plain `python`; `-I` hides the user-installed shapely). Night cycle passes on the
-  new list. Rechecked 22 Nov 12:25pm: same file link, same `Last-Modified` (unchanged). STILL TO DO 23 Nov: check the page's "correct as at" line again (compare `Last-Modified` with
-  `raw-20261121-1140/headers-xlsx.txt`; rerun only if it moved), then the blog's booths build
-  (`C:/dev/inthegame-blog/politics/night-maps/build-booths-2026.py`), which still has 1,851 centres.
+  new list. Rechecked 22 Nov 12:25pm and 23 Nov 10:55pm: same file link, same `Last-Modified` (20 Nov 02:02 GMT, unchanged). The
+  blog's `booths-vic2026.json` was rebuilt 23 Nov 3:23pm with all 1,852 centres. Next check: 26 Nov (item below).
   DRY RUN 21 Nov passed on the 2022 pages (one cycle 68 s, 87 of 88 seats, class split on); REPEATED 22 Nov 1:44pm on `main` 0.4.195 with
   the one command: rc 0 in 3 min 5 s, 174 pages for 87 districts, JSON of 88 seats written (312 KB), nothing uploaded; REPEATED 3:37pm on `dev` 044c2c5c with `--upload-key=auspol/night/test-vic2026.json`: rc 0, uploaded (`NWU3`), test file stamped 20261122_153733. ON `main` since 0.4.193, THE
   NIGHT COMMAND: `bash scripts/night_vic2026.sh <results index URL> <work dir> [--upload] [--every=90]` (fetcher 4 pages at
@@ -112,8 +112,6 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - OPEN, DATED Thu 26 Nov: VEC venues recheck (off Pete's Daily Eight, 23 Nov). Compare the spreadsheet's `Last-Modified` with
   `raw-20261121-1140/headers-xlsx.txt` (20 Nov 02:02 GMT); only if it moved: save raw, `scripts/build_vec_places_2026.R`, the geocoder,
   `bash scripts/publish_night_inputs.sh --upload`, and hand ITG a rebuilt booth file. Done when: checked and, if moved, all four done.
-- DONE 23 Nov (was DATED 25 Nov, off Pete's Daily Eight): final search-interest snapshot taken (window to 21 Nov) and walked; Pete kept
-  it OFF for the election, so no publish is needed before the 27 Nov capture (DECISIONS 2026-11-23).
 - OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. 17 Nov done: 6 sources (TAB not
   saved: Chrome blocked the download on api.beta.tab.com.au; Betfair has no Victorian markets). On 27 Nov, if the TAB
   download is blocked again, check Chrome's download prompt for that site first. Leads from X (23 Nov): a 16 Nov 4CP
@@ -287,15 +285,11 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
 
 ## Dated, cannot move
 
-- **DONE 23 Nov 10:35pm: first live run after the MRP pattern ships** (run 45162697096, success). `SPMA`, `SPPB` and
-  `SPB` never reach the run's log: `run_all.R` keeps only codes ending in a digit. The check that works is the `SMN1
-  seat-poll blend` line against the `SMN1` line before it. Tonight's party averages moved by under 0.1 points (ALP 23.56
-  -> 23.48, ONP 20.50 -> 20.59); deviations blended as levels would have cut each party by about 1.5-2 points. `FJ9!`
-  (`AUSPOL_SEAT_POLL_MRP_PATTERN (absent)->1`) prints daily until the next rebuild records the switch. The switch acts
-  after the trees, so this is expected. If the blend step ever drops a party by points, the deviations were blended
-  as levels: roll back by re-uploading
-  `deciding-runs/20261123-mrp-pattern/shipped-before-mrp-seat-poll-blend-vic2026.csv` (the asset before 23 Nov 10:09pm,
-  md5 5242e763...). Uploaded asset md5 cb5e3bc1... (verified by download). First live run: 45162697096 (23 Nov 10:10pm).
+- OPEN, DATED 24 Nov (checked in-session 10:13am): MRP seat pattern, live since 23 Nov 10:35pm. Each daily run, the `SMN1
+  seat-poll blend` line should move party averages by tenths, not points (`SPMA`/`SPPB` are filtered out of the run log).
+  Points would mean seat deviations blended as levels: roll back with
+  `deciding-runs/20261123-mrp-pattern/shipped-before-mrp-seat-poll-blend-vic2026.csv`. `FJ9!` naming the switch is expected
+  until the next rebuild. Done when: the 24 Nov scheduled run passes this. Detail: DECISIONS 2026-11-23.
 - **After 28 Nov: the 35-election deciding run for the MRP pattern**, which Pete chose to ship without
   (`deciding_run.ps1 -Arm "AUSPOL_SEAT_POLL_MRP_PATTERN=1" -Base "AUSPOL_SEAT_POLL_MRP_PATTERN=0"`). The baseline must pin
   the switch off now that it ships. Record the result in `plans/prereg-mrp-seat-pattern-2026-11-23.md`.
