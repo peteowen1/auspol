@@ -881,7 +881,7 @@ if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate")) {
 # can be reported at both ends of that bound instead of at one unvalidated
 # point. Unset leaves the shape exactly as measured.
 ONP_CV <- as.numeric(Sys.getenv("AUSPOL_ONP_CV", "0.365"))
-# AUSPOL_ONP_ALLOC=model (default "rank"; docs/plans/prereg-onp-direct-model-2026-11-22.md): every seat's relativity
+# AUSPOL_ONP_ALLOC=model (default "model" since 23 Nov 2026; docs/plans/prereg-onp-direct-model-2026-11-22.md): every seat's relativity
 # comes from its Senate share and Year 12 (onp_model_ratio(), fitted on earlier elections), and the spread is NOT
 # forced. Needs the Senate ordering (its values are the model's input). Any failure stops the run: a silent fall back
 # to the rank rule would publish a forecast that says "model" and is not.

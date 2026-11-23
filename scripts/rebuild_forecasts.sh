@@ -303,7 +303,7 @@ fi
 # AUSPOL_ONP_IN_TRAINING=1 (default 1 since 23 Nov 2026; docs/plans/prereg-onp-direct-model-2026-11-22.md, Amendment 1): One Nation's
 # no-history allocation is part of the base the as-at trees TRAIN on, so stage 1 runs it at its published values
 # instead of pinning it off. post_xgb_switches() drops the two One Nation switches under the same setting.
-if [ "${AUSPOL_ONP_IN_TRAINING:-1}" = "1" ]; then S1_ONP_RULE=1; S1_ONP_ORDER=senate_rank; echo "   ONT1  stage 1 runs One Nation's allocation (AUSPOL_ONP_IN_TRAINING=1, AUSPOL_ONP_ALLOC=${AUSPOL_ONP_ALLOC:-rank}): the trees train on it";
+if [ "${AUSPOL_ONP_IN_TRAINING:-1}" = "1" ]; then S1_ONP_RULE=1; S1_ONP_ORDER=senate_rank; echo "   ONT1  stage 1 runs One Nation's allocation (AUSPOL_ONP_IN_TRAINING=1, AUSPOL_ONP_ALLOC=${AUSPOL_ONP_ALLOC:-model}): the trees train on it";
 else S1_ONP_RULE=0; S1_ONP_ORDER=federal; fi
 if at_least 1; then stage "1-harnesses-base_pred"; AUSPOL_XGB_BASE_RECORD=1 AUSPOL_REENTRY=0 AUSPOL_NEW_IND_SHRINK=0 AUSPOL_DEPARTED_SUCCESSOR=0 AUSPOL_IND_PERSON=0 AUSPOL_GRN_TREE_SHRINK=0 AUSPOL_LEVEL_RECENT=0 AUSPOL_IND_TYPICAL=0 AUSPOL_IND_MIXTURE=0 AUSPOL_IND_RETURN=0 AUSPOL_LEVEL_CONSERVE=0 AUSPOL_ONP_NEWSEAT_RULE=$S1_ONP_RULE AUSPOL_ONP_ORDER=$S1_ONP_ORDER AUSPOL_SEAT_SWING_PORT_3C=0 AUSPOL_IND_GAP_RESTAND=0 AUSPOL_SWING_FORM=points AUSPOL_N_SIMS="${AUSPOL_STAGE1_SIMS:-2000}" run6 0 s1; done_stage "1-harnesses-base_pred"; fi
 if at_least 2; then stage "2-pool-sharedetail";    AUSPOL_POOL_MIN_SIMS="${AUSPOL_STAGE1_SIMS:-2000}" Rscript scripts/pool_sharedetail.R      > "$LOG/s2_pool.log" 2>&1; done_stage "2-pool-sharedetail"; fi

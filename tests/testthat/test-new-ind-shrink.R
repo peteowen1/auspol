@@ -113,10 +113,14 @@ test_that("switch 0 returns the matrix itself without reading anything", {
 
 test_that("post_xgb_switches lists every active post-xgb switch", {
   # One Nation's order and new-seat rule ship ON (2026-10-26), and the port's 3C cleaning (2026-10-28);
-  # all three are post-xgb: unset, all are reported.
+  # all three are post-xgb when the trees are NOT trained on One Nation's allocation (AUSPOL_ONP_IN_TRAINING "0"):
+  # unset, all are reported. Since 23 Nov 2026 the shipped default is "1", which takes the two One Nation ones out.
   withr::local_envvar(AUSPOL_IND_PERSON = "0", AUSPOL_REENTRY = "0", AUSPOL_NEW_IND_SHRINK = "0", AUSPOL_DEPARTED_SUCCESSOR = "0",
-                      AUSPOL_ONP_NEWSEAT_RULE = NA, AUSPOL_ONP_ORDER = NA, AUSPOL_SEAT_SWING_PORT_3C = NA)
+                      AUSPOL_ONP_NEWSEAT_RULE = NA, AUSPOL_ONP_ORDER = NA, AUSPOL_SEAT_SWING_PORT_3C = NA, AUSPOL_ONP_IN_TRAINING = "0")
   expect_setequal(names(post_xgb_switches()), c("AUSPOL_ONP_NEWSEAT_RULE", "AUSPOL_ONP_ORDER", "AUSPOL_SEAT_SWING_PORT_3C"))
+  withr::local_envvar(AUSPOL_ONP_IN_TRAINING = NA)   # the shipped default
+  expect_setequal(names(post_xgb_switches()), "AUSPOL_SEAT_SWING_PORT_3C")
+  withr::local_envvar(AUSPOL_ONP_IN_TRAINING = "0")
   withr::local_envvar(AUSPOL_ONP_NEWSEAT_RULE = "0", AUSPOL_ONP_ORDER = "federal",   # the stage-1 pin
                       AUSPOL_SEAT_SWING_PORT_3C = "0")
   expect_length(post_xgb_switches(), 0L)

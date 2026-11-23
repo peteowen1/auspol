@@ -112,6 +112,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   design-checked it 21 Nov at head 84d9e8d5 (0 important; PASS at 400/760/desktop); its check of the live forecast: the
   note shows on 0 of 88 seats (highest unsplit independent total Macedon 5.6%, against the 10% bar). On 27 Nov: mark it
   ready, check its render run is green, merge, close #1239 (same nav commit). Any new commit to the branch: tell ITG.
+- OPEN, DATED Thu 26 Nov: VEC venues recheck (off Pete's Daily Eight, 23 Nov). Compare the spreadsheet's `Last-Modified` with
+  `raw-20261121-1140/headers-xlsx.txt` (20 Nov 02:02 GMT); only if it moved: save raw, `scripts/build_vec_places_2026.R`, the geocoder,
+  `bash scripts/publish_night_inputs.sh --upload`, and hand ITG a rebuilt booth file. Done when: checked and, if moved, all four done.
+- DONE 23 Nov (was DATED 25 Nov, off Pete's Daily Eight): final search-interest snapshot taken (window to 21 Nov) and walked; Pete kept
+  it OFF for the election, so no publish is needed before the 27 Nov capture (DECISIONS 2026-11-23).
 - OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. 17 Nov done: 6 sources (TAB not
   saved: Chrome blocked the download on api.beta.tab.com.au; Betfair has no Victorian markets). On 27 Nov, if the TAB
   download is blocked again, check Chrome's download prompt for that site first. Each date: `Rscript scripts/snapshot_benchmarks.R`, plus the GES
