@@ -287,9 +287,13 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
 
 ## Dated, cannot move
 
-- **24 Nov, first daily run after the MRP pattern ships** (`AUSPOL_SEAT_POLL_MRP_PATTERN=1`, 23 Nov): read the run's
-  log for `SPMA vic2026 ... 351 cells` and `SPPB vic2026 ... over 353 cells`. Without `SPMA`, the shipped
-  `seat-poll-blend-vic2026.csv`'s seat deviations were blended as levels: roll back by re-uploading
+- **DONE 23 Nov 10:35pm: first live run after the MRP pattern ships** (run 45162697096, success). `SPMA`, `SPPB` and
+  `SPB` never reach the run's log: `run_all.R` keeps only codes ending in a digit. The check that works is the `SMN1
+  seat-poll blend` line against the `SMN1` line before it. Tonight's party averages moved by under 0.1 points (ALP 23.56
+  -> 23.48, ONP 20.50 -> 20.59); deviations blended as levels would have cut each party by about 1.5-2 points. `FJ9!`
+  (`AUSPOL_SEAT_POLL_MRP_PATTERN (absent)->1`) prints daily until the next rebuild records the switch. The switch acts
+  after the trees, so this is expected. If the blend step ever drops a party by points, the deviations were blended
+  as levels: roll back by re-uploading
   `deciding-runs/20261123-mrp-pattern/shipped-before-mrp-seat-poll-blend-vic2026.csv` (the asset before 23 Nov 10:09pm,
   md5 5242e763...). Uploaded asset md5 cb5e3bc1... (verified by download). First live run: 45162697096 (23 Nov 10:10pm).
 - **After 28 Nov: the 35-election deciding run for the MRP pattern**, which Pete chose to ship without
