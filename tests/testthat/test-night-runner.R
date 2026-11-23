@@ -411,6 +411,11 @@ test_that("night final_twos: every pair at 1%+ of draws, the afternoon file's ru
   expect_equal(c(s1$final_two$leader, s1$final_two$other), c(s1$final_twos[[1]]$a, s1$final_twos[[1]]$b))
   expect_equal(s1$final_two$p_pair, s1$final_twos[[1]]$p_pair)
   expect_equal(s1$final_two$leader_tcp, s1$final_twos[[1]]$a_tcp)
+  # most draws with no final two (three still in): final_two still names the pair the other draws hold (review, 23 Nov)
+  res$sim$tcp_winner[1:150, 1] <- NA; res$sim$tcp_runnerup[1:150, 1] <- NA
+  s1 <- night_build_json(list(shares = sh0, pair = "t"), res, list(file = "f", stamp = "s", archived = TRUE))$seats[[1]]
+  expect_equal(c(s1$final_two$leader, s1$final_two$other), c("GRN", "ALP"))
+  expect_equal(s1$final_two$p_pair, s1$final_twos[[1]]$p_pair)
 })
 
 test_that("the VEC's raw counted 2CP share is carried through night_tcp_obs and night_apply_tcp, apart from the flow projection (#162)", {

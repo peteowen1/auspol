@@ -637,9 +637,12 @@ night_build_json <- function(st, res, snapshot, base = NULL, election = "vic2026
                                                          candidate = NULL, sitting = NULL))
     ps <- ps[order(-vapply(ps, `[[`, numeric(1), "win_prob"))]
     ft <- NULL
-    if (!is.null(tw) && s %in% colnames(tw)) {
-      pr <- paste(pmin(tw[, s], tr[, s]), pmax(tw[, s], tr[, s]), sep = "|"); top <- names(sort(table(pr), decreasing = TRUE))[1]
-      hit <- pr == top; ab <- strsplit(top, "|", fixed = TRUE)[[1]]
+    # draws with no final two (three or more still in at the count) are left out, as in night_final_twos(), so the
+    # pair here is always final_twos[[1]]'s and an "NA|NA" pair can never come first
+    okd <- if (!is.null(tw) && s %in% colnames(tw)) !is.na(tw[, s]) & !is.na(tr[, s]) else FALSE
+    if (any(okd)) {
+      pr <- paste(pmin(tw[, s], tr[, s]), pmax(tw[, s], tr[, s]), sep = "|"); top <- names(sort(table(pr[okd]), decreasing = TRUE))[1]
+      hit <- okd & pr == top; ab <- strsplit(top, "|", fixed = TRUE)[[1]]
       lead <- names(sort(table(tw[hit, s]), decreasing = TRUE))[1]
       # one copy of the leader removed, so a same-class pair ("LNP|LNP", Liberal v National) keeps other = LNP; there the
       # draws cannot say which candidate won, so no leader-win share (as fit_seats_full.R's seat ranges)
