@@ -111,7 +111,9 @@ this codebase has hit five times.
 `w_grid`/`lambdas` (search grids, resolution not assumption), optimiser bounds
 and starts in `optim_boxed`, `window = 30` (days counted as "final poll"),
 `horizons = c(30, 90, 180, 365, 730)`, plot colours and alphas, the 180-day
-leader-caveat window, and `G3`'s 0.15 MAE tolerance.
+leader-caveat window, `G3`'s 0.15 MAE tolerance, and the 1% of runs a final-two
+pair needs to be listed in `seats[].final_twos` (`.TCP_PAIR_MIN` in
+`scripts/fit_seats_full.R`, `min_p` in `night_final_twos()`; Pete, 23 Nov 2026).
 
 Two of these are closer to judgement than the rest and are worth revisiting if
 they ever look load-bearing: `window = 30` decides which poll counts as a

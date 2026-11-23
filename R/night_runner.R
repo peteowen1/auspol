@@ -595,6 +595,8 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
 #' (the VEC's two-candidate count where the update used it, else `null`: `vec_share_a` is the RAW counted share of `a` over `a` + `b`
 #' in the booths reported, `flow_share_a` the flow-based projection of the final share from first preferences and flow, `model_share_a` the
 #' simulated posterior mean, and `wrong_pair` TRUE when the VEC's pair is not one the model expected).
+#' Added 23 Nov 2026 for the seat panel: per seat `final_twos` ([night_final_twos()], the afternoon file's shape) and
+#' `final_two$leader_tcp` (the leader's 2CP share in percent over the draws with that pair: q05, q50, q95; `null` for a same-class pair).
 #' @param base A parsed published `forecast-vic2026.json` (list), or `NULL`.
 #' @param st Saved afternoon state (an `AUSPOL_NIGHT_DUMP` RDS, read).
 #' @param res Result of [night_run_update()].
@@ -642,16 +644,19 @@ night_build_json <- function(st, res, snapshot, base = NULL, election = "vic2026
       # one copy of the leader removed, so a same-class pair ("LNP|LNP", Liberal v National) keeps other = LNP; there the
       # draws cannot say which candidate won, so no leader-win share (as fit_seats_full.R's seat ranges)
       other <- ab[-match(lead, ab)]
+      lq <- if (identical(lead, other) || is.null(sim$tcp_share)) NULL else .night_tcp_q(tw[hit, s], sim$tcp_share[hit, s], lead)
       ft <- list(leader = lead, other = other, p_pair = round(mean(hit), 4),
-                 p_leader_wins_pair = if (identical(lead, other)) NULL else round(mean(tw[hit, s] == lead), 4))
+                 p_leader_wins_pair = if (identical(lead, other)) NULL else round(mean(tw[hit, s] == lead), 4),
+                 leader_tcp = lq)
     }
+    fts <- if (!is.null(tw) && !is.null(sim$tcp_share) && s %in% colnames(tw)) night_final_twos(tw[, s], tr[, s], sim$tcp_share[, s]) else I(list())
     # the VEC's two-candidate count where the update used it: `wrong_pair` TRUE = the VEC's pair is not one the model expected
     v2 <- NULL
     if (!is.null(nt) && s %in% nt$seat) { r <- nt[nt$seat == s, ][1L, ]
       v2 <- list(a = r$a, b = r$b, vec_share_a = if (is.finite(r$raw_a)) round(r$raw_a, 4) else NULL, flow_share_a = round(r$obs_a, 4), model_share_a = if (is.finite(r$post_a)) round(r$post_a, 4) else NULL,
                  pair_share = round(r$pair_share, 4), wrong_pair = isTRUE(r$flag)) }
     list(seat = s, vec_2cp = v2, region = if (!is.null(region) && s %in% names(region) && !is.na(region[[s]])) region[[s]] else NULL,
-         favourite = ps[[1]]$party, favourite_prob = ps[[1]]$win_prob, final_two = ft,
+         favourite = ps[[1]]$party, favourite_prob = ps[[1]]$win_prob, final_two = ft, final_twos = fts,
          counted_pct = round(100 * unname(res$nu$counted[s]), 1), parties = ps,
          swing = if (!is.null(swing) && s %in% names(swing)) unname(swing[s]) else NULL)
   })
@@ -666,6 +671,41 @@ night_build_json <- function(st, res, snapshot, base = NULL, election = "vic2026
                     seats_with_feed_data = length(res$matched), seats_updated = res$n_updated, seats_with_2cp = res$n_tcp,
                     prior_state = st$pair, counted_denominator = res$denominator, unreported_booths_listed = res$n_placeholder, snapshot_booths_not_listed = res$n_unlisted, seats_on_projected_denominator = length(res$nu$fallback_projected), mean_counted_pct = round(100 * mean(res$nu$counted), 1)),
        seats = seat_rows, booths = booths)
+}
+
+# `lead`'s 2CP share in percent over draws w (count winners) / sh (winner's share, 0-1): q05, q50, q95
+.night_tcp_q <- function(w, sh, lead) {
+  v <- 100 * ifelse(w == lead, sh, 1 - sh); v <- v[is.finite(v)]
+  if (!length(v)) return(NULL)
+  q <- round(stats::quantile(v, c(0.05, 0.5, 0.95), names = FALSE, type = 7), 2)
+  list(q05 = q[1], q50 = q[2], q95 = q[3])
+}
+
+#' Every final-two pair in at least `min_p` of the night's draws, for one seat
+#'
+#' The night version of the afternoon file's `seats[].final_twos` (`scripts/fit_seats_full.R`, TCP2): same rules and
+#' the same JSON shape, so a page reads both files the same way. Pairs run most draws first, ties alphabetically; `a`
+#' is whichever of the pair wins it more often, `a_tcp` its 2CP share in percent over the draws with that pair (q05,
+#' q50, q95), `NULL` for a same-class pair, where the draws cannot say which candidate won. The most common pair is
+#' always kept, even under `min_p`.
+#' @param w,r Character vectors, one per draw: the count winner and runner-up (`sim$tcp_winner[, seat]`, `tcp_runnerup`).
+#' @param sh Numeric vector, one per draw: the winner's share of the two-candidate total, 0-1 (`sim$tcp_share[, seat]`).
+#' @param min_p Smallest share of draws a pair needs to be listed (0.01, a display threshold).
+#' @return A list (wrapped in `I()`, so an empty one writes `[]`) of `list(a, b, p_pair, a_tcp)`.
+#' @export
+night_final_twos <- function(w, r, sh, min_p = 0.01) {
+  if (length(w) != length(r) || length(w) != length(sh)) stop("NW25! night_final_twos: w, r and sh differ in length", call. = FALSE)
+  ok <- !is.na(w) & !is.na(r) & is.finite(sh)
+  if (!any(ok)) return(I(list()))
+  pair <- ifelse(w < r, paste(w, r, sep = "|"), paste(r, w, sep = "|"))
+  tb <- table(pair[ok]); tb <- tb[order(-as.numeric(tb), names(tb))]
+  tb <- tb[as.numeric(tb) / length(w) >= min_p | names(tb) == names(tb)[1]]
+  I(lapply(names(tb), function(pr) {
+    k <- ok & pair == pr; ab <- strsplit(pr, "|", fixed = TRUE)[[1]]
+    lead <- ab[which.max(c(sum(w[k] == ab[1]), sum(w[k] == ab[2])))]; other <- ab[-match(lead, ab)]
+    list(a = lead, b = other, p_pair = round(mean(k), 4),
+         a_tcp = if (identical(lead, other)) NULL else .night_tcp_q(w[k], sh[k], lead))
+  }))
 }
 
 #' Write a JSON document atomically and validated: temp file, read it back, then rename over the target

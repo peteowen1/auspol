@@ -378,6 +378,39 @@ test_that("the night JSON carries seat-count histograms, the afternoon primary a
   expect_true(all(c("chamber", "night", "majority", "seats", "n_sims", "built_at") %in% names(doc)))
   js <- jsonlite::fromJSON(jsonlite::toJSON(doc, auto_unbox = TRUE, null = "null"), simplifyVector = FALSE)
   expect_equal(unlist(js$chamber$parties$ALP$hist), c(1, 2, 1))
+  expect_length(s1$final_twos, 0L)                                  # no draws of the final two: [] in the JSON
+  expect_true(grepl('"final_twos":[]', jsonlite::toJSON(doc$seats[[1]], auto_unbox = TRUE, null = "null"), fixed = TRUE))
+})
+
+test_that("night final_twos: every pair at 1%+ of draws, the afternoon file's rules, and final_two's leader 2CP range (23 Nov)", {
+  # 200 draws: ALP v LNP 150 (ALP wins 100), GRN v ALP 48 (GRN wins all), ONP v LNP 1 (0.5%, under 1%), one NA
+  w <- c(rep("ALP", 100), rep("LNP", 50), rep("GRN", 48), "ONP", NA)
+  r <- c(rep("LNP", 100), rep("ALP", 50), rep("ALP", 48), "LNP", NA)
+  sh <- c(seq(0.51, 0.60, length.out = 100), rep(0.53, 50), rep(0.70, 48), 0.51, NA)
+  ft <- night_final_twos(w, r, sh)
+  expect_equal(vapply(ft, `[[`, "", "a"), c("ALP", "GRN"))           # ONP v LNP (1 of 200) dropped, most draws first
+  expect_equal(vapply(ft, `[[`, "", "b"), c("LNP", "ALP"))
+  expect_equal(vapply(ft, `[[`, 0, "p_pair"), c(0.75, 0.24))
+  # ALP's share over the 150 ALP v LNP draws: its own share where it won, 1 - LNP's share where LNP won
+  a_sh <- 100 * c(seq(0.51, 0.60, length.out = 100), rep(0.47, 50))
+  expect_equal(ft[[1]]$a_tcp$q50, round(stats::quantile(a_sh, 0.5, names = FALSE), 2))
+  expect_equal(ft[[2]]$a_tcp, list(q05 = 70, q50 = 70, q95 = 70))
+  # a same-class pair (Liberal v National, both LNP): no 2CP range
+  expect_null(night_final_twos(c("LNP", "LNP"), c("LNP", "LNP"), c(0.6, 0.55))[[1]]$a_tcp)
+  # the most common pair is kept even under the threshold
+  expect_length(night_final_twos(c("ALP", "LNP"), c("LNP", "ALP"), c(0.6, 0.6), min_p = 0.99), 1L)
+  expect_error(night_final_twos("ALP", c("LNP", "ALP"), 0.6), "NW25!")
+  # through night_build_json: final_twos[[1]] is final_two's pair, and final_two carries the leader's 2CP range
+  sh0 <- matrix(c(50, 40), 1, dimnames = list("S1", c("ALP", "LNP")))
+  tw <- matrix(w, ncol = 1, dimnames = list(NULL, "S1")); tr <- matrix(r, ncol = 1, dimnames = list(NULL, "S1"))
+  sim <- list(totals = cbind(ALP = rep(1L, 200), LNP = 0L), win_prob = data.frame(seat = "S1", party = "ALP", prob = 0.6),
+              tcp_winner = tw, tcp_runnerup = tr, tcp_share = matrix(sh, ncol = 1, dimnames = list(NULL, "S1")))
+  res <- list(sim = sim, shares = sh0, sd = sh0 * 0 + 3, matched = "S1", n_updated = 1L, n_tcp = 0L,
+              nu = list(counted = c(S1 = 0.3), fallback_projected = character()), denominator = "expected", n_placeholder = 0L, n_unlisted = 0L)
+  s1 <- night_build_json(list(shares = sh0, pair = "t"), res, list(file = "f", stamp = "s", archived = TRUE))$seats[[1]]
+  expect_equal(c(s1$final_two$leader, s1$final_two$other), c(s1$final_twos[[1]]$a, s1$final_twos[[1]]$b))
+  expect_equal(s1$final_two$p_pair, s1$final_twos[[1]]$p_pair)
+  expect_equal(s1$final_two$leader_tcp, s1$final_twos[[1]]$a_tcp)
 })
 
 test_that("the VEC's raw counted 2CP share is carried through night_tcp_obs and night_apply_tcp, apart from the flow projection (#162)", {

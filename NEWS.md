@@ -1,3 +1,9 @@
+# auspol (development)
+
+No change to the published forecast; election-night file only.
+
+- **The election-night file carries every final-two pair at 1%+ of draws** (`seats[].final_twos`, the afternoon file's shape: a, b, p_pair, a_tcp q05/q50/q95), recomputed each cycle from the night's updated draws by `night_final_twos()`, and `final_two$leader_tcp` gives the leader's 2CP range over the draws with that pair. So the seat panel reads both files the same way (Pete, 23 Nov).
+
 # auspol 0.4.200
 
 No change to the model; fixes the daily run for 0.4.199.
