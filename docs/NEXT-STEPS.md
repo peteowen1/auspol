@@ -289,8 +289,9 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
 
 - **24 Nov, first daily run after the MRP pattern ships** (`AUSPOL_SEAT_POLL_MRP_PATTERN=1`, 23 Nov): read the run's
   log for `SPMA vic2026 ... 351 cells` and `SPPB vic2026 ... over 353 cells`. Without `SPMA`, the shipped
-  `seat-poll-blend-vic2026.csv`'s seat deviations were blended as levels: re-upload the arm-off copy (byte-identical
-  backup of the 23 Nov asset in the session scratchpad; rebuild with `blendtab2.R` from `auspol-wt-rbm` inputs otherwise).
+  `seat-poll-blend-vic2026.csv`'s seat deviations were blended as levels: roll back by re-uploading
+  `deciding-runs/20261123-mrp-pattern/shipped-before-mrp-seat-poll-blend-vic2026.csv` (the asset before 23 Nov 10:09pm,
+  md5 5242e763...). Uploaded asset md5 cb5e3bc1... (verified by download). First live run: 45162697096 (23 Nov 10:10pm).
 - **After 28 Nov: the 35-election deciding run for the MRP pattern**, which Pete chose to ship without
   (`deciding_run.ps1 -Arm "AUSPOL_SEAT_POLL_MRP_PATTERN=1" -Base "AUSPOL_SEAT_POLL_MRP_PATTERN=0"`). The baseline must pin
   the switch off now that it ships. Record the result in `plans/prereg-mrp-seat-pattern-2026-11-23.md`.
