@@ -263,6 +263,7 @@ pooled_ll <- with(per, sum(logloss * n) / sum(n))
 cat(sprintf("PA5  pooled seat log loss over %d seat-elections: %.4f (lower is better)%s\n", sum(per$n), pooled_ll,
             if (!is.null(ledger_summary)) sprintf(" | AEF-7 ledger: ours %.4f vs AEF %.4f", ledger_summary$seat_logloss$our, ledger_summary$seat_logloss$aef) else ""))
 gitsha <- tryCatch(trimws(system2("git", c("rev-parse", "HEAD"), stdout = TRUE)), error = function(e) NA_character_)
+.used_flags <- lapply(setNames(nm = names(PUBLISHED_FLAGS)), function(n) { v <- Sys.getenv(n, ""); if (nzchar(v)) v else as.character(PUBLISHED_FLAGS[[n]]) })
 man <- list(
   promoted_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z"),
   arm = "rebuild", rundir = "scripts/rebuild_forecasts.sh", seeds = 1L,
@@ -271,7 +272,12 @@ man <- list(
   pooled_seat_logloss_mean_of_seeds = round(mean(per$logloss), 6),
   pairs = nrow(per), seat_elections = sum(per$n), missing_pairs = missing,
   aef7 = ledger_summary,
-  flags = as.list(PUBLISHED_FLAGS),
+  # The values the run USED: a switch set in the environment (a rebuild arm, e.g. AUSPOL_BYELECTION_PERSON=1 on
+  # 23 Nov) overrides the file. Before 23 Nov this wrote the file's values, so the 23 Nov manifest said "0" for the
+  # switch its trees were trained with at "1". rebuild_forecasts.sh exports every switch, so "set in the
+  # environment" says nothing; `differs_from_file` names the switches whose used value is not the file's.
+  flags = .used_flags,
+  differs_from_file = as.list(names(.used_flags)[vapply(names(.used_flags), function(n) !identical(.used_flags[[n]], as.character(PUBLISHED_FLAGS[[n]])), logical(1))]),
   per_pair = lapply(seq_len(nrow(per)), function(i) list(pair = per$pair[i], n = per$n[i], logloss = round(per$logloss[i], 6), file = per$file[i])),
   models = data.frame(file = models, md5 = vapply(mf, function(p) as.character(tools::md5sum(p)), character(1)),
                       mtime = format(file.mtime(mf), "%Y-%m-%dT%H:%M:%S"), stringsAsFactors = FALSE))
