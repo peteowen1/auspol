@@ -1,6 +1,6 @@
 # Data dictionary
 
-**Generated 2026-11-12 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
+**Generated 2026-11-23 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
 
 Companion to `docs/DATA-REGISTRY.md`. The registry answers *do we have this
 file*; this answers *do we have this field*. Four wrong "we don't have it"
@@ -263,13 +263,16 @@ The originals, before any aggregation. **This is where dropped columns live.**
 | `pollbludger/posts.csv` | 72,378 | `post_id`, `url`, `title`, `posted`, `categories`, `text`, `day_file`, `date` |
 | `seat-polls/hand_keyed_primaries.csv` | 17 | `election`, `seat`, `pollster`, `client`, `fieldwork_start`, `fieldwork_end`, `date_raw`, `published`, `sample_n`, `party`, `fp`, `tcp_party_a`, `tcp_party_b`, `tcp_a`, `source_url`, `row_type`, `seat_name`, `source` |
 | `seat-polls/mrp_candidates.csv` | 122 | `election`, `pollster`, `release_date`, `seat`, `label_in_file`, `named_candidate`, `modelled`, `method_note`, `source_url`, `source_date` |
+| `seat-polls/mrp_extra.csv` | 527 | `election`, `seat`, `pollster`, `client`, `fieldwork_start`, `fieldwork_end`, `date_raw`, `published`, `sample_n`, `party`, `fp`, `tcp_party_a`, `tcp_party_b`, `tcp_a`, `source_url`, `row_type`, `seat_name` |
 | `seat-polls/poll_methods.csv` | 1,211 | `election`, `seat`, `pollster`, `fieldwork_end`, `sample_n`, `pollster_clean`, `method`, `sponsor_type`, `sponsor_name`, `evidence`, `evidence_url`, `confidence`, `sponsor_confidence` |
+| `seat-polls/raw/sources/yougov-vic-mrp-2026-07-full.csv` | 88 | `page`, `seat`, `alp`, `coalition`, `grn`, `onp`, `ind`, `oth_left`, `oth_right`, `winner_2022`, `proj_winner`, `proj_runner_up`, `winner_2pp`, `seat_status` |
 | `seat-polls/seat_poll_corrections.csv` | 3 | `election`, `seat_name`, `pollster`, `fieldwork_end`, `party`, `fp_wrong`, `fp_right`, `source`, `note` |
 | `seat-polls/seat_polls.csv` | 7,244 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8`, `V9`, `V10`, `V11`, `V12`, `V13`, `V14`, `V15`, `V16`, `V17` |
+| `sponsor_side.csv` | 20 | `pattern`, `side`, `note` |
 | `state-federal/state-federal-polls.csv` | 1,095 | `election`, `pollster`, `fieldwork_start`, `fieldwork_end`, `scope`, `state`, `seat`, `sample_n`, `alp_tpp`, `alp_fp`, `lnp_fp`, `grn_fp`, `oth_fp`, `source_url`, `verified`, `extra_fp` |
 | `state-regional-splits/regional_splits.csv` | 266 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8`, `V9`, `V10`, `V11`, `V12`, `V13` |
 | `statewide-samples/election_dates.csv` | 70 | `V1`, `V2`, `V3`, `V4` |
-| `statewide-samples/firm_alias.csv` | 30 | `pattern`, `canonical`, `note` |
+| `statewide-samples/firm_alias.csv` | 31 | `pattern`, `canonical`, `note` |
 | `statewide-samples/pages_manifest.csv` | 140 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8`, `V9`, `V10`, `V11` |
 | `statewide-samples/pollbludger_polls.csv` | 102 | `election`, `region`, `row_type`, `date`, `POLLSTER`, `alp_fp`, `lnp_fp`, `grn_fp`, `alp_tpp`, `lnp_tpp`, `DATE`, `LNPtrend`, `ALPtrend`, `GRNtrend`, `LNP2trend`, `ALP2trend`, `source_url` |
 | `statewide-samples/raw/pollbludger_nsw2019_sheet_gid0.csv` | 49 | `DATE`, `POLLSTER`, `LNP`, `ALP`, `GRN`, `LNP2`, `ALP2`, `LNPtrend`, `ALPtrend`, `GRNtrend`, `LNP2trend`, `ALP2trend` |
@@ -299,7 +302,7 @@ processed extract. Every one is recoverable without a new fetch.
 
 ## Derived outputs (`output/`)
 
-1135 files in 643 families (names differing only by numbers are one family, N; rows and columns are its first file's).
+1156 files in 664 families (names differing only by numbers are one family, N; rows and columns are its first file's).
 
 | file (family) | files | rows | columns |
 |---|---:|---:|---|
@@ -337,10 +340,10 @@ processed extract. Every one is recoverable without a new fetch.
 | `booths-qldN.csv` | 2 | 15,186 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes` |
 | `booths-saN-Ncp.csv` | 2 | 1,484 | `district`, `booth`, `vote_type`, `candidate`, `party_raw`, `votes` |
 | `booths-saN.csv` | 2 | 3,904 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes` |
-| `booths-vicN-Ncp.csv` | 2 | 4,820 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes` |
-| `booths-vicN.csv` | 2 | 13,353 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes` |
-| `booths-vicN-ref-Ncp.csv` | 1 | 4,422 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes`, `ref_year` |
-| `booths-vicN-ref.csv` | 1 | 18,211 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes`, `ref_year` |
+| `booths-vicN-Ncp.csv` | 2 | 4,468 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes` |
+| `booths-vicN.csv` | 2 | 12,361 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes` |
+| `booths-vicN-ref-Ncp.csv` | 1 | 4,418 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes`, `ref_year` |
+| `booths-vicN-ref.csv` | 1 | 18,201 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes`, `ref_year` |
 | `booths-waN.csv` | 2 | 8,270 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes` |
 | `bucket-total-history.csv` | 1 | 20 | `pair`, `cand_total`, `poll_total`, `actual`, `date` |
 | `cN-widened-population.csv` | 1 | 4,168 | `election`, `region`, `seat`, `name`, `party`, `pcv`, `elected`, `own_prev_pcv`, `base`, `gated`, `xp`, `emergence` |
@@ -420,6 +423,8 @@ processed extract. Every one is recoverable without a new fetch.
 | `fit-seats-timing-vic-N-cardoff.csv` | 1 | 13 | `stage`, `secs`, `pct` |
 | `fit-seats-timing-vic-N-mclive-arm.csv` | 1 | 13 | `stage`, `secs`, `pct` |
 | `fit-seats-timing-vic-N-mclive-base.csv` | 1 | 13 | `stage`, `secs`, `pct` |
+| `fit-seats-timing-vic-N-mrparm.csv` | 1 | 13 | `stage`, `secs`, `pct` |
+| `fit-seats-timing-vic-N-mrpbase.csv` | 1 | 13 | `stage`, `secs`, `pct` |
 | `fit-seats-timing-vic-N-nomtrial.csv` | 1 | 13 | `stage`, `secs`, `pct` |
 | `fit-seats-timing-vic-N-trace-werribee.csv` | 1 | 13 | `stage`, `secs`, `pct` |
 | `fit-seats-timing-vic-N.csv` | 1 | 13 | `stage`, `secs`, `pct` |
@@ -429,7 +434,7 @@ processed extract. Every one is recoverable without a new fetch.
 | `flows-estimated.csv` | 1 | 200 | `election`, `region`, `year`, `party`, `flow_alp`, `exhaust`, `se_flow`, `se_exhaust`, `n_seats`, `prior_source`, `pool_weight`, `answer_key_available` |
 | `flows-key-table.csv` | 1 | 135 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8` |
 | `flows-state-blend.csv` | 1 | 75 | `election`, `region`, `year`, `party`, `flow_alp`, `exhaust`, `se_flow`, `se_exhaust`, `w`, `n_prior_keys`, `borrow_source`, `source` |
-| `forecasts-seats.csv` | 1 | 9,908 | `election`, `seat`, `party`, `win_prob`, `actual_winner`, `is_winner`, `source_file`, `source_mtime`, `election_date` |
+| `forecasts-seats.csv` | 1 | 9,855 | `election`, `seat`, `party`, `win_prob`, `actual_winner`, `is_winner`, `source_file`, `source_mtime`, `election_date` |
 | `forecasts.csv` | 1 | 17,010 | `election`, `election_date`, `region`, `seat`, `party`, `candidate`, `n_candidates`, `base_pred`, `xgb_pred`, `xgb_pred_seat`, `actual_share`, `err_base`, `err_xgb`, `model`, `cutoff_date`, `n_train_pairs`, `built_at`, `xgb_pred_prezero` |
 | `fp-coverage.csv` | 1 | 139 | `region`, `year`, `party`, `fitted`, `sd`, `actual`, `sd_infl` |
 | `fp-extra-var.csv` | 1 | 139 | `region`, `year`, `party`, `fitted`, `actual`, `sd`, `tau_loo`, `sd_new` |
@@ -462,6 +467,9 @@ processed extract. Every one is recoverable without a new fetch.
 | `ind-salience-anchoredN.csv` | 1 | 22 | `sname`, `rel`, `seat`, `pct`, `breakout` |
 | `ind-salience-gate.csv` | 1 | 18 | `year`, `seat`, `name`, `sitting`, `pct`, `breakout`, `chal`, `inc`, `ratio` |
 | `ind-salience-state.csv` | 1 | 22 | `sname`, `state`, `rel_state`, `rel_nat`, `seat`, `pct`, `breakout`, `rel_max` |
+| `ind-split-candidates.csv` | 1 | 1,439 | `election`, `year`, `seat`, `name`, `cls`, `share`, `cred`, `prior_nonmajor`, `prior_same_seat`, `n_ind`, `our_cls` |
+| `ind-split-fit-nswN.csv` | 1 | 8 | `mode`, `sd_mode`, `seat`, `cls`, `r`, `pts`, `pts_b`, `sd`, `f`, `n_cand`, `n_cred`, `n_hist`, `b`, `carry_same`, `carry_other`, `i_none`, `i_MP`, `i_prior5`, `i_councillor` |
+| `ind-split-fit-vicN.csv` | 1 | 50 | `mode`, `sd_mode`, `seat`, `cls`, `r`, `pts`, `pts_b`, `sd`, `f`, `n_cand`, `n_cred`, `n_hist`, `b`, `carry_same`, `carry_other`, `i_none`, `i_MP`, `i_prior5`, `i_councillor` |
 | `independent-emergence-loo.csv` | 1 | 88 | `seat`, `mu`, `s`, `nu`, `y`, `ind_now`, `z`, `pit` |
 | `independent-emergence-scores.csv` | 1 | 264 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `arm` |
 | `independent-federal-scores-shN-cor.csv` | 1 | 2,658 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `arm`, `target` |
@@ -475,7 +483,7 @@ processed extract. Every one is recoverable without a new fetch.
 | `level-pred.csv` | 1 | 239 | `pair`, `party`, `level_pred`, `from_polls` |
 | `level-recent.csv` | 1 | 105 | `election`, `region`, `cls`, `trend`, `avg28`, `n28`, `actual` |
 | `lga-district-overlap-vic.csv` | 1 | 1,093 | `election`, `district`, `lga`, `share_of_district`, `share_of_lga` |
-| `lga-district-overlap.csv` | 1 | 12,558 | `election`, `region`, `sed_vintage`, `district`, `lga`, `share_of_district`, `share_of_lga` |
+| `lga-district-overlap.csv` | 1 | 12,750 | `election`, `region`, `sed_vintage`, `district`, `lga`, `share_of_district`, `share_of_lga` |
 | `minor-candidate-features-vN-live.csv` | 1 | 11,510 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8`, `V9`, `V10`, `V11`, `V12`, `V13`, `V14`, `V15`, `V16`, `V17`, `V18`, `V19`, `V20`, `V21`, `V22`, `V23`, `V24`, `V25`, `V26`, `V27`, `V28`, `V29`, `V30`, `V31`, `V32`, `V33`, `V34`, `V35`, `V36`, `V37`, `V38`, `V39`, `V40`, `V41`, `V42`, `V43`, `V44`, `V45`, `V46`, `V47`, `V48`, `V49`, `V50`, `V51`, `V52`, `V53`, `V54`, `V55`, `V56`, `V57`, `V58`, `V59`, `V60`, `V61`, `V62`, `V63`, `V64` |
 | `minor-candidate-features-vN-sal.csv` | 1 | 11,041 | `election`, `seat`, `cls`, `pk`, `st`, `nk`, `region`, `year`, `name`, `surname`, `given`, `party`, `party_raw`, `party_ab`, `state`, `votes`, `pcv`, `elected`, `historic_elected`, `breakout`, `swing`, `ballot_position`, `ordinary`, `absent`, `provisional`, `prepoll`, `postal`, `ballot_order`, `tot`, `source`, `party_conflict`, `class_rule`, `party_alt`, `edate`, `share`, `juris`, `prev`, `prev_date`, `own_prev`, `own_prev_seat`, `held`, `own_prev_major`, `held_major`, `n_prior`, `fed_own`, `p_prev_mean`, `p_prev_seats`, `p_now_seats`, `p_prev_seat`, `p_fed_mean`, `seat_prev_minor`, `seat_prev_n`, `seat_prev_cls`, `n_minor_now`, `n_cands_now`, `n_cls_now`, `cls_prev_state`, `cls_cands_now`, `cls_cands_prev`, `p_new`, `ran_fed`, `p_seat_ratio`, `cls_cand_ratio`, `has_prev_election`, `sal_seat_share`, `sal_el_pct`, `sal_pos`, `c200_seat`, `voices_seat` |
 | `minor-candidate-features-vN.csv` | 1 | 11,041 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8`, `V9`, `V10`, `V11`, `V12`, `V13`, `V14`, `V15`, `V16`, `V17`, `V18`, `V19`, `V20`, `V21`, `V22`, `V23`, `V24`, `V25`, `V26`, `V27`, `V28`, `V29`, `V30`, `V31`, `V32`, `V33`, `V34`, `V35`, `V36`, `V37`, `V38`, `V39`, `V40`, `V41`, `V42`, `V43`, `V44`, `V45`, `V46`, `V47`, `V48`, `V49`, `V50`, `V51`, `V52`, `V53`, `V54`, `V55`, `V56`, `V57`, `V58`, `V59`, `V60`, `V61`, `V62`, `V63`, `V64` |
@@ -604,6 +612,8 @@ processed extract. Every one is recoverable without a new fetch.
 | `seat-primary-ranges-vic-N-councilfix.csv` | 1 | 616 | `seat`, `party`, `mean`, `q05`, `q25`, `q50`, `q75`, `q95` |
 | `seat-primary-ranges-vic-N-mclive-arm.csv` | 1 | 616 | `seat`, `party`, `mean`, `q05`, `q25`, `q50`, `q75`, `q95` |
 | `seat-primary-ranges-vic-N-mclive-base.csv` | 1 | 616 | `seat`, `party`, `mean`, `q05`, `q25`, `q50`, `q75`, `q95` |
+| `seat-primary-ranges-vic-N-mrparm.csv` | 1 | 616 | `seat`, `party`, `mean`, `q05`, `q25`, `q50`, `q75`, `q95` |
+| `seat-primary-ranges-vic-N-mrpbase.csv` | 1 | 616 | `seat`, `party`, `mean`, `q05`, `q25`, `q50`, `q75`, `q95` |
 | `seat-primary-ranges-vic-N-nocouncilwalk.csv` | 1 | 616 | `seat`, `party`, `mean`, `q05`, `q25`, `q50`, `q75`, `q95` |
 | `seat-primary-ranges-vic-N-nomtrial.csv` | 1 | 616 | `seat`, `party`, `mean`, `q05`, `q25`, `q50`, `q75`, `q95` |
 | `seat-primary-ranges-vic-N-scn-ALP-N.csv` | 9 | 616 | `seat`, `party`, `mean`, `q05`, `q25`, `q50`, `q75`, `q95` |
@@ -644,6 +654,8 @@ processed extract. Every one is recoverable without a new fetch.
 | `seat-probs-vic-N-lvon.csv` | 1 | 333 | `seat`, `party`, `prob` |
 | `seat-probs-vic-N-mclive-arm.csv` | 1 | 434 | `seat`, `party`, `prob` |
 | `seat-probs-vic-N-mclive-base.csv` | 1 | 434 | `seat`, `party`, `prob` |
+| `seat-probs-vic-N-mrparm.csv` | 1 | 457 | `seat`, `party`, `prob` |
+| `seat-probs-vic-N-mrpbase.csv` | 1 | 453 | `seat`, `party`, `prob` |
 | `seat-probs-vic-N-nocouncilwalk.csv` | 1 | 337 | `seat`, `party`, `prob` |
 | `seat-probs-vic-N-nodsN.csv` | 1 | 352 | `seat`, `party`, `prob` |
 | `seat-probs-vic-N-nolive.csv` | 1 | 356 | `seat`, `party`, `prob` |
@@ -673,7 +685,7 @@ processed extract. Every one is recoverable without a new fetch.
 | `seat-probs-vic-N-xgbvNisolatetest.csv` | 1 | 277 | `seat`, `party`, `prob` |
 | `seat-probs-vic-N-xgbvNlivetest.csv` | 1 | 277 | `seat`, `party`, `prob` |
 | `seat-probs-vic-N-xgbvNsalltest.csv` | 1 | 282 | `seat`, `party`, `prob` |
-| `seat-probs-vic-N.csv` | 1 | 446 | `seat`, `party`, `prob` |
+| `seat-probs-vic-N.csv` | 1 | 448 | `seat`, `party`, `prob` |
 | `seat-probs-vic-NcvN.csv` | 3 | 360 | `seat`, `party`, `prob` |
 | `seat-probs-vic-Ncvbase.csv` | 1 | 362 | `seat`, `party`, `prob` |
 | `seat-probs-vic-NdefectN.csv` | 1 | 362 | `seat`, `party`, `prob` |
@@ -704,6 +716,8 @@ processed extract. Every one is recoverable without a new fetch.
 | `seat-shares-vic-N-lvon.csv` | 1 | 87 | `seat`, `ALP`, `GRN`, `IND`, `LNP`, `ONP`, `OTH`, `OTH_RIGHT` |
 | `seat-shares-vic-N-mclive-arm.csv` | 1 | 88 | `seat`, `ALP`, `GRN`, `IND`, `LNP`, `ONP`, `OTH`, `OTH_RIGHT` |
 | `seat-shares-vic-N-mclive-base.csv` | 1 | 88 | `seat`, `ALP`, `GRN`, `IND`, `LNP`, `ONP`, `OTH`, `OTH_RIGHT` |
+| `seat-shares-vic-N-mrparm.csv` | 1 | 88 | `seat`, `ALP`, `GRN`, `IND`, `LNP`, `ONP`, `OTH`, `OTH_RIGHT` |
+| `seat-shares-vic-N-mrpbase.csv` | 1 | 88 | `seat`, `ALP`, `GRN`, `IND`, `LNP`, `ONP`, `OTH`, `OTH_RIGHT` |
 | `seat-shares-vic-N-nocouncilwalk.csv` | 1 | 88 | `seat`, `ALP`, `GRN`, `IND`, `LNP`, `ONP`, `OTH`, `OTH_RIGHT` |
 | `seat-shares-vic-N-nodsN.csv` | 1 | 87 | `seat`, `ALP`, `GRN`, `IND`, `LNP`, `ONP`, `OTH`, `OTH_RIGHT` |
 | `seat-shares-vic-N-nolive.csv` | 1 | 87 | `seat`, `ALP`, `GRN`, `IND`, `LNP`, `ONP`, `OTH`, `OTH_RIGHT` |
@@ -762,6 +776,8 @@ processed extract. Every one is recoverable without a new fetch.
 | `seat-sims-full-vic-N-lvon.csv` | 1 | 4,000 | `ALP`, `GRN`, `IND`, `LNP`, `ONP`, `OTH`, `OTH_RIGHT` |
 | `seat-sims-full-vic-N-mclive-arm.csv` | 1 | 20,000 | `ALP`, `GRN`, `IND`, `LNP`, `ONP`, `OTH`, `OTH_RIGHT` |
 | `seat-sims-full-vic-N-mclive-base.csv` | 1 | 20,000 | `ALP`, `GRN`, `IND`, `LNP`, `ONP`, `OTH`, `OTH_RIGHT` |
+| `seat-sims-full-vic-N-mrparm.csv` | 1 | 20,000 | `ALP`, `GRN`, `IND`, `LNP`, `ONP`, `OTH`, `OTH_RIGHT` |
+| `seat-sims-full-vic-N-mrpbase.csv` | 1 | 20,000 | `ALP`, `GRN`, `IND`, `LNP`, `ONP`, `OTH`, `OTH_RIGHT` |
 | `seat-sims-full-vic-N-nocouncilwalk.csv` | 1 | 20,000 | `ALP`, `GRN`, `IND`, `LNP`, `ONP`, `OTH`, `OTH_RIGHT` |
 | `seat-sims-full-vic-N-nodsN.csv` | 1 | 20,000 | `ALP`, `GRN`, `IND`, `LNP`, `ONP`, `OTH`, `OTH_RIGHT` |
 | `seat-sims-full-vic-N-nolive.csv` | 1 | 20,000 | `ALP`, `GRN`, `IND`, `LNP`, `ONP`, `OTH`, `OTH_RIGHT` |
@@ -802,6 +818,8 @@ processed extract. Every one is recoverable without a new fetch.
 | `seat-swing-port-vicN.csv` | 1 | 88 | `seat`, `fed_swing`, `coef`, `coef_unshrunk`, `coef_se`, `cycles`, `n_fit`, `lineup3c`, `w3c` |
 | `seat-swing-predictors.csv` | 1 | 180 | `seat`, `incumbent`, `fed_swing`, `retirement`, `soph_cand`, `soph_party`, `actual_swing`, `alp_inc`, `election`, `dev`, `ret_i`, `soc_i`, `sop_i`, `fed_c` |
 | `seat-swing-revalidation.csv` | 1 | 5 | `election`, `federal`, `n`, `mae_uniform`, `mae_model`, `gain` |
+| `seat-tcp-pairs-vic-N-mrparm.csv` | 1 | 266 | `seat`, `a`, `b`, `p_pair`, `a_tcp_q05`, `a_tcp_q50`, `a_tcp_q95` |
+| `seat-tcp-pairs-vic-N-mrpbase.csv` | 1 | 266 | `seat`, `a`, `b`, `p_pair`, `a_tcp_q05`, `a_tcp_q50`, `a_tcp_q95` |
 | `seat-tcp-ranges-nsw-N-scn-exact-GRN--N.csv` | 1 | 93 | `seat`, `leader`, `other`, `p_pair`, `p_leader_wins_pair`, `leader_tcp_q05`, `leader_tcp_q25`, `leader_tcp_q50`, `leader_tcp_q75`, `leader_tcp_q95`, `swing_to_flip` |
 | `seat-tcp-ranges-nsw-N-scn-exact-GRN-+N.csv` | 1 | 93 | `seat`, `leader`, `other`, `p_pair`, `p_leader_wins_pair`, `leader_tcp_q05`, `leader_tcp_q25`, `leader_tcp_q50`, `leader_tcp_q75`, `leader_tcp_q95`, `swing_to_flip` |
 | `seat-tcp-ranges-nsw-N-scn-exact-ONP--N.csv` | 1 | 93 | `seat`, `leader`, `other`, `p_pair`, `p_leader_wins_pair`, `leader_tcp_q05`, `leader_tcp_q25`, `leader_tcp_q50`, `leader_tcp_q75`, `leader_tcp_q95`, `swing_to_flip` |
@@ -816,6 +834,8 @@ processed extract. Every one is recoverable without a new fetch.
 | `seat-tcp-ranges-vic-N-councilfix.csv` | 1 | 88 | `seat`, `leader`, `other`, `p_pair`, `p_leader_wins_pair`, `leader_tcp_q05`, `leader_tcp_q25`, `leader_tcp_q50`, `leader_tcp_q75`, `leader_tcp_q95`, `swing_to_flip` |
 | `seat-tcp-ranges-vic-N-mclive-arm.csv` | 1 | 88 | `seat`, `leader`, `other`, `p_pair`, `p_leader_wins_pair`, `leader_tcp_q05`, `leader_tcp_q25`, `leader_tcp_q50`, `leader_tcp_q75`, `leader_tcp_q95`, `swing_to_flip` |
 | `seat-tcp-ranges-vic-N-mclive-base.csv` | 1 | 88 | `seat`, `leader`, `other`, `p_pair`, `p_leader_wins_pair`, `leader_tcp_q05`, `leader_tcp_q25`, `leader_tcp_q50`, `leader_tcp_q75`, `leader_tcp_q95`, `swing_to_flip` |
+| `seat-tcp-ranges-vic-N-mrparm.csv` | 1 | 88 | `seat`, `leader`, `other`, `p_pair`, `p_leader_wins_pair`, `leader_tcp_q05`, `leader_tcp_q25`, `leader_tcp_q50`, `leader_tcp_q75`, `leader_tcp_q95`, `swing_to_flip` |
+| `seat-tcp-ranges-vic-N-mrpbase.csv` | 1 | 88 | `seat`, `leader`, `other`, `p_pair`, `p_leader_wins_pair`, `leader_tcp_q05`, `leader_tcp_q25`, `leader_tcp_q50`, `leader_tcp_q75`, `leader_tcp_q95`, `swing_to_flip` |
 | `seat-tcp-ranges-vic-N-nocouncilwalk.csv` | 1 | 88 | `seat`, `leader`, `other`, `p_pair`, `p_leader_wins_pair`, `leader_tcp_q05`, `leader_tcp_q25`, `leader_tcp_q50`, `leader_tcp_q75`, `leader_tcp_q95`, `swing_to_flip` |
 | `seat-tcp-ranges-vic-N-nomtrial.csv` | 1 | 88 | `seat`, `leader`, `other`, `p_pair`, `p_leader_wins_pair`, `leader_tcp_q05`, `leader_tcp_q25`, `leader_tcp_q50`, `leader_tcp_q75`, `leader_tcp_q95`, `swing_to_flip` |
 | `seat-tcp-ranges-vic-N-scn-ALP-N.csv` | 9 | 88 | `seat`, `leader`, `other`, `p_pair`, `p_leader_wins_pair`, `leader_tcp_q05`, `leader_tcp_q25`, `leader_tcp_q50`, `leader_tcp_q75`, `leader_tcp_q95`, `swing_to_flip` |
@@ -863,6 +883,8 @@ processed extract. Every one is recoverable without a new fetch.
 | `statewide-draw-betas-vic-N-cardoff.csv` | 1 | 16 | `moved`, `class`, `beta` |
 | `statewide-draw-betas-vic-N-mclive-arm.csv` | 1 | 16 | `moved`, `class`, `beta` |
 | `statewide-draw-betas-vic-N-mclive-base.csv` | 1 | 16 | `moved`, `class`, `beta` |
+| `statewide-draw-betas-vic-N-mrparm.csv` | 1 | 16 | `moved`, `class`, `beta` |
+| `statewide-draw-betas-vic-N-mrpbase.csv` | 1 | 16 | `moved`, `class`, `beta` |
 | `statewide-draw-betas-vic-N-nomtrial.csv` | 1 | 16 | `moved`, `class`, `beta` |
 | `statewide-draw-betas-vic-N-scn-ALP-N.csv` | 9 | 16 | `moved`, `class`, `beta` |
 | `statewide-draw-betas-vic-N-scn-exact-ONP-+N.csv` | 2 | 16 | `moved`, `class`, `beta` |
@@ -898,6 +920,8 @@ processed extract. Every one is recoverable without a new fetch.
 | `statewide-level-vic-N-boardN.csv` | 1 | 5 | `party`, `level` |
 | `statewide-level-vic-N-mclive-arm.csv` | 1 | 5 | `party`, `level` |
 | `statewide-level-vic-N-mclive-base.csv` | 1 | 5 | `party`, `level` |
+| `statewide-level-vic-N-mrparm.csv` | 1 | 5 | `party`, `level` |
+| `statewide-level-vic-N-mrpbase.csv` | 1 | 5 | `party`, `level` |
 | `statewide-level-vic-N-nomtrial.csv` | 1 | 5 | `party`, `level` |
 | `statewide-level-vic-N-trace-werribee.csv` | 1 | 5 | `party`, `level` |
 | `statewide-level-vic-N.csv` | 1 | 5 | `party`, `level` |
@@ -947,5 +971,5 @@ processed extract. Every one is recoverable without a new fetch.
 | `xgb-primary-vNf-oof-predictions.csv` | 1 | 13,634 | `pair`, `seat`, `party`, `pred_share`, `actual_share`, `xgb_pred` |
 | `yougov-comparison.csv` | 1 | 88 | `seat`, `yg_win`, `our_win`, `our_p`, `yg_tpp`, `status`, `p_for_their_pick` |
 
-_(5377 `backtest-*.csv` arm outputs omitted; they share one shape.)_
+_(5587 `backtest-*.csv` arm outputs omitted; they share one shape.)_
 

@@ -121,3 +121,11 @@ Per election: fed2025 0.3353 -> 0.2864 (-0.0489), sa2026 -0.0047, fed2022
 information it had), nsw2023 0.0000; qld2024, vic2022, wa2025 byte-identical.
 Most of the gain is one election (fed2025), which per the standing rule is not a
 refusal by itself; the 35-election deciding run is the ship test.
+
+## Ship decision (Pete, 23 Nov 2026 ~9:40pm)
+
+Offered: run the 35-election deciding run tonight and ship tomorrow if it holds
+(recommended), ship now on the 7-election screen, or keep it off. **Pete chose
+"ship now on the 7-election screen".** The deciding run named in this plan as
+the ship test was therefore NOT run before shipping; it is queued in
+`docs/NEXT-STEPS.md` as the after-the-fact check.

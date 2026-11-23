@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (330 switches from `published_flags.R`, 7 entry points)
+## Switch parity (331 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -280,6 +280,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_SEAT_POLL_MATCH` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
 | `AUSPOL_SEAT_POLL_MODELVAR_ALL` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
 | `AUSPOL_SEAT_POLL_MRP_NAME` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
+| `AUSPOL_SEAT_POLL_MRP_PATTERN` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
 | `AUSPOL_SEAT_POLL_NAMED_ONLY` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
 | `AUSPOL_SEAT_POLL_PAID_LEAN` | NO | NO | NO | NO | NO | NO | NO | seat_paid_lean.R |
 | `AUSPOL_SEAT_POLL_PRECISION_BLEND` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
@@ -587,6 +588,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_SEAT_POLL_MATCH`** (intentional / dead experiment): TESTING, default 'class' (plans/prereg-seat-poll-per-poll-match-2026-09-29.md). Read in R/seat_poll_blend.R; 'perpoll' is built for blend mode 1 only and backtests only until shipped, so no live wiring is expected.
 - **`AUSPOL_SEAT_POLL_MODELVAR_ALL`** (**adopted, shared-function wiring**): SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R reach). plans/prereg-seat-poll-method-weights-2026-10-18.md
 - **`AUSPOL_SEAT_POLL_MRP_NAME`** (**adopted, shared-function wiring**): SHIPPED 2026-10-09 with DECAY and PRIOR (data fix: an MRP release under 20 seats named MRP). Read in seat_poll_shares() in R/seat_poll_blend.R; reaches every entry point through the blend.
+- **`AUSPOL_SEAT_POLL_MRP_PATTERN`** (**adopted, shared-function wiring**): SHIPPED 2026-11-23 (Pete, on the AEF-7 screen), UNIVERSAL via R/: read inside R/seat_poll_blend.R (re-centring, MRP half-life, mrp_extra.csv), which every harness and fit_seats_full.R reach; the live election's anchor is applied in seat_poll_blend_apply() from the frozen table. plans/prereg-mrp-seat-pattern-2026-11-23.md
 - **`AUSPOL_SEAT_POLL_NAMED_ONLY`** (**adopted, shared-function wiring**): SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R reach). plans/prereg-seat-poll-method-weights-2026-10-18.md
 - **`AUSPOL_SEAT_POLL_PAID_LEAN`** (**adopted, shared-function wiring**): SHIPPED 2026-11-14 as Pete's override (plans/prereg-seat-paid-lean-2026-11-14.md amendment 3). Read in R/seat_paid_lean.R from .seat_poll_shares_impl() in R/seat_poll_blend.R, which every harness and fit_seats_full.R reach through seat_poll_shares() (SPQ1/SPQ2 lines).
 - **`AUSPOL_SEAT_POLL_PRECISION_BLEND`** (**adopted, shared-function wiring**): SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM, off: did not clear 2026-10-09 (+0.0000, SE 0.0037). Read in seat_poll_blend_apply() and seat_poll_blend_table() in R/seat_poll_blend.R; needs AUSPOL_SEAT_POLL_DECAY=1.
@@ -714,4 +716,4 @@ MR4  every AUSPOL_* switch read in code (435) is registered (312) or listed as n
 
 
 
-MR2  every non-universal switch (299 of 330) has a recorded classification.
+MR2  every non-universal switch (300 of 331) has a recorded classification.

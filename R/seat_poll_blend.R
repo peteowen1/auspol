@@ -213,10 +213,10 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
   per_poll[, list(poll = sum(wt * fp) / sum(wt), n_polls = .N, n_mrp = sum(mrp), wsum = sum(wt)), by = by_cols]
 }
 
-# AUSPOL_SEAT_POLL_MRP_PATTERN (ARM, docs/plans/prereg-mrp-seat-pattern-2026-11-23.md): an MRP release votes
+# AUSPOL_SEAT_POLL_MRP_PATTERN (SHIPPED 2026-11-23, docs/plans/prereg-mrp-seat-pattern-2026-11-23.md): an MRP release votes
 # only on how a seat differs from the release's other seats, re-centred on OUR level, and MRP polls get their
 # own half-life (seat_poll_decay_params()). Also reads mrp_extra.csv (MRP releases no scrape carries).
-.seat_poll_mrp_pattern_on <- function() .seat_poll_onoff("AUSPOL_SEAT_POLL_MRP_PATTERN", "0")
+.seat_poll_mrp_pattern_on <- function() .seat_poll_onoff("AUSPOL_SEAT_POLL_MRP_PATTERN", "1")   # SHIPPED 2026-11-23 (Pete)
 
 #' Re-centre each MRP release on our own level (arm MRP_PATTERN)
 #'
@@ -229,7 +229,11 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
 .seat_poll_mrp_recentre <- function(pp, election) {
   if (!any(pp$mrp)) return(pp)
   f <- current_seat_predictions()
-  if (is.null(f)) stop("AUSPOL_SEAT_POLL_MRP_PATTERN=1 needs our seat predictions (output/forecasts.csv) to re-centre MRP releases")
+  if (is.null(f)) {
+    # No predictions on this machine at all (CI, a bare checkout): nothing to re-centre on. Said aloud, never silent.
+    cat(sprintf("SPMP! %s MRP pattern: no seat predictions on file, MRP releases NOT re-centred\n", election))
+    return(pp)
+  }
   el_lab <- election
   fe <- f[f$election == el_lab]
   pp$.rel <- paste(pp$.pollster, pp$.fw)
