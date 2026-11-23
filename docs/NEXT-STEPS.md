@@ -8,7 +8,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
-- **Status 23 Nov, 8pm.** main 0.4.200 (PR #271, 0.4.201, adds final_twos to the night file: 2022 replay 88 seats OK). Live (5:37pm): by-election
+- **Status 23 Nov, 8pm.** main 0.4.201 (PR #271 merged: final_twos in the night file, 2022 replay 88 seats OK). Live (5:37pm): by-election
   person rule ON, One Nation MODELLED allocation ON (Pete's override), final_twos in the forecast file. Search interest off. Dated: 25 Nov
   both night rehearsals (check the night file's final_twos on the test key); 26 Nov venues recheck; 27 Nov inthegame-blog#1262 + benchmark capture.
   Rebuild worktrees `C:/dev/auspol-wt-rb0`, `-rb1`, `-rbm`, `-rbr`, `-rbb` (junction lists in their deciding-runs folders): unlink before removing.
