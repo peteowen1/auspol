@@ -10,7 +10,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 - **Status 23 Nov, 9:30am.** main 0.4.197 (PR #267: by-election person rule ON, trees from its rebuild published 9:18am;
   night command finds the results page itself, `auto`). Search interest stays off. In flight: One Nation fair test (about 4pm).
-  Dated: venues recheck + `publish_night_inputs.sh --upload` + blog booths (today); 25 Nov both night rehearsals; 27 Nov
+  Venues rechecked 23 Nov 10am: unchanged (Last-Modified 20 Nov), backup bundle matches; booth file rebuilt (+Ringwood Heights)
+  and handed to ITG (`deciding-runs/20261123-booths/`). Dated: 25 Nov both night rehearsals; 27 Nov
   inthegame-blog#1262 + benchmark capture. Scratch with junctions inside (unlink first): `%TEMP%/auspol-quickarm`, `%TEMP%/auspol-quickarm-onm`;
   rebuild worktrees `C:/dev/auspol-wt-rb0`, `-rb1` (junction lists in `deciding-runs/20261123-byp-rebuilds/`).
 - OPEN, IN FLIGHT 23 Nov from 9:11am: One Nation direct model, fair test (3 arms m/r/b, about 2 h 15 min each, so about
