@@ -39,13 +39,13 @@ on:
         description: "How long to keep polling, in minutes, 1 to 330 (a larger value is cut to 330)"
         default: "10"
       every:
-        description: "Seconds between fetches of the VEC pages (at least 10; one fetch of 174 pages takes about a minute)"
-        default: "90"
+        description: "Seconds between fetches of the VEC pages (at least 10). Default 300: on 24 Nov a runner fetching every 90 s was refused (HTTP 999) on every page for 45 minutes"
+        default: "300"
       parallel:
-        description: "web sources: VEC pages in flight at once. 2 passed from a runner (22 Nov; the VEC blocks some pages with HTTP 999 and the retry recovers them); 4 was blocked outright; 1 took over 9 minutes a fetch"
+        description: "web sources: VEC pages in flight at once. 1 (default since 24 Nov, over 9 minutes a fetch) is the gentlest; 2 passed on 22 Nov but was blocked outright on 24 Nov; 4 was blocked outright"
         type: choice
         options: ["1", "2", "4"]
-        default: "2"
+        default: "1"
 
 # One group per key: a test run never queues ahead of a break-glass run on the live key, and two runs on the same key never
 # write at once (a newer dispatch replaces an older one still queued).
@@ -192,7 +192,9 @@ jobs:
               DRYARG=(--dry-2022)
               INDEX="https://www.vec.vic.gov.au/results/state-election-results/2022-state-election-results"
             fi
-            timeout "${MINUTES}m" bash scripts/night_vic2026.sh "$INDEX" night-work --upload-key="$KEY" --every="$EVERY" --parallel="$PARALLEL" "${DRYARG[@]}" || rc=$?
+            # --retries=6 --retry-pause=120: the site serves a runner ~110 of 174 pages then refuses the rest for a while
+            # (24 Nov), so a snapshot keeps what it got and fetches the missing pages two minutes later, up to 6 times
+            timeout "${MINUTES}m" bash scripts/night_vic2026.sh "$INDEX" night-work --upload-key="$KEY" --every="$EVERY" --parallel="$PARALLEL" --retries=6 --retry-pause=120 "${DRYARG[@]}" || rc=$?
             echo "--- fetch.log, last lines"; tail -n 5 night-work/fetch.log || true
           fi
           [ "$rc" -eq 124 ] && { echo "loop stopped after ${MINUTES} minutes, as asked"; rc=0; }

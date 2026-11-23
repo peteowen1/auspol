@@ -224,14 +224,14 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
 #' our pre-blend share (`xgb_pred_seat`, [current_seat_predictions()]) is
 #' above 0: `fp - mean(fp) + mean(ours)`. A release's level error is removed and
 #' only its seat pattern is kept. MRP rows with no share of ours to anchor on
-#' are dropped. Direct polls are untouched. Prints SPMP.
+#' are dropped. Direct polls are untouched. Prints SPM1.
 #' @keywords internal
 .seat_poll_mrp_recentre <- function(pp, election) {
   if (!any(pp$mrp)) return(pp)
   f <- current_seat_predictions()
   if (is.null(f)) {
     # No predictions on this machine at all (CI, a bare checkout): nothing to re-centre on. Said aloud, never silent.
-    cat(sprintf("SPMP! %s MRP pattern: no seat predictions on file, MRP releases NOT re-centred\n", election))
+    cat(sprintf("SPM1! %s MRP pattern: no seat predictions on file, MRP releases NOT re-centred\n", election))
     return(pp)
   }
   el_lab <- election
@@ -248,7 +248,7 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
     pm <- stats::ave(pp$fp, pp$.rel, pp$class, FUN = mean)
     pp$fp[m] <- pp$fp[m] - pm[m]
     pp$.dev[m] <- TRUE
-    cat(sprintf("SPMP %s MRP pattern: no predictions on file, %d MRP cells stored as seat deviations (re-centred on the run's own shares at apply)\n",
+    cat(sprintf("SPM1 %s MRP pattern: no predictions on file, %d MRP cells stored as seat deviations (re-centred on the run's own shares at apply)\n",
                 election, sum(m)))
     return(pp)
   }
@@ -262,7 +262,7 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
   shift <- om - pm
   rel_shift <- unique(data.table::data.table(rel = pp$.rel[m], class = pp$class[m], shift = shift[m]))
   pp$fp[m] <- pp$fp[m] + shift[m]
-  cat(sprintf("SPMP %s MRP pattern: %d release(s) re-centred on our level (%d MRP cells without a share of ours dropped); level shift by class: %s\n",
+  cat(sprintf("SPM1 %s MRP pattern: %d release(s) re-centred on our level (%d MRP cells without a share of ours dropped); level shift by class: %s\n",
               election, length(unique(pp$.rel[m])), n_drop,
               paste(rel_shift[, list(s = sprintf("%s %+.1f", class[1], mean(shift))), by = class]$s, collapse = ", ")))
   pp
@@ -274,7 +274,7 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
 #' this run are dropped (no phantom candidates), the kept deviations are
 #' re-centred over the kept seats, and the mean of `shares` over those seats is
 #' added: the release moves seats relative to one another and leaves each
-#' class's mean exactly where the run has it. Prints SPMA (kept and dropped)
+#' class's mean exactly where the run has it. Prints SPM4 (kept and dropped)
 #' and stops if every cell is dropped (a label mismatch, not a measurement).
 #' @keywords internal
 .seat_poll_mrp_anchor <- function(tb, shares, target_election) {
@@ -286,17 +286,17 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
   sh[ok] <- shares[cbind(i[ok], j[ok])]
   use <- d & is.finite(sh) & sh > 0
   if (any(d) && !any(use))
-    stop("SPMA! ", target_election, ": none of the ", sum(d), " MRP seat-pattern cells matches a seat and class with a share in this run",
+    stop("SPM4! ", target_election, ": none of the ", sum(d), " MRP seat-pattern cells matches a seat and class with a share in this run",
          " (seat or class labels differ between the frozen table and the shares matrix)")
   cl <- tb$class
   dev_mean <- tapply(tb$poll[use], cl[use], mean)   # over the KEPT seats, so dropping a zero-share seat cannot move the mean
   anc <- tapply(sh[use], cl[use], mean)
   tb$poll[use] <- tb$poll[use] - unname(dev_mean[cl[use]]) + unname(anc[cl[use]])
   tb$type[d] <- "mrp"
-  cat(sprintf("SPMA %s MRP pattern anchored on this run's shares: %d cells kept, %d dropped (no share of ours); anchor by class %s\n",
+  cat(sprintf("SPM4 %s MRP pattern anchored on this run's shares: %d cells kept, %d dropped (no share of ours); anchor by class %s\n",
               target_election, sum(use), sum(d & !use), paste(sprintf("%s %.1f", names(anc), anc), collapse = ", ")))
   if (sum(d & !use) > 0.25 * sum(d))
-    cat(sprintf("SPMA! %s: more than a quarter of the MRP cells dropped (%d of %d): check seat and class labels\n",
+    cat(sprintf("SPM4! %s: more than a quarter of the MRP cells dropped (%d of %d): check seat and class labels\n",
                 target_election, sum(d & !use), sum(d)))
   tb[!(d & !use)]
 }
@@ -781,7 +781,7 @@ seat_poll_decay_params <- function(target_election) {
                 firm_mult = fm)
     if (pat) {
       out$H_mrp <- Hm
-      cat(sprintf("SPMH %s MRP pattern half-life %.0f days (other polls %.0f; %d earlier MRP poll-cells, ages %.0f-%.0f days)\n",
+      cat(sprintf("SPM3 %s MRP pattern half-life %.0f days (other polls %.0f; %d earlier MRP poll-cells, ages %.0f-%.0f days)\n",
                   target_election, Hm, H, sum(rows$mrp), min(rows$days[rows$mrp]), max(rows$days[rows$mrp])))
     }
     if (.seat_poll_firm_on() && length(fm))
@@ -1299,13 +1299,13 @@ seat_poll_weights_split <- function(target_election) {
     x <- data.table::fread(xf, showProgress = FALSE)
     if (length(setdiff(names(s), names(x))) || anyDuplicated(paste(x$election, x$seat_name, x$pollster, x$fieldwork_end, x$party)))
       stop(xf, ": columns differ from ", basename(f), " or a poll repeats a party")
-    cat(sprintf("SPMX MRP releases appended from %s: %d rows (%s)\n", basename(xf), nrow(x),
+    cat(sprintf("SPM2 MRP releases appended from %s: %d rows (%s)\n", basename(xf), nrow(x),
                 paste(unique(paste(x$election, x$pollster, x$fieldwork_end, sprintf("%d seats", data.table::uniqueN(x$seat_name)))), collapse = "; ")))
     s <- data.table::rbindlist(list(s, x[, names(s), with = FALSE]), use.names = TRUE)
   } else if (.seat_poll_mrp_pattern_on()) {
     # optional input (gitignored, built by scripts/parse_yougov_mrp_seats.R): said aloud when absent, so a table
     # promoted from a machine without it is visibly missing the Victorian MRP
-    cat(sprintf("SPMX! %s absent: MRP releases no scrape carries (YouGov Vic July 2026) are NOT in this run\n", basename(xf)))
+    cat(sprintf("SPM2! %s absent: MRP releases no scrape carries (YouGov Vic July 2026) are NOT in this run\n", basename(xf)))
   }
   v <- Sys.getenv("AUSPOL_SEAT_POLL_HANDKEYED", "1")
   if (!v %in% c("0", "1")) stop("AUSPOL_SEAT_POLL_HANDKEYED must be \"0\" or \"1\", not ", v)

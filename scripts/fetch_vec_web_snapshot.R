@@ -3,6 +3,7 @@
 #
 #   Rscript scripts/fetch_vec_web_snapshot.R --index=<results page URL> --out=<snapshot root>
 #       [--districts=external/reference/vec/2026/vec-candidates-2026.csv | Name1,Name2] [--every=0] [--max-cycles=0] [--parallel=4] [--retries=3]
+#       [--cooldown=300] [--retry-pause=5,15,30]
 #
 # From --index it finds every district's two "results by voting centre" pages (first preferences, two-candidate):
 # directly if the index links to them, else through the district result pages it links to (one level). Each district in
@@ -10,7 +11,7 @@
 # <out>/<YYYYMMDD_HHMMSS>/ (Melbourne time, the stamp the night runner orders by): <slug>-fp.html, <slug>-2cp.html,
 # manifest.csv (district, fp, tcp, fp_url, tcp_url) and DONE last, so the runner never reads a folder mid-fetch.
 # Pages are saved exactly as received. Polite: one request at a time, a pause between them. --every=N repeats every N
-# seconds (0 = once). Check codes VWF1-VWF4.
+# seconds (0 = once). Check codes VWF1-VWF7.
 #
 # The 2026 results URL is not known before the night: pass whatever results page lists the districts (tested on the
 # Nepean 2026 by-election pages, 11 Nov 2026).
@@ -35,6 +36,12 @@ get <- function(u) { Sys.sleep(pause)
 par_n <- max(1L, as.integer(flag("parallel", "4")))
 retries <- suppressWarnings(as.integer(flag("retries", "3"))); if (is.na(retries)) stop("VWF1! --retries must be a whole number")
 retries <- max(0L, retries)   # retry rounds for the failed pages of a snapshot; 0 = none
+# --retry-pause=a,b,c: seconds before retry round 1, 2, 3 (the last repeats). Default 5,15,30 (the laptop). The GitHub
+# backup uses 120: the site serves a runner ~110 pages then refuses the rest for a while (24 Nov, run 45189369953:
+# 110-124 of 174 a snapshot, different districts each time), so the missing pages are fetched in the next window and
+# the pages already in hand are kept.
+retry_pause <- suppressWarnings(as.numeric(strsplit(flag("retry-pause", "5,15,30"), ",", fixed = TRUE)[[1]]))
+if (!length(retry_pause) || anyNA(retry_pause) || any(retry_pause < 0)) stop("VWF1! --retry-pause must be seconds, comma-separated")
 get_many <- function(urls) {
   if (par_n <= 1L || length(urls) <= 1L) return(vapply(urls, get, character(1), USE.NAMES = FALSE))
   res <- rep(NA_character_, length(urls)); why <- rep("no reply", length(urls))
@@ -98,27 +105,43 @@ one_snapshot <- function(m) {
   # RETRY ONLY THE FAILED PAGES (22 Nov 2026): one failed page of 174 voids the whole snapshot, and the VEC site
   # answers bursts with HTTP 999 (4 to 74 pages a snapshot from a GitHub runner). Up to --retries rounds (default 3),
   # waiting 5, 15, then 30 s first. Pages that arrived are never fetched again, so a clean snapshot is unchanged.
+  # A round that recovers NOTHING ends the retries (24 Nov 2026: a GitHub runner, refused on every page, retried 3 times
+  # a snapshot every 90 s for 45 minutes and stayed blocked); the main loop then cools down before the next snapshot.
+  refused <- FALSE
   for (r in seq_len(retries)) {
     again <- which(is.na(pages)); if (!length(again)) break
-    Sys.sleep(c(5, 15, 30)[min(r, 3L)])
+    Sys.sleep(retry_pause[min(r, length(retry_pause))])
     pages[again] <- get_many(jobs$u[again])
     cat(sprintf("VWF6 %s: retry %d of %d page(s), %d still failed\n", stamp, r, length(again), sum(is.na(pages))))
+    # refused = nothing recovered AND a quarter or more of the snapshot still missing: a wholesale block. A few pages
+    # that stay missing (one not yet published) keep the old short retries and --every (review, 24 Nov: one 404 among
+    # 174 would otherwise cost the laptop a 5-20 minute cooldown on the night)
+    if (sum(is.na(pages)) == length(again)) { refused <- length(again) >= 0.25 * nrow(jobs); break }
   }
   for (i in seq_len(nrow(jobs))) {
     if (is.na(pages[i])) { bad <- c(bad, paste(jobs$district[i], jobs$k[i])); next }
     writeLines(pages[i], file.path(d, jobs$f[i]), useBytes = TRUE)
   }
   if (length(bad)) { cat(sprintf("VWF3! %s: %d page(s) failed (%s); no DONE, the runner keeps the previous snapshot\n", stamp, length(bad),
-                                 paste(utils::head(bad, 5), collapse = "; "))); return(invisible(FALSE)) }
+                                 paste(utils::head(bad, 5), collapse = "; ")))
+    return(invisible(if (refused) "refused" else FALSE)) }
   fwrite(m[, list(district, fp = paste0(s, "-fp.html"), tcp = paste0(s, "-2cp.html"), fp_url, tcp_url)], file.path(d, "manifest.csv"))
   writeLines(format(Sys.time(), tz = "Australia/Melbourne", usetz = TRUE), file.path(d, "DONE"))
   cat(sprintf("VWF4 %s: %d districts, %d pages saved\n", stamp, nrow(m), 2L * nrow(m)))
   invisible(TRUE)
 }
 
-m <- discover(); n <- 0L
+# --cooldown=N (default 300 s): after a snapshot whose last retry recovered nothing with a quarter or more of its pages
+# missing (the site refusing us), wait N seconds (or --every if longer) before the next one, doubling each time it
+# happens again (to 4N), back to --every after any other result.
+cooldown <- as.numeric(flag("cooldown", "300")); if (is.na(cooldown) || cooldown < 0) stop("VWF1! --cooldown must be a number of seconds")
+m <- discover(); n <- 0L; strikes <- 0L
 repeat {
-  one_snapshot(m); n <- n + 1L
+  ok <- one_snapshot(m); n <- n + 1L
   if (every <= 0 || (max_cycles > 0 && n >= max_cycles)) break
-  Sys.sleep(every)
+  if (identical(ok, "refused")) {
+    strikes <- strikes + 1L; wait <- max(every, cooldown * 2^min(strikes - 1L, 2L))
+    cat(sprintf("VWF7! the site refused a whole retry round (%d time(s) running): waiting %.0f s before the next snapshot\n", strikes, wait))
+  } else { strikes <- 0L; wait <- every }
+  Sys.sleep(wait)
 }
