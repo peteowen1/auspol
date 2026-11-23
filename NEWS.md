@@ -1,3 +1,9 @@
+# auspol 0.4.200
+
+No change to the model; fixes the daily run for 0.4.199.
+
+- **The daily run downloads the four tables One Nation's seat model fits on** (census features, Senate by federal division, and the two Senate-by-district tables), and `promote_rebuild.R` ships them. The first run after 0.4.199 stopped without them; the site kept the morning's forecast. A first fix with two of the four would have dropped every state election from the fit without an error (caught in review).
+
 # auspol 0.4.199
 
 Changes the published forecast.
