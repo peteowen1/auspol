@@ -42,14 +42,14 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - SHIPPED 14 Nov, arm SPL (Pete's override, "Build per-side, ship live"): paid SEAT polls lose a lean toward the sponsor's
   side, each side shrunk to zero (`AUSPOL_SEAT_POLL_PAID_LEAN=1`, `plans/prereg-seat-paid-lean-2026-11-14.md`). Backtest
   neutral; live today unchanged (Hawthorn's paid poll is 15 months old). OPEN after 28 Nov: score it on vic2026.
-- **BROKEN, found 24 Nov 12:50am: the night BACKUP (GitHub runner) was blocked by the VEC site.** Rehearsal run
-  45179140374 (web-2022, 50 min, parallel 2, every 90 s, test key): first pass 110 of 174 pages, then HTTP 999 on 174 of
-  174 for the remaining ~45 min; 0 snapshots, nothing uploaded (`NWL3!`, then `::error::no cycle was uploaded`). The
-  22 Nov runner rehearsal passed with 56 pages refused then recovered. The same page from the LAPTOP at 12:51am: HTTP
-  200, so the main (laptop) path is not affected; the block is on the runner's address or its request rate. Log and
-  archive: `deciding-runs/20261123-mrp-pattern/night-backup-*`. Fix to decide with Pete: the fetcher backs off for minutes
-  (not seconds) after a fully refused round, and the backup's defaults slow to parallel 1, every 300 s; then re-rehearse
-  on GitHub. Until then treat the backup as best-effort.
+- **FIXED on `dev`, 24 Nov 2:45am (to `main` with the next PR): the night BACKUP (GitHub runner) vs the VEC site's limit.**
+  Run 45179140374 (parallel 2, every 90 s): refused (HTTP 999) on every page for 45 min, 0 snapshots. Run 45189369953
+  (parallel 1, every 300 s, cooldown): 110-124 of 174 pages a snapshot, different districts each time: a per-window
+  limit. Fix: the fetcher keeps a snapshot's pages and retries the missing ones after `--retry-pause` (backup 120 s x 6;
+  laptop unchanged 5,15,30), cools down only on a wholesale refusal (`VWF7!`); backup defaults parallel 1, every 300.
+  Run 45199291224 on `dev`: PASSED, 4 of 4 snapshots complete (174 pages, ~10.5 min apart), 4 uploads to the test key.
+  It saw no refusals, so the two-minute retry is proven only on a local server that mimics the limit. Laptop path
+  unaffected throughout (HTTP 200 at 12:51am). Archives: `deciding-runs/20261123-mrp-pattern/rehearsal*`.
 - OPEN, DATED 23 Nov and 25 Nov, NIGHT BACKUP (on `main` 0.4.196, PR #265): if the laptop dies on the night, Actions >
   "Election-night backup", key `auspol/night/vic2026.json`, source `web`, index = the results index URL, minutes 330. Passed on the
   2022 pages (run 44984447331, 2 cycles, 4-5 min refresh). TO DO: after the 26 Nov venues recheck, if any bundled file changed,
