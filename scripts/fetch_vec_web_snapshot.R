@@ -3,7 +3,7 @@
 #
 #   Rscript scripts/fetch_vec_web_snapshot.R --index=<results page URL> --out=<snapshot root>
 #       [--districts=external/reference/vec/2026/vec-candidates-2026.csv | Name1,Name2] [--every=0] [--max-cycles=0] [--parallel=4] [--retries=3]
-#       [--cooldown=300]
+#       [--cooldown=300] [--retry-pause=5,15,30]
 #
 # From --index it finds every district's two "results by voting centre" pages (first preferences, two-candidate):
 # directly if the index links to them, else through the district result pages it links to (one level). Each district in
@@ -36,6 +36,12 @@ get <- function(u) { Sys.sleep(pause)
 par_n <- max(1L, as.integer(flag("parallel", "4")))
 retries <- suppressWarnings(as.integer(flag("retries", "3"))); if (is.na(retries)) stop("VWF1! --retries must be a whole number")
 retries <- max(0L, retries)   # retry rounds for the failed pages of a snapshot; 0 = none
+# --retry-pause=a,b,c: seconds before retry round 1, 2, 3 (the last repeats). Default 5,15,30 (the laptop). The GitHub
+# backup uses 120: the site serves a runner ~110 pages then refuses the rest for a while (24 Nov, run 45189369953:
+# 110-124 of 174 a snapshot, different districts each time), so the missing pages are fetched in the next window and
+# the pages already in hand are kept.
+retry_pause <- suppressWarnings(as.numeric(strsplit(flag("retry-pause", "5,15,30"), ",", fixed = TRUE)[[1]]))
+if (!length(retry_pause) || anyNA(retry_pause) || any(retry_pause < 0)) stop("VWF1! --retry-pause must be seconds, comma-separated")
 get_many <- function(urls) {
   if (par_n <= 1L || length(urls) <= 1L) return(vapply(urls, get, character(1), USE.NAMES = FALSE))
   res <- rep(NA_character_, length(urls)); why <- rep("no reply", length(urls))
@@ -104,7 +110,7 @@ one_snapshot <- function(m) {
   refused <- FALSE
   for (r in seq_len(retries)) {
     again <- which(is.na(pages)); if (!length(again)) break
-    Sys.sleep(c(5, 15, 30)[min(r, 3L)])
+    Sys.sleep(retry_pause[min(r, length(retry_pause))])
     pages[again] <- get_many(jobs$u[again])
     cat(sprintf("VWF6 %s: retry %d of %d page(s), %d still failed\n", stamp, r, length(again), sum(is.na(pages))))
     # refused = nothing recovered AND a quarter or more of the snapshot still missing: a wholesale block. A few pages

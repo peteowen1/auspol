@@ -192,7 +192,9 @@ jobs:
               DRYARG=(--dry-2022)
               INDEX="https://www.vec.vic.gov.au/results/state-election-results/2022-state-election-results"
             fi
-            timeout "${MINUTES}m" bash scripts/night_vic2026.sh "$INDEX" night-work --upload-key="$KEY" --every="$EVERY" --parallel="$PARALLEL" "${DRYARG[@]}" || rc=$?
+            # --retries=6 --retry-pause=120: the site serves a runner ~110 of 174 pages then refuses the rest for a while
+            # (24 Nov), so a snapshot keeps what it got and fetches the missing pages two minutes later, up to 6 times
+            timeout "${MINUTES}m" bash scripts/night_vic2026.sh "$INDEX" night-work --upload-key="$KEY" --every="$EVERY" --parallel="$PARALLEL" --retries=6 --retry-pause=120 "${DRYARG[@]}" || rc=$?
             echo "--- fetch.log, last lines"; tail -n 5 night-work/fetch.log || true
           fi
           [ "$rc" -eq 124 ] && { echo "loop stopped after ${MINUTES} minutes, as asked"; rc=0; }
