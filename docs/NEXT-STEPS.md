@@ -15,10 +15,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   page also check the address search lists 3 nearest centres, ITG 3592b69a; our night runner does not read that file); 27 Nov
   inthegame-blog#1262 + benchmark capture. Scratch with junctions inside (unlink first): `%TEMP%/auspol-quickarm`, `%TEMP%/auspol-quickarm-onm`;
   rebuild worktrees `C:/dev/auspol-wt-rb0`, `-rb1` (junction lists in `deciding-runs/20261123-byp-rebuilds/`).
-- OPEN, IN FLIGHT 23 Nov from 9:11am: One Nation direct model, fair test (3 arms m/r/b, about 2 h 15 min each, so about
-  4:00pm). Task `auspol-onp-rebuilds`, `deciding-runs/20261124-onp-rebuilds/`; every arm runs the shipped by-election switch (plan
-  Amendment 2). On `DONE`: `scripts/score_onp_alloc.R` m and r against b, per `plans/prereg-onp-direct-model-2026-11-22.md`. Pete
-  asked to run it now. Pete (23 Nov 9:55am): ships if it passes, even after his post (same rule as the by-election one).
+- OPEN, after 28 Nov: One Nation allocation. The modelled version was REFUSED 23 Nov (DECISIONS); training the trees on the
+  rank rule cut One Nation's cell error 5% but hurt sa2026 and pooled log loss. Score both on vic2026 once results are in.
 - OPEN, 15 Nov full review (`reviews/FABLE-FULL-REVIEW-2026-11-15.md`, "Pick up from here" is the work list; DECISIONS
   2026-11-15). A1-A6, B1 shipped (seen live 17 Nov); C1 traced 16 Nov (item below). PARKED, trigger after 28 Nov
   (checked 21 Nov): C2 score the 14-day forecast (days), C3 validation stages off the publish path (edits the publish

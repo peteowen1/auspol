@@ -250,3 +250,23 @@ The original clauses above are unedited.
 5. `gh workflow run forecast.yaml --ref main -f scenarios=true`; read the conclusion; check `FJ9` in its log says every switch matches.
 6. Tell Pete and the ITG session: pass/fail, shipped or not, expected seats before and after.
 On a fail: the switches stay; RESULT written; Pete and ITG told.
+
+## RESULT, fair test (23 Nov 2026; three rebuilds rc 0, 9:11am-3:47pm, code f4c3cb1d, every arm with AUSPOL_BYELECTION_PERSON=1)
+
+Scored 3:50pm with the commands above. Files: `deciding-runs/20261124-onp-rebuilds/` (`score-onp-m.txt`, `score-onp-r.txt`,
+`compare-m.txt`, `compare-r.txt`). Applied: `ONT1` in arms m and r, absent in b; m moved 669 One Nation cells in 16 elections.
+
+**Arm m (the modelled allocation, trees trained on it) against b: FAILS, stays off.**
+1. Applied: yes.
+2. Primary FAIL: squared error on the moved One Nation cells -138.5 of 9644.9 (-1.4%), SE 255.6 (16 elections).
+3. Leave-one-election-out FAIL: without qld2020 it is +47.9 (fed2019 alone +122.1).
+4. Guard pass: pooled seat log loss 0.3125 -> 0.3130 (+0.0004, SE 0.0007).
+5. Not tripped: sa2026 -0.0024, qld2024 +0.0005 (SE 0.0034 / 0.0033); no seat One Nation won lost more than 0.10.
+Reported, not a criterion: AEF-7 seat log loss -0.0018 (SE 0.0010, 6 of 7 better); share RMSE 2.851 -> 2.840.
+
+**Arm r (the shipped rank rule, trees trained on it) against b: primary PASS (-450.3, SE 204.1), leave-one-out PASS
+(worst -250.0), but clause 5 TRIPS (sa2026 +0.0036, SE 0.0026) and the guard FAILS (pooled +0.0016, SE 0.0014; nsw2019
++0.0437).** By the decision rule a result about the training change, not shipped.
+
+Decision rule applied: m fails the primary and the leave-one-out, so it stays "rank" / "0" for the election, and the
+refusal goes to Pete. Both arms are reported to him with the AEF-7 line.
