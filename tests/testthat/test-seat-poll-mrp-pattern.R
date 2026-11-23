@@ -37,7 +37,7 @@ test_that("a live MRP release's seat deviations are anchored on the run's own sh
 test_that("the anchor stops when no MRP cell matches the shares (label mismatch), instead of dropping the release", {
   shares <- matrix(c(30, 70), nrow = 1, dimnames = list("Alpha", c("ALP", "LNP")))
   tb <- data.table::data.table(seat = "Alpha", class = "L/NP", type = "mrp_dev", poll = 2, n_polls = 1L, n_mrp = 1L, wsum = 0.01)
-  expect_error(utils::capture.output(.seat_poll_mrp_anchor(tb, shares, "test")), "SPMA!")
+  expect_error(utils::capture.output(.seat_poll_mrp_anchor(tb, shares, "test")), "SPM4!")
 })
 
 test_that("the arm switch refuses values it does not know", {

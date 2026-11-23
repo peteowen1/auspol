@@ -286,7 +286,8 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
 ## Dated, cannot move
 
 - OPEN, DATED 24 Nov (checked in-session 10:13am): MRP seat pattern, live since 23 Nov 10:35pm. Each daily run, the `SMN1
-  seat-poll blend` line should move party averages by tenths, not points (`SPMA`/`SPPB` are filtered out of the run log).
+  seat-poll blend` line should move party averages by tenths, not points; from 0.4.203 the run log also shows
+  `SPM4 vic2026 ... cells kept` (renamed from SPMA, which `run_all.R` filtered out: its codes must end in a digit).
   Points would mean seat deviations blended as levels: roll back with
   `deciding-runs/20261123-mrp-pattern/shipped-before-mrp-seat-poll-blend-vic2026.csv`. `FJ9!` naming the switch is expected
   until the next rebuild. Done when: the 24 Nov scheduled run passes this. Detail: DECISIONS 2026-11-23.
