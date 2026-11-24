@@ -36,6 +36,10 @@ on:
         description: "Also build the what-if scenarios on this manual run (daily runs always build them)"
         type: boolean
         default: false
+      n_sims:
+        description: "Simulations for the Victorian forecast (default 20000). Leave scenarios off with anything else: they run at 20000 and would not match"
+        type: string
+        default: "20000"
 
 permissions:
   # contents: write is for the "Publish the forecast" step, which uploads the
@@ -97,7 +101,7 @@ jobs:
     needs: gate
     if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 75   # was 45; 20k runs take ~12 min, and a 100k trial (n_sims, 25 Nov 2026) needs room
 
     steps:
       - uses: actions/checkout@v4
@@ -460,6 +464,10 @@ jobs:
           echo "no zero-byte files among the poll data, election results or downloaded models"
       - name: Run the pipeline
         id: run
+        env:
+          # Manual trials only (Pete, 25 Nov 2026: one 100k run); scheduled and worker runs leave it empty = 20,000.
+          # The election-night state stays at AUSPOL_NIGHT_STATE_SIMS (20,000) whatever this is.
+          AUSPOL_N_SIMS: ${{ inputs.n_sims || '20000' }}
         run: |
           # run_all.R exits non-zero when ANY validation stage breaches (2026-09-19:
           # every daily run since at least the 12th had failed on a NSW 2027

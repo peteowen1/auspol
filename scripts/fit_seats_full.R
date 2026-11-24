@@ -2063,15 +2063,24 @@ if (identical(.sw_net_live, "1"))
 {
   .dmp <- sprintf("output/night-state-%s%s.rds", TARGET$out_stem, OUT_SUFFIX)
   .yr_of <- function(x) as.integer(sub("^[a-z]+", "", x))
+  # The election-night runner has only ever run (and been rehearsed) at 20,000 sims. A run at more (Pete's 100k trial,
+  # 25 Nov 2026) saves the FIRST AUSPOL_NIGHT_STATE_SIMS statewide draws: they are independent, so the first k are a
+  # sample of the same distribution, and night_runner.R needs nrow(swd) == n_sims (NW2!).
+  .ns_k <- as.integer(Sys.getenv("AUSPOL_NIGHT_STATE_SIMS", "20000"))
+  if (!is.finite(.ns_k) || .ns_k < 1L) stop("AUSPOL_NIGHT_STATE_SIMS must be a positive integer")
+  .ns_k <- min(.ns_k, N_SIMS)
   saveRDS(list(pair = TGT, from = .yr_of(PREV), to = .yr_of(TGT), shares = shares, level_sd = .level_sd, level_mult = .lm(shares), fm = fm,
-               psd = psd, swd = sw_draws, sdo = .sd_ov, seat_sd = SEAT_SD, n_sims = N_SIMS, bo = .bo,
+               psd = psd, swd = sw_draws[seq_len(.ns_k), , drop = FALSE], sdo = .sd_ov, seat_sd = SEAT_SD, n_sims = .ns_k, bo = .bo,
+               # every draw, for build_whatif_sims.R (pairs them row for row with seat-sims-full); the night runner reads swd only
+               swd_all = if (.ns_k < N_SIMS) sw_draws else NULL,
                coalition_split = coalition_split_args(TGT, rownames(shares)), error_q = error_dist_args(TGT, colnames(shares)),
                smooth = SMOOTH, seed = SEED, party_cor = NULL, shrink = SHRINK, htv_ov = .htv_ov,
                htv_card = if (is.finite(.card_p)) list(p = .card_p, labor_above = .htv_lab, greens_above = .htv_grn) else NULL,
                fb_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD, surge_h = surge_arg, surge_party = surge_party_arg,
                surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg,
                saved_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z")), .dmp)
-  cat(sprintf("NS1  night state for %s saved to %s (%d seats, %d sims)\n", TGT, .dmp, nrow(shares), N_SIMS))
+  cat(sprintf("NS1  night state for %s saved to %s (%d seats, %d sims%s)\n", TGT, .dmp, nrow(shares), .ns_k,
+              if (.ns_k < N_SIMS) sprintf("; the forecast itself runs %d", N_SIMS) else ""))
 }
 .run_sim <- function(.ov) simulate_seat_contests(level_sd = .level_sd, sd_override = .sd_ov, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
                               breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(TGT, rownames(shares)), error_q = error_dist_args(TGT, colnames(shares)),

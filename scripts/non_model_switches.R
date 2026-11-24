@@ -66,6 +66,7 @@ NON_MODEL_SWITCHES <- c(
   AUSPOL_MC_LIVE                 = "BUILDER",  # fit_minor_candidates.R: predict an election with nominations and no votes (vic2026), -live outputs (6 Nov)
   AUSPOL_NB_PRIOR                = "BUILDER",  # build_notional_baselines.R
   AUSPOL_NB_TARGET               = "BUILDER",  # build_notional_baselines.R
+  AUSPOL_NIGHT_STATE_SIMS        = "RUN",  # fit_seats_full.R: draws kept in the election-night state (20000; the forecast may run more)
   AUSPOL_NIGHT_SURGE_FADE        = "DIAG",  # night_replay_detail.R (night fixes, review 2026-10-30)
   AUSPOL_NIGHT_TCP_CENTER        = "DIAG",  # night_replay_detail.R
   AUSPOL_NIGHT_TCP_FLOW_FLOOR    = "DIAG",  # night_replay_detail.R
