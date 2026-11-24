@@ -2071,6 +2071,8 @@ if (identical(.sw_net_live, "1"))
   .ns_k <- min(.ns_k, N_SIMS)
   saveRDS(list(pair = TGT, from = .yr_of(PREV), to = .yr_of(TGT), shares = shares, level_sd = .level_sd, level_mult = .lm(shares), fm = fm,
                psd = psd, swd = sw_draws[seq_len(.ns_k), , drop = FALSE], sdo = .sd_ov, seat_sd = SEAT_SD, n_sims = .ns_k, bo = .bo,
+               # every draw, for build_whatif_sims.R (pairs them row for row with seat-sims-full); the night runner reads swd only
+               swd_all = if (.ns_k < N_SIMS) sw_draws else NULL,
                coalition_split = coalition_split_args(TGT, rownames(shares)), error_q = error_dist_args(TGT, colnames(shares)),
                smooth = SMOOTH, seed = SEED, party_cor = NULL, shrink = SHRINK, htv_ov = .htv_ov,
                htv_card = if (is.finite(.card_p)) list(p = .card_p, labor_above = .htv_lab, greens_above = .htv_grn) else NULL,
