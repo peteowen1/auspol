@@ -101,7 +101,7 @@ jobs:
     needs: gate
     if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 75   # was 45; 20k runs take ~12 min, and a 100k trial (n_sims, 25 Nov 2026) needs room
 
     steps:
       - uses: actions/checkout@v4
