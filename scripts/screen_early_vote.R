@@ -167,7 +167,7 @@ res <- rbindlist(lapply(names(IDEAS), function(nm) {
                rmse_base = round(sqrt(mean(s$per$base)), 2),
                d_mse = round(obs, 3), se = round(sd(s$per$d) / sqrt(nrow(s$per)), 3),
                pct = round(100 * obs / mean(s$per$base), 2),
-               placebo_p = round(mean(pl <= obs), 3),
+               placebo_p = round((1 + sum(pl <= obs)) / (1 + length(pl)), 3),
                same_sign = max(sum(s$per$b > 0), sum(s$per$b < 0)))
   }))
 }))

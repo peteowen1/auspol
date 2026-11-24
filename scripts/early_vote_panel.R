@@ -89,6 +89,13 @@ pt <- pt[votes > 0]
 seat <- dcast(pt[, .(votes = sum(votes)), by = .(election, seat, type)],
               election + seat ~ type, value.var = "votes", fill = 0)
 seat[, tot := early + postal + ordinary + other]
+# A seat published only as one "all votes" total (vic2014, vic2018 Ripon) has no
+# split: zero early AND zero postal is "not reported", never "nobody voted early".
+no_split <- seat[early + postal == 0]
+if (nrow(no_split)) cat("EVP3! no vote-type split, DROPPED:", paste(no_split$election, no_split$seat, collapse = "; "), "\n")
+seat <- seat[early + postal > 0]
+pt <- pt[!no_split, on = c("election", "seat")]
+stopifnot(all(seat$early > 0))
 seat[, `:=`(early_sh = early / tot, postal_sh = postal / tot)]
 seat[, juris := sub("[0-9]+$", "", election)]
 seat[, year := as.integer(sub("^[a-z]+", "", election))]
