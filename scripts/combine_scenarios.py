@@ -224,7 +224,15 @@ if zero:
         sc_ft = next(s["final_two"] for s in scen if s["mode"] == "polled" and s["party"] == k["party"] and s["offset"] == 0)
         if os.path.exists(pub_t) and sc_ft is not None:
             pub_ft = final_two_list(os.path.basename(pub_t), check_fresh=False)
-            bad = [seat_names[i] for i, (a, b) in enumerate(zip(pub_ft, sc_ft))
+            # A pair near 50/50 may name the other side as leader on a different runner (see SAME_TOL): compare it
+            # in the published orientation, flipping the scenario's leader share to 100 - share and swapping q05/q95.
+            def oriented(a, b):
+                if a is None or b is None or a[:2] == b[:2] or a[:2] != b[1::-1] or a[3] is None \
+                        or abs(a[3] - 0.5) > SAME_TOL:
+                    return b
+                return [b[1], b[0], b[2], 1 - b[3]] + [None if v is None else 100 - v for v in (b[6], b[5], b[4])]
+            sc_or = [oriented(a, b) for a, b in zip(pub_ft, sc_ft)]
+            bad = [seat_names[i] for i, (a, b) in enumerate(zip(pub_ft, sc_or))
                    if a is None or b is None or a[:2] != b[:2]
                    or any((x is None) != (y is None) or (x is not None and abs(x - y) > (SAME_TOL if j < 4 else 100 * SAME_TOL))
                           for j, (x, y) in enumerate(zip(a, b)) if j >= 2)]
