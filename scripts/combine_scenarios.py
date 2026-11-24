@@ -111,6 +111,34 @@ pub_f = os.path.join(OUT, "seat-probs-%s.csv" % stem)
 pub_rows = read_csv(pub_f)
 seat_names = sorted({r["seat"] for r in pub_rows})
 seat_ix = {s: i for i, s in enumerate(seat_names)}
+
+
+def num(v):
+    """CSV cell to float; blank or NA (a same-class pair has no leader share) is None."""
+    return None if v in ("", "NA") else float(v)
+
+
+def final_two_list(fname):
+    """Each seat's likeliest final two in one scenario, from fit_seats_full.R's seat-tcp-ranges file, in the
+    order of `seats`; fields as build_forecast_json.R's seats[].final_two, flattened (FINAL_TWO_FIELDS). None for the
+    whole scenario when the file is missing (CSC9! counts them; the slider still publishes), None for a seat
+    the file lacks."""
+    path = os.path.join(OUT, fname)
+    if not os.path.exists(path):
+        return None
+    out = [None] * len(seat_names)
+    for r in read_csv(path):
+        if r["seat"] not in seat_ix:
+            die("CSC9! %s: seat %s not in the published forecast" % (fname, r["seat"]))
+        # one compact row per seat, in FINAL_TWO_FIELDS order (objects would add ~1 MB to a 154 KB file)
+        out[seat_ix[r["seat"]]] = [r["leader"], r["other"]] + [num(r[c]) for c in FINAL_TWO_FIELDS[2:]]
+    return out
+
+
+FINAL_TWO_FIELDS = ["leader", "other", "p_pair", "p_leader_wins_pair",
+                    "leader_tcp_q05", "leader_tcp_q50", "leader_tcp_q95"]
+
+
 classes = None
 scen = []
 n_sims = None
@@ -140,6 +168,7 @@ for k in keys:
         if r["seat"] not in seat_ix:
             die("CSC6! %s: seat not in the published forecast" % k["file"])
         pm[seat_ix[r["seat"]]][ci[r["party"]]] = int(rnd(float(r["prob"]) * 1000, 0))
+    ft = final_two_list(k["file"].replace("seat-sims-full", "seat-tcp-ranges", 1))
     scen.append({
         "mode": k["mode"], "party": k["party"], "offset": k["off"],
         "level": rnd(today[k["party"]] + k["off"], 2),
@@ -147,7 +176,10 @@ for k in keys:
         "p_majority": {c: r4(sum(row[j] >= maj for row in sims) / n) for j, c in enumerate(cls)},
         "p_hung": r4(hung / n),
         "p_onp_balance_of_power": r4(bop / n),
-        "seat_probs": pm})
+        "seat_probs": pm,
+        "final_two": ft})
+n_ft = sum(1 for s in scen if s["final_two"] is not None)
+print("CSC9%s seat final-two figures in %d of %d scenarios" % ("" if n_ft == len(scen) else "!", n_ft, len(scen)))
 
 
 # Runners differ in CPU, so floating point differs in the last bits and a few of 20,000 simulations
@@ -192,7 +224,8 @@ doc = {
     "chamber_seats": cfg["seats"], "majority": maj, "n_sims": n_sims,
     "modes": {"exact": "The party gets exactly this share of the statewide first-preference vote in every simulated election.",
               "polled": "This is where the party's vote is expected to land, with the forecast's usual uncertainty around it."},
-    "today": today, "betas": betas, "classes": classes, "seats": seat_names, "scenarios": scen}
+    "today": today, "betas": betas, "classes": classes, "seats": seat_names,
+    "final_two_fields": FINAL_TWO_FIELDS, "scenarios": scen}
 out = os.path.join(OUT, "scenario-%s.json" % target)
 with open(out, "w", encoding="utf-8") as fh:
     json.dump(doc, fh, separators=(",", ":"))
