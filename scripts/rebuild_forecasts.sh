@@ -330,6 +330,19 @@ if at_least 5; then Rscript scripts/build_fed_state_breakdowns.R > "$LOG/s5b_fed
 if at_least 5; then Rscript scripts/build_level_recent_table.R > "$LOG/s5b_level_recent.log" 2>&1 || { echo "!! build_level_recent_table.R failed -- see $LOG/s5b_level_recent.log"; exit 1; }; fi
 # Leader ratings for the forecast pages (display only; published, downloaded by forecast.yaml).
 if at_least 5; then Rscript scripts/build_leader_ratings.R > "$LOG/s5b_leader_ratings.log" 2>&1 || { echo "!! build_leader_ratings.R failed -- see $LOG/s5b_leader_ratings.log"; exit 1; }; fi
+# PREVIOUS ELECTION'S EARLY-VOTE SHARE BY SEAT (AUSPOL_DEMO_RESID_EARLY, shipped 2026-11-24): read by the demographic
+# correction in stage 6, the live forecast and the promote step. Built from the booth files and the candidate corpus
+# on disk, ~3 s. In the pipeline from day one so it cannot go stale beside a rebuilt corpus.
+# Gated on the switch (shell default = the shipped "1"), so turning the feature off also stops its builder being able
+# to fail a rebuild. Skipped under AUSPOL_REBUILD_ONLY when the table exists: a partial stage 6 reuses the other
+# harnesses' results, and they must all have read one vintage of it.
+if at_least 6 && [ "${AUSPOL_DEMO_RESID_EARLY:-1}" != "0" ]; then
+  if [ -n "${AUSPOL_REBUILD_ONLY:-}" ] && [ -f output/prev-early-share.csv ]; then
+    echo "   PES0  AUSPOL_REBUILD_ONLY set: reusing output/prev-early-share.csv as it stands"
+  else
+    { Rscript scripts/early_vote_panel.R && Rscript scripts/build_prev_early_share.R; } > "$LOG/s5c_prev_early.log" 2>&1 || { echo "!! early_vote_panel.R / build_prev_early_share.R failed -- see $LOG/s5c_prev_early.log"; exit 1; }
+  fi
+fi
 run_stage6() {
   # the seat-size spread table this pass reads, kept so stage 7's refit can be compared against it
   [ -f output/spread-by-size.csv ] && cp output/spread-by-size.csv "$LOG/spread-by-size-read-by-s6.csv"

@@ -3,6 +3,18 @@
 Each item below is the full text as it stood on 21 Nov 2026 before it was cut to its open state in the queue.
 The live parts stay in `docs/NEXT-STEPS.md`; this file is history.
 
+## DONE 24 Nov: MRP seat pattern daily-run check (moved from NEXT-STEPS 24 Nov)
+
+- OPEN, DATED 24 Nov (after the ~9:20am scheduled run; the in-session 10:13am check dies if that session ends, so any session runs it): MRP seat pattern, live since 23 Nov 10:35pm. Each daily run, the `SMN1
+  seat-poll blend` line should move party averages by tenths, not points; from 0.4.203 the run log also shows
+  `SPM4 vic2026 ... cells kept` (renamed from SPMA, which `run_all.R` filtered out: its codes must end in a digit).
+  Points would mean seat deviations blended as levels: roll back with
+  `deciding-runs/20261123-mrp-pattern/shipped-before-mrp-seat-poll-blend-vic2026.csv`. `FJ9!` naming the switch is expected
+  until the next rebuild. Done when: the 24 Nov scheduled run passes this. Detail: DECISIONS 2026-11-23.
+  PASSED on the 24 Nov 4:30am run (45228420242): blend step ALP 23.55 -> 23.47, LNP 30.36 -> 30.40, ONP 20.50 -> 20.58;
+  `SPM4 ... 351 cells kept, 0 dropped`. DONE: the "~9:20am run" is GitHub's late fallback schedule, whose gate skips it
+  once the 4:30am daily has gone (forecast.yaml header), so the 4:30am run was the check; none had appeared by 11:13am.
+
 ## SHIPPED 15 Nov (PR #241
 
 - SHIPPED 15 Nov (PR #241, merged 10:23am; publishes with the 16 Nov 4:30am daily run): vic2026 Liberal card known, Labor

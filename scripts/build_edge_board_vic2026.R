@@ -144,7 +144,7 @@ sf <- rbindlist(lapply(fc$seats, function(s) {
          win_prob = p$win_prob, primary = p$primary, primary_q05 = q$q05 %||% NA_real_, primary_q95 = q$q95 %||% NA_real_, primary_2022 = v22,
          final_two = if (is.null(ft)) "" else paste(lab(ft$leader), "v", lab(ft$other)), p_final_two = ft$p_pair %||% NA_real_,
          leader_tcp = ft$leader_tcp$q50 %||% NA_real_, swing_to_flip = ft$swing_to_flip %||% NA_real_, forecast_at = built,
-         site_link = paste0("https://inthegame.blog/politics/seat.html#name=", utils::URLencode(s$seat, reserved = TRUE)))
+         site_link = paste0("https://inthegame.blog/politics/vic2026/seat#name=", utils::URLencode(s$seat, reserved = TRUE)))
   }))
 }))
 stopifnot(uniqueN(sf$seat) == length(fc$seats), !anyDuplicated(sf[, .(seat, party)]))

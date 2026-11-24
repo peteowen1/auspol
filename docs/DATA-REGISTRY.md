@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-11-23 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-11-24 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
@@ -130,7 +130,7 @@ cannot pass as a working one.
   - e.g. raw/2006/bcp-cgia/CED_2004/ACT/CED_ACT_B01.csv, raw/2006/bcp-cgia/CED_2004/ACT/CED_ACT_B02.csv, raw/2006/bcp-cgia/CED_2004/ACT/CED_ACT_B03.csv, raw/2006/bcp-cgia/CED_2004/ACT/CED_ACT_B04_A.csv
 - **act/** -- 41 files, 185.4 MB
   - e.g. raw/2008/BallotPaperVersions.txt, raw/2008/BrindabellaTotal.txt, raw/2008/Candidates.txt, raw/2008/Electorates.txt
-- **aec/** -- 2459 files, 2085.8 MB
+- **aec/** -- 2467 files, 2087.0 MB
   - e.g. booths/fed2016-NSW.csv, booths/fed2016-QLD.csv, booths/fed2016-VIC.csv, booths/fed2019-QLD.csv
 - **aef/** -- 17 files, 4.8 MB
   - e.g. 2022fed-results.json, 2022fed-summary.json, 2022sa-results.json, 2022sa-summary.json
@@ -138,7 +138,9 @@ cannot pass as a working one.
   - e.g. prior-results.csv
 - **anchor-supplement/** -- 5 files, 12 KB
   - e.g. election-cycles-extra.csv, poll-data-act.csv, poll-data-nt.csv, poll-data-tas.csv
-- **benchmarks/** -- 377 files, 98.1 MB
+- **antonygreen-vic2022-early/** -- 41 files, 299 KB
+  - e.g. 2022-victorian-election-early-voting-by-district.html, datawrapper/GPdbH-v1.csv, datawrapper/GPdbH-v2.csv, datawrapper/gZEYU-v1.csv
+- **benchmarks/** -- 425 files, 107.7 MB
   - e.g. vic2026-extra/2026-10-24/betfair/markets-1.240828208-113207.json, vic2026-extra/2026-10-24/manifest.tsv, vic2026-extra/2026-10-24/sportsbet/event-10277242-markets-113206.json, vic2026-extra/2026-10-24/sportsbet/event-10952080-markets-113206.json
 - **boundaries/** -- 85 files, 849.9 MB
   - e.g. AEC-2025-esri.zip, AEC_2025/AUS_ELB_region.dbf, AEC_2025/AUS_ELB_region.prj, AEC_2025/AUS_ELB_region.shp
@@ -162,7 +164,7 @@ cannot pass as a working one.
   - e.g. raw/2020/BallotPaperVersions.txt, raw/2020/BrindabellaTotal.txt, raw/2020/Candidates.txt, raw/2020/DataDescriptions.pdf
 - **historical-odds/** -- 34 files, 784 KB
   - e.g. afe2025/betr_electorate_data.json, afe2025/betr_wide.csv, afe2025/market_odds.json, afe2025/sportsbet_wide.csv
-- **htv/** -- 95 files, 60.0 MB
+- **htv/** -- 96 files, 61.9 MB
   - e.g. coalition-card-order-researched.csv, liberal-alp-grn-order.csv, raw/fed2007/vee-how-to-vote-2007.html, raw/fed2010/andrewnorton-2010-08-16.html
 - **leaders/** -- 2 files, 66 KB
   - e.g. leaders-supplement.csv, leaders.csv
@@ -182,8 +184,10 @@ cannot pass as a working one.
   - e.g. raw/tec/2018/2018-Bass-first-prefs-by-polling-places.xlsx, raw/tec/2018/2018-Braddon-first-prefs-by-polling-places.xlsx, raw/tec/2018/2018-Denison-first-prefs-by-polling-places.xlsx, raw/tec/2018/2018-Franklin-first-prefs-by-polling-places.xlsx
 - **trends/** -- 6270 files, 4.8 MB
   - e.g. 2019_anch2_Adrian_Wone_Susie_Beveridge_Will_Landers_Ammar_Khan.rds, 2019_anch2_Bill_Chandler_Susan_Moylan_Dave_Blake_Tim_Bohm.rds, 2019_anch2_Robert_Oakeshott_Helen_Haines_Zali_Steggall_Kerryn_Phelps.rds, 2019_anch2_Trevor_Jones_Colin_Butland_David_Norman_Thor_Prohaska.rds
-- **vec/** -- 4332 files, 459.4 MB
+- **vec/** -- 4342 files, 459.6 MB
   - e.g. 2006/vc/fpv-albertpark.html, 2006/vc/fpv-altona.html, 2006/vc/fpv-ballarateast.html, 2006/vc/fpv-ballaratwest.html
+- **vec-early-vote-2026/** -- 1 files, 78 KB
+  - e.g. vec-early-postal-stats-20261124-1341.xlsx
 - **waec/** -- 2307 files, 63.7 MB
   - e.g. app.html, app.min.js, config-loader.js, config.json
 - **wikipedia/** -- 34 files, 4.9 MB

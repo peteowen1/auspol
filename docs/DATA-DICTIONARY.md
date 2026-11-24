@@ -1,6 +1,6 @@
 # Data dictionary
 
-**Generated 2026-11-23 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
+**Generated 2026-11-24 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
 
 Companion to `docs/DATA-REGISTRY.md`. The registry answers *do we have this
 file*; this answers *do we have this field*. Four wrong "we don't have it"
@@ -302,7 +302,7 @@ processed extract. Every one is recoverable without a new fetch.
 
 ## Derived outputs (`output/`)
 
-1156 files in 664 families (names differing only by numbers are one family, N; rows and columns are its first file's).
+1157 files in 665 families (names differing only by numbers are one family, N; rows and columns are its first file's).
 
 | file (family) | files | rows | columns |
 |---|---:|---:|---|
@@ -556,6 +556,7 @@ processed extract. Every one is recoverable without a new fetch.
 | `pollster-scorecard.csv` | 1 | 19 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8` |
 | `pooled-backtest.csv` | 1 | 35 | `pair`, `n`, `accuracy`, `brier`, `logloss`, `code`, `mtime`, `file` |
 | `pooled-sharedetail.csv` | 1 | 19,616 | `pair`, `seat`, `party`, `pred_share`, `actual_share` |
+| `prev-early-share.csv` | 1 | 1,774 | `pair`, `seat`, `prev_el`, `prev_early` |
 | `primary-errors-by-class.csv` | 1 | 13,352 | `pair`, `seat`, `party`, `pred`, `actual`, `err` |
 | `projection-data.csv` | 1 | 321 | `year`, `region`, `horizon`, `trend_tpp`, `actual_tpp`, `n_polls`, `fund_tpp` |
 | `projection-mix.csv` | 1 | 8 | `horizon`, `n`, `w`, `mae_mix`, `mae_mix_loo`, `mae_trend`, `mae_fund`, `bias`, `sd_err`, `sd_err_loo` |

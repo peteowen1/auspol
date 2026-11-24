@@ -44,7 +44,7 @@ man <- fread(file.path(RAW, "manifest.tsv"), sep = "\t")
 # ---- bookmaker prices, same parsers and file patterns as compare_bookmaker_odds.R ----
 books <- list(
   sportsbet = function(f) sb_parse_markets(rd(f), "x")[, seat := market],
-  tab       = function(f) tab_parse_markets(rd(f))[market == "Seat Winner"][, seat := sub(" State Election$", "", event)],
+  tab       = function(f) bk_tab_seats(tab_parse_markets(rd(f))),
   betfair   = function(f) bf_parse_prices(rd(f))[event == "Individual Electorates"][, seat := sub("^Seat of ", "", market)]
 )
 pats <- c(sportsbet = "^event-.*-markets-.*json$", tab = "^Politics-Victorian-Politics.*\\.json$", betfair = "^markets-.*json$")
@@ -70,6 +70,11 @@ for (src in names(books)) {
 }
 if (!length(got)) stop("VO1! no bookmaker captured for ", DAY)
 px <- rbindlist(got, fill = TRUE)
+# A runner listed with no price (Betfair, no back offer) made best_price NA for 15 of 506 rows on 24 Nov.
+n_np <- px[is.na(price), .N]
+if (n_np) cat(sprintf("VO1  %d listed runner(s) with no price dropped (%s)\n", n_np,
+                      paste(px[is.na(price), unique(source)], collapse = ", ")))
+px <- px[!is.na(price)]
 okey <- function(x) fcase(
   grepl("^Labor$", x), "ALP", grepl("^(Liberals?|Nationals?|Coalition)$", x), "LNP", grepl("^Gre+ns?$", x), "GRN",
   grepl("^One Nation$", x), "ONP", grepl("^Independent", x), "IND", grepl("^(Any )?Other", x), "OTHER")

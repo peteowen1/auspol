@@ -310,10 +310,33 @@ demographic_residual_apply <- function(shares, pair,
     cat(sprintf("DR1! no class could be fitted for %s; correction SKIPPED\n", pair))
     return(shares)
   }
+  # Labor's early-share shift (AUSPOL_DEMO_RESID_EARLY, plans/prereg-early-share-labor-2026-11-24.md): added after
+  # the census step and before the rebalance, so it rides the same delivery rule and the same shipped table.
+  es <- if (mode2 && "ALP" %in% colnames(shares)) early_share_adjust(rownames(shares), pair, oof, census, feats) else NULL
+  if (!is.null(es)) {
+    alp0 <- shares[, "ALP"]; rs0 <- rowSums(shares)
+    shares[, "ALP"] <- pmax(0, alp0 + es$adj)
+    rs1 <- rowSums(shares); live <- rs0 > 0 & rs1 > 0
+    # what the DEFAULT row rescale will leave of the shift (the prereg's "delivery" line); under
+    # AUSPOL_DEMO_RESID_FULL=1 the rebalance delivers it in full and this line does not apply
+    deliv <- ifelse(live, shares[, "ALP"] * tot / rs1 - alp0 * tot / rs0, 0)
+    moved <- es$adj != 0
+    if (any(moved) && identical(Sys.getenv("AUSPOL_DEMO_RESID_FULL", "0"), "0"))
+      cat(sprintf("DRE2 %s: Labor shift fitted mean |%.2f| max |%.2f| points; after the row rescale mean |%.2f| (%.0f%% delivered)\n",
+                  pair, mean(abs(es$adj[moved])), max(abs(es$adj)), mean(abs(deliv[moved])),
+                  100 * sum(abs(deliv)) / sum(abs(es$adj))))
+    shipped[["ALP:early"]] <- data.table::data.table(seat = rownames(shares), class = "ALP", adj = es$adj)
+  }
   shares <- .demo_rebalance(shares, tot, intersect(classes, colnames(shares)))
   if (isTRUE(write_table)) {
-    data.table::fwrite(data.table::rbindlist(shipped), cache)
-    cat(sprintf("DR1  wrote %s (%d rows)\n", basename(cache), sum(vapply(shipped, nrow, 1L))))
+    # one row per seat and class: the daily run adds `adj` by matrix index, where a repeated cell would keep only
+    # the last of two corrections
+    ship <- data.table::rbindlist(shipped)
+    cell <- paste(ship$seat, ship$class, sep = "\r"); first <- !duplicated(cell)
+    ship <- data.table::data.table(seat = ship$seat[first], class = ship$class[first],
+                                   adj = as.vector(rowsum(ship$adj, cell, reorder = FALSE)[cell[first], 1]))
+    data.table::fwrite(ship, cache)
+    cat(sprintf("DR1  wrote %s (%d rows)\n", basename(cache), nrow(ship)))
   }
   # The control announces itself, and coverage is never implicit: an experiment
   # that never ran looks exactly like an experiment with no effect.
@@ -323,6 +346,107 @@ demographic_residual_apply <- function(shares, pair,
                 sprintf(", SHUFFLED CONTROL seed=%s", shuffle)))
   for (a in applied) cat(sprintf("DR1    %s\n", a))
   shares
+}
+
+# AUSPOL_DEMO_RESID_EARLY: "1" on (shipped 2026-11-24), "0" off, "shuffle" the placebo (the early-share column
+# permuted between seats within each election). plans/prereg-early-share-labor-2026-11-24.md. The inline default is
+# the shipped value, because the promote step calls the correction without applying published_flags.R.
+early_share_mode <- function() {
+  v <- Sys.getenv("AUSPOL_DEMO_RESID_EARLY", "1")
+  if (!v %in% c("0", "1", "shuffle")) stop("AUSPOL_DEMO_RESID_EARLY must be \"0\", \"1\" or \"shuffle\", not ", v)
+  v
+}
+
+# Labor's shift for one election from the PREVIOUS election's early in-person vote share by seat
+# (output/prev-early-share.csv, scripts/build_prev_early_share.R). Where a lot of a seat voted early last time the
+# model has rated Labor too high. One slope times the seat's within-election z; z is centred over the seats that
+# have a value, so the shifts sum to zero and the statewide Labor total is left alone. A seat with no value, and an
+# election with none, gets exactly zero. Returns NULL when off or when nothing can be fitted.
+early_share_adjust <- function(seats, pair, training, census, feats, tab = NULL) {
+  mode <- early_share_mode()
+  if (identical(mode, "0")) return(NULL)
+  if (is.null(tab)) {
+    f <- out_path("prev-early-share.csv")
+    if (!file.exists(f)) {
+      cat("DRE0! output/prev-early-share.csv missing; Labor early-share shift SKIPPED (run scripts/build_prev_early_share.R)\n")
+      return(NULL)
+    }
+    tab <- data.table::fread(f, showProgress = FALSE)
+  }
+  es_tab <- data.table::as.data.table(tab)[, c("pair", "seat", "prev_early"), with = FALSE]
+  if (identical(mode, "shuffle")) es_tab <- .er_shuffle(es_tab, "prev_early", 20261124L)
+  .p <- pair
+  tg <- es_tab[es_tab$pair == .p]
+  idx <- match(seats, tg$seat); ok <- !is.na(idx)
+  if (sum(ok) < 10) {
+    cat(sprintf("DRE1 %s: no previous early share on file; no Labor early-share shift\n", pair))
+    return(NULL)
+  }
+  v <- as.numeric(tg$prev_early[idx[ok]]); s <- stats::sd(v)
+  if (!is.finite(s) || s <= 0) return(NULL)
+  z <- numeric(length(seats)); z[ok] <- (v - mean(v)) / s
+  fit <- early_share_slope(pair, training, census, feats, es_tab)
+  if (is.null(fit)) {
+    cat(sprintf("DRE1 %s: too few earlier elections with an early share to fit a slope; no shift\n", pair))
+    return(NULL)
+  }
+  cat(sprintf("DRE1 %s: Labor early-share shift ON%s: slope %+.3f (SE %.3f, %d seats in %d earlier elections), kept %.0f%% -> %+.3f points per SD; %d of %d seats covered\n",
+              pair, if (identical(mode, "shuffle")) " (SHUFFLED PLACEBO)" else "", fit$b, fit$se, fit$n, fit$n_el,
+              100 * fit$w, fit$b_shrunk, sum(ok), length(ok)))
+  list(adj = fit$b_shrunk * z, fit = fit, covered = sum(ok))
+}
+
+# The slope: Labor's as-at miss on the within-election z of last election's early share, over elections held before
+# `pair` (time-forward), with the census columns partialled out so it measures what the census correction leaves.
+# No intercept (everything is centred within election). Shrunk toward zero by b^2 / (b^2 + se^2), se clustered on
+# election: a weakly measured slope keeps almost none of itself, with no cut-off.
+early_share_slope <- function(pair, training, census, feats, es_tab) {
+  if (is.data.frame(training)) {
+    O <- data.table::as.data.table(training)
+  } else {
+    if (!file.exists(training)) return(NULL)
+    O <- data.table::fread(training, showProgress = FALSE)
+  }
+  .ex <- pair
+  O <- O[O$party == "ALP" & elections_before(O$pair, .ex)]
+  if (!nrow(O)) return(NULL)
+  M <- merge(O, es_tab, by = c("pair", "seat"))
+  cf <- character(0)
+  if (file.exists(census)) {
+    C <- unique(data.table::fread(census, showProgress = FALSE), by = c("pair", "seat"))
+    cf <- intersect(feats, names(C))
+    if (length(cf)) M <- merge(M, C[, c("pair", "seat", cf), with = FALSE], by = c("pair", "seat"), all.x = TRUE)
+  }
+  ze <- .demo_z(M, "prev_early")[, 1]
+  y <- M$actual_share - M$xgb_pred
+  keep <- is.finite(ze) & is.finite(y)
+  if (sum(keep) < 100 || length(unique(M$pair[keep])) < 3) return(NULL)
+  X <- matrix(ze, ncol = 1, dimnames = list(NULL, "prev_early"))
+  if (length(cf)) { Zc <- .demo_z(M, cf); Zc[!is.finite(Zc)] <- 0; X <- cbind(X, Zc) }   # no census row: neutral, not dropped
+  X <- X[keep, , drop = FALSE]; y <- y[keep]; pr <- M$pair[keep]
+  y <- y - stats::ave(y, pr)
+  # re-centre after the row filter too, so "no intercept" still means within-election on the rows actually used
+  for (j in seq_len(ncol(X))) X[, j] <- X[, j] - stats::ave(X[, j], pr)
+  sdv <- apply(X, 2, stats::sd)
+  X <- X[, is.finite(sdv) & sdv > 0, drop = FALSE]
+  if (!"prev_early" %in% colnames(X)) return(NULL)
+  q <- qr(X)
+  if (q$rank < ncol(X)) X <- X[, q$pivot[seq_len(q$rank)], drop = FALSE]
+  if (!"prev_early" %in% colnames(X)) return(NULL)
+  XtXi <- solve(crossprod(X))
+  beta <- as.vector(XtXi %*% crossprod(X, y)); names(beta) <- colnames(X)
+  u <- as.vector(y - X %*% beta)
+  meat <- Reduce(`+`, lapply(split(seq_along(u), pr), function(i) {
+    sc <- crossprod(X[i, , drop = FALSE], u[i]); sc %*% t(sc)
+  }))
+  # Few elections make the plain sandwich too small, which would keep almost all of a noisy slope exactly when the
+  # evidence is thinnest (review, 2026-11-24): the usual G/(G-1) small-cluster factor, G = elections.
+  G <- length(unique(pr))
+  V <- (XtXi %*% meat %*% XtXi) * (G / (G - 1)); dimnames(V) <- list(colnames(X), colnames(X))
+  b <- unname(beta["prev_early"]); se <- sqrt(V["prev_early", "prev_early"])
+  if (!is.finite(b) || !is.finite(se)) return(NULL)
+  w <- if (b == 0) 0 else b^2 / (b^2 + se^2)
+  list(b = b, se = se, w = w, b_shrunk = w * b, n = length(y), n_el = length(unique(pr)))
 }
 
 # Put each row back to its original total after the corrections were added. Default: rescale the whole row, which

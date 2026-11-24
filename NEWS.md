@@ -1,3 +1,12 @@
+# auspol 0.4.204
+
+Changes the published seat forecast for Victoria once the release carries the new `demo-resid-vic2026.csv` (Labor's primary by seat; no statewide change).
+
+- **Labor's primary is shifted by how early each seat voted at the previous election** (`AUSPOL_DEMO_RESID_EARLY`, shipped 24 Nov on Pete's call). Where a lot of a seat voted early in person last time the model has rated Labor too high, and where few did, too low. The shift is one slope, fitted only on earlier elections with the census columns held fixed, shrunk toward zero by its own uncertainty, and applied beside the census correction. On 16 elections against a shuffled placebo: Labor squared error -0.258 (SE 0.096), seat log loss 0.2279 to 0.2269. For vic2026 the average seat moves 0.33 points and one favourite changes (Ringwood). `docs/plans/prereg-early-share-labor-2026-11-24.md`.
+- **Nothing else about early voting is in the model.** This election's early or postal surge, the vote-type mix, postal applications and the day-by-day shape were all screened on 22 elections and showed no usable signal (`scripts/screen_early_vote.R`).
+- **The promote step stops if the shift's input is missing**, where it used to write the table without the shift and print one line.
+- `AUSPOL_ONP_FLOW_KEYS` (One Nation preference keys from the history rate): built, tested, refused; off.
+
 # auspol 0.4.203
 
 No change to the published forecast; election-night backup and log lines.

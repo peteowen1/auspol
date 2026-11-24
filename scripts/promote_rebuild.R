@@ -164,8 +164,23 @@ cat(sprintf("PRS1  salience-v6.csv ships with %d vic2026 rows, snapshot to %s\n"
 .csf <- data.table::fread(file.path(OUT, "census-features.csv"), showProgress = FALSE)
 .v26 <- unique(.csf$seat[.csf$pair == "vic2026"])
 if (!length(.v26)) stop("census-features.csv has no vic2026 seats: the demographic table cannot be written")
-invisible(withr::with_envvar(c(AUSPOL_DEMO_RESID = "2"), demographic_residual_apply(
+# Labor's early-share shift (AUSPOL_DEMO_RESID_EARLY) rides in the same table. A missing or stale input used to mean
+# only a DRE0! line and a table WITHOUT the shift, so the published forecast would silently lack what stage 6 used
+# (review, 2026-11-24): the switch is passed explicitly, the input is required, and the shift must announce itself.
+.es_flag <- .flag("AUSPOL_DEMO_RESID_EARLY")
+if (!identical(.es_flag, "0")) {
+  .esf <- file.path(OUT, "prev-early-share.csv")
+  if (!file.exists(.esf)) stop("AUSPOL_DEMO_RESID_EARLY=", .es_flag, " but ", .esf, " is missing -- run scripts/early_vote_panel.R then scripts/build_prev_early_share.R")
+  .est <- data.table::fread(.esf, showProgress = FALSE)
+  if (sum(.est$pair == "vic2026") < 80L) stop("prev-early-share.csv has ", sum(.est$pair == "vic2026"), " vic2026 seats -- rerun scripts/build_prev_early_share.R")
+  if (file.mtime(.esf) < file.mtime(file.path(OUT, "candidacies.csv")))
+    stop("prev-early-share.csv is older than candidacies.csv -- rerun scripts/early_vote_panel.R then scripts/build_prev_early_share.R")
+}
+.dr_log <- utils::capture.output(withr::with_envvar(c(AUSPOL_DEMO_RESID = "2", AUSPOL_DEMO_RESID_EARLY = .es_flag), demographic_residual_apply(
   matrix(50, length(.v26), 2, dimnames = list(.v26, c("ALP", "GRN"))), "vic2026", write_table = TRUE)))
+cat(.dr_log, sep = "\n")
+if (identical(.es_flag, "1") && !any(grepl("^DRE1 vic2026: Labor early-share shift ON", .dr_log)))
+  stop("AUSPOL_DEMO_RESID_EARLY=1 but the vic2026 demographic table was written WITHOUT Labor's early-share shift (no DRE1 ... ON line)")
 # NEW SOUTH WALES 2027 (AUSPOL_PUBLISH_NSW2027=1, off by default so Victoria's
 # promotion is unchanged until Pete turns NSW on; plans/nsw2027-itg-scope-2026-10-08.md).
 # The same per-target tables as Victoria above, written for nsw2027, plus the two

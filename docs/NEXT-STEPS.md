@@ -8,7 +8,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
-- **Status 23 Nov, 11pm.** main 0.4.202 (PR #272: MRP seat pattern). Live (10:35pm, run 45162697096): MRP seat pattern ON (July
+- **Status 24 Nov, 3pm.** main 0.4.202 (PR #272: MRP seat pattern); dev ahead, unmerged by choice (ONP switch off, benchmark readers, seat odds builder). Site 24 Nov: seat odds page live at `politics/vic2026/odds`; election pages moved to `politics/vic2026/` + `politics/nsw2027/` (redirects checked on prod). Edge Board and party-page links repointed on dev (reach the site with the next dev->main merge). Pete's X thread: https://claude.ai/artifact/QXNJBdSvqMJ4PyaBiFD6nn. MRP check of 24 Nov PASSED (4:30am run 45228420242). Live (10:35pm, run 45162697096): MRP seat pattern ON (July
   YouGov MRP in; Pete shipped on the 7-election screen), by-election person rule ON, One Nation MODELLED allocation ON (Pete's
   override), final_twos in the forecast file. Search interest off. Dated: 25 Nov
   both night rehearsals (check the night file's final_twos on the test key); 26 Nov venues recheck; 27 Nov inthegame-blog#1262 + benchmark capture.
@@ -42,17 +42,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - SHIPPED 14 Nov, arm SPL (Pete's override, "Build per-side, ship live"): paid SEAT polls lose a lean toward the sponsor's
   side, each side shrunk to zero (`AUSPOL_SEAT_POLL_PAID_LEAN=1`, `plans/prereg-seat-paid-lean-2026-11-14.md`). Backtest
   neutral; live today unchanged (Hawthorn's paid poll is 15 months old). OPEN after 28 Nov: score it on vic2026.
-- **FIXED on `dev`, 24 Nov 2:45am (to `main` with the next PR): the night BACKUP (GitHub runner) vs the VEC site's limit.**
-  Run 45179140374 (parallel 2, every 90 s): refused (HTTP 999) on every page for 45 min, 0 snapshots. Run 45189369953
-  (parallel 1, every 300 s, cooldown): 110-124 of 174 pages a snapshot, different districts each time: a per-window
-  limit. Fix: the fetcher keeps a snapshot's pages and retries the missing ones after `--retry-pause` (backup 120 s x 6;
-  laptop unchanged 5,15,30), cools down only on a wholesale refusal (`VWF7!`); backup defaults parallel 1, every 300.
-  Run 45199291224 on `dev`: PASSED, 4 of 4 snapshots complete (174 pages, ~10.5 min apart), 4 uploads to the test key.
-  It saw no refusals, so the two-minute retry is proven only on a local server that mimics the limit. Laptop path
-  unaffected throughout (HTTP 200 at 12:51am). Archives: `deciding-runs/20261123-mrp-pattern/rehearsal*`.
 - OPEN, DATED 23 Nov and 25 Nov, NIGHT BACKUP (on `main` 0.4.196, PR #265): if the laptop dies on the night, Actions >
   "Election-night backup", key `auspol/night/vic2026.json`, source `web`, index = the results index URL, minutes 330. Passed on the
-  2022 pages (run 44984447331, 2 cycles, 4-5 min refresh). TO DO: after the 26 Nov venues recheck, if any bundled file changed,
+  2022 pages (run 44984447331, 2 cycles, 4-5 min refresh). 23 Nov: two runs failed on the VEC site refusing GitHub (HTTP 999); fixed by the cooldown/retry commits e478d8e9, 60bc0b4f, 6de5673c (on `main`); rerun 45199291224 passed (4 cycles, 87 of 88 seats, uploaded to the test key, no `VWF3!`). TO DO: after the 26 Nov venues recheck, if any bundled file changed,
   `bash scripts/publish_night_inputs.sh --upload` (23 Nov 8:45pm: the uploaded bundle matches all 18 local files); 25 Nov one `web-2022` run of 45-60 min, pass = no snapshot
   ends in `VWF3!`. Done when: both are run. UNTESTED: the live key, a 330-minute run. Detail: `backlog/journal-2026-11-21-queue-history.md`.
 - OPEN, NIGHT SOURCE (before 28 Nov): the VEC REFUSED the feed (11 Nov); the night runs on the VEC WEBSITE
@@ -108,6 +100,14 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   bases (other classes over-called -2.9, SE 0.84; Narracan Greens is the live case).
 
 
+- OPEN, DATED 27 Nov (evening) and 28 Nov (morning): save the VEC early and postal vote spreadsheet again, raw, into
+  `external/reference/vec-early-vote-2026/` (link on https://www.vec.vic.gov.au/voting/2026-state-election/voting-statistics;
+  one copy saved 24 Nov; cumulative, 88 districts per day from 7 Nov, verified). The 28 Nov copy is the final pre-poll count. Early-vote screen:
+  `scripts/screen_early_vote.R`. PARKED 24 Nov (DECISIONS): as an xgb feature LAST election's early share is not
+  separable from a placebo. AFTER 28 Nov: add vic2026 to the panel and rescore; the untested route is a direct post-tree
+  correction on Labor; the federal "pre-poll shifted later" lead can be computed for Victoria from
+  `external/reference/antonygreen-vic2022-early/` and the saved VEC 2026 file. DATED 25 Nov (morning): refresh posts 1-4
+  and the three early-voting charts in the Victoria Forecast Thread artifact from the new VEC file before Pete posts.
 - OPEN, DATED 27 Nov: seat-page independents note (inthegame-blog #1243 + #1246) is on its dev only. Reaches prod via
   my cherry-pick branch off its `main` (ITG's rule), with the navbar #1239. Done when: the note's code is on inthegame.blog
   (it shows only at 10%+ independent; since search interest went off on 19 Nov no seat qualifies, so no page shows it yet).
@@ -120,7 +120,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - OPEN, DATED Thu 26 Nov: VEC venues recheck (off Pete's Daily Eight, 23 Nov). Compare the spreadsheet's `Last-Modified` with
   `raw-20261121-1140/headers-xlsx.txt` (20 Nov 02:02 GMT); only if it moved: save raw, `scripts/build_vec_places_2026.R`, the geocoder,
   `bash scripts/publish_night_inputs.sh --upload`, and hand ITG a rebuilt booth file. Done when: checked and, if moved, all four done.
-- OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. 17 Nov done: 6 sources (TAB not
+- OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. 24 Nov 9:16am done, every source (`docs/benchmarks/vic2026/2026-11-23/`; TAB moved to one "Vic Seats" event, read by
+  `bk_tab_seats()`; 27 Nov: also rebuild `seat-odds-page.html` there, the seat odds artifact
+  https://claude.ai/artifact/PJHtfKoc8xKvhjUErCb9QR; and the SITE page politics/odds.qmd: hand-write that folder's
+  `majority-markets.csv` + `capture-note.txt` (copy 2026-11-23's shape), `Rscript scripts/build_seat_odds_json.R`, then
+  `wrangler r2 object put inthegame-data/auspol/seat-odds-vic2026.json --file output/seat-odds-vic2026.json --content-type application/json --remote`). 17 Nov: 6 sources (TAB not
   saved: Chrome blocked the download on api.beta.tab.com.au; Betfair has no Victorian markets). On 27 Nov, if the TAB
   download is blocked again, check Chrome's download prompt for that site first. Leads from X (23 Nov): a 16 Nov 4CP
   calculator post https://x.com/NotTurnbull/status/2122215843228684574 (calculator unnamed; if it is not Jago's, add it
@@ -293,12 +297,9 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
 
 ## Dated, cannot move
 
-- OPEN, DATED 24 Nov (checked in-session 10:13am): MRP seat pattern, live since 23 Nov 10:35pm. Each daily run, the `SMN1
-  seat-poll blend` line should move party averages by tenths, not points; from 0.4.203 the run log also shows
-  `SPM4 vic2026 ... cells kept` (renamed from SPMA, which `run_all.R` filtered out: its codes must end in a digit).
-  Points would mean seat deviations blended as levels: roll back with
-  `deciding-runs/20261123-mrp-pattern/shipped-before-mrp-seat-poll-blend-vic2026.csv`. `FJ9!` naming the switch is expected
-  until the next rebuild. Done when: the 24 Nov scheduled run passes this. Detail: DECISIONS 2026-11-23.
+- OPEN, after 28 Nov: One Nation flow keys (24 Nov arms `AUSPOL_ONP_FLOW_KEYS` cond/cond2 REFUSED, DECISIONS 2026-11-24). Run
+  `scripts/score_flows_oracle.R` with and without the switch on sa2026/qld2024/fed2025 and score both on vic2026: are the trees'
+  One-Nation-leaning flows right, or offsetting under-called One Nation primaries? Done when: both scored, written in the prereg.
 - **After 28 Nov: the 35-election deciding run for the MRP pattern**, which Pete chose to ship without
   (`deciding_run.ps1 -Arm "AUSPOL_SEAT_POLL_MRP_PATTERN=1" -Base "AUSPOL_SEAT_POLL_MRP_PATTERN=0"`). The baseline must pin
   the switch off now that it ships. Record the result in `plans/prereg-mrp-seat-pattern-2026-11-23.md`.

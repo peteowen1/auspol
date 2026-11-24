@@ -272,6 +272,10 @@ CLASSIFY <- list(
   AUSPOL_DEMO_RESID_FULL = paste(
     "ARM (0), UNIVERSAL via R/: read inside R/demographic_residual.R (the demographic correction every harness and",
     "fit_seats_full.R reach). plans/prereg-demo-resid-full-2026-10-19.md"),
+  AUSPOL_DEMO_RESID_EARLY = paste(
+    "SHIPPED (1) 2026-11-24, UNIVERSAL via R/: read by early_share_mode() in R/demographic_residual.R, inside",
+    "demographic_residual_apply(), which every harness, fit_seats_full.R and promote_rebuild.R call. Labor only; needs",
+    "output/prev-early-share.csv. plans/prereg-early-share-labor-2026-11-24.md"),
   AUSPOL_ROW_SHIFT_EXACT = paste(
     "ARM (0), UNIVERSAL via R/: read by row_shift_exact_on() in R/row_shift_exact.R, called from blend_salience_shares()",
     "(R/salience_surge.R) and the three seat-poll blend modes (R/seat_poll_blend.R, R/seat_poll_joint.R), which every",
@@ -1087,7 +1091,12 @@ CLASSIFY <- list(
   AUSPOL_SEAT_POLL_PAID_LEAN = paste(
     "SHIPPED 2026-11-14 as Pete's override (plans/prereg-seat-paid-lean-2026-11-14.md amendment 3). Read in",
     "R/seat_paid_lean.R from .seat_poll_shares_impl() in R/seat_poll_blend.R, which every harness and fit_seats_full.R",
-    "reach through seat_poll_shares() (SPQ1/SPQ2 lines).")
+    "reach through seat_poll_shares() (SPQ1/SPQ2 lines)."),
+  # ---- Added 2026-11-24.
+  AUSPOL_ONP_FLOW_KEYS = paste(
+    "DEAD EXPERIMENT, off: both arms (cond, cond2) refused on 35 elections 24 Nov (plans/prereg-onp-flow-keys-2026-11-24.md).",
+    "Read in R/xgb_flow_override.R inside xgb_flow_conditional_override_for(), which every harness and fit_seats_full.R",
+    "call for per-seat flows (ONK1 line).")
 )
 
 fmt_row <- function(sw) {

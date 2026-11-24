@@ -1,6 +1,6 @@
 # Model registry
 
-**Generated 2026-11-23 by `scripts/build_model_registry.R`. Do not hand-edit** --
+**Generated 2026-11-24 by `scripts/build_model_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate whenever a switch is added to
 `published_flags.R` or a harness's wiring changes.
 
@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (331 switches from `published_flags.R`, 7 entry points)
+## Switch parity (333 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -82,6 +82,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_DEFECT_SIZE` | NO | NO | NO | NO | NO | NO | NO | candidate_returns.R |
 | `AUSPOL_DEFECTOR_STATE` | NO | NO | NO | NO | NO | NO | NO | defector_state.R |
 | `AUSPOL_DEMO_RESID` | yes | yes | yes | yes | yes | yes | yes | demographic_residual.R |
+| `AUSPOL_DEMO_RESID_EARLY` | NO | NO | NO | NO | NO | NO | NO | demographic_residual.R |
 | `AUSPOL_DEMO_RESID_FULL` | NO | NO | NO | NO | NO | NO | NO | demographic_residual.R |
 | `AUSPOL_DEMO_RESID_SHUFFLE` | NO | yes | yes | yes | yes | yes | yes |  |
 | `AUSPOL_DEPARTED_FED` | yes | NO | NO | NO | NO | NO | NO | departed_fed.R |
@@ -218,6 +219,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_ONP_CV` | yes | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_ONP_FILL` | yes | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_ONP_FIX` | yes | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_ONP_FLOW_KEYS` | NO | NO | NO | NO | NO | NO | NO | xgb_flow_override.R |
 | `AUSPOL_ONP_IN_TRAINING` | NO | NO | NO | NO | NO | NO | NO | onp_newseat.R |
 | `AUSPOL_ONP_NEWSEAT_RULE` | yes | NO | yes | yes | yes | NO | yes | new_ind_shrink.R, onp_newseat.R |
 | `AUSPOL_ONP_ORDER` | yes | yes | yes | yes | yes | yes | yes | new_ind_shrink.R, onp_newseat.R |
@@ -413,6 +415,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_DEFECT_POOLED`** (**adopted, shared-function wiring**): ADOPTED 2026-09-09 at "2" (docs/plans/prereg-defector-two-rate- 2026-09-09.md), by Pete on mechanism -- the arm missed its own primary bar (t -2.04 vs 2.08) but every directional indicator was favourable and R4 confirmed the published Victorian forecast is byte-identical (Victoria fields no major-party defector standing as a minor this cycle, so the mechanism does not fire there). Reaches fit_seats_full.R correctly: personal_prior_vote() self-resolves both rates from Sys.getenv() when the caller passes NULL, exactly so this did not need a seventh call site wired by hand -- the mistake that made the first pooled-arm run VOID earlier the same day.
 - **`AUSPOL_DEFECT_SIZE`** (intentional / dead experiment): OFF, REFUSED 2026-10-14 (nt2016 +0.19 on screen). Read inside R/candidate_returns.R (fit_defector_discount() and personal_prior_vote()), so it reaches every harness's base_pred when on; 'NO' in the harness columns is the grep, not a gap. reviews/defector-overcarry-2026-10-14.md
 - **`AUSPOL_DEFECTOR_STATE`** (intentional / dead experiment): PREREG PENDING, OFF (built 2026-10-06; docs/reviews/state-defectors-2026-10-06.md). Gate is .defstate_on() in R/defector_state.R, called from R/candidate_returns.R, so it would reach every harness and fit_seats_full.R if turned on; not a gap.
+- **`AUSPOL_DEMO_RESID_EARLY`** (**adopted, shared-function wiring**): SHIPPED (1) 2026-11-24, UNIVERSAL via R/: read by early_share_mode() in R/demographic_residual.R, inside demographic_residual_apply(), which every harness, fit_seats_full.R and promote_rebuild.R call. Labor only; needs output/prev-early-share.csv. plans/prereg-early-share-labor-2026-11-24.md
 - **`AUSPOL_DEMO_RESID_FULL`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: read inside R/demographic_residual.R (the demographic correction every harness and fit_seats_full.R reach). plans/prereg-demo-resid-full-2026-10-19.md
 - **`AUSPOL_DEMO_RESID_SHUFFLE`** (intentional / dead experiment): Control, not an arm. Permutes which seat gets which seat's demographics within each election, at fit and at apply both, so every marginal and the whole procedure survive and only the seat-to-demographics link dies. Absent from fit_seats_full.R for the same reason its arm is: a control has no business in the published forecast. Calibrated on sa2026 -- 8 draws give mean 0.3576 against a 0.3577 baseline, sd 0.0013, so the null manufactures nothing and the real effect sits 8.9 sds out.
 - **`AUSPOL_DEPARTED_FED`** (intentional / dead experiment): REFUSED 2026-09-30 (both '1' and 'gap': qld2020 and sa2026 worse; plans/prereg-departed-fed-gap-2026-09-30.md). Wired into the nsw/qld/sa/vic harnesses and fit_seats_full.R. The fed and wa 'NO' cells are by design: commit 2ff6bf8 says fed and wa have no booth map (the booth-to-federal-district join only exists for state elections with transposed federal swing).
@@ -527,6 +530,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_ONP_CV`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R). ADOPTED 2026-09-09 at 0.365, partially pooled (docs/reviews/onp-concentration-validated-2026-09-09.md) -- moves the live Victorian One Nation median seat count 9 -> 10. The highest-stakes switch this registry tracks; was previously mislabelled "federal" here, which is wrong -- fit_seats_full.R is the Victorian forecast, not a federal one.
 - **`AUSPOL_ONP_FILL`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R -- how the other classes fill One Nation's seat-level gap). No harness has a One Nation fill step, so "uniform_major" cannot be backtested (docs/plans/prereg-onp-fill-uniform-2026-10-25.md).
 - **`AUSPOL_ONP_FIX`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R -- One Nation allocation fix for the live Victorian projection).
+- **`AUSPOL_ONP_FLOW_KEYS`** (intentional / dead experiment): DEAD EXPERIMENT, off: both arms (cond, cond2) refused on 35 elections 24 Nov (plans/prereg-onp-flow-keys-2026-11-24.md). Read in R/xgb_flow_override.R inside xgb_flow_conditional_override_for(), which every harness and fit_seats_full.R call for per-seat flows (ONK1 line).
 - **`AUSPOL_ONP_IN_TRAINING`** (**adopted, shared-function wiring**): SHIPPED "1" 2026-11-23 (Pete's override). Was an arm. Read by post_xgb_switches() (R/new_ind_shrink.R) and by scripts/rebuild_forecasts.sh stage 1, not by a harness script, which is why the entry-point columns read NO. '1' trains the as-at trees on a base that already carries One Nation's allocation (docs/plans/prereg-onp-direct-model-2026-11-22.md, Amendment 1); a three-arm rebuild runs 24 Nov.
 - **`AUSPOL_ONP_NEWSEAT_RULE`** (intentional / dead experiment): TESTING (0), UNIVERSAL via R/: read by onp_newseat_rule() (R/onp_newseat.R), which all seven harnesses call (onp_newseat_prepare()/onp_newseat_apply() at the point their no-history One Nation seats are formed) and fit_seats_full.R prints (live: every seat is a no-history seat, so the rule is the live method at both values). fed and WA have no House key (ONN1! under AUSPOL_ONP_ORDER=federal); NT has no One Nation candidates. plans/prereg-onp-newseat-rule-2026-10-25.md
 - **`AUSPOL_OTHERS_SCALE`** (intentional / dead experiment): ARM, REFUSED 2026-09-28 (plans/prereg-others-bucket-size-2026-09-27.md). Backtest path only (R/forecast_mode.R, R/others_bucket.R); published_flags.R says the live script is deliberately not wired because it did not pass.
@@ -712,8 +716,8 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR4  every AUSPOL_* switch read in code (435) is registered (312) or listed as not a model switch (123).
+MR4  every AUSPOL_* switch read in code (437) is registered (314) or listed as not a model switch (123).
 
 
 
-MR2  every non-universal switch (300 of 331) has a recorded classification.
+MR2  every non-universal switch (302 of 333) has a recorded classification.

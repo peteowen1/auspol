@@ -362,6 +362,7 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_WA_DROP_LNP         = "0",          # R/external_flows.R:187, prereg-wa-flows refusal W2 arm
   AUSPOL_FLOW_CELL_SD        = "0",          # R/xgb_flow_override.R:377
   AUSPOL_FLOW_TF             = "1",          # SHIPPED 2026-10-12 (Pete; docs/reviews/lnp-onp-flows-by-election-2026-10-11.md): "1" feeds the flow trees time-forward rate features from .flow_rates_tf() (R/xgb_flow_override.R), the definition scripts/fit_xgb_flows_tf.R trains on (rebuild stage 4c); needs AUSPOL_FLOW_MODEL_TAG naming those models. Flow-only split error 14.21 -> 11.89, all-22 seat log loss 0.3110 -> 0.3095 (SE 0.0033). "0" = the leave-one-out-trained trees.
+  AUSPOL_ONP_FLOW_KEYS       = "0",          # ARM 2026-11-24 (docs/plans/prereg-onp-flow-keys-2026-11-24.md): "cond" = every per-seat flow key with One Nation among the survivors takes the time-forward history rate instead of the trees; "cond2" = two-survivor One Nation keys only; "0" = trees everywhere (R/xgb_flow_override.R).
   AUSPOL_FLOW_RATE_HL        = "2",          # SHIPPED 2026-10-12 with AUSPOL_FLOW_TF: half-life in years for the historical flow rate fed to the per-seat flow model (R/xgb_flow_override.R, key_rates); "0" weights every earlier election equally. Must equal the half-life the tagged models were trained at (validate_flow_arm()).
   AUSPOL_FLOW_MODEL_TAG      = "tf2",        # SHIPPED 2026-10-12: R/xgb_flow_override.R:42 suffixes the flow model filename; "tf2" = scripts/fit_xgb_flows_tf.R at half-life 2; "none" = the untagged leave-one-out-trained models (with AUSPOL_FLOW_TF=0)
   AUSPOL_REENTRY_SPLIT       = "1",          # R/reentry_prior.R:129, reached via reentry_mode() at fit_seats_full.R:1150
@@ -614,6 +615,7 @@ PUBLISHED_FLAGS <- c(
                                              # are untouched. UNDER TEST -- do not turn on without the plan's
                                              # criterion being met.
   AUSPOL_DEMO_RESID_SHUFFLE  = "0",          # control for the above; same permutation as AUSPOL_EDU_RESID_SHUFFLE.
+  AUSPOL_DEMO_RESID_EARLY    = "1",          # SHIPPED 2026-11-24 (Pete chose "Ship for Saturday"; plans/prereg-early-share-labor-2026-11-24.md passed on 16 elections against the placebo: Labor squared error -0.258, SE 0.096; seat log loss -0.0009, SE 0.0006): Labor shifted by a time-forward slope on the PREVIOUS election's early in-person vote share by seat (output/prev-early-share.csv), beside the census correction. "1" on; "shuffle" = the placebo (that column permuted between seats within each election).
   AUSPOL_EDU_RESID_SHUFFLE   = "0",          # the real control. 0 = off; any other integer is an RNG seed that
                                              # PERMUTES each census column across seats WITHIN each election, at
                                              # fit and at apply both. Breaks the seat-to-demographics link while
