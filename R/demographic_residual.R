@@ -317,11 +317,14 @@ demographic_residual_apply <- function(shares, pair,
     alp0 <- shares[, "ALP"]; rs0 <- rowSums(shares)
     shares[, "ALP"] <- pmax(0, alp0 + es$adj)
     rs1 <- rowSums(shares); live <- rs0 > 0 & rs1 > 0
-    # what the default row rescale will leave of the shift (the prereg's "delivery" line)
+    # what the DEFAULT row rescale will leave of the shift (the prereg's "delivery" line); under
+    # AUSPOL_DEMO_RESID_FULL=1 the rebalance delivers it in full and this line does not apply
     deliv <- ifelse(live, shares[, "ALP"] * tot / rs1 - alp0 * tot / rs0, 0)
-    cat(sprintf("DRE2 %s: Labor shift fitted mean |%.2f| max |%.2f| points; after the row rescale mean |%.2f| (%.0f%% delivered)\n",
-                pair, mean(abs(es$adj[es$adj != 0])), max(abs(es$adj)), mean(abs(deliv[es$adj != 0])),
-                100 * sum(abs(deliv)) / sum(abs(es$adj))))
+    moved <- es$adj != 0
+    if (any(moved) && identical(Sys.getenv("AUSPOL_DEMO_RESID_FULL", "0"), "0"))
+      cat(sprintf("DRE2 %s: Labor shift fitted mean |%.2f| max |%.2f| points; after the row rescale mean |%.2f| (%.0f%% delivered)\n",
+                  pair, mean(abs(es$adj[moved])), max(abs(es$adj)), mean(abs(deliv[moved])),
+                  100 * sum(abs(deliv)) / sum(abs(es$adj))))
     shipped[["ALP:early"]] <- data.table::data.table(seat = rownames(shares), class = "ALP", adj = es$adj)
   }
   shares <- .demo_rebalance(shares, tot, intersect(classes, colnames(shares)))
@@ -421,6 +424,8 @@ early_share_slope <- function(pair, training, census, feats, es_tab) {
   if (length(cf)) { Zc <- .demo_z(M, cf); Zc[!is.finite(Zc)] <- 0; X <- cbind(X, Zc) }   # no census row: neutral, not dropped
   X <- X[keep, , drop = FALSE]; y <- y[keep]; pr <- M$pair[keep]
   y <- y - stats::ave(y, pr)
+  # re-centre after the row filter too, so "no intercept" still means within-election on the rows actually used
+  for (j in seq_len(ncol(X))) X[, j] <- X[, j] - stats::ave(X[, j], pr)
   sdv <- apply(X, 2, stats::sd)
   X <- X[, is.finite(sdv) & sdv > 0, drop = FALSE]
   if (!"prev_early" %in% colnames(X)) return(NULL)
@@ -433,7 +438,10 @@ early_share_slope <- function(pair, training, census, feats, es_tab) {
   meat <- Reduce(`+`, lapply(split(seq_along(u), pr), function(i) {
     sc <- crossprod(X[i, , drop = FALSE], u[i]); sc %*% t(sc)
   }))
-  V <- XtXi %*% meat %*% XtXi; dimnames(V) <- list(colnames(X), colnames(X))
+  # Few elections make the plain sandwich too small, which would keep almost all of a noisy slope exactly when the
+  # evidence is thinnest (review, 2026-11-24): the usual G/(G-1) small-cluster factor, G = elections.
+  G <- length(unique(pr))
+  V <- (XtXi %*% meat %*% XtXi) * (G / (G - 1)); dimnames(V) <- list(colnames(X), colnames(X))
   b <- unname(beta["prev_early"]); se <- sqrt(V["prev_early", "prev_early"])
   if (!is.finite(b) || !is.finite(se)) return(NULL)
   w <- if (b == 0) 0 else b^2 / (b^2 + se^2)

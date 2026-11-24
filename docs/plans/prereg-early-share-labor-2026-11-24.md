@@ -72,6 +72,53 @@ likely read as a tie. If the primary passes and seats tie:
 If the primary fails, or a guard fails, it is refused and Pete is told with the
 split.
 
-## RESULT
+## RESULT, 24 November 2026 5:58pm: PASSES every clause. Not shipped; the ship question is with Pete.
 
-(to be filled in)
+`quick_arm.R`, 1,000 sims, 16 elections, one process at a time; scored by
+`deciding-runs/20261124-early-share-screen/score.R` (cache keys: baseline
+`e9205f7ba140`, arm `2a4798fff10c`, placebo `691ce3c6e322`).
+
+1. **Identity: pass.** sa2026, vic2010 and wa2013 (no previous early share, or
+   too few earlier elections) came back with 0 of 329, 528 and 295 cells moved
+   under both arms. The correction acts in 13 elections.
+2. **Primary: pass.** Labor's squared error on the 1,265 covered seats, arm
+   against placebo: -0.258 (SE 0.096 across elections), better in 9 of 13.
+   Against the shipped model: arm -0.232 (SE 0.079, 10 of 13 better), placebo
+   +0.026 (SE 0.028). Labor RMSE 4.954 -> 4.930, placebo 4.955. All parties,
+   same elections (9,078 cells): 3.513 -> 3.507, placebo 3.513.
+3. **Guards: pass.** Seat-winner log loss over 1,320 seats 0.2279 -> 0.2269
+   (-0.0009, SE 0.0006, 9 of 13 better); placebo 0.2281 (+0.0004, SE 0.0004).
+   The gain is mostly qld2024 (-0.0074) and fed2025 (-0.0041). Victoria:
+   vic2014 -0.0002, vic2018 -0.0001, vic2022 -0.0001; none worse. quick_arm's
+   own lines: all 16 elections -0.0008 (SE 0.0006), AEF-7 -0.0020 (SE 0.0011).
+4. **Delivery.** The average covered seat's Labor share moved 0.00 to 0.26
+   points per election (fed2025 0.26, qld2024 0.24, wa2025 0.22, vic2022 0.12),
+   well under the scout's full-delivery shifts, as expected.
+
+So this is better than the "seats tied" case the tie rule was written for: the
+seat metric is better by about 1.5 SE, not tied.
+
+**Two things changed after the screen, both from the review of `db25a16b`:**
+the slope's standard error now carries the small-cluster factor G/(G-1), and
+the regressors are re-centred after the row filter. For vic2026 the kept share
+of the slope goes 93% -> 92% (shift per SD -0.561 -> -0.558); vic2022 76% ->
+74%; fed2025 and nsw2023 change by under 1 point. The screened and fixed
+versions differ by 1 to 3% of an already small shift, so the screen was not
+rerun. A deciding run before any ship would use the fixed code.
+
+**Correction to the text above:** the shifts sum to zero across a state's
+covered seats BEFORE the row rescale; after it, Labor's statewide total can
+move slightly. "Leaves the statewide Labor total alone" overstated it.
+
+**vic2026, fitted shifts before the rescale** (slope -0.605, SE 0.175, 16
+earlier elections; `deciding-runs/20261124-early-share-screen/vic2026-fitted-shifts.csv`):
+31 of 87 seats move under 0.25 points, 23 between 0.25 and 0.5, 27 between 0.5
+and 1, 6 over 1. Live seats that move most: St Albans -1.38 (Labor 63%),
+Greenvale -1.11 (46%), Werribee -0.88, Monbulk +1.36 (24%), Preston +0.89,
+Box Hill +0.80, Albert Park +0.75 (Labor 52%, Greens 32%). The effect on
+vic2026 win probabilities has NOT been measured: it needs a live run with and
+without the switch.
+
+**Still needed before a ship:** the live with/without walk, the builder in
+`rebuild_forecasts.sh`, a regenerated `demo-resid-vic2026.csv` through the
+promote step, `check_like_ci.R`, a registry regen and the publish.
