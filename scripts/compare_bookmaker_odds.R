@@ -68,6 +68,12 @@ all <- rbindlist(got, fill = TRUE)[, key := okey(selection)]
 if (anyNA(all$key)) stop("VB16! selections with no outcome key: ", paste(unique(all[is.na(key), selection]), collapse = ", "))
 all[, seat := toupper(bk_our_seat(seat, fread(file.path(RAW, "ours", "seat-probs-vic-2026.csv"))$seat))]
 all <- bk_drop_unreal_books(all, c("source", "seat"), "bookmakers")   # placeholder books (VBK2!)
+# A runner listed with no price (Betfair, no back offer) made max(price) NA, blanking "Best price"
+# for 11 of 352 top-4 rows in the 24 Nov capture. Drop those rows, and say how many.
+n_np <- all[is.na(price), .N]
+if (n_np) cat(sprintf("VB16 %d listed runner(s) with no price dropped (%s)\n", n_np,
+                      paste(all[is.na(price), unique(source)], collapse = ", ")))
+all <- all[!is.na(price)]
 # for the top-4 table: TAB's "Coalition" is Sportsbet's "Liberal" in a seat with no Nationals runner
 all[, key4 := fifelse(key == "COAL" & !any(key == "NAT"), "LIB", key), by = seat]
 
