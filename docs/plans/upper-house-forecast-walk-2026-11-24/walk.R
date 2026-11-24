@@ -12,13 +12,16 @@ A <- x[, c(lapply(.SD, function(v) sum(v * enrolment) / sum(enrolment)), .(enrol
 cat("1. LOWER-HOUSE forecast by region (% of primary vote, weighted by enrolment). MINOR = independents and every other party.\n")
 print(A[, .(region, ALP = round(ALP, 1), LNP = round(LNP, 1), ONP = round(ONP, 1), GRN = round(GRN, 1), MINOR = round(MINOR, 1))][order(region)], row.names = FALSE)
 # upper-house share = lower-house share x ratio (2018 and 2022 mean, design doc section 1). One Nation has NO
-# measured ratio (it barely stood in the Assembly before 2026): 1.00 is an ASSUMPTION, shown as such.
-RATIO <- c(ALP = 0.905, LNP = 0.845, GRN = 0.883, ONP = 1.00)
+# Victorian measurement (it barely stood in the Assembly before 2026), so its ratio is FITTED (onp_ratio.R, 24 Nov):
+# 516 division-elections where it stood in both houses, mostly federal 2001-2025; mean ratio 0.85 (median-type 0.79,
+# 80% interval 0.65 to 0.96), flat in the size of its vote up to 20%. The first draft assumed 1.00. Only 2 divisions
+# ever had One Nation above 20% in the lower house, so at Victoria's 2026 levels this is partly extrapolation.
+RATIO <- c(ALP = 0.905, LNP = 0.845, GRN = 0.883, ONP = 0.85)
 C <- copy(A); for (k in cls) C[, (k) := get(k) * RATIO[[k]]]
 C[, MINOR := 100 - ALP - LNP - ONP - GRN]
 Q <- 100 / 6
 cat(sprintf("\n2. UPPER-HOUSE projection in QUOTAS (1 quota = %.2f%% of the vote wins a seat; 5 seats per region).\n", Q),
-    "   Ratios: Labor x0.905, Coalition x0.845, Greens x0.883 (measured 2018 and 2022); One Nation x1.00 (ASSUMED).\n",
+    "   Ratios: Labor x0.905, Coalition x0.845, Greens x0.883 (Victoria 2018 and 2022); One Nation x0.85 (fitted on 516 division-elections).\n",
     "   MINOR is every other group together, typically 15 to 20 groups, so no single one has this many quotas.\n", sep = "")
 print(C[, .(region, ALP = round(ALP / Q, 2), LNP = round(LNP / Q, 2), ONP = round(ONP / Q, 2), GRN = round(GRN / Q, 2), MINOR_pool = round(MINOR / Q, 2))][order(region)], row.names = FALSE)
 # seats: full quotas, then the largest remainders among the four named groups and ONE minor group holding 30% of the pool

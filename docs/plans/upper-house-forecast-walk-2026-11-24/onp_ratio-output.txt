@@ -1,0 +1,161 @@
+Warning message:
+package 'data.table' was built under R version 4.5.2 
+candidacies.csv: 22592 rows (elections 44)
+fed House rows 8529; NA ordinary 0
+senate-by-division-class.csv: 8419 rows, 9 fed elections, cols fed,state,division,cls,v,senate_pct
+Senate share sums per division: min 100.00 max 100.00 (n=1216 divisions)
+
+Federal ONP one-sidedness (ONP in one file only cannot enter a ratio; this is selection):
+Key: <elec>
+      elec  both lower_only upper_only
+    <char> <int>      <int>      <int>
+1: fed2004    77          0         64
+2: fed2007    35          0        106
+3: fed2010    20          1        121
+4: fed2013    15          0        126
+5: fed2016    15          0        131
+6: fed2019    59          0         87
+7: fed2022   144          5          2
+8: fed2025   147          0          0
+Federal division-elections with no match between House and Senate names (lost to the join):
+Key: <elec>
+      elec only_house only_senate
+    <char>      <int>       <int>
+1: fed2004          0           0
+2: fed2007          0           0
+3: fed2010          0           0
+4: fed2013          0           0
+5: fed2016          0           0
+6: fed2019          0           0
+7: fed2022          0           0
+8: fed2025          0           0
+council-fp-2018: 71615 rows read, 1683 district_total group/ungrouped rows used
+  vic2018: 484 district-class cells upper, 403 lower; upper districts with no lower result: 
+council-fp-2022: 87695 rows read, 2013 district_total group/ungrouped rows used
+  vic2022: 583 district-class cells upper, 508 lower; upper districts with no lower result: Narracan
+Vic upper-share sum per district (should be ~100):
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    100     100     100     100     100     100 
+Vic ONP one-sidedness:
+      elec  both lower_only upper_only
+    <char> <int>      <int>      <int>
+1: vic2022     4          0         83
+
+NSW/WA/SA upper-house results on disk: NONE found (external/reference/{nswec,waec,ecsa} hold lower-house raw files and LOCAL-government council folders only; output/council-results-* are local councils).
+
+PAIRED TABLE (both shares > 0): 7377 rows; counts by election x class
+Key: <elec>
+       elec   ALP   GRN   IND   LNP   ONP   OTH OTH_RIGHT
+     <char> <int> <int> <int> <int> <int> <int>     <int>
+ 1: fed2004   150   150    70   150    77   132       139
+ 2: fed2007   150   150    71   150    35   105       147
+ 3: fed2010   150   150    53   150    20    59       124
+ 4: fed2013   150   150    57   150    15    69       150
+ 5: fed2016   150   150    83   150    15    85       136
+ 6: fed2019   151   151    72   151    59    93       151
+ 7: fed2022   149   151    73   151   144   107       151
+ 8: fed2025   150   150    89   120   147    80       135
+ 9: vic2018    88    88    28    87     0    55        31
+10: vic2022    87    87    44    87     4    87        87
+
+Five One Nation example rows (percent of that unit's votes):
+      elec      unit lower upper ratio
+    <char>    <char> <num> <num> <num>
+1: fed2019    Hunter 21.86 13.32 0.609
+2: fed2025    Hunter 16.38 13.17 0.804
+3: fed2025    Durack  9.84  9.12 0.926
+4: fed2019     Lyons  7.91  4.71 0.596
+5: fed2007 Bennelong  0.27  0.25 0.945
+
+By lower-share bin and class: n and mean ratio (upper/lower)
+Key: <bin>
+      bin n_ALP n_GRN n_IND n_LNP n_ONP n_OTH n_OTH_RIGHT mean_ratio_ALP
+   <fctr> <int> <int> <int> <int> <int> <int>       <int>          <num>
+1:     <5    NA   198   410    NA   306   736         696             NA
+2:   5-10    13   633    85    NA   163   115         429          2.931
+3:  10-20    97   463    65    53    45    21         113          1.359
+4:  20-35   469    68    50   408     2    NA           8          0.954
+5:    >35   796    15    30   885    NA    NA           5          0.847
+   mean_ratio_GRN mean_ratio_IND mean_ratio_LNP mean_ratio_ONP mean_ratio_OTH
+            <num>          <num>          <num>          <num>          <num>
+1:          1.111          1.927             NA          0.877          4.588
+2:          1.012          0.567             NA          0.877          2.122
+3:          0.989          0.381          1.066          0.899          1.541
+4:          0.919          0.239          0.947          0.699             NA
+5:          0.797          0.117          0.864             NA             NA
+   mean_ratio_OTH_RIGHT
+                  <num>
+1:                2.109
+2:                1.331
+3:                1.038
+4:                0.812
+5:                0.492
+
+MODEL A: lratio ~ class + log(lower/10) + (1|election)  [slope shared across classes]
+             Estimate Std. Error  t value
+(Intercept)    0.4864     0.0501   9.7068
+clsLNP         0.0214     0.0225   0.9532
+clsGRN        -0.5931     0.0271 -21.9059
+clsONP        -1.1813     0.0400 -29.5413
+clsIND        -1.5717     0.0368 -42.7296
+clsOTH        -0.0137     0.0396  -0.3461
+clsOTH_RIGHT  -0.5303     0.0322 -16.4818
+lc            -0.4789     0.0111 -42.9644
+between-election sd tau = 0.144 (log ratio), residual sd = 0.585; 10 elections, n = 7377
+
+MODEL B: class x slope; the ONP-related rows:
+          Estimate Std. Error t value
+clsONP     -0.5540     0.0636 -8.7071
+lc         -0.3489     0.0393 -8.8860
+clsONP:lc   0.3349     0.0494  6.7785
+ML AIC, A then B (lower is better):  13071.3 12181.5 
+
+ONP predicted ratio (se on LOG scale; incl_election adds tau for a new election; 80% interval on ratio)
+Model A (shared slope):
+  lower_share ratio se_log_fixed   tau se_log_incl_election  lo80  hi80
+1          15 0.411       0.0551 0.144                0.154 0.337 0.501
+2          21 0.350       0.0563 0.144                0.154 0.287 0.426
+3          30 0.295       0.0578 0.144                0.155 0.242 0.360
+Model B (ONP-specific slope):
+  lower_share ratio se_log_fixed   tau se_log_incl_election  lo80  hi80
+1          15 0.791       0.0649 0.135                0.150 0.653 0.959
+2          21 0.788       0.0717 0.135                0.153 0.647 0.958
+3          30 0.784       0.0796 0.135                0.157 0.641 0.958
+
+ONP-only model lratio ~ log(lower/10) + (1|election):
+            Estimate Std. Error t value
+(Intercept)  -0.2960     0.0908 -3.2591
+lc           -0.0651     0.0204 -3.1934
+ONP-only tau = 0.256, resid sd = 0.270, n = 516, elections = 9
+ONP mean ratio by election (n):
+      elec     n mean_lower mean_ratio
+    <char> <int>      <num>      <num>
+1: fed2004    77       2.25      1.048
+2: fed2007    35       1.09      0.672
+3: fed2010    20       1.49      0.582
+4: fed2013    15       1.64      0.856
+5: fed2016    15      12.88      0.859
+6: fed2019    59       7.79      1.011
+7: fed2022   144       4.96      0.839
+8: fed2025   147       6.33      0.867
+9: vic2022     4       4.71      0.944
+
+TIME-FORWARD: last federal election with ONP pairs = fed2025
+train: 6506 rows, 9 elections (fed2004,fed2007,fed2010,fed2013,fed2016,fed2019,fed2022,vic2018,vic2022); test: ONP n=147 divisions, lower range 0.94-16.88
+Error in UPPER-share points (predicted minus actual), n=147; mean actual upper 5.42, mean lower 6.33. ONP-only training n=369 (slope 0.046)
+                      RMSE_pts mean_err_pts MAE_pts
+ratio_1.00               1.671        0.903   1.304
+labor_0.905              1.338        0.302   0.995
+A_shared_slope           2.770       -1.831   2.006
+B_class_slopes           1.284       -0.154   0.916
+C_ONP_only_regression    1.315        0.087   0.959
+Implied mean ratio actual: 0.867 ; model A mean ratio: 0.65 
+
+EXTRAPOLATION: largest ONP lower share observed 21.9% (fed2019 Hunter). ONP units n=516; above 10%: 47; above 15%: 14; above 20%: 2; above 21%: 1.
+      elec     n max_lower
+    <char> <int>     <num>
+1: fed2016     9      21.0
+2: fed2019    15      21.9
+3: fed2022     7      14.6
+4: fed2025    16      16.9
+Non-ONP units above 20% lower share: n = 2734  (ALP/LNP/GRN above 15%: 2862 )

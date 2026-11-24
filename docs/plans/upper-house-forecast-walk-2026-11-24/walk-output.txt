@@ -10,23 +10,23 @@
            Western Victoria  22.0  30.9  25.1  12.1   9.9
 
 2. UPPER-HOUSE projection in QUOTAS (1 quota = 16.67% of the vote wins a seat; 5 seats per region).
-   Ratios: Labor x0.905, Coalition x0.845, Greens x0.883 (measured 2018 and 2022); One Nation x1.00 (ASSUMED).
+   Ratios: Labor x0.905, Coalition x0.845, Greens x0.883 (Victoria 2018 and 2022); One Nation x0.85 (fitted on 516 division-elections).
    MINOR is every other group together, typically 15 to 20 groups, so no single one has this many quotas.
                      region   ALP   LNP   ONP   GRN MINOR_pool
-           Eastern Victoria  0.83  1.83  1.78  0.54       1.01
- North-Eastern Metropolitan  1.44  1.70  0.95  0.81       1.10
-      Northern Metropolitan  1.49  0.96  0.89  1.26       1.40
-          Northern Victoria  0.77  1.81  1.78  0.49       1.16
- South-Eastern Metropolitan  1.74  1.30  1.24  0.60       1.11
-      Southern Metropolitan  1.12  2.01  0.67  1.05       1.14
-       Western Metropolitan  1.62  1.16  1.12  0.64       1.46
-           Western Victoria  1.19  1.57  1.50  0.64       1.09
+           Eastern Victoria  0.83  1.83  1.51  0.54       1.28
+ North-Eastern Metropolitan  1.44  1.70  0.81  0.81       1.24
+      Northern Metropolitan  1.49  0.96  0.76  1.26       1.53
+          Northern Victoria  0.77  1.81  1.51  0.49       1.42
+ South-Eastern Metropolitan  1.74  1.30  1.05  0.60       1.30
+      Southern Metropolitan  1.12  2.01  0.57  1.05       1.24
+       Western Metropolitan  1.62  1.16  0.95  0.64       1.63
+           Western Victoria  1.19  1.57  1.28  0.64       1.32
 
 3. FIRST-CUT SEATS: whole quotas first, then the largest remainders. No preferences yet. 'Biggest minor' assumes one
    minor group takes 30% of the minor pool (the 2018 and 2022 range was 14 to 29%). gap = quotas between the last seat
    in and the first loser; under about 0.2 the seat is decided by preferences and this table cannot call it.
                      region   ALP   LNP   ONP   GRN minor
-           Eastern Victoria     1     2     2     0     0
+           Eastern Victoria     1     2     1     1     0
  North-Eastern Metropolitan     1     2     1     1     0
       Northern Metropolitan     2     1     1     1     0
           Northern Victoria     1     2     2     0     0
@@ -35,14 +35,14 @@
        Western Metropolitan     2     1     1     1     0
            Western Victoria     1     2     1     1     0
                   last_seat          first_loser   gap
- ONP (0.78 of a quota left)           GRN (0.54)  0.24
+ GRN (0.54 of a quota left)           ONP (0.51)  0.03
  LNP (0.70 of a quota left)           ALP (0.44)  0.26
- ALP (0.49 of a quota left) Biggest minor (0.42)  0.07
- ALP (0.77 of a quota left)           GRN (0.49)  0.28
- GRN (0.60 of a quota left) Biggest minor (0.33)  0.27
- ONP (0.67 of a quota left) Biggest minor (0.34)  0.33
- ALP (0.62 of a quota left) Biggest minor (0.44)  0.18
- LNP (0.57 of a quota left)           ONP (0.50)  0.07
+ ALP (0.49 of a quota left) Biggest minor (0.46)  0.03
+ ONP (0.51 of a quota left)           GRN (0.49)  0.02
+ GRN (0.60 of a quota left) Biggest minor (0.39)  0.21
+ ONP (0.57 of a quota left) Biggest minor (0.37)  0.20
+ ALP (0.62 of a quota left) Biggest minor (0.49)  0.13
+ LNP (0.57 of a quota left) Biggest minor (0.40)  0.17
 
-Total of 40: Labor 11, Coalition 13, One Nation 10, Greens 6, minor 0. Seats with a gap under 0.20: 3 of 8 regions.
+Total of 40: Labor 11, Coalition 13, One Nation 9, Greens 7, minor 0. Seats with a gap under 0.20: 5 of 8 regions.
 2022 result for comparison: Labor 15, Coalition 14, Greens 4, Legalise Cannabis 2, One Nation 1, and 4 other minors (40).
