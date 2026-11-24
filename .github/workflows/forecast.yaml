@@ -563,6 +563,11 @@ jobs:
           # every run. Polling day's copy is the one used on the night. Tolerant: a missing file or a failed upload must not stop
           # the publish (set -e is on, and the R2 step after this one would be skipped).
           if [ -s output/night-state-vic-2026.rds ]; then gh release upload forecast-latest output/night-state-vic-2026.rds --clobber || echo "::warning::night-state upload failed -- the night runner has no state from this run"; else echo "::warning::no output/night-state-vic-2026.rds -- the night runner has no state from this run"; fi
+          # The "type every primary" what-if page (added 24 Nov 2026): this run's simulations as statewide votes and
+          # seats, one row per simulation (scripts/build_whatif_sims.R). Optional: a failure warns and the page keeps
+          # the previous run's file; it must never stop the publish.
+          rm -f output/whatif-sims-vic2026.json
+          Rscript scripts/build_whatif_sims.R --target=vic2026 || echo "::warning::what-if simulations not built -- the all-primaries what-if page keeps the previous run's data"
       - name: Publish the forecast to R2 for the ITG page
         # The blog (inthegame-blog) fetches every dataset client-side from the
         # inthegame-data R2 bucket; its CSP does not allow github.com, so the
@@ -598,6 +603,12 @@ jobs:
             wrangler r2 object put "inthegame-data/auspol/$(basename "$f")" --file "$f" --content-type "$ct" --cache-control "public, max-age=300" --remote
             echo "OK $(basename "$f")"
           done
+          # The all-primaries what-if page's simulations: optional, as above.
+          if [ -s output/whatif-sims-vic2026.json ]; then
+            wrangler r2 object put "inthegame-data/auspol/whatif-sims-vic2026.json" --file output/whatif-sims-vic2026.json --content-type application/json --cache-control "public, max-age=300" --remote && echo "OK whatif-sims-vic2026.json" || echo "::warning::what-if simulations upload failed -- the page keeps the previous run's data"
+          else
+            echo "::warning::no output/whatif-sims-vic2026.json -- the all-primaries what-if page keeps the previous run's data"
+          fi
           # Per-pollster pages (scripts/build_pollster_pages.R): optional, so a missing file or failed upload warns and
           # never blocks the forecast above.
           if [ -s output/pollster-pages.json ]; then
