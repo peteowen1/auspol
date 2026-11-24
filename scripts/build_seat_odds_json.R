@@ -78,6 +78,18 @@ pr <- fread(file.path(cap, "bookmaker-odds-top4.csv"), encoding = "UTF-8")
 setnames(pr, c("Seat", "Outcome", "Sportsbet", "TAB", "Betfair", "Bookies prob (margin removed)", "Our class"),
          c("district", "outcome", "sportsbet", "tab", "betfair", "book_p", "cls"))
 pr[, grp := fifelse(cls == "OTHER+IND", "IND+OTH", cls)]
+# A price that covers only PART of a group has no matching chance: the sources give one
+# Coalition chance, not Liberal and Nationals apart, and one IND+OTH chance, not each
+# independent. Such rows keep their prices but get grp NA, and the page shows no edge for
+# them (24 Nov review: Ripon Nationals at $11 was scored against the whole Coalition, +409%).
+both_coal <- fread(file.path(cap, "bookmaker-odds.csv"), encoding = "UTF-8")
+both_coal <- both_coal[nzchar(`Liberal best`) & nzchar(`Nationals best`), Seat]
+pr[, part := .N > 1, by = .(district, grp)]
+pr[grp == "LNP" & district %chin% both_coal, part := TRUE]
+n_part <- pr[part == TRUE, .N]
+pr[part == TRUE, grp := NA_character_]
+message(sprintf("SOJ2 %d price rows cover only part of a group, shown without an edge: %s", n_part,
+                paste(unique(pr[is.na(grp), sprintf("%s %s", district, outcome)]), collapse = "; ")))
 num <- function(v) suppressWarnings(as.numeric(v))
 pr[, `:=`(sportsbet = num(sportsbet), tab = num(tab), betfair = num(betfair), book_p = num(book_p))]
 
