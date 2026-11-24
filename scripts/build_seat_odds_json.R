@@ -82,8 +82,11 @@ pr[, grp := fifelse(cls == "OTHER+IND", "IND+OTH", cls)]
 # Coalition chance, not Liberal and Nationals apart, and one IND+OTH chance, not each
 # independent. Such rows keep their prices but get grp NA, and the page shows no edge for
 # them (24 Nov review: Ripon Nationals at $11 was scored against the whole Coalition, +409%).
-both_coal <- fread(file.path(cap, "bookmaker-odds.csv"), encoding = "UTF-8")
-both_coal <- both_coal[nzchar(`Liberal best`) & nzchar(`Nationals best`), Seat]
+# Read as text: a capture with no Nationals runner anywhere gives an all-empty column, which fread
+# would type as logical NA, and nzchar(NA) is TRUE (every Liberal row would lose its edge).
+both_coal <- fread(file.path(cap, "bookmaker-odds.csv"), encoding = "UTF-8", colClasses = "character")
+has <- function(v) !is.na(v) & nzchar(v)
+both_coal <- both_coal[has(`Liberal best`) & has(`Nationals best`), Seat]
 pr[, part := .N > 1, by = .(district, grp)]
 pr[grp == "LNP" & district %chin% both_coal, part := TRUE]
 n_part <- pr[part == TRUE, .N]
