@@ -170,7 +170,7 @@ live_of <- function(region, fam) {
   fj <- sprintf("output/forecast-%s.json", e); ch <- NULL
   if (file.exists(fj)) { f <- jsonlite::fromJSON(fj, simplifyVector = FALSE)
     ch <- Filter(function(x) identical(x$party, cls), f$chamber$parties); ch <- if (length(ch)) ch[[1]] else NULL }
-  list(election = e, page = paste0("/politics/", sub("[0-9]+$", "", e)), as_of = d$meta$as_of,
+  list(election = e, page = paste0("/politics/", e, "/"), as_of = d$meta$as_of,
        class_note = if (cls == "LNP") "the forecast models the Coalition as one (Liberal, National, LNP)" else NA,
        fp_trend_pct = if (nrow(fp)) round(fp$m[1], 1) else NA,
        expected_seats = if (!is.null(ch)) ch$expected else NA, p_most_seats = if (!is.null(ch)) ch$p_most_seats else NA)
