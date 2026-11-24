@@ -292,7 +292,8 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
   `deciding-runs/20261123-mrp-pattern/shipped-before-mrp-seat-poll-blend-vic2026.csv`. `FJ9!` naming the switch is expected
   until the next rebuild. Done when: the 24 Nov scheduled run passes this. Detail: DECISIONS 2026-11-23.
   PASSED on the 24 Nov 4:30am run (45228420242): blend step ALP 23.55 -> 23.47, LNP 30.36 -> 30.40, ONP 20.50 -> 20.58;
-  `SPM4 ... 351 cells kept, 0 dropped`. The ~9:20am run only needs the same glance.
+  `SPM4 ... 351 cells kept, 0 dropped`. DONE: the "~9:20am run" is GitHub's late fallback schedule, whose gate skips it
+  once the 4:30am daily has gone (forecast.yaml header), so the 4:30am run was the check; none had appeared by 11:13am.
 - OPEN, NEEDS PETE (found 24 Nov 7:40am): the per-seat flow model sends preferences TOWARD One Nation in One Nation
   contests, against the cards and the one election that measured it. Live night state (forecast-latest), median over 88
   seats against the pooled table: Labor between Liberal and One Nation 55.1% to Liberal (pooled 65.5; sa2026 actual 71.5 on
