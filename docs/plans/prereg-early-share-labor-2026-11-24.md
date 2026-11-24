@@ -119,6 +119,28 @@ Box Hill +0.80, Albert Park +0.75 (Labor 52%, Greens 32%). The effect on
 vic2026 win probabilities has NOT been measured: it needs a live run with and
 without the switch.
 
-**Still needed before a ship:** the live with/without walk, the builder in
+**LIVE WALK, 24 November 6:14pm** (Pete chose "Walk it live first").
+`fit_seats_full.R` twice on this checkout, same seed, `AUSPOL_OUT_SUFFIX`
+`-esbase` and `-esarm`; files moved to
+`deciding-runs/20261124-early-share-screen/live/`; compared by
+`docs/reviews/early-vote-scouts-2026-11-24/walk.R`. **Read the changes, not the
+levels:** the local poll clone is from 14 November, so this baseline (Coalition
+majority 31.4%) is not today's published forecast (35%).
+
+- Labor's primary: 76% of the fitted shift is delivered; the average seat moves
+  0.33 points, from -1.00 (Melton) to +1.44 (Eildon).
+- Win probabilities: largest change in any seat-party cell 0.073; 34 of 616
+  cells move by 0.02 or more, 6 by 0.05 or more.
+- One favourite changes: Ringwood, Coalition 0.474 / Labor 0.429 becomes Labor
+  0.462 / Coalition 0.445.
+- Labor's win chance: Monbulk 0.256 -> 0.329, Ashwood 0.532 -> 0.588, Albert
+  Park 0.472 -> 0.522 (Greens 0.384 -> 0.352), St Albans 0.693 -> 0.626,
+  Greenvale 0.496 -> 0.432, Werribee 0.289 -> 0.244, Kororoit 0.501 -> 0.460.
+- Expected seats: Labor 25.60 -> 25.60, Coalition 39.96 -> 39.85, One Nation
+  14.91 -> 15.07, Greens 7.09 -> 7.05.
+- Parliament: Coalition majority 31.4% -> 31.1%, hung 67.8% -> 68.2%, Coalition
+  most seats 79.4% -> 79.1%.
+
+**Still needed before a ship:** the builder in
 `rebuild_forecasts.sh`, a regenerated `demo-resid-vic2026.csv` through the
 promote step, `check_like_ci.R`, a registry regen and the publish.
