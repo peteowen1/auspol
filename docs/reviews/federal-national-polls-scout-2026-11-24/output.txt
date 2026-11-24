@@ -1,0 +1,75 @@
+Warning message:
+package 'data.table' was built under R version 4.5.2 
+level-recent.csv: 105 rows, 35 elections. Columns used: election, region, cls, trend (day-before poll trend, blend off), avg28, actual
+fed polls: 4133 rows 1943-06-01 to 2026-11-05 ; ALP non-NA 3807 
+Key: <election>
+   election        a        l       date
+     <char>    <num>    <num>     <Date>
+1:  fed2007 43.38746 42.10585 2007-11-24
+2:  fed2010 37.99531 43.61849 2010-08-21
+3:  fed2013 33.39535 45.56764 2013-09-07
+4:  fed2016 34.73369 42.05603 2016-07-02
+5:  fed2019 33.34557 41.44812 2019-05-18
+6:  fed2022 32.58291 35.70272 2022-05-21
+7:  fed2025 34.59460 31.85026 2025-05-03
+    election       date  nfed miss_trend miss_avg28 fed_labor_level prev_fed fed_labor_change    gov fed_gov_change_signed
+      <char>     <Date> <num>      <num>      <num>           <num>   <char>            <num> <char>                 <num>
+ 1:   wa2001 2001-02-10     6      -3.91      -4.58           44.08     <NA>               NA    LNP                    NA
+ 2:   wa2005 2005-02-26     9      -3.43      -2.11           37.00     <NA>               NA    LNP                    NA
+ 3:   wa2008 2008-09-06    15      -6.95      -3.46           46.13  fed2007             2.75    ALP                  2.75
+ 4:   sa2010 2010-03-20    15      -2.18       1.82           43.03  fed2007            -0.35    ALP                 -0.35
+ 5:  vic2010 2010-11-27    20       0.90       0.31           38.88  fed2010             0.88    ALP                  0.88
+ 6:  nsw2011 2011-03-26    26       2.59       2.05           36.17  fed2010            -1.82    ALP                 -1.82
+ 7:  qld2012 2012-03-24    24      -6.11      -2.01           34.31  fed2010            -3.68    ALP                 -3.68
+ 8:   wa2013 2013-03-09    22      -0.98      -0.37           34.02  fed2010            -3.97    ALP                 -3.97
+ 9:   sa2014 2014-03-15    15       2.71       1.80           37.09  fed2013             3.69    LNP                  4.13
+10:  vic2014 2014-11-29    20       0.47       0.89           37.56  fed2013             4.16    LNP                  6.10
+11:  qld2015 2015-01-31    15      -3.68       0.14           39.85  fed2013             6.45    LNP                  7.22
+12:  nsw2015 2015-03-28    20       1.11       0.49           40.01  fed2013             6.61    LNP                  7.09
+13:   nt2016 2016-08-27    13       3.83         NA           36.08  fed2016             1.35    LNP                  1.42
+14:   wa2017 2017-03-11     8       5.78       3.87           36.00  fed2016             1.27    LNP                  6.04
+15:  qld2017 2017-11-25    11       0.43       0.69           37.09  fed2016             2.36    LNP                  6.69
+16:   sa2018 2018-03-17    10       3.67       2.13           36.70  fed2016             1.97    LNP                  6.46
+17:  vic2018 2018-11-24    10       3.27       2.82           37.30  fed2016             2.57    LNP                  5.86
+18:  nsw2019 2019-03-23    14      -1.27      -2.89           37.09  fed2016             2.35    LNP                  5.39
+19:   nt2020 2020-08-22     9       1.72         NA           35.23  fed2019             1.88    LNP                 -1.34
+20:  qld2020 2020-10-31     8       4.74       2.90           35.21  fed2019             1.87    LNP                 -1.57
+21:   wa2021 2021-03-13    10       8.68       6.97           36.35  fed2019             3.01    LNP                  0.40
+22:   sa2022 2022-03-19    17       2.14      -0.36           38.84  fed2019             5.50    LNP                  6.29
+23:  vic2022 2022-11-26    14      -0.21      -1.08           37.44  fed2022             4.85    ALP                  4.85
+24:  nsw2023 2023-03-25    17       2.39       0.28           36.96  fed2022             4.38    ALP                  4.38
+25:   nt2024 2024-08-24    24       2.25         NA           30.81  fed2022            -1.77    ALP                 -1.77
+26:  qld2024 2024-10-26    23       3.11       0.16           31.06  fed2022            -1.52    ALP                 -1.52
+27:   wa2025 2025-03-08    29      -0.85      -2.07           30.40  fed2022            -2.18    ALP                 -2.18
+28:   sa2026 2026-03-21    31      -0.77       0.82           30.54  fed2025            -4.05    ALP                 -4.05
+    election       date  nfed miss_trend miss_avg28 fed_labor_level prev_fed fed_labor_change    gov fed_gov_change_signed
+      <char>     <Date> <num>      <num>      <num>           <num>   <char>            <num> <char>                 <num>
+
+Dropped (no day-before poll figure or <3 fed polls in window):
+Empty data.table (0 rows and 3 cols): election,nfed,miss_trend
+No previous federal election in file (change predictors NA): wa2001 wa2005 
+Federal election results in the file start at fed2007, so fed2004/2001 Labor primaries are unavailable here.
+
+[miss_trend ~ fed_labor_level] n=28  r=-0.375  slope=-0.353 (SE 0.171, t=-2.06)  intercept=13.70
+  LOO: SSE zero-miss=349.6, SSE model=339.3, change=-10.3 (-3.0%)
+  time-forward (first 6 scored from 7th): scored n=22, SSE zero-miss=262.0, SSE model=318.8, change=+56.8 (+21.7%)
+
+[miss_trend ~ fed_labor_change] n=26  r=0.157  slope=0.173 (SE 0.223, t=0.78)  intercept=0.77
+  LOO: SSE zero-miss=322.6, SSE model=337.1, change=+14.5 (+4.5%)
+  time-forward (first 6 scored from 7th): scored n=20, SSE zero-miss=223.7, SSE model=258.4, change=+34.7 (+15.5%)
+
+[miss_trend ~ fed_gov_change_signed] n=26  r=0.107  slope=0.094 (SE 0.177, t=0.53)  intercept=0.84
+  LOO: SSE zero-miss=322.6, SSE model=338.4, change=+15.8 (+4.9%)
+  time-forward (first 6 scored from 7th): scored n=20, SSE zero-miss=223.7, SSE model=270.4, change=+46.8 (+20.9%)
+
+[miss_avg28 ~ fed_labor_level] n=25  r=-0.241  slope=-0.161 (SE 0.135, t=-1.19)  intercept=6.34
+  LOO: SSE zero-miss=153.2, SSE model=172.0, change=+18.8 (+12.3%)
+  time-forward (first 6 scored from 7th): scored n=19, SSE zero-miss=108.2, SSE model=132.5, change=+24.3 (+22.5%)
+
+[miss_avg28 ~ fed_labor_change] n=23  r=0.101  slope=0.072 (SE 0.155, t=0.47)  intercept=0.58
+  LOO: SSE zero-miss=127.8, SSE model=132.1, change=+4.3 (+3.4%)
+  time-forward (first 6 scored from 7th): scored n=17, SSE zero-miss=104.0, SSE model=105.6, change=+1.6 (+1.5%)
+
+[miss_avg28 ~ fed_gov_change_signed] n=23  r=0.048  slope=0.027 (SE 0.124, t=0.22)  intercept=0.63
+  LOO: SSE zero-miss=127.8, SSE model=135.0, change=+7.2 (+5.6%)
+  time-forward (first 6 scored from 7th): scored n=17, SSE zero-miss=104.0, SSE model=109.5, change=+5.5 (+5.3%)

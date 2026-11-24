@@ -1,3 +1,11 @@
+# auspol 0.4.205
+
+No change to the published forecast; a new data file for the site and a new comparison source.
+
+- **Each daily run exports its simulations for the "type every primary" what-if page** (`scripts/build_whatif_sims.R`, `output/whatif-sims-vic2026.json`, uploaded to R2). Votes and seats for five groups, one row per simulation. Optional in the workflow: a failure warns and never stops the publish.
+- **First Preference (electionfirstpreference.com) joins the forecast comparison** (`snapshot_benchmarks.R`, `build_seat_odds_json.R`).
+- Analysis only: pollsters' published two-party figures were no closer than past preference flows on 27 elections; national federal voting intention does not predict state poll misses on 28; One Nation's upper-to-lower-house vote ratio fitted at 0.85 for the upper-house forecast under design.
+
 # auspol 0.4.204
 
 Changes the published seat forecast for Victoria once the release carries the new `demo-resid-vic2026.csv` (Labor's primary by seat; no statewide change).

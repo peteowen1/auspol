@@ -1,0 +1,78 @@
+Warning message:
+Warning messages:
+1: In sanity_check_polls(out, region, min_rows = if (supplement) 1L else 101L) :
+  More than 2% of modern polls have FP sums far from 100 - check parsing
+2: In sanity_check_polls(out, region, min_rows = if (supplement) 1L else 101L) :
+  More than 2% of modern polls have FP sums far from 100 - check parsing
+Elections with 2+ final-28-day polls carrying a published two-party figure, full-preferential, 2004 on: 27
+All figures are Labor's two-party share in points. gap = published minus computed; err = poll figure minus the result (0 is perfect).
+    election polls actual published computed   gap err_pub err_comp
+      <char> <int>  <num>     <num>    <num> <num>   <num>    <num>
+ 1:  fed2004    19   47.3      49.9     47.4   2.5     2.7      0.1
+ 2:   wa2005     3   52.3      52.5     52.7  -0.1     0.3      0.4
+ 3:   sa2006     6   56.8      58.0     58.5  -0.5     1.2      1.7
+ 4:  vic2006     8   54.4      53.9     53.2   0.7    -0.5     -1.2
+ 5:  nsw2007     4   52.3      55.4     53.6   1.8     3.1      1.3
+ 6:  fed2007    16   52.7      55.0     54.6   0.4     2.3      1.9
+ 7:   wa2008     6   48.1      50.9     51.7  -0.8     2.7      3.5
+ 8:   sa2010     2   48.4      48.5     49.1  -0.6     0.1      0.7
+ 9:  fed2010    21   50.1      51.5     52.0  -0.5     1.3      1.9
+10:  vic2010     9   48.4      50.2     50.0   0.1     1.8      1.6
+11:  nsw2011     7   35.8      35.3     37.6  -2.3    -0.5      1.8
+12:   wa2013     2   42.7      42.2     45.9  -3.7    -0.5      3.2
+13:  fed2013    28   46.5      47.2     47.3  -0.1     0.7      0.8
+14:   sa2014     2   47.0      46.9     47.1  -0.2    -0.1      0.1
+15:  vic2014    11   52.0      52.2     52.4  -0.1     0.2      0.4
+16:  nsw2015    13   45.7      45.2     45.4  -0.3    -0.5     -0.3
+17:  fed2016    16   49.6      49.9     49.0   0.9     0.2     -0.6
+18:   wa2017     6   55.5      52.7     55.0  -2.4    -2.8     -0.5
+19:  vic2018     7   57.6      54.4     55.0  -0.6    -3.2     -2.6
+20:  nsw2019     4   48.0      50.0     49.5   0.5     2.0      1.5
+21:  fed2019    14   48.5      51.4     51.4  -0.1     2.9      3.0
+22:   wa2021     3   69.7      65.0     67.9  -2.9    -4.7     -1.8
+23:   sa2022     3   54.6      54.3     55.3  -0.9    -0.3      0.7
+24:  fed2022    13   52.1      53.5     53.6  -0.1     1.4      1.5
+25:  vic2022     7   55.0      54.7     55.5  -0.9    -0.3      0.5
+26:   wa2025     2   57.1      57.2     60.2  -2.9     0.1      3.1
+27:  fed2025    25   55.2      52.5     52.1   0.4    -2.7     -3.1
+    election polls actual published computed   gap err_pub err_comp
+      <char> <int>  <num>     <num>    <num> <num>   <num>    <num>
+
+Mean absolute error: published 1.45, computed from past flows 1.47 (n = 27 elections). Published closer in 17 of 27.
+RMSE: published 1.92, computed 1.80
+Does the gap predict the surprise? actual - computed = -0.60 + 0.26 x gap (slope SE 0.23, n = 27, r = 0.22). Slope 1 = pollsters' figure fully right, 0 = no information.
+Elections where the two differed by 1 point or more: 7. In those, the result fell on the published side of the computed figure in 3.
+   election   gap surprise
+     <char> <num>    <num>
+1:  fed2004   2.5     -0.1
+2:  nsw2007   1.8     -1.3
+3:  nsw2011  -2.3     -1.8
+4:   wa2013  -3.7     -3.2
+5:   wa2017  -2.4      0.5
+6:   wa2021  -2.9      1.8
+7:   wa2025  -2.9     -3.1
+
+Since 2016 only (n = 11): MAE published 1.88, computed 1.72; slope 0.13
+
+VICTORIA 2026, polls since 15 Oct on disk (local poll clone; newest poll 2026-11-13 ):
+         date                 firm published_alp_2pp   ALP   LNP   GRN   ONP
+       <Date>               <char>             <num> <num> <num> <num> <num>
+1: 2026-10-19            Newspoll3                45  24.0  33.0  14.0    20
+2: 2026-10-20 Online Research Unit                46  25.0  32.0  15.0    14
+3: 2026-10-26           Lighthouse                NA  23.0  31.0  14.0    22
+4: 2026-10-28           SMS Morgan                44  22.5  29.5  12.5    22
+5: 2026-11-04              DemosAU                44  18.0  33.0  17.0    21
+6: 2026-11-05            ResolvePM                NA  22.0  30.0  13.0    23
+7: 2026-11-07            Redbridge                43  23.0  31.0  15.0    22
+8: 2026-11-13           Lighthouse                NA  21.0  32.0  14.0    23
+     OTH
+   <num>
+1:   9.0
+2:  14.0
+3:  10.0
+4:  13.5
+5:  11.0
+6:  12.0
+7:   9.0
+8:  10.0
+mean published Labor two-party 44.4 over 5 polls that released one; flows recorded before 2026: GRN 81.9 (2022), ONP 42.0 (2018), OTH 49.2 (2022), UAP 34.9 (2022)

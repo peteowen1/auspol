@@ -36,9 +36,9 @@ if (length(miss)) stop(sprintf("SOJ1! %s lacks %s", cap, paste(miss, collapse = 
 
 # Source order and labels as the page shows them; GES gives a single call, not a chance.
 SOURCES <- data.table(
-  id    = c("ours", "sportsbet", "tab", "betfair", "theswingison", "aeforecasts", "ges"),
-  label = c("Our model", "Sportsbet", "TAB", "Betfair", "The Swing Is On", "AE Forecasts", "Global Election Sim"),
-  kind  = c("model", "book", "book", "book", "model", "model", "call"))
+  id    = c("ours", "sportsbet", "tab", "betfair", "theswingison", "aeforecasts", "firstpreference", "ges"),
+  label = c("Our model", "Sportsbet", "TAB", "Betfair", "The Swing Is On", "AE Forecasts", "First Preference", "Global Election Sim"),
+  kind  = c("model", "book", "book", "book", "model", "model", "model", "call"))
 
 # Every source's own class labels collapse to the page's six groups.
 to_group <- function(x) {

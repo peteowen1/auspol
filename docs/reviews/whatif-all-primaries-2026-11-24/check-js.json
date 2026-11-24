@@ -1,0 +1,44 @@
+{
+ "now": {
+  "coalMajority": 0.31435,
+  "laborMajority": 0.00745,
+  "hung": 0.6782,
+  "ess": 20000,
+  "meanLabor": 25.6012,
+  "meanCoalition": 39.9597,
+  "meanOneNation": 14.91375,
+  "meanGreens": 7.09005,
+  "meanOthers": 0.4353,
+  "mostLabor": 0.18600000000000003,
+  "mostCoalition": 0.7838250000000001,
+  "mostOneNation": 0.030175
+ },
+ "a": {
+  "coalMajority": 0.1505292481015961,
+  "laborMajority": 9.99455277464348e-7,
+  "hung": 0.8494697524431252,
+  "ess": 1453.3605723506253,
+  "meanLabor": 25.885615028977462,
+  "meanCoalition": 40.035001122290666,
+  "meanOneNation": 14.741156124874157,
+  "meanGreens": 6.92281864457109,
+  "meanOthers": 0.41540907928696336,
+  "mostLabor": 0.028502421172026504,
+  "mostCoalition": 0.9713574231031552,
+  "mostOneNation": 0.00014015572482141485
+ },
+ "b": {
+  "coalMajority": 0.40032829096340294,
+  "laborMajority": 5.1198302539153025e-11,
+  "hung": 0.5996717089854017,
+  "ess": 996.1283196704243,
+  "meanLabor": 21.65261392907682,
+  "meanCoalition": 43.40348908679631,
+  "meanOneNation": 13.991178286050335,
+  "meanGreens": 8.504336287727272,
+  "meanOthers": 0.4483824103494441,
+  "mostLabor": 0.0009546155355008132,
+  "mostCoalition": 0.9990406942217532,
+  "mostOneNation": 0.000004690242749627219
+ }
+}

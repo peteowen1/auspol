@@ -103,7 +103,18 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - OPEN, DATED 27 Nov (evening) and 28 Nov (morning): save the VEC early and postal vote spreadsheet again, raw, into
   `external/reference/vec-early-vote-2026/` (link on https://www.vec.vic.gov.au/voting/2026-state-election/voting-statistics;
   one copy saved 24 Nov; cumulative, 88 districts per day from 7 Nov, verified). The 28 Nov copy is the final pre-poll count. Early-vote screen:
-  `scripts/screen_early_vote.R`. PARKED 24 Nov (DECISIONS): as an xgb feature LAST election's early share is not
+  `scripts/screen_early_vote.R`.
+  **DATED 25 Nov (first thing): the early-share Labor correction went live-pending 24 Nov 7:09pm** (PR #274 merged;
+  `demo-resid-vic2026.csv` on the `shipped-models` release replaced by hand, DECISIONS). Check the 4:30am forecast run:
+  (1) its conclusion is success; (2) its log has `DR1  demographic correction ON for vic2026 from demo-resid-vic2026.csv
+  (176 of 176 rows matched)`; (3) against the 24 Nov run, Labor's win chance moves in the walked seats (Monbulk up,
+  St Albans and Greenvale down, Ringwood near even) and the hung-parliament figure moves by under 1 point. Then tell
+  Pete, and update thread 1's numbers in the Victoria Forecast Thread artifact if they changed. ROLL BACK with
+  `gh release upload shipped-models docs/reviews/early-vote-scouts-2026-11-24/demo-resid-vic2026-BEFORE-23nov-release.csv#demo-resid-vic2026.csv --clobber`
+  (check the `#name` form uploads under the right name before relying on it; else copy the file to that name first).
+  NOT DONE: nsw2027's table has no shift; `output/` in this checkout is the 13 Nov rebuild, NOT the live model
+  (live = `C:/dev/auspol-wt-rbm/output`), so never run stage 9 from here until a full rebuild has been checked.
+  EARLIER, PARKED 24 Nov (DECISIONS): as an xgb feature LAST election's early share is not
   separable from a placebo. AFTER 28 Nov: add vic2026 to the panel and rescore; the untested route is a direct post-tree
   correction on Labor; the federal "pre-poll shifted later" lead can be computed for Victoria from
   `external/reference/antonygreen-vic2022-early/` and the saved VEC 2026 file. DATED 25 Nov (morning): refresh posts 1-4
