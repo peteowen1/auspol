@@ -1,6 +1,6 @@
 # Data dictionary
 
-**Generated 2026-11-23 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
+**Generated 2026-11-24 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
 
 Companion to `docs/DATA-REGISTRY.md`. The registry answers *do we have this
 file*; this answers *do we have this field*. Four wrong "we don't have it"
