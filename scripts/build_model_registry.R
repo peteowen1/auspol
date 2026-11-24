@@ -272,6 +272,10 @@ CLASSIFY <- list(
   AUSPOL_DEMO_RESID_FULL = paste(
     "ARM (0), UNIVERSAL via R/: read inside R/demographic_residual.R (the demographic correction every harness and",
     "fit_seats_full.R reach). plans/prereg-demo-resid-full-2026-10-19.md"),
+  AUSPOL_DEMO_RESID_EARLY = paste(
+    "SHIPPED (1) 2026-11-24, UNIVERSAL via R/: read by early_share_mode() in R/demographic_residual.R, inside",
+    "demographic_residual_apply(), which every harness, fit_seats_full.R and promote_rebuild.R call. Labor only; needs",
+    "output/prev-early-share.csv. plans/prereg-early-share-labor-2026-11-24.md"),
   AUSPOL_ROW_SHIFT_EXACT = paste(
     "ARM (0), UNIVERSAL via R/: read by row_shift_exact_on() in R/row_shift_exact.R, called from blend_salience_shares()",
     "(R/salience_surge.R) and the three seat-poll blend modes (R/seat_poll_blend.R, R/seat_poll_joint.R), which every",

@@ -348,10 +348,11 @@ demographic_residual_apply <- function(shares, pair,
   shares
 }
 
-# AUSPOL_DEMO_RESID_EARLY: "0" off, "1" on, "shuffle" the placebo (the early-share column permuted between seats
-# within each election). plans/prereg-early-share-labor-2026-11-24.md.
+# AUSPOL_DEMO_RESID_EARLY: "1" on (shipped 2026-11-24), "0" off, "shuffle" the placebo (the early-share column
+# permuted between seats within each election). plans/prereg-early-share-labor-2026-11-24.md. The inline default is
+# the shipped value, because the promote step calls the correction without applying published_flags.R.
 early_share_mode <- function() {
-  v <- Sys.getenv("AUSPOL_DEMO_RESID_EARLY", "0")
+  v <- Sys.getenv("AUSPOL_DEMO_RESID_EARLY", "1")
   if (!v %in% c("0", "1", "shuffle")) stop("AUSPOL_DEMO_RESID_EARLY must be \"0\", \"1\" or \"shuffle\", not ", v)
   v
 }

@@ -141,6 +141,13 @@ majority 31.4%) is not today's published forecast (35%).
 - Parliament: Coalition majority 31.4% -> 31.1%, hung 67.8% -> 68.2%, Coalition
   most seats 79.4% -> 79.1%.
 
-**Still needed before a ship:** the builder in
+**SHIPPING, 24 November 6:15pm: Pete chose "Ship for Saturday" after the live
+walk.** `AUSPOL_DEMO_RESID_EARLY = "1"` in `published_flags.R`, the inline
+default in `early_share_mode()` flipped with it (the promote step calls the
+correction without applying the flags), and the builder runs before stage 6 in
+`rebuild_forecasts.sh`. In flight until the release carries a regenerated
+`demo-resid-vic2026.csv` and a daily run has used it.
+
+**Still needed before a ship (the list as it stood before the decision):** the builder in
 `rebuild_forecasts.sh`, a regenerated `demo-resid-vic2026.csv` through the
 promote step, `check_like_ci.R`, a registry regen and the publish.

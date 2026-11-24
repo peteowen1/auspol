@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (332 switches from `published_flags.R`, 7 entry points)
+## Switch parity (333 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -82,6 +82,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_DEFECT_SIZE` | NO | NO | NO | NO | NO | NO | NO | candidate_returns.R |
 | `AUSPOL_DEFECTOR_STATE` | NO | NO | NO | NO | NO | NO | NO | defector_state.R |
 | `AUSPOL_DEMO_RESID` | yes | yes | yes | yes | yes | yes | yes | demographic_residual.R |
+| `AUSPOL_DEMO_RESID_EARLY` | NO | NO | NO | NO | NO | NO | NO | demographic_residual.R |
 | `AUSPOL_DEMO_RESID_FULL` | NO | NO | NO | NO | NO | NO | NO | demographic_residual.R |
 | `AUSPOL_DEMO_RESID_SHUFFLE` | NO | yes | yes | yes | yes | yes | yes |  |
 | `AUSPOL_DEPARTED_FED` | yes | NO | NO | NO | NO | NO | NO | departed_fed.R |
@@ -414,6 +415,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_DEFECT_POOLED`** (**adopted, shared-function wiring**): ADOPTED 2026-09-09 at "2" (docs/plans/prereg-defector-two-rate- 2026-09-09.md), by Pete on mechanism -- the arm missed its own primary bar (t -2.04 vs 2.08) but every directional indicator was favourable and R4 confirmed the published Victorian forecast is byte-identical (Victoria fields no major-party defector standing as a minor this cycle, so the mechanism does not fire there). Reaches fit_seats_full.R correctly: personal_prior_vote() self-resolves both rates from Sys.getenv() when the caller passes NULL, exactly so this did not need a seventh call site wired by hand -- the mistake that made the first pooled-arm run VOID earlier the same day.
 - **`AUSPOL_DEFECT_SIZE`** (intentional / dead experiment): OFF, REFUSED 2026-10-14 (nt2016 +0.19 on screen). Read inside R/candidate_returns.R (fit_defector_discount() and personal_prior_vote()), so it reaches every harness's base_pred when on; 'NO' in the harness columns is the grep, not a gap. reviews/defector-overcarry-2026-10-14.md
 - **`AUSPOL_DEFECTOR_STATE`** (intentional / dead experiment): PREREG PENDING, OFF (built 2026-10-06; docs/reviews/state-defectors-2026-10-06.md). Gate is .defstate_on() in R/defector_state.R, called from R/candidate_returns.R, so it would reach every harness and fit_seats_full.R if turned on; not a gap.
+- **`AUSPOL_DEMO_RESID_EARLY`** (**adopted, shared-function wiring**): SHIPPED (1) 2026-11-24, UNIVERSAL via R/: read by early_share_mode() in R/demographic_residual.R, inside demographic_residual_apply(), which every harness, fit_seats_full.R and promote_rebuild.R call. Labor only; needs output/prev-early-share.csv. plans/prereg-early-share-labor-2026-11-24.md
 - **`AUSPOL_DEMO_RESID_FULL`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: read inside R/demographic_residual.R (the demographic correction every harness and fit_seats_full.R reach). plans/prereg-demo-resid-full-2026-10-19.md
 - **`AUSPOL_DEMO_RESID_SHUFFLE`** (intentional / dead experiment): Control, not an arm. Permutes which seat gets which seat's demographics within each election, at fit and at apply both, so every marginal and the whole procedure survive and only the seat-to-demographics link dies. Absent from fit_seats_full.R for the same reason its arm is: a control has no business in the published forecast. Calibrated on sa2026 -- 8 draws give mean 0.3576 against a 0.3577 baseline, sd 0.0013, so the null manufactures nothing and the real effect sits 8.9 sds out.
 - **`AUSPOL_DEPARTED_FED`** (intentional / dead experiment): REFUSED 2026-09-30 (both '1' and 'gap': qld2020 and sa2026 worse; plans/prereg-departed-fed-gap-2026-09-30.md). Wired into the nsw/qld/sa/vic harnesses and fit_seats_full.R. The fed and wa 'NO' cells are by design: commit 2ff6bf8 says fed and wa have no booth map (the booth-to-federal-district join only exists for state elections with transposed federal swing).
@@ -714,8 +716,8 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR4  every AUSPOL_* switch read in code (436) is registered (313) or listed as not a model switch (123).
+MR4  every AUSPOL_* switch read in code (437) is registered (314) or listed as not a model switch (123).
 
 
 
-MR2  every non-universal switch (301 of 332) has a recorded classification.
+MR2  every non-universal switch (302 of 333) has a recorded classification.
