@@ -968,6 +968,7 @@ jobs:
           path: |
             output/seat-sims-full-*-scn-*
             output/seat-probs-*-scn-*
+            output/seat-tcp-ranges-*-scn-*
             output/scenario-logs/
           retention-days: 2
           if-no-files-found: error
