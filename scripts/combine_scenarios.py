@@ -118,7 +118,7 @@ def num(v):
     return None if v in ("", "NA") else float(v)
 
 
-def final_two_list(fname):
+def final_two_list(fname, check_fresh=True):
     """Each seat's likeliest final two in one scenario, from fit_seats_full.R's seat-tcp-ranges file, in the
     order of `seats`; fields as build_forecast_json.R's seats[].final_two, flattened (FINAL_TWO_FIELDS). None for the
     whole scenario when the file is missing (CSC9! counts them; the slider still publishes), None for a seat
@@ -126,6 +126,8 @@ def final_two_list(fname):
     path = os.path.join(OUT, fname)
     if not os.path.exists(path):
         return None
+    if check_fresh and os.path.getmtime(path) < lvl_time:
+        die("CSC9! %s predates today's levels: it describes a different day's forecast" % fname)
     out = [None] * len(seat_names)
     for r in read_csv(path):
         if r["seat"] not in seat_ix:
@@ -179,7 +181,12 @@ for k in keys:
         "seat_probs": pm,
         "final_two": ft})
 n_ft = sum(1 for s in scen if s["final_two"] is not None)
-print("CSC9%s seat final-two figures in %d of %d scenarios" % ("" if n_ft == len(scen) else "!", n_ft, len(scen)))
+n_gap = sum(1 for s in scen if s["final_two"] is not None for f in s["final_two"] if f is None)
+ok_ft = n_ft == len(scen) and n_gap == 0
+print("CSC9%s seat final-two figures in %d of %d scenarios, %d seat gap(s)" % ("" if ok_ft else "!", n_ft, len(scen), n_gap))
+if not ok_ft and not partial:
+    die("CSC9! seat final-two figures incomplete (a scenario's seat-tcp-ranges file is missing or short); "
+        "--allow-partial publishes them as null")
 
 
 # Runners differ in CPU, so floating point differs in the last bits and a few of 20,000 simulations
@@ -211,6 +218,20 @@ if zero:
               % (k["party"], "MATCHES" if same else "DOES NOT MATCH", gap, SAME_TOL))
         if not same:
             die("CSC7! %s differs from %s: the scenarios do not describe the published forecast" % (f, pub_f))
+        # Same tie for the final-two figures, when the published TCP file is here (it is not in every
+        # job's inputs): same pairs, probabilities and medians within SAME_TOL (medians in points, x100).
+        pub_t = os.path.join(OUT, "seat-tcp-ranges-%s.csv" % stem)
+        sc_ft = next(s["final_two"] for s in scen if s["mode"] == "polled" and s["party"] == k["party"] and s["offset"] == 0)
+        if os.path.exists(pub_t) and sc_ft is not None:
+            pub_ft = final_two_list(os.path.basename(pub_t), check_fresh=False)
+            bad = [seat_names[i] for i, (a, b) in enumerate(zip(pub_ft, sc_ft))
+                   if a is None or b is None or a[:2] != b[:2]
+                   or any((x is None) != (y is None) or (x is not None and abs(x - y) > (SAME_TOL if j < 4 else 100 * SAME_TOL))
+                          for j, (x, y) in enumerate(zip(a, b)) if j >= 2)]
+            print("CSC7  polled %s at today's level: final two differs from the published seat-tcp-ranges in %d of %d seats"
+                  % (k["party"], len(bad), len(seat_names)))
+            if bad:
+                die("CSC7! final two differs from %s in %s" % (pub_t, ", ".join(bad[:5])))
 else:
     print("CSC7! no polled offset-0 scenario, so nothing ties these scenarios to the published forecast")
 
