@@ -32,11 +32,27 @@ if (!is.finite(pairing) || pairing < 0.5) stop(sprintf("WIS1! Coalition vote and
 grp <- function(m) cbind(Labor = m[, "ALP"], Coalition = m[, "LNP"], OneNation = m[, "ONP"], Greens = m[, "GRN"],
                          Others = rowSums(m[, setdiff(colnames(m), cols), drop = FALSE]))
 v <- grp(swd); s <- grp(seats)
+# The statewide preference flows the forecast itself uses (the FL0 line of fit_seats_full.R), so the page can show
+# the two-party-preferred figure a set of primaries implies: Labor + each group's vote x its share flowing to Labor.
+# Optional: if the package or its flow table cannot be loaded, `flows_to_labor` is null and the page shows no
+# two-party line. Independents and every other party use the model's "other" flow.
+flows <- tryCatch({
+  options(auspol.root = normalizePath("."))
+  suppressMessages(devtools::load_all(quiet = TRUE))
+  ft <- as.data.frame(flows_for(load_preference_flows(), as.integer(sub("^[a-z]+", "", TARGET)), sub("[0-9]+$", "", TARGET), quiet = TRUE))
+  pick <- function(k) { r <- ft$flow_alp[ft$party == k]; if (length(r) == 1L && is.finite(r) && r >= 0 && r <= 100) r / 100 else NA_real_ }
+  fl <- c(Greens = pick("GRN"), OneNation = pick("ONP"), Others = pick("OTH"))
+  if (anyNA(fl)) stop("a flow is missing: ", paste(names(fl)[is.na(fl)], collapse = ", "))
+  fl
+}, error = function(e) { cat("WIS1! statewide flows not read (", conditionMessage(e), "); the file carries no two-party flows\n", sep = ""); NULL })
+tpp_labor <- function(m, f) 100 * (m[, "Labor"] + f[["Greens"]] * m[, "Greens"] + f[["OneNation"]] * m[, "OneNation"] + f[["Others"]] * m[, "Others"]) / rowSums(m)
 fj <- file.path(dir_in, sprintf("forecast-%s.json", TARGET))
 built_at <- if (file.exists(fj)) tryCatch(jsonlite::fromJSON(fj)$built_at, error = function(e) NA_character_) else NA_character_
 out <- list(election = TARGET, built_at = if (is.null(built_at)) NA_character_ else built_at, saved_at = as.character(ns$saved_at),
             parties = colnames(v), n = nrow(v), seats_total = chamber, majority = as.integer(floor(chamber / 2) + 1L),
             vote_means = as.list(round(colMeans(v), 3)), seat_means = as.list(round(colMeans(s), 3)),
+            flows_to_labor = if (is.null(flows)) NULL else as.list(round(flows, 4)),
+            tpp_labor_mean = if (is.null(flows)) NULL else round(mean(tpp_labor(v, flows)), 2),
             votes = lapply(seq_len(ncol(v)), function(j) round(v[, j], 1)), seats = lapply(seq_len(ncol(s)), function(j) as.integer(s[, j])))
 f_out <- file.path(dir_in, sprintf("whatif-sims-%s.json", TARGET))
 writeLines(jsonlite::toJSON(out, auto_unbox = TRUE, digits = NA, na = "null"), f_out)
