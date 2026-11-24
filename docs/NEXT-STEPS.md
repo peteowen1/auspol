@@ -122,12 +122,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `council-forecast-vic2026.json`; ITG has the JSON shape). LEFT: move sim.R into `scripts/` and the daily run with an R2
   upload (review gate), test the count against a real ticket-free count (a Senate contest), tell ITG the R2 key.
   (7) Seat TCP per what-if scenario: MERGED 25 Nov 9:15am (PR #276, `final_two` per scenario in scenario-vic2026.json;
-  ITG built its column against it). Manual run 45500128541 (9:21am, Pete OK'd) writes it to R2: when done, check
-  `CSC9 ... 72 of 72` and `CSC7 ... final two differs ... in 0 of 88` in its publish-scenarios log, then message ITG the
-  built_at. Still open from the same ask: `flows_to_labor` in scenario-vic2026.json; `n` on each `polls` row of
+  ITG built its column against it). ON R2 since run 45500128541 (Pete OK'd; built_at 2026-11-24T22:55:01Z, 9:55am): CSC9
+  72 of 72, CSC7 0 of 88 differ on all four parties; ITG told, checks its live page. Still open from the same ask: `flows_to_labor` in scenario-vic2026.json; `n` on each `polls` row of
   vic-page-data.json.
   4:30am run 25 Nov (45449335210) CHECKED: success; `DR1 ... (176 of 176 rows matched)`; WIS2 + `OK whatif` and the R2 file
-  has majority 45 and built_at. NOT YET: (3) per-seat movement against the 24 Nov run, and telling ITG about the R2 file.
+  has majority 45 and built_at. (3) CHECKED: Labor win chance Monbulk 0.24 -> 0.29, St Albans 0.635 -> 0.513, Greenvale 0.463 -> 0.354, Ringwood 0.404 -> 0.412, as walked (polls 23 -> 24 Nov in the same step). Hung figure not checked (not in page data).
   NOT DONE: nsw2027's table has no shift; `output/` in this checkout is the 13 Nov rebuild, NOT the live model
   (live = `C:/dev/auspol-wt-rbm/output`), so never run stage 9 from here until a full rebuild has been checked.
   EARLIER, PARKED 24 Nov (DECISIONS): as an xgb feature LAST election's early share is not
