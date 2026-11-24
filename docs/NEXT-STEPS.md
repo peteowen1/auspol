@@ -8,7 +8,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
-- **Status 24 Nov, 1pm.** main 0.4.202 (PR #272: MRP seat pattern); dev ahead, unmerged by choice (ONP switch off, benchmark readers, seat odds builder). Site: seat odds page (inthegame-blog#1294) merged; ITG moving the election pages to `politics/vic2026/` + `politics/nsw2027/` with redirects today (Pete, "everything now"; PETE-ASKED-FOR), then repoint `build_edge_board_vic2026.R:147` (`seat.html#name=`) at the new path. MRP check of 24 Nov PASSED (4:30am run 45228420242). Live (10:35pm, run 45162697096): MRP seat pattern ON (July
+- **Status 24 Nov, 3pm.** main 0.4.202 (PR #272: MRP seat pattern); dev ahead, unmerged by choice (ONP switch off, benchmark readers, seat odds builder). Site 24 Nov: seat odds page live at `politics/vic2026/odds`; election pages moved to `politics/vic2026/` + `politics/nsw2027/` (redirects checked on prod). Edge Board and party-page links repointed on dev (reach the site with the next dev->main merge). Pete's X thread: https://claude.ai/artifact/QXNJBdSvqMJ4PyaBiFD6nn. MRP check of 24 Nov PASSED (4:30am run 45228420242). Live (10:35pm, run 45162697096): MRP seat pattern ON (July
   YouGov MRP in; Pete shipped on the 7-election screen), by-election person rule ON, One Nation MODELLED allocation ON (Pete's
   override), final_twos in the forecast file. Search interest off. Dated: 25 Nov
   both night rehearsals (check the night file's final_twos on the test key); 26 Nov venues recheck; 27 Nov inthegame-blog#1262 + benchmark capture.
