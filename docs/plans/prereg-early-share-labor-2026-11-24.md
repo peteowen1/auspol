@@ -148,6 +148,22 @@ correction without applying the flags), and the builder runs before stage 6 in
 `rebuild_forecasts.sh`. In flight until the release carries a regenerated
 `demo-resid-vic2026.csv` and a daily run has used it.
 
+**CAVEAT FOUND WHILE SHIPPING, 24 November 6:45pm, and Pete's ruling.** The
+live release was promoted on 23 November 4:59pm from the worktree
+`C:/dev/auspol-wt-rbm` (commit f4c3cb1d, the One Nation "arm m" trees); this
+checkout's `output/` is the 13 November rebuild. So the screen and the live
+walk above ran on the 13 November trees, NOT the live model's. Measured on the
+live model's files (same code, `auspol.root` pointed at the worktree): slope
+-0.621 (SE 0.176) against -0.605, kept 93% against 92%, and the 87 vic2026
+shifts correlate 1.0000 with a largest difference of 0.048 points. The screen
+was not rerun on the live trees. The standard promote from this checkout would
+have overwritten the live release with older tables, so it was NOT run. Pete
+chose "Upload the one file": `demo-resid-vic2026.csv` rebuilt as the live
+release's census table plus Labor's shift fitted on the live model's as-at
+misses (`deciding-runs/20261124-early-share-screen/make_live_table.R`; the
+previous release copy is kept in `.../release/`). nsw2027's table is unchanged,
+so the correction is live for Victoria only until the next full promote.
+
 **Still needed before a ship (the list as it stood before the decision):** the builder in
 `rebuild_forecasts.sh`, a regenerated `demo-resid-vic2026.csv` through the
 promote step, `check_like_ci.R`, a registry regen and the publish.
