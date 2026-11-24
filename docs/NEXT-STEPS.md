@@ -8,6 +8,22 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
+- **IN FLIGHT 25 Nov (morning), all Pete's asks, in order:**
+  (1) `AUSPOL_LEADER_FORMER` (Mulgrave/Bulleen: former leader's seat loses ~1.0-1.4 points; Pete "Build it anyway" after
+  being told it cannot flip Mulgrave): committed 429b91e9 OFF; screen `deciding-runs/20261125-leader-former/screen.log`
+  (35 elections, prereg `plans/prereg-leader-former-2026-11-25.md`). Ship = flip published_flags + inline default, rebuild
+  `leader-seat-vic2026.csv` from the live inputs (scratch root `liveroot` = hard links of `auspol-wt-rbm/output` + junction
+  to `external/`; UNLINK the junction with `cmd /c rmdir` before deleting), check the 3 existing rows byte-identical, upload.
+  (2) Nov YouGov MRP: only Bendigo East (ALP 23, ONP 18) and Mulgrave (2PP only) public; tweet regions NOT used (Pete: no
+  source). Statewide-anchor code on branch `mrp-statewide-anchor` 6a7ed5eb (worktree `C:/dev/auspol-wt-be`). TO DO: add the
+  Nov rows to `mrp_extra.csv` + `mrp_release_levels.csv` (ALP 20, LNP 31, ONP 21, GRN 16; force-add), rebuild
+  `seat-poll-blend-vic2026.csv` from `liveroot` (control: no Nov rows -> md5 cb5e3bc1), walk, upload.
+  (3) 100k-sims trial (Pete: "Real run, publishes"): 7bb3bf2a adds workflow input `n_sims`, night state kept at 20k; needs
+  review -> cherry-pick PR to main -> dispatch `n_sims=100000` with scenarios OFF -> send ITG timing + what-if file size.
+  (4) Upper house to the daily run + R2 `auspol/council-forecast-vic2026.json` with `status`/`built_at` (ITG links it on
+  arrival; Pete wants it linked). (5) Answered: in-sim correlation is statewide only; cluster correlation plan
+  `plans/plan-correlated-seat-draws.md` after 28 Nov.
+
 - **Status 24 Nov, 3pm.** main 0.4.202 (PR #272: MRP seat pattern); dev ahead, unmerged by choice (ONP switch off, benchmark readers, seat odds builder). Site 24 Nov: seat odds page live at `politics/vic2026/odds`; election pages moved to `politics/vic2026/` + `politics/nsw2027/` (redirects checked on prod). Edge Board and party-page links repointed on dev (reach the site with the next dev->main merge). Pete's X thread: https://claude.ai/artifact/QXNJBdSvqMJ4PyaBiFD6nn. MRP check of 24 Nov PASSED (4:30am run 45228420242). Live (10:35pm, run 45162697096): MRP seat pattern ON (July
   YouGov MRP in; Pete shipped on the 7-election screen), by-election person rule ON, One Nation MODELLED allocation ON (Pete's
   override), final_twos in the forecast file. Search interest off. Dated: 25 Nov
