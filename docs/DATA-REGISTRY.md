@@ -140,7 +140,7 @@ cannot pass as a working one.
   - e.g. election-cycles-extra.csv, poll-data-act.csv, poll-data-nt.csv, poll-data-tas.csv
 - **antonygreen-vic2022-early/** -- 41 files, 299 KB
   - e.g. 2022-victorian-election-early-voting-by-district.html, datawrapper/GPdbH-v1.csv, datawrapper/GPdbH-v2.csv, datawrapper/gZEYU-v1.csv
-- **benchmarks/** -- 425 files, 107.7 MB
+- **benchmarks/** -- 434 files, 108.2 MB
   - e.g. vic2026-extra/2026-10-24/betfair/markets-1.240828208-113207.json, vic2026-extra/2026-10-24/manifest.tsv, vic2026-extra/2026-10-24/sportsbet/event-10277242-markets-113206.json, vic2026-extra/2026-10-24/sportsbet/event-10952080-markets-113206.json
 - **boundaries/** -- 85 files, 849.9 MB
   - e.g. AEC-2025-esri.zip, AEC_2025/AUS_ELB_region.dbf, AEC_2025/AUS_ELB_region.prj, AEC_2025/AUS_ELB_region.shp
@@ -184,7 +184,7 @@ cannot pass as a working one.
   - e.g. raw/tec/2018/2018-Bass-first-prefs-by-polling-places.xlsx, raw/tec/2018/2018-Braddon-first-prefs-by-polling-places.xlsx, raw/tec/2018/2018-Denison-first-prefs-by-polling-places.xlsx, raw/tec/2018/2018-Franklin-first-prefs-by-polling-places.xlsx
 - **trends/** -- 6270 files, 4.8 MB
   - e.g. 2019_anch2_Adrian_Wone_Susie_Beveridge_Will_Landers_Ammar_Khan.rds, 2019_anch2_Bill_Chandler_Susan_Moylan_Dave_Blake_Tim_Bohm.rds, 2019_anch2_Robert_Oakeshott_Helen_Haines_Zali_Steggall_Kerryn_Phelps.rds, 2019_anch2_Trevor_Jones_Colin_Butland_David_Norman_Thor_Prohaska.rds
-- **vec/** -- 4342 files, 459.6 MB
+- **vec/** -- 4353 files, 461.2 MB
   - e.g. 2006/vc/fpv-albertpark.html, 2006/vc/fpv-altona.html, 2006/vc/fpv-ballarateast.html, 2006/vc/fpv-ballaratwest.html
 - **vec-early-vote-2026/** -- 1 files, 78 KB
   - e.g. vec-early-postal-stats-20261124-1341.xlsx

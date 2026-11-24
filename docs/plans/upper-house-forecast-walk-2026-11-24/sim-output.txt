@@ -1,0 +1,120 @@
+Warning message:
+package 'data.table' was built under R version 4.5.2 
+UH1  4000 simulations, 8 regions, 104 groups (72 minor). Minor groups with a 2022 result in the same region: 43 of 72.
+UH1  One Nation ratio drawn per simulation: median 0.85, 80% of draws 0.77 to 0.94
+
+2. EVERY GROUP WITH A REAL CHANCE, by region. quotas = mean first-preference vote in quotas (1 quota = 16.7% wins a seat);
+   seats = mean seats won of 5; p1/p2/p3 = chance of at least 1, 2, 3 seats. Groups under a 3% chance of a seat are left out.
+
+Eastern Victoria
+                         group quotas seats    p1    p2    p3
+                        <char>  <num> <num> <num> <num> <num>
+       Liberal / The Nationals   1.83  1.90  1.00  0.89     0
+                    One Nation   1.53  1.47  1.00  0.47     0
+        Australian Labor Party   0.83  0.91  0.91  0.00     0
+                    The Greens   0.54  0.52  0.52  0.00     0
+             Legalise Cannabis   0.32  0.09  0.09  0.00     0
+                    Labour DLP   0.30  0.07  0.07  0.00     0
+ Shooters, Fishers and Farmers   0.24  0.03  0.03  0.00     0
+
+North-Eastern Metropolitan
+                  group quotas seats    p1    p2    p3
+                 <char>  <num> <num> <num> <num> <num>
+                Liberal   1.70  1.79  1.00  0.79     0
+ Australian Labor Party   1.45  1.22  1.00  0.22     0
+             One Nation   0.82  0.95  0.95  0.00     0
+             The Greens   0.81  0.89  0.89  0.00     0
+             Labour DLP   0.38  0.13  0.13  0.00     0
+
+Northern Metropolitan
+                  group quotas seats    p1    p2    p3
+                 <char>  <num> <num> <num> <num> <num>
+ Australian Labor Party   1.49  1.58  1.00  0.58     0
+             The Greens   1.26  1.21  1.00  0.21     0
+                Liberal   0.96  0.99  0.99  0.00     0
+             One Nation   0.77  0.96  0.96  0.00     0
+             Labour DLP   0.31  0.05  0.05  0.00     0
+   Victorian Socialists   0.31  0.15  0.15  0.00     0
+      Legalise Cannabis   0.22  0.04  0.04  0.00     0
+
+Northern Victoria
+                         group quotas seats    p1    p2    p3
+                        <char>  <num> <num> <num> <num> <num>
+       Liberal / The Nationals   1.80  1.92  1.00  0.91     0
+                    One Nation   1.52  1.55  1.00  0.55     0
+        Australian Labor Party   0.77  0.90  0.89  0.00     0
+                    The Greens   0.49  0.38  0.38  0.00     0
+ Shooters, Fishers and Farmers   0.33  0.14  0.14  0.00     0
+             Legalise Cannabis   0.32  0.10  0.10  0.00     0
+
+South-Eastern Metropolitan
+                  group quotas seats    p1    p2    p3
+                 <char>  <num> <num> <num> <num> <num>
+ Australian Labor Party   1.75  1.77  1.00  0.76  0.01
+                Liberal   1.30  1.19  1.00  0.19  0.00
+             One Nation   1.06  1.03  1.00  0.03  0.00
+             The Greens   0.60  0.76  0.76  0.00  0.00
+      Legalise Cannabis   0.39  0.17  0.17  0.00  0.00
+             Labour DLP   0.26  0.07  0.07  0.00  0.00
+
+Southern Metropolitan
+                  group quotas seats    p1    p2    p3
+                 <char>  <num> <num> <num> <num> <num>
+                Liberal   2.01  2.00  1.00  0.98  0.02
+ Australian Labor Party   1.12  1.05  1.00  0.05  0.00
+             The Greens   1.06  1.01  0.99  0.01  0.00
+             One Nation   0.57  0.78  0.78  0.00  0.00
+      Legalise Cannabis   0.34  0.09  0.09  0.00  0.00
+             Labour DLP   0.27  0.06  0.06  0.00  0.00
+
+Western Metropolitan
+                  group quotas seats    p1    p2    p3
+                 <char>  <num> <num> <num> <num> <num>
+ Australian Labor Party   1.63  1.70  1.00  0.70     0
+                Liberal   1.16  1.06  1.00  0.06     0
+             One Nation   0.96  1.00  0.99  0.01     0
+             The Greens   0.64  0.91  0.91  0.00     0
+             Labour DLP   0.35  0.15  0.15  0.00     0
+      Legalise Cannabis   0.30  0.08  0.08  0.00     0
+   Victorian Socialists   0.26  0.05  0.05  0.00     0
+           Family First   0.24  0.05  0.05  0.00     0
+
+Western Victoria
+                         group quotas seats    p1    p2    p3
+                        <char>  <num> <num> <num> <num> <num>
+       Liberal / The Nationals   1.57  1.74  1.00  0.74     0
+                    One Nation   1.29  1.18  1.00  0.18     0
+        Australian Labor Party   1.19  1.07  1.00  0.08     0
+                    The Greens   0.64  0.89  0.89  0.00     0
+             Legalise Cannabis   0.29  0.04  0.04  0.00     0
+ Shooters, Fishers and Farmers   0.22  0.05  0.05  0.00     0
+
+3. THE CHAMBER, 40 seats (21 for a majority). mean = average seats; lo and hi = the middle 80% of simulations.
+            party  mean    lo    hi
+           <char> <num> <num> <num>
+            Labor  10.2     8    12
+        Coalition  12.6    11    14
+       One Nation   8.9     7    11
+           Greens   6.6     5     9
+ All minor groups   1.7     0     4
+   Chance Labor + Greens reach 21: 1%. Coalition + One Nation reach 21: 74%. Neither: 25%.
+
+   Minor groups, mean seats statewide (top 6):
+                         group seats
+                        <char> <num>
+             Legalise Cannabis  0.62
+                    Labour DLP  0.54
+ Shooters, Fishers and Farmers  0.22
+          Victorian Socialists  0.20
+                  Family First  0.09
+          Animal Justice Party  0.01
+
+4. HOW MUCH THE PREFERENCE ASSUMPTION MATTERS. Same vote model (fresh draws each), four preference rules; mean seats of 40.
+   none = whole quotas then largest remainders (the first walk). base = same-bloc groups favoured about 2.5 to 1, 5-30% exhaust.
+   tight = blocs favoured 5 to 1, 5% exhaust. loose = no bloc preference, 30% exhaust.
+             none base tight loose
+Labor        10.3 10.2  10.1  10.3
+Coalition    12.4 12.6  12.7  12.4
+One Nation    8.8  8.9   8.9   8.8
+Greens        6.7  6.6   6.5   6.7
+Minor groups  1.8  1.7   1.8   1.7
