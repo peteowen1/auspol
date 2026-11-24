@@ -45,6 +45,17 @@ flows <- tryCatch({
   if (anyNA(fl)) stop("a flow is missing: ", paste(names(fl)[is.na(fl)], collapse = ", "))
   fl
 }, error = function(e) { cat("WIS1! statewide flows not read (", conditionMessage(e), "); the file carries no two-party flows\n", sep = ""); NULL })
+# A second set for the page's toggle (Pete, 24 Nov: "both with a toggle"): the flow table's own row for this election,
+# which carries the most recently measured flows (One Nation's is the 2025 federal figure) with no blending toward
+# earlier elections. Same optional rule: null if it cannot be read.
+flows_latest <- tryCatch({
+  pf <- as.data.frame(load_preference_flows())
+  pf <- pf[pf$year == as.integer(sub("^[a-z]+", "", TARGET)) & pf$region == sub("[0-9]+$", "", TARGET), ]
+  pick <- function(k) { r <- pf$flow_alp[pf$party == k]; if (length(r) == 1L && is.finite(r) && r >= 0 && r <= 100) r / 100 else NA_real_ }
+  fl <- c(Greens = pick("GRN"), OneNation = pick("ONP"), Others = pick("OTH"))
+  if (anyNA(fl)) stop("a flow is missing: ", paste(names(fl)[is.na(fl)], collapse = ", "))
+  fl
+}, error = function(e) { cat("WIS1! latest measured flows not read (", conditionMessage(e), ")\n", sep = ""); NULL })
 tpp_labor <- function(m, f) 100 * (m[, "Labor"] + f[["Greens"]] * m[, "Greens"] + f[["OneNation"]] * m[, "OneNation"] + f[["Others"]] * m[, "Others"]) / rowSums(m)
 fj <- file.path(dir_in, sprintf("forecast-%s.json", TARGET))
 built_at <- if (file.exists(fj)) tryCatch(jsonlite::fromJSON(fj)$built_at, error = function(e) NA_character_) else NA_character_
@@ -53,6 +64,8 @@ out <- list(election = TARGET, built_at = if (is.null(built_at)) NA_character_ e
             vote_means = as.list(round(colMeans(v), 3)), seat_means = as.list(round(colMeans(s), 3)),
             flows_to_labor = if (is.null(flows)) NULL else as.list(round(flows, 4)),
             tpp_labor_mean = if (is.null(flows)) NULL else round(mean(tpp_labor(v, flows)), 2),
+            flows_to_labor_latest = if (is.null(flows_latest)) NULL else as.list(round(flows_latest, 4)),
+            tpp_labor_mean_latest = if (is.null(flows_latest)) NULL else round(mean(tpp_labor(v, flows_latest)), 2),
             votes = lapply(seq_len(ncol(v)), function(j) round(v[, j], 1)), seats = lapply(seq_len(ncol(s)), function(j) as.integer(s[, j])))
 f_out <- file.path(dir_in, sprintf("whatif-sims-%s.json", TARGET))
 writeLines(jsonlite::toJSON(out, auto_unbox = TRUE, digits = NA, na = "null"), f_out)
