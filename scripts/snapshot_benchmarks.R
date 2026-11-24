@@ -35,6 +35,8 @@
 #   Roy Morgan   DROPPED 21 Oct (no seat winners in finding 10346); not fetched
 #   theswingison (added 24 Oct) data/vic/tap-default-result.js: 5,000-simulation win counts per seat, one entry per
 #                date (a 7-day rolling buffer); the entry for DAY is the forecast of record for that date
+#   firstpreference (added 24 Nov) electionfirstpreference.com's vic2026_candidate_fp_projections.csv: every
+#                candidate's projected primary and win chance by district, and gov_probs.json for its chamber odds
 #   sportsbet, tab, betfair (added 24 Oct) seat-winner markets via the oddsdata package (C:/dev/oddsdata). Partial
 #                coverage (50, 53 and 4 of 88 on 24 Oct), so their calls files carry only the districts priced and
 #                say how many. Prices become probabilities with oddsdata::implied_probs()'s power method (plan
@@ -154,6 +156,12 @@ if (!DERIVE_ONLY) {
   get("theswingison", paste0(TSIO, "/track-polls/vic26"), "vic26.html", has_text("tap-default-result\\.js"))
   get("theswingison", paste0(TSIO, "/data/vic/tap-default-result.js"), "tap-default-result.js",
       has_text(sprintf('window\\.TAP_DEFAULT_RESULT = \\{"days":.*"date":"(%s|%s)"', DAY, format(as.Date(DAY) + 1L))))   # Sydney dates, see VB14
+
+  # First Preference: one CSV carries every district's candidates, and a small JSON its chamber odds.
+  FPM <- "https://electionfirstpreference.com/vic2026_web"
+  get("firstpreference", paste0(FPM, "/vic2026_candidate_fp_projections.csv"), "vic2026_candidate_fp_projections.csv",
+      has_text("District,Party_Code,Display_Name"))
+  get("firstpreference", paste0(FPM, "/gov_probs.json"), "gov_probs.json", has_text("coal_maj"))
 
   # Bookmakers and the exchange, through oddsdata, which writes raw files and manifest rows itself. Last, because
   # get() rewrites the manifest from memory and would drop rows appended behind its back.
@@ -335,6 +343,26 @@ if (file.exists(tf)) {
               paste(sprintf("%s %.1f", names(dd[[1]]$avgPt), unlist(dd[[1]]$avgPt)), collapse = ", ")))
   write_calls(tl[n > 0, .(district = match_districts(seat, "theswingison"), call_class = unname(tcls[lab]), prob = n / n_it)], "theswingison")
 } else { cat("VB4! no The Swing Is On result for this date\n"); fails <- c(fails, "theswingison") }
+
+# First Preference (added 24 Nov 2026): each candidate's win chance, in percent, by district. Liberal and National
+# both count as the Coalition, a code starting IND is an independent, and every other party is OTH.
+ff <- raw("firstpreference", "vic2026_candidate_fp_projections.csv")
+if (file.exists(ff)) {
+  fpm <- fread(ff, encoding = "UTF-8")
+  fneed <- c("District", "Party_Code", "Win_Prob_Pct")
+  if (!all(fneed %in% names(fpm))) stop("VB20! First Preference file lacks ", paste(setdiff(fneed, names(fpm)), collapse = ", "))
+  fmap <- c(ALP = "ALP", LP = "LNP", NP = "LNP", GRN = "GRN", ON = "ONP")
+  fcode <- as.character(fpm$Party_Code)
+  fpm[, cls := ifelse(fcode %in% names(fmap), unname(fmap[fcode]), ifelse(startsWith(fcode, "IND"), "IND", "OTH"))]
+  ftot <- fpm[, .(s = sum(Win_Prob_Pct)), by = District]
+  if (nrow(ftot) != 88L || any(abs(ftot$s - 100) > 0.5))
+    stop(sprintf("VB20! First Preference: %d districts, win chances sum to %.1f-%.1f, not 88 districts at 100", nrow(ftot), min(ftot$s), max(ftot$s)))
+  fcl <- fpm[, .(prob = sum(Win_Prob_Pct)), by = .(District, cls)][prob > 0]
+  fcl[, prob := prob / sum(prob), by = District]
+  cat(sprintf("VB20 First Preference: %d candidates in %d districts; minor-party codes filed as OTH: %s\n", nrow(fpm), nrow(ftot),
+              paste(sort(unique(fcode[fpm$cls == "OTH"])), collapse = " ")))
+  write_calls(fcl[, .(district = match_districts(District, "firstpreference"), call_class = cls, prob)], "firstpreference")
+} else { cat("VB4! no First Preference file for this date\n"); fails <- c(fails, "firstpreference") }
 
 # Bookmakers and the exchange: seat-winner markets only, partial coverage. Selections are classed by name; a residual
 # ("Any Other", "Other", "Any Other Result", "Any Other Party or Independent") is ANY_OTHER, which scores as the
