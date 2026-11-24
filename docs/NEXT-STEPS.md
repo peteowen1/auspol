@@ -117,9 +117,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `majority` 45 and a `built_at`; then MESSAGE THE ITG SESSION that it is on R2 (ITG merges its page
   `/politics/vic2026/what-if-primaries.html`, on its dev at 134d5307, after that and after Pete's launch). (5) Refresh
   posts 1-4 and the three early-voting charts in the Victoria Forecast Thread artifact from the new VEC file (after
-  8:30am), and thread 1's numbers and four charts if the forecast moved. (6) Upper house, for release Thu 26 Nov: load
-  the 2026 groups, simulate from `plans/upper-house-forecast-walk-2026-11-24/` with One Nation's fitted ratio (log-normal,
-  median 0.79, sd 0.153) and preference uncertainty; walk the result with Pete before publishing anything.
+  8:30am), and thread 1's numbers and four charts if the forecast moved. (6) Upper house, for release Thu 26 Nov: simulated walk
+  DONE 24 Nov and Pete said the region tables look good (`plans/upper-house-forecast-walk-2026-11-24/sim.R`, `sim-output.txt`,
+  `council-forecast-vic2026.json`; ITG has the JSON shape). LEFT: move sim.R into `scripts/` and the daily run with an R2
+  upload (review gate), test the count against a real ticket-free count (a Senate contest), tell ITG the R2 key.
+  (7) After the launch, for ITG: sample size `n` on each `polls` row of vic-page-data.json; `flows_to_labor` in
+  scenario-vic2026.json; seat two-candidate figures per what-if scenario (Pete asked 24 Nov, NOT built).
   NOT DONE: nsw2027's table has no shift; `output/` in this checkout is the 13 Nov rebuild, NOT the live model
   (live = `C:/dev/auspol-wt-rbm/output`), so never run stage 9 from here until a full rebuild has been checked.
   EARLIER, PARKED 24 Nov (DECISIONS): as an xgb feature LAST election's early share is not
