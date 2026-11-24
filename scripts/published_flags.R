@@ -615,6 +615,7 @@ PUBLISHED_FLAGS <- c(
                                              # are untouched. UNDER TEST -- do not turn on without the plan's
                                              # criterion being met.
   AUSPOL_DEMO_RESID_SHUFFLE  = "0",          # control for the above; same permutation as AUSPOL_EDU_RESID_SHUFFLE.
+  AUSPOL_DEMO_RESID_EARLY    = "0",          # ARM (plans/prereg-early-share-labor-2026-11-24.md): Labor shifted by a time-forward slope on the PREVIOUS election's early in-person vote share by seat (output/prev-early-share.csv), beside the census correction. "1" on; "shuffle" = the placebo (that column permuted between seats within each election).
   AUSPOL_EDU_RESID_SHUFFLE   = "0",          # the real control. 0 = off; any other integer is an RNG seed that
                                              # PERMUTES each census column across seats WITHIN each election, at
                                              # fit and at apply both. Breaks the seat-to-demographics link while
