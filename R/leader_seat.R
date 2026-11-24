@@ -97,6 +97,19 @@ leader_seat_bonus <- function(target_election) {
   ls$k <- paste(ls$pair, normalise_seat(ls$seat), ls$party)
   s$k <- paste(s$pair, normalise_seat(s$seat), s$party)
   m <- merge(s[elections_before(s$pair, target_election)], ls[, list(k, role)], by = "k")
+  .role_pooled_bonus(m)
+}
+
+#' Partially pooled mean of `r_seat` per role (gov, opp, minor), shared by the
+#' leader-seat and former-leader-seat fits
+#'
+#' Each role's mean is shrunk toward the pooled mean by `tau^2 / (tau^2 + se^2)`;
+#' the pooled mean is shrunk toward 0 by `mu^2 / (mu^2 + se^2)`. Under 3 rows
+#' every bonus is 0.
+#' @param m data.table with `r_seat` and `role`.
+#' @return data.table `role`, `bonus`, `raw`, `se`, `n`, with attribute `pooled`.
+#' @keywords internal
+.role_pooled_bonus <- function(m) {
   roles <- c("gov", "opp", "minor")
   empty <- data.table::data.table(role = roles, bonus = 0, raw = NA_real_, se = NA_real_, n = 0L)
   if (nrow(m) < 3) { attr(empty, "pooled") <- list(mu = 0, raw = NA_real_, se = NA_real_, n = nrow(m)); return(empty) }
@@ -112,6 +125,76 @@ leader_seat_bonus <- function(target_election) {
   out$n[is.na(out$n)] <- 0L
   attr(out, "pooled") <- list(mu = mu, raw = mu_raw, se = mu_se, n = nrow(m), tau2 = tau2)
   out
+}
+
+#' Whether former leaders' seats are corrected (`AUSPOL_LEADER_FORMER`)
+#' @return `TRUE` when the switch is "1"; an error for any value other than "0" or "1".
+#' @keywords internal
+leader_former_on <- function() {
+  v <- Sys.getenv("AUSPOL_LEADER_FORMER", "0")
+  if (!v %in% c("0", "1")) stop("AUSPOL_LEADER_FORMER must be \"0\" or \"1\", not \"", v, "\"")
+  identical(v, "1")
+}
+
+#' Former leaders' seats at one election
+#'
+#' The seat each party's leader held at the previous election in the same
+#' jurisdiction (the latest earlier `leader_seats()` election with the same
+#' label prefix), where that party's leader at `target_election` sits in a
+#' different seat: Andrews' Mulgrave and Guy's Bulleen for vic2026. The seat's
+#' base still carries some of that leader's personal vote, which the
+#' leader-seat bonus never takes back (found 24 Nov 2026 tracing Mulgrave).
+#' An election with no leader rows of its own is skipped, so a gap in the
+#' leaders table cannot mark a sitting leader's seat as a former one.
+#' @param target_election Label such as `"vic2026"`.
+#' @param ls [leader_seats()] output (passed in to avoid re-reading).
+#' @return data.table `seat`, `party`, `leader`, `role` (the role at the previous election), `prev`.
+#' @export
+former_leader_seats <- function(target_election, ls = leader_seats()) {
+  none <- data.table::data.table(seat = character(0), party = character(0), leader = character(0),
+                                 role = character(0), prev = character(0))
+  tgt <- target_election
+  now <- ls[ls$pair == tgt]
+  if (!nrow(now)) return(none)
+  jur <- sub("[0-9]+$", "", ls$pair)
+  cand <- unique(ls$pair[jur == sub("[0-9]+$", "", tgt)])
+  cand <- cand[elections_before(cand, tgt)]
+  if (!length(cand)) return(none)
+  pv <- cand[which.max(as.integer(sub("^[a-z]+", "", cand)))]
+  old <- ls[ls$pair == pv]
+  here <- paste(normalise_seat(now$seat), now$party)
+  old <- old[!paste(normalise_seat(old$seat), old$party) %in% here]
+  data.table::data.table(seat = old$seat, party = old$party, leader = old$leader, role = old$role, prev = rep(pv, nrow(old)))
+}
+
+#' Time-forward correction at former leaders' seats, partially pooled by role
+#'
+#' Same fit as [leader_seat_bonus()] (actual minus as-at `xgb_pred_seat`, less
+#' the class's median miss that election), at the former-leader seats of every
+#' election before the target. Sized 25 Nov 2026 on the live as-at predictions:
+#' 36 seats, mean -1.70 (SE 0.82), shrunk -1.38.
+#' @param target_election Label such as `"vic2026"`.
+#' @return As [leader_seat_bonus()].
+#' @export
+former_leader_bonus <- function(target_election) {
+  f <- current_seat_predictions()
+  if (is.null(f)) stop("former_leader_bonus needs this rebuild's as-at predictions (output/xgb-primary-asat-predictions.csv)")
+  f <- f[is.finite(f$xgb_pred_seat) & is.finite(f$actual_share)]
+  s <- f[, list(pred = sum(xgb_pred_seat), actual = sum(actual_share)), by = list(pair = election, seat, party)]
+  s$r <- s$actual - s$pred
+  s[, r_seat := r - stats::median(r), by = list(pair, party)]
+  ls <- leader_seats()
+  prs <- unique(s$pair[elections_before(s$pair, target_election)])
+  fl <- data.table::rbindlist(lapply(prs, function(e) {
+    x <- former_leader_seats(e, ls)
+    if (nrow(x)) x$pair <- e
+    x
+  }), fill = TRUE)
+  if (!nrow(fl)) return(.role_pooled_bonus(data.table::data.table(r_seat = numeric(0), role = character(0))))
+  fl$k <- paste(fl$pair, normalise_seat(fl$seat), fl$party)
+  s$k <- paste(s$pair, normalise_seat(s$seat), s$party)
+  m <- merge(s[, list(k, r_seat)], fl[, list(k, role)], by = "k")
+  .role_pooled_bonus(m)
 }
 
 #' The leader-seat inputs for one target, computed or shipped
@@ -131,6 +214,17 @@ leader_seat_table <- function(target_election, write = FALSE) {
     .t <- target_election
     tb <- merge(ls[ls$pair == .t, list(seat, party, leader, role)],
                 b[, list(role, bonus, raw, se, n)], by = "role")
+    # AUSPOL_LEADER_FORMER: former leaders' seats as rows of their own, role "former_<role>", so the shipped table
+    # carries them and the apply loop below moves them like any other row.
+    if (leader_former_on()) {
+      fs <- former_leader_seats(.t, ls)
+      if (nrow(fs)) {
+        fb <- former_leader_bonus(.t)
+        fr <- merge(fs[, list(seat, party, leader, role)], fb[, list(role, bonus, raw, se, n)], by = "role")
+        fr$role <- paste0("former_", fr$role)
+        tb <- rbind(tb, fr[, names(tb), with = FALSE])
+      }
+    }
     if (write) data.table::fwrite(tb, cache)
   } else if (file.exists(cache)) {
     tb <- data.table::fread(cache, showProgress = FALSE)
@@ -198,6 +292,8 @@ leader_seat_apply <- function(shares, target_election, stage = c("post_blend", "
     NULL
   })
   if (is.null(tb)) return(shares)
+  # a shipped table may carry former-leader rows; they act only with the switch on
+  if (!leader_former_on()) tb <- tb[!startsWith(tb$role, "former_")]
   if (!nrow(tb)) {
     cat(sprintf("LS1  %s: no leaders with a seat here\n", target_election))
     return(shares)

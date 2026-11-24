@@ -15,9 +15,12 @@ test_that("the bonus lands on the leader's class and keeps the seat total", {
   skip_if_not(file.exists(out_path("forecasts.csv")), "no forecasts table")
   sh <- matrix(c(48, 38, 8, 6, 30, 50, 12, 8), nrow = 2, byrow = TRUE,
                dimnames = list(c("Kogarah", "Epping"), c("ALP", "LNP", "GRN", "OTH")))
-  off <- withr::with_envvar(c(AUSPOL_LEADER_SEAT = "0"), leader_seat_apply(sh, "nsw2023"))
+  # the bonus acts at the stage AUSPOL_LEADER_BEFORE_BLEND names ("1", shipped 7 Nov: pre_blend); this test called the
+  # default post_blend stage and had silently tested a no-op since then (found 25 Nov; skipped on CI, no forecasts table)
+  off <- withr::with_envvar(c(AUSPOL_LEADER_SEAT = "0"), leader_seat_apply(sh, "nsw2023", stage = "pre_blend"))
   expect_identical(off, sh)
-  on <- withr::with_envvar(c(AUSPOL_LEADER_SEAT = "1"), leader_seat_apply(sh, "nsw2023"))
+  on <- withr::with_envvar(c(AUSPOL_LEADER_SEAT = "1", AUSPOL_LEADER_BEFORE_BLEND = "1"),
+                           leader_seat_apply(sh, "nsw2023", stage = "pre_blend"))
   expect_gt(on["Kogarah", "ALP"], sh["Kogarah", "ALP"])
   expect_gt(on["Epping", "LNP"], sh["Epping", "LNP"])
   expect_equal(unname(rowSums(on)), unname(rowSums(sh)))
@@ -65,6 +68,39 @@ test_that("leaders-supplement.csv fills elections leaders.csv lacks, and leaders
   # A malformed supplement stops the run rather than being skipped.
   data.table::fwrite(sup[, setdiff(names(sup), "note")], sp)
   expect_error(read_leaders(), "columns differ")
+})
+
+test_that("former leaders' seats: previous election in the same jurisdiction, minus seats a leader still holds", {
+  ls <- data.table::data.table(
+    pair  = c("xx2010", "xx2010", "xx2014", "xx2014", "yy2012", "xx2018"),
+    seat  = c("Oldseat", "Oppseat", "Newseat", "Oppseat", "Otherjur", "Newseat"),
+    party = c("ALP", "LNP", "ALP", "LNP", "ALP", "ALP"),
+    leader = c("Gone Premier", "Same Opp", "New Premier", "Same Opp", "Elsewhere", "New Premier"),
+    role  = c("gov", "opp", "gov", "opp", "gov", "gov"))
+  f14 <- former_leader_seats("xx2014", ls)
+  expect_equal(f14$seat, "Oldseat")                 # the departed premier's seat, not the opposition leader who stayed
+  expect_equal(f14$role, "gov"); expect_equal(f14$prev, "xx2010")
+  expect_equal(nrow(former_leader_seats("xx2010", ls)), 0L)   # no earlier xx election
+  # the PREVIOUS election only (xx2014), not every earlier one: xx2010's Oldseat is not former at xx2018
+  expect_equal(former_leader_seats("xx2018", ls)$seat, "Oppseat")
+  # an election with no leader rows of its own is skipped, never "every old leader departed"
+  expect_equal(nrow(former_leader_seats("xx2022", ls)), 0L)
+})
+
+test_that("former-leader rows act only with AUSPOL_LEADER_FORMER=1", {
+  tb <- data.table::data.table(role = c("gov", "former_gov"), seat = c("Aseat", "Bseat"), party = c("ALP", "ALP"),
+                               leader = c("A", "B"), bonus = c(2, -1), raw = NA_real_, se = NA_real_, n = 5L)
+  testthat::local_mocked_bindings(leader_seat_table = function(target_election, write = FALSE) tb)
+  sh <- matrix(c(40, 60, 40, 60), nrow = 2, byrow = TRUE, dimnames = list(c("Aseat", "Bseat"), c("ALP", "LNP")))
+  args <- c(AUSPOL_LEADER_SEAT = "1", AUSPOL_LEADER_BEFORE_BLEND = "1")
+  off <- withr::with_envvar(c(args, AUSPOL_LEADER_FORMER = "0"), suppressMessages(capture.output(r <- leader_seat_apply(sh, "zz2026", "pre_blend"))))
+  r_off <- withr::with_envvar(c(args, AUSPOL_LEADER_FORMER = "0"), {invisible(capture.output(x <- leader_seat_apply(sh, "zz2026", "pre_blend"))); x})
+  r_on  <- withr::with_envvar(c(args, AUSPOL_LEADER_FORMER = "1"), {invisible(capture.output(x <- leader_seat_apply(sh, "zz2026", "pre_blend"))); x})
+  expect_equal(unname(r_off["Bseat", "ALP"]), 40)    # off: the former row is dropped
+  expect_equal(unname(r_on["Bseat", "ALP"]), 39)     # on: exactly the bonus
+  expect_equal(unname(r_on["Aseat", "ALP"]), 42)     # the current-leader row acts either way
+  expect_equal(unname(rowSums(r_on)), c(100, 100))
+  expect_error(withr::with_envvar(c(AUSPOL_LEADER_FORMER = "yes"), leader_former_on()), "must be")
 })
 
 test_that("fetch_leaders.R never writes the supplement file", {
