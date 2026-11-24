@@ -112,6 +112,14 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   Pete, and update thread 1's numbers in the Victoria Forecast Thread artifact if they changed. ROLL BACK with
   `gh release upload shipped-models docs/reviews/early-vote-scouts-2026-11-24/demo-resid-vic2026-BEFORE-23nov-release.csv#demo-resid-vic2026.csv --clobber`
   (check the `#name` form uploads under the right name before relying on it; else copy the file to that name first).
+  SAME MORNING, after that run: (4) its log shows `WIS2 wrote output/whatif-sims-vic2026.json` and `OK whatif-sims-vic2026.json`
+  (PR #275), and https://pub-ee4bf5b599a047f9ac2b9facc1587008.r2.dev/auspol/whatif-sims-vic2026.json returns the file with
+  `majority` 45 and a `built_at`; then MESSAGE THE ITG SESSION that it is on R2 (ITG merges its page
+  `/politics/vic2026/what-if-primaries.html`, on its dev at 134d5307, after that and after Pete's launch). (5) Refresh
+  posts 1-4 and the three early-voting charts in the Victoria Forecast Thread artifact from the new VEC file (after
+  8:30am), and thread 1's numbers and four charts if the forecast moved. (6) Upper house, for release Thu 26 Nov: load
+  the 2026 groups, simulate from `plans/upper-house-forecast-walk-2026-11-24/` with One Nation's fitted ratio (log-normal,
+  median 0.79, sd 0.153) and preference uncertainty; walk the result with Pete before publishing anything.
   NOT DONE: nsw2027's table has no shift; `output/` in this checkout is the 13 Nov rebuild, NOT the live model
   (live = `C:/dev/auspol-wt-rbm/output`), so never run stage 9 from here until a full rebuild has been checked.
   EARLIER, PARKED 24 Nov (DECISIONS): as an xgb feature LAST election's early share is not
