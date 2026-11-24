@@ -103,7 +103,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - OPEN, DATED 27 Nov (evening) and 28 Nov (morning): save the VEC early and postal vote spreadsheet again, raw, into
   `external/reference/vec-early-vote-2026/` (link on https://www.vec.vic.gov.au/voting/2026-state-election/voting-statistics;
   one copy saved 24 Nov; cumulative, 88 districts per day from 7 Nov, verified). The 28 Nov copy is the final pre-poll count. Early-vote screen:
-  `scripts/screen_early_vote.R`; open item is testing LAST election's early share by seat inside the model (`quick_arm.R`).
+  `scripts/screen_early_vote.R`. PARKED 24 Nov (DECISIONS): as an xgb feature LAST election's early share is not
+  separable from a placebo. AFTER 28 Nov: add vic2026 to the panel and rescore; the untested route is a direct post-tree
+  correction on Labor; the federal "pre-poll shifted later" lead can be computed for Victoria from
+  `external/reference/antonygreen-vic2022-early/` and the saved VEC 2026 file. DATED 25 Nov (morning): refresh posts 1-4
+  and the three early-voting charts in the Victoria Forecast Thread artifact from the new VEC file before Pete posts.
 - OPEN, DATED 27 Nov: seat-page independents note (inthegame-blog #1243 + #1246) is on its dev only. Reaches prod via
   my cherry-pick branch off its `main` (ITG's rule), with the navbar #1239. Done when: the note's code is on inthegame.blog
   (it shows only at 10%+ independent; since search interest went off on 19 Nov no seat qualifies, so no page shows it yet).
