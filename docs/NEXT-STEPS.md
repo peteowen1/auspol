@@ -121,12 +121,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   DONE 24 Nov and Pete said the region tables look good (`plans/upper-house-forecast-walk-2026-11-24/sim.R`, `sim-output.txt`,
   `council-forecast-vic2026.json`; ITG has the JSON shape). LEFT: move sim.R into `scripts/` and the daily run with an R2
   upload (review gate), test the count against a real ticket-free count (a Senate contest), tell ITG the R2 key.
-  (7) **WED 25 NOV, RIGHT AFTER THE LAUNCH, DO NOT SKIP: seat two-candidate (TCP) figures per what-if scenario.** Pete,
-  via ITG 24 Nov 11pm: "make sure not to forget about this tomorrow it's important". NOT built: the scenario runs write
-  `seat-tcp-ranges-*`/`seat-tcp-pairs-*`, but the workflow's scenario artifact uploads only `seat-sims-full-*-scn-*` and
-  `seat-probs-*-scn-*`, and `combine_scenarios.py` carries neither. Add both, then SEND ITG the field names and shape;
-  ITG builds the column the same day. Same pass: `flows_to_labor` in scenario-vic2026.json; `n` on each `polls` row of
+  (7) Seat TCP per what-if scenario: MERGED 25 Nov 9:15am (PR #276, `final_two` per scenario in scenario-vic2026.json;
+  ITG built its column against it). Manual run 45500128541 (9:21am, Pete OK'd) writes it to R2: when done, check
+  `CSC9 ... 72 of 72` and `CSC7 ... final two differs ... in 0 of 88` in its publish-scenarios log, then message ITG the
+  built_at. Still open from the same ask: `flows_to_labor` in scenario-vic2026.json; `n` on each `polls` row of
   vic-page-data.json.
+  4:30am run 25 Nov (45449335210) CHECKED: success; `DR1 ... (176 of 176 rows matched)`; WIS2 + `OK whatif` and the R2 file
+  has majority 45 and built_at. NOT YET: (3) per-seat movement against the 24 Nov run, and telling ITG about the R2 file.
   NOT DONE: nsw2027's table has no shift; `output/` in this checkout is the 13 Nov rebuild, NOT the live model
   (live = `C:/dev/auspol-wt-rbm/output`), so never run stage 9 from here until a full rebuild has been checked.
   EARLIER, PARKED 24 Nov (DECISIONS): as an xgb feature LAST election's early share is not
