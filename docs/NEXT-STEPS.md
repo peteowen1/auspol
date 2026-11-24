@@ -114,7 +114,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `bash scripts/publish_night_inputs.sh --upload`, and hand ITG a rebuilt booth file. Done when: checked and, if moved, all four done.
 - OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. 24 Nov 9:16am done, every source (`docs/benchmarks/vic2026/2026-11-23/`; TAB moved to one "Vic Seats" event, read by
   `bk_tab_seats()`; 27 Nov: also rebuild `seat-odds-page.html` there, the seat odds artifact
-  https://claude.ai/artifact/PJHtfKoc8xKvhjUErCb9QR). 17 Nov: 6 sources (TAB not
+  https://claude.ai/artifact/PJHtfKoc8xKvhjUErCb9QR; and the SITE page politics/odds.qmd: hand-write that folder's
+  `majority-markets.csv` + `capture-note.txt` (copy 2026-11-23's shape), `Rscript scripts/build_seat_odds_json.R`, then
+  `wrangler r2 object put inthegame-data/auspol/seat-odds-vic2026.json --file output/seat-odds-vic2026.json --content-type application/json --remote`). 17 Nov: 6 sources (TAB not
   saved: Chrome blocked the download on api.beta.tab.com.au; Betfair has no Victorian markets). On 27 Nov, if the TAB
   download is blocked again, check Chrome's download prompt for that site first. Leads from X (23 Nov): a 16 Nov 4CP
   calculator post https://x.com/NotTurnbull/status/2122215843228684574 (calculator unnamed; if it is not Jago's, add it
