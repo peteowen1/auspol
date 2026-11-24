@@ -8,7 +8,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
-- **Status 23 Nov, 11pm.** main 0.4.202 (PR #272: MRP seat pattern). Live (10:35pm, run 45162697096): MRP seat pattern ON (July
+- **Status 24 Nov, 11:30am.** main 0.4.202 (PR #272: MRP seat pattern); dev 6 commits ahead, unmerged by choice (ONP switch off, benchmark readers only). Live (10:35pm, run 45162697096): MRP seat pattern ON (July
   YouGov MRP in; Pete shipped on the 7-election screen), by-election person rule ON, One Nation MODELLED allocation ON (Pete's
   override), final_twos in the forecast file. Search interest off. Dated: 25 Nov
   both night rehearsals (check the night file's final_twos on the test key); 26 Nov venues recheck; 27 Nov inthegame-blog#1262 + benchmark capture.
@@ -112,7 +112,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - OPEN, DATED Thu 26 Nov: VEC venues recheck (off Pete's Daily Eight, 23 Nov). Compare the spreadsheet's `Last-Modified` with
   `raw-20261121-1140/headers-xlsx.txt` (20 Nov 02:02 GMT); only if it moved: save raw, `scripts/build_vec_places_2026.R`, the geocoder,
   `bash scripts/publish_night_inputs.sh --upload`, and hand ITG a rebuilt booth file. Done when: checked and, if moved, all four done.
-- OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. 17 Nov done: 6 sources (TAB not
+- OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. 24 Nov 9:16am done, every source (`docs/benchmarks/vic2026/2026-11-23/`; TAB moved to one "Vic Seats" event, read by
+  `bk_tab_seats()`; 27 Nov: also rebuild `seat-odds-page.html` there, the seat odds artifact
+  https://claude.ai/artifact/PJHtfKoc8xKvhjUErCb9QR). 17 Nov: 6 sources (TAB not
   saved: Chrome blocked the download on api.beta.tab.com.au; Betfair has no Victorian markets). On 27 Nov, if the TAB
   download is blocked again, check Chrome's download prompt for that site first. Leads from X (23 Nov): a 16 Nov 4CP
   calculator post https://x.com/NotTurnbull/status/2122215843228684574 (calculator unnamed; if it is not Jago's, add it
@@ -294,21 +296,9 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
   PASSED on the 24 Nov 4:30am run (45228420242): blend step ALP 23.55 -> 23.47, LNP 30.36 -> 30.40, ONP 20.50 -> 20.58;
   `SPM4 ... 351 cells kept, 0 dropped`. DONE: the "~9:20am run" is GitHub's late fallback schedule, whose gate skips it
   once the 4:30am daily has gone (forecast.yaml header), so the 4:30am run was the check; none had appeared by 11:13am.
-- OPEN, NEEDS PETE (found 24 Nov 7:40am): the per-seat flow model sends preferences TOWARD One Nation in One Nation
-  contests, against the cards and the one election that measured it. Live night state (forecast-latest), median over 88
-  seats against the pooled table: Labor between Liberal and One Nation 55.1% to Liberal (pooled 65.5; sa2026 actual 71.5 on
-  2 seats, all 6 rows 63.4); Liberal between Labor and One Nation 26.1% to Labor (pooled 31.8; actual 32.4 on 14 rows, 11
-  of them sa2026); Greens between Labor and One Nation 70.9% to Labor (pooled 80.4; actual 79.9 on 12 rows, all sa2026).
-  Labor's registered Ripon card numbers One Nation LAST (12 of 12, Liberals 8 and 9;
-  `external/reference/htv/raw/vic2026/vec-cards-2026-11-24/`). SIZED: the whole flow model off (pooled table everywhere)
-  moves One Nation 14.9 -> 9.7 expected seats, Labor 25.6 -> 30.7, Coalition flat (local live fit, files in the session
-  scratchpad). But that arm changes EVERY key, and it is worse on the backtest: quick_arm sa2026/qld2024/fed2025 at 1,000
-  sims, log loss 0.2746 -> 0.2823 (+0.0078, SE 0.0062), worse on all three. So the fix, if any, is a targeted arm on the
-  three One Nation keys only (prereg, all harnesses), not turning the model off.
-  BUILT AND REFUSED 24 Nov 8:40am (Pete chose "build targeted fix today"): `AUSPOL_ONP_FLOW_KEYS` cond / cond2, both worse on
-  sa2026 (+0.0128 / +0.0082) where they lost the seats One Nation won; pooled +0.0004 (SE 0.0003) / +0.0001 (SE 0.0001).
-  Switch stays "0". OPEN after 28 Nov: the flow-only oracle, to tell whether the trees' lean offsets under-called One
-  Nation primaries (`plans/prereg-onp-flow-keys-2026-11-24.md` RESULT).
+- OPEN, after 28 Nov: One Nation flow keys (24 Nov arms `AUSPOL_ONP_FLOW_KEYS` cond/cond2 REFUSED, DECISIONS 2026-11-24). Run
+  `scripts/score_flows_oracle.R` with and without the switch on sa2026/qld2024/fed2025 and score both on vic2026: are the trees'
+  One-Nation-leaning flows right, or offsetting under-called One Nation primaries? Done when: both scored, written in the prereg.
 - **After 28 Nov: the 35-election deciding run for the MRP pattern**, which Pete chose to ship without
   (`deciding_run.ps1 -Arm "AUSPOL_SEAT_POLL_MRP_PATTERN=1" -Base "AUSPOL_SEAT_POLL_MRP_PATTERN=0"`). The baseline must pin
   the switch off now that it ships. Record the result in `plans/prereg-mrp-seat-pattern-2026-11-23.md`.
