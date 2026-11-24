@@ -110,6 +110,22 @@ cat(sprintf("   Chance Labor + Greens reach 21: %.0f%%. Coalition + One Nation r
 mn <- rbindlist(lapply(regions, function(r) { W <- base[[r]]$W; k <- g[region == r][match(colnames(W), group)]$class
   data.table(group = colnames(W)[k == "MINOR"], seats = colMeans(W[, k == "MINOR", drop = FALSE])) }))[, .(seats = round(sum(seats), 2)), by = group][order(-seats)]
 cat("\n   Minor groups, mean seats statewide (top 6):\n"); print(head(mn[, .(group = short(group), seats)], 6), row.names = FALSE)
+# The same numbers as one JSON file, the shape a site page would read. Written beside this script, not to output/.
+here <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1]))
+pname <- c(ALP = "Labor", LNP = "Coalition", ONP = "One Nation", GRN = "Greens", MINOR = "Minor groups")
+jsonlite::write_json(list(
+  election = "vic2026", chamber = "Legislative Council", status = "walk, not a published forecast", lower_house_run_saved_at = as.character(ns$saved_at),
+  n_sims = N, seats_total = 40L, majority = 21L, seats_per_region = 5L, quota_pct = round(100 / 6, 2),
+  chamber_seats = lapply(colnames(T0), function(k) list(class = k, party = pname[[k]], mean = round(mean(T0[, k]), 2),
+    lo80 = unname(quantile(T0[, k], .1)), hi80 = unname(quantile(T0[, k], .9)), dist = as.list(table(factor(T0[, k], levels = 0:max(T0))) / N))),
+  p_coalition_onp_21 = round(mean(T0[, "LNP"] + T0[, "ONP"] >= 21), 4), p_labor_greens_21 = round(mean(T0[, "ALP"] + T0[, "GRN"] >= 21), 4),
+  regions = lapply(regions, function(r) list(region = r, groups = lapply(unname(split(tb[region == r][order(-quotas)], seq_len(sum(tb$region == r)))), function(z)
+    list(group = z$group, class = z$class, vote_pct = round(z$quotas * 100 / 6, 2), quotas = round(z$quotas, 3), seats = round(z$seats, 3),
+         p1 = round(z$p1, 4), p2 = round(z$p2, 4), p3 = round(z$p3, 4))))),
+  assumptions = c("Upper-house vote = lower-house forecast by region x a ratio per party (Labor 0.905, Coalition 0.845, Greens 0.883, One Nation median 0.85).",
+                  "Minor vote split across groups from 2022 shares pulled toward equal.",
+                  "Preferences assumed, not measured: same-bloc groups favoured about 2.5 to 1, 5-30% of votes exhaust at each exclusion.")),
+  file.path(here, "council-forecast-vic2026.json"), auto_unbox = TRUE, digits = NA)
 cat("\n4. HOW MUCH THE PREFERENCE ASSUMPTION MATTERS. Same vote model (fresh draws each), four preference rules; mean seats of 40.\n",
     "   none = whole quotas then largest remainders (the first walk). base = same-bloc groups favoured about 2.5 to 1, 5-30% exhaust.\n",
     "   tight = blocs favoured 5 to 1, 5% exhaust. loose = no bloc preference, 30% exhaust.\n", sep = "")
