@@ -8,7 +8,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
-- **Status 24 Nov, 11:30am.** main 0.4.202 (PR #272: MRP seat pattern); dev 6 commits ahead, unmerged by choice (ONP switch off, benchmark readers only). Live (10:35pm, run 45162697096): MRP seat pattern ON (July
+- **Status 24 Nov, 1pm.** main 0.4.202 (PR #272: MRP seat pattern); dev ahead, unmerged by choice (ONP switch off, benchmark readers, seat odds builder). Site: seat odds page (inthegame-blog#1294) merged; ITG moving the election pages to `politics/vic2026/` + `politics/nsw2027/` with redirects today (Pete, "everything now"; PETE-ASKED-FOR), then repoint `build_edge_board_vic2026.R:147` (`seat.html#name=`) at the new path. MRP check of 24 Nov PASSED (4:30am run 45228420242). Live (10:35pm, run 45162697096): MRP seat pattern ON (July
   YouGov MRP in; Pete shipped on the 7-election screen), by-election person rule ON, One Nation MODELLED allocation ON (Pete's
   override), final_twos in the forecast file. Search interest off. Dated: 25 Nov
   both night rehearsals (check the night file's final_twos on the test key); 26 Nov venues recheck; 27 Nov inthegame-blog#1262 + benchmark capture.
@@ -44,7 +44,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   neutral; live today unchanged (Hawthorn's paid poll is 15 months old). OPEN after 28 Nov: score it on vic2026.
 - OPEN, DATED 23 Nov and 25 Nov, NIGHT BACKUP (on `main` 0.4.196, PR #265): if the laptop dies on the night, Actions >
   "Election-night backup", key `auspol/night/vic2026.json`, source `web`, index = the results index URL, minutes 330. Passed on the
-  2022 pages (run 44984447331, 2 cycles, 4-5 min refresh). TO DO: after the 26 Nov venues recheck, if any bundled file changed,
+  2022 pages (run 44984447331, 2 cycles, 4-5 min refresh). 23 Nov: two runs failed on the VEC site refusing GitHub (HTTP 999); fixed by the cooldown/retry commits e478d8e9, 60bc0b4f, 6de5673c (on `main`); rerun 45199291224 passed (4 cycles, 87 of 88 seats, uploaded to the test key, no `VWF3!`). TO DO: after the 26 Nov venues recheck, if any bundled file changed,
   `bash scripts/publish_night_inputs.sh --upload` (23 Nov 8:45pm: the uploaded bundle matches all 18 local files); 25 Nov one `web-2022` run of 45-60 min, pass = no snapshot
   ends in `VWF3!`. Done when: both are run. UNTESTED: the live key, a 330-minute run. Detail: `backlog/journal-2026-11-21-queue-history.md`.
 - OPEN, NIGHT SOURCE (before 28 Nov): the VEC REFUSED the feed (11 Nov); the night runs on the VEC WEBSITE
@@ -289,15 +289,6 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
 
 ## Dated, cannot move
 
-- OPEN, DATED 24 Nov (after the ~9:20am scheduled run; the in-session 10:13am check dies if that session ends, so any session runs it): MRP seat pattern, live since 23 Nov 10:35pm. Each daily run, the `SMN1
-  seat-poll blend` line should move party averages by tenths, not points; from 0.4.203 the run log also shows
-  `SPM4 vic2026 ... cells kept` (renamed from SPMA, which `run_all.R` filtered out: its codes must end in a digit).
-  Points would mean seat deviations blended as levels: roll back with
-  `deciding-runs/20261123-mrp-pattern/shipped-before-mrp-seat-poll-blend-vic2026.csv`. `FJ9!` naming the switch is expected
-  until the next rebuild. Done when: the 24 Nov scheduled run passes this. Detail: DECISIONS 2026-11-23.
-  PASSED on the 24 Nov 4:30am run (45228420242): blend step ALP 23.55 -> 23.47, LNP 30.36 -> 30.40, ONP 20.50 -> 20.58;
-  `SPM4 ... 351 cells kept, 0 dropped`. DONE: the "~9:20am run" is GitHub's late fallback schedule, whose gate skips it
-  once the 4:30am daily has gone (forecast.yaml header), so the 4:30am run was the check; none had appeared by 11:13am.
 - OPEN, after 28 Nov: One Nation flow keys (24 Nov arms `AUSPOL_ONP_FLOW_KEYS` cond/cond2 REFUSED, DECISIONS 2026-11-24). Run
   `scripts/score_flows_oracle.R` with and without the switch on sa2026/qld2024/fed2025 and score both on vic2026: are the trees'
   One-Nation-leaning flows right, or offsetting under-called One Nation primaries? Done when: both scored, written in the prereg.
