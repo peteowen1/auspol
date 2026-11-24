@@ -238,15 +238,36 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
   fe <- f[f$election == el_lab]
   pp$.rel <- paste(pp$.pollster, pp$.fw)
   pp$.dev <- FALSE
+  # A release with its own statewide figures on record (mrp_release_levels.csv) is centred on THOSE, not on the
+  # mean of its seats: a release of a handful of seats (YouGov Nov 2026: Bendigo East and Mulgrave only) has no
+  # seat mean to speak of, and centring one seat on itself throws the seat away. Pete, 25 Nov 2026.
+  lv <- .seat_poll_mrp_levels(election)
+  lk <- paste(pp$.rel, pp$class)
+  has_lv <- pp$mrp & pp$.rel %in% lv$rel
+  if (any(has_lv)) {
+    no_cls <- has_lv & !lk %in% paste(lv$rel, lv$class)
+    if (any(no_cls)) {
+      cat(sprintf("SPM5! %s: %d MRP cell(s) in a statewide-levelled release have no level for their class, dropped (%s)\n",
+                  election, sum(no_cls), paste(unique(paste(pp$seat[no_cls], pp$class[no_cls])), collapse = ", ")))
+      pp <- pp[!no_cls]; lk <- lk[!no_cls]; has_lv <- has_lv[!no_cls]
+    }
+  }
+  lvl_of <- lv$level[match(lk, paste(lv$rel, lv$class))]
   if (!nrow(fe)) {
     # The live election has no predictions on file (they are this run's own shares): its MRP rows are stored as
     # the release's seat DEVIATIONS (type "mrp_dev") and seat_poll_blend_apply() adds the mean of that run's
-    # shares over the same seats. One release only, so that mean is the release's own seat set.
-    nr <- length(unique(pp$.rel[pp$mrp]))
-    if (nr > 1L) stop("AUSPOL_SEAT_POLL_MRP_PATTERN=1: ", election, " has ", nr, " MRP releases and no predictions to anchor them on")
+    # shares over the same seats. At most one release may be centred on its seat mean (that mean is then the
+    # anchor's seat set); any others must carry their statewide figures.
+    nr <- length(unique(pp$.rel[pp$mrp & !has_lv]))
+    if (nr > 1L) stop("AUSPOL_SEAT_POLL_MRP_PATTERN=1: ", election, " has ", nr, " MRP releases without statewide levels and no predictions to anchor them on")
     m <- pp$mrp
     pm <- stats::ave(pp$fp, pp$.rel, pp$class, FUN = mean)
+    pm[has_lv] <- lvl_of[has_lv]
     pp$fp[m] <- pp$fp[m] - pm[m]
+    if (any(has_lv))
+      cat(sprintf("SPM5 %s MRP pattern: %d cell(s) of %s centred on the release's own statewide figures (%s)\n", election,
+                  sum(has_lv), paste(unique(pp$.rel[has_lv]), collapse = "; "),
+                  paste(sprintf("%s %s %+.1f", pp$seat[has_lv], pp$class[has_lv], pp$fp[has_lv]), collapse = ", ")))
     pp$.dev[m] <- TRUE
     cat(sprintf("SPM1 %s MRP pattern: no predictions on file, %d MRP cells stored as seat deviations (re-centred on the run's own shares at apply)\n",
                 election, sum(m)))
@@ -255,10 +276,16 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
   ours <- fe$xgb_pred_seat[match(paste(normalise_seat(pp$seat), pp$class), paste(normalise_seat(fe$seat), fe$party))]
   ok <- !pp$mrp | (is.finite(ours) & ours > 0)
   n_drop <- sum(!ok)
-  pp <- pp[ok]; ours <- ours[ok]
+  pp <- pp[ok]; ours <- ours[ok]; has_lv <- has_lv[ok]; lvl_of <- lvl_of[ok]
   m <- pp$mrp
   pm <- stats::ave(pp$fp, pp$.rel, pp$class, FUN = mean)
   om <- stats::ave(ours, pp$.rel, pp$class, FUN = mean)
+  if (any(has_lv)) {
+    # statewide-levelled release: its own statewide figure against OUR statewide mean (every seat of the election)
+    st <- fe[, list(o = mean(xgb_pred_seat)), by = list(cls = party)]
+    pm[has_lv] <- lvl_of[has_lv]
+    om[has_lv] <- st$o[match(pp$class[has_lv], st$cls)]
+  }
   shift <- om - pm
   rel_shift <- unique(data.table::data.table(rel = pp$.rel[m], class = pp$class[m], shift = shift[m]))
   pp$fp[m] <- pp$fp[m] + shift[m]
@@ -266,6 +293,31 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
               election, length(unique(pp$.rel[m])), n_drop,
               paste(rel_shift[, list(s = sprintf("%s %+.1f", class[1], mean(shift))), by = class]$s, collapse = ", ")))
   pp
+}
+
+#' Statewide figures of MRP releases that published them (mrp_release_levels.csv)
+#'
+#' One row per release and class: `election`, `pollster`, `fieldwork_end`,
+#' `party` (a model class: ALP, LNP, GRN, ONP), `level`, `source_url`. A
+#' release listed here is centred on these figures by
+#' [.seat_poll_mrp_recentre()] instead of on the mean of its own seats.
+#' Absent file: no release is levelled.
+#' @param election Election label.
+#' @return data.table `rel` (pollster + fieldwork end, the release key), `class`, `level`.
+#' @keywords internal
+.seat_poll_mrp_levels <- function(election) {
+  none <- data.table::data.table(rel = character(0), class = character(0), level = numeric(0))
+  f <- file.path(pkg_root(), "external", "reference", "polls", "seat-polls", "mrp_release_levels.csv")
+  if (!file.exists(f)) return(none)
+  x <- data.table::fread(f, showProgress = FALSE, colClasses = list(character = c("fieldwork_end")))
+  need <- c("election", "pollster", "fieldwork_end", "party", "level")
+  if (length(setdiff(need, names(x)))) stop(f, " needs columns ", paste(need, collapse = ", "))
+  el <- election
+  x <- x[x$election == el]
+  if (!nrow(x)) return(none)
+  if (anyDuplicated(paste(x$pollster, x$fieldwork_end, x$party)) || any(!is.finite(x$level)))
+    stop(f, ": a release repeats a class or has a non-numeric level")
+  data.table::data.table(rel = paste(x$pollster, x$fieldwork_end), class = x$party, level = as.numeric(x$level))
 }
 
 #' Anchor an MRP release's seat deviations on this run's shares (arm MRP_PATTERN, live election)
