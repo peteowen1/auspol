@@ -71,6 +71,22 @@ test_that("a release with statewide levels is centred on them; a seat-mean relea
   expect_equal(n2$fp, c(23 - 20 + mean(c(25, 30, 20)), 18 - 21 + mean(c(22, 26, 18))))
 })
 
+test_that("a statewide-levelled release alone is refused (the anchor would erase it)", {
+  pp <- data.table::data.table(seat = c("Beta", "Beta"), class = c("ALP", "ONP"), fp = c(23, 18), mrp = TRUE,
+                               .pollster = "YouGov (MRP) Nov", .fw = "2026-11-23")
+  lv <- data.table::data.table(rel = "YouGov (MRP) Nov 2026-11-23", class = c("ALP", "ONP"), level = c(20, 21))
+  testthat::local_mocked_bindings(current_seat_predictions = function(...) data.table::data.table(
+    election = "other", seat = "x", party = "ALP", xgb_pred_seat = 1, actual_share = 1),
+    .seat_poll_mrp_levels = function(election) lv)
+  expect_error(utils::capture.output(.seat_poll_mrp_recentre(data.table::copy(pp), "zz2026")), "SPM5!")
+})
+
+test_that("the seat-poll cache key stamps the statewide levels file under the arm", {
+  withr::local_envvar(AUSPOL_SEAT_POLL_MRP_PATTERN = "1")
+  f <- body(.seat_poll_memo_key)
+  expect_true(any(grepl("mrp_release_levels.csv", deparse(f), fixed = TRUE)))
+})
+
 test_that("the arm switch refuses values it does not know", {
   withr::local_envvar(AUSPOL_SEAT_POLL_MRP_PATTERN = "yes")
   expect_error(.seat_poll_mrp_pattern_on())
