@@ -93,6 +93,21 @@ test_that("a changed corpus, by-election file or switch misses; an unrelated swi
   ipc_forget(); ipc_run(C); expect_gt(ipc_n(d), n2)            # same path, new contents: miss
 })
 
+test_that("the code hash holds no pointer, so a fresh process computes the same key", {
+  # the registered C++ routines carry per-process addresses: hashed raw, every
+  # scenario process missed (2026-11-25, caught only by a two-process run)
+  # (a data.table constant's .internal.selfref pointer is exempt: it serialises the same in
+  # every process, checked by hashing .ip_code_objects() in two fresh processes)
+  has_ptr <- function(x) {
+    if (typeof(x) %in% c("externalptr", "environment")) return(TRUE)
+    a <- attributes(x); a[[".internal.selfref"]] <- NULL
+    if (length(a) && any(vapply(a, has_ptr, NA))) return(TRUE)
+    is.list(x) && length(x) && any(vapply(x, has_ptr, NA))
+  }
+  expect_false(has_ptr(.ip_code_objects()))
+  expect_true(any(vapply(as.list(asNamespace("auspol")), function(x) inherits(x, "NativeSymbolInfo"), NA)))
+})
+
 test_that("AUSPOL_IND_PERSON_CACHE takes only 0 or 1", {
   withr::local_envvar(AUSPOL_IND_PERSON_CACHE = "yes")
   expect_error(.ip_cache_on(), "must be")
