@@ -129,8 +129,8 @@ test_that("two scenario-style processes with different forced votes share one en
     "cat('OUT', paste(format(r, nsmall = 6), collapse = ','), '\\n')"), child)
   run <- function(fp) {
     # set in this process and inherited, as build_scenarios.R does (system2's env= does not work on Windows).
-    # TESTTHAT unset, as in a pipeline process: its load_all() then sources helper-cross-seat-cache.R
-    # exactly as fit_seats_full.R's does, so this also fails if that helper ever moves the cache again.
+    # TESTTHAT unset, as in a pipeline process: its load_all() sources tests/testthat/helper*.R
+    # exactly as fit_seats_full.R's does, so this also fails if a helper ever moves the cache again.
     withr::with_envvar(c(TESTTHAT = NA, AUSPOL_CROSS_SEAT_CACHE_DIR = file.path(d, "cache"), AUSPOL_IND_PERSON = "final",
                          AUSPOL_IND_PERSON_DIR = "both", AUSPOL_IND_PERSON_CARRY = "linear", AUSPOL_IND_RETURN = "0",
                          AUSPOL_IND_PERSON_CACHE = "1", AUSPOL_FORCE_FP = paste0("ALP=", fp),
