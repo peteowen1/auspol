@@ -122,10 +122,10 @@ Probabilities of each chamber outcome, and seat ranges (80% / 90% central interv
 | P(Coalition majority, 45+) | 0.298 | 0.296 |
 | P(Labor majority) | 0.008 | 0.010 |
 | P(hung) | 0.694 | 0.694 |
-| Coalition seats: sd, 80%, 90% | 9.49, 27*-52 | 9.61, 27-52 |
+| Coalition seats: sd, 80%, 90% | 9.49, 28-52, 25-56 | 9.61, 27-52, 25-56 |
 | Labor seats: sd, 80%, 90% | 7.85, 16-37, 14-39 | 7.99, 16-37, 13-40 |
 | One Nation seats: sd, 80%, 90% | 7.03, 6-24, 4-27 | 7.17, 6-24, 4-27 |
 
-(*off: Coalition 80% 28-52, 90% 25-56; on: 80% 27-52, 90% 25-56.) The statewide draw already
+The statewide draw already
 gives a 9.5-seat sd for the Coalition, so the regional term adds about 1-2% to seat-total sd.
 Live, it is close to invisible.
