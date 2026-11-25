@@ -10,7 +10,7 @@ Workflow: [`forecast.yaml`](https://github.com/peteowen1/auspol/blob/HEAD/.githu
 
 One run per day. The forecast job publishes first; then 16 what-if jobs (4 parties, 2 modes, 2 elections) rerun the seat model with one party's vote forced, side by side, and a last job combines and publishes them. Only full daily runs are counted: the title must say "(daily)" and the what-if jobs must have run. From 25 Nov 2026 every run uses 100,000 simulations (was 20,000), so runs before that date are faster than today's.
 
-**What starts it, and what it starts:** The inthegame-blog site's worker dispatches it at 4:30am Melbourne time with daily=true; GitHub's own schedule (17:37 UTC) is a late fallback that the gate job skips when the day's run already went. It starts nothing else: the site reads the files it publishes.
+**What starts it, and what it starts:** The inthegame-blog site's worker dispatches it at 4:30am Melbourne time with daily=true; GitHub's own schedule (4:37am Sydney time in summer) is a late fallback that the gate job skips when the day's run already went. It starts nothing else: the site reads the files it publishes.
 
 ### The order jobs run in
 
