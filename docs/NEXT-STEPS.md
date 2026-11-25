@@ -162,6 +162,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   correction on Labor; the federal "pre-poll shifted later" lead can be computed for Victoria from
   `external/reference/antonygreen-vic2022-early/` and the saved VEC 2026 file. DATED 25 Nov (morning): refresh posts 1-4
   and the three early-voting charts in the Victoria Forecast Thread artifact from the new VEC file before Pete posts.
+- SUPERSEDED 25 Nov: inthegame-blog #1262 CLOSED (Pete OK): the note reached main via #1280; ITG owns the menu link as #1310 (merge 27 Nov). Old text kept below.
 - OPEN, DATED 27 Nov: seat-page independents note (inthegame-blog #1243 + #1246) is on its dev only. Reaches prod via
   my cherry-pick branch off its `main` (ITG's rule), with the navbar #1239. Done when: the note's code is on inthegame.blog
   (it shows only at 10%+ independent; since search interest went off on 19 Nov no seat qualifies, so no page shows it yet).
