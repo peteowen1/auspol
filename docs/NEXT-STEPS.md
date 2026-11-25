@@ -402,6 +402,11 @@ Trigger: the post-election review after 28 Nov, unless an item names its own.
   (Parramatta, Heathcote): walk examples with Pete before any rule.
 
 ## Harness and pipeline hygiene
+- OPEN (registry, found 25 Nov by dev-dc, confirmed by grep) 6 switches are in neither `scripts/published_flags.R` nor
+  `scripts/non_model_switches.R`: `AUSPOL_REBUILD_FROM`, `_REBUILD_ONLY`, `_REBUILD_SLOTS`, `_MC_FORCE`, `_PUBLISH`, `_STAGE1_SIMS`
+  (read in `rebuild_forecasts.sh` / `scheduled_rebuild.ps1`). `test-switch-registry.R` misses them because `mr4_scan()` parses R only.
+  Fix: list them as RUN, and have `mr4_scan()` also grep `.sh`/`.ps1`. Record: `C:/dev/vault/reviews/code-mode-trial-2026-11-25.md`.
+  Trigger: post-election review (changes no forecast).
 - OPEN (speed, CORRECTED 6 Nov 12:40pm) stage 4 (`fit_xgb_primary_asat.R`) 1,664 s for 31 models on a full retrain. The "287 s before"
   I compared it with was `driver.log` of 19 SEP (22 elections, ensemble 1); not the kernel leak. Cost per model grows with the corpus:
   `xgb.cv` uses ONE FOLD PER EARLIER ELECTION (sa2026: 34 folds, 401 rounds, 142 s; sa2010: 4 folds, 1 s), times `AUSPOL_XGB_ENSEMBLE=3`
