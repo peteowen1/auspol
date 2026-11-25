@@ -65,7 +65,7 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
   sp <- file.path(pkg_root(), "external", "reference", "polls", "seat-polls")
   files <- c(file.path(sp, c("seat_polls.csv", "hand_keyed_primaries.csv", "poll_methods.csv", "mrp_candidates.csv", "seat_poll_corrections.csv")),
              # stamped only under the arm, so the default key (and so the default cache) is unchanged
-             if (.seat_poll_mrp_pattern_on()) file.path(sp, "mrp_extra.csv") else character(0),
+             if (.seat_poll_mrp_pattern_on()) file.path(sp, c("mrp_extra.csv", "mrp_release_levels.csv")) else character(0),
              out_path(c("candidacies.csv", "endorsement-features.csv", "xgb-primary-asat-predictions.csv", "forecasts.csv")),
              # Under AUSPOL_POSTXGB_RESID_NET=1 current_seat_predictions() also reads the port's inputs;
              # stamped only then, so the default key (and so the default cache) is unchanged.
@@ -260,6 +260,12 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
     # anchor's seat set); any others must carry their statewide figures.
     nr <- length(unique(pp$.rel[pp$mrp & !has_lv]))
     if (nr > 1L) stop("AUSPOL_SEAT_POLL_MRP_PATTERN=1: ", election, " has ", nr, " MRP releases without statewide levels and no predictions to anchor them on")
+    # .seat_poll_mrp_anchor() re-centres all mrp_dev rows on their per-class mean, which is right only when a
+    # seat-mean-centred release covers the seats; a statewide-levelled release ALONE (Bendigo East with no
+    # July release) would be re-centred to nothing, silently. Refuse it (review, 25 Nov 2026).
+    if (any(has_lv) && nr == 0L)
+      stop("SPM5! ", election, ": only statewide-levelled MRP releases (", paste(unique(pp$.rel[has_lv]), collapse = "; "),
+           ") and no seat-mean release; the anchor step would erase them. Add the full release or drop the levelled rows.")
     m <- pp$mrp
     pm <- stats::ave(pp$fp, pp$.rel, pp$class, FUN = mean)
     pm[has_lv] <- lvl_of[has_lv]
