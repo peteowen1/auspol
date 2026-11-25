@@ -368,6 +368,15 @@
 #'   different number of draws and later seats' streams move.
 #'   docs/plans/prereg-lib-nat-two-candidates-2026-10-16.md.
 #' @param seed Optional RNG seed.
+#' @param seat_cluster,cluster_rho Optional SEAT CLUSTER FACTOR (AUSPOL_SEAT_CLUSTER_COR,
+#'   [seat_cluster_setup()]). `seat_cluster` is an integer cluster id per seat (in `shares`' row
+#'   order, `NA` = no cluster term); `cluster_rho` a named vector over classes in `[0, 1)`, the
+#'   share of each cell's variance that is common to its cluster. Each cell's noise becomes
+#'   `sd_cell * (sqrt(rho) * z_cluster + sqrt(1 - rho) * z_own)`, one `z_cluster` per (draw,
+#'   cluster, class) drawn on a separate stream: every cell's variance is unchanged (exactly, as
+#'   the error quantiles have RMS 1), seats in a cluster move together, and seat-count ranges
+#'   widen. Needs `level_sd` and no `party_draws`. Both `NULL` (or every rho 0) is the old run,
+#'   byte for byte.
 #' @return List: `win_prob` (data.frame, one row per seat and party with a
 #'   probability), `totals` (matrix of seats won per party per simulation),
 #'   `tcp_winner`, `tcp_runnerup` (n_sims x nseat character matrices naming
@@ -405,7 +414,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                                    breakout_p = NULL, breakout_q = NULL,
                                    coalition_split = NULL, error_q = NULL,
                                    zero_absent = zero_absent_on(),
-                                   surge_level = surge_level_on()) {
+                                   surge_level = surge_level_on(),
+                                   seat_cluster = NULL, cluster_rho = NULL) {
   engine <- match.arg(engine)
   if (!is.logical(surge_level) || length(surge_level) != 1L || is.na(surge_level))
     stop("surge_level must be TRUE or FALSE; got ", paste(format(surge_level), collapse = ", "))
@@ -1271,6 +1281,97 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   # exhaust_by). The two engines are byte-identical with exhaustion on
   # (tests/testthat/test-seat-sim.R and test-coalition-split.R), so it no longer forces "r".
   has_exhaust <- any(as.numeric(exhaust) != 0)
+  # SEAT CLUSTER FACTOR (AUSPOL_SEAT_CLUSTER_COR, R/seat_cluster.R). Resolved here, after every
+  # change to sd_cell_pre (sd_override included), so the split acts on the width actually drawn.
+  has_clu <- FALSE; clu_z <- base::matrix(0, 0L, 0L); clu_col <- integer(0); clu_load <- base::matrix(0, 0L, 0L)
+  if (!is.null(seat_cluster) || !is.null(cluster_rho)) {
+    if (is.null(seat_cluster) || is.null(cluster_rho))
+      stop("seat_cluster and cluster_rho go together; pass both or neither")
+  }
+  if ((is.matrix(seat_cluster) || is.list(cluster_rho)) && !is.null(seat_cluster)) {
+    # SEVERAL FACTORS (AUSPOL_SEAT_CLUSTER_COR=both; plans/prereg-seat-type-cor-2026-11-25.md):
+    # seat_cluster is a matrix, one column per factor, cluster_rho a list of named vectors in the
+    # same order. noise = sd * (sum_f sqrt(rho_f) z_f[cluster_f(i)] + sqrt(1 - sum_f rho_f) z_own).
+    # The factors' common parts are summed per seat here into one column block per seat, so the
+    # compiled core reads them through its one-factor interface unchanged.
+    if (!is.matrix(seat_cluster) || !is.list(cluster_rho) || ncol(seat_cluster) != length(cluster_rho))
+      stop("a multi-factor seat_cluster is a matrix with one column per factor, and cluster_rho a list of the same length")
+    if (nrow(seat_cluster) != nseat)
+      stop("seat_cluster must have one entry per seat (", nseat, "); got ", nrow(seat_cluster))
+    nf <- ncol(seat_cluster)
+    rho_m <- base::matrix(0, nf, K, dimnames = list(NULL, parties))
+    for (f in seq_len(nf)) {
+      r <- cluster_rho[[f]]
+      if (is.null(names(r)) || !all(names(r) %in% parties))
+        stop("cluster_rho must be named by share columns; not a column: ", paste(setdiff(names(r), parties), collapse = ", "))
+      if (anyNA(r) || any(r < 0) || any(r >= 1)) stop("cluster_rho must be in [0, 1)")
+      rho_m[f, names(r)] <- r
+    }
+    if (any(colSums(rho_m) >= 1)) stop("cluster_rho summed over factors must be in [0, 1)")
+    scm <- base::matrix(as.integer(seat_cluster), nseat, nf)
+    act <- which(vapply(seq_len(nf), function(f) any(rho_m[f, ] > 0) && any(!is.na(scm[, f])), logical(1)))
+    if (length(act)) {
+      if (is.null(sd_cell_pre))
+        stop("seat_cluster needs level_sd and no party_draws (the per-cell sd must be fixed per seat)")
+      Rsh <- base::matrix(0, nseat, K)
+      for (f in act) Rsh[!is.na(scm[, f]), ] <- Rsh[!is.na(scm[, f]), , drop = FALSE] +
+        matrix(rho_m[f, ], sum(!is.na(scm[, f])), K, byrow = TRUE)
+      .had <- exists(".Random.seed", envir = globalenv(), inherits = FALSE)
+      .old <- if (.had) get(".Random.seed", envir = globalenv(), inherits = FALSE) else NULL
+      .s4 <- if (!is.null(seed)) as.integer((as.numeric(seed) * 7919 + 15485863) %% .Machine$integer.max)
+             else if (.had) as.integer(abs(.old[length(.old) - 1L]) %% .Machine$integer.max) else 15485863L
+      set.seed(.s4)
+      clu_z <- base::matrix(0, n_sims, nseat * K)
+      for (f in act) {
+        ids <- sort(unique(scm[!is.na(scm[, f]), f])); ci <- match(scm[, f], ids)
+        zf <- base::matrix(stats::rnorm(n_sims * length(ids) * K), n_sims, length(ids) * K)
+        ld <- matrix(sqrt(rho_m[f, ]), n_sims, K, byrow = TRUE)
+        for (i in which(!is.na(ci)))
+          clu_z[, (i - 1L) * K + seq_len(K)] <- clu_z[, (i - 1L) * K + seq_len(K)] + ld * zf[, (ci[i] - 1L) * K + seq_len(K)]
+        rm(zf)
+      }
+      if (.had) assign(".Random.seed", .old, envir = globalenv())
+      else rm(".Random.seed", envir = globalenv())
+      clu_load <- sd_cell_pre + 0; clu_load[rowSums(Rsh) == 0, ] <- 0
+      storage.mode(clu_load) <- "double"; dimnames(clu_load) <- NULL
+      clu_col <- as.integer((seq_len(nseat) - 1L) * K)
+      sd_cell_pre <- sd_cell_pre * sqrt(1 - Rsh)
+      has_clu <- TRUE
+    }
+  } else if (!is.null(seat_cluster) || !is.null(cluster_rho)) {
+    if (length(seat_cluster) != nseat)
+      stop("seat_cluster must have one entry per seat (", nseat, "); got ", length(seat_cluster))
+    if (is.null(names(cluster_rho)) || !all(names(cluster_rho) %in% parties))
+      stop("cluster_rho must be named by share columns; not a column: ",
+           paste(setdiff(names(cluster_rho), parties), collapse = ", "))
+    if (anyNA(cluster_rho) || any(cluster_rho < 0) || any(cluster_rho >= 1))
+      stop("cluster_rho must be in [0, 1)")
+    rho_vec <- stats::setNames(numeric(K), parties); rho_vec[names(cluster_rho)] <- cluster_rho
+    sc <- as.integer(seat_cluster)
+    if (any(rho_vec > 0) && any(!is.na(sc))) {
+      if (is.null(sd_cell_pre))
+        stop("seat_cluster needs level_sd and no party_draws (the per-cell sd must be fixed per seat)")
+      ids <- sort(unique(sc[!is.na(sc)]))
+      ci <- match(sc, ids)                       # 1..n_clusters, NA = none
+      clu_col <- ifelse(is.na(ci), -1L, (ci - 1L) * K)
+      clu_load <- sd_cell_pre * matrix(sqrt(rho_vec), nseat, K, byrow = TRUE)
+      clu_load[is.na(ci), ] <- 0
+      keep <- matrix(sqrt(1 - rho_vec), nseat, K, byrow = TRUE); keep[is.na(ci), ] <- 1
+      sd_cell_pre <- sd_cell_pre * keep
+      # Separate stream (the coalition-split idiom above): save, draw, restore, so the count's
+      # own random numbers are the no-cluster run's and the arm is paired with it draw by draw.
+      .had <- exists(".Random.seed", envir = globalenv(), inherits = FALSE)
+      .old <- if (.had) get(".Random.seed", envir = globalenv(), inherits = FALSE) else NULL
+      .s4 <- if (!is.null(seed)) as.integer((as.numeric(seed) * 7919 + 15485863) %% .Machine$integer.max)
+             else if (.had) as.integer(abs(.old[length(.old) - 1L]) %% .Machine$integer.max) else 15485863L
+      set.seed(.s4)
+      clu_z <- base::matrix(stats::rnorm(n_sims * length(ids) * K), n_sims, length(ids) * K)
+      if (.had) assign(".Random.seed", .old, envir = globalenv())
+      else rm(".Random.seed", envir = globalenv())
+      storage.mode(clu_load) <- "double"; dimnames(clu_load) <- NULL
+      has_clu <- TRUE
+    }
+  }
   if (engine == "auto") engine <- if (!identical(Sys.getenv("AUSPOL_SIM_ENGINE", "cpp"), "r") &&
                                       is.null(party_draws) && dense_cells &&
                                       shrink_k == 0) "cpp" else "r"
@@ -1416,7 +1517,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                           has_bo, bo_p, bo_q,
                           has_split, as.integer(split_cls), split_r, as.numeric(split_fv),
                           has_eq, eq, za, absent_m, isTRUE(surge_level),
-                          if (has_exhaust) as.numeric(EXHAUST_BY) else numeric(0))
+                          if (has_exhaust) as.numeric(EXHAUST_BY) else numeric(0),
+                          has_clu, clu_z, as.integer(clu_col), clu_load)
     wins[] <- core$wins; totals[] <- core$totals
     tcp_winner[] <- parties[core$tcp_w]; tcp_runnerup[] <- parties[core$tcp_r]
     tcp_share[] <- core$tcp_share
@@ -1514,6 +1616,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
         level_sd[1L] + level_sd[2L] * level_mult_vec * sqrt(pp * (1 - pp))
       }
       v <- base_v + shift + if (has_eq) sd_cell * .eq_z(stats::runif(K)) else stats::rnorm(K, 0, sd_cell)
+      if (has_clu && clu_col[i] >= 0L) v <- v + clu_load[i, ] * clu_z[s, clu_col[i] + seq_len(K)]
       v[v < 0] <- 0
       if (za) v[absent_m[i, ]] <- 0
       # BREAKOUT MIXTURE: with probability p this cell's share comes from the

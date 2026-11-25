@@ -33,6 +33,12 @@ moved verbatim 2026-10-24. Every row below still has something open.
 
 ---
 
+## 2026-11-25
+
+| Request | Status |
+|---|---|
+| Correlated seat draws: seats in the same region / of the same type should move together (One Nation surging across regional seats at once); today only the statewide draw links seats | **26 Nov: SHIPPING `AUSPOL_SEAT_CLUSTER_COR=both` (region + type) on Pete's override; flag flipped on `seat-corr-type` and `seat-corr-main`, NOT live until merged to main** (same request as the 2026-09-15 row "seat-seat correlation"). Built 25 Nov: `AUSPOL_SEAT_CLUSTER_COR`, prereg `plans/prereg-seat-cluster-cor-2026-11-25.md`; seat TYPE (shares + census k-means, every jurisdiction) and region + type: values `type` / `both`, prereg `plans/prereg-seat-type-cor-2026-11-25.md` (RESULT, Override 1 and the live effect there). The election-night runner takes the factor from the night state. |
+
 ## 2026-11-24
 
 | Request | Status |

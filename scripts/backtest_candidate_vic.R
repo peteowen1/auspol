@@ -1028,7 +1028,8 @@ for (K in PAIRS) {
       .imx <- ind_mixture_surge(sprintf("vic%d", K$to), rownames(shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BV1N")
       surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
       .swd <- harness_sw_draws(SWD, colnames(shares), per, sprintf("vic%d", K$to), "BVW", from = (r - 1L) * per + 1L, quiet = r > 1L)
-      s1 <- simulate_seat_contests(level_sd = .level_sd, sd_override = harness_sw_net_sd(size_sd_apply(SD_OVR, shares, .eb, .level_sd, .lm(shares)), .swd, shares, .level_sd, .lm(shares), psd, sprintf("vic%d", K$to), "BVW", quiet = r > 1L), level_mult = .lm(shares), shares, fmr, party_sd = psd, statewide_draws = .swd,
+      .scc <- seat_cluster_setup(sprintf("vic%d", K$to), shares, tag = "BV5k", quiet = r > 1L)
+      s1 <- simulate_seat_contests(seat_cluster = .scc$seat_cluster, cluster_rho = .scc$cluster_rho, level_sd = .level_sd, sd_override = harness_sw_net_sd(size_sd_apply(SD_OVR, shares, .eb, .level_sd, .lm(shares)), .swd, shares, .level_sd, .lm(shares), psd, sprintf("vic%d", K$to), "BVW", quiet = r > 1L), level_mult = .lm(shares), shares, fmr, party_sd = psd, statewide_draws = .swd,
                                    seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = per,
                                    breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(.eb, rownames(shares)), error_q = error_dist_args(.eb, colnames(shares)),
                                    smooth = SMOOTH, seed = SEED + r, shrink = SHRINK,
@@ -1111,7 +1112,8 @@ for (K in PAIRS) {
                   K$to, .nf, .nu$n_updated, nrow(shares), 100 * stats::median(.nu$counted[.nu$counted > 0]), 100 * .nu$resolved, 1 - .nu$resolved))
       shares <- .nu$shares; .sdo <- .nu$sd; .swd <- night_shrink_draws(.swd, 1 - .nu$resolved)
     }
-    sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = .sdo, level_mult = .lm(shares), shares, fm, party_sd = psd, statewide_draws = .swd,
+    .scc <- seat_cluster_setup(sprintf("vic%d", K$to), shares, tag = "BV5k")
+    sim <- simulate_seat_contests(seat_cluster = .scc$seat_cluster, cluster_rho = .scc$cluster_rho, level_sd = .level_sd, sd_override = .sdo, level_mult = .lm(shares), shares, fm, party_sd = psd, statewide_draws = .swd,
                                   seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = N_SIMS,
                                   breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(.eb, rownames(shares)), error_q = error_dist_args(.eb, colnames(shares)),
                                   smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
