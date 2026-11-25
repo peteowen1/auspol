@@ -48,21 +48,21 @@ report says so.
 
 ## Decision rule
 
-- **PRIMARY**: paired seat-winner log loss, scaled minus flat, over the seats either moved (SQ6), SE clustered
+- **PRIMARY**: paired seat-winner log loss, scaled minus flat, over the seats either moved (SKQ6), SE clustered
   on election. The scaled variant is PREFERRED to flat if the paired change is below -1 SE.
 - **DO-NO-HARM against the baseline** (the clause the flat cut failed): log-loss change over all seats of the
-  35 elections (SQ5, quick_arm's Q3 denominator) not worse than +1 SE, and no single election worse by more
+  35 elections (SKQ5, quick_arm's Q3 denominator) not worse than +1 SE, and no single election worse by more
   than 0.01.
 - **BIAS NOT WORSENED**: the mean signed error of the former leader's party at the seats the scaled cut moved
-  (actual minus predicted, SQ3b) must be no further from 0 than the baseline's at the same cells. The scaled
+  (actual minus predicted, SKQ3b) must be no further from 0 than the baseline's at the same cells. The scaled
   cut is smaller by design, so it is not required to remove as much of the bias as the flat cut does; the
   amount it removes is reported beside flat's.
 - SHIP CANDIDATE only if all three hold; then it goes to a quick_arm run built into `leader_seat_apply()`
   before any shipping decision. A screen here is never a ship decision.
 
-What would make an apparent win unacceptable: any seat moving that the tweak does not declare (SQ7 stops the
+What would make an apparent win unacceptable: any seat moving that the tweak does not declare (SKQ7 stops the
 run); the slope's sign positive (a cut that becomes a bonus); the result resting on seats with no recorded
-winner (scored 0, listed by SQ1!).
+winner (scored 0, listed by SKQ1!).
 
 ## Instrument proofs, with pass rules written before they run
 
@@ -101,7 +101,7 @@ scored.
    10:37am quick_arm baseline b09d4d70fd65 (allprobs and sharedetail md5).
 2. `--prove-subset=vic2022,wa2025`: max |z| 2.65 and 2.60, 0 cells above 4: PASS. With `--break`: max
    |z| 30.6 and 17.0: FAIL, as it must. A deliberately broken tweak (off-by-one row) stops with
-   `SQ7! ... Leichhardt`.
+   `SKQ7! ... Leichhardt`.
 3. Flat port against the harness arm (1,000 sims): same moved seats in 34 of 35 elections (fed2025: the
    harness arm also moves all 149 other seats by at most 0.008 points, the state-poll-pool spillover seen
    when the leader bonus shipped). State baselines equal to 6e-14; the 7 FEDERAL baselines differ by up to

@@ -8,7 +8,8 @@ seat_tweak_former_leader(
   shares,
   pair,
   mode = c("flat", "scaled"),
-  safety = NULL
+  safety = NULL,
+  passthrough = NULL
 )
 }
 \arguments{
@@ -20,6 +21,10 @@ seat_tweak_former_leader(
 
 \item{safety}{For \code{"scaled"}: \verb{function(pair, fs)} returning one non-negative
 number (or \code{NA}) per row of \code{fs} (\code{seat}, \code{party}).}
+
+\item{passthrough}{\code{NULL}, or data.frame \code{pair}, \code{seat}, \code{party}, \code{r}: each listed
+seat's cut is multiplied by \code{r}, the fraction of the cut the real harness
+carries through to the final shares (see \code{scripts/seat_quick.R --passthrough}).}
 }
 \value{
 \code{shares}, moved, with attributes \code{targets} (seats it may move) and \code{log}

@@ -74,7 +74,7 @@ test_that("seat_tweak_check refuses a tweak that moves a seat it does not declar
   a["s2", ] <- .shift_cell(a["s2", ], 2, -1)
   expect_identical(seat_tweak_check(b, a, "s2"), "s2")
   a2 <- a; a2["s3", ] <- .shift_cell(a2["s3", ], 1, -1)     # the off-by-one row
-  expect_error(seat_tweak_check(b, a2, "s2"), "SQ7! .*s3")
+  expect_error(seat_tweak_check(b, a2, "s2"), "SKQ7! .*s3")
   a3 <- a; a3["s2", 1] <- a3["s2", 1] + 1                    # a row total that changed
   expect_error(seat_tweak_check(b, a3, "s2"), "row total")
   expect_identical(seat_tweak_check(b, b, character(0)), character(0))

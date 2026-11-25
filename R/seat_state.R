@@ -32,7 +32,7 @@
 seat_state_sim <- function(pair, ...) {
   args <- list(...)
   path <- Sys.getenv("AUSPOL_SEAT_STATE_DUMP", "")
-  if (nzchar(path) && !grepl("[.]rds$", path)) stop("SQ9! AUSPOL_SEAT_STATE_DUMP must end in .rds (the pair label is inserted before it), not ", path)
+  if (nzchar(path) && !grepl("[.]rds$", path)) stop("SKQ9! AUSPOL_SEAT_STATE_DUMP must end in .rds (the pair label is inserted before it), not ", path)
   sim <- do.call(simulate_seat_contests, args)
   if (nzchar(path)) {
     out <- sub("[.]rds$", sprintf("-%s.rds", pair), path)
@@ -40,7 +40,7 @@ seat_state_sim <- function(pair, ...) {
     na <- seat_state_named_args(args)
     saveRDS(list(version = 1L, pair = pair, args = na,
                  env = stats::setNames(as.character(env), names(env)), win_prob = sim$win_prob), out)
-    cat(sprintf("SQ8  seat state for %s saved to %s (%d seats, %s sims)\n", pair, out, nrow(as.matrix(na$shares)),
+    cat(sprintf("SKQ8  seat state for %s saved to %s (%d seats, %s sims)\n", pair, out, nrow(as.matrix(na$shares)),
                 if (is.null(na$n_sims)) "default" else format(na$n_sims)))
   }
   sim
@@ -240,14 +240,14 @@ seat_state_ll <- function(seats, n_seats, eps) {
 #' @keywords internal
 seat_tweak_check <- function(base, arm, targets) {
   if (!identical(dim(base), dim(arm)) || !identical(dimnames(base), dimnames(arm)))
-    stop("SQ7! the tweak changed the shape or names of the shares matrix")
-  if (anyNA(arm) && !identical(is.na(arm), is.na(base))) stop("SQ7! the tweak introduced NA shares")
+    stop("SKQ7! the tweak changed the shape or names of the shares matrix")
+  if (anyNA(arm) && !identical(is.na(arm), is.na(base))) stop("SKQ7! the tweak introduced NA shares")
   d <- abs(arm - base); d[is.na(d)] <- 0
   moved <- rownames(base)[rowSums(d) > 0]
   stray <- setdiff(moved, targets)
-  if (length(stray)) stop("SQ7! the tweak moved seat(s) it does not target: ", paste(stray, collapse = ", "))
+  if (length(stray)) stop("SKQ7! the tweak moved seat(s) it does not target: ", paste(stray, collapse = ", "))
   tot <- abs(rowSums(arm, na.rm = TRUE) - rowSums(base, na.rm = TRUE))
-  if (any(tot > 1e-8)) stop("SQ7! the tweak changed a row total: ", paste(rownames(base)[tot > 1e-8], collapse = ", "))
+  if (any(tot > 1e-8)) stop("SKQ7! the tweak changed a row total: ", paste(rownames(base)[tot > 1e-8], collapse = ", "))
   moved
 }
 

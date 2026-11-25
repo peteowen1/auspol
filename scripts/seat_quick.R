@@ -30,7 +30,7 @@
 #
 # WHAT IT DOES. For each election it loads the saved state, applies the tweak to the saved
 # shares (the matrix the simulator received), stops if the tweak moved any seat it does not
-# declare (seat_tweak_check, code SQ7!), and re-simulates ONLY the moved seats, ONE SEAT PER
+# declare (seat_tweak_check, code SKQ7!), and re-simulates ONLY the moved seats, ONE SEAT PER
 # CALL, baseline and every arm on the same seed at --sims: per seat, baseline and arm share
 # their random stream until the tweak changes what is drawn (common random numbers). A
 # seat's winner depends only on its own row and its own draws
@@ -115,7 +115,7 @@ if (!is.na(pt_flag)) {
     r <- ifelse(abs(lg$delta) < 0.2 | !is.finite(real), 1, pmin(1, pmax(0, real / lg$delta)))
     data.table(pair = id, seat = lg$seat, party = lg$party, intended = lg$delta, realised = real, r = r)
   }))
-  cat("SQ0p pass-through of the flat cut in the real harness arm (realised / intended; r used, 1 where the cut is under 0.2 points):\n")
+  cat("SKQ0p pass-through of the flat cut in the real harness arm (realised / intended; r used, 1 where the cut is under 0.2 points):\n")
   print(PT[, .(pair, seat, party, intended = round(intended, 3), realised = round(realised, 3), r = round(r, 3))], row.names = FALSE)
 }
 TWEAKS <- list(
@@ -132,7 +132,7 @@ TWEAKS <- list(
   })
 if (!prove && is.na(flag("prove-subset", NA_character_)) && !all(arm_names %in% names(TWEAKS)))
   stop("usage: Rscript scripts/seat_quick.R --tweak=NAME [--vs=NAME] | --prove   (tweaks: ", paste(names(TWEAKS), collapse = ", "), ")")
-cat(sprintf("SQ0  cache %s: %d election(s); %s; %d sims; data root %s\n", cache, length(ids),
+cat(sprintf("SKQ0  cache %s: %d election(s); %s; %d sims; data root %s\n", cache, length(ids),
             if (prove) "prove" else paste("tweak", paste(arm_names, collapse = " vs ")), sims, root))
 
 # ---- prove: the state reproduces the harness's own simulation ----------------------------
@@ -150,11 +150,11 @@ if (prove) {
     sh <- as.matrix(st$args$shares)
     hit <- x$sd$seat %in% rownames(sh) & x$sd$party %in% colnames(sh)
     d_sd <- max(abs(x$sd$pred_share[hit] - sh[cbind(match(x$sd$seat[hit], rownames(sh)), match(x$sd$party[hit], colnames(sh)))]))
-    cat(sprintf("SQP %-8s %3d seats %5d sims: re-run == harness's own win_prob: %s | max |diff| vs allprobs.csv %.2g | shares vs sharedetail %.2g (%.0f s)\n",
+    cat(sprintf("SKQP %-8s %3d seats %5d sims: re-run == harness's own win_prob: %s | max |diff| vs allprobs.csv %.2g | shares vs sharedetail %.2g (%.0f s)\n",
                 id, nrow(sh), as.integer(st$args$n_sims), if (same_own) "IDENTICAL" else "DIFFERENT", d_ap, d_sd, secs))
     data.table(pair = id, seats = nrow(sh), identical = same_own, max_ap = d_ap, max_sd = d_sd, secs = secs)
   }))
-  cat(sprintf("SQP  %d of %d elections re-simulate IDENTICALLY to the harness run; largest |diff| vs allprobs.csv %.2g, shares vs sharedetail %.2g (csv rounding); %.0f s\n",
+  cat(sprintf("SKQP  %d of %d elections re-simulate IDENTICALLY to the harness run; largest |diff| vs allprobs.csv %.2g, shares vs sharedetail %.2g (csv rounding); %.0f s\n",
               sum(P$identical), nrow(P), max(P$max_ap), max(P$max_sd), as.numeric(difftime(Sys.time(), t0, units = "secs"))))
   if (!all(P$identical) || max(P$max_ap) > 1e-9 || max(P$max_sd) > 1e-9) quit(status = 1)
   quit(status = 0)
@@ -181,7 +181,7 @@ if (!is.na(ps)) {
   ok_all <- TRUE
   for (id in trimws(strsplit(ps, ",")[[1]])) {
     x <- ld(id); st <- x$st; n_s <- as.integer(st$args$n_sims)
-    if (brk) { st$args <- rot(st$args); cat(sprintf("SQB  %s: BROKEN on purpose, rotated by one seat: %s\n", id, paste(attr(st$args, "rotated"), collapse = ", "))) }
+    if (brk) { st$args <- rot(st$args); cat(sprintf("SKQB  %s: BROKEN on purpose, rotated by one seat: %s\n", id, paste(attr(st$args, "rotated"), collapse = ", "))) }
     t1 <- Sys.time()
     seats <- rownames(as.matrix(st$args$shares))
     one <- rbindlist(lapply(seats, function(s) as.data.table(seat_state_resim(st, seats = s))))
@@ -196,7 +196,7 @@ if (!is.na(ps)) {
     se_w <- stats::sd(w$p_one - w$p_full) / sqrt(nrow(w))
     pass <- max(abs(m$z)) < 5 && abs(mean(w$p_one - w$p_full)) < 3 * se_w
     ok_all <- ok_all && pass
-    cat(sprintf("SQS  %s: %d seats one per call at %d sims vs the harness's full run: max |z| %.2f over %d seat-party cells (%d above 4); winner probability mean diff %+.5f (SE %.5f) => %s (%.0f s)\n",
+    cat(sprintf("SKQS  %s: %d seats one per call at %d sims vs the harness's full run: max |z| %.2f over %d seat-party cells (%d above 4); winner probability mean diff %+.5f (SE %.5f) => %s (%.0f s)\n",
                 id, length(seats), n_s, max(abs(m$z)), nrow(m), sum(abs(m$z) > 4), cl$mean, se_w, if (pass) "PASS" else "FAIL",
                 as.numeric(difftime(Sys.time(), t1, units = "secs"))))
     if (!pass) print(head(m[order(-abs(z))], 5), row.names = FALSE)
@@ -247,7 +247,7 @@ for (id in ids) {
   actual <- stats::setNames(act$actual, act$seat)[u]
   # a seat with no recorded winner scores 0 in baseline and arm alike, as quick_winner_prob() gives it; listed
   no_act <- u[is.na(actual)]
-  if (length(no_act)) cat(sprintf("SQ1! %s: no actual winner for %s; scored as a change of exactly 0, as quick_arm does\n", id, paste(no_act, collapse = ", ")))
+  if (length(no_act)) cat(sprintf("SKQ1! %s: no actual winner for %s; scored as a change of exactly 0, as quick_arm does\n", id, paste(no_act, collapse = ", ")))
   # one seat per call: each seat's baseline and arm runs start from the same seed
   p_b <- vapply(u, function(s) if (is.na(actual[s])) 0 else seat_state_winner_p(seat_state_resim(st, seats = s, n_sims = sims), actual[s]), 0)
   row <- data.table(pair = id, seat = u, winner = unname(actual), p_base = unname(p_b),
@@ -265,18 +265,18 @@ for (id in ids) {
   cell_rows[[id]] <- sdm
 }
 S <- rbindlist(seat_rows); C <- rbindlist(cell_rows); G <- rbindlist(logs, fill = TRUE)
-cat(sprintf("SQ0b %d seats in the %d elections scored (quick_arm's Q3 denominator; 2,931 over all 35)\n", sum(n_seats), length(n_seats)))
-cat(sprintf("SQ1  seats moved: %s; %d seats in all, in %d of %d elections (every moved seat declared by its tweak, SQ7 check)\n",
+cat(sprintf("SKQ0b %d seats in the %d elections scored (quick_arm's Q3 denominator; 2,931 over all 35)\n", sum(n_seats), length(n_seats)))
+cat(sprintf("SKQ1  seats moved: %s; %d seats in all, in %d of %d elections (every moved seat declared by its tweak, SKQ7 check)\n",
             paste(sprintf("%s %d", arm_names, n_moved[arm_names]), collapse = ", "), nrow(S), uniqueN(S$pair), length(ids)))
 if (length(chk_rows)) {
   K <- rbindlist(chk_rows)
-  cat("SQC  our tweak's shares against the harness arm, in points of primary share (0 = identical); base_vs_qbase: our cached baseline against that arm's own baseline:\n")
+  cat("SKQC  our tweak's shares against the harness arm, in points of primary share (0 = identical); base_vs_qbase: our cached baseline against that arm's own baseline:\n")
   print(K[qarm_seats > 0 | ours_seats > 0 | base_vs_qbase > 1e-9], row.names = FALSE)
-  cat(sprintf("SQC  %d elections; same moved-seat set in %d; our baseline equals the arm's baseline in %d; largest gap on a moved seat %.4f points, elsewhere %.2g\n",
+  cat(sprintf("SKQC  %d elections; same moved-seat set in %d; our baseline equals the arm's baseline in %d; largest gap on a moved seat %.4f points, elsewhere %.2g\n",
               nrow(K), sum(K$same_seats), sum(K$base_vs_qbase < 1e-9), max(K$arm_vs_qarm_moved), max(K$arm_vs_qarm_other)))
 }
-if (!nrow(S)) { cat("SQ1  nothing moved: the tweak is a no-op on these elections\n"); quit(status = 0) }
-if (nrow(G)) { cat("SQ1b what each tweak did (delta in points of the named party's primary; scaled tweaks show safety and slope):\n"); print(G, row.names = FALSE) }
+if (!nrow(S)) { cat("SKQ1  nothing moved: the tweak is a no-op on these elections\n"); quit(status = 0) }
+if (nrow(G)) { cat("SKQ1b what each tweak did (delta in points of the named party's primary; scaled tweaks show safety and slope):\n"); print(G, row.names = FALSE) }
 res <- list()
 for (nm in arm_names) {
   L <- seat_state_ll(as.data.frame(S[, .(pair, seat, p_base, p_arm = get(paste0("p_", nm)))]), n_seats, eps)
@@ -286,28 +286,28 @@ for (nm in arm_names) {
   res[[nm]] <- list(L = L, Q = Q)
   p <- Q$primary; o <- L$touched; o2 <- L$all
   cat(sprintf("\n== %s vs baseline ==\n", nm))
-  cat(sprintf("SQ3  share-level squared error on %d changed cells (moved > 0.05 points; lower is better): %.1f -> %.1f, change %+.1f (%+.0f%%), SE %s (clustered on election, %d elections) => %s\n",
+  cat(sprintf("SKQ3  share-level squared error on %d changed cells (moved > 0.05 points; lower is better): %.1f -> %.1f, change %+.1f (%+.0f%%), SE %s (clustered on election, %d elections) => %s\n",
               p$n, p$base, p$arm, p$change, 100 * p$change / p$base, if (is.na(p$se)) "NA" else sprintf("%.1f", p$se), p$clusters, quick_q2_verdict(p)))
   cut <- C[get(paste0("s_", nm)) < pred_share - 0.05]
-  if (nrow(cut)) cat(sprintf("SQ3b signed error on the %d cells it cut (actual minus predicted, points; 0 is unbiased): %+.2f -> %+.2f\n",
+  if (nrow(cut)) cat(sprintf("SKQ3b signed error on the %d cells it cut (actual minus predicted, points; 0 is unbiased): %+.2f -> %+.2f\n",
                              nrow(cut), mean(cut$actual_share - cut$pred_share), mean(cut$actual_share - cut[[paste0("s_", nm)]])))
-  cat(sprintf("SQ4  seat-winner log loss over the %d seats any tweak moved (lower is better): %.4f -> %.4f, change %+.4f per seat (SE %.4f, clustered on election, %d elections) => %s\n",
+  cat(sprintf("SKQ4  seat-winner log loss over the %d seats any tweak moved (lower is better): %.4f -> %.4f, change %+.4f per seat (SE %.4f, clustered on election, %d elections) => %s\n",
               o$n, mean(L$seats$ll_base), mean(L$seats$ll_arm), o$mean, o$se, o$clusters, quick_word(o$mean, o$se)))
-  cat(sprintf("SQ5  as quick_arm's Q3 states it, over all %d seats of the %d elections (untouched seats exactly 0): change %+.5f (SE %.5f) => %s; worst election %s %+.4f\n",
+  cat(sprintf("SKQ5  as quick_arm's Q3 states it, over all %d seats of the %d elections (untouched seats exactly 0): change %+.5f (SE %.5f) => %s; worst election %s %+.4f\n",
               o2$n, o2$clusters, o2$mean, o2$se, quick_word(o2$mean, o2$se),
               L$per_pair$pair[which.max(L$per_pair$ll_change_all)], max(L$per_pair$ll_change_all)))
 }
 if (length(arm_names) == 2L) {
   d <- S[[paste0("dd_", arm_names[1])]] - S[[paste0("dd_", arm_names[2])]]
   o <- quick_clustered(d, S$pair)
-  cat(sprintf("\nSQ6  PAIRED %s minus %s, seat-winner log loss over the %d moved seats (negative = %s better): %+.4f per seat (SE %.4f, %d elections) => %s\n",
+  cat(sprintf("\nSKQ6  PAIRED %s minus %s, seat-winner log loss over the %d moved seats (negative = %s better): %+.4f per seat (SE %.4f, %d elections) => %s\n",
               arm_names[1], arm_names[2], o$n, arm_names[1], o$mean, o$se, o$clusters, quick_word(o$mean, o$se)))
 }
-cat("\nSQ2  per seat: probability given to the actual winner, all re-simulated one seat at a time at", sims, "sims on one seed (higher is better); p_harness is the cached full run; dd = log-loss change vs baseline (lower is better):\n")
+cat("\nSKQ2  per seat: probability given to the actual winner, all re-simulated one seat at a time at", sims, "sims on one seed (higher is better); p_harness is the cached full run; dd = log-loss change vs baseline (lower is better):\n")
 show <- copy(S)
 for (cc in grep("^p_|^dd_", names(show), value = TRUE)) show[[cc]] <- round(show[[cc]], if (startsWith(cc, "dd_")) 4 else 3)
 print(show[order(pair, seat)], row.names = FALSE)
 of <- flag("out", "")
-if (nzchar(of)) { fwrite(S, of); cat("SQ8  per-seat table written to", of, "\n") }
-cat(sprintf("SQ9  runtime %.0f s, %d seats, %d tweak(s), %d sims each (eps %.1e)\n",
+if (nzchar(of)) { fwrite(S, of); cat("SKQW  per-seat table written to", of, "\n") }
+cat(sprintf("SKQT  runtime %.0f s, %d seats, %d tweak(s), %d sims each (eps %.1e)\n",
             as.numeric(difftime(Sys.time(), t0, units = "secs")), nrow(S), length(arm_names), sims, eps))
