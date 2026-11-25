@@ -64,6 +64,27 @@ What would make an apparent win unacceptable: any seat moving that the tweak doe
 run); the slope's sign positive (a cut that becomes a bonus); the result resting on seats with no recorded
 winner (scored 0, listed by SQ1!).
 
+## Instrument proofs, with pass rules written before they run
+
+1. `--prove`: every election re-simulated in full from its state is IDENTICAL to the harness's own
+   `win_prob` (same seed, same sims), and the state's shares equal the run's `sharedetail.csv` to csv
+   rounding (< 1e-9). Any election not identical fails the instrument.
+2. `--prove-subset=vic2022,wa2025`: every seat, one per call, against the harness's full run: max |z| < 5
+   over all seat-party cells and the winner-probability mean difference within 3 SE. The same command with
+   `--break` (every per-seat argument rotated by one seat) must FAIL; if it passes, the check is blind.
+3. Flat port against the real harness arm (`--check-arm` on the 10:37am quick_arm caches 6ac7023650e3 arm,
+   b09d4d70fd65 baseline):
+   - our cached baseline shares equal that run's baseline shares on every cell (< 1e-9) in every election
+     (code since then touches vic2026 only); if not, the comparison is void where they differ;
+   - the moved-seat sets are identical in every election;
+   - at seats with no seat poll, our arm equals the harness arm on every cell (< 1e-6 points);
+   - at seats where they differ, the gap is the seat-poll blend's dilution and is listed per seat. The proof
+     does NOT pass if any of Wentworth fed2019, Clayfield qld2020 or Cottesloe wa2021 is among them without
+     the pass-through correction described above.
+   - log loss: flat at 1,000 sims (quick_arm's floor, 5e-4) over the touched seats agrees in sign with
+     quick_arm's 0.1124 -> 0.1369 on those seats, and the all-seat change agrees with +0.0003 within 2 of
+     quick_arm's SEs (0.0002).
+
 ## Dry run on a known answer (the instrument, before the variant)
 
 The flat cut, scored by this screen, must reproduce the sign of quick_arm's verdict: do-no-harm WORSE
