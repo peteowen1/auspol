@@ -1,7 +1,7 @@
 # Upper-house (Legislative Council) forecast for the daily run: the 24 Nov walk's simulation
 # (docs/plans/upper-house-forecast-walk-2026-11-24/sim.R, which Pete approved) moved here unchanged in its model and
 # seed, base preference rule only (the walk's sensitivity runs stay in the walk). Written for the ITG page
-# /politics/vic2026/council via R2 key auspol/council-forecast-vic2026.json.
+# /politics/vic2026/upper-house via R2 key auspol/council-forecast-vic2026.json.
 #
 #   Rscript scripts/build_council_forecast.R [--dir=output] [--out=output/council-forecast-vic2026.json] [--sims=4000]
 # In:  <dir>/night-state-vic-2026.rds (its swd), <dir>/seat-shares-vic-2026.csv,
