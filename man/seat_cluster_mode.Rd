@@ -7,6 +7,6 @@
 seat_cluster_mode()
 }
 \description{
-Seat cluster factor mode (\code{AUSPOL_SEAT_CLUSTER_COR}: "0", "1", "type" or "both")
+Unset means "both", the published value (shipped 26 Nov 2026, scripts/published_flags.R).
 }
 \keyword{internal}

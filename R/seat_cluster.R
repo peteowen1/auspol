@@ -34,9 +34,11 @@
 #        region file get the type factor alone, as under "type".
 
 #' Seat cluster factor mode (`AUSPOL_SEAT_CLUSTER_COR`: "0", "1", "type" or "both")
+#'
+#' Unset means "both", the published value (shipped 26 Nov 2026, scripts/published_flags.R).
 #' @keywords internal
 seat_cluster_mode <- function() {
-  v <- Sys.getenv("AUSPOL_SEAT_CLUSTER_COR", "0")
+  v <- Sys.getenv("AUSPOL_SEAT_CLUSTER_COR", "both")
   if (!v %in% c("0", "1", "type", "both"))
     stop("AUSPOL_SEAT_CLUSTER_COR must be \"0\", \"1\", \"type\" or \"both\"; got \"", v, "\"", call. = FALSE)
   v
@@ -72,9 +74,7 @@ seat_cluster_type_map <- function(election, seats, shares, census = NULL, root =
   n_cen <- 0L
   if (!isFALSE(census)) {
     if (is.null(census)) {
-      f <- file.path(root, "output", "census-features-vintage.csv")
-      if (!file.exists(f)) stop("seat_cluster_type_map: ", f, " is missing", call. = FALSE)
-      census <- utils::read.csv(f, stringsAsFactors = FALSE)
+      census <- seat_cluster_census(election, root)
     }
     miss <- setdiff(c("pair", "seat", SCT_CENSUS_COLS), names(census))
     if (length(miss)) stop("seat_cluster_type_map: census table lacks ", paste(miss, collapse = ", "), call. = FALSE)
@@ -105,6 +105,34 @@ seat_cluster_type_map <- function(election, seats, shares, census = NULL, root =
                           n_cen, length(seats), paste(sort(tabulate(id), decreasing = TRUE), collapse = "/")))
   attr(id, "scheme") <- scheme; attr(id, "labels") <- labels; attr(id, "n_census") <- n_cen
   id
+}
+
+#' Census table for the seat-type clusters
+#'
+#' `output/census-features-vintage.csv` (each row the latest census BEFORE polling day). The
+#' daily forecast runner has only `output/census-features.csv` (the `shipped-models` release
+#' carries that one, not the vintage file). The two differ only where a later census was matched
+#' to an earlier election; for an election whose every row's census year is before the election
+#' year they are the same rows (vic2026 and nsw2027 checked identical, 26 Nov 2026). So the plain
+#' table is used only for such an election, said in an SCT2 line, and anything else stops.
+#' @param election Election label, e.g. `"vic2026"`.
+#' @param root Directory holding `output/`.
+#' @return Data frame of census rows (`pair`, `seat`, census columns).
+#' @keywords internal
+seat_cluster_census <- function(election, root = ".") {
+  f <- file.path(root, "output", "census-features-vintage.csv")
+  if (file.exists(f)) return(utils::read.csv(f, stringsAsFactors = FALSE))
+  g <- file.path(root, "output", "census-features.csv")
+  if (!file.exists(g)) stop("seat_cluster_type_map: neither ", f, " nor ", g, " exists", call. = FALSE)
+  ce <- utils::read.csv(g, stringsAsFactors = FALSE)
+  yr <- suppressWarnings(as.integer(sub("^[a-z]+", "", election)))
+  vin <- suppressWarnings(as.integer(ce$vintage[ce$pair == election]))
+  if (!is.finite(yr) || !length(vin) || anyNA(vin) || any(vin >= yr))
+    stop("SCT2! ", f, " is missing, and ", basename(g), " cannot stand in for ", election,
+         " (its census rows are not all from before ", yr, ")", call. = FALSE)
+  cat(sprintf("SCT2 %s: %s absent; census rows from %s (every row census %s, before %d, so the same rows)\n",
+              election, basename(f), basename(g), paste(sort(unique(vin)), collapse = "/"), yr))
+  ce
 }
 
 #' Does the jurisdiction have a region cluster file (vic, nsw) or a state (federal)?

@@ -23,7 +23,9 @@ test_that("the switch off (NULL, all-zero rho, or no seat in a cluster) is the o
   expect_identical(run(seat_cluster = rep(NA_integer_, 6), cluster_rho = c(ALP = 0.4)), base)
   on <- run(seat_cluster = f$cl, cluster_rho = c(ALP = 0.4, LNP = 0.4))
   expect_false(identical(on$totals, base$totals))          # the mechanism actually ran
-  expect_identical(seat_cluster_setup("vic2022", f$sh), list(seat_cluster = NULL, cluster_rho = NULL))  # switch unset
+  withr::with_envvar(c(AUSPOL_SEAT_CLUSTER_COR = "0"),
+    expect_identical(seat_cluster_setup("vic2022", f$sh), list(seat_cluster = NULL, cluster_rho = NULL)))  # switch off
+  withr::with_envvar(c(AUSPOL_SEAT_CLUSTER_COR = NA), expect_identical(seat_cluster_mode(), "both"))  # unset = published
 })
 
 test_that("the compiled core and the R loop agree byte for byte with the cluster term on", {
@@ -166,4 +168,19 @@ test_that("seat types come from shares and census only, a seat without census is
   seed_before <- .Random.seed
   seat_cluster_type_map("vic2099", seats, sh, census = cen, quiet = TRUE)
   expect_identical(.Random.seed, seed_before)                    # the caller's stream is untouched
+})
+
+test_that("without the vintage census file, the plain one stands in only for an election after every row's census", {
+  d <- tempfile(); dir.create(file.path(d, "output"), recursive = TRUE)
+  ce <- data.frame(pair = c("vic2099", "vic2099", "qld2017"), seat = c("A", "B", "A"), vintage = c(2021L, 2021L, 2021L),
+                   yr12_pct = 1, born_aus_pct = 1, indig_pct = 1, over55_pct = 1, under35_pct = 1, lang_other_pct = 1,
+                   edu_25plus_pct = 1)
+  expect_error(seat_cluster_census("vic2099", d), "neither")
+  utils::write.csv(ce, file.path(d, "output", "census-features.csv"), row.names = FALSE)
+  expect_output(got <- seat_cluster_census("vic2099", d), "SCT2 vic2099")
+  expect_identical(nrow(got), 3L)
+  expect_error(seat_cluster_census("qld2017", d), "SCT2!")       # a 2021 census for a 2017 election: refused
+  expect_error(seat_cluster_census("vic2050", d), "SCT2!")       # no rows for the election: refused
+  utils::write.csv(ce[1, ], file.path(d, "output", "census-features-vintage.csv"), row.names = FALSE)
+  expect_identical(nrow(seat_cluster_census("qld2017", d)), 1L)  # the vintage file, when present, is read as before
 })
