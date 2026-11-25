@@ -16,12 +16,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   seat-level quick tester (merged 6b6910db), switch registry scans .sh/.ps1 (d718b747, dev-e2). OFF by decision:
   former-leader cut, regional seat correlation, upper-house all-party regional blend (DECISIONS 25 Nov). dev -> main
   after 28 Nov (dev carries deliberately-off-main work). Rebuild worktrees `C:/dev/auspol-wt-rb*`: unlink junctions before removing.
-- **DATED Thu 26 Nov morning, seat-type correlation screens (branch `seat-corr-type` 5453c141, Pete "Go" 25 Nov):** read the
-  markers in `C:/dev/auspol-wt-corrtype/deciding-runs/20261125-2142-seat-type-A/` (type, 1:00am) and `-B/` (both, 3:15am),
-  5,000 sims, all elections. Score each with `scripts/score_seat_totals.R <base_cache> <arm_cache>` (caches under each
-  folder's `cache/`), check the baseline reproduces 1.8792 / 0.3033, fill the RESULT in
-  `docs/plans/prereg-seat-type-cor-2026-11-25.md` (branch), then the vic2026 live effect (switch 0 / type / both, 20k).
-  Any ship decision goes to Pete with the split.
+- **NEEDS PETE (26 Nov): seat-type correlation, both arms REFUSED under the prereg's clause 1** (branch `seat-corr-type`
+  d3367c17, RESULT in `docs/plans/prereg-seat-type-cor-2026-11-25.md`). Type only: -0.0071 (0.41 SE), null. Region + type:
+  -0.0159 (0.92 SE; needs 1 SE), passes clauses 2-5 (sign 35 of 35). Recommendation: OFF for 28 Nov; rescore after.
 - **DATED Thu 26 Nov, 4:30am run, MRP + cache:** log has `SPM5 ... 24 cell(s) of YouGov (MRP) 2026-11-23` (Bendigo East, Mulgrave, Kew,
   Pakenham, Niddrie, Melbourne; table md5 f560c155) and the what-if jobs log `IPC1  ind-person cache hit` (PR #283), each
   ~60 s faster than run 45545825468's scenario jobs; the council step logs 8 `CFC2` lines (Victorian Socialists, Northern
