@@ -60,7 +60,9 @@ permissions:
   actions: read
 
 concurrency:
-  group: forecast-refresh
+  # only=council gets its own queue: in the shared one a pending council run would cancel a pending daily
+  # fallback (GitHub keeps one pending run per group) and wait behind a ~45 min full run (review, 26 Nov 2026).
+  group: ${{ inputs.only == 'council' && 'forecast-council' || 'forecast-refresh' }}
   cancel-in-progress: false
 
 jobs:
@@ -127,6 +129,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p output
+          # Both files must come from ONE lower-house run: refresh uploads them seconds apart, so a council run in
+          # that window (or after a refresh that died between them) could pair two runs. Refuse if > 10 min apart.
+          gh release view forecast-latest --json assets --jq '.assets[] | select(.name == "night-state-vic-2026.rds" or .name == "seat-shares-vic-2026.csv") | "\(.name) \(.updatedAt)"' | tee assets.txt
+          test "$(wc -l < assets.txt)" -eq 2
+          gap=$(( $(date -d "$(sed -n 1p assets.txt | cut -d' ' -f2)" +%s) - $(date -d "$(sed -n 2p assets.txt | cut -d' ' -f2)" +%s) ))
+          if [ "${gap#-}" -gt 600 ]; then echo "::error::night state and seat shares were uploaded ${gap#-} s apart: not one run"; exit 1; fi
           gh release download forecast-latest -p night-state-vic-2026.rds -p seat-shares-vic-2026.csv -D output --clobber
           ls -la output
           test -s output/night-state-vic-2026.rds && test -s output/seat-shares-vic-2026.csv
