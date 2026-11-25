@@ -40,7 +40,9 @@ simulate_seat_contests(
   coalition_split = NULL,
   error_q = NULL,
   zero_absent = zero_absent_on(),
-  surge_level = surge_level_on()
+  surge_level = surge_level_on(),
+  seat_cluster = NULL,
+  cluster_rho = NULL
 )
 }
 \arguments{
@@ -428,6 +430,16 @@ is identical. Defaults to the \code{AUSPOL_SURGE_LEVEL} switch (\code{\link[=sur
 previous (gain) behaviour, byte for byte. Under \code{TRUE} the result also carries
 \code{surge_level_raised} and \code{surge_level_unchanged} (per seat, draws) and prints \code{SLV1}.
 docs/plans/prereg-surge-level-2026-10-25.md.}
+
+\item{seat_cluster, cluster_rho}{Optional SEAT CLUSTER FACTOR (AUSPOL_SEAT_CLUSTER_COR,
+\code{\link[=seat_cluster_setup]{seat_cluster_setup()}}). \code{seat_cluster} is an integer cluster id per seat (in \code{shares}' row
+order, \code{NA} = no cluster term); \code{cluster_rho} a named vector over classes in \verb{[0, 1)}, the
+share of each cell's variance that is common to its cluster. Each cell's noise becomes
+\code{sd_cell * (sqrt(rho) * z_cluster + sqrt(1 - rho) * z_own)}, one \code{z_cluster} per (draw,
+cluster, class) drawn on a separate stream: every cell's variance is unchanged (exactly, as
+the error quantiles have RMS 1), seats in a cluster move together, and seat-count ranges
+widen. Needs \code{level_sd} and no \code{party_draws}. Both \code{NULL} (or every rho 0) is the old run,
+byte for byte.}
 }
 \value{
 List: \code{win_prob} (data.frame, one row per seat and party with a

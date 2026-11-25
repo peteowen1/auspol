@@ -293,7 +293,7 @@ cat(sprintf("BNT0  transfers on file: %s\n",
 if (!identical(Sys.getenv("AUSPOL_FORECAST_MODE", "1"), "1"))
   cat("BNT0o  AUSPOL_FORECAST_MODE is not 1: the seats swing toward the ACTUAL statewide result. Diagnostic of the seat layer only -- NOT a forecast.\n")
 
-res_all <- list(); ap_all <- list(); share_detail <- list()
+res_all <- list(); ap_all <- list(); share_detail <- list(); tot_all <- list()
 prev_spread <- NA_real_
 
 for (K in PAIRS) {
@@ -848,8 +848,9 @@ for (K in PAIRS) {
   .imx <- ind_mixture_surge(el_to, rownames(shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BNT1N")
   surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
   .swd <- harness_sw_draws(SWD, colnames(shares), N_SIMS, el_to, "BNTW")
+  .scc <- seat_cluster_setup(el_to, shares, tag = "BNT5k")
   # seat_state_sim(): this call, plus the exact inputs saved under AUSPOL_SEAT_STATE_DUMP (R/seat_state.R, scripts/seat_quick.R)
-  sim <- seat_state_sim(el_to, level_sd = .level_sd, sd_override = harness_sw_net_sd(size_sd_apply(SD_OVR, shares, el_to, .level_sd, .lm(shares)), .swd, shares, .level_sd, .lm(shares), psd, el_to, "BNTW"), level_mult = .lm(shares), shares, fm, party_sd = psd, statewide_draws = .swd,
+  sim <- seat_state_sim(el_to, seat_cluster = .scc$seat_cluster, cluster_rho = .scc$cluster_rho, level_sd = .level_sd, sd_override = harness_sw_net_sd(size_sd_apply(SD_OVR, shares, el_to, .level_sd, .lm(shares)), .swd, shares, .level_sd, .lm(shares), psd, el_to, "BNTW"), level_mult = .lm(shares), shares, fm, party_sd = psd, statewide_draws = .swd,
                                 seat_sd = sd_used * SEAT_SD_MULT,
                                 breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(el_to, rownames(shares)), error_q = error_dist_args(el_to, colnames(shares)),
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
@@ -908,6 +909,9 @@ for (K in PAIRS) {
   # Per-seat per-party probabilities, per pair. Parity with fed/sa/qld, which
   # already write this; WA carries seven pairs and was entirely invisible to
   # emergence analysis without it.
+  # the simulated seat totals per draw, as the other harnesses write them (seat-count ranges
+  # cannot be rebuilt from per-seat probabilities; added 2026-11-25 for AUSPOL_SEAT_CLUSTER_COR).
+  tot_all[[el_to]] <- data.table(pair = el_to, as.data.table(sim$totals))
   ap_all[[el_to]] <- {
     .f <- merge(wp[, .(seat, party, prob)],
                 data.table(seat = keep, actual = unname(truth[keep])),
@@ -959,6 +963,7 @@ R <- rbindlist(res_all)
 fwrite(R, file.path("output", sprintf("backtest-nt%s.csv", CAL_TAG)))
 .nt_ap <- rbindlist(ap_all, fill = TRUE)
 fwrite(.nt_ap, file.path("output", sprintf("backtest-nt-allprobs%s.csv", CAL_TAG)))
+fwrite(rbindlist(tot_all, fill = TRUE), file.path("output", sprintf("backtest-nt-totals%s.csv", CAL_TAG)))
 cat(sprintf("BNT5p wrote the full probability table: %d rows over %d pair(s)
 ",
             nrow(.nt_ap), uniqueN(.nt_ap$pair)))

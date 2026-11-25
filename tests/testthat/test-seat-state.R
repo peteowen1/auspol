@@ -56,6 +56,22 @@ test_that("a seat subset keeps per-seat arguments aligned with their seats", {
   expect_error(seat_state_subset(bad2, "s1"), "seat order")
 })
 
+test_that("the seat cluster factor subsets by seat, and its per-class rho is passed through whole", {
+  sh <- ss_shares()
+  rho1 <- c(ALP = 0.1, LNP = 0.2, GRN = 0.05, IND = 0)    # length 4 = the seat count: must not be read as per seat
+  a <- seat_state_named_args(list(sh, ss_matrix(), party_sd = 1, n_sims = 10,
+                                  seat_cluster = c(1L, 2L, 1L, NA), cluster_rho = rho1))
+  b <- seat_state_subset(a, c("s3", "s1"))
+  expect_identical(b$seat_cluster, c(1L, 1L))
+  expect_identical(b$cluster_rho, rho1)
+  two <- list(region = c(ALP = 0.1, LNP = 0.1), type = c(ALP = 0.2, LNP = 0.05))   # AUSPOL_SEAT_CLUSTER_COR=both
+  a2 <- seat_state_named_args(list(sh, ss_matrix(), party_sd = 1, n_sims = 10,
+                                   seat_cluster = cbind(region = c(1L, 1L, 2L, 2L), type = c(3L, 4L, 3L, 4L)), cluster_rho = two))
+  b2 <- seat_state_subset(a2, c("s4", "s2"))
+  expect_identical(unname(b2$seat_cluster), cbind(c(2L, 1L), c(4L, 4L)))
+  expect_identical(b2$cluster_rho, two)
+})
+
 test_that("a subset run matches the full run to Monte Carlo error, seat by seat", {
   sh <- ss_shares()
   a <- list(shares = sh, matrix = ss_matrix(), party_sd = c(ALP = 2, LNP = 2, GRN = 1, IND = 1),

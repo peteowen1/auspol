@@ -615,6 +615,28 @@ test_that("night_run_update mixes the two Liberal-card runs when the state carri
   expect_null(attr(r0$sim, "htv_card"))
 })
 
+test_that("night_run_update passes the state's seat cluster factor to the simulation, and none from an older state", {
+  seen <- new.env()
+  fake_sim <- function(..., seat_cluster = NULL, cluster_rho = NULL) {
+    seen$sc <- seat_cluster; seen$rho <- cluster_rho
+    list(totals = cbind(ALP = 1L), tcp_winner = matrix("ALP", 1, 1, dimnames = list(NULL, "S")),
+         tcp_runnerup = matrix("GRN", 1, 1, dimnames = list(NULL, "S")), tcp_share = matrix(0.55, 1, 1, dimnames = list(NULL, "S")),
+         win_prob = data.frame(seat = "S", party = "ALP", prob = 1))
+  }
+  local_mocked_bindings(
+    night_prior_sd = function(...) NULL,
+    night_booth_update = function(...) list(n_updated = 0L, counted = c(S = 0), shares = NULL, sd = NULL, resolved = 0),
+    simulate_seat_contests = fake_sim)
+  st <- list(shares = matrix(50, 1, 2, dimnames = list("S", c("ALP", "GRN"))), n_sims = 1L, swd = NULL, htv_ov = "none",
+             seat_cluster = cbind(region = 1L, type = 2L), cluster_rho = list(region = c(ALP = 0.1), type = c(ALP = 0.2)))
+  conv <- list(live = data.frame(district = "S"), counted = data.frame(), tcp = data.frame())
+  night_run_update(st, conv, NULL, use_tcp = FALSE)
+  expect_identical(seen$sc, st$seat_cluster); expect_identical(seen$rho, st$cluster_rho)
+  st$seat_cluster <- NULL; st$cluster_rho <- NULL
+  night_run_update(st, conv, NULL, use_tcp = FALSE)
+  expect_null(seen$sc); expect_null(seen$rho)
+})
+
 test_that("night_apply_tcp(own_fp = TRUE) reads each draw's flow from its own primaries, so outlying draws cannot skew the centre", {
   # 7 typical draws (IND 36, LNP 40, a = 52.6%) and 3 far-off draws (IND 66, LNP 22, a = 74.3%): every draw's OWN
   # implied flow to IND is 0.69. Counted primaries IND 36 / LNP 40 and a counted flow of 0.776, i.e. good news for IND.

@@ -74,7 +74,7 @@ seat_state_named_args <- function(args) {
                               "breakout_q", "level_sd", "party_sd", "seat_sd", "flow_sd", "fallback_flow_sd",
                               "n_sims", "seed", "smooth", "fallback_smooth", "shrink_k", "exhaust", "engine",
                               "keep_fp", "surge_parties", "surge_floor", "surge_from_zero", "zero_absent",
-                              "surge_level", "level_mult")
+                              "surge_level", "level_mult", "cluster_rho")
 
 #' Restrict a saved argument list to some seats
 #'

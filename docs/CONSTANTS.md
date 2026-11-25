@@ -763,3 +763,20 @@ Replay-only until the 2026 feed arrives; none is read by the published forecast.
 | `SEAT_PAID_LEAN_BASE_K` | an election's independent-poll side mean shrunk to 0 by n/(n+3) | no: the `AUSPOL_CONSERVE_SHRINK_K` precedent |
 | `SEAT_PAID_LEAN_SIDES` | ALP, ALP+GRN, GRN, LNP, IND (UNKNOWN gets none) | no: the sides of `sponsor_side.csv` |
 | lean per side, noise | fitted per target from earlier elections, each side shrunk to zero (vic2026: LNP +3.27, ALP+GRN +2.97, IND -0.18; noise sd 4.54) | yes |
+
+## Seat cluster factor (`AUSPOL_SEAT_CLUSTER_COR`, built 2026-11-25, SHIPPED as `both` 26 Nov 2026 on Pete's override; `R/seat_cluster.R`; `plans/prereg-seat-cluster-cor-2026-11-25.md`)
+
+Without `output/census-features-vintage.csv` (the daily runner has only `census-features.csv`), the seat
+types read `census-features.csv` for an election whose every row's census predates it, printing SCT2
+(`seat_cluster_census()`); same rows for vic2026 and nsw2027.
+
+| constant | value | from data? |
+|---|---|---|
+| cluster per seat | vic: 8 upper-house regions; nsw: regions file; fed: division's state; qld/sa/wa/nt: k-means on projected shares | no: definitions, chosen 2026-11-25 (the files on disk; no region file for qld/sa/wa/nt) |
+| k-means `k` | round(seats / 11), at least 2 (about a Victorian region's size) | no: a choice, not tuned |
+| k-means seed / starts | 20261125, nstart 20 | no: reproducibility only |
+| rho per class | per-election intraclass correlation of standardised misses (`scripts/fit_seat_cluster_icc.R` -> `inst/extdata/seat-cluster-icc.csv`), pooled over EARLIER elections of the same group (federal / state), partially pooled across classes (DerSimonian-Laird). vic2026: ALP 0.172, LNP 0.172, GRN 0.145, IND 0.073, ONP 0.136, OTH 0.127, OTH_RIGHT 0.128 | **ESTIMATED** |
+| rho clamp | [0, 0.9] (printed when hit) | no: guard |
+| standardising sd | published `AUSPOL_LEVEL_SD` 1.10, 8.67 | inherited |
+| seat type (values `type`, `both`; `plans/prereg-seat-type-cor-2026-11-25.md`) | k-means on z-scored projected shares + 7 census features (`output/census-features-vintage.csv`, latest census before polling day; missing = 0), k = round(seats / 11), seed 20261126, nstart 20 | no: a definition, chosen 2026-11-25, not tuned |
+| rho for `type` / `both` | `inst/extdata/seat-cluster-icc-type.csv` (`fit_seat_cluster_icc.R --scheme=type`): one-way type ICC (`type`), crossed lmer region and type shares (`both`), pooled as above; sum capped at 0.9 | **ESTIMATED** |

@@ -62,7 +62,11 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
                    bool za = false,
                    LogicalMatrix absent = LogicalMatrix(0, 0),
                    bool surge_level = false,
-                   NumericVector exhaust_by = NumericVector::create()) {
+                   NumericVector exhaust_by = NumericVector::create(),
+                   bool has_clu = false,
+                   NumericMatrix clu_z = NumericMatrix(0, 0),
+                   IntegerVector clu_col = IntegerVector::create(),
+                   NumericMatrix clu_load = NumericMatrix(0, 0)) {
   const int nseat = shares.nrow(), K = shares.ncol();
   // OPTIONAL-PREFERENTIAL EXHAUSTION (R/seat_sim.R EXHAUST_BY, ported 7 Nov 2026): percent of
   // an excluded candidate's votes that reach nobody. One multiply on `pot` per transfer, at the
@@ -209,6 +213,10 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
           e = R::rnorm(0.0, sdc[k]);
         }
         v[k] = base[k] + shift[k] + e;
+        // SEAT CLUSTER FACTOR (AUSPOL_SEAT_CLUSTER_COR, R/seat_cluster.R): one standard normal per
+        // (draw, cluster, class), precomputed in R on its own stream, times this cell's loading.
+        // Draws no random number here, so the off path is the old run exactly.
+        if (has_clu && clu_col[i] >= 0) v[k] = v[k] + clu_load(i, k) * clu_z(s, clu_col[i] + k);
         if (v[k] < 0) v[k] = 0;
         if (za && absent(i, k)) v[k] = 0;   // not standing (R/seat_sim.R absent_m)
       }
