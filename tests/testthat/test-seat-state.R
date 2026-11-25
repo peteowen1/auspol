@@ -98,3 +98,27 @@ test_that("the winprob safety measure is 0 at a coin flip or worse and 1 at cert
   expect_equal(f("e1", fs), c(0.6, 0, 0, 0))                # GRN in B: never drawn winning
   expect_true(all(is.na(f("e9", fs))))                       # an election with no probabilities: unknown, not 0
 })
+
+test_that("seat_quick takes only the current published-config baseline cache, by its key", {
+  ctx <- list(code = "tabc1234", external = "anchor=x;reference=y;", input = "in0123456789", subdirs = character(0))
+  base <- tempfile("cache"); dir.create(base)
+  mk <- function(parts, name, ids = c("vic2022", "wa2025")) {
+    d <- file.path(base, name); dir.create(d)
+    saveRDS(parts, file.path(d, "_key.rds"))
+    for (u in ids) { dir.create(file.path(d, u)); saveRDS(list(pair = u), file.path(d, u, sprintf("state-%s.rds", u))) }
+    d
+  }
+  good <- mk(quick_key_parts(ctx, 20000L, character(0), TRUE), quick_key(ctx, 20000L, character(0), TRUE))
+  expect_identical(quick_check_seat_cache(good, ctx, c("vic2022", "wa2025"))$key, basename(good))
+  arm_env <- c(AUSPOL_LEADER_FORMER = "1")
+  arm <- mk(quick_key_parts(ctx, 20000L, arm_env, TRUE), quick_key(ctx, 20000L, arm_env, TRUE))
+  expect_error(quick_check_seat_cache(arm, ctx, "vic2022"), "ARM cache .*AUSPOL_LEADER_FORMER=1")
+  old <- utils::modifyList(ctx, list(code = "told9999"))
+  stale <- mk(quick_key_parts(old, 20000L, character(0), TRUE), quick_key(old, 20000L, character(0), TRUE))
+  expect_error(quick_check_seat_cache(stale, ctx, "vic2022"), "its code told9999 differs")
+  nodump <- mk(quick_key_parts(ctx, 20000L, character(0), FALSE), quick_key(ctx, 20000L, character(0), FALSE))
+  expect_error(quick_check_seat_cache(nodump, ctx, "vic2022"), "not built with --dump")
+  expect_error(quick_check_seat_cache(good, ctx, c("vic2022", "fed2019")), "no state for 1 election.*fed2019")
+  newin <- utils::modifyList(ctx, list(input = "in9999999999"))
+  expect_error(quick_check_seat_cache(good, newin, "vic2022"), "inputs .* differ")
+})

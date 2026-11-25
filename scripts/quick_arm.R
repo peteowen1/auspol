@@ -65,6 +65,10 @@ stopifnot(is.finite(sims), sims >= 100, slots >= 1, slots <= 2)  # two R process
 base_only <- "--base-only" %in% a
 reuse_on <- "--reuse" %in% a && !("--no-reuse" %in% a)
 dump_on <- "--dump" %in% a
+# --reuse adopts older baselines after a canary compares sharedetail and allprobs only; their state
+# files (what scripts/seat_quick.R simulates from) would come along unverified. Refused, not warned.
+if (dump_on && reuse_on)
+  stop("quick_arm: --dump cannot be combined with --reuse: a reused baseline's state files were never checked by the canary. Rebuild the dump cache without --reuse.", call. = FALSE)
 if (!clean_only && !base_only && !length(arm_env)) stop("usage: Rscript scripts/quick_arm.R \"AUSPOL_X=1 AUSPOL_Y=0\" [--pairs=..] [--sims=N] [--base=\"ENV\"]")
 # the arm and the baseline must differ, or this compares a run with itself
 arm_eff <- c(base_env[setdiff(names(base_env), names(arm_env))], arm_env)
@@ -83,14 +87,8 @@ if (length(.forced))
 sh <- function(...) suppressWarnings(system2("git", c(...), stdout = TRUE, stderr = FALSE))
 repo <- normalizePath(".", winslash = "/")
 stopifnot(file.exists(file.path(repo, "DESCRIPTION")))
-common <- tryCatch(normalizePath(sh("rev-parse", "--git-common-dir")[1], winslash = "/"), error = function(e) NA_character_)
-main_checkout <- if (!is.na(common)) dirname(common) else repo
-pick <- function(sub, probe) {
-  for (b in unique(c(repo, main_checkout))) if (file.exists(file.path(b, sub, probe))) return(file.path(b, sub))
-  stop("quick_arm: cannot find ", sub, "/", probe, " in ", repo, " or ", main_checkout)
-}
-src_output <- Sys.getenv("AUSPOL_QUICK_SRC_OUTPUT", pick("output", "xgb-primary-asat-predictions.csv"))
-src_external <- pick("external", "elections")
+.src <- quick_source_dirs(repo)   # R/quick_arm.R, shared with scripts/seat_quick.R
+main_checkout <- .src$main_checkout; src_output <- .src$src_output; src_external <- .src$src_external
 qd <- normalizePath(Sys.getenv("AUSPOL_QUICK_DIR", file.path(Sys.getenv("TEMP", tempdir()), "auspol-quickarm")), winslash = "/", mustWork = FALSE)
 # never inside a real output/ directory or the source of the inputs
 for (bad in c(src_output, file.path(repo, "output"), file.path(main_checkout, "output")))
@@ -129,65 +127,19 @@ if (clean_only) {
 quick_check_root(qd, create = TRUE)       # refuses a directory without the marker that is not empty
 
 # ---- identity of the inputs and the code --------------------------------------
-# EVERY top-level input the slot copy takes (same filter as the copy below), not a
-# hand-picked few: with three named files, a new or refitted input elsewhere in
-# output/ (e.g. departed-successor-rates.csv, 2026-10-07) was never recopied into
-# the slots and never invalidated a cached baseline.
-sig_files <- list.files(src_output, full.names = TRUE)
-sig_files <- sort(sig_files[!dir.exists(sig_files) & !grepl("^backtest-", basename(sig_files))])
-top_sig <- paste(vapply(sig_files, function(f) if (file.exists(f)) sprintf("%s:%d:%d", basename(f), file.size(f), as.integer(file.mtime(f))) else paste0(basename(f), ":absent"), ""), collapse = "|")
-# The six subdirectories the slot copy takes are inputs too (a refit model under xgb-primary-*
-# changes the forecast): recursive relative path, size, mtime, so a change invalidates both the
-# slot copy and every cache key. A missing or unreadable one changes the key every call.
-SUBDIRS <- c("booths", "cache", "shipped", "xgb-base-ref", "xgb-primary-asat", "xgb-primary-v6-models")
-sub_sig <- paste(vapply(SUBDIRS, function(d) paste0(d, "=", if (dir.exists(file.path(src_output, d))) quick_tree_sig(file.path(src_output, d)) else "absent"), ""), collapse = "|")
-input_sig <- quick_md5(paste(top_sig, sub_sig, sep = "##"))
-
-# CODE: everything a harness loads or compiles (R/, scripts/, src/ -- load_all() compiles
-# src/seat_sim_core.cpp -- plus DESCRIPTION and NAMESPACE), as the commit plus a digest of the
-# uncommitted diff and untracked files. This tool's own two files are excluded.
-# CONTENT, not the commit: the committed part is the blob hashes of those paths at HEAD
-# (`git ls-tree`), so a commit that touches only docs/ or other non-code files no longer
-# throws away every cached baseline (2026-10-07: several 7-minute rebuilds for doc notes).
-CODE_PATHS <- c("R", "scripts", "src", "inst", "DESCRIPTION", "NAMESPACE")
-excl <- c(":(exclude)R/quick_arm.R", ":(exclude)scripts/quick_arm.R")
-sh_checked <- function(...) {   # a git call that failed is an unreadable input, never an empty one
-  r <- suppressWarnings(system2("git", c(...), stdout = TRUE, stderr = FALSE))
-  if (!is.null(attr(r, "status")) && attr(r, "status") != 0L) return(NULL)
-  r
-}
-# ls-tree takes plain paths, not :(exclude) pathspecs (it exits 128), so drop this tool's
-# own two files from the listing here instead.
-head_tree <- sh_checked("ls-tree", "-r", "HEAD", "--", CODE_PATHS)
-if (!is.null(head_tree)) head_tree <- head_tree[!grepl("\t(R|scripts)/quick_arm\\.R$", head_tree)]
-head_sha <- if (is.null(head_tree) || !length(head_tree)) NA_character_ else
-  paste0("t", substr(quick_md5(paste(head_tree, collapse = "\n")), 1, 7))
-diff_txt <- sh_checked("diff", "HEAD", "--", CODE_PATHS, excl)
-untracked <- sh_checked("ls-files", "--others", "--exclude-standard", "--", CODE_PATHS, excl)
-if (is.null(head_sha) || is.na(head_sha) || is.null(diff_txt) || is.null(untracked)) {
-  cat("quick_arm: WARNING git could not describe the code; the cache is bypassed for this call\n")
-  code_hash <- quick_unreadable("git")
-} else {
-  dirty_txt <- c(diff_txt, unlist(lapply(untracked, function(f) c(f, readLines(f, warn = FALSE)))))
-  code_hash <- if (length(dirty_txt)) sprintf("%sx%s", head_sha, substr(quick_md5(paste(dirty_txt, collapse = "\n")), 1, 8)) else head_sha
-}
-# EXTERNAL: the polling-anchor clone (HEAD plus its working-tree state) and the reference data
-# (recursive size+mtime). Anything unreadable changes the key.
-anchor_dir <- file.path(src_external, "aus-polling-analyser")
-external_id <- paste(c(
-  if (file.exists(file.path(anchor_dir, ".git"))) {
-    h <- sh_checked("-C", anchor_dir, "rev-parse", "HEAD"); st <- sh_checked("-C", anchor_dir, "status", "--porcelain")
-    if (is.null(h) || is.null(st)) quick_unreadable("anchor git") else paste0("anchor=", h[1], "/", quick_md5(paste(st, collapse = "\n")))
-  } else paste0("anchor-files=", quick_tree_sig(anchor_dir)),
-  paste0("reference=", quick_tree_sig(file.path(src_external, "reference"))), ""), collapse = ";")
-key_of <- function(env) {
-  quick_md5(paste(c("keyv2", code_hash, external_id, sims, input_sig, if (dump_on) "seat-state-dump", if (length(env)) paste0(names(env)[order(names(env))], "=", env[order(names(env))])), collapse = ";"))
-}
+# Computed by quick_key_context() in R/quick_arm.R (moved there 25 Nov 2026 so scripts/seat_quick.R
+# recomputes exactly this key and refuses a cache that does not match it). EVERY top-level input the
+# slot copy takes plus the six copied subdirectories (size, mtime); the CODE as the blob hashes of R/,
+# scripts/, src/, inst/, DESCRIPTION, NAMESPACE at HEAD plus a digest of uncommitted and untracked
+# files (QUICK_KEY_EXCLUDE left out: this tool's own files and the two cache readers); the EXTERNAL
+# anchor clone and reference data. Anything unreadable changes the key.
+.ctx <- quick_key_context(repo, src_output, src_external)
+input_sig <- .ctx$input; code_hash <- .ctx$code; external_id <- .ctx$external; SUBDIRS <- .ctx$subdirs
+key_of <- function(env) quick_key(.ctx, sims, env, dump_on)
 key_base <- key_of(base_env); key_arm <- key_of(arm_eff)
 # What each key was made of, so a later call can find a baseline that differs ONLY in code
 # (the canary below). Written once per key directory.
-key_parts_of <- function(env) list(code = code_hash, external = external_id, sims = sims, input = paste0(input_sig, if (dump_on) "+dump"),
-                                   env = if (length(env)) paste0(names(env)[order(names(env))], "=", env[order(names(env))]) else character(0))
+key_parts_of <- function(env) quick_key_parts(.ctx, sims, env, dump_on)
 for (.k in c(list(list(key_base, base_env)), if (!base_only) list(list(key_arm, arm_eff)))) {
   .d <- file.path(qd, "cache", .k[[1]]); dir.create(.d, recursive = TRUE, showWarnings = FALSE)
   if (!file.exists(file.path(.d, "_key.rds"))) saveRDS(key_parts_of(.k[[2]]), file.path(.d, "_key.rds"))

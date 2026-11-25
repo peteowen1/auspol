@@ -61,25 +61,35 @@ stopifnot(is.finite(sims), sims >= 100)
 
 # ---- the cache -----------------------------------------------------------------------
 qd <- normalizePath(Sys.getenv("AUSPOL_QUICK_DIR", file.path(Sys.getenv("TEMP", tempdir()), "auspol-quickarm")), winslash = "/", mustWork = FALSE)
-cache <- flag("cache", NA_character_)
-if (is.na(cache)) {
-  kd <- list.dirs(file.path(qd, "cache"), recursive = FALSE)
-  kd <- kd[vapply(kd, function(d) length(list.files(d, pattern = "^state-.*[.]rds$", recursive = TRUE)) > 0, NA)]
-  if (!length(kd)) stop("seat_quick: no cache with state files under ", qd, "/cache; build one with quick_arm.R --base-only --dump --pairs=all --sims=20000")
-  cache <- kd[which.max(file.mtime(kd))]
-}
-all_ids <- basename(list.dirs(cache, recursive = FALSE))
-all_ids <- all_ids[file.exists(file.path(cache, all_ids, sprintf("state-%s.rds", all_ids)))]
+# The cache is chosen BY ITS KEY, never by date: it must be the published-config BASELINE built with
+# --dump by THIS checkout's code from TODAY's inputs (the key quick_arm would compute now, from the same
+# R/quick_arm.R functions), and hold every election asked for. Anything else stops, naming what differs:
+# an arm cache, a partial one, or one built before a code or input change.
+all_ids <- quick_units()$id
 ids <- all_ids
 want <- flag("pairs", "all")
 if (!identical(want, "all")) {
-  w <- trimws(strsplit(want, ",")[[1]])
-  if (!all(w %in% ids)) stop("seat_quick: no state for ", paste(setdiff(w, ids), collapse = ", "), " in ", cache)
-  ids <- w
+  ids <- trimws(strsplit(want, ",")[[1]])
+  if (!all(ids %in% all_ids)) stop("seat_quick: unknown election(s): ", paste(setdiff(ids, all_ids), collapse = ", "))
 }
+repo <- normalizePath(".", winslash = "/")
+.src <- quick_source_dirs(repo)
+.ctx <- quick_key_context(repo, .src$src_output, .src$src_external)
+cache <- flag("cache", NA_character_)
+if (is.na(cache)) cache <- file.path(qd, "cache", quick_key(.ctx, as.integer(flag("cache-sims", "20000")), character(0), TRUE))
+if (!dir.exists(cache)) stop("seat_quick: no baseline seat-state cache for this code and these inputs (expected ", cache,
+                             "); build it: Rscript scripts/quick_arm.R --base-only --dump --pairs=all --sims=20000")
+need <- if (any(c("former_winprob") %in% arm_names)) all_ids else ids   # its fit reads every earlier election's probabilities
+.ck <- quick_check_seat_cache(cache, .ctx, need)
+# the tweak's own data reads (leaders table, as-at predictions, candidacies) come from a slot whose output/
+# copy is the SAME inputs the cache was built from
 root <- flag("root", file.path(qd, "slot1"))
-if (!file.exists(file.path(root, "output", "xgb-primary-asat-predictions.csv"))) stop("seat_quick: ", root, " has no output/ inputs; pass --root=")
+.sig <- file.path(root, "output", ".quick-sig")
+if (!file.exists(.sig) || !identical(readLines(.sig, warn = FALSE), .ctx$input))
+  stop("seat_quick: ", root, "/output is not a copy of today's inputs (", .ctx$input, "); run quick_arm.R once to refresh the slot, or pass --root=")
 options(auspol.root = normalizePath(root, winslash = "/"))
+cat(sprintf("SKQ0k cache %s: published-config baseline, code %s, inputs %s, %s sims, --dump; %d election(s) used of %d required present\n",
+            .ck$key, .ck$parts$code, .ctx$input, .ck$sims, length(ids), length(need)))
 
 ld_ap <- function(id) { ap <- fread(file.path(cache, id, "allprobs.csv"), showProgress = FALSE); if (!"pair" %in% names(ap)) ap$pair <- id; ap }
 ld <- function(id) {

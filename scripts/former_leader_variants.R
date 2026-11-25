@@ -23,17 +23,17 @@ do_ll <- !("--no-ll" %in% a) && !noise_only
 heldout_name <- flag("heldout", NA_character_)
 sims <- as.integer(flag("sims", "20000"))
 qd <- normalizePath(Sys.getenv("AUSPOL_QUICK_DIR", file.path(Sys.getenv("TEMP", tempdir()), "auspol-quickarm")), winslash = "/", mustWork = FALSE)
-cache <- flag("cache", NA_character_)
-if (is.na(cache)) {
-  kd <- list.dirs(file.path(qd, "cache"), recursive = FALSE)
-  kd <- kd[vapply(kd, function(d) length(list.files(d, pattern = "^state-.*[.]rds$", recursive = TRUE)) > 30, NA)]
-  if (!length(kd)) stop("no seat_quick cache under ", qd)
-  cache <- kd[which.max(file.mtime(kd))]
-}
+# the cache is chosen by its key, as scripts/seat_quick.R does: the current published-config baseline with
+# every election (quick_check_seat_cache() in R/quick_arm.R stops naming what differs)
+.src <- quick_source_dirs(normalizePath(".", winslash = "/"))
+.ctx <- quick_key_context(normalizePath(".", winslash = "/"), .src$src_output, .src$src_external)
+cache <- flag("cache", file.path(qd, "cache", quick_key(.ctx, as.integer(flag("cache-sims", "20000")), character(0), TRUE)))
+ids <- quick_units()$id
+.ck <- quick_check_seat_cache(cache, .ctx, ids)
 root <- flag("root", file.path(qd, "slot1"))
+if (!identical(readLines(file.path(root, "output", ".quick-sig"), warn = FALSE), .ctx$input)) stop(root, "/output is not a copy of today's inputs")
 options(auspol.root = normalizePath(root, winslash = "/"))
-ids <- basename(list.dirs(cache, recursive = FALSE))
-ids <- ids[file.exists(file.path(cache, ids, sprintf("state-%s.rds", ids)))]
+cat(sprintf("FLV0k cache %s: published-config baseline, code %s, %s sims, %d elections\n", .ck$key, .ck$parts$code, .ck$sims, length(ids)))
 yr <- function(p) as.integer(sub("^[a-z]+", "", p))
 HELD <- ids[yr(ids) >= 2024]
 cat(sprintf("FLV0 cache %s: %d elections; held out (scored once, at the end): %s\n", cache, length(ids), paste(HELD, collapse = " ")))
