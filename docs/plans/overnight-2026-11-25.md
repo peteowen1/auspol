@@ -18,3 +18,4 @@
 - 10:09pm: full check_like_ci on dev PASSED (5,551 tests, 0 failed; R CMD check skipped, package unchanged). Item 1 done.
 - 10:05pm: hubs slimmed, DECISIONS 40.4k -> 27.7k, NEXT-STEPS 45.7k -> 41.4k (47d6dfdc). Item 4 done.
 - 10:14pm: #283 review nit fixed (fe34a24b, 27 cache tests pass); CI R-CMD-check green on d38a3bf7. Item 5 done.
+- 2:16am: seat-type run A (type) DONE. Seat-total log score 1.9259 -> 1.9188 (diff -0.0071, SE 0.0174, 35 elections, 191 cells): fails rule 1 (needs >= 1 SE) => NULL, refused under the prereg. Seat-winner log loss 0.3033 -> 0.3023 (-0.0009, SE 0.0007; guard passes, baseline reproduces 0.3033). Coverage 90%: 0.895 -> 0.901. Sign holds leaving any one election out in 32 of 35. CAVEAT: totals baseline 1.9259 / 191 cells vs parent 1.8792 / 195: trace why. Score file: deciding-runs/20261125-2142-seat-type-A/score-totals.txt.
