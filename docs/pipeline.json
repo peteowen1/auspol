@@ -1,0 +1,125 @@
+{
+  "repo": "peteowen1/auspol",
+  "title": "auspol forecast pipeline",
+  "output": "docs/CI-PIPELINE.md",
+  "about": "What the daily Victorian (and NSW 2027) forecast run does on GitHub Actions, in order, and how long each part takes: from fetching the polls to the forecast and the what-if sliders landing on the release and the data store the site reads. The model's own stages (the forecast's four steps and the rebuild's eight) are described in docs/PIPELINE.md; this file is the GitHub Actions run that executes them every day.",
+  "runs": 5,
+  "pipelines": [
+    {
+      "name": "Daily forecast refresh",
+      "workflow": "forecast.yaml",
+      "about": "One run per day. The forecast job publishes first; then 16 what-if jobs (4 parties, 2 modes, 2 elections) rerun the seat model with one party's vote forced, side by side, and a last job combines and publishes them. Only full daily runs are counted: the title must say \"(daily)\" and the what-if jobs must have run. From 25 Nov 2026 every run uses 100,000 simulations (was 20,000), so runs before that date are faster than today's.",
+      "triggers": "The inthegame-blog site's worker dispatches it at 4:30am Melbourne time with daily=true; GitHub's own schedule (17:37 UTC) is a late fallback that the gate job skips when the day's run already went. It starts nothing else: the site reads the files it publishes.",
+      "select": {
+        "events": [
+          "workflow_dispatch",
+          "schedule"
+        ],
+        "title": "\\(daily\\)",
+        "require_jobs": [
+          "^refresh$",
+          "^scenarios \\(",
+          "^publish-scenarios$"
+        ]
+      },
+      "jobs": [
+        {
+          "name": "gate",
+          "match": "^gate$",
+          "about": "Checks whether today's daily forecast already ran, so a late fallback or a duplicated dispatch does not run it twice",
+          "steps": {
+            "re:^Run go\\(\\)": "Lists the last 10 runs of this workflow and stops this one if a daily run in the last 12 hours already succeeded or is still going"
+          }
+        },
+        {
+          "name": "refresh",
+          "match": "^refresh$",
+          "about": "The forecast itself: fetches the polls and the trained models, runs every model stage, and publishes Victoria and then NSW 2027 to the release and the data store",
+          "steps": {
+            "Fetch the anchor's poll data": "Clones the poll CSVs and seat files from the aus-polling-analyser repository (a shallow copy of its analysis folder only)",
+            "Restore cached election results": "Restores the past election results (VEC, ECSA, ECQ pages) saved by an earlier run; they never change, so they are fetched only when the fetch scripts change",
+            "Fetch election results": "Downloads the past election results from the commissions when the cache missed (skipped on a cache hit)",
+            "Cache election results": "Saves the election results just fetched for later runs (skipped on a cache hit)",
+            "Fetch the trained models": "Downloads the trained trees and the fitted tables from the shipped-models release; refetches today's Wikipedia and Poll Bludger poll tables and leader ratings; fails if any required file is missing or the models are more than 14 days old",
+            "Refuse zero-byte inputs": "Stops the run if any poll file, election result or downloaded model is an empty file",
+            "Run the pipeline": "Runs scripts/run_all.R: every model stage from preference flows to the seat simulation and the pages (stages in the next table); then checks the Victorian outputs were written by this run",
+            "Summarise": "Writes the headline numbers, every check line and the warnings to the run's summary page",
+            "Publish the forecast to the forecast-latest release": "Uploads the Victorian forecast files and a poll snapshot to the forecast-latest release, then builds the all-primaries what-if simulations and the upper-house forecast",
+            "Publish the forecast to R2 for the ITG page": "Copies the forecast, page data, what-if, upper-house, pollster and party files to the R2 store the site reads",
+            "Keep a dated copy of the forecast on R2 (as-at history)": "Saves today's forecast under a dated name on R2, so past days can be shown (scripts/publish_forecast_history.sh)",
+            "re:^NSW 2027 forecast": "Downloads the NSW tables, runs the seat model for NSW 2027 at 20,000 simulations, builds its forecast JSON and poll-trend data, and uploads them to the release",
+            "Publish the NSW 2027 forecast to R2 for the ITG page": "Copies the NSW 2027 forecast files to R2",
+            "Keep a dated copy of the NSW 2027 forecast on R2 (as-at history)": "Saves today's NSW 2027 forecast under a dated name on R2",
+            "Upload outputs": "Keeps the page, page data, projection mix and the run log as a downloadable bundle for 30 days",
+            "Hand the scenario jobs their inputs": "Saves everything this job fetched and built so the 16 what-if jobs can start from it",
+            "Raise an alarm": "On a daily run, opens or updates one tracking issue when a check fails with something new; otherwise writes \"Alarm not raised\""
+          },
+          "log": {
+            "headers": [
+              {
+                "regex": "^--- (?P<name>.+ \\(scripts/[a-z_]+\\.R\\)) ---$",
+                "label": "the stages of run_all.R"
+              }
+            ],
+            "tables": [
+              {
+                "start": "^SQ1  stage timings",
+                "row": "^\\s+(?P<name>\\S.*?)\\s+(?P<seconds>\\d+\\.\\d+)\\s+\\d+\\.\\d+\\s*$",
+                "labels": [
+                  "Victorian seat model (its SQ1 table, when printed)",
+                  "NSW 2027 seat model, by part (fit_seats_full.R's SQ1 table)"
+                ]
+              }
+            ],
+            "about": {
+              "preference-flow estimator (scripts/backtest_flows.R)": "Estimates how preferences flow between parties",
+              "Victoria (live target) (scripts/fit_vic.R)": "Each party's Victorian poll average over time",
+              "federal cycles (scripts/fit_federal.R)": "Re-fits past federal poll trends, as a validation stage",
+              "NSW cycles (scripts/fit_nsw.R)": "Re-fits past NSW poll trends, as a validation stage",
+              "fundamentals + mix (scripts/fit_projection.R)": "Blends the poll trend with the fundamentals model into the statewide projection",
+              "statewide covariance (scripts/estimate_statewide_cov.R)": "How the parties' statewide errors move together, from ten past election pairs",
+              "seat simulation (per seat) (scripts/fit_seats_full.R)": "The seat model: each seat's primary votes, then the simulated elections",
+              "pollster scorecard (scripts/fit_scorecard.R)": "Each pollster's past accuracy and lean",
+              "pollster pages (scripts/build_pollster_pages.R)": "One page of data per pollster for the site",
+              "public page (scripts/build_page.R)": "The Victorian forecast page and its page data",
+              "forecast JSON (scripts/build_forecast_json.R)": "The forecast as one JSON file plus a history row",
+              "party pages (scripts/build_party_pages.R)": "One page of data per party and jurisdiction for the site"
+            }
+          },
+          "stage_notes": {
+            "the stages of run_all.R": "Each stage runs from its `--- name ---` header line to the next one; the last runs to the end of the step."
+          }
+        },
+        {
+          "name": "scenarios",
+          "match": "^scenarios \\(",
+          "about": "The what-if slider: 16 copies, one per election, party and mode (\"exactly X%\" or \"polling at X%\"); each reruns the seat model at 9 forced vote levels",
+          "rename": {
+            "^Run the .* scenarios$": "Run this copy's scenarios"
+          },
+          "steps": {
+            "Release the dpkg lock the timed-out R setup left behind": "Only when the R install timed out: frees the package-manager lock before the retry",
+            "Release the dpkg lock the timed-out dependency install left behind": "Only when the package install timed out: frees the package-manager lock before the retry",
+            "Say when an R install step needed its retry": "Only after a retry: says so in the run's warnings",
+            "Run this copy's scenarios": "Runs scripts/build_scenarios.R for this copy's election, party and mode: the seat model at each forced vote level"
+          }
+        },
+        {
+          "name": "publish-scenarios",
+          "match": "^publish-scenarios$",
+          "about": "Joins the 16 copies' results into one what-if file per election and publishes it",
+          "steps": {
+            "Combine into scenario-<election>.json": "Runs scripts/combine_scenarios.py (Python, no R install) to build scenario-vic2026.json and scenario-nsw2027.json",
+            "Publish to the forecast-latest release and R2": "Uploads the what-if files to the forecast-latest release and to R2"
+          }
+        },
+        {
+          "name": "scenario-alarm",
+          "match": "^scenario-alarm$",
+          "optional": true,
+          "about": "Only when a what-if job failed on a daily run: opens or updates the tracking issue"
+        }
+      ]
+    }
+  ]
+}
