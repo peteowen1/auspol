@@ -244,6 +244,10 @@ fit_cross_seat_carry <- function(target_election, corpus = NULL, pairs = NULL) {
 .cs_fingerprint <- function(what, corpus, ..., env = TRUE) {
   bd <- file.path("external", "reference", "byelections")
   bf <- if (dir.exists(bd)) sort(list.files(bd, full.names = TRUE)) else character(0)
+  # byelection_table() reads AUSPOL_BYELECTION_RESULTS instead when it is set: its CONTENTS
+  # count too (the read set records only the path)
+  bp <- base::Sys.getenv("AUSPOL_BYELECTION_RESULTS", "")
+  if (nzchar(bp) && file.exists(bp)) bf <- c(bf, bp)
   ev <- if (env) {
     e <- base::Sys.getenv(); e <- e[grepl("^AUSPOL_", names(e)) & !names(e) %in% .CS_IGNORED_VARS]
     e[order(names(e))]
@@ -325,7 +329,10 @@ Sys.getenv <- function(x = NULL, unset = "", names = NA) {
 # never fatal.
 #' @noRd
 .cs_cached <- function(key, compute, cache_dir = NULL, disk = TRUE) {
-  note <- function(e) { .cs_note_reads(names(e$reads), all = isTRUE(e$all)); e$value }
+  # as.character(): an entry that read no switch has NULL names, and a NULL here would mark
+  # every enclosing recorder as having read ALL of them (found 2026-11-25, when .ip_cases
+  # began recording around the "prep" memo)
+  note <- function(e) { .cs_note_reads(as.character(names(e$reads)), all = isTRUE(e$all)); e$value }
   mem <- if (exists(key, envir = .cs_memo, inherits = FALSE)) get(key, envir = .cs_memo, inherits = FALSE) else list()
   for (e in mem) if (.cs_entry_ok(e)) return(note(e))
   dir <- .cs_cache_dir(cache_dir)

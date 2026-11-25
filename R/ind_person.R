@@ -86,12 +86,75 @@ ind_person_cells <- function(target, corpus = NULL) {
 
 .ip_memo <- new.env(parent = emptyenv())
 
+# ---- disk memo (AUSPOL_IND_PERSON_CACHE, default "1") ----------------------------
+# The person cells and the carry-fit case table depend on the target and the
+# candidate corpus, never on the shares matrix, yet each what-if scenario (a
+# separate Rscript, scripts/build_scenarios.R) recomputed them: ~36 s of a
+# ~73 s scenario on CI (run 45500128541). They now go through the cross-seat
+# disk cache (.cs_cached(), AUSPOL_CROSS_SEAT_CACHE_DIR), keyed on the corpus
+# contents, the election pairs, the by-election files' contents (including the
+# AUSPOL_BYELECTION_RESULTS file, .cs_fingerprint()), and a hash of EVERY function
+# and constant in the package namespace; each entry also records the AUSPOL_* switches its computation read
+# and hits only while they all still hold. "0" computes everything afresh.
+#' @noRd
+.ip_cache_on <- function() {
+  v <- base::Sys.getenv("AUSPOL_IND_PERSON_CACHE", "1")
+  if (!v %in% c("0", "1")) stop("AUSPOL_IND_PERSON_CACHE must be \"0\" or \"1\", not ", v)
+  v == "1"
+}
+
+# Hash of every function body and constant in this namespace, once per process
+# (~0.3 s): any code edit anywhere invalidates the memo, so no hand-kept list of
+# the functions the cells depend on can fall out of date.
+#' @noRd
+.ip_code_hash <- function() {
+  if (!is.null(.ip_memo$.code)) return(.ip_memo$.code)
+  h <- digest::digest(.ip_code_objects(), algo = "xxhash64")
+  assign(".code", h, envir = .ip_memo)
+  h
+}
+
+# What .ip_code_hash() hashes. Nothing in it may hold a pointer, which differs per
+# process and would make every fresh process miss (tests/testthat/test-ind-person-cache.R).
+#' @noRd
+.ip_code_objects <- function() {
+  ns <- environment(.ip_code_hash)
+  nm <- sort(ls(ns, all.names = TRUE))
+  obj <- lapply(nm, function(n) {
+    x <- get(n, envir = ns)
+    # a registered C++ routine carries a per-process address: hash its name only
+    if (is.function(x)) deparse(x) else if (is.environment(x)) NULL else if (inherits(x, "NativeSymbolInfo")) x$name else x
+  })
+  list(nm, obj)
+}
+
+#' @noRd
+.ip_key <- function(what, C, ...) .cs_fingerprint(what, C, .ip_code_hash(), ..., env = FALSE)
+
+# ind_person_cells(), through the disk memo when it is on.
+#' @noRd
+.ip_cells <- function(target, C) {
+  if (!.ip_cache_on()) return(ind_person_cells(target, C))
+  C <- data.table::as.data.table(C)
+  # a copy: the caller edits `value`, and the memo must not see that (copy() also
+  # restores data.table's self-reference after readRDS)
+  data.table::copy(.cs_cached(.ip_key("ipcells", C, target), function() ind_person_cells(target, C)))
+}
+
 # Every person cell in every election pair, with that person's actual share
-# there. Computed once per process per corpus.
+# there. Computed once per process per corpus, and kept on disk across
+# processes while AUSPOL_IND_PERSON_CACHE is "1".
 #' @noRd
 .ip_cases <- function(C) {
   key <- .cs_fingerprint("ipcases", C)
   if (!is.null(.ip_memo[[key]])) return(.ip_memo[[key]])
+  r <- if (.ip_cache_on()) .cs_cached(.ip_key("ipcases", C), function() .ip_cases_compute(C)) else .ip_cases_compute(C)
+  assign(key, r, envir = .ip_memo)
+  r
+}
+
+#' @noRd
+.ip_cases_compute <- function(C) {
   els <- vapply(all_election_pairs(), `[[`, "", "election")
   rows <- lapply(els, function(e) {
     x <- NULL
@@ -103,9 +166,7 @@ ind_person_cells <- function(target, corpus = NULL) {
     if (nrow(m)) m$election <- .e
     m
   })
-  r <- data.table::rbindlist(rows, fill = TRUE)
-  assign(key, r, envir = .ip_memo)
-  r
+  data.table::rbindlist(rows, fill = TRUE)
 }
 
 #' The record-size carry for person-matched independents (Amendment 1)
@@ -157,7 +218,9 @@ ind_person_apply <- function(shares, target, stage = c("base", "final"), code = 
   # disjoint from this rule's (a record in the same seat at the previous election vs none).
   if (!identical(ind_person_mode(), stage) || !"IND" %in% colnames(shares))
     return(ind_return_apply(shares, target, stage, paste0(code, "r"), corpus))
-  cells <- ind_person_cells(target, corpus)
+  # with the memo on, one read of the corpus serves its key, the cells and the carry fit
+  if (is.null(corpus) && .ip_cache_on()) corpus <- data.table::fread(out_path("candidacies.csv"), showProgress = FALSE)
+  cells <- .ip_cells(target, corpus)
   how <- Sys.getenv("AUSPOL_IND_PERSON_CARRY", "linear")
   if (!how %in% c("ratio", "linear")) stop("AUSPOL_IND_PERSON_CARRY must be \"ratio\" or \"linear\", not ", how)
   fit_note <- ""
