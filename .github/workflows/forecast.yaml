@@ -153,9 +153,6 @@ jobs:
           npm install -g wrangler@4.135.0 >/dev/null 2>&1
           wrangler r2 object put "inthegame-data/auspol/upper-house-forecast-vic2026.json" --file output/upper-house-forecast-vic2026.json --content-type application/json --cache-control "public, max-age=300" --remote
           echo "OK upper-house-forecast-vic2026.json"
-          # TRANSITION (26 Nov 2026): also the old key the ITG page reads until it switches; delete when it has.
-          wrangler r2 object put "inthegame-data/auspol/council-forecast-vic2026.json" --file output/upper-house-forecast-vic2026.json --content-type application/json --cache-control "public, max-age=300" --remote
-          echo "OK council-forecast-vic2026.json (old key)"
 
   refresh:
     needs: gate
@@ -689,8 +686,6 @@ jobs:
           # The upper-house page's forecast: optional, as above.
           if [ -s output/upper-house-forecast-vic2026.json ]; then
             wrangler r2 object put "inthegame-data/auspol/upper-house-forecast-vic2026.json" --file output/upper-house-forecast-vic2026.json --content-type application/json --cache-control "public, max-age=300" --remote && echo "OK upper-house-forecast-vic2026.json" || echo "::warning::upper-house forecast upload failed -- the upper-house page keeps the previous run's data"
-            # TRANSITION (26 Nov 2026): also the old key the ITG page reads until it switches; delete when it has.
-            wrangler r2 object put "inthegame-data/auspol/council-forecast-vic2026.json" --file output/upper-house-forecast-vic2026.json --content-type application/json --cache-control "public, max-age=300" --remote && echo "OK council-forecast-vic2026.json (old key)" || echo "::warning::upper-house forecast upload to the old key failed"
           else
             echo "::warning::no output/upper-house-forecast-vic2026.json -- the upper-house page keeps the previous run's data"
           fi
