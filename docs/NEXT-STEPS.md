@@ -120,9 +120,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   run stage 9 from here until a full rebuild is checked. nsw2027's demographic table has no shift.
   25 Nov morning checks (early-share correction live, whatif on R2, seat TCP per scenario, upper house) DONE; text verbatim
   in `backlog/journal-2026-11-25-queue-history.md`, with the superseded #1262 note (ITG merges #1310 on 27 Nov).
-- OPEN, DATED Thu 26 Nov: VEC venues recheck (off Pete's Daily Eight, 23 Nov). Compare the spreadsheet's `Last-Modified` with
-  `raw-20261121-1140/headers-xlsx.txt` (20 Nov 02:02 GMT); only if it moved: save raw, `scripts/build_vec_places_2026.R`, the geocoder,
-  `bash scripts/publish_night_inputs.sh --upload`, and hand ITG a rebuilt booth file. Done when: checked and, if moved, all four done.
+- DONE 26 Nov 5:13am, VEC venues recheck: reissued ("correct as at 24th Nov 7:00pm", Last-Modified 24 Nov 22:56 GMT), saved
+  raw `voting-locations/raw-20261126-0513/`, rebuilt: same 1,852 + 310 centres, none added or removed; only entrance /
+  accessibility text on 3 election-day + 1 early centre (Glenroy South and Broadmeadows EVC 1: lift out of order, stairs only).
+  Night model unaffected (booth names unchanged), geocoder nothing new, night bundle NOT re-uploaded (no booth change).
+  OPEN for ITG: does the booth finder show accessibility text? If so, rebuild `booths-vic2026.json` for the lift change.
 - OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. 24 Nov 9:16am done, every source (`docs/benchmarks/vic2026/2026-11-23/`; TAB moved to one "Vic Seats" event, read by
   `bk_tab_seats()`; 27 Nov: also rebuild `seat-odds-page.html` there, the seat odds artifact
   https://claude.ai/artifact/PJHtfKoc8xKvhjUErCb9QR; and the SITE page politics/odds.qmd: hand-write that folder's
