@@ -37,9 +37,9 @@ on:
         type: boolean
         default: false
       n_sims:
-        description: "Simulations for the Victorian forecast (default 20000). Leave scenarios off with anything else: they run at 20000 and would not match"
+        description: "Simulations for the Victorian forecast and its what-if scenarios (default 100000, Pete 25 Nov 2026; was 20000)"
         type: string
-        default: "20000"
+        default: "100000"
 
 permissions:
   # contents: write is for the "Publish the forecast" step, which uploads the
@@ -465,11 +465,12 @@ jobs:
       - name: Run the pipeline
         id: run
         env:
-          # Manual trials only (Pete, 25 Nov 2026: one 100k run); scheduled and worker runs leave it empty = 20,000.
+          # 100,000 for every run since 25 Nov 2026 (Pete: "Yes, 100k daily", after the 100k trial took +2 min); the n_sims
+          # input overrides it on a manual run. NSW (its own step below) stays at the published 20,000.
           # The election-night state stays at AUSPOL_NIGHT_STATE_SIMS (20,000) whatever this is.
-          AUSPOL_N_SIMS: ${{ inputs.n_sims || '20000' }}
+          AUSPOL_N_SIMS: ${{ inputs.n_sims || '100000' }}
           # fit_seats_full.R refuses to publish a run whose sims differ from published_flags.R unless this is set
-          AUSPOL_ALLOW_SIMS_CHANGE: ${{ (inputs.n_sims && inputs.n_sims != '20000') && '1' || '0' }}
+          AUSPOL_ALLOW_SIMS_CHANGE: ${{ (inputs.n_sims || '100000') != '20000' && '1' || '0' }}
         run: |
           # run_all.R exits non-zero when ANY validation stage breaches (2026-09-19:
           # every daily run since at least the 12th had failed on a NSW 2027
@@ -619,7 +620,9 @@ jobs:
           done
           # The all-primaries what-if page's simulations: optional, as above.
           if [ -s output/whatif-sims-vic2026.json ]; then
-            wrangler r2 object put "inthegame-data/auspol/whatif-sims-vic2026.json" --file output/whatif-sims-vic2026.json --content-type application/json --cache-control "public, max-age=300" --remote && echo "OK whatif-sims-vic2026.json" || echo "::warning::what-if simulations upload failed -- the page keeps the previous run's data"
+            # gzip on the wire (3.6 MB -> ~0.95 MB at 100k; Pete 25 Nov): the browser's fetch decompresses it
+            gzip -9 -c output/whatif-sims-vic2026.json > output/whatif-sims-vic2026.json.gz
+            wrangler r2 object put "inthegame-data/auspol/whatif-sims-vic2026.json" --file output/whatif-sims-vic2026.json.gz --content-type application/json --content-encoding gzip --cache-control "public, max-age=300" --remote && echo "OK whatif-sims-vic2026.json" || echo "::warning::what-if simulations upload failed -- the page keeps the previous run's data"
           else
             echo "::warning::no output/whatif-sims-vic2026.json -- the all-primaries what-if page keeps the previous run's data"
           fi
@@ -900,7 +903,7 @@ jobs:
     # asked (inputs.scenarios): 16 jobs of what-ifs cost ~16 min of runners and nothing reads a test run's.
     if: ${{ !inputs.quick && (github.event_name == 'schedule' || inputs.daily || inputs.scenarios) }}
     runs-on: ubuntu-latest
-    timeout-minutes: 80   # worst case: two (10 + 7 + 10)-min install rounds + ~16 min of scenarios
+    timeout-minutes: 120  # worst case: two (10 + 7 + 10)-min install rounds + ~28 min of 100k scenarios (25 Nov 2026; was 80 at 20k)
     strategy:
       fail-fast: false
       matrix:
@@ -980,6 +983,11 @@ jobs:
           name: scenario-inputs-${{ github.run_id }}
           path: .
       - name: Run the ${{ matrix.target }} ${{ matrix.party }} ${{ matrix.mode }} scenarios
+        env:
+          # Same sims as the published run of that election, or combine_scenarios.py's CSC7 check (today's level ==
+          # published) fails: Victoria 100,000 (refresh job, 25 Nov 2026), NSW the published 20,000. A suffixed run, so
+          # fit_seats_full.R's published-filenames guard does not apply.
+          AUSPOL_N_SIMS: ${{ matrix.target == 'vic2026' && (inputs.n_sims || '100000') || '20000' }}
         run: Rscript scripts/build_scenarios.R --target=${{ matrix.target }} --parties=${{ matrix.party }} --modes=${{ matrix.mode }}
       - uses: actions/upload-artifact@v4
         if: always()
