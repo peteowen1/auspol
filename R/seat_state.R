@@ -264,10 +264,13 @@ seat_tweak_check <- function(base, arm, targets) {
 #' @param mode `"flat"` or `"scaled"`.
 #' @param safety For `"scaled"`: `function(pair, fs)` returning one non-negative
 #'   number (or `NA`) per row of `fs` (`seat`, `party`).
+#' @param passthrough `NULL`, or data.frame `pair`, `seat`, `party`, `r`: each listed
+#'   seat's cut is multiplied by `r`, the fraction of the cut the real harness
+#'   carries through to the final shares (see `scripts/seat_quick.R --passthrough`).
 #' @return `shares`, moved, with attributes `targets` (seats it may move) and `log`
 #'   (data.table seat, party, delta, and `safety`/`slope` when scaled).
 #' @keywords internal
-seat_tweak_former_leader <- function(shares, pair, mode = c("flat", "scaled"), safety = NULL) {
+seat_tweak_former_leader <- function(shares, pair, mode = c("flat", "scaled"), safety = NULL, passthrough = NULL) {
   mode <- match.arg(mode)
   ls <- leader_seats()
   fs <- former_leader_seats(pair, ls)
@@ -285,12 +288,20 @@ seat_tweak_former_leader <- function(shares, pair, mode = c("flat", "scaled"), s
     fs$slope <- sl$slope
     fs$delta <- sl$slope * fs$safety
   }
+  # PASS-THROUGH: the share of a pre-blend cut the real harness carries to the final shares (the seat-poll
+  # blend dilutes it in polled seats); a seat not listed passes 1.
+  fs$pt <- 1
+  if (!is.null(passthrough)) {
+    k <- match(paste(pair, normalise_seat(fs$seat), fs$party), paste(passthrough$pair, normalise_seat(passthrough$seat), passthrough$party))
+    fs$pt[!is.na(k)] <- passthrough$r[k[!is.na(k)]]
+    fs$delta <- fs$delta * fs$pt
+  }
   i <- match(normalise_seat(fs$seat), normalise_seat(rownames(shares)))
   j <- match(fs$party, colnames(shares))
   hit <- which(!is.na(i) & !is.na(j) & is.finite(fs$delta) & fs$delta != 0)
   for (h in hit) shares[i[h], ] <- .shift_cell(shares[i[h], ], j[h], fs$delta[h])
   attr(shares, "targets") <- rownames(shares)[unique(i[hit])]
-  lg <- data.table::data.table(seat = rownames(shares)[i[hit]], party = fs$party[hit], delta = fs$delta[hit])
+  lg <- data.table::data.table(seat = rownames(shares)[i[hit]], party = fs$party[hit], delta = fs$delta[hit], passthrough = fs$pt[hit])
   if (mode == "scaled") { lg$safety <- fs$safety[hit]; lg$slope <- fs$slope[hit] }
   attr(shares, "log") <- lg
   shares

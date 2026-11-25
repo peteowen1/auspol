@@ -20,6 +20,8 @@
 #        --sims=N       simulations per re-run (default 20000; at most the cache's own count)
 #        --check-arm=ARMDIR,BASEDIR  a quick_arm ARM cache and its BASELINE cache: compares this tweak's
 #                       shares with that arm's sharedetail cell by cell (the delta-vs-pipeline gap)
+#        --passthrough=ARMDIR,BASEDIR  scale each former-leader seat's cut by the fraction the real harness
+#                       carried to the final shares in that quick_arm arm (see PASS-THROUGH below)
 #        --prove        full re-simulation of every election, compared with the harness's own result
 #        --prove-subset=a,b  every seat of those elections re-simulated ONE SEAT PER CALL (the screen's own
 #                       path) against the harness's full run, by z-score; add --break to rotate every
@@ -94,10 +96,32 @@ wp_all <- function() {
   if (is.null(.wp_all)) .wp_all <<- rbindlist(lapply(all_ids, function(u) ld_ap(u)[, .(pair, seat, party, prob)]))
   .wp_all
 }
+# PASS-THROUGH (--passthrough=ARMDIR,BASEDIR, a quick_arm arm of the SAME cut built into the pipeline and
+# its baseline): per former-leader seat, the fraction of the flat cut the real harness carried to the final
+# shares, r = (arm - base) on the cut cell / intended cut, clamped to [0, 1]; 1 where the cut is under 0.2
+# points (the ratio is noise there). Every former-leader tweak is then multiplied by its seat's r, so a cut
+# the pipeline would dilute (a polled seat) is diluted here too. PT stays NULL without the flag.
+PT <- NULL
+pt_flag <- flag("passthrough", NA_character_)
+if (!is.na(pt_flag)) {
+  ptd <- trimws(strsplit(pt_flag, ",")[[1]]); stopifnot(length(ptd) == 2L, all(dir.exists(ptd)))
+  PT <- rbindlist(lapply(all_ids, function(id) {
+    x <- ld(id); b <- as.matrix(x$st$args$shares)
+    lg <- attr(seat_state_with_env(x$st, seat_tweak_former_leader(b, id, "flat")), "log")
+    if (!nrow(lg)) return(NULL)
+    qa <- fread(file.path(ptd[1], id, "sharedetail.csv"), showProgress = FALSE); qb <- fread(file.path(ptd[2], id, "sharedetail.csv"), showProgress = FALSE)
+    k <- paste(lg$seat, lg$party)
+    real <- qa$pred_share[match(k, paste(qa$seat, qa$party))] - qb$pred_share[match(k, paste(qb$seat, qb$party))]
+    r <- ifelse(abs(lg$delta) < 0.2 | !is.finite(real), 1, pmin(1, pmax(0, real / lg$delta)))
+    data.table(pair = id, seat = lg$seat, party = lg$party, intended = lg$delta, realised = real, r = r)
+  }))
+  cat("SQ0p pass-through of the flat cut in the real harness arm (realised / intended; r used, 1 where the cut is under 0.2 points):\n")
+  print(PT[, .(pair, seat, party, intended = round(intended, 3), realised = round(realised, 3), r = round(r, 3))], row.names = FALSE)
+}
 TWEAKS <- list(
-  former_flat    = function(sh, pair) seat_tweak_former_leader(sh, pair, "flat"),
-  former_margin  = function(sh, pair) seat_tweak_former_leader(sh, pair, "scaled", former_safety_margin),
-  former_winprob = function(sh, pair) seat_tweak_former_leader(sh, pair, "scaled", former_safety_winprob(wp_all())),
+  former_flat    = function(sh, pair) seat_tweak_former_leader(sh, pair, "flat", passthrough = PT),
+  former_margin  = function(sh, pair) seat_tweak_former_leader(sh, pair, "scaled", former_safety_margin, passthrough = PT),
+  former_winprob = function(sh, pair) seat_tweak_former_leader(sh, pair, "scaled", former_safety_winprob(wp_all()), passthrough = PT),
   # DELIBERATELY BROKEN, for the proof that seat_tweak_check catches it: the flat cut, plus a
   # one-point move on the row after the first target, which the tweak does not declare.
   broken_offbyone = function(sh, pair) {
@@ -199,7 +223,7 @@ for (id in ids) {
     n_moved[nm] <- n_moved[nm] + length(moved[[nm]])
     arms[[nm]] <- y
   }
-  if (!is.na(chk)) {   # cell-by-cell against a real harness arm and its baseline (first tweak only)
+  if (!anyNA(chk)) {   # cell-by-cell against a real harness arm and its baseline (first tweak only)
     asd <- fread(file.path(chk[1], id, "sharedetail.csv"), showProgress = FALSE)
     bsd <- fread(file.path(chk[2], id, "sharedetail.csv"), showProgress = FALSE)
     hit <- bsd$seat %in% rownames(base) & bsd$party %in% colnames(base)
@@ -210,6 +234,9 @@ for (id in ids) {
     chk_rows[[id]] <- data.table(pair = id, base_vs_qbase = max(abs(base[ix] - q_b)),
                                  qarm_seats = length(q_moved), ours_seats = length(m1), same_seats = setequal(q_moved, m1),
                                  arm_vs_qarm_moved = if (length(union(m1, q_moved))) max(dd[bsd$seat[hit] %in% union(m1, q_moved)]) else 0,
+                                 # the tweak's own move against the harness arm's move, cell by cell (immune to a baseline gap)
+                                 delta_gap_moved = if (length(m1)) max(abs((y1[ix] - base[ix]) - (q_a - q_b))[bsd$seat[hit] %in% m1]) else 0,
+                                 delta_gap_seat = if (length(m1)) { g <- abs((y1[ix] - base[ix]) - (q_a - q_b)); g[!bsd$seat[hit] %in% m1] <- 0; bsd$seat[hit][which.max(g)] } else "",
                                  arm_vs_qarm_other = if (any(!bsd$seat[hit] %in% union(m1, q_moved))) max(dd[!bsd$seat[hit] %in% union(m1, q_moved)]) else 0,
                                  worst_cell = if (max(dd) > 0) paste(bsd$seat[hit][which.max(dd)], bsd$party[hit][which.max(dd)]) else "")
   }
