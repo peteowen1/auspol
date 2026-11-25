@@ -79,6 +79,31 @@ type; report the mean rho_r + rho_t against the first arm's rho.
 `fit_seats_full.R` vic2026 in a scratch copy, 20,000 sims, seed 42, switch 0 vs type vs both:
 P(Coalition majority), P(Labor majority), P(hung), seat sd and 80%/90% ranges for LNP, ALP, ONP.
 
-## RESULT
+## RESULT (deciding runs 26 Nov 2026, 1:00-2:15am A and 3:15-4:30am B; 35 elections, 5,000 sims, slots 1, no reuse, commit 5453c141)
 
-(to be filled after the screens)
+Runs: `deciding-runs/20261125-2142-seat-type-A/` and `-B/` (this worktree; DONE markers; `score-totals.txt` in each).
+Baseline = shipped config, cache 82a613cca0e0, identical in both runs and to the parent prereg's baseline
+(235244214575 vs 82a613cca0e0: seat-total diff 0.0000 on every class). The pooled cell count differs by pair
+(197 base-vs-base, 191 with A, 188 with B) because the scorable minor-class cells depend on both runs compared.
+
+| measure (lower is better unless stated) | arm A `type` | arm B `both` |
+|---|---:|---:|
+| 1. seat-total log score, diff (SE, clustered on election) | 1.9259 -> 1.9188, -0.0071 (0.0174) = 0.41 SE | 1.9549 -> 1.9390, -0.0159 (0.0172) = 0.92 SE |
+| 2. sign held, leaving any one election out | 32 of 35 | 35 of 35 |
+| 3. RPS per seat, diff (SE) | -0.00010 (0.00016) | -0.00012 (0.00016) |
+| 4. 90% coverage (target 0.90) | 0.895 -> 0.901 | 0.894 -> 0.904 |
+| 4. 80% coverage (target 0.80) | 0.827 -> 0.843 | 0.824 -> 0.840 |
+| 5. guard: seat-winner log loss (2,931 seats) | 0.3033 -> 0.3023, -0.0009 (SE 0.0007) | 0.3033 -> 0.3028, -0.0005 (SE 0.0008) |
+| floor hits | 4 -> 4 | 4 -> 4 |
+| ALP / LNP seat-total ls diff | -0.006 / -0.004 | -0.004 / -0.015 |
+
+**Verdict under the rule: both REFUSED (clause 1 needs the pooled diff better by >= 1 SE).** Arm A is a clear null
+(0.41 SE). Arm B misses by a hair (0.92 SE) and passes clauses 2-5, so per CLAUDE.md ("clause refusals go to Pete") the
+split goes to Pete; recommendation: keep OFF for 28 Nov. Reasons: clause 1 fails; two arms were run (two chances at a
+pass); and the "unacceptable win" clause above applies in spirit: the region arm (-0.0031) and type arm (-0.0071) are both
+null while B, whose summed rho is larger (vic2022 region ~0.08 + type ~0.15-0.20 against ~0.17 for one factor), does
+best, so B's edge may be "more total correlation" rather than seat type. Not explained away: B's sign holds in 35 of 35
+and coverage moves toward nominal on both arms. Rescore on vic2026 after 28 Nov (adds one election to the 35).
+
+Live effect (vic2026, switch 0 / type / both): NOT RUN (needs three 20k `fit_seats_full.R` runs on the live inputs; held
+for Pete's call, since it decides nothing).
