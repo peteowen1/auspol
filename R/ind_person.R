@@ -158,11 +158,13 @@ ind_person_cells <- function(target, corpus = NULL) {
   parts <- .ip_key_parts(what, C, ...)
   key <- digest::digest(parts, algo = "xxhash64")
   dir <- .cs_cache_dir()
-  why <- if (dir.exists(dir)) .ip_miss_reason(dir, what, key, parts) else sprintf("no cache directory %s", dir)
   v <- .cs_cached(key, compute)
   how <- .cs_last$how
   if (identical(how, "disk")) cat(sprintf("IPC1  ind-person cache hit (%s): %s\n", what, basename(.cs_last$file)))
   if (identical(how, "miss")) {
+    # Only on a miss, and never fatal: a diagnosis must not stop a forecast run.
+    why <- tryCatch(if (dir.exists(dir)) .ip_miss_reason(dir, what, key, parts) else sprintf("no cache directory %s", dir),
+                    error = function(e) paste("diagnosis failed:", conditionMessage(e)))
     cat(sprintf("IPC1! ind-person cache MISS (%s), recomputed: %s\n", what, why))
     f <- .cs_last$file
     if (!is.na(f)) tryCatch({
@@ -179,6 +181,7 @@ ind_person_cells <- function(target, corpus = NULL) {
 #' @noRd
 .ip_miss_reason <- function(dir, what, key, parts) {
   fs <- list.files(dir, pattern = sprintf("^ipmeta-%s-.*\\.rds$", what), full.names = TRUE)
+  fs <- fs[basename(fs) != sprintf("ipmeta-%s-%s.rds", what, key)]   # never compare an entry with itself
   if (!length(fs)) return(sprintf("no earlier %s entry in %s", what, dir))
   m <- tryCatch(readRDS(fs[which.max(file.mtime(fs))]), error = function(e) NULL)
   if (is.null(m)) return("the newest earlier entry is unreadable")
