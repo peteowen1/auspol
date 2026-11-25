@@ -167,6 +167,11 @@ test_that("a miss names what changed against the newest entry", {
   expect_true(any(grepl("MISS \\(cases\\).*switch\\(es\\) it read changed: AUSPOL_TIME_FORWARD_FITS NA -> 0", lg)))
 })
 
+test_that("under testthat the cross-seat cache goes to a temp directory, never output/cache", {
+  expect_true(nzchar(Sys.getenv("AUSPOL_CROSS_SEAT_CACHE_DIR")))
+  expect_false(grepl("output", .cs_cache_dir(), fixed = TRUE))
+})
+
 test_that("AUSPOL_IND_PERSON_CACHE takes only 0 or 1", {
   withr::local_envvar(AUSPOL_IND_PERSON_CACHE = "yes")
   expect_error(.ip_cache_on(), "must be")
