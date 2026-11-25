@@ -41,9 +41,9 @@ on:
         type: string
         default: "100000"
       only:
-        description: "Run one output only, from the latest published forecast: 'council' rebuilds the upper house (~3 min) and nothing else"
+        description: "Run one output only, from the latest published forecast: 'upper-house' rebuilds the upper house (~1 min) and nothing else"
         type: choice
-        options: ["all", "council"]
+        options: ["all", "upper-house"]
         default: "all"
 
 permissions:
@@ -60,9 +60,9 @@ permissions:
   actions: read
 
 concurrency:
-  # only=council gets its own queue: in the shared one a pending council run would cancel a pending daily
+  # only=upper-house gets its own queue: in the shared one a pending upper-house run would cancel a pending daily
   # fallback (GitHub keeps one pending run per group) and wait behind a ~45 min full run (review, 26 Nov 2026).
-  group: ${{ inputs.only == 'council' && 'forecast-council' || 'forecast-refresh' }}
+  group: ${{ inputs.only == 'upper-house' && 'forecast-upper-house' || 'forecast-refresh' }}
   cancel-in-progress: false
 
 jobs:
@@ -85,7 +85,7 @@ jobs:
           ONLY: ${{ inputs.only }}
         run: |
           go() { echo "run=$1" >> "$GITHUB_OUTPUT"; }
-          # A one-output run (only=council) never refits the lower house: its own job below does the work.
+          # A one-output run (only=upper-house) never refits the lower house: its own job below does the work.
           if [ -n "$ONLY" ] && [ "$ONLY" != "all" ]; then echo "only=$ONLY: the full refresh is skipped" | tee -a "$GITHUB_STEP_SUMMARY"; go false; exit 0; fi
           if [ "$EVENT" != "schedule" ] && [ "$DAILY" != "true" ]; then echo "not a daily run ($EVENT): run"; go true; exit 0; fi
           since=$(( $(date -u +%s) - 12 * 3600 ))
@@ -107,13 +107,13 @@ jobs:
           done
           go true
 
-  # only=council: rebuild ONLY the upper house, from the lower-house run already published on forecast-latest
-  # (its night state and seat shares), and upload that one file. ~3 min against ~45 for the full run, which
+  # only=upper-house: rebuild ONLY the upper house, from the lower-house run already published on forecast-latest
+  # (its night state and seat shares), and upload that one file. ~1 min against ~45 for the full run, which
   # refits the lower house and reruns every what-if scenario for a change that touches neither (Pete, 26 Nov
   # 2026: "only ever run steps that are needed"). The page shows which lower-house run it used
   # (lower_house_run_saved_at in the JSON).
-  council-only:
-    if: inputs.only == 'council'
+  upper-house-only:
+    if: inputs.only == 'upper-house'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -129,7 +129,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p output
-          # Both files must come from ONE lower-house run: refresh uploads them seconds apart, so a council run in
+          # Both files must come from ONE lower-house run: refresh uploads them seconds apart, so a run in
           # that window (or after a refresh that died between them) could pair two runs. Refuse if > 10 min apart.
           gh release view forecast-latest --json assets --jq '.assets[] | select(.name == "night-state-vic-2026.rds" or .name == "seat-shares-vic-2026.csv") | "\(.name) \(.updatedAt)"' | tee assets.txt
           test "$(wc -l < assets.txt)" -eq 2
@@ -139,7 +139,7 @@ jobs:
           ls -la output
           test -s output/night-state-vic-2026.rds && test -s output/seat-shares-vic-2026.csv
       - name: Build the upper house
-        run: Rscript scripts/build_council_forecast.R
+        run: Rscript scripts/build_upper_house_forecast.R
       - name: Publish the upper house to R2
         shell: bash
         env:
@@ -149,10 +149,13 @@ jobs:
           set -e
           # Asked for by hand, so missing secrets or a missing file is a failure here, not a warning.
           if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then echo "::error::R2 secrets not set"; exit 1; fi
-          test -s output/council-forecast-vic2026.json
+          test -s output/upper-house-forecast-vic2026.json
           npm install -g wrangler@4.135.0 >/dev/null 2>&1
-          wrangler r2 object put "inthegame-data/auspol/council-forecast-vic2026.json" --file output/council-forecast-vic2026.json --content-type application/json --cache-control "public, max-age=300" --remote
-          echo "OK council-forecast-vic2026.json"
+          wrangler r2 object put "inthegame-data/auspol/upper-house-forecast-vic2026.json" --file output/upper-house-forecast-vic2026.json --content-type application/json --cache-control "public, max-age=300" --remote
+          echo "OK upper-house-forecast-vic2026.json"
+          # TRANSITION (26 Nov 2026): also the old key the ITG page reads until it switches; delete when it has.
+          wrangler r2 object put "inthegame-data/auspol/council-forecast-vic2026.json" --file output/upper-house-forecast-vic2026.json --content-type application/json --cache-control "public, max-age=300" --remote
+          echo "OK council-forecast-vic2026.json (old key)"
 
   refresh:
     needs: gate
@@ -637,9 +640,9 @@ jobs:
           rm -f output/whatif-sims-vic2026.json
           Rscript scripts/build_whatif_sims.R --target=vic2026 || echo "::warning::what-if simulations not built -- the all-primaries what-if page keeps the previous run's data"
           # The upper-house page (Legislative Council, added 25 Nov 2026; Pete approved the 24 Nov walk): this run's
-          # statewide draws through scripts/build_council_forecast.R (~20 s). Optional, as above.
-          rm -f output/council-forecast-vic2026.json
-          Rscript scripts/build_council_forecast.R || echo "::warning::upper-house forecast not built -- the council page keeps the previous run's data"
+          # statewide draws through scripts/build_upper_house_forecast.R (~20 s). Optional, as above.
+          rm -f output/upper-house-forecast-vic2026.json
+          Rscript scripts/build_upper_house_forecast.R || echo "::warning::upper-house forecast not built -- the upper-house page keeps the previous run's data"
       - name: Publish the forecast to R2 for the ITG page
         # The blog (inthegame-blog) fetches every dataset client-side from the
         # inthegame-data R2 bucket; its CSP does not allow github.com, so the
@@ -684,10 +687,12 @@ jobs:
             echo "::warning::no output/whatif-sims-vic2026.json -- the all-primaries what-if page keeps the previous run's data"
           fi
           # The upper-house page's forecast: optional, as above.
-          if [ -s output/council-forecast-vic2026.json ]; then
-            wrangler r2 object put "inthegame-data/auspol/council-forecast-vic2026.json" --file output/council-forecast-vic2026.json --content-type application/json --cache-control "public, max-age=300" --remote && echo "OK council-forecast-vic2026.json" || echo "::warning::upper-house forecast upload failed -- the council page keeps the previous run's data"
+          if [ -s output/upper-house-forecast-vic2026.json ]; then
+            wrangler r2 object put "inthegame-data/auspol/upper-house-forecast-vic2026.json" --file output/upper-house-forecast-vic2026.json --content-type application/json --cache-control "public, max-age=300" --remote && echo "OK upper-house-forecast-vic2026.json" || echo "::warning::upper-house forecast upload failed -- the upper-house page keeps the previous run's data"
+            # TRANSITION (26 Nov 2026): also the old key the ITG page reads until it switches; delete when it has.
+            wrangler r2 object put "inthegame-data/auspol/council-forecast-vic2026.json" --file output/upper-house-forecast-vic2026.json --content-type application/json --cache-control "public, max-age=300" --remote && echo "OK council-forecast-vic2026.json (old key)" || echo "::warning::upper-house forecast upload to the old key failed"
           else
-            echo "::warning::no output/council-forecast-vic2026.json -- the council page keeps the previous run's data"
+            echo "::warning::no output/upper-house-forecast-vic2026.json -- the upper-house page keeps the previous run's data"
           fi
           # Per-pollster pages (scripts/build_pollster_pages.R): optional, so a missing file or failed upload warns and
           # never blocks the forecast above.
