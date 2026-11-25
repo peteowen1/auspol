@@ -33,7 +33,9 @@ test_that("direction 'lower' only lowers a cell, and the row keeps its total", {
                                   name = c("A", "B"), record = c(1, 40), record_election = "vic2014",
                                   record_seat = "X", carry = 0.5, value = c(2, 35))
   local_mocked_bindings(ind_person_cells = function(target, corpus = NULL) cells)
-  withr::local_envvar(AUSPOL_IND_PERSON = "final", AUSPOL_IND_PERSON_CARRY = "ratio", AUSPOL_IND_PERSON_DIR = "lower")
+  # the memo off: the mocked cells must be what ind_person_apply() sees (no corpus to key on here)
+  withr::local_envvar(AUSPOL_IND_PERSON = "final", AUSPOL_IND_PERSON_CARRY = "ratio", AUSPOL_IND_PERSON_DIR = "lower",
+                      AUSPOL_IND_PERSON_CACHE = "0")
   out <- NULL
   capture.output(out <- ind_person_apply(sh, "vic2022", stage = "final"))
   expect_equal(out["Alpha", "IND"], 2)            # 10 -> 2: lowered
