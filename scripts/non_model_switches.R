@@ -6,7 +6,9 @@
 #   RETIRED read only by a script the pipeline no longer runs, kept because diagnostics read its old output
 # mr4_scan() below finds every AUSPOL_* name read in R/ or scripts/; tests/testthat/test-switch-registry.R FAILS CI on
 # any name in neither list (and scripts/build_model_registry.R prints it as MR4!), so a new switch has to be registered
-# or listed here. It sees only a literal Sys.getenv("AUSPOL_NAME" on one line: names built with sprintf (the
+# or listed here. It sees a literal Sys.getenv("AUSPOL_NAME" on one line in .R files, and $AUSPOL_NAME, ${AUSPOL_NAME
+# or $env:AUSPOL_NAME in scripts/*.sh and scripts/*.ps1 (since 2026-11-25; six shell-only reads had slipped past).
+# Python reads (os.environ) are not scanned. Names built with sprintf (the
 # AUSPOL_{QLD,WA,SA}_FLOWS / _CUTOFF reads in R/external_flows.R) and loop reads are registered by hand.
 # Classification: docs/reviews/unregistered-switches-2026-10-29.tsv.
 NON_MODEL_SWITCHES <- c(
@@ -139,10 +141,18 @@ NON_MODEL_SWITCHES <- c(
   AUSPOL_V7_IND_FEAT             = "RETIRED",  # fit_xgb_primary_v7.R
   AUSPOL_V7_ONP                  = "RETIRED",  # fit_xgb_primary_v7.R
   AUSPOL_V7_SHIP                 = "RETIRED",  # fit_xgb_primary_v7.R
-  AUSPOL_V7_SPLIT_BASE           = "RETIRED"   # fit_xgb_primary_v7.R
+  AUSPOL_V7_SPLIT_BASE           = "RETIRED",  # fit_xgb_primary_v7.R
+  # Read only from shell/PowerShell scripts, so the scan missed them until it read .sh/.ps1 (2026-11-25).
+  AUSPOL_REBUILD_FROM            = "RUN",  # rebuild_forecasts.sh, scheduled_rebuild.ps1: stage to start from
+  AUSPOL_REBUILD_ONLY            = "RUN",  # rebuild_forecasts.sh: run only the named stages
+  AUSPOL_REBUILD_SLOTS           = "RUN",  # rebuild_forecasts.sh, scheduled_rebuild.ps1: parallel slots
+  AUSPOL_MC_FORCE                = "RUN",  # rebuild_forecasts.sh: refit the minor-candidate split even if fresh
+  AUSPOL_PUBLISH                 = "RUN",  # rebuild_forecasts.sh: publish step (the harnesses filter it out)
+  AUSPOL_STAGE1_SIMS             = "RUN"   # rebuild_forecasts.sh: stage-1 simulation count
 )
 
-# MR4: every AUSPOL_* name read with Sys.getenv("...") in R/ or scripts/ (comment lines skipped) against the names
+# MR4: every AUSPOL_* name read with Sys.getenv("...") in R/ or scripts/, or as $AUSPOL_X / $env:AUSPOL_X in the
+# scripts/ shell entry points (comment lines skipped), against the names
 # registered in published_flags.R and the names listed above. `root` is the repository root.
 mr4_scan <- function(root = ".") {
   pf <- readLines(file.path(root, "scripts", "published_flags.R"), warn = FALSE)
@@ -150,14 +160,26 @@ mr4_scan <- function(root = ".") {
   files <- c(list.files(file.path(root, "R"), "\\.R$", full.names = TRUE),
              list.files(file.path(root, "scripts"), "\\.R$", full.names = TRUE))
   files <- files[!basename(files) %in% c("build_model_registry.R", "non_model_switches.R")]
-  read <- unique(unlist(lapply(files, function(f) {
+  read_r <- unique(unlist(lapply(files, function(f) {
     x <- readLines(f, warn = FALSE)
     x <- x[!grepl("^\\s*#", x)]
     m <- regmatches(x, gregexpr("Sys\\.getenv\\(\\s*\"AUSPOL_[A-Z0-9_]+\"", x))
     sub("^.*\"(AUSPOL_[A-Z0-9_]+)\"$", "\\1", unlist(m))
   })))
+  # Shell entry points (rebuild_forecasts.sh, scheduled_rebuild.ps1, ...) read switches too, and six were read
+  # nowhere else (2026-11-25). A read is ${AUSPOL_X...} or $AUSPOL_X in .sh, and $env:AUSPOL_X in .ps1 unless it is
+  # the target of an assignment ($env:AUSPOL_X = "1" sets it for a child; a prefix AUSPOL_X=1 cmd has no $).
+  sh_files <- list.files(file.path(root, "scripts"), "\\.(sh|ps1)$", full.names = TRUE)
+  read_sh <- unique(unlist(lapply(sh_files, function(f) {
+    x <- readLines(f, warn = FALSE)
+    x <- x[!grepl("^\\s*#", x)]
+    m <- regmatches(x, gregexpr("\\$(\\{|env:)?AUSPOL_[A-Z0-9_]+(?![A-Z0-9_])(?!\\s*=(?!=))", x, perl = TRUE))
+    sub("^\\$(\\{|env:)?", "", unlist(m))
+  })))
+  read <- unique(c(read_r, read_sh))
   listed <- names(NON_MODEL_SWITCHES)
-  list(read = read, registered = registered, n_files = length(files),
+  list(read = read, registered = registered, n_files = length(files), n_sh_files = length(sh_files),
+       read_sh = sort(read_sh),
        unlisted = sort(setdiff(read, c(registered, listed))),
        stale_listed = sort(setdiff(listed, read)),
        both = sort(intersect(registered, listed)))
