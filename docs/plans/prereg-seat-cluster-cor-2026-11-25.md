@@ -100,8 +100,11 @@ of the corpus get rho 0 (no earlier election), as designed.
 | floor hits | 4 | 4 | |
 | seat-winner log loss (guard), 2,931 seats | 0.3033 | 0.3031 | -0.0002 (0.0007) |
 
-Clauses: (1) FAILS: -0.0031 is 0.2 SE, not 1 SE. (2) sign holds in 32 of 35 leave-one-out
-(range -0.0080 to +0.0071). (3) passes. (4) passes (90% coverage moves toward 0.90).
+Clauses: (1) FAILS: -0.0031 is 0.2 SE, not 1 SE. (2) FAILS: the sign holds in 32 of 35
+leave-one-out (range -0.0080 to +0.0071). (3) passes. (4) passes within tolerance, but both
+coverages move AWAY from nominal (90%: 0.897 -> 0.913; 80%: 0.831 -> 0.836). Baseline intervals
+already cover at or above nominal (ALP and LNP 0.91 at 90%): these 35 elections do not show the
+seat ranges as too narrow.
 (5) guard passes: seat log loss within 1 SE, every point share byte-identical (max share diff 0),
 largest seat-probability move 0.026 (Monte Carlo plus the error-quantile shape nudge).
 
