@@ -1,7 +1,7 @@
 # Upper-house (Legislative Council) forecast for the daily run: the 24 Nov walk's simulation
 # (docs/plans/upper-house-forecast-walk-2026-11-24/sim.R, which Pete approved) moved here unchanged in its model and
 # seed, base preference rule only (the walk's sensitivity runs stay in the walk). Written for the ITG page
-# /politics/vic2026/council via R2 key auspol/council-forecast-vic2026.json.
+# /politics/vic2026/upper-house via R2 key auspol/council-forecast-vic2026.json.
 #
 #   Rscript scripts/build_council_forecast.R [--dir=output] [--out=output/council-forecast-vic2026.json] [--sims=4000]
 # In:  <dir>/night-state-vic-2026.rds (its swd), <dir>/seat-shares-vic-2026.csv,
@@ -43,6 +43,30 @@ g <- merge(g, r22[!is.na(key), .(share22 = sum(pool_share)), by = .(region, key)
 g <- merge(g, med22, by = "region")
 g[class == "MINOR", raw := fifelse(!is.na(share22), share22, fifelse(grepl("Ungrouped|no name|Unnamed", group), 0.3 * med, med))]
 g[class == "MINOR", w := { r <- raw / sum(raw); 0.67 * r + 0.33 / .N }, by = region]
+# Victorian Socialists' share of the minor pool from the polled regional VS vote (YouGov Megapoll 6-23 Nov 2026,
+# n 3890, its upper-house-region crosstab; Pete 25 Nov), not their 2022 share. Each region's figure is shrunk toward
+# the statewide 4%: w = tau^2 / (tau^2 + se^2), se from the region's sample (n ~ 3890 x enrolment share, design
+# effect 1), tau^2 the between-region variance beyond sampling noise. Upper-house VS vote = polled vote (ratio 1).
+# Every other minor group keeps its relative weight. AUSPOL_COUNCIL_VS_POLL=0 restores the 2022-share split.
+if (Sys.getenv("AUSPOL_COUNCIL_VS_POLL", "1") == "1") {
+  YG <- fread("external/reference/polls/yougov-megapoll-regions-2026-11.csv")
+  vr <- YG[party == "VS"][match(regions, region)]$pct; vs_s <- YG[party == "VS" & region == "Statewide"]$pct
+  stopifnot(length(vs_s) == 1L, !anyNA(vr))
+  en_r <- x[, .(e = sum(enrolment)), by = region][match(regions, region)]$e
+  se <- 100 * sqrt((vr / 100) * (1 - vr / 100) / (3890 * en_r / sum(en_r)))
+  d <- vr - vs_s; tau2 <- max(0, mean(d^2) - mean(se^2))
+  vs_hat <- setNames(vs_s + tau2 / (tau2 + se^2) * d, regions)
+  for (r in regions) {
+    pool_mean <- 100 - sum(unlist(A[region == r, ..cls]) * RATIO[cls])
+    iv <- which(g$region == r & g$class == "MINOR" & g$group == "Victorian Socialists")
+    io <- which(g$region == r & g$class == "MINOR" & g$group != "Victorian Socialists")
+    stopifnot(length(iv) == 1L, length(io) >= 1L)
+    old <- g$w[iv]; wv <- min(0.8, vs_hat[[r]] / pool_mean)
+    g$w[io] <- g$w[io] * (1 - wv) / sum(g$w[io]); g$w[iv] <- wv
+    cat(sprintf("CFC2  %s: Victorian Socialists %.1f%% polled -> %.1f%% after shrinkage; share of the minor pool %.2f -> %.2f\n",
+                r, vr[match(r, regions)], vs_hat[[r]], old, wv))
+  }
+} else cat("CFC2  AUSPOL_COUNCIL_VS_POLL=0: Victorian Socialists split from their 2022 share\n")
 cat(sprintf("CFC1  %d simulations, %d regions, %d groups (%d minor). Minor groups with a 2022 result in the same region: %d of %d.\n",
             N, length(regions), nrow(g), sum(g$class == "MINOR"), sum(!is.na(g$share22) & g$class == "MINOR"), sum(g$class == "MINOR")))
 cat(sprintf("CFC1  One Nation ratio drawn per simulation: median %.2f, 80%% of draws %.2f to %.2f\n", median(onp_ratio), quantile(onp_ratio, .1), quantile(onp_ratio, .9)))
@@ -118,7 +142,9 @@ jsonlite::write_json(list(
     list(group = z$group, class = z$class, vote_pct = round(z$quotas * 100 / 6, 2), quotas = round(z$quotas, 3), seats = round(z$seats, 3),
          p1 = round(z$p1, 4), p2 = round(z$p2, 4), p3 = round(z$p3, 4))))),
   assumptions = c("Upper-house vote = lower-house forecast by region x a ratio per party (Labor 0.905, Coalition 0.845, Greens 0.883, One Nation median 0.85).",
-                  "Minor vote split across groups from 2022 shares pulled toward equal.",
+                  if (Sys.getenv("AUSPOL_COUNCIL_VS_POLL", "1") == "1")
+                    "Minor vote split across groups from 2022 shares pulled toward equal; Victorian Socialists from YouGov's regional polling (6-23 Nov)."
+                  else "Minor vote split across groups from 2022 shares pulled toward equal.",
                   "Preferences assumed, not measured: same-bloc groups favoured about 2.5 to 1, 5-30% of votes exhaust at each exclusion.")),
   OUT, auto_unbox = TRUE, digits = NA)
 cat(sprintf("CFC9  wrote %s: %d simulations, %d regions, %d bytes
