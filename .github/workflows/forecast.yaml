@@ -468,6 +468,8 @@ jobs:
           # Manual trials only (Pete, 25 Nov 2026: one 100k run); scheduled and worker runs leave it empty = 20,000.
           # The election-night state stays at AUSPOL_NIGHT_STATE_SIMS (20,000) whatever this is.
           AUSPOL_N_SIMS: ${{ inputs.n_sims || '20000' }}
+          # fit_seats_full.R refuses to publish a run whose sims differ from published_flags.R unless this is set
+          AUSPOL_ALLOW_SIMS_CHANGE: ${{ (inputs.n_sims && inputs.n_sims != '20000') && '1' || '0' }}
         run: |
           # run_all.R exits non-zero when ANY validation stage breaches (2026-09-19:
           # every daily run since at least the 12th had failed on a NSW 2027
