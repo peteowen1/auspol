@@ -2067,6 +2067,9 @@ if (identical(.sw_net_live, "1"))
 # under the same suffix rule, so the daily workflow publishes polling day's copy with the forecast it belongs to. Same fields
 # as the vic harness's AUSPOL_NIGHT_DUMP (scripts/backtest_candidate_vic.R), under this script's names; party_cor is NULL
 # because this call passes none. It never changes the forecast: it reads, then saves, and draws no random number.
+# The seat cluster factor is set up first so the state carries it (seat_cluster_setup() restores the caller's random
+# stream after its k-means), and the night starts from the same joint law of seats as this forecast.
+.scc <- seat_cluster_setup(TGT, shares, tag = "SCC1")
 {
   .dmp <- sprintf("output/night-state-%s%s.rds", TARGET$out_stem, OUT_SUFFIX)
   .yr_of <- function(x) as.integer(sub("^[a-z]+", "", x))
@@ -2085,11 +2088,11 @@ if (identical(.sw_net_live, "1"))
                htv_card = if (is.finite(.card_p)) list(p = .card_p, labor_above = .htv_lab, greens_above = .htv_grn) else NULL,
                fb_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD, surge_h = surge_arg, surge_party = surge_party_arg,
                surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg,
+               seat_cluster = .scc$seat_cluster, cluster_rho = .scc$cluster_rho,
                saved_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z")), .dmp)
   cat(sprintf("NS1  night state for %s saved to %s (%d seats, %d sims%s)\n", TGT, .dmp, nrow(shares), .ns_k,
               if (.ns_k < N_SIMS) sprintf("; the forecast itself runs %d", N_SIMS) else ""))
 }
-.scc <- seat_cluster_setup(TGT, shares, tag = "SCC1")
 .run_sim <- function(.ov) simulate_seat_contests(seat_cluster = .scc$seat_cluster, cluster_rho = .scc$cluster_rho, level_sd = .level_sd, sd_override = .sd_ov, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
                               breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(TGT, rownames(shares)), error_q = error_dist_args(TGT, colnames(shares)),
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
