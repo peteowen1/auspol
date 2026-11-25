@@ -9,6 +9,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 ## NEEDS PETE
 
 - **IN FLIGHT 25 Nov (morning), all Pete's asks, in order:**
+  UPDATE 11:40am: (2) Bendigo East SHIPPED to shipped-models (md5 de6b7c33; rollback `deciding-runs/20261125-nov-mrp/BEFORE-*`);
+  live from the first run after 11:30am (the 100k run had already downloaded). (1) former-leader screen REFUSED by
+  do-no-harm (prereg file); Pete: test it seat-level instead -> Opus agent building `scripts/seat_quick.R` (worktree
+  `C:/dev/auspol-wt-seatq`, branch seat-quick-screen), then the safety-scaled variant. Regional seat correlation: Opus
+  agent, worktree `C:/dev/auspol-wt-corr`. (3) 100k: first run stopped on the published-filenames guard; PR #279 lets it
+  publish; second run 45516620755. (4) Upper house: PR #278 merged; R2 file arrives with that run.
   (1) `AUSPOL_LEADER_FORMER` (Mulgrave/Bulleen: former leader's seat loses ~1.0-1.4 points; Pete "Build it anyway" after
   being told it cannot flip Mulgrave): committed 429b91e9 OFF; screen `deciding-runs/20261125-leader-former/screen.log`
   (35 elections, prereg `plans/prereg-leader-former-2026-11-25.md`). Ship = flip published_flags + inline default, rebuild
