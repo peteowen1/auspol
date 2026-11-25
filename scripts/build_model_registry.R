@@ -379,9 +379,10 @@ CLASSIFY <- list(
     "read only inside R/level_conserve.R (level_conserve_hold()), so every entry point that calls level_conserve_apply()",
     "honours it; 'NO' in the harness columns is the grep, not a gap."),
   AUSPOL_SEAT_CLUSTER_COR = paste(
-    "ARM (0), built 2026-11-25, UNIVERSAL via R/: seat_cluster_setup() (R/seat_cluster.R) is called at every",
-    "simulate_seat_contests() site (six harnesses, NT, fit_seats_full.R) and reads the switch inside R/, so 'NO' in the",
-    "entry-point columns is the grep, not a gap. Election-night runner (R/night_runner.R) not wired.",
+    "SHIPPED (\"both\") 26 Nov 2026 on Pete's override of clause 1; built 2026-11-25, UNIVERSAL via R/: seat_cluster_setup()",
+    "(R/seat_cluster.R) is called at every simulate_seat_contests() site (six harnesses, NT, fit_seats_full.R) and reads the",
+    "switch inside R/, so 'NO' in the entry-point columns is the grep, not a gap. The election-night runner",
+    "(R/night_runner.R) takes the factor from the night state fit_seats_full.R saves; the night_replay*.R tools do not.",
     "plans/prereg-seat-cluster-cor-2026-11-25.md; values \"type\" / \"both\": plans/prereg-seat-type-cor-2026-11-25.md"),
   AUSPOL_ERROR_DIST = paste(
     "SHIPPED (1) 2026-10-17 on Pete's override (with AUSPOL_COMPOSITION_SD), UNIVERSAL via R/: error_dist_args() (R/error_dist.R) is called at every simulate_seat_contests() site",
