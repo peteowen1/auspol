@@ -270,7 +270,7 @@ if ("wa2001" %in% TX$election)
   cat("BW0  note: wa2001 transfers ARE present in the file\n") else
   cat("BW0  note: wa2001 transfers are ABSENT (excluded upstream); that pair uses pooled flows\n")
 
-res_all <- list(); ap_all <- list(); share_detail <- list()
+res_all <- list(); ap_all <- list(); share_detail <- list(); tot_all <- list()
 prev_spread <- NA_real_
 
 for (K in PAIRS) {
@@ -852,7 +852,8 @@ for (K in PAIRS) {
                  surge_mu = surge_mu_arg, surge_sd = surge_sd_arg, truth = truth, keep = keep), .dpath)
     cat(sprintf("NX8  night state for wa%d saved to %s\n", K$to, .dpath))
   }
-  sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = harness_sw_net_sd(size_sd_apply(SD_OVR, shares, el_to, .level_sd, .lm(shares)), .swd, shares, .level_sd, .lm(shares), psd, el_to, "BWW"), level_mult = .lm(shares), shares, fm, party_sd = psd, statewide_draws = .swd,
+  .scc <- seat_cluster_setup(el_to, shares, tag = "BW5k")
+  sim <- simulate_seat_contests(seat_cluster = .scc$seat_cluster, cluster_rho = .scc$cluster_rho, level_sd = .level_sd, sd_override = harness_sw_net_sd(size_sd_apply(SD_OVR, shares, el_to, .level_sd, .lm(shares)), .swd, shares, .level_sd, .lm(shares), psd, el_to, "BWW"), level_mult = .lm(shares), shares, fm, party_sd = psd, statewide_draws = .swd,
                                 seat_sd = sd_used * SEAT_SD_MULT,
                                 breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(el_to, rownames(shares)), error_q = error_dist_args(el_to, colnames(shares)),
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
@@ -911,6 +912,9 @@ for (K in PAIRS) {
   # Per-seat per-party probabilities, per pair. Parity with fed/sa/qld, which
   # already write this; WA carries seven pairs and was entirely invisible to
   # emergence analysis without it.
+  # the simulated seat totals per draw, as the other harnesses write them (seat-count ranges
+  # cannot be rebuilt from per-seat probabilities; added 2026-11-25 for AUSPOL_SEAT_CLUSTER_COR).
+  tot_all[[el_to]] <- data.table(pair = el_to, as.data.table(sim$totals))
   ap_all[[el_to]] <- {
     .f <- merge(wp[, .(seat, party, prob)],
                 data.table(seat = keep, actual = unname(truth[keep])),
@@ -951,6 +955,7 @@ R <- rbindlist(res_all)
 fwrite(R, file.path("output", sprintf("backtest-wa%s.csv", CAL_TAG)))
 .wa_ap <- rbindlist(ap_all, fill = TRUE)
 fwrite(.wa_ap, file.path("output", sprintf("backtest-wa-allprobs%s.csv", CAL_TAG)))
+fwrite(rbindlist(tot_all, fill = TRUE), file.path("output", sprintf("backtest-wa-totals%s.csv", CAL_TAG)))
 cat(sprintf("BW5  wrote the full probability table: %d rows over %d pair(s)
 ",
             nrow(.wa_ap), uniqueN(.wa_ap$pair)))

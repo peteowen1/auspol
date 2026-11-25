@@ -1,0 +1,231 @@
+election,party,icc,n_cells,n_clusters,scheme
+fed2007,ALP,0.2342,149,8,fed states
+fed2007,GRN,0.31711,149,8,fed states
+fed2007,IND,0.03912,70,8,fed states
+fed2007,LNP,0.10988,149,8,fed states
+fed2007,ONP,0.32925,35,5,fed states
+fed2007,OTH,0.0816,118,8,fed states
+fed2007,OTH_RIGHT,0.14825,148,8,fed states
+fed2010,ALP,0.52209,150,8,fed states
+fed2010,GRN,0.23476,150,8,fed states
+fed2010,IND,0.14127,53,7,fed states
+fed2010,LNP,0.42718,150,8,fed states
+fed2010,ONP,0.01019,21,5,fed states
+fed2010,OTH,0.20306,59,7,fed states
+fed2010,OTH_RIGHT,0.1787,124,7,fed states
+fed2013,ALP,0.30532,150,8,fed states
+fed2013,GRN,0.34172,150,8,fed states
+fed2013,IND,0.07621,57,7,fed states
+fed2013,LNP,0.20217,150,8,fed states
+fed2013,ONP,0.56729,15,2,fed states
+fed2013,OTH,0.32341,69,8,fed states
+fed2013,OTH_RIGHT,0.42765,150,8,fed states
+fed2016,ALP,0.18264,150,8,fed states
+fed2016,GRN,0.23036,150,8,fed states
+fed2016,IND,0.5678,83,8,fed states
+fed2016,LNP,0.31469,150,8,fed states
+fed2016,ONP,0.42933,15,2,fed states
+fed2016,OTH,0.20134,85,8,fed states
+fed2016,OTH_RIGHT,0.06803,136,7,fed states
+fed2019,ALP,0.25922,151,8,fed states
+fed2019,GRN,0.25549,151,8,fed states
+fed2019,IND,0.24745,72,8,fed states
+fed2019,LNP,0.22548,151,8,fed states
+fed2019,ONP,0.3046,59,6,fed states
+fed2019,OTH,0.11917,93,7,fed states
+fed2019,OTH_RIGHT,-0.01753,151,8,fed states
+fed2022,ALP,0.20494,151,8,fed states
+fed2022,GRN,0.06736,151,8,fed states
+fed2022,IND,-0.01114,73,8,fed states
+fed2022,LNP,0.13671,151,8,fed states
+fed2022,ONP,0.07821,149,8,fed states
+fed2022,OTH,0.54584,107,7,fed states
+fed2022,OTH_RIGHT,0.25516,151,8,fed states
+fed2025,ALP,0.08785,150,8,fed states
+fed2025,GRN,0.15039,150,8,fed states
+fed2025,IND,-0.01863,89,8,fed states
+fed2025,LNP,0.15856,150,8,fed states
+fed2025,ONP,0.14024,147,8,fed states
+fed2025,OTH,0.01607,80,7,fed states
+fed2025,OTH_RIGHT,0.22659,135,8,fed states
+nsw2011,ALP,0.0851,82,9,nsw regions
+nsw2011,GRN,0.21262,82,9,nsw regions
+nsw2011,IND,-0.0349,58,9,nsw regions
+nsw2011,LNP,0.04209,82,9,nsw regions
+nsw2011,OTH,-1.04482,11,6,nsw regions
+nsw2011,OTH_RIGHT,0.19623,77,9,nsw regions
+nsw2015,ALP,0.28167,88,9,nsw regions
+nsw2015,GRN,0.1955,88,9,nsw regions
+nsw2015,IND,-0.10724,38,9,nsw regions
+nsw2015,LNP,0.30967,88,9,nsw regions
+nsw2015,OTH,0.00638,88,9,nsw regions
+nsw2015,OTH_RIGHT,0.16371,88,9,nsw regions
+nsw2019,ALP,0.44842,88,9,nsw regions
+nsw2019,GRN,0.10146,88,9,nsw regions
+nsw2019,IND,0.03701,40,9,nsw regions
+nsw2019,LNP,0.12336,88,9,nsw regions
+nsw2019,ONP,-0.12096,12,6,nsw regions
+nsw2019,OTH,0.19558,76,9,nsw regions
+nsw2019,OTH_RIGHT,0.43209,50,9,nsw regions
+nsw2023,ALP,0.33589,93,9,nsw regions
+nsw2023,GRN,0.09147,93,9,nsw regions
+nsw2023,IND,-0.01476,53,9,nsw regions
+nsw2023,LNP,0.24351,93,9,nsw regions
+nsw2023,ONP,-0.15772,17,5,nsw regions
+nsw2023,OTH,0.20918,90,9,nsw regions
+nsw2023,OTH_RIGHT,-0.22418,34,9,nsw regions
+nt2016,ALP,-0.01192,24,2,nt k-means on projected shares (k = 2)
+nt2016,GRN,-0.43492,6,2,nt k-means on projected shares (k = 2)
+nt2016,IND,-0.06718,19,2,nt k-means on projected shares (k = 2)
+nt2016,LNP,0.0511,24,2,nt k-means on projected shares (k = 2)
+nt2016,OTH,-0.20426,8,2,nt k-means on projected shares (k = 2)
+nt2016,OTH_RIGHT,-0.16683,14,2,nt k-means on projected shares (k = 2)
+nt2020,ALP,0.16558,25,2,nt k-means on projected shares (k = 2)
+nt2020,GRN,-0.36927,10,2,nt k-means on projected shares (k = 2)
+nt2020,IND,-0.10482,17,2,nt k-means on projected shares (k = 2)
+nt2020,LNP,0.73139,24,2,nt k-means on projected shares (k = 2)
+nt2020,OTH,-0.37597,22,2,nt k-means on projected shares (k = 2)
+nt2020,OTH_RIGHT,-0.34986,9,2,nt k-means on projected shares (k = 2)
+nt2024,ALP,0.05344,24,2,nt k-means on projected shares (k = 2)
+nt2024,GRN,-1.15182,11,2,nt k-means on projected shares (k = 2)
+nt2024,IND,-0.07044,15,2,nt k-means on projected shares (k = 2)
+nt2024,LNP,0.21169,25,2,nt k-means on projected shares (k = 2)
+nt2024,OTH,-0.10588,25,2,nt k-means on projected shares (k = 2)
+qld2012,ALP,0.24672,89,8,qld k-means on projected shares (k = 8)
+qld2012,GRN,0.03491,89,8,qld k-means on projected shares (k = 8)
+qld2012,IND,0.03271,36,8,qld k-means on projected shares (k = 8)
+qld2012,LNP,0.29238,89,8,qld k-means on projected shares (k = 8)
+qld2012,ONP,0.50689,6,5,qld k-means on projected shares (k = 8)
+qld2012,OTH,0.29215,32,6,qld k-means on projected shares (k = 8)
+qld2012,OTH_RIGHT,0.11178,81,8,qld k-means on projected shares (k = 8)
+qld2015,ALP,0.21056,89,8,qld k-means on projected shares (k = 8)
+qld2015,GRN,-0.02529,89,8,qld k-means on projected shares (k = 8)
+qld2015,IND,0.04982,52,7,qld k-means on projected shares (k = 8)
+qld2015,LNP,0.14289,89,8,qld k-means on projected shares (k = 8)
+qld2015,ONP,-1.00558,11,7,qld k-means on projected shares (k = 8)
+qld2015,OTH_RIGHT,0.07724,62,8,qld k-means on projected shares (k = 8)
+qld2017,ALP,0.30338,93,8,qld k-means on projected shares (k = 8)
+qld2017,GRN,0.29081,93,8,qld k-means on projected shares (k = 8)
+qld2017,IND,0.11004,58,8,qld k-means on projected shares (k = 8)
+qld2017,LNP,0.23005,93,8,qld k-means on projected shares (k = 8)
+qld2017,ONP,0.29516,61,7,qld k-means on projected shares (k = 8)
+qld2017,OTH,0.34072,8,4,qld k-means on projected shares (k = 8)
+qld2017,OTH_RIGHT,0.74503,10,6,qld k-means on projected shares (k = 8)
+qld2020,ALP,0.01646,93,8,qld k-means on projected shares (k = 8)
+qld2020,GRN,0.38057,93,8,qld k-means on projected shares (k = 8)
+qld2020,IND,0.14768,50,8,qld k-means on projected shares (k = 8)
+qld2020,LNP,0.06254,93,8,qld k-means on projected shares (k = 8)
+qld2020,ONP,0.28419,90,7,qld k-means on projected shares (k = 8)
+qld2020,OTH,0.1223,65,8,qld k-means on projected shares (k = 8)
+qld2020,OTH_RIGHT,0.05339,61,8,qld k-means on projected shares (k = 8)
+qld2024,ALP,0.17798,93,8,qld k-means on projected shares (k = 8)
+qld2024,GRN,0.14061,93,8,qld k-means on projected shares (k = 8)
+qld2024,IND,0.3264,30,6,qld k-means on projected shares (k = 8)
+qld2024,LNP,0.10453,93,8,qld k-means on projected shares (k = 8)
+qld2024,ONP,0.13643,93,8,qld k-means on projected shares (k = 8)
+qld2024,OTH,0.11691,37,6,qld k-means on projected shares (k = 8)
+qld2024,OTH_RIGHT,0.14742,68,8,qld k-means on projected shares (k = 8)
+sa2010,ALP,0.29503,47,4,sa k-means on projected shares (k = 4)
+sa2010,GRN,0.137,47,4,sa k-means on projected shares (k = 4)
+sa2010,IND,0.1238,19,4,sa k-means on projected shares (k = 4)
+sa2010,LNP,0.20384,47,4,sa k-means on projected shares (k = 4)
+sa2010,ONP,0.52464,6,2,sa k-means on projected shares (k = 4)
+sa2010,OTH,-0.1824,23,3,sa k-means on projected shares (k = 4)
+sa2010,OTH_RIGHT,0.06614,47,4,sa k-means on projected shares (k = 4)
+sa2014,ALP,0.11887,46,4,sa k-means on projected shares (k = 4)
+sa2014,GRN,0.0544,46,4,sa k-means on projected shares (k = 4)
+sa2014,IND,-0.37862,10,4,sa k-means on projected shares (k = 4)
+sa2014,LNP,0.11679,46,4,sa k-means on projected shares (k = 4)
+sa2014,OTH,-0.2166,7,2,sa k-means on projected shares (k = 4)
+sa2014,OTH_RIGHT,0.09542,42,4,sa k-means on projected shares (k = 4)
+sa2018,ALP,-0.08219,40,4,sa k-means on projected shares (k = 4)
+sa2018,GRN,0.199,40,4,sa k-means on projected shares (k = 4)
+sa2018,IND,0.27626,32,3,sa k-means on projected shares (k = 4)
+sa2018,LNP,0.05268,40,4,sa k-means on projected shares (k = 4)
+sa2018,OTH,-0.04535,26,4,sa k-means on projected shares (k = 4)
+sa2018,OTH_RIGHT,-0.16648,27,4,sa k-means on projected shares (k = 4)
+sa2022,ALP,0.27595,47,4,sa k-means on projected shares (k = 4)
+sa2022,GRN,0.1289,43,4,sa k-means on projected shares (k = 4)
+sa2022,IND,0.45521,19,4,sa k-means on projected shares (k = 4)
+sa2022,LNP,0.14731,47,4,sa k-means on projected shares (k = 4)
+sa2022,ONP,0.17215,19,4,sa k-means on projected shares (k = 4)
+sa2022,OTH,-0.06207,10,3,sa k-means on projected shares (k = 4)
+sa2022,OTH_RIGHT,0.38402,35,4,sa k-means on projected shares (k = 4)
+sa2026,ALP,0.06831,47,4,sa k-means on projected shares (k = 4)
+sa2026,GRN,0.14907,47,4,sa k-means on projected shares (k = 4)
+sa2026,IND,-0.09199,22,4,sa k-means on projected shares (k = 4)
+sa2026,LNP,0.14502,47,4,sa k-means on projected shares (k = 4)
+sa2026,ONP,-0.05861,47,4,sa k-means on projected shares (k = 4)
+sa2026,OTH,-0.02312,41,4,sa k-means on projected shares (k = 4)
+sa2026,OTH_RIGHT,0.25961,47,4,sa k-means on projected shares (k = 4)
+vic2010,ALP,0.03877,66,8,vic regions (8)
+vic2010,GRN,0.37349,66,8,vic regions (8)
+vic2010,IND,0.00127,41,8,vic regions (8)
+vic2010,LNP,0.28857,66,8,vic regions (8)
+vic2010,OTH,0.33812,14,8,vic regions (8)
+vic2010,OTH_RIGHT,0.29199,58,8,vic regions (8)
+vic2014,ALP,0.02193,79,8,vic regions (8)
+vic2014,GRN,0.21496,79,8,vic regions (8)
+vic2014,IND,0.02351,52,8,vic regions (8)
+vic2014,LNP,0.11154,79,8,vic regions (8)
+vic2014,OTH,0.04032,30,7,vic regions (8)
+vic2014,OTH_RIGHT,0.11008,69,8,vic regions (8)
+vic2018,ALP,0.17193,79,8,vic regions (8)
+vic2018,GRN,0.11723,79,8,vic regions (8)
+vic2018,IND,0.09553,49,8,vic regions (8)
+vic2018,LNP,-0.08114,78,8,vic regions (8)
+vic2018,OTH,-0.01409,51,8,vic regions (8)
+vic2018,OTH_RIGHT,0.26603,31,8,vic regions (8)
+vic2022,ALP,0.17374,87,8,vic regions (8)
+vic2022,GRN,0.18834,88,8,vic regions (8)
+vic2022,IND,0.07224,70,8,vic regions (8)
+vic2022,LNP,0.1898,88,8,vic regions (8)
+vic2022,ONP,-0.66697,5,2,vic regions (8)
+vic2022,OTH,0.67297,88,8,vic regions (8)
+vic2022,OTH_RIGHT,0.2854,88,8,vic regions (8)
+wa2001,ALP,0.29783,56,5,wa k-means on projected shares (k = 5)
+wa2001,GRN,-0.0988,51,5,wa k-means on projected shares (k = 5)
+wa2001,IND,-0.04333,47,5,wa k-means on projected shares (k = 5)
+wa2001,LNP,0.8975,56,5,wa k-means on projected shares (k = 5)
+wa2001,ONP,0.18734,54,4,wa k-means on projected shares (k = 5)
+wa2001,OTH,0.3994,38,5,wa k-means on projected shares (k = 5)
+wa2001,OTH_RIGHT,-0.04419,13,5,wa k-means on projected shares (k = 5)
+wa2005,ALP,0.35899,46,4,wa k-means on projected shares (k = 4)
+wa2005,GRN,-0.05253,46,4,wa k-means on projected shares (k = 4)
+wa2005,IND,0.10998,25,4,wa k-means on projected shares (k = 4)
+wa2005,LNP,0.34682,46,4,wa k-means on projected shares (k = 4)
+wa2005,ONP,0.56041,36,3,wa k-means on projected shares (k = 4)
+wa2005,OTH,0.12017,28,4,wa k-means on projected shares (k = 4)
+wa2005,OTH_RIGHT,0.12519,46,4,wa k-means on projected shares (k = 4)
+wa2008,ALP,0.03631,59,5,wa k-means on projected shares (k = 5)
+wa2008,GRN,0.29696,59,5,wa k-means on projected shares (k = 5)
+wa2008,IND,-0.09816,19,5,wa k-means on projected shares (k = 5)
+wa2008,LNP,0.22819,58,4,wa k-means on projected shares (k = 5)
+wa2008,ONP,0.12515,30,4,wa k-means on projected shares (k = 5)
+wa2008,OTH_RIGHT,0.08066,53,4,wa k-means on projected shares (k = 5)
+wa2013,ALP,0.36228,59,5,wa k-means on projected shares (k = 5)
+wa2013,GRN,0.16371,59,5,wa k-means on projected shares (k = 5)
+wa2013,IND,0.23656,26,5,wa k-means on projected shares (k = 5)
+wa2013,LNP,0.12724,59,5,wa k-means on projected shares (k = 5)
+wa2013,OTH_RIGHT,-0.06542,48,5,wa k-means on projected shares (k = 5)
+wa2017,ALP,0.01576,59,5,wa k-means on projected shares (k = 5)
+wa2017,GRN,0.35558,59,5,wa k-means on projected shares (k = 5)
+wa2017,IND,0.06891,24,5,wa k-means on projected shares (k = 5)
+wa2017,LNP,0.36929,59,5,wa k-means on projected shares (k = 5)
+wa2017,ONP,-0.12962,35,5,wa k-means on projected shares (k = 5)
+wa2017,OTH,0.00854,50,5,wa k-means on projected shares (k = 5)
+wa2017,OTH_RIGHT,-0.06481,54,5,wa k-means on projected shares (k = 5)
+wa2021,ALP,0.19239,59,5,wa k-means on projected shares (k = 5)
+wa2021,GRN,0.01133,59,5,wa k-means on projected shares (k = 5)
+wa2021,IND,-0.038,15,5,wa k-means on projected shares (k = 5)
+wa2021,LNP,0.21666,59,5,wa k-means on projected shares (k = 5)
+wa2021,ONP,0.07082,40,5,wa k-means on projected shares (k = 5)
+wa2021,OTH,-0.02995,59,5,wa k-means on projected shares (k = 5)
+wa2021,OTH_RIGHT,-0.06486,49,5,wa k-means on projected shares (k = 5)
+wa2025,ALP,0.09519,59,5,wa k-means on projected shares (k = 5)
+wa2025,GRN,0.30782,59,5,wa k-means on projected shares (k = 5)
+wa2025,IND,0.08167,21,5,wa k-means on projected shares (k = 5)
+wa2025,LNP,-0.02244,59,5,wa k-means on projected shares (k = 5)
+wa2025,ONP,0.18391,41,5,wa k-means on projected shares (k = 5)
+wa2025,OTH,0.06867,40,5,wa k-means on projected shares (k = 5)
+wa2025,OTH_RIGHT,0.10067,55,5,wa k-means on projected shares (k = 5)
