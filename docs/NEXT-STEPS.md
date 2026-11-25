@@ -124,7 +124,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   raw `voting-locations/raw-20261126-0513/`, rebuilt: same 1,852 + 310 centres, none added or removed; only entrance /
   accessibility text on 3 election-day + 1 early centre (Glenroy South and Broadmeadows EVC 1: lift out of order, stairs only).
   Night model unaffected (booth names unchanged), geocoder nothing new, night bundle NOT re-uploaded (no booth change).
-  OPEN for ITG: does the booth finder show accessibility text? If so, rebuild `booths-vic2026.json` for the lift change.
+  ITG confirmed 26 Nov: the booth finder shows no accessibility text, so no rebuild.
 - OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. 24 Nov 9:16am done, every source (`docs/benchmarks/vic2026/2026-11-23/`; TAB moved to one "Vic Seats" event, read by
   `bk_tab_seats()`; 27 Nov: also rebuild `seat-odds-page.html` there, the seat odds artifact
   https://claude.ai/artifact/PJHtfKoc8xKvhjUErCb9QR; and the SITE page politics/odds.qmd: hand-write that folder's
