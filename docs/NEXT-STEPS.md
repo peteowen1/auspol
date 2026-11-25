@@ -8,39 +8,19 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
-- **IN FLIGHT 25 Nov (morning), all Pete's asks, in order:**
-  **DATED Thu 26 Nov, 4:30am run (first at 100k daily, PR #280):** (a) every scenario job finished under its 120-min limit
-  and publish-scenarios logs `CSC9 ... 72 of 72` and `CSC7 ... differs ... in 0 of 88` for all four parties; (b) log has
-  `S6  AUSPOL_N_SIMS=100000 allowed`, `NS1 ... 20000 sims; the forecast itself runs 100000`, `CFC9`, `OK council`;
-  (c) `curl -sI` the whatif file shows `Content-Encoding: gzip`, then MESSAGE ITG with the run id and built_at;
-  (d) Bendigo East moved (uploaded 11:30am 25 Nov): One Nation's primary down ~4 points vs the 9:55am 25 Nov run.
-  Rollback for (d): `deciding-runs/20261125-nov-mrp/BEFORE-seat-poll-blend-vic2026-cb5e3bc1.csv`.
-  UPDATE 11:40am: (2) Bendigo East SHIPPED to shipped-models (md5 de6b7c33; rollback `deciding-runs/20261125-nov-mrp/BEFORE-*`);
-  live from the first run after 11:30am (the 100k run had already downloaded). (1) former-leader screen REFUSED by
-  do-no-harm (prereg file); Pete: test it seat-level instead -> Opus agent building `scripts/seat_quick.R` (worktree
-  `C:/dev/auspol-wt-seatq`, branch seat-quick-screen), then the safety-scaled variant. Regional seat correlation: Opus
-  agent, worktree `C:/dev/auspol-wt-corr`. (3) 100k: first run stopped on the published-filenames guard; PR #279 lets it
-  publish; second run 45516620755. (4) Upper house: PR #278 merged; R2 file arrives with that run.
-  (1) `AUSPOL_LEADER_FORMER` (Mulgrave/Bulleen: former leader's seat loses ~1.0-1.4 points; Pete "Build it anyway" after
-  being told it cannot flip Mulgrave): committed 429b91e9 OFF; screen `deciding-runs/20261125-leader-former/screen.log`
-  (35 elections, prereg `plans/prereg-leader-former-2026-11-25.md`). Ship = flip published_flags + inline default, rebuild
-  `leader-seat-vic2026.csv` from the live inputs (scratch root `liveroot` = hard links of `auspol-wt-rbm/output` + junction
-  to `external/`; UNLINK the junction with `cmd /c rmdir` before deleting), check the 3 existing rows byte-identical, upload.
-  (2) Nov YouGov MRP: only Bendigo East (ALP 23, ONP 18) and Mulgrave (2PP only) public; tweet regions NOT used (Pete: no
-  source). Statewide-anchor code on branch `mrp-statewide-anchor` 6a7ed5eb (worktree `C:/dev/auspol-wt-be`). TO DO: add the
-  Nov rows to `mrp_extra.csv` + `mrp_release_levels.csv` (ALP 20, LNP 31, ONP 21, GRN 16; force-add), rebuild
-  `seat-poll-blend-vic2026.csv` from `liveroot` (control: no Nov rows -> md5 cb5e3bc1), walk, upload.
-  (3) 100k-sims trial (Pete: "Real run, publishes"): 7bb3bf2a adds workflow input `n_sims`, night state kept at 20k; needs
-  review -> cherry-pick PR to main -> dispatch `n_sims=100000` with scenarios OFF -> send ITG timing + what-if file size.
-  (4) Upper house to the daily run + R2 `auspol/council-forecast-vic2026.json` with `status`/`built_at` (ITG links it on
-  arrival; Pete wants it linked). (5) Answered: in-sim correlation is statewide only; cluster correlation plan
-  `plans/plan-correlated-seat-draws.md` after 28 Nov.
-
-- **Status 24 Nov, 3pm.** main 0.4.202 (PR #272: MRP seat pattern); dev ahead, unmerged by choice (ONP switch off, benchmark readers, seat odds builder). Site 24 Nov: seat odds page live at `politics/vic2026/odds`; election pages moved to `politics/vic2026/` + `politics/nsw2027/` (redirects checked on prod). Edge Board and party-page links repointed on dev (reach the site with the next dev->main merge). Pete's X thread: https://claude.ai/artifact/QXNJBdSvqMJ4PyaBiFD6nn. MRP check of 24 Nov PASSED (4:30am run 45228420242). Live (10:35pm, run 45162697096): MRP seat pattern ON (July
-  YouGov MRP in; Pete shipped on the 7-election screen), by-election person rule ON, One Nation MODELLED allocation ON (Pete's
-  override), final_twos in the forecast file. Search interest off. Dated: 25 Nov
-  both night rehearsals (check the night file's final_twos on the test key); 26 Nov venues recheck; 27 Nov inthegame-blog#1262 + benchmark capture.
+- **Status 25 Nov, 2pm (replaces the 24 Nov status and the 25 Nov morning in-flight list; both verbatim in DECISIONS
+  2026-11-25 and git history).** Live: 100k sims daily incl. scenarios (PR #280), independents cache (PR #281), upper house
+  on R2 + site `politics/vic2026/upper-house` (PR #278), seat TCP per what-if scenario (PR #276), Bendigo East from the Nov
+  YouGov MRP (table md5 de6b7c33, rollback `deciding-runs/20261125-nov-mrp/BEFORE-*`). OFF by decision: former-leader cut,
+  regional seat correlation (DECISIONS 25 Nov). IN FLIGHT: PR #282 statewide-anchor code to main (CI); seat-level quick
+  tester `seat-quick-screen` (worktree `C:/dev/auspol-wt-seatq`, reviewed, needs one full check_like_ci then merge to dev;
+  last attempt reaped for low memory); night rehearsals of 25 Nov running (backup run 45537238935, laptop dry run).
   Rebuild worktrees `C:/dev/auspol-wt-rb0`, `-rb1`, `-rbm`, `-rbr`, `-rbb` (junction lists in their deciding-runs folders): unlink before removing.
+- **DATED Thu 26 Nov, 4:30am run (first at 100k daily, PR #280):** (a) every scenario job finished under its 120-min limit
+  and publish-scenarios logs `CSC9 ... 72 of 72` and `CSC7 ... differs ... in 0 of 88` for all four parties, and the scenario
+  logs show `ind_person` warm (the cache, PR #281); (b) log has `S6  AUSPOL_N_SIMS=100000 allowed`, `NS1 ... 20000 sims; the
+  forecast itself runs 100000`, `CFC9`, `OK council`; (c) `curl -sI` the whatif file shows `Content-Encoding: gzip`, then
+  MESSAGE ITG with the run id and built_at; (d) Bendigo East moved: One Nation's primary down ~4 points vs 25 Nov 9:55am.
 - OPEN, after 28 Nov: One Nation allocation. The modelled version is LIVE on Pete's override of its refusal (23 Nov, DECISIONS);
   the rank rule with retrained trees stays off. Score both on vic2026 once results are in.
 - OPEN, 15 Nov full review (`reviews/FABLE-FULL-REVIEW-2026-11-15.md`, "Pick up from here" is the work list; DECISIONS
