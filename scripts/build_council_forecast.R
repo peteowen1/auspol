@@ -60,7 +60,7 @@ if (Sys.getenv("AUSPOL_COUNCIL_VS_POLL", "1") == "1") {
     pool_mean <- 100 - sum(unlist(A[region == r, ..cls]) * RATIO[cls])
     iv <- which(g$region == r & g$class == "MINOR" & g$group == "Victorian Socialists")
     io <- which(g$region == r & g$class == "MINOR" & g$group != "Victorian Socialists")
-    stopifnot(length(iv) == 1L, length(io) >= 1L)
+    stopifnot(length(iv) == 1L, length(io) >= 1L, pool_mean > vs_hat[[r]])   # else wv is negative or pinned at the cap
     old <- g$w[iv]; wv <- min(0.8, vs_hat[[r]] / pool_mean)
     g$w[io] <- g$w[io] * (1 - wv) / sum(g$w[io]); g$w[iv] <- wv
     cat(sprintf("CFC2  %s: Victorian Socialists %.1f%% polled -> %.1f%% after shrinkage; share of the minor pool %.2f -> %.2f\n",
