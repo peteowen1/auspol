@@ -97,7 +97,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `gh release download forecast-latest -p night-state-vic-2026.rds -D <dir>`, then the fetcher and loop exactly as written
   under NIGHT SOURCE ("THE NIGHT COMMAND"; the feed-era three-flag command that stood here stops on `NW9!`). Live page https://inthegame.blog/politics/live
   (find my seat live, #166 closed 5 Nov). OPEN, in order (1-2 done 18 Nov):
-  3. Navbar link: OWNED BY ITG as inthegame-blog #1310 (merge 27 Nov); our #1239 closed unmerged 25 Nov. "Called" rule 0.99 with 10% counted CONFIRMED 17 Nov on the real fed2022/fed2025/vic2022 nights
+  3. Navbar link: LIVE 26 Nov 10:54am (inthegame-blog #1310, ITG); our #1239 closed unmerged 25 Nov. "Called" rule 0.99 with 10% counted CONFIRMED 17 Nov on the real fed2022/fed2025/vic2022 nights
      (`reviews/night-called-rule-real-nights-2026-11-17.md`): one wrong call, Melbourne fed2025 (a Liberal-flow
      miss, not the final-pair defect: see FLOW MEANS); the gate blocks Fowler 2022 and Mildura 2022 (called at 0.3% and 0.9% counted).
   4. 25 Nov trial (no 2CP): with real 2026 centre names, compare each counted early centre with its own 2022 upper-house lean,
@@ -120,7 +120,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - NOTE: `output/` in C:/dev/auspol is the 13 Nov rebuild, NOT the live model (live = `C:/dev/auspol-wt-rbm/output`): never
   run stage 9 from here until a full rebuild is checked. nsw2027's demographic table has no shift.
   25 Nov morning checks (early-share correction live, whatif on R2, seat TCP per scenario, upper house) DONE; text verbatim
-  in `backlog/journal-2026-11-25-queue-history.md`, with the superseded #1262 note (ITG merges #1310 on 27 Nov).
+  in `backlog/journal-2026-11-25-queue-history.md`, with the superseded #1262 note (#1310 merged 26 Nov).
 - DONE 26 Nov 5:13am, VEC venues recheck: reissued ("correct as at 24th Nov 7:00pm", Last-Modified 24 Nov 22:56 GMT), saved
   raw `voting-locations/raw-20261126-0513/`, rebuilt: same 1,852 + 310 centres, none added or removed; only entrance /
   accessibility text on 3 election-day + 1 early centre (Glenroy South and Broadmeadows EVC 1: lift out of order, stairs only).
