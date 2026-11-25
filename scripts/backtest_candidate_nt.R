@@ -849,7 +849,8 @@ for (K in PAIRS) {
   surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
   .swd <- harness_sw_draws(SWD, colnames(shares), N_SIMS, el_to, "BNTW")
   .scc <- seat_cluster_setup(el_to, shares, tag = "BNT5k")
-  sim <- simulate_seat_contests(seat_cluster = .scc$seat_cluster, cluster_rho = .scc$cluster_rho, level_sd = .level_sd, sd_override = harness_sw_net_sd(size_sd_apply(SD_OVR, shares, el_to, .level_sd, .lm(shares)), .swd, shares, .level_sd, .lm(shares), psd, el_to, "BNTW"), level_mult = .lm(shares), shares, fm, party_sd = psd, statewide_draws = .swd,
+  # seat_state_sim(): this call, plus the exact inputs saved under AUSPOL_SEAT_STATE_DUMP (R/seat_state.R, scripts/seat_quick.R)
+  sim <- seat_state_sim(el_to, seat_cluster = .scc$seat_cluster, cluster_rho = .scc$cluster_rho, level_sd = .level_sd, sd_override = harness_sw_net_sd(size_sd_apply(SD_OVR, shares, el_to, .level_sd, .lm(shares)), .swd, shares, .level_sd, .lm(shares), psd, el_to, "BNTW"), level_mult = .lm(shares), shares, fm, party_sd = psd, statewide_draws = .swd,
                                 seat_sd = sd_used * SEAT_SD_MULT,
                                 breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(el_to, rownames(shares)), error_q = error_dist_args(el_to, colnames(shares)),
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,

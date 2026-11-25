@@ -1961,7 +1961,8 @@ for (X in out_all) {
     cat(sprintf("NX8  night state for fed%d saved to %s\n", K$to, .dpath))
   }
   .scc <- seat_cluster_setup(sprintf("fed%d", K$to), X$shares, tag = "BF5k")
-  sim <- simulate_seat_contests(seat_cluster = .scc$seat_cluster, cluster_rho = .scc$cluster_rho, level_sd = .level_sd, sd_override = harness_sw_net_sd(size_sd_apply(SD_OVR, X$shares, sprintf("fed%d", K$to), .level_sd, .lm(X$shares)), X$sw_draws, X$shares, .level_sd, .lm(X$shares), psd, sprintf("fed%d", K$to), "BFW"), level_mult = .lm(X$shares), X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
+  # seat_state_sim(): this call, plus the exact inputs saved under AUSPOL_SEAT_STATE_DUMP (R/seat_state.R, scripts/seat_quick.R)
+  sim <- seat_state_sim(sprintf("fed%d", K$to), seat_cluster = .scc$seat_cluster, cluster_rho = .scc$cluster_rho, level_sd = .level_sd, sd_override = harness_sw_net_sd(size_sd_apply(SD_OVR, X$shares, sprintf("fed%d", K$to), .level_sd, .lm(X$shares)), X$sw_draws, X$shares, .level_sd, .lm(X$shares), psd, sprintf("fed%d", K$to), "BFW"), level_mult = .lm(X$shares), X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                                 shrink = shrink_arg, surge_h = surge_arg, surge_party = surge_party_arg,
                                 surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"),

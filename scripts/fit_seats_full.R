@@ -444,6 +444,13 @@ RUN_FLAGS <- PUBLISHED_FLAGS  # scripts/published_flags.R -- the only copy
 .now <- vapply(names(RUN_FLAGS), function(k) Sys.getenv(k, RUN_FLAGS[[k]]),
                character(1))
 changed <- names(RUN_FLAGS)[.now != RUN_FLAGS]
+# A deliberate sim-count trial (the workflow's n_sims input, Pete 25 Nov 2026) may publish: the sim count changes
+# Monte Carlo noise, not the model. Only the workflow sets AUSPOL_ALLOW_SIMS_CHANGE, and only with that input, so a
+# by-hand low-sims run still cannot overwrite the published files.
+if (identical(Sys.getenv("AUSPOL_ALLOW_SIMS_CHANGE"), "1") && "AUSPOL_N_SIMS" %in% changed) {
+  cat(sprintf("S6  AUSPOL_N_SIMS=%s allowed to publish (AUSPOL_ALLOW_SIMS_CHANGE=1, workflow n_sims trial)\n", Sys.getenv("AUSPOL_N_SIMS")))
+  changed <- setdiff(changed, "AUSPOL_N_SIMS")
+}
 default_run <- length(changed) == 0L && OUT_SUFFIX == ""
 
 # AND REFUSE TO WRITE THE PUBLISHED FILENAME FROM A NON-DEFAULT RUN. Reporting

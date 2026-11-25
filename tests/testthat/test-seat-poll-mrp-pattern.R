@@ -40,6 +40,53 @@ test_that("the anchor stops when no MRP cell matches the shares (label mismatch)
   expect_error(utils::capture.output(.seat_poll_mrp_anchor(tb, shares, "test")), "SPM4!")
 })
 
+test_that("a release with statewide levels is centred on them; a seat-mean release is unchanged beside it", {
+  pp <- data.table::data.table(
+    seat = c("Alpha", "Beta", "Gamma", "Alpha", "Beta", "Gamma", "Beta", "Beta"),
+    class = c("ALP", "ALP", "ALP", "ONP", "ONP", "ONP", "ALP", "ONP"),
+    fp = c(20, 26, 23, 30, 18, 24, 23, 18), mrp = TRUE,
+    .pollster = c(rep("YouGov (MRP)", 6), "YouGov (MRP) Nov", "YouGov (MRP) Nov"),
+    .fw = c(rep("2026-07-10", 6), "2026-11-23", "2026-11-23"))
+  lv <- data.table::data.table(rel = "YouGov (MRP) Nov 2026-11-23", class = c("ALP", "ONP"), level = c(20, 21))
+  testthat::local_mocked_bindings(current_seat_predictions = function(...) data.table::data.table(
+    election = "other", seat = "x", party = "ALP", xgb_pred_seat = 1, actual_share = 1),
+    .seat_poll_mrp_levels = function(election) lv)
+  out <- NULL
+  invisible(utils::capture.output(out <- .seat_poll_mrp_recentre(data.table::copy(pp), "zz2026")))
+  jul <- out[out$.pollster == "YouGov (MRP)"]
+  expect_equal(jul$fp[jul$class == "ALP"], c(20, 26, 23) - mean(c(20, 26, 23)))   # July: seat-mean centring, as before
+  nov <- out[out$.pollster == "YouGov (MRP) Nov"]
+  expect_equal(nov$fp, c(23 - 20, 18 - 21))                                         # Nov: its own statewide figures
+  expect_true(all(out$.dev))
+  # control: with no levels on file the same two releases stop the run, as they always did
+  testthat::local_mocked_bindings(.seat_poll_mrp_levels = function(election) lv[0])
+  expect_error(utils::capture.output(.seat_poll_mrp_recentre(data.table::copy(pp), "zz2026")), "without statewide levels")
+  # with predictions on file: the levelled release is shifted by OUR statewide mean minus its own level
+  fe <- data.table::data.table(election = "zz2026", seat = c("Alpha", "Beta", "Gamma", "Alpha", "Beta", "Gamma"),
+                               party = c(rep("ALP", 3), rep("ONP", 3)), xgb_pred_seat = c(25, 30, 20, 22, 26, 18),
+                               actual_share = NA_real_)
+  testthat::local_mocked_bindings(current_seat_predictions = function(...) fe, .seat_poll_mrp_levels = function(election) lv)
+  invisible(utils::capture.output(out2 <- .seat_poll_mrp_recentre(data.table::copy(pp), "zz2026")))
+  n2 <- out2[out2$.pollster == "YouGov (MRP) Nov"]
+  expect_equal(n2$fp, c(23 - 20 + mean(c(25, 30, 20)), 18 - 21 + mean(c(22, 26, 18))))
+})
+
+test_that("a statewide-levelled release alone is refused (the anchor would erase it)", {
+  pp <- data.table::data.table(seat = c("Beta", "Beta"), class = c("ALP", "ONP"), fp = c(23, 18), mrp = TRUE,
+                               .pollster = "YouGov (MRP) Nov", .fw = "2026-11-23")
+  lv <- data.table::data.table(rel = "YouGov (MRP) Nov 2026-11-23", class = c("ALP", "ONP"), level = c(20, 21))
+  testthat::local_mocked_bindings(current_seat_predictions = function(...) data.table::data.table(
+    election = "other", seat = "x", party = "ALP", xgb_pred_seat = 1, actual_share = 1),
+    .seat_poll_mrp_levels = function(election) lv)
+  expect_error(utils::capture.output(.seat_poll_mrp_recentre(data.table::copy(pp), "zz2026")), "SPM5!")
+})
+
+test_that("the seat-poll cache key stamps the statewide levels file under the arm", {
+  withr::local_envvar(AUSPOL_SEAT_POLL_MRP_PATTERN = "1")
+  f <- body(.seat_poll_memo_key)
+  expect_true(any(grepl("mrp_release_levels.csv", deparse(f), fixed = TRUE)))
+})
+
 test_that("the arm switch refuses values it does not know", {
   withr::local_envvar(AUSPOL_SEAT_POLL_MRP_PATTERN = "yes")
   expect_error(.seat_poll_mrp_pattern_on())

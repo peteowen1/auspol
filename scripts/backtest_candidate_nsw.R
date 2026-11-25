@@ -1287,7 +1287,8 @@ if (nzchar(.dmp)) {
 ", TO, .dpath))
 }
 .scc <- seat_cluster_setup(TGT, shares, tag = "BN5k")
-sim <- simulate_seat_contests(seat_cluster = .scc$seat_cluster, cluster_rho = .scc$cluster_rho, level_sd = .level_sd, sd_override = harness_sw_net_sd(size_sd_apply(SD_OVR, shares, TGT, .level_sd, .lm(shares)), .swd, shares, .level_sd, .lm(shares), psd, TGT, "BNW"), level_mult = .lm(shares), shares, fm, party_sd = psd, statewide_draws = .swd, seat_sd = sp$sd_within * SEAT_SD_MULT,
+# seat_state_sim(): this call, plus the exact inputs saved under AUSPOL_SEAT_STATE_DUMP (R/seat_state.R, scripts/seat_quick.R)
+sim <- seat_state_sim(TGT, seat_cluster = .scc$seat_cluster, cluster_rho = .scc$cluster_rho, level_sd = .level_sd, sd_override = harness_sw_net_sd(size_sd_apply(SD_OVR, shares, TGT, .level_sd, .lm(shares)), .swd, shares, .level_sd, .lm(shares), psd, TGT, "BNW"), level_mult = .lm(shares), shares, fm, party_sd = psd, statewide_draws = .swd, seat_sd = sp$sd_within * SEAT_SD_MULT,
                               breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(TGT, rownames(shares)), error_q = error_dist_args(TGT, colnames(shares)),
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
                               shrink = SHRINK, conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),

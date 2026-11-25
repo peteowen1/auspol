@@ -1113,7 +1113,8 @@ for (K in PAIRS) {
       shares <- .nu$shares; .sdo <- .nu$sd; .swd <- night_shrink_draws(.swd, 1 - .nu$resolved)
     }
     .scc <- seat_cluster_setup(sprintf("vic%d", K$to), shares, tag = "BV5k")
-    sim <- simulate_seat_contests(seat_cluster = .scc$seat_cluster, cluster_rho = .scc$cluster_rho, level_sd = .level_sd, sd_override = .sdo, level_mult = .lm(shares), shares, fm, party_sd = psd, statewide_draws = .swd,
+    # seat_state_sim(): this call, plus the exact inputs saved under AUSPOL_SEAT_STATE_DUMP (R/seat_state.R, scripts/seat_quick.R)
+    sim <- seat_state_sim(sprintf("vic%d", K$to), seat_cluster = .scc$seat_cluster, cluster_rho = .scc$cluster_rho, level_sd = .level_sd, sd_override = .sdo, level_mult = .lm(shares), shares, fm, party_sd = psd, statewide_draws = .swd,
                                   seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = N_SIMS,
                                   breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(.eb, rownames(shares)), error_q = error_dist_args(.eb, colnames(shares)),
                                   smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,

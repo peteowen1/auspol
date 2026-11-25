@@ -8,27 +8,22 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
-- **IN FLIGHT 25 Nov (morning), all Pete's asks, in order:**
-  (1) `AUSPOL_LEADER_FORMER` (Mulgrave/Bulleen: former leader's seat loses ~1.0-1.4 points; Pete "Build it anyway" after
-  being told it cannot flip Mulgrave): committed 429b91e9 OFF; screen `deciding-runs/20261125-leader-former/screen.log`
-  (35 elections, prereg `plans/prereg-leader-former-2026-11-25.md`). Ship = flip published_flags + inline default, rebuild
-  `leader-seat-vic2026.csv` from the live inputs (scratch root `liveroot` = hard links of `auspol-wt-rbm/output` + junction
-  to `external/`; UNLINK the junction with `cmd /c rmdir` before deleting), check the 3 existing rows byte-identical, upload.
-  (2) Nov YouGov MRP: only Bendigo East (ALP 23, ONP 18) and Mulgrave (2PP only) public; tweet regions NOT used (Pete: no
-  source). Statewide-anchor code on branch `mrp-statewide-anchor` 6a7ed5eb (worktree `C:/dev/auspol-wt-be`). TO DO: add the
-  Nov rows to `mrp_extra.csv` + `mrp_release_levels.csv` (ALP 20, LNP 31, ONP 21, GRN 16; force-add), rebuild
-  `seat-poll-blend-vic2026.csv` from `liveroot` (control: no Nov rows -> md5 cb5e3bc1), walk, upload.
-  (3) 100k-sims trial (Pete: "Real run, publishes"): 7bb3bf2a adds workflow input `n_sims`, night state kept at 20k; needs
-  review -> cherry-pick PR to main -> dispatch `n_sims=100000` with scenarios OFF -> send ITG timing + what-if file size.
-  (4) Upper house to the daily run + R2 `auspol/council-forecast-vic2026.json` with `status`/`built_at` (ITG links it on
-  arrival; Pete wants it linked). (5) Answered: in-sim correlation is statewide only; cluster correlation plan
-  `plans/plan-correlated-seat-draws.md` after 28 Nov.
-
-- **Status 24 Nov, 3pm.** main 0.4.202 (PR #272: MRP seat pattern); dev ahead, unmerged by choice (ONP switch off, benchmark readers, seat odds builder). Site 24 Nov: seat odds page live at `politics/vic2026/odds`; election pages moved to `politics/vic2026/` + `politics/nsw2027/` (redirects checked on prod). Edge Board and party-page links repointed on dev (reach the site with the next dev->main merge). Pete's X thread: https://claude.ai/artifact/QXNJBdSvqMJ4PyaBiFD6nn. MRP check of 24 Nov PASSED (4:30am run 45228420242). Live (10:35pm, run 45162697096): MRP seat pattern ON (July
-  YouGov MRP in; Pete shipped on the 7-election screen), by-election person rule ON, One Nation MODELLED allocation ON (Pete's
-  override), final_twos in the forecast file. Search interest off. Dated: 25 Nov
-  both night rehearsals (check the night file's final_twos on the test key); 26 Nov venues recheck; 27 Nov inthegame-blog#1262 + benchmark capture.
-  Rebuild worktrees `C:/dev/auspol-wt-rb0`, `-rb1`, `-rbm`, `-rbr`, `-rbb` (junction lists in their deciding-runs folders): unlink before removing.
+- **Status 25 Nov, 10pm (replaces the 2pm block; that one is in git history).** Live: 100k sims daily incl. scenarios,
+  upper house on the site, seat TCP per what-if. Six Nov YouGov MRP seats (Mulgrave, Bendigo East corrected, Kew, Pakenham,
+  Niddrie, Melbourne) in table md5 f560c155, published by run 45584793640 at 8:32pm (scenarios not rerun: what-if page is
+  the 3:29pm run until 4:30am). ON from 4:30am Thu: ind_person cache across processes (PR #283 merged, on dev), Victorian
+  Socialists from YouGov's regional crosstab in the upper house (`AUSPOL_UPPER_HOUSE_VS_POLL=1`, 7f12d55b). On dev only:
+  seat-level quick tester (merged 6b6910db), switch registry scans .sh/.ps1 (d718b747, dev-e2). OFF by decision:
+  former-leader cut, regional seat correlation, upper-house all-party regional blend (DECISIONS 25 Nov). dev -> main
+  after 28 Nov (dev carries deliberately-off-main work). Rebuild worktrees `C:/dev/auspol-wt-rb*`: unlink junctions before removing.
+- **NEEDS PETE (26 Nov): seat-type correlation, both arms REFUSED under the prereg's clause 1** (branch `seat-corr-type`
+  d3367c17, RESULT in `docs/plans/prereg-seat-type-cor-2026-11-25.md`). Type only: -0.0071 (0.41 SE), null. Region + type:
+  -0.0159 (0.92 SE; needs 1 SE), passes clauses 2-5 (sign 35 of 35). Recommendation: OFF for 28 Nov; rescore after.
+- LIVE 26 Nov 8:03am: PR #284 (Victorian Socialists 0.54 seats) via the new upper-house-only run (PR #285, 62 s). To
+  republish the upper house alone: `gh workflow run forecast.yaml -R peteowen1/auspol --ref main -f only=upper-house`.
+- CHECKED 26 Nov 4:30am run 45665482641 (main a0efa804): success; CSC9 72 of 72, CSC7 0 of 88 for all parties; S6, NS1,
+  CFC9, OK council, OK whatif present; cache fix (#283) works: Victorian what-ifs 152 s -> 90 s each (72 scenarios,
+  vs run 45545825468); what-if jobs ~17 min. Hung 61.5%. The what-if step logs no IPC1 lines (summary output only).
 - OPEN, after 28 Nov: One Nation allocation. The modelled version is LIVE on Pete's override of its refusal (23 Nov, DECISIONS);
   the rank rule with retrained trees stays off. Score both on vic2026 once results are in.
 - OPEN, 15 Nov full review (`reviews/FABLE-FULL-REVIEW-2026-11-15.md`, "Pick up from here" is the work list; DECISIONS
@@ -61,8 +56,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - OPEN, DATED 23 Nov and 25 Nov, NIGHT BACKUP (on `main` 0.4.196, PR #265): if the laptop dies on the night, Actions >
   "Election-night backup", key `auspol/night/vic2026.json`, source `web`, index = the results index URL, minutes 330. Passed on the
   2022 pages (run 44984447331, 2 cycles, 4-5 min refresh). 23 Nov: two runs failed on the VEC site refusing GitHub (HTTP 999); fixed by the cooldown/retry commits e478d8e9, 60bc0b4f, 6de5673c (on `main`); rerun 45199291224 passed (4 cycles, 87 of 88 seats, uploaded to the test key, no `VWF3!`). TO DO: after the 26 Nov venues recheck, if any bundled file changed,
-  `bash scripts/publish_night_inputs.sh --upload` (23 Nov 8:45pm: the uploaded bundle matches all 18 local files); 25 Nov one `web-2022` run of 45-60 min, pass = no snapshot
-  ends in `VWF3!`. Done when: both are run. UNTESTED: the live key, a 330-minute run. Detail: `backlog/journal-2026-11-21-queue-history.md`.
+  `bash scripts/publish_night_inputs.sh --upload` (23 Nov 8:45pm: the uploaded bundle matches all 18 local files). The 25 Nov
+  `web-2022` rehearsal PASSED (run 45537238935). Done when: the venues recheck is done. UNTESTED: the live key, a 330-minute run. Detail: `backlog/journal-2026-11-21-queue-history.md`.
 - OPEN, NIGHT SOURCE (before 28 Nov): the VEC REFUSED the feed (11 Nov); the night runs on the VEC WEBSITE
   (`R/vec_web.R`, `scripts/fetch_vec_web_snapshot.R`, `night_cycle(source_type = "web")`, `cand_ref = "copy"`). Still open:
   (1) the 2026 results index URL is only known on the night (the fetcher takes --index); (2) ASSUMED (Pete, 17 Nov;
@@ -102,8 +97,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `gh release download forecast-latest -p night-state-vic-2026.rds -D <dir>`, then the fetcher and loop exactly as written
   under NIGHT SOURCE ("THE NIGHT COMMAND"; the feed-era three-flag command that stood here stops on `NW9!`). Live page https://inthegame.blog/politics/live
   (find my seat live, #166 closed 5 Nov). OPEN, in order (1-2 done 18 Nov):
-  3. Navbar link: BUILT 18 Nov on inthegame-blog branch `feat/politics-live-nav-2`, PR #1239 (264d638f, Politics menu
-     "Victoria 2026: election night live"); 27 Nov a session merges its PR into `dev`, then `dev`→`main`. "Called" rule 0.99 with 10% counted CONFIRMED 17 Nov on the real fed2022/fed2025/vic2022 nights
+  3. Navbar link: OWNED BY ITG as inthegame-blog #1310 (merge 27 Nov); our #1239 closed unmerged 25 Nov. "Called" rule 0.99 with 10% counted CONFIRMED 17 Nov on the real fed2022/fed2025/vic2022 nights
      (`reviews/night-called-rule-real-nights-2026-11-17.md`): one wrong call, Melbourne fed2025 (a Liberal-flow
      miss, not the final-pair defect: see FLOW MEANS); the gate blocks Fowler 2022 and Mildura 2022 (called at 0.3% and 0.9% counted).
   4. 25 Nov trial (no 2CP): with real 2026 centre names, compare each counted early centre with its own 2022 upper-house lean,
@@ -117,52 +111,22 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 
 - OPEN, DATED 27 Nov (evening) and 28 Nov (morning): save the VEC early and postal vote spreadsheet again, raw, into
-  `external/reference/vec-early-vote-2026/` (link on https://www.vec.vic.gov.au/voting/2026-state-election/voting-statistics;
-  one copy saved 24 Nov; cumulative, 88 districts per day from 7 Nov, verified). The 28 Nov copy is the final pre-poll count. Early-vote screen:
-  `scripts/screen_early_vote.R`.
-  **DATED 25 Nov (first thing): the early-share Labor correction went live-pending 24 Nov 7:09pm** (PR #274 merged;
-  `demo-resid-vic2026.csv` on the `shipped-models` release replaced by hand, DECISIONS). Check the 4:30am forecast run:
-  (1) its conclusion is success; (2) its log has `DR1  demographic correction ON for vic2026 from demo-resid-vic2026.csv
-  (176 of 176 rows matched)`; (3) against the 24 Nov run, Labor's win chance moves in the walked seats (Monbulk up,
-  St Albans and Greenvale down, Ringwood near even) and the hung-parliament figure moves by under 1 point. Then tell
-  Pete, and update thread 1's numbers in the Victoria Forecast Thread artifact if they changed. ROLL BACK with
-  `gh release upload shipped-models docs/reviews/early-vote-scouts-2026-11-24/demo-resid-vic2026-BEFORE-23nov-release.csv#demo-resid-vic2026.csv --clobber`
-  (check the `#name` form uploads under the right name before relying on it; else copy the file to that name first).
-  SAME MORNING, after that run: (4) its log shows `WIS2 wrote output/whatif-sims-vic2026.json` and `OK whatif-sims-vic2026.json`
-  (PR #275), and https://pub-ee4bf5b599a047f9ac2b9facc1587008.r2.dev/auspol/whatif-sims-vic2026.json returns the file with
-  `majority` 45 and a `built_at`; then MESSAGE THE ITG SESSION that it is on R2 (ITG merges its page
-  `/politics/vic2026/what-if-primaries.html`, on its dev at 134d5307, after that and after Pete's launch). (5) Refresh
-  posts 1-4 and the three early-voting charts in the Victoria Forecast Thread artifact from the new VEC file (after
-  8:30am), and thread 1's numbers and four charts if the forecast moved. (6) Upper house, for release Thu 26 Nov: simulated walk
-  DONE 24 Nov and Pete said the region tables look good (`plans/upper-house-forecast-walk-2026-11-24/sim.R`, `sim-output.txt`,
-  `council-forecast-vic2026.json`; ITG has the JSON shape). LEFT: move sim.R into `scripts/` and the daily run with an R2
-  upload (review gate), test the count against a real ticket-free count (a Senate contest), tell ITG the R2 key.
-  (7) Seat TCP per what-if scenario: MERGED 25 Nov 9:15am (PR #276, `final_two` per scenario in scenario-vic2026.json;
-  ITG built its column against it). ON R2 since run 45500128541 (Pete OK'd; built_at 2026-11-24T22:55:01Z, 9:55am): CSC9
-  72 of 72, CSC7 0 of 88 differ on all four parties; ITG told, checks its live page. Still open from the same ask: `flows_to_labor` in scenario-vic2026.json; `n` on each `polls` row of
-  vic-page-data.json.
-  4:30am run 25 Nov (45449335210) CHECKED: success; `DR1 ... (176 of 176 rows matched)`; WIS2 + `OK whatif` and the R2 file
-  has majority 45 and built_at. (3) CHECKED: Labor win chance Monbulk 0.24 -> 0.29, St Albans 0.635 -> 0.513, Greenvale 0.463 -> 0.354, Ringwood 0.404 -> 0.412, as walked (polls 23 -> 24 Nov in the same step). Hung figure not checked (not in page data).
-  NOT DONE: nsw2027's table has no shift; `output/` in this checkout is the 13 Nov rebuild, NOT the live model
-  (live = `C:/dev/auspol-wt-rbm/output`), so never run stage 9 from here until a full rebuild has been checked.
-  EARLIER, PARKED 24 Nov (DECISIONS): as an xgb feature LAST election's early share is not
-  separable from a placebo. AFTER 28 Nov: add vic2026 to the panel and rescore; the untested route is a direct post-tree
-  correction on Labor; the federal "pre-poll shifted later" lead can be computed for Victoria from
-  `external/reference/antonygreen-vic2022-early/` and the saved VEC 2026 file. DATED 25 Nov (morning): refresh posts 1-4
-  and the three early-voting charts in the Victoria Forecast Thread artifact from the new VEC file before Pete posts.
-- OPEN, DATED 27 Nov: seat-page independents note (inthegame-blog #1243 + #1246) is on its dev only. Reaches prod via
-  my cherry-pick branch off its `main` (ITG's rule), with the navbar #1239. Done when: the note's code is on inthegame.blog
-  (it shows only at 10%+ independent; since search interest went off on 19 Nov no seat qualifies, so no page shows it yet).
-  BUILT 21 Nov: DRAFT inthegame-blog PR #1262 (`feat/politics-night-prod`, into `main`): c3e41729, 28f51c5c, d38e702f and
-  the navbar 264d638f cherry-picked onto its `main` (21 added lines, 2 files; built with merge-tree + commit-tree, the
-  shared checkout untouched). ITG agreed 21 Nov and lists it as the 27 Nov merge in place of #1239. ITG reviewed and
-  design-checked it 21 Nov at head 84d9e8d5 (0 important; PASS at 400/760/desktop); its check of the live forecast: the
-  note shows on 0 of 88 seats (highest unsplit independent total Macedon 5.6%, against the 10% bar). On 27 Nov: mark it
-  ready, check its render run is green, merge, close #1239 (same nav commit). Any new commit to the branch: tell ITG.
-- OPEN, DATED Thu 26 Nov: VEC venues recheck (off Pete's Daily Eight, 23 Nov). Compare the spreadsheet's `Last-Modified` with
-  `raw-20261121-1140/headers-xlsx.txt` (20 Nov 02:02 GMT); only if it moved: save raw, `scripts/build_vec_places_2026.R`, the geocoder,
-  `bash scripts/publish_night_inputs.sh --upload`, and hand ITG a rebuilt booth file. Done when: checked and, if moved, all four done.
-- OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. 24 Nov 9:16am done, every source (`docs/benchmarks/vic2026/2026-11-23/`; TAB moved to one "Vic Seats" event, read by
+  `external/reference/vec-early-vote-2026/` (link on https://www.vec.vic.gov.au/voting/2026-state-election/voting-statistics);
+  the 28 Nov copy is the final pre-poll count. Screen: `scripts/screen_early_vote.R`.
+  Copies on disk: 24, 25 and 26 Nov (26 Nov 9:30am, Last-Modified 25 Nov 21:42 GMT).
+- OPEN, after 28 Nov: early-vote share (an xgb feature is not separable from a placebo, DECISIONS 24 Nov): add vic2026 to the
+  panel and rescore; untested route = a direct post-tree Labor correction. Also from ITG's ask: `flows_to_labor` in
+  scenario-vic2026.json and `n` on each `polls` row of vic-page-data.json.
+- NOTE: `output/` in C:/dev/auspol is the 13 Nov rebuild, NOT the live model (live = `C:/dev/auspol-wt-rbm/output`): never
+  run stage 9 from here until a full rebuild is checked. nsw2027's demographic table has no shift.
+  25 Nov morning checks (early-share correction live, whatif on R2, seat TCP per scenario, upper house) DONE; text verbatim
+  in `backlog/journal-2026-11-25-queue-history.md`, with the superseded #1262 note (ITG merges #1310 on 27 Nov).
+- DONE 26 Nov 5:13am, VEC venues recheck: reissued ("correct as at 24th Nov 7:00pm", Last-Modified 24 Nov 22:56 GMT), saved
+  raw `voting-locations/raw-20261126-0513/`, rebuilt: same 1,852 + 310 centres, none added or removed; only entrance /
+  accessibility text on 3 election-day + 1 early centre (Glenroy South and Broadmeadows EVC 1: lift out of order, stairs only).
+  Night model unaffected (booth names unchanged), geocoder nothing new, night bundle NOT re-uploaded (no booth change).
+  ITG confirmed 26 Nov: the booth finder shows no accessibility text, so no rebuild.
+- OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. REHEARSED 26 Nov 9:35am (UTC folder 2026-11-25, 432ab86b): every scripted source fine; TAB and GES still need the Chrome steps; the betfair VBK2! warning (79-82 thin books left out) is normal (74 on 23 Nov). 24 Nov 9:16am done, every source (`docs/benchmarks/vic2026/2026-11-23/`; TAB moved to one "Vic Seats" event, read by
   `bk_tab_seats()`; 27 Nov: also rebuild `seat-odds-page.html` there, the seat odds artifact
   https://claude.ai/artifact/PJHtfKoc8xKvhjUErCb9QR; and the SITE page politics/odds.qmd: hand-write that folder's
   `majority-markets.csv` + `capture-note.txt` (copy 2026-11-23's shape), `Rscript scripts/build_seat_odds_json.R`, then
@@ -170,7 +134,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   saved: Chrome blocked the download on api.beta.tab.com.au; Betfair has no Victorian markets). On 27 Nov, if the TAB
   download is blocked again, check Chrome's download prompt for that site first. Leads from X (23 Nov): a 16 Nov 4CP
   calculator post https://x.com/NotTurnbull/status/2122215843228684574 (calculator unnamed; if it is not Jago's, add it
-  as reported-only, never scored); the 20 Nov Greens odds post is Sportsbet/TAB, already captured. Each date: `Rscript scripts/snapshot_benchmarks.R`, plus the GES
+  as reported-only, never scored); the 20 Nov Greens odds post is Sportsbet/TAB, already captured. Leads from X (25 Nov
+  bookmark triage): Dania Freidgeim's "First Preference" Vic 2026 model, with interactive seat-by-seat probabilities
+  (hung 71%, Coalition majority 27%, Labor majority 2%) https://x.com/DaniaFreidgeim/status/2123683498167021757, ALREADY
+  a source: `snapshot_benchmarks.R` fetches it as "firstpreference" since 24 Nov, nothing to do; the YouGov 4CP poll run through Jago's
+  calculator (LNP 70, GRN 14, ALP 4, reported-only) https://x.com/rippinghottakes/status/2125017464333611290; Antony
+  Green's Victorian political-geography piece, to read against our regional swings
+  https://x.com/AntonyGreenElec/status/2124779398729806235. Each date: `Rscript scripts/snapshot_benchmarks.R`, plus the GES
   Chrome step (`scripts/ges_read_calls.js`; plan Amendment 1), rerun the script, commit the calls folder, rerun
   `scripts/build_data_registry.R`. Scorer BUILT 23 Oct: `Rscript scripts/score_benchmarks_vic2026.R --results=<csv>`
   (`district, winner, status`; winner as the VEC prints the party) once every district is declared; `--dry-run` passes
@@ -385,9 +355,9 @@ Trigger: the post-election review after 28 Nov, unless an item names its own.
   (7 of the 12 worst state-years are TAS/ACT/NT).
 - **Overcalled independents**: the `ind-overcall-1025` re-stand arm REFUSED 30 Oct (see "Builds from 26 Oct branches"). Successor overcalls
   (Morwell, Mildura, Kavel, Finniss) are a separate item, not started; departed-hold refused.
-- **Scenario tool** (hold the party exactly at X, others give way by regression: Pete's choices): build NOT
-  started, about 40-50 h (a guess); stage 1 is brute-force `AUSPOL_FORCE_FP` runs, also the test oracle
-  (`plans/scenario-tool-scoping-2026-10-03.md`). Request register: NOT DONE.
+- **Scenario tool** (hold the party exactly at X, others give way by regression: Pete's choices): stage 1 LIVE since
+  Nov (the daily what-if: 16 `AUSPOL_FORCE_FP` scenario jobs + `whatif-sims-vic2026.json`, seat TCP per scenario, PR #276).
+  OPEN after 28 Nov: the regression give-way and a live slider (`plans/scenario-tool-scoping-2026-10-03.md`).
 - **Early WA pairs and fed2007/2010 get no leader-seat bonus** (as-at predictions start at fed2010): extend
   the as-at corpus back if the data allows.
 - **Seat polls: PARKED** after arms S, T, U refused; the weight is fitted on one or two earlier polled

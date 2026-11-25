@@ -30,3 +30,23 @@ test_that("the scan catches a new unlisted read and ignores one on a comment lin
   expect_identical(s$stale_listed, "AUSPOL_GONE")
   expect_false("AUSPOL_ONLY_IN_COMMENT" %in% s$read)
 })
+
+test_that("the scan catches switches read only from shell and PowerShell scripts", {
+  root <- testthat::test_path("..", "..")
+  skip_if_not(file.exists(file.path(root, "scripts", "non_model_switches.R")), "scripts/ not shipped in the check build")
+  d <- withr::local_tempdir()
+  dir.create(file.path(d, "R")); dir.create(file.path(d, "scripts"))
+  writeLines(c('AUSPOL_KNOWN = "1",'), file.path(d, "scripts", "published_flags.R"))
+  writeLines('a <- Sys.getenv("AUSPOL_KNOWN", "1")', file.path(d, "R", "x.R"))
+  writeLines(c('if [ "${AUSPOL_SH_BRACED:-0}" = 1 ]; then echo "$AUSPOL_SH_BARE"; fi',
+               'AUSPOL_SH_SET_ONLY=1 Rscript x.R', '# echo "$AUSPOL_SH_COMMENT"'), file.path(d, "scripts", "run.sh"))
+  writeLines(c('if ($env:AUSPOL_PS_ENV -eq "1") { }', '$env:AUSPOL_PS_SET_ONLY = "1"'), file.path(d, "scripts", "run.ps1"))
+  e <- new.env()
+  sys.source(file.path(root, "scripts", "non_model_switches.R"), envir = e)
+  assign("NON_MODEL_SWITCHES", c(AUSPOL_SH_BARE = "RUN"), envir = e)
+  s <- e$mr4_scan(d)
+  expect_identical(s$unlisted, c("AUSPOL_PS_ENV", "AUSPOL_SH_BRACED"))
+  expect_identical(s$stale_listed, character())
+  expect_false(any(c("AUSPOL_SH_SET_ONLY", "AUSPOL_SH_COMMENT", "AUSPOL_PS_SET_ONLY") %in% s$read))
+  expect_identical(s$n_sh_files, 2L)
+})

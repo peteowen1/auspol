@@ -1,9 +1,9 @@
 # The 2026 Legislative Council (upper house) groups, by region, in ballot order, from the VEC's nomination pages.
 #
-#   Rscript scripts/build_council_groups_2026.R [--from=<saved folder>]
+#   Rscript scripts/build_upper_house_groups_2026.R [--from=<saved folder>]
 # Fetches the 8 region nomination pages (one request each, half a second apart), saves each page exactly as received
 # under external/reference/vec/2026/web-regions/<stamp>/, then parses the saved copies. --from re-parses a saved folder.
-# Out: external/reference/vec/2026/council-groups-2026.csv      one row per group: region, letter, group, candidates, class
+# Out: external/reference/vec/2026/upper-house-groups-2026.csv      one row per group: region, letter, group, candidates, class
 #      external/reference/vec/2026/council-candidates-2026.csv  one row per candidate: region, letter, group, position, name
 # Check codes: CG1! (a page is missing, truncated or has no groups), CG2! (counts do not match the page), CG3 (summary).
 suppressPackageStartupMessages({library(data.table); library(xml2)})
@@ -65,7 +65,7 @@ for (k in c("ALP", "LNP", "GRN", "ONP")) {
   n <- groups[class == k, .N, by = region]
   if (nrow(n) != 8L || any(n$N != 1L)) stop("CG2! class ", k, " is not exactly one group in each of the 8 regions")
 }
-fwrite(groups, file.path(out_dir, "council-groups-2026.csv")); fwrite(cand[, .(region, letter, group, class, position, name)], file.path(out_dir, "council-candidates-2026.csv"))
+fwrite(groups, file.path(out_dir, "upper-house-groups-2026.csv")); fwrite(cand[, .(region, letter, group, class, position, name)], file.path(out_dir, "council-candidates-2026.csv"))
 cat(sprintf("CG3  %d groups and %d candidates in 8 regions, from %s\n", nrow(groups), nrow(cand), raw_dir))
 print(groups[, .(groups = .N, candidates = sum(candidates), no_name = sum(grepl("no name", group)), ungrouped = sum(candidates[group == "Ungrouped"])), by = region], row.names = FALSE)
 cat("CG3  groups standing, by number of regions:\n"); print(groups[, .(regions = .N, candidates = sum(candidates)), by = .(group, class)][order(-regions, group)], row.names = FALSE)
