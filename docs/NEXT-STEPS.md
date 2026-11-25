@@ -24,6 +24,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   jobs 22-28 min (limit 120), CSC9 72 of 72, CSC7 0 of 88 differ for all four parties, whatif file gzip (932,598 bytes),
   Bendigo East now Nationals 0.559 (was ONP), ITG told. FOUND: the ind_person cache (PR #281) hits in the forecast job
   (0.2 s) but MISSES in every scenario (~59 s each): agent on branch ind-person-cache-scn. Thursday's run only needs a glance.
+- **DATED Thu 26 Nov, 4:30am run, MRP + cache:** log has `SPM5 ... 18 cell(s) of YouGov (MRP) 2026-11-23` (Bendigo East + Kew,
+  Pakenham, Niddrie, Melbourne; table md5 300686b1) and the what-if jobs log `IPC1  ind-person cache hit` (PR #283), each
+  ~60 s faster than run 45545825468's scenario jobs.
 - **DATED Thu 26 Nov, 4:30am run (first at 100k daily, PR #280):** (a) every scenario job finished under its 120-min limit
   and publish-scenarios logs `CSC9 ... 72 of 72` and `CSC7 ... differs ... in 0 of 88` for all four parties, and the scenario
   logs show `ind_person` warm (the cache, PR #281); (b) log has `S6  AUSPOL_N_SIMS=100000 allowed`, `NS1 ... 20000 sims; the
