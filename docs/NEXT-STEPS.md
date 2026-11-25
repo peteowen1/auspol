@@ -17,7 +17,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   last attempt reaped for low memory); PR #282 MERGED 2:05pm. Night rehearsal 25 Nov, LAPTOP PASSED 2:06pm on the first
   night state from a 100k run (6.7 MB, release asset 11:26am; NW2 check passed): 87 of 88 seats, 2CP 87, final_twos on all 88
   (`scripts/night_vic2026.sh <2022 index> <dir> --dry-2022 --max-cycles=1`, rc 0). GitHub backup rehearsal run 45537238935
-  (web-2022, 50 min, test key) in flight.
+  (web-2022, 50 min, test key) PASSED 3:50pm: every cycle 87 of 88 seats, 2CP 87, uploaded to the test key (NWU3), no VWF3!.
+  Both 25 Nov rehearsals DONE.
   Rebuild worktrees `C:/dev/auspol-wt-rb0`, `-rb1`, `-rbm`, `-rbr`, `-rbb` (junction lists in their deciding-runs folders): unlink before removing.
 - **DATED Thu 26 Nov, 4:30am run (first at 100k daily, PR #280):** (a) every scenario job finished under its 120-min limit
   and publish-scenarios logs `CSC9 ... 72 of 72` and `CSC7 ... differs ... in 0 of 88` for all four parties, and the scenario
