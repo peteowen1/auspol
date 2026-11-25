@@ -562,7 +562,10 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
   ncs <- if (!is.null(class_split) && nu$n_updated > 0L) tryCatch(night_class_split(conv$live, nu$units, nu$counted, class_split, seats),
     error = function(e) { message("NW24! night class split skipped this cycle: ", conditionMessage(e)); NULL }) else NULL
   csp <- .night_merge_split(st$coalition_split, ncs, seats)
-  run <- function(ov) simulate_seat_contests(level_sd = st$level_sd, sd_override = sdo, level_mult = st$level_mult, shares, st$fm,
+  # seat_cluster / cluster_rho: the seat cluster factor the afternoon forecast ran with (AUSPOL_SEAT_CLUSTER_COR,
+  # saved by fit_seats_full.R since 26 Nov 2026); NULL in an older state, which is the run without it.
+  run <- function(ov) simulate_seat_contests(seat_cluster = st[["seat_cluster"]], cluster_rho = st[["cluster_rho"]],
+                                level_sd = st$level_sd, sd_override = sdo, level_mult = st$level_mult, shares, st$fm,
                                 party_sd = st$psd, statewide_draws = swd, seat_sd = st$seat_sd, n_sims = sims,
                                 breakout_p = st$bo$p, breakout_q = st$bo$q, coalition_split = csp, error_q = st$error_q,
                                 smooth = st$smooth, seed = st$seed, party_cor = st$party_cor, shrink = st$shrink,
