@@ -14,6 +14,7 @@ NON_MODEL_SWITCHES <- c(
   AUSPOL_AEF_WORST               = "DIAG",  # build_aef_comparison.R
   AUSPOL_ALLOW_INERT_ARM         = "RUN",  # pool_pf_arms.R, promote_arm.R
   AUSPOL_ALLOW_PARTIAL_PROMOTE   = "RUN",  # promote_arm.R, promote_rebuild.R
+  AUSPOL_ALLOW_SIMS_CHANGE       = "RUN",  # fit_seats_full.R: let the workflow's n_sims trial publish (set only by forecast.yaml)
   AUSPOL_ANCHOR_SHA              = "RUN",  # build_forecast_json.R
   AUSPOL_ASAT_FORCE              = "RUN",  # fit_xgb_flows_asat.R, fit_xgb_primary_asat.R
   AUSPOL_AUDIT_TAG               = "BUILDER",  # audit_statewide_forecast.R, build_others_bucket_history.R
