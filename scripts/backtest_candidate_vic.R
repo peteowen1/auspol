@@ -1111,7 +1111,8 @@ for (K in PAIRS) {
                   K$to, .nf, .nu$n_updated, nrow(shares), 100 * stats::median(.nu$counted[.nu$counted > 0]), 100 * .nu$resolved, 1 - .nu$resolved))
       shares <- .nu$shares; .sdo <- .nu$sd; .swd <- night_shrink_draws(.swd, 1 - .nu$resolved)
     }
-    sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = .sdo, level_mult = .lm(shares), shares, fm, party_sd = psd, statewide_draws = .swd,
+    # seat_state_sim(): this call, plus the exact inputs saved under AUSPOL_SEAT_STATE_DUMP (R/seat_state.R, scripts/seat_quick.R)
+    sim <- seat_state_sim(sprintf("vic%d", K$to), level_sd = .level_sd, sd_override = .sdo, level_mult = .lm(shares), shares, fm, party_sd = psd, statewide_draws = .swd,
                                   seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = N_SIMS,
                                   breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(.eb, rownames(shares)), error_q = error_dist_args(.eb, colnames(shares)),
                                   smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,

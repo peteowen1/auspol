@@ -387,3 +387,133 @@ quick_harness_code_sig <- function(root, harness) {
   if (anyNA(h)) return(quick_unreadable(paste0("code:", harness)))
   quick_md5(paste(substring(fl, nchar(root) + 2L), h, sep = ":", collapse = "|"))
 }
+
+# ---- cache identity (shared by scripts/quick_arm.R and scripts/seat_quick.R) ----------------------
+# Moved out of scripts/quick_arm.R on 25 Nov 2026 so scripts/seat_quick.R can recompute the baseline key
+# quick_arm would compute NOW and refuse a cache that does not match it (an arm cache, a partial one, or
+# one built by older code or inputs). Same arithmetic as before the move.
+
+# Files the code identity leaves out: this tool's own two files, and the two scripts that only READ a
+# cache (they never run inside a harness), so editing them does not throw away a 20-minute cache.
+QUICK_KEY_EXCLUDE <- c("R/quick_arm.R", "scripts/quick_arm.R", "scripts/seat_quick.R", "scripts/former_leader_variants.R")
+
+#' Where quick_arm takes its inputs from: this checkout, else the main checkout
+#' @param repo The checkout quick_arm runs from.
+#' @return list `repo`, `main_checkout`, `src_output`, `src_external`.
+#' @keywords internal
+#' @noRd
+quick_source_dirs <- function(repo) {
+  common <- tryCatch(normalizePath(suppressWarnings(system2("git", c("-C", repo, "rev-parse", "--git-common-dir"), stdout = TRUE, stderr = FALSE))[1], winslash = "/"),
+                     error = function(e) NA_character_)
+  if (!is.na(common) && !grepl("^[A-Za-z]:|^/", common)) common <- normalizePath(file.path(repo, common), winslash = "/", mustWork = FALSE)
+  main_checkout <- if (!is.na(common)) dirname(common) else repo
+  pick <- function(sub, probe) {
+    for (b in unique(c(repo, main_checkout))) if (file.exists(file.path(b, sub, probe))) return(file.path(b, sub))
+    stop("quick_arm: cannot find ", sub, "/", probe, " in ", repo, " or ", main_checkout)
+  }
+  list(repo = repo, main_checkout = main_checkout,
+       src_output = Sys.getenv("AUSPOL_QUICK_SRC_OUTPUT", pick("output", "xgb-primary-asat-predictions.csv")),
+       src_external = pick("external", "elections"))
+}
+
+#' The input, code and external identity a quick_arm cache key is built from
+#' @param repo The checkout (its R/, scripts/, src/, inst/ are the code).
+#' @param src_output,src_external As [quick_source_dirs()].
+#' @return list `code`, `external`, `input` (strings), `subdirs` (the output/ subdirectories copied to a slot).
+#' @keywords internal
+#' @noRd
+quick_key_context <- function(repo, src_output, src_external) {
+  # EVERY top-level input the slot copy takes (same filter as the copy), not a hand-picked few
+  sig_files <- list.files(src_output, full.names = TRUE)
+  sig_files <- sort(sig_files[!dir.exists(sig_files) & !grepl("^backtest-", basename(sig_files))])
+  top_sig <- paste(vapply(sig_files, function(f) if (file.exists(f)) sprintf("%s:%d:%d", basename(f), file.size(f), as.integer(file.mtime(f))) else paste0(basename(f), ":absent"), ""), collapse = "|")
+  SUBDIRS <- c("booths", "cache", "shipped", "xgb-base-ref", "xgb-primary-asat", "xgb-primary-v6-models")
+  sub_sig <- paste(vapply(SUBDIRS, function(d) paste0(d, "=", if (dir.exists(file.path(src_output, d))) quick_tree_sig(file.path(src_output, d)) else "absent"), ""), collapse = "|")
+  input_sig <- quick_md5(paste(top_sig, sub_sig, sep = "##"))
+  # CODE: the blob hashes of R/, scripts/, src/, inst/, DESCRIPTION, NAMESPACE at HEAD plus a digest of the
+  # uncommitted diff and untracked files, QUICK_KEY_EXCLUDE left out. A git call that fails is unreadable, never empty.
+  CODE_PATHS <- c("R", "scripts", "src", "inst", "DESCRIPTION", "NAMESPACE")
+  excl <- paste0(":(exclude)", QUICK_KEY_EXCLUDE)
+  sh_checked <- function(...) {
+    r <- suppressWarnings(system2("git", c("-C", repo, ...), stdout = TRUE, stderr = FALSE))
+    if (!is.null(attr(r, "status")) && attr(r, "status") != 0L) return(NULL)
+    r
+  }
+  head_tree <- sh_checked("ls-tree", "-r", "HEAD", "--", CODE_PATHS)   # ls-tree takes no :(exclude); drop them here
+  if (!is.null(head_tree)) head_tree <- head_tree[!sub("^[^\t]*\t", "", head_tree) %in% QUICK_KEY_EXCLUDE]
+  head_sha <- if (is.null(head_tree) || !length(head_tree)) NA_character_ else
+    paste0("t", substr(quick_md5(paste(head_tree, collapse = "\n")), 1, 7))
+  diff_txt <- sh_checked("diff", "HEAD", "--", CODE_PATHS, excl)
+  untracked <- sh_checked("ls-files", "--others", "--exclude-standard", "--", CODE_PATHS, excl)
+  if (is.null(head_sha) || is.na(head_sha) || is.null(diff_txt) || is.null(untracked)) {
+    cat("quick_arm: WARNING git could not describe the code; the cache is bypassed for this call\n")
+    code_hash <- quick_unreadable("git")
+  } else {
+    dirty_txt <- c(diff_txt, unlist(lapply(untracked, function(f) c(f, readLines(file.path(repo, f), warn = FALSE)))))
+    code_hash <- if (length(dirty_txt)) sprintf("%sx%s", head_sha, substr(quick_md5(paste(dirty_txt, collapse = "\n")), 1, 8)) else head_sha
+  }
+  # EXTERNAL: the polling-anchor clone (HEAD plus working-tree state) and the reference data
+  anchor_dir <- file.path(src_external, "aus-polling-analyser")
+  external_id <- paste(c(
+    if (file.exists(file.path(anchor_dir, ".git"))) {
+      h <- suppressWarnings(system2("git", c("-C", anchor_dir, "rev-parse", "HEAD"), stdout = TRUE, stderr = FALSE))
+      st <- suppressWarnings(system2("git", c("-C", anchor_dir, "status", "--porcelain"), stdout = TRUE, stderr = FALSE))
+      bad <- function(r) !is.null(attr(r, "status")) && attr(r, "status") != 0L
+      if (bad(h) || bad(st)) quick_unreadable("anchor git") else paste0("anchor=", h[1], "/", quick_md5(paste(st, collapse = "\n")))
+    } else paste0("anchor-files=", quick_tree_sig(anchor_dir)),
+    paste0("reference=", quick_tree_sig(file.path(src_external, "reference"))), ""), collapse = ";")
+  list(code = code_hash, external = external_id, input = input_sig, subdirs = SUBDIRS)
+}
+
+#' Sorted NAME=value strings of a switch set
+#' @keywords internal
+#' @noRd
+quick_env_strings <- function(env) if (length(env)) paste0(names(env)[order(names(env))], "=", env[order(names(env))]) else character(0)
+
+#' A quick_arm cache key (the directory name under cache/)
+#' @param ctx [quick_key_context()]. @param sims Simulations. @param env Switches set (named character).
+#' @param dump `--dump` (a separate key: a run without state files can never satisfy a dump call).
+#' @return 12-character key.
+#' @keywords internal
+#' @noRd
+quick_key <- function(ctx, sims, env, dump) {
+  quick_md5(paste(c("keyv2", ctx$code, ctx$external, sims, ctx$input, if (dump) "seat-state-dump", quick_env_strings(env)), collapse = ";"))
+}
+
+#' What a key was made of, saved as _key.rds in its cache directory
+#' @inheritParams quick_key
+#' @return list `code`, `external`, `sims`, `input` ("+dump" appended under --dump), `env`.
+#' @keywords internal
+#' @noRd
+quick_key_parts <- function(ctx, sims, env, dump) {
+  list(code = ctx$code, external = ctx$external, sims = sims, input = paste0(ctx$input, if (dump) "+dump"), env = quick_env_strings(env))
+}
+
+#' Refuse a seat-state cache that is not the current published-config baseline
+#'
+#' For scripts/seat_quick.R. The cache must be a BASELINE (`_key.rds` env empty), built with --dump, its
+#' code, inputs and external data equal to `ctx` (what quick_arm would compute now), its directory name
+#' equal to the key those parts give, and it must hold a state file for every election asked for.
+#' @param dir A cache key directory. @param ctx [quick_key_context()] now. @param ids Elections required.
+#' @return list `key`, `sims`, `parts`; stops naming what differs.
+#' @keywords internal
+#' @noRd
+quick_check_seat_cache <- function(dir, ctx, ids) {
+  kf <- file.path(dir, "_key.rds")
+  if (!file.exists(kf)) stop("seat_quick: ", dir, " has no _key.rds; not a quick_arm cache", call. = FALSE)
+  p <- readRDS(kf)
+  why <- character(0)
+  if (length(p$env)) why <- c(why, paste0("it is an ARM cache (switches set: ", paste(p$env, collapse = " "), "), not the published-config baseline"))
+  if (!endsWith(p$input, "+dump")) why <- c(why, "it was not built with --dump")
+  if (!identical(p$code, ctx$code)) why <- c(why, sprintf("its code %s differs from this checkout's %s (rebuild: quick_arm.R --base-only --dump --pairs=all --sims=%s)", p$code, ctx$code, p$sims))
+  if (!identical(sub("[+]dump$", "", p$input), ctx$input)) why <- c(why, sprintf("its inputs %s differ from today's output/ (%s)", sub("[+]dump$", "", p$input), ctx$input))
+  if (!identical(p$external, ctx$external)) why <- c(why, "its external data (anchor clone or reference/) differs from today's")
+  if (!length(why) && !identical(basename(dir), quick_key(ctx, p$sims, character(0), TRUE)))
+    why <- c(why, "its directory name is not the key its own parts give")
+  # meta.rds is quick_arm's written-last completion marker (have()); a unit killed after its state was dumped
+  # leaves the state file without it, and possibly a truncated allprobs/sharedetail (review, 25 Nov 2026)
+  miss <- ids[!file.exists(file.path(dir, ids, sprintf("state-%s.rds", ids))) | !file.exists(file.path(dir, ids, "meta.rds"))]
+  if (length(miss)) why <- c(why, paste0("it has no state for ", length(miss), " election(s) asked for: ", paste(utils::head(miss, 8), collapse = ", ")))
+  if (length(why)) stop("seat_quick: cache ", basename(dir), " refused: ", paste(why, collapse = "; "), call. = FALSE)
+  list(key = basename(dir), sims = p$sims, parts = p)
+}
