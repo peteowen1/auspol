@@ -28,3 +28,12 @@ default sims, against the published config.
 
 What would make an apparent win unacceptable: an untouched pair moving (must be byte-identical), or the
 log line `LS1` not naming the expected former-leader seats on a pair where they exist.
+
+## Result (25 Nov 2026, 11:15am; screen `deciding-runs/20261125-leader-former/screen.log`, 35 elections, 1,000 sims)
+
+Run exactly as written above. **REFUSED by both clauses:**
+- PRIMARY: squared error on the 145 changed cells 3003.0 -> 3016.9 (+13.9, SE 127.9, clustered on 22 elections): not lower.
+- DO-NO-HARM: pooled seat-winner log loss 0.2984 -> 0.2988 (+0.0003, SE 0.0002) over 2,931 seats: worse by more than 1 SE.
+  No single election worse by more than 0.01 (largest wa2021 +0.0053). AEF-7 0.2400 -> 0.2398 (-0.0003, SE 0.0004).
+- Untouched elections byte-identical: 13 of 35.
+Decision goes to Pete (clause refusal on a change he asked for).
