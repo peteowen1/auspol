@@ -91,3 +91,44 @@ The flat cut, scored by this screen, must reproduce the sign of quick_arm's verd
 (quick_arm: +0.0003, SE 0.0002, 2,931 seats) and the cut-party mean error moving from about +2 toward +1. If
 the screen reads flat as harmless, the instrument disagrees with quick_arm and the scaled variant is not
 scored.
+
+## Result (25 Nov 2026, about 1pm; seat_quick on cache 45c2997405f4, 35 elections, 20,000 sims, pass-through on)
+
+**Instrument proofs: all pass as written.**
+1. `--prove`: 35 of 35 elections re-simulate IDENTICALLY to the harness's own run; shares equal
+   sharedetail to 6.4e-14. Dumping is switch-neutral: one pair per harness (fed2010, wa2001, vic2010,
+   nsw2011, qld2012, sa2010, nt2016) at 1,000 sims, with and without the dump, is byte-identical to the
+   10:37am quick_arm baseline b09d4d70fd65 (allprobs and sharedetail md5).
+2. `--prove-subset=vic2022,wa2025`: max |z| 2.65 and 2.60, 0 cells above 4: PASS. With `--break`: max
+   |z| 30.6 and 17.0: FAIL, as it must. A deliberately broken tweak (off-by-one row) stops with
+   `SQ7! ... Leichhardt`.
+3. Flat port against the harness arm (1,000 sims): same moved seats in 34 of 35 elections (fed2025: the
+   harness arm also moves all 149 other seats by at most 0.008 points, the state-poll-pool spillover seen
+   when the leader bonus shipped). State baselines equal to 6e-14; the 7 FEDERAL baselines differ by up to
+   0.21 points between 1,000 and 20,000 sims (the federal harness's shares depend on N_SIMS: an open
+   finding, not caused by this change). Comparing the tweak's move with the harness arm's move: the
+   federal harness carries only 58% of the cut to the final shares at Maribyrnong 2022 and Cook 2025, 87%
+   at Kennedy 2022, 95-100% everywhere else (Wentworth 99.7%, Clayfield 98.8%, Cottesloe 99.9%). With
+   that pass-through applied, the largest cell gap is 0.11 points (Maribyrnong), 0.06 or less elsewhere.
+   All-seat log loss +0.00031 (SE 0.00022) against quick_arm's +0.0003 (SE 0.0002); touched seats
+   0.1078 -> 0.1355 against 0.1124 -> 0.1369. Dry run passes: the screen reads flat as WORSE.
+
+**Scaled variant (primary, `former_winprob`): REFUSED.** Fitted slopes -0.6 to -2.8 points per unit of
+safety (negative, as required); most former-leader seats have safety near 1, so the cut there is LARGER
+than flat's.
+- PRIMARY, paired scaled minus flat over 33 seats: -0.0163 per seat (SE 0.0174): within 1 SE, so not
+  preferred.
+- DO-NO-HARM: +0.00014 (SE 0.00006) over 2,931 seats: WORSE by more than 1 SE (flat: +0.00032, SE 0.00021).
+  No election worse by more than 0.01 (largest wa2021 +0.0016).
+- BIAS: -2.32 -> -0.68 at the 28 cells it cut: not worsened (passes).
+- Motivating seats (probability given to the actual winner, baseline / flat / scaled): Wentworth fed2019
+  0.340 / 0.214 / 0.340; Clayfield qld2020 0.647 / 0.493 / 0.579; Cottesloe wa2021 0.622 / 0.468 / 0.565;
+  Dawesville wa2025 0.458 / 0.569 / 0.470.
+
+**Secondary (`former_margin`, not decided on):** paired vs flat -0.0144 (SE 0.0165); vs baseline +0.00016
+(SE 0.00009), worse by more than 1 SE; bias -2.28 -> -0.59.
+
+Why both lose: every former-leader seat the party still WINS pays log loss for any cut, and most of them are
+won comfortably, so a cut that fixes the share bias is a small cost on winner calls almost everywhere and a
+gain only where the seat is lost. Scaling by safety moves the cut from the close seats to the safe ones; it
+does not remove that cost. Decision goes to Pete with this split, as the flat refusal did.
