@@ -14,7 +14,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   YouGov MRP (table md5 de6b7c33, rollback `deciding-runs/20261125-nov-mrp/BEFORE-*`). OFF by decision: former-leader cut,
   regional seat correlation (DECISIONS 25 Nov). IN FLIGHT: PR #282 statewide-anchor code to main (CI); seat-level quick
   tester `seat-quick-screen` (worktree `C:/dev/auspol-wt-seatq`, reviewed, needs one full check_like_ci then merge to dev;
-  last attempt reaped for low memory); night rehearsals of 25 Nov running (backup run 45537238935, laptop dry run).
+  last attempt reaped for low memory); PR #282 MERGED 2:05pm. Night rehearsal 25 Nov, LAPTOP PASSED 2:06pm on the first
+  night state from a 100k run (6.7 MB, release asset 11:26am; NW2 check passed): 87 of 88 seats, 2CP 87, final_twos on all 88
+  (`scripts/night_vic2026.sh <2022 index> <dir> --dry-2022 --max-cycles=1`, rc 0). GitHub backup rehearsal run 45537238935
+  (web-2022, 50 min, test key) in flight.
   Rebuild worktrees `C:/dev/auspol-wt-rb0`, `-rb1`, `-rbm`, `-rbr`, `-rbb` (junction lists in their deciding-runs folders): unlink before removing.
 - **DATED Thu 26 Nov, 4:30am run (first at 100k daily, PR #280):** (a) every scenario job finished under its 120-min limit
   and publish-scenarios logs `CSC9 ... 72 of 72` and `CSC7 ... differs ... in 0 of 88` for all four parties, and the scenario
