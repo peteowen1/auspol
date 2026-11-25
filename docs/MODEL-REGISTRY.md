@@ -1,6 +1,6 @@
 # Model registry
 
-**Generated 2026-11-25 by `scripts/build_model_registry.R`. Do not hand-edit** --
+**Generated 2026-11-26 by `scripts/build_model_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate whenever a switch is added to
 `published_flags.R` or a harness's wiring changes.
 
@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (335 switches from `published_flags.R`, 7 entry points)
+## Switch parity (337 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -56,7 +56,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_BYELECTION_MP` | NO | NO | NO | NO | NO | NO | NO | byelection_prior.R, candidate_returns.R |
 | `AUSPOL_BYELECTION_PERSON` | NO | NO | NO | NO | NO | NO | NO | byelection_prior.R, candidate_returns.R |
 | `AUSPOL_BYELECTION_PRIOR` | yes | yes | yes | yes | yes | yes | yes | byelection_prior.R, candidate_returns.R |
-| `AUSPOL_BYELECTION_RESULTS` | NO | NO | NO | NO | NO | NO | NO | byelection_prior.R, new_ind_shrink.R |
+| `AUSPOL_BYELECTION_RESULTS` | NO | NO | NO | NO | NO | NO | NO | byelection_prior.R, cross_seat_vote.R, ind_person.R, new_ind_shrink.R |
 | `AUSPOL_CENSUS_FILE` | NO | NO | NO | NO | NO | NO | NO | demographic_residual.R |
 | `AUSPOL_CLASS_CONSERVE` | NO | NO | NO | NO | NO | NO | NO | nomination_zero.R |
 | `AUSPOL_CLASS_SPLIT` | NO | NO | NO | NO | NO | NO | NO | class_split.R |
@@ -298,6 +298,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_SEAT_POLL_W_SINGLE_CLUSTER` | NO | NO | NO | NO | NO | NO | NO | seat_poll_blend.R |
 | `AUSPOL_SEAT_SD_MULT` | yes | yes | yes | yes | yes | yes | yes |  |
 | `AUSPOL_SEAT_SPREAD_SRC` | NO | NO | NO | NO | NO | NO | NO | prev_seat_swing.R |
+| `AUSPOL_SEAT_STATE_DUMP` | NO | NO | NO | NO | NO | NO | NO | seat_state.R |
 | `AUSPOL_SEAT_SWING_PORT` | yes | yes | yes | yes | yes | yes | NO | seat_swing_port.R |
 | `AUSPOL_SEAT_SWING_PORT_3C` | NO | NO | NO | NO | NO | NO | NO | new_ind_shrink.R, seat_swing_port.R, seat_swing_port_3c.R |
 | `AUSPOL_SEAT_SWING_PORT_3C_W` | NO | NO | NO | NO | NO | NO | NO | seat_swing_port.R, seat_swing_port_3c.R |
@@ -339,6 +340,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_TREND_RW_MULT` | NO | NO | NO | NO | NO | NO | NO | forecast_mode.R |
 | `AUSPOL_TREND_SIGMAS` | NO | NO | NO | NO | NO | NO | NO | forecast_mode.R |
 | `AUSPOL_TREND_SZC` | NO | NO | NO | NO | NO | NO | NO | trend.R |
+| `AUSPOL_UPPER_HOUSE_VS_POLL` | NO | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_UPSET_FLOOR` | yes | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_WA_CUTOFF` | NO | yes | NO | yes | yes | yes | NO |  |
 | `AUSPOL_WA_DROP_3C` | NO | yes | NO | yes | yes | yes | NO | external_flows.R |
@@ -573,7 +575,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_SALIENCE_SURGE`** (intentional / dead experiment): HARNESS-ONLY ARM, off: federal harness's hazard surge, superseded by surge-v2 (AUSPOL_SURGE_V2).
 - **`AUSPOL_SALIENCE_SURGE_V2`** (**OPEN GAP**): WA: OPEN GAP, not fixed. Marked `yes*` above because the switch's name appears only in a disclosure comment explaining that it is NOT wired -- WA has no surge-v2 hazard at all where every other harness does (docs/NEXT-STEPS.md's own "Open" item 3, still unaddressed). A plain grep of the file would otherwise call this cell a clean "yes" and hide the gap.
 - **`AUSPOL_SD_DEPARTED`** (intentional / dead experiment): UNDER TEST, default 0, not adopted: widens the per-cell sd for major-party cells whose previous winner is off the ballot. Read inside R/xgb_primary_sd_override.R, reached by the fed and nsw harnesses that call it; the other four never call the sd override at all (see AUSPOL_XGB_PRIMARY_SD). plans/prereg-departed-member-width-2026-09-16.md
-- **`AUSPOL_SEAT_CLUSTER_COR`** (intentional / dead experiment): ARM (0), built 2026-11-25, UNIVERSAL via R/: seat_cluster_setup() (R/seat_cluster.R) is called at every simulate_seat_contests() site (six harnesses, NT, fit_seats_full.R) and reads the switch inside R/, so 'NO' in the entry-point columns is the grep, not a gap. Election-night runner (R/night_runner.R) not wired. plans/prereg-seat-cluster-cor-2026-11-25.md; values "type" / "both": plans/prereg-seat-type-cor-2026-11-25.md
+- **`AUSPOL_SEAT_CLUSTER_COR`** (**adopted, shared-function wiring**): SHIPPED ("both") 26 Nov 2026 on Pete's override of clause 1; built 2026-11-25, UNIVERSAL via R/: seat_cluster_setup() (R/seat_cluster.R) is called at every simulate_seat_contests() site (six harnesses, NT, fit_seats_full.R) and reads the switch inside R/, so 'NO' in the entry-point columns is the grep, not a gap. The election-night runner (R/night_runner.R) takes the factor from the night state fit_seats_full.R saves; the night_replay*.R tools do not. plans/prereg-seat-cluster-cor-2026-11-25.md; values "type" / "both": plans/prereg-seat-type-cor-2026-11-25.md
 - **`AUSPOL_SEAT_CONTEXT_FILL`** (**shipped, fitting-time switch (reaches harnesses via the artifact)**): FITTING-TIME. SHIPPED 2026-09-28 as v46: fills incumbent party / retiring member from output/seat-context.csv when the xgb training table is built (scripts/fit_xgb_primary_v6.R); baked into the trained model, no harness or live read.
 - **`AUSPOL_SEAT_CONTEXT_MARGIN`** (intentional / dead experiment): ARM, not shipped (default 0; phase 2 of plans/prereg-seat-context-complete-2026-09-28.md). Read in scripts/fit_xgb_primary_v6.R (training) and R/xgb_primary_override.R (the 'all' mode, live). Off, so nothing differs by entry point.
 - **`AUSPOL_SEAT_CONTEXT_SOPH`** (**shipped, fitting-time switch (reaches harnesses via the artifact)**): FITTING-TIME ARM (0): fills the first-term-member flag (soph_cand) from output/seat-context.csv where the seat file has none, in scripts/fit_xgb_primary_v6.R; baked into the trained model. Live reads the vic2026 seat file, which has the flag. plans/prereg-first-term-fill-2026-10-20.md
@@ -609,6 +611,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_SEAT_POLL_TPP_SOURCE`** (intentional / dead experiment): TESTING, default 'all' (plans/prereg-seat-poll-tpp-direct-2026-09-30.md). Read in R/seat_poll_joint.R, which implements blend mode 3 (joint primary and two-party weights); it only matters under that mode.
 - **`AUSPOL_SEAT_POLL_W_SINGLE_CLUSTER`** (**adopted, shared-function wiring**): SHIPPED 2026-10-07 (bug fix: a weight fitted on one cluster gets SE Inf, not ~0). 'legacy' restores the old factor for screening only. Read at R/seat_poll_blend.R line ~393 inside all three weight fits, so every entry point gets it.
 - **`AUSPOL_SEAT_SPREAD_SRC`** (**adopted, shared-function wiring**): SHIPPED (derived), UNIVERSAL via R/: read inside R/prev_seat_swing.R, which the harnesses call for seat_sd; harness-only by its own comment (live seat_sd comes from the fitted spread).
+- **`AUSPOL_SEAT_STATE_DUMP`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_SEAT_SWING_PORT`** (**adopted, shared-function wiring**): SHIPPED (2), UNIVERSAL via R/: read inside seat_swing_port_apply() (R/seat_swing_port.R), which WA reaches too; WA's own scoping switch is AUSPOL_SEAT_SWING_PORT_WA, whose name made the old WA cell 'yes'.
 - **`AUSPOL_SEAT_SWING_PORT_3C`** (intentional / dead experiment): ARM, default 0 (built 2026-10-25; plans/prereg-seat-swing-port-3c-2026-10-25.md). UNIVERSAL via R/: read in R/seat_swing_port_3c.R (seat_swing_port_3c_mode), called from seat_swing_port_fs()/seat_swing_port_coef() in R/seat_swing_port.R, which every state harness and fit_seats_full.R reach through seat_swing_port_apply(); no entry point names it. The federal harness has no port, so it is untouched by construction.
 - **`AUSPOL_SEAT_SWING_PORT_3C_W`** (intentional / dead experiment): ARM, default 0 (same prereg): the fixed weight for AUSPOL_SEAT_SWING_PORT_3C=1, read in R/seat_swing_port_3c.R (seat_swing_port_3c_w); same reach as AUSPOL_SEAT_SWING_PORT_3C, and inert unless that switch is 1.
@@ -647,6 +650,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_TREND_RW_MULT`** (intentional / dead experiment): REFUSED ARM 2026-10-12, same prereg, off at "1". Read inside R/forecast_mode.R -- universal in practice.
 - **`AUSPOL_TREND_SIGMAS`** (intentional / dead experiment): REFUSED ARM 2026-10-12 (plans/prereg-responsive-trend-2026-10-12.md), off at "default". Read inside R/forecast_mode.R (the statewide forecast every harness and fit_seats_full.R call), not per-harness -- universal in practice.
 - **`AUSPOL_TREND_SZC`** (intentional / dead experiment): REFUSED ARM 2026-10-12, same prereg (T3), off at "polls". Read inside R/trend.R, so it reaches every trend fit -- universal in practice.
+- **`AUSPOL_UPPER_HOUSE_VS_POLL`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_UPSET_FLOOR`** (intentional / dead experiment): REFUSED 2026-10-02 (Brier guard: 0.0894 -> 0.0904 against a 0.0005 limit; plans/prereg-upset-floor-2026-10-02.md,  DECISIONS.md 2026-10-02), default 0, code kept. Not a per-harness switch by design: it is stage 6b, applied by  scripts/rebuild_forecasts.sh (scripts/apply_upset_floor.R) to the pooled harness output, and read live by  fit_seats_full.R and scripts/promote_rebuild.R; so no harness reads it.
 - **`AUSPOL_WA_CUTOFF`** (intentional / dead experiment): Read inside R/external_flows.R (pool_configured_flows), not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).
 - **`AUSPOL_WA_DROP_3C`** (intentional / dead experiment): Read inside R/external_flows.R (pool_configured_flows), not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).
@@ -720,8 +724,8 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR4  every AUSPOL_* switch read in code (440) is registered (316) or listed as not a model switch (124).
+MR4  every AUSPOL_* switch read in code (450) is registered (318) or listed as not a model switch (132).
 
 
 
-**MR2! 1 switch(es) have a non-universal row with NO recorded classification: AUSPOL_LEADER_FORMER.** Add them to CLASSIFY in scripts/build_model_registry.R before trusting this table.
+**MR2! 3 switch(es) have a non-universal row with NO recorded classification: AUSPOL_LEADER_FORMER, AUSPOL_SEAT_STATE_DUMP, AUSPOL_UPPER_HOUSE_VS_POLL.** Add them to CLASSIFY in scripts/build_model_registry.R before trusting this table.
