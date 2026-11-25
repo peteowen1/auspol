@@ -20,6 +20,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   (web-2022, 50 min, test key) PASSED 3:50pm: every cycle 87 of 88 seats, 2CP 87, uploaded to the test key (NWU3), no VWF3!.
   Both 25 Nov rehearsals DONE.
   Rebuild worktrees `C:/dev/auspol-wt-rb0`, `-rb1`, `-rbm`, `-rbr`, `-rbb` (junction lists in their deciding-runs folders): unlink before removing.
+- **CHECKED EARLY 25 Nov on manual run 45545825468 (Pete OK, 3:18pm; published 3:29pm with Bendigo East):** 100k scenario
+  jobs 22-28 min (limit 120), CSC9 72 of 72, CSC7 0 of 88 differ for all four parties, whatif file gzip (932,598 bytes),
+  Bendigo East now Nationals 0.559 (was ONP), ITG told. FOUND: the ind_person cache (PR #281) hits in the forecast job
+  (0.2 s) but MISSES in every scenario (~59 s each): agent on branch ind-person-cache-scn. Thursday's run only needs a glance.
 - **DATED Thu 26 Nov, 4:30am run (first at 100k daily, PR #280):** (a) every scenario job finished under its 120-min limit
   and publish-scenarios logs `CSC9 ... 72 of 72` and `CSC7 ... differs ... in 0 of 88` for all four parties, and the scenario
   logs show `ind_person` warm (the cache, PR #281); (b) log has `S6  AUSPOL_N_SIMS=100000 allowed`, `NS1 ... 20000 sims; the
