@@ -19,15 +19,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - **NEEDS PETE (26 Nov): seat-type correlation, both arms REFUSED under the prereg's clause 1** (branch `seat-corr-type`
   d3367c17, RESULT in `docs/plans/prereg-seat-type-cor-2026-11-25.md`). Type only: -0.0071 (0.41 SE), null. Region + type:
   -0.0159 (0.92 SE; needs 1 SE), passes clauses 2-5 (sign 35 of 35). Recommendation: OFF for 28 Nov; rescore after.
-- **DATED Thu 26 Nov, 4:30am run, MRP + cache:** log has `SPM5 ... 24 cell(s) of YouGov (MRP) 2026-11-23` (Bendigo East, Mulgrave, Kew,
-  Pakenham, Niddrie, Melbourne; table md5 f560c155) and the what-if jobs log `IPC1  ind-person cache hit` (PR #283), each
-  ~60 s faster than run 45545825468's scenario jobs; the council step logs 8 `CFC2` lines (Victorian Socialists, Northern
-  Metro 7.0%) and the upper-house JSON's Victorian Socialists total about 0.5 seats.
-- **DATED Thu 26 Nov, 4:30am run (first at 100k daily, PR #280):** (a) every scenario job finished under its 120-min limit
-  and publish-scenarios logs `CSC9 ... 72 of 72` and `CSC7 ... differs ... in 0 of 88` for all four parties, and the scenario
-  logs show `ind_person` warm (the cache, PR #281); (b) log has `S6  AUSPOL_N_SIMS=100000 allowed`, `NS1 ... 20000 sims; the
-  forecast itself runs 100000`, `CFC9`, `OK council`; (c) `curl -sI` the whatif file shows `Content-Encoding: gzip`, then
-  MESSAGE ITG with the run id and built_at; (d) Bendigo East moved: One Nation's primary down ~4 points vs 25 Nov 9:55am.
+- **NEEDS PETE (26 Nov): merge PR #284** (Victorian Socialists from YouGov's regions, upper house), CI green, reviewed.
+  The 4:30am run is a workflow_dispatch on MAIN, so dev 7f12d55b did not reach it (live council file still VS 0.2).
+- CHECKED 26 Nov 4:30am run 45665482641 (main a0efa804): success; CSC9 72 of 72, CSC7 0 of 88 for all parties; S6, NS1,
+  CFC9, OK council, OK whatif present; cache fix (#283) works: Victorian what-ifs 152 s -> 90 s each (72 scenarios,
+  vs run 45545825468); what-if jobs ~17 min. Hung 61.5%. The what-if step logs no IPC1 lines (summary output only).
 - OPEN, after 28 Nov: One Nation allocation. The modelled version is LIVE on Pete's override of its refusal (23 Nov, DECISIONS);
   the rank rule with retrained trees stays off. Score both on vic2026 once results are in.
 - OPEN, 15 Nov full review (`reviews/FABLE-FULL-REVIEW-2026-11-15.md`, "Pick up from here" is the work list; DECISIONS
