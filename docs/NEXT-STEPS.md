@@ -359,9 +359,9 @@ Trigger: the post-election review after 28 Nov, unless an item names its own.
   (7 of the 12 worst state-years are TAS/ACT/NT).
 - **Overcalled independents**: the `ind-overcall-1025` re-stand arm REFUSED 30 Oct (see "Builds from 26 Oct branches"). Successor overcalls
   (Morwell, Mildura, Kavel, Finniss) are a separate item, not started; departed-hold refused.
-- **Scenario tool** (hold the party exactly at X, others give way by regression: Pete's choices): build NOT
-  started, about 40-50 h (a guess); stage 1 is brute-force `AUSPOL_FORCE_FP` runs, also the test oracle
-  (`plans/scenario-tool-scoping-2026-10-03.md`). Request register: NOT DONE.
+- **Scenario tool** (hold the party exactly at X, others give way by regression: Pete's choices): stage 1 LIVE since
+  Nov (the daily what-if: 16 `AUSPOL_FORCE_FP` scenario jobs + `whatif-sims-vic2026.json`, seat TCP per scenario, PR #276).
+  OPEN after 28 Nov: the regression give-way and a live slider (`plans/scenario-tool-scoping-2026-10-03.md`).
 - **Early WA pairs and fed2007/2010 get no leader-seat bonus** (as-at predictions start at fed2010): extend
   the as-at corpus back if the data allows.
 - **Seat polls: PARKED** after arms S, T, U refused; the weight is fitted on one or two earlier polled
