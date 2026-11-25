@@ -1,9 +1,10 @@
 {
  "repo": "peteowen1/auspol",
+ "doc_path": "docs/CI-PIPELINE.md",
  "title": "auspol forecast pipeline",
  "about": "What the daily Victorian (and NSW 2027) forecast run does on GitHub Actions, in order, and how long each part takes: from fetching the polls to the forecast and the what-if sliders landing on the release and the data store the site reads. The model's own stages (the forecast's four steps and the rebuild's eight) are described in docs/PIPELINE.md; this file is the GitHub Actions run that executes them every day.",
- "generated_utc": "2026-11-25T00:59:21Z",
- "generated_sydney": "25 Nov 2026, 11:59am",
+ "newest_run_utc": "2026-11-24T17:30:35Z",
+ "newest_run_sydney": "25 Nov 2026, 4:30am",
  "pipelines": [
   {
    "name": "Daily forecast refresh",
