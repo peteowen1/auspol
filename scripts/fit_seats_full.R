@@ -2089,7 +2089,8 @@ if (identical(.sw_net_live, "1"))
   cat(sprintf("NS1  night state for %s saved to %s (%d seats, %d sims%s)\n", TGT, .dmp, nrow(shares), .ns_k,
               if (.ns_k < N_SIMS) sprintf("; the forecast itself runs %d", N_SIMS) else ""))
 }
-.run_sim <- function(.ov) simulate_seat_contests(level_sd = .level_sd, sd_override = .sd_ov, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
+.scc <- seat_cluster_setup(TGT, shares, tag = "SCC1")
+.run_sim <- function(.ov) simulate_seat_contests(seat_cluster = .scc$seat_cluster, cluster_rho = .scc$cluster_rho, level_sd = .level_sd, sd_override = .sd_ov, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
                               breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(TGT, rownames(shares)), error_q = error_dist_args(TGT, colnames(shares)),
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               conditional_override = .ov, conditional_override_sd = attr(.ov, "sd"),
