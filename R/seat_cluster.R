@@ -26,12 +26,101 @@
 # separately for federal and state elections, and partially pooled across classes toward the
 # all-class mean (seat_cluster_rho()).
 
-#' Is the seat cluster factor on? (`AUSPOL_SEAT_CLUSTER_COR`, "0" or "1")
+#   "type" (plans/prereg-seat-type-cor-2026-11-25.md) clusters EVERY jurisdiction by seat type:
+#        k-means on z-scored projected shares plus the seven census features of the latest
+#        census before polling day (seat_cluster_type_map()); rho from the one-way type ICC.
+#   "both" two independent factors per cell, region (as "1") and type, rho from a crossed
+#        random-effects fit (inst/extdata/seat-cluster-icc-type.csv); jurisdictions with no
+#        region file get the type factor alone, as under "type".
+
+#' Seat cluster factor mode (`AUSPOL_SEAT_CLUSTER_COR`: "0", "1", "type" or "both")
 #' @keywords internal
-seat_cluster_on <- function() {
+seat_cluster_mode <- function() {
   v <- Sys.getenv("AUSPOL_SEAT_CLUSTER_COR", "0")
-  if (!v %in% c("0", "1")) stop("AUSPOL_SEAT_CLUSTER_COR must be \"0\" or \"1\"; got \"", v, "\"", call. = FALSE)
-  identical(v, "1")
+  if (!v %in% c("0", "1", "type", "both"))
+    stop("AUSPOL_SEAT_CLUSTER_COR must be \"0\", \"1\", \"type\" or \"both\"; got \"", v, "\"", call. = FALSE)
+  v
+}
+
+#' Is the seat cluster factor on? (`AUSPOL_SEAT_CLUSTER_COR` anything but "0")
+#' @keywords internal
+seat_cluster_on <- function() !identical(seat_cluster_mode(), "0")
+
+SCT_CENSUS_COLS <- c("yr12_pct", "born_aus_pct", "indig_pct", "over55_pct", "under35_pct",
+                     "lang_other_pct", "edu_25plus_pct")
+
+#' Seat-TYPE cluster id per seat for one election (AUSPOL_SEAT_CLUSTER_COR "type" / "both")
+#'
+#' k-means (k = round(seats / 11), at least 2) on a per-seat feature vector, every column
+#' z-scored across the election's seats: the projected shares, and the census features of the
+#' latest census before polling day. A seat without census values gets 0 (the mean) on those
+#' columns. Nothing from the election's results is used.
+#' @param election Label such as `"vic2022"`.
+#' @param seats Seat names, in the order of `shares`.
+#' @param shares Projected shares (seats x classes).
+#' @param census Data frame with `pair`, `seat` and the census columns, or `NULL` to read
+#'   `<root>/output/census-features-vintage.csv`; `FALSE` = shares only.
+#' @param root Directory holding `output/`.
+#' @param quiet Suppress the SCT1 line.
+#' @return Integer vector with attributes `scheme`, `labels`, `n_census`.
+#' @keywords internal
+seat_cluster_type_map <- function(election, seats, shares, census = NULL, root = ".", quiet = FALSE) {
+  norm <- function(x) tolower(gsub("[^a-z]", "", tolower(x)))
+  x <- as.matrix(shares); storage.mode(x) <- "double"
+  x[!is.finite(x)] <- 0
+  if (nrow(x) != length(seats)) stop("seat_cluster_type_map: shares has ", nrow(x), " rows for ", length(seats), " seats", call. = FALSE)
+  n_cen <- 0L
+  if (!isFALSE(census)) {
+    if (is.null(census)) {
+      f <- file.path(root, "output", "census-features-vintage.csv")
+      if (!file.exists(f)) stop("seat_cluster_type_map: ", f, " is missing", call. = FALSE)
+      census <- utils::read.csv(f, stringsAsFactors = FALSE)
+    }
+    miss <- setdiff(c("pair", "seat", SCT_CENSUS_COLS), names(census))
+    if (length(miss)) stop("seat_cluster_type_map: census table lacks ", paste(miss, collapse = ", "), call. = FALSE)
+    ce <- census[census$pair == election, , drop = FALSE]
+    if (anyDuplicated(norm(ce$seat))) stop("seat_cluster_type_map: duplicate census seats in ", election, call. = FALSE)
+    cm <- as.matrix(ce[match(norm(seats), norm(ce$seat)), SCT_CENSUS_COLS, drop = FALSE])
+    storage.mode(cm) <- "double"
+    n_cen <- sum(rowSums(is.finite(cm)) == length(SCT_CENSUS_COLS))
+    x <- cbind(x, cm)
+  }
+  # z-score each column; a constant or all-missing column carries nothing and is dropped
+  z <- apply(x, 2, function(v) {
+    s <- stats::sd(v, na.rm = TRUE); m <- mean(v, na.rm = TRUE)
+    if (!is.finite(s) || s == 0) return(rep(NA_real_, length(v)))
+    out <- (v - m) / s; out[!is.finite(out)] <- 0; out
+  })
+  z <- z[, colSums(is.finite(z)) > 0, drop = FALSE]
+  k <- max(2L, as.integer(round(nrow(z) / 11)))
+  .had <- exists(".Random.seed", envir = globalenv(), inherits = FALSE)
+  .old <- if (.had) get(".Random.seed", envir = globalenv(), inherits = FALSE) else NULL
+  set.seed(20261126L)
+  km <- stats::kmeans(z, centers = k, nstart = 20, iter.max = 100)
+  if (.had) assign(".Random.seed", .old, envir = globalenv()) else rm(".Random.seed", envir = globalenv())
+  lab <- paste0("type", km$cluster)
+  labels <- sort(unique(lab)); id <- match(lab, labels)
+  scheme <- sprintf("type k-means on shares%s (k = %d)", if (isFALSE(census)) "" else " + census", k)
+  if (!quiet) cat(sprintf("SCT1 %s: %s; census features for %d of %d seats; cluster sizes %s\n", election, scheme,
+                          n_cen, length(seats), paste(sort(tabulate(id), decreasing = TRUE), collapse = "/")))
+  attr(id, "scheme") <- scheme; attr(id, "labels") <- labels; attr(id, "n_census") <- n_cen
+  id
+}
+
+#' Does the jurisdiction have a region cluster file (vic, nsw) or a state (federal)?
+#' @keywords internal
+seat_cluster_has_region <- function(election) .sc_juris(election) %in% c("vic", "nsw", "fed")
+
+#' Read the type ICC table (inst/extdata/seat-cluster-icc-type.csv) as a seat_cluster_rho() table
+#' @param col `"icc_type"`, `"icc_r2"` or `"icc_t2"`.
+#' @keywords internal
+seat_cluster_type_tab <- function(col) {
+  f <- file.path("inst", "extdata", "seat-cluster-icc-type.csv")
+  if (!file.exists(f)) f <- system.file("extdata", "seat-cluster-icc-type.csv", package = "auspol")
+  if (!nzchar(f) || !file.exists(f)) stop("seat-cluster-icc-type.csv is missing (scripts/fit_seat_cluster_icc.R --scheme=type)", call. = FALSE)
+  t <- utils::read.csv(f, stringsAsFactors = FALSE)
+  if (!col %in% names(t)) stop("seat-cluster-icc-type.csv has no column ", col, call. = FALSE)
+  data.frame(election = t$election, party = t$party, icc = t[[col]], n_cells = t$n_cells, stringsAsFactors = FALSE)
 }
 
 .sc_juris <- function(election) sub("[0-9]+$", "", election)
@@ -187,10 +276,40 @@ seat_cluster_rho <- function(election, tab = NULL, quiet = FALSE) {
 #' @return `list(seat_cluster, cluster_rho)`, both `NULL` when the switch is off.
 #' @export
 seat_cluster_setup <- function(election, shares, tag = "SCC1", quiet = FALSE) {
-  if (!seat_cluster_on()) return(list(seat_cluster = NULL, cluster_rho = NULL))
+  mode <- seat_cluster_mode()
+  if (identical(mode, "0")) return(list(seat_cluster = NULL, cluster_rho = NULL))
   seats <- if (is.data.frame(shares) && "seat" %in% names(shares)) as.character(shares$seat) else rownames(shares)
   if (is.null(seats)) stop("seat_cluster_setup: shares has no seat names", call. = FALSE)
   sh <- if (is.data.frame(shares)) shares[, setdiff(names(shares), "seat"), drop = FALSE] else shares
+  if (mode %in% c("type", "both")) {
+    tid <- seat_cluster_type_map(election, seats, sh, quiet = quiet)
+    if (!(identical(mode, "both") && seat_cluster_has_region(election))) {
+      rho <- seat_cluster_rho(election, tab = seat_cluster_type_tab("icc_type"), quiet = quiet)
+      rho <- rho[intersect(names(rho), colnames(sh))]
+      if (!quiet) cat(sprintf("%s %s: AUSPOL_SEAT_CLUSTER_COR=%s, %s: %d clusters%s\n", tag, election, mode,
+                              attr(tid, "scheme"), length(attr(tid, "labels")),
+                              if (identical(mode, "both")) " (no region file: type factor only)" else ""))
+      return(list(seat_cluster = as.integer(tid), cluster_rho = rho))
+    }
+    rid <- seat_cluster_map(election, seats, sh)
+    rr <- seat_cluster_rho(election, tab = seat_cluster_type_tab("icc_r2"), quiet = quiet)
+    rt <- seat_cluster_rho(election, tab = seat_cluster_type_tab("icc_t2"), quiet = quiet)
+    cls <- intersect(union(names(rr), names(rt)), colnames(sh))
+    rr <- stats::setNames(ifelse(is.na(rr[cls]), 0, rr[cls]), cls)
+    rt <- stats::setNames(ifelse(is.na(rt[cls]), 0, rt[cls]), cls)
+    tot <- rr + rt; scl <- ifelse(tot > 0.9, 0.9 / tot, 1)
+    if (!quiet && any(scl < 1))
+      cat(sprintf("%s %s: rho_region + rho_type > 0.9 for %s; both scaled to sum 0.9\n", tag, election, paste(cls[scl < 1], collapse = ",")))
+    rr <- rr * scl; rt <- rt * scl
+    if (!quiet) {
+      cat(sprintf("%s %s: AUSPOL_SEAT_CLUSTER_COR=both, region %s (%d clusters, %d of %d seats) + %s (%d clusters)\n",
+                  tag, election, attr(rid, "scheme"), length(attr(rid, "labels")), sum(!is.na(rid)), length(rid),
+                  attr(tid, "scheme"), length(attr(tid, "labels"))))
+      cat(sprintf("%s   %-9s rho_region %.3f rho_type %.3f\n", tag, cls, rr, rt), sep = "")
+    }
+    return(list(seat_cluster = cbind(region = as.integer(rid), type = as.integer(tid)),
+                cluster_rho = list(region = rr, type = rt)))
+  }
   id <- seat_cluster_map(election, seats, sh)
   rho <- seat_cluster_rho(election, quiet = quiet)
   rho <- rho[intersect(names(rho), colnames(sh))]
