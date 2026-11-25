@@ -107,9 +107,16 @@ ind_person_cells <- function(target, corpus = NULL) {
 # (~0.3 s): any code edit anywhere invalidates the memo, so no hand-kept list of
 # the functions the cells depend on can fall out of date.
 #' @noRd
-.ip_code_hash <- function() {
+.ip_code_hash <- function() digest::digest(.ip_code_object_hashes(), algo = "xxhash64")
+
+# One hash per namespace object, named, once per process: kept beside each entry so a miss
+# can name the objects that changed.
+#' @noRd
+.ip_code_object_hashes <- function() {
   if (!is.null(.ip_memo$.code)) return(.ip_memo$.code)
-  h <- digest::digest(.ip_code_objects(), algo = "xxhash64")
+  o <- .ip_code_objects()
+  h <- vapply(o[[2]], digest::digest, "", algo = "xxhash64")
+  names(h) <- o[[1]]
   assign(".code", h, envir = .ip_memo)
   h
 }
@@ -128,8 +135,75 @@ ind_person_cells <- function(target, corpus = NULL) {
   list(nm, obj)
 }
 
+# The key, as named parts, so a miss can say which part moved. Every file the cached code
+# reads is in it by content: the corpus (passed in), the by-election directory and the
+# AUSPOL_BYELECTION_RESULTS file; the election pairs by value; the code by .ip_code_hash().
 #' @noRd
-.ip_key <- function(what, C, ...) .cs_fingerprint(what, C, .ip_code_hash(), ..., env = FALSE)
+.ip_key_parts <- function(what, C, ...) {
+  bd <- file.path("external", "reference", "byelections")
+  bf <- if (dir.exists(bd)) sort(list.files(bd, full.names = TRUE)) else character(0)
+  bp <- base::Sys.getenv("AUSPOL_BYELECTION_RESULTS", "")
+  if (nzchar(bp) && file.exists(bp)) bf <- c(bf, bp)
+  h <- function(x) digest::digest(x, algo = "xxhash64")
+  list(version = .CS_CACHE_VERSION, what = what, args = h(list(...)), corpus = h(as.data.frame(C)),
+       pairs = h(all_election_pairs()), byelection_files = h(unname(tools::md5sum(bf))), code = .ip_code_hash())
+}
+
+# Memoise compute() on disk under .ip_key_parts(), and say how it went: "IPC1" on a disk
+# hit; "IPC1!" on a miss, naming what differs from the newest earlier entry of the same
+# kind (key parts, the namespace objects behind a code change, or the switches it read).
+# A session hit is silent: the harnesses make many.
+#' @noRd
+.ip_cached <- function(what, C, compute, ...) {
+  parts <- .ip_key_parts(what, C, ...)
+  key <- digest::digest(parts, algo = "xxhash64")
+  dir <- .cs_cache_dir()
+  v <- .cs_cached(key, compute)
+  how <- .cs_last$how
+  if (identical(how, "disk")) cat(sprintf("IPC1  ind-person cache hit (%s): %s\n", what, basename(.cs_last$file)))
+  if (identical(how, "miss")) {
+    # Only on a miss, and never fatal: a diagnosis must not stop a forecast run.
+    why <- tryCatch(if (dir.exists(dir)) .ip_miss_reason(dir, what, key, parts) else sprintf("no cache directory %s", dir),
+                    error = function(e) paste("diagnosis failed:", conditionMessage(e)))
+    cat(sprintf("IPC1! ind-person cache MISS (%s), recomputed: %s\n", what, why))
+    f <- .cs_last$file
+    if (!is.na(f)) tryCatch({
+      e <- readRDS(f)
+      side <- file.path(dir, sprintf("ipmeta-%s-%s.rds", what, key))
+      saveRDS(list(parts = parts, code = .ip_code_object_hashes(), reads = e$reads, all = e$all,
+                   at = Sys.time()), side)
+    }, error = function(err) cat(sprintf("IPC1! could not write the key record beside %s: %s\n", f, conditionMessage(err))))
+  }
+  v
+}
+
+# What differs between this lookup and the newest earlier entry of the same kind.
+#' @noRd
+.ip_miss_reason <- function(dir, what, key, parts) {
+  fs <- list.files(dir, pattern = sprintf("^ipmeta-%s-.*\\.rds$", what), full.names = TRUE)
+  fs <- fs[basename(fs) != sprintf("ipmeta-%s-%s.rds", what, key)]   # never compare an entry with itself
+  if (!length(fs)) return(sprintf("no earlier %s entry in %s", what, dir))
+  m <- tryCatch(readRDS(fs[which.max(file.mtime(fs))]), error = function(e) NULL)
+  if (is.null(m)) return("the newest earlier entry is unreadable")
+  d <- names(parts)[!vapply(names(parts), function(n) identical(parts[[n]], m$parts[[n]]), NA)]
+  out <- character(0)
+  if (length(d)) out <- c(out, paste0("key part(s) changed: ", paste(d, collapse = ", ")))
+  if ("code" %in% d) {
+    now <- .ip_code_object_hashes(); was <- m$code
+    nm <- union(names(now), names(was))
+    ch <- nm[!vapply(nm, function(n) identical(unname(now[n]), unname(was[n])), NA)]
+    out <- c(out, sprintf("%d namespace object(s) differ: %s%s", length(ch), paste(utils::head(ch, 8), collapse = ", "),
+                          if (length(ch) > 8) ", ..." else ""))
+  }
+  rd <- if (isTRUE(m$all)) .cs_all_names() else names(m$reads)
+  now <- .cs_snapshot(union(rd, names(m$reads)))
+  sw <- names(now)[!vapply(names(now), function(n) identical(unname(now[n]), unname(m$reads[n])), NA)]
+  if (isTRUE(m$all)) out <- c(out, "the newest entry recorded ALL switches as read")
+  if (length(sw)) out <- c(out, paste0("switch(es) it read changed: ",
+                                       paste(sprintf("%s %s -> %s", sw, m$reads[sw], now[sw]), collapse = ", ")))
+  if (!length(out)) out <- "same key and switches as the newest entry (it was written by a process this lookup could not read?)"
+  paste(out, collapse = "; ")
+}
 
 # ind_person_cells(), through the disk memo when it is on.
 #' @noRd
@@ -138,7 +212,7 @@ ind_person_cells <- function(target, corpus = NULL) {
   C <- data.table::as.data.table(C)
   # a copy: the caller edits `value`, and the memo must not see that (copy() also
   # restores data.table's self-reference after readRDS)
-  data.table::copy(.cs_cached(.ip_key("ipcells", C, target), function() ind_person_cells(target, C)))
+  data.table::copy(.ip_cached("cells", C, function() ind_person_cells(target, C), target))
 }
 
 # Every person cell in every election pair, with that person's actual share
@@ -148,7 +222,7 @@ ind_person_cells <- function(target, corpus = NULL) {
 .ip_cases <- function(C) {
   key <- .cs_fingerprint("ipcases", C)
   if (!is.null(.ip_memo[[key]])) return(.ip_memo[[key]])
-  r <- if (.ip_cache_on()) .cs_cached(.ip_key("ipcases", C), function() .ip_cases_compute(C)) else .ip_cases_compute(C)
+  r <- if (.ip_cache_on()) .ip_cached("cases", C, function() .ip_cases_compute(C)) else .ip_cases_compute(C)
   assign(key, r, envir = .ip_memo)
   r
 }
