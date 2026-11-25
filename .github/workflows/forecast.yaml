@@ -36,6 +36,10 @@ on:
         description: "Also build the what-if scenarios on this manual run (daily runs always build them)"
         type: boolean
         default: false
+      n_sims:
+        description: "Simulations for the Victorian forecast (default 20000). Leave scenarios off with anything else: they run at 20000 and would not match"
+        type: string
+        default: "20000"
 
 permissions:
   # contents: write is for the "Publish the forecast" step, which uploads the
@@ -97,7 +101,7 @@ jobs:
     needs: gate
     if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 75   # was 45; 20k runs take ~12 min, and a 100k trial (n_sims, 25 Nov 2026) needs room
 
     steps:
       - uses: actions/checkout@v4
@@ -460,6 +464,12 @@ jobs:
           echo "no zero-byte files among the poll data, election results or downloaded models"
       - name: Run the pipeline
         id: run
+        env:
+          # Manual trials only (Pete, 25 Nov 2026: one 100k run); scheduled and worker runs leave it empty = 20,000.
+          # The election-night state stays at AUSPOL_NIGHT_STATE_SIMS (20,000) whatever this is.
+          AUSPOL_N_SIMS: ${{ inputs.n_sims || '20000' }}
+          # fit_seats_full.R refuses to publish a run whose sims differ from published_flags.R unless this is set
+          AUSPOL_ALLOW_SIMS_CHANGE: ${{ (inputs.n_sims && inputs.n_sims != '20000') && '1' || '0' }}
         run: |
           # run_all.R exits non-zero when ANY validation stage breaches (2026-09-19:
           # every daily run since at least the 12th had failed on a NSW 2027
@@ -568,6 +578,10 @@ jobs:
           # the previous run's file; it must never stop the publish.
           rm -f output/whatif-sims-vic2026.json
           Rscript scripts/build_whatif_sims.R --target=vic2026 || echo "::warning::what-if simulations not built -- the all-primaries what-if page keeps the previous run's data"
+          # The upper-house page (Legislative Council, added 25 Nov 2026; Pete approved the 24 Nov walk): this run's
+          # statewide draws through scripts/build_council_forecast.R (~20 s). Optional, as above.
+          rm -f output/council-forecast-vic2026.json
+          Rscript scripts/build_council_forecast.R || echo "::warning::upper-house forecast not built -- the council page keeps the previous run's data"
       - name: Publish the forecast to R2 for the ITG page
         # The blog (inthegame-blog) fetches every dataset client-side from the
         # inthegame-data R2 bucket; its CSP does not allow github.com, so the
@@ -608,6 +622,12 @@ jobs:
             wrangler r2 object put "inthegame-data/auspol/whatif-sims-vic2026.json" --file output/whatif-sims-vic2026.json --content-type application/json --cache-control "public, max-age=300" --remote && echo "OK whatif-sims-vic2026.json" || echo "::warning::what-if simulations upload failed -- the page keeps the previous run's data"
           else
             echo "::warning::no output/whatif-sims-vic2026.json -- the all-primaries what-if page keeps the previous run's data"
+          fi
+          # The upper-house page's forecast: optional, as above.
+          if [ -s output/council-forecast-vic2026.json ]; then
+            wrangler r2 object put "inthegame-data/auspol/council-forecast-vic2026.json" --file output/council-forecast-vic2026.json --content-type application/json --cache-control "public, max-age=300" --remote && echo "OK council-forecast-vic2026.json" || echo "::warning::upper-house forecast upload failed -- the council page keeps the previous run's data"
+          else
+            echo "::warning::no output/council-forecast-vic2026.json -- the council page keeps the previous run's data"
           fi
           # Per-pollster pages (scripts/build_pollster_pages.R): optional, so a missing file or failed upload warns and
           # never blocks the forecast above.

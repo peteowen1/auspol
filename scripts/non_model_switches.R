@@ -14,6 +14,7 @@ NON_MODEL_SWITCHES <- c(
   AUSPOL_AEF_WORST               = "DIAG",  # build_aef_comparison.R
   AUSPOL_ALLOW_INERT_ARM         = "RUN",  # pool_pf_arms.R, promote_arm.R
   AUSPOL_ALLOW_PARTIAL_PROMOTE   = "RUN",  # promote_arm.R, promote_rebuild.R
+  AUSPOL_ALLOW_SIMS_CHANGE       = "RUN",  # fit_seats_full.R: let the workflow's n_sims trial publish (set only by forecast.yaml)
   AUSPOL_ANCHOR_SHA              = "RUN",  # build_forecast_json.R
   AUSPOL_ASAT_FORCE              = "RUN",  # fit_xgb_flows_asat.R, fit_xgb_primary_asat.R
   AUSPOL_AUDIT_TAG               = "BUILDER",  # audit_statewide_forecast.R, build_others_bucket_history.R
@@ -66,6 +67,7 @@ NON_MODEL_SWITCHES <- c(
   AUSPOL_MC_LIVE                 = "BUILDER",  # fit_minor_candidates.R: predict an election with nominations and no votes (vic2026), -live outputs (6 Nov)
   AUSPOL_NB_PRIOR                = "BUILDER",  # build_notional_baselines.R
   AUSPOL_NB_TARGET               = "BUILDER",  # build_notional_baselines.R
+  AUSPOL_NIGHT_STATE_SIMS        = "RUN",  # fit_seats_full.R: draws kept in the election-night state (20000; the forecast may run more)
   AUSPOL_NIGHT_SURGE_FADE        = "DIAG",  # night_replay_detail.R (night fixes, review 2026-10-30)
   AUSPOL_NIGHT_TCP_CENTER        = "DIAG",  # night_replay_detail.R
   AUSPOL_NIGHT_TCP_FLOW_FLOOR    = "DIAG",  # night_replay_detail.R
