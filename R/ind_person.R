@@ -109,15 +109,23 @@ ind_person_cells <- function(target, corpus = NULL) {
 #' @noRd
 .ip_code_hash <- function() {
   if (!is.null(.ip_memo$.code)) return(.ip_memo$.code)
+  h <- digest::digest(.ip_code_objects(), algo = "xxhash64")
+  assign(".code", h, envir = .ip_memo)
+  h
+}
+
+# What .ip_code_hash() hashes. Nothing in it may hold a pointer, which differs per
+# process and would make every fresh process miss (tests/testthat/test-ind-person-cache.R).
+#' @noRd
+.ip_code_objects <- function() {
   ns <- environment(.ip_code_hash)
   nm <- sort(ls(ns, all.names = TRUE))
   obj <- lapply(nm, function(n) {
     x <- get(n, envir = ns)
-    if (is.function(x)) deparse(x) else if (is.environment(x)) NULL else x
+    # a registered C++ routine carries a per-process address: hash its name only
+    if (is.function(x)) deparse(x) else if (is.environment(x)) NULL else if (inherits(x, "NativeSymbolInfo")) x$name else x
   })
-  h <- digest::digest(list(nm, obj), algo = "xxhash64")
-  assign(".code", h, envir = .ip_memo)
-  h
+  list(nm, obj)
 }
 
 #' @noRd
