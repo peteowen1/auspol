@@ -328,31 +328,41 @@ Sys.getenv <- function(x = NULL, unset = "", names = NA) {
 # another). A corrupt or unreadable disk entry is recomputed; a failed write is reported,
 # never fatal.
 #' @noRd
-.cs_cached <- function(key, compute, cache_dir = NULL, disk = TRUE) {
+.cs_cached <- function(key, compute, cache_dir = NULL, disk = TRUE, meta = NULL) {
   # as.character(): an entry that read no switch has NULL names, and a NULL here would mark
   # every enclosing recorder as having read ALL of them (found 2026-11-25, when .ip_cases
   # began recording around the "prep" memo)
   note <- function(e) { .cs_note_reads(as.character(names(e$reads)), all = isTRUE(e$all)); e$value }
+  # how the last lookup went, for callers that log it (.ip_cached())
+  .cs_last$how <- NA_character_; .cs_last$file <- NA_character_
   mem <- if (exists(key, envir = .cs_memo, inherits = FALSE)) get(key, envir = .cs_memo, inherits = FALSE) else list()
-  for (e in mem) if (.cs_entry_ok(e)) return(note(e))
+  for (e in mem) if (.cs_entry_ok(e)) { .cs_last$how <- "session"; return(note(e)) }
   dir <- .cs_cache_dir(cache_dir)
   if (disk && dir.exists(dir)) {
     for (f in list.files(dir, pattern = paste0("^", key, "--.*\\.rds$"), full.names = TRUE)) {
       e <- tryCatch(readRDS(f), error = function(err) NULL)
-      if (.cs_entry_ok(e)) { assign(key, c(mem, list(e)), envir = .cs_memo); return(note(e)) }
+      if (.cs_entry_ok(e)) {
+        assign(key, c(mem, list(e)), envir = .cs_memo)
+        .cs_last$how <- "disk"; .cs_last$file <- f
+        return(note(e))
+      }
     }
   }
   e <- .cs_record(compute)
+  .cs_last$how <- "miss"; .cs_last$file <- NA_character_   # after compute: nested lookups overwrite it
+  if (!is.null(meta)) e$meta <- meta
   if (disk) tryCatch({
     f <- file.path(dir, paste0(key, "--", digest::digest(list(e$reads, e$all), algo = "xxhash64"), ".rds"))
     dir.create(dirname(f), recursive = TRUE, showWarnings = FALSE)
     tmp <- tempfile(pattern = paste0(key, "-"), tmpdir = dirname(f), fileext = ".tmp")
     saveRDS(e, tmp)
     if (!file.rename(tmp, f)) { unlink(tmp); stop("rename failed") }
+    .cs_last$file <- f
   }, error = function(err) cat(sprintf("CSV1! cross-seat cache write failed (%s): %s\n", dir, conditionMessage(err))))
   assign(key, c(mem, list(e)), envir = .cs_memo)
   e$value
 }
+.cs_last <- new.env(parent = emptyenv())
 
 #' Clear the in-session cross-seat memo (tests and benchmarks)
 #' @return Invisibly `NULL`.
