@@ -350,6 +350,12 @@ jobs:
               test -s "output/$f" || { echo "::error::$f downloaded empty"; exit 1; }
             done
           fi
+          # AUSPOL_SEAT_CLUSTER_COR (published "both", 26 Nov 2026): the seat-type clusters read census-features.csv too
+          # (R/seat_cluster.R seat_cluster_census(), SCT2!), so fetch it whatever AUSPOL_ONP_ALLOC says (review).
+          if [ "$(pflag AUSPOL_SEAT_CLUSTER_COR)" = "type" ] || [ "$(pflag AUSPOL_SEAT_CLUSTER_COR)" = "both" ]; then
+            [ -s output/census-features.csv ] || gh release download shipped-models -p census-features.csv -D output --clobber || { echo "::error::shipped-models has no census-features.csv -- AUSPOL_SEAT_CLUSTER_COR needs it"; exit 1; }
+            test -s output/census-features.csv || { echo "::error::census-features.csv downloaded empty"; exit 1; }
+          fi
           # AUSPOL_DEPARTED_SUCCESSOR (published "1"): fit_seats_full.R stops without the rate
           # table, and running with the switch off would trip its published-filename guard,
           # so a missing table fails here, loudly, and yesterday's forecast stays live.
