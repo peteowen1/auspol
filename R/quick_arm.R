@@ -510,7 +510,9 @@ quick_check_seat_cache <- function(dir, ctx, ids) {
   if (!identical(p$external, ctx$external)) why <- c(why, "its external data (anchor clone or reference/) differs from today's")
   if (!length(why) && !identical(basename(dir), quick_key(ctx, p$sims, character(0), TRUE)))
     why <- c(why, "its directory name is not the key its own parts give")
-  miss <- ids[!file.exists(file.path(dir, ids, sprintf("state-%s.rds", ids)))]
+  # meta.rds is quick_arm's written-last completion marker (have()); a unit killed after its state was dumped
+  # leaves the state file without it, and possibly a truncated allprobs/sharedetail (review, 25 Nov 2026)
+  miss <- ids[!file.exists(file.path(dir, ids, sprintf("state-%s.rds", ids))) | !file.exists(file.path(dir, ids, "meta.rds"))]
   if (length(miss)) why <- c(why, paste0("it has no state for ", length(miss), " election(s) asked for: ", paste(utils::head(miss, 8), collapse = ", ")))
   if (length(why)) stop("seat_quick: cache ", basename(dir), " refused: ", paste(why, collapse = "; "), call. = FALSE)
   list(key = basename(dir), sims = p$sims, parts = p)

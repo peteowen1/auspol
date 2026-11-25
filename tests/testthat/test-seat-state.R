@@ -105,7 +105,8 @@ test_that("seat_quick takes only the current published-config baseline cache, by
   mk <- function(parts, name, ids = c("vic2022", "wa2025")) {
     d <- file.path(base, name); dir.create(d)
     saveRDS(parts, file.path(d, "_key.rds"))
-    for (u in ids) { dir.create(file.path(d, u)); saveRDS(list(pair = u), file.path(d, u, sprintf("state-%s.rds", u))) }
+    for (u in ids) { dir.create(file.path(d, u)); saveRDS(list(pair = u), file.path(d, u, sprintf("state-%s.rds", u)))
+                     saveRDS(list(ok = TRUE), file.path(d, u, "meta.rds")) }
     d
   }
   good <- mk(quick_key_parts(ctx, 20000L, character(0), TRUE), quick_key(ctx, 20000L, character(0), TRUE))
@@ -121,4 +122,8 @@ test_that("seat_quick takes only the current published-config baseline cache, by
   expect_error(quick_check_seat_cache(good, ctx, c("vic2022", "fed2019")), "no state for 1 election.*fed2019")
   newin <- utils::modifyList(ctx, list(input = "in9999999999"))
   expect_error(quick_check_seat_cache(good, newin, "vic2022"), "inputs .* differ")
+  # a unit killed after its state was dumped: state file present, completion marker (meta.rds) absent
+  file.remove(file.path(good, "wa2025", "meta.rds"))
+  expect_error(quick_check_seat_cache(good, ctx, c("vic2022", "wa2025")), "no state for 1 election.*wa2025")
+  expect_identical(quick_check_seat_cache(good, ctx, "vic2022")$key, basename(good))
 })
