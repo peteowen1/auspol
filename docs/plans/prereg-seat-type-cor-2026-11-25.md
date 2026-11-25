@@ -107,3 +107,44 @@ and coverage moves toward nominal on both arms. Rescore on vic2026 after 28 Nov 
 
 Live effect (vic2026, switch 0 / type / both): NOT RUN (needs three 20k `fit_seats_full.R` runs on the live inputs; held
 for Pete's call, since it decides nothing).
+
+## Override 1 (added 26 Nov 2026; the clauses and RESULT above are unedited)
+
+**Pete overrode clause 1 and shipped arm B**, 26 Nov 2026: *"let's implement region and seat type please it looks
+great!"*. Arm B missed clause 1 (seat-total log score -0.0159, SE 0.0172, 0.92 SE; the rule wanted 1 SE) and passed
+clauses 2-5. The recommendation above (keep it off) was mine; the decision is his. `AUSPOL_SEAT_CLUSTER_COR = "both"`
+in `scripts/published_flags.R`, and the inline default of `seat_cluster_mode()` with it.
+
+Two changes ship with it, both found while shipping:
+- The daily runner has `output/census-features.csv` (from `shipped-models`) and not `census-features-vintage.csv`,
+  so the type map would have stopped the forecast. `seat_cluster_census()` reads the plain file only for an election
+  whose every census row predates it (vic2026: all 2016; the two files hold identical vic2026 and nsw2027 rows) and
+  prints SCT2; anything else stops (SCT2!).
+- The night state saves the factor and `night_run_update()` uses it, so the election-night page starts from the same
+  seat ranges as the forecast. The `night_replay*.R` tools (replay only) do not carry it.
+
+### Live effect, vic2026 (decides nothing)
+
+`fit_seats_full.R`, 20,000 sims, seed 42, code = branch `seat-corr-main` (main plus this feature), inputs = the
+`scenario-inputs` artifact of the 26 Nov 4:30am daily run (run 45665482641: its exact `output/` and `external/`,
+seat-poll blend md5 f560c155), in a scratch copy. Point shares byte-identical between the two arms.
+
+Chamber outcomes are probabilities; seat ranges are central intervals of seats won, of 88 (45 for a majority).
+
+| | published 26 Nov (100,000 sims) | switch 0 (20,000) | `both` (20,000) |
+|---|---:|---:|---:|
+| P(Coalition majority) | 0.382 | 0.380 | 0.385 |
+| P(Labor majority) | 0.003 | 0.002 | 0.005 |
+| P(hung) | 0.615 | 0.617 | 0.609 |
+| P(Coalition most seats, ties counted) | 0.846 | 0.847 | 0.827 |
+| Coalition seats: mean, sd, 80%, 90% | 41.7, 9.96, 29-55, 26-59 | 41.7, 9.87, 29-55, 26-59 | 41.7, 10.36, 28-56, 25-59 |
+| Labor seats | 23.5, 7.95, 13-34, 11-37 | 23.5, 7.84, 13-34, 11-37 | 23.4, 8.30, 13-35, 10-38 |
+| One Nation seats | 15.9, 7.45, 7-26, 5-29 | 15.9, 7.59, 7-26, 5-30 | 16.1, 8.05, 6-27, 4-31 |
+| Greens seats | 6.5, 1.95, 4-9, 4-10 | 6.5, 1.98, 4-9, 4-10 | 6.5, 2.06, 4-9, 4-10 |
+
+Switch 0 reproduces the published run to Monte Carlo error (P(hung) 0.617 against 0.615; its SE at 20,000 sims is
+about 0.004). Its point shares differ from the published ones in the fourth decimal: the trend is fitted as at
+`Sys.Date()`, which was 25 Nov on the (UTC) runner and 26 Nov here. With `both`, each party's seat-total sd rises
+about 5-6%, every chamber probability moves by under 2.1 points, and the largest seat-probability move is 0.015.
+rho (vic2026): region 0.02 (ONP) to 0.11 (LNP), type 0.08 (IND) to 0.19 (GRN). Simulation time 26.5 s against
+22.6 s at 20,000 sims.
