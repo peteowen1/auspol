@@ -764,7 +764,11 @@ Replay-only until the 2026 feed arrives; none is read by the published forecast.
 | `SEAT_PAID_LEAN_SIDES` | ALP, ALP+GRN, GRN, LNP, IND (UNKNOWN gets none) | no: the sides of `sponsor_side.csv` |
 | lean per side, noise | fitted per target from earlier elections, each side shrunk to zero (vic2026: LNP +3.27, ALP+GRN +2.97, IND -0.18; noise sd 4.54) | yes |
 
-## Seat cluster factor (`AUSPOL_SEAT_CLUSTER_COR`, ARM built 2026-11-25, OFF; `R/seat_cluster.R`; `plans/prereg-seat-cluster-cor-2026-11-25.md`)
+## Seat cluster factor (`AUSPOL_SEAT_CLUSTER_COR`, built 2026-11-25, SHIPPED as `both` 26 Nov 2026 on Pete's override; `R/seat_cluster.R`; `plans/prereg-seat-cluster-cor-2026-11-25.md`)
+
+Without `output/census-features-vintage.csv` (the daily runner has only `census-features.csv`), the seat
+types read `census-features.csv` for an election whose every row's census predates it, printing SCT2
+(`seat_cluster_census()`); same rows for vic2026 and nsw2027.
 
 | constant | value | from data? |
 |---|---|---|
