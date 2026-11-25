@@ -1,0 +1,888 @@
+{
+ "repo": "peteowen1/auspol",
+ "doc_path": "docs/CI-PIPELINE.md",
+ "title": "auspol forecast pipeline",
+ "about": "What the daily Victorian (and NSW 2027) forecast run does on GitHub Actions, in order, and how long each part takes: from fetching the polls to the forecast and the what-if sliders landing on the release and the data store the site reads. The model's own stages (the forecast's four steps and the rebuild's eight) are described in docs/PIPELINE.md; this file is the GitHub Actions run that executes them every day.",
+ "newest_run_utc": "2026-11-24T17:30:35Z",
+ "newest_run_sydney": "25 Nov 2026, 4:30am",
+ "pipelines": [
+  {
+   "name": "Daily forecast refresh",
+   "workflow": "forecast.yaml",
+   "about": "One run per day. The forecast job publishes first; then 16 what-if jobs (4 parties, 2 modes, 2 elections) rerun the seat model with one party's vote forced, side by side, and a last job combines and publishes them. Only full daily runs are counted: the title must say \"(daily)\" and the what-if jobs must have run. From 25 Nov 2026 every run uses 100,000 simulations (was 20,000), so runs before that date are faster than today's.",
+   "triggers": "The inthegame-blog site's worker dispatches it at 4:30am Melbourne time with daily=true; GitHub's own schedule (4:37am Sydney time in summer) is a late fallback that the gate job skips when the day's run already went. It starts nothing else: the site reads the files it publishes.",
+   "median_s": 2112.0,
+   "min_s": 1946.0,
+   "max_s": 2724.0,
+   "runs": [
+    {
+     "id": 45449335210,
+     "url": "https://github.com/peteowen1/auspol/actions/runs/45449335210",
+     "event": "workflow_dispatch",
+     "branch": "main",
+     "title": "Forecast refresh (daily)",
+     "started_utc": "2026-11-24T17:30:35Z",
+     "started_sydney": "25 Nov 2026, 4:30am",
+     "wall_s": 1946.0,
+     "queued_s": 3.0
+    },
+    {
+     "id": 45228420242,
+     "url": "https://github.com/peteowen1/auspol/actions/runs/45228420242",
+     "event": "workflow_dispatch",
+     "branch": "main",
+     "title": "Forecast refresh (daily)",
+     "started_utc": "2026-11-23T17:30:37Z",
+     "started_sydney": "24 Nov 2026, 4:30am",
+     "wall_s": 2724.0,
+     "queued_s": 5.0
+    },
+    {
+     "id": 45049822824,
+     "url": "https://github.com/peteowen1/auspol/actions/runs/45049822824",
+     "event": "workflow_dispatch",
+     "branch": "main",
+     "title": "Forecast refresh (daily)",
+     "started_utc": "2026-11-22T17:30:33Z",
+     "started_sydney": "23 Nov 2026, 4:30am",
+     "wall_s": 2112.0,
+     "queued_s": 3.0
+    },
+    {
+     "id": 44930417155,
+     "url": "https://github.com/peteowen1/auspol/actions/runs/44930417155",
+     "event": "workflow_dispatch",
+     "branch": "main",
+     "title": "Forecast refresh (daily)",
+     "started_utc": "2026-11-21T17:30:35Z",
+     "started_sydney": "22 Nov 2026, 4:30am",
+     "wall_s": 2015.0,
+     "queued_s": 4.0
+    },
+    {
+     "id": 44577920205,
+     "url": "https://github.com/peteowen1/auspol/actions/runs/44577920205",
+     "event": "workflow_dispatch",
+     "branch": "main",
+     "title": "Forecast refresh (daily)",
+     "started_utc": "2026-11-19T17:30:38Z",
+     "started_sydney": "20 Nov 2026, 4:30am",
+     "wall_s": 2268.0,
+     "queued_s": 4.0
+    }
+   ],
+   "jobs": [
+    {
+     "name": "gate",
+     "about": "Checks whether today's daily forecast already ran, so a late fallback or a duplicated dispatch does not run it twice",
+     "legs": 1,
+     "median_s": 3.0,
+     "min_s": 3.0,
+     "max_s": 4.0,
+     "leg_median_s": 3.0,
+     "slowest_leg_median_s": 3.0,
+     "runs_seen": 5,
+     "steps": [
+      {
+       "name": "Set up job",
+       "about": "GitHub starts the machine and downloads the actions this job uses",
+       "source": "builtin",
+       "median_s": 0.0,
+       "min_s": 0.0,
+       "max_s": 1.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Run go() { echo \"run=$1\" >> \"$GITHUB_OUTPUT\"; }",
+       "about": "Lists the last 10 runs of this workflow and stops this one if a daily run in the last 12 hours already succeeded or is still going",
+       "source": "config",
+       "median_s": 1.0,
+       "min_s": 1.0,
+       "max_s": 1.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Complete job",
+       "about": "GitHub closes the job and cleans up the machine",
+       "source": "builtin",
+       "median_s": 0.0,
+       "min_s": 0.0,
+       "max_s": 1.0,
+       "n": 5,
+       "of": 5
+      }
+     ],
+     "stages": {},
+     "stage_notes": {},
+     "stage_about": {}
+    },
+    {
+     "name": "refresh",
+     "about": "The forecast itself: fetches the polls and the trained models, runs every model stage, and publishes Victoria and then NSW 2027 to the release and the data store",
+     "legs": 1,
+     "median_s": 843.0,
+     "min_s": 674.0,
+     "max_s": 915.0,
+     "leg_median_s": 843.0,
+     "slowest_leg_median_s": 843.0,
+     "runs_seen": 5,
+     "steps": [
+      {
+       "name": "Set up job",
+       "about": "GitHub starts the machine and downloads the actions this job uses",
+       "source": "builtin",
+       "median_s": 2.0,
+       "min_s": 1.0,
+       "max_s": 2.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Run actions/checkout@v4",
+       "about": "Downloads this repo's code onto the machine",
+       "source": "builtin",
+       "median_s": 2.0,
+       "min_s": 2.0,
+       "max_s": 2.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Run r-lib/actions/setup-r@v2",
+       "about": "Installs R",
+       "source": "builtin",
+       "median_s": 28.0,
+       "min_s": 25.0,
+       "max_s": 44.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Run r-lib/actions/setup-r-dependencies@v2",
+       "about": "Installs the R packages this repo needs (from a cache when it can)",
+       "source": "builtin",
+       "median_s": 39.0,
+       "min_s": 37.0,
+       "max_s": 46.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Fetch the anchor's poll data",
+       "about": "Clones the poll CSVs and seat files from the aus-polling-analyser repository (a shallow copy of its analysis folder only)",
+       "source": "config",
+       "median_s": 118.0,
+       "min_s": 103.0,
+       "max_s": 122.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Restore cached election results",
+       "about": "Restores the past election results (VEC, ECSA, ECQ pages) saved by an earlier run; they never change, so they are fetched only when the fetch scripts change",
+       "source": "config",
+       "median_s": 1.0,
+       "min_s": 0.0,
+       "max_s": 1.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Fetch the trained models",
+       "about": "Downloads the trained trees and the fitted tables from the shipped-models release; refetches today's Wikipedia and Poll Bludger poll tables and leader ratings; fails if any required file is missing or the models are more than 14 days old",
+       "source": "config",
+       "median_s": 52.0,
+       "min_s": 49.0,
+       "max_s": 63.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Refuse zero-byte inputs",
+       "about": "Stops the run if any poll file, election result or downloaded model is an empty file",
+       "source": "config",
+       "median_s": 0.0,
+       "min_s": 0.0,
+       "max_s": 0.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Run the pipeline",
+       "about": "Runs scripts/run_all.R: every model stage from preference flows to the seat simulation and the pages (stages in the next table); then checks the Victorian outputs were written by this run",
+       "source": "config",
+       "median_s": 426.0,
+       "min_s": 274.0,
+       "max_s": 435.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Summarise",
+       "about": "Writes the headline numbers, every check line and the warnings to the run's summary page",
+       "source": "config",
+       "median_s": 0.0,
+       "min_s": 0.0,
+       "max_s": 0.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Publish the forecast to the forecast-latest release",
+       "about": "Uploads the Victorian forecast files and a poll snapshot to the forecast-latest release, then builds the all-primaries what-if simulations and the upper-house forecast",
+       "source": "config",
+       "median_s": 7.0,
+       "min_s": 6.0,
+       "max_s": 8.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Publish the forecast to R2 for the ITG page",
+       "about": "Copies the forecast, page data, what-if, upper-house, pollster and party files to the R2 store the site reads",
+       "source": "config",
+       "median_s": 26.0,
+       "min_s": 25.0,
+       "max_s": 32.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Keep a dated copy of the forecast on R2 (as-at history)",
+       "about": "Saves today's forecast under a dated name on R2, so past days can be shown (scripts/publish_forecast_history.sh)",
+       "source": "config",
+       "median_s": 9.0,
+       "min_s": 7.0,
+       "max_s": 10.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "NSW 2027 forecast (on while the repository variable AUSPOL_PUBLISH_NSW2027 is 1, set 8 Oct)",
+       "about": "Downloads the NSW tables, runs the seat model for NSW 2027 at 20,000 simulations, builds its forecast JSON and poll-trend data, and uploads them to the release",
+       "source": "config",
+       "median_s": 85.0,
+       "min_s": 60.0,
+       "max_s": 90.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Publish the NSW 2027 forecast to R2 for the ITG page",
+       "about": "Copies the NSW 2027 forecast files to R2",
+       "source": "config",
+       "median_s": 15.0,
+       "min_s": 13.0,
+       "max_s": 20.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Keep a dated copy of the NSW 2027 forecast on R2 (as-at history)",
+       "about": "Saves today's NSW 2027 forecast under a dated name on R2",
+       "source": "config",
+       "median_s": 9.0,
+       "min_s": 7.0,
+       "max_s": 9.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Upload outputs",
+       "about": "Keeps the page, page data, projection mix and the run log as a downloadable bundle for 30 days",
+       "source": "config",
+       "median_s": 1.0,
+       "min_s": 1.0,
+       "max_s": 2.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Hand the scenario jobs their inputs",
+       "about": "Saves everything this job fetched and built so the 16 what-if jobs can start from it",
+       "source": "config",
+       "median_s": 30.0,
+       "min_s": 20.0,
+       "max_s": 30.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Raise an alarm",
+       "about": "On a daily run, opens or updates one tracking issue when a check fails with something new; otherwise writes \"Alarm not raised\"",
+       "source": "config",
+       "median_s": 0.0,
+       "min_s": 0.0,
+       "max_s": 0.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Post Run r-lib/actions/setup-r-dependencies@v2",
+       "about": "Clean-up for an earlier step (saves caches, removes credentials)",
+       "source": "builtin",
+       "median_s": 2.0,
+       "min_s": 1.0,
+       "max_s": 3.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Post Run actions/checkout@v4",
+       "about": "Clean-up for an earlier step (saves caches, removes credentials)",
+       "source": "builtin",
+       "median_s": 0.0,
+       "min_s": 0.0,
+       "max_s": 1.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Complete job",
+       "about": "GitHub closes the job and cleans up the machine",
+       "source": "builtin",
+       "median_s": 0.0,
+       "min_s": 0.0,
+       "max_s": 0.0,
+       "n": 5,
+       "of": 5
+      }
+     ],
+     "stages": {
+      "the stages of run_all.R": [
+       {
+        "name": "preference-flow estimator (scripts/backtest_flows.R)",
+        "median_s": 2.717104,
+        "min_s": 1.983196,
+        "max_s": 2.751283,
+        "n": 5
+       },
+       {
+        "name": "Victoria (live target) (scripts/fit_vic.R)",
+        "median_s": 21.278031,
+        "min_s": 16.142685,
+        "max_s": 22.896341,
+        "n": 5
+       },
+       {
+        "name": "federal cycles (scripts/fit_federal.R)",
+        "median_s": 69.203729,
+        "min_s": 39.125298,
+        "max_s": 73.284908,
+        "n": 5
+       },
+       {
+        "name": "NSW cycles (scripts/fit_nsw.R)",
+        "median_s": 28.671175,
+        "min_s": 17.109336,
+        "max_s": 29.253335,
+        "n": 5
+       },
+       {
+        "name": "fundamentals + mix (scripts/fit_projection.R)",
+        "median_s": 122.837049,
+        "min_s": 86.302934,
+        "max_s": 126.376906,
+        "n": 5
+       },
+       {
+        "name": "statewide covariance (scripts/estimate_statewide_cov.R)",
+        "median_s": 1.943274,
+        "min_s": 1.371064,
+        "max_s": 1.972141,
+        "n": 5
+       },
+       {
+        "name": "seat simulation (per seat) (scripts/fit_seats_full.R)",
+        "median_s": 123.932757,
+        "min_s": 75.334198,
+        "max_s": 125.774624,
+        "n": 5
+       },
+       {
+        "name": "pollster scorecard (scripts/fit_scorecard.R)",
+        "median_s": 11.891607,
+        "min_s": 8.320004,
+        "max_s": 11.966837,
+        "n": 5
+       },
+       {
+        "name": "pollster pages (scripts/build_pollster_pages.R)",
+        "median_s": 14.197827,
+        "min_s": 9.578498,
+        "max_s": 14.264655,
+        "n": 5
+       },
+       {
+        "name": "public page (scripts/build_page.R)",
+        "median_s": 11.135805,
+        "min_s": 7.865873,
+        "max_s": 14.426739,
+        "n": 5
+       },
+       {
+        "name": "forecast JSON (scripts/build_forecast_json.R)",
+        "median_s": 4.944792,
+        "min_s": 3.142638,
+        "max_s": 5.103087,
+        "n": 5
+       },
+       {
+        "name": "party pages (scripts/build_party_pages.R)",
+        "median_s": 3.922413,
+        "min_s": 2.789655,
+        "max_s": 3.992647,
+        "n": 5
+       }
+      ],
+      "NSW 2027 seat model, by part (fit_seats_full.R's SQ1 table)": [
+       {
+        "name": "4. project each seat's primaries",
+        "median_s": 29.0,
+        "min_s": 17.2,
+        "max_s": 29.1,
+        "n": 5
+       },
+       {
+        "name": "simulate seat contests",
+        "median_s": 16.8,
+        "min_s": 9.5,
+        "max_s": 17.0,
+        "n": 5
+       },
+       {
+        "name": "3. statewide 2026, from the model rather than assumed",
+        "median_s": 6.9,
+        "min_s": 5.3,
+        "max_s": 7.1,
+        "n": 5
+       },
+       {
+        "name": "LL1: the statewide LEVEL anchored to the projection, as the",
+        "median_s": 3.9,
+        "min_s": 2.6,
+        "max_s": 4.2,
+        "n": 5
+       },
+       {
+        "name": "S5, the seat-total sanity check",
+        "median_s": 2.0,
+        "min_s": 1.8,
+        "max_s": 2.9,
+        "n": 5
+       },
+       {
+        "name": "setup: load_all",
+        "median_s": 1.6,
+        "min_s": 1.2,
+        "max_s": 1.7,
+        "n": 5
+       },
+       {
+        "name": "1. flow matrix, from both elections",
+        "median_s": 1.0,
+        "min_s": 0.8,
+        "max_s": 1.1,
+        "n": 5
+       },
+       {
+        "name": "S7: does the PUBLISHED trend follow the polls it was fitted",
+        "median_s": 0.9,
+        "min_s": 0.5,
+        "max_s": 1.0,
+        "n": 5
+       },
+       {
+        "name": "setup: inputs and flags",
+        "median_s": 0.1,
+        "min_s": 0.0,
+        "max_s": 0.1,
+        "n": 5
+       },
+       {
+        "name": "TARGET ELECTION",
+        "median_s": 0.0,
+        "min_s": 0.0,
+        "max_s": 0.0,
+        "n": 5
+       },
+       {
+        "name": "2. each seat's 2022 first preferences, as class shares",
+        "median_s": 0.0,
+        "min_s": 0.0,
+        "max_s": 0.0,
+        "n": 5
+       },
+       {
+        "name": "where a party's extra votes come from",
+        "median_s": 0.0,
+        "min_s": 0.0,
+        "max_s": 0.0,
+        "n": 5
+       },
+       {
+        "name": "5. statewide draws, ANCHORED to the projection",
+        "median_s": 0.0,
+        "min_s": 0.0,
+        "max_s": 0.1,
+        "n": 5
+       }
+      ]
+     },
+     "stage_notes": {
+      "the stages of run_all.R": "Each stage runs from its `--- name ---` header line to the next one; the last runs to the end of the step."
+     },
+     "stage_about": {
+      "preference-flow estimator (scripts/backtest_flows.R)": "Estimates how preferences flow between parties",
+      "Victoria (live target) (scripts/fit_vic.R)": "Each party's Victorian poll average over time",
+      "federal cycles (scripts/fit_federal.R)": "Re-fits past federal poll trends, as a validation stage",
+      "NSW cycles (scripts/fit_nsw.R)": "Re-fits past NSW poll trends, as a validation stage",
+      "fundamentals + mix (scripts/fit_projection.R)": "Blends the poll trend with the fundamentals model into the statewide projection",
+      "statewide covariance (scripts/estimate_statewide_cov.R)": "How the parties' statewide errors move together, from ten past election pairs",
+      "seat simulation (per seat) (scripts/fit_seats_full.R)": "The seat model: each seat's primary votes, then the simulated elections",
+      "pollster scorecard (scripts/fit_scorecard.R)": "Each pollster's past accuracy and lean",
+      "pollster pages (scripts/build_pollster_pages.R)": "One page of data per pollster for the site",
+      "public page (scripts/build_page.R)": "The Victorian forecast page and its page data",
+      "forecast JSON (scripts/build_forecast_json.R)": "The forecast as one JSON file plus a history row",
+      "party pages (scripts/build_party_pages.R)": "One page of data per party and jurisdiction for the site"
+     }
+    },
+    {
+     "name": "scenarios",
+     "about": "The what-if slider: 16 copies, one per election, party and mode (\"exactly X%\" or \"polling at X%\"); each reruns the seat model at 9 forced vote levels",
+     "legs": 16,
+     "median_s": 1235.0,
+     "min_s": 1228.0,
+     "max_s": 1809.0,
+     "leg_median_s": 790.5,
+     "slowest_leg_median_s": 1235.0,
+     "runs_seen": 5,
+     "steps": [
+      {
+       "name": "Set up job",
+       "about": "GitHub starts the machine and downloads the actions this job uses",
+       "source": "builtin",
+       "median_s": 3.0,
+       "min_s": 2.0,
+       "max_s": 5.0,
+       "n": 80,
+       "of": 80
+      },
+      {
+       "name": "Run actions/checkout@v4",
+       "about": "Downloads this repo's code onto the machine",
+       "source": "builtin",
+       "median_s": 2.0,
+       "min_s": 1.0,
+       "max_s": 8.0,
+       "n": 80,
+       "of": 80
+      },
+      {
+       "name": "Run r-lib/actions/setup-r@v2",
+       "about": "Installs R",
+       "source": "builtin",
+       "median_s": 35.0,
+       "min_s": 22.0,
+       "max_s": 423.0,
+       "n": 80,
+       "of": 80
+      },
+      {
+       "name": "Run r-lib/actions/setup-r-dependencies@v2",
+       "about": "Installs the R packages this repo needs (from a cache when it can)",
+       "source": "builtin",
+       "median_s": 38.5,
+       "min_s": 27.0,
+       "max_s": 601.0,
+       "n": 80,
+       "of": 80
+      },
+      {
+       "name": "Release the dpkg lock the timed-out dependency install left behind",
+       "about": "Only when the package install timed out: frees the package-manager lock before the retry",
+       "source": "config",
+       "median_s": 105.0,
+       "min_s": 105.0,
+       "max_s": 105.0,
+       "n": 1,
+       "of": 80
+      },
+      {
+       "name": "Run r-lib/actions/setup-r-dependencies@v2 (2)",
+       "about": "Installs the R packages this repo needs (from a cache when it can)",
+       "source": "builtin",
+       "median_s": 16.0,
+       "min_s": 16.0,
+       "max_s": 16.0,
+       "n": 1,
+       "of": 80
+      },
+      {
+       "name": "Say when an R install step needed its retry",
+       "about": "Only after a retry: says so in the run's warnings",
+       "source": "config",
+       "median_s": 0.0,
+       "min_s": 0.0,
+       "max_s": 0.0,
+       "n": 1,
+       "of": 80
+      },
+      {
+       "name": "Run actions/download-artifact@v4",
+       "about": "Fetches files an earlier job saved",
+       "source": "builtin",
+       "median_s": 4.0,
+       "min_s": 2.0,
+       "max_s": 14.0,
+       "n": 80,
+       "of": 80
+      },
+      {
+       "name": "Run this copy's scenarios",
+       "about": "Runs scripts/build_scenarios.R for this copy's election, party and mode: the seat model at each forced vote level",
+       "source": "config",
+       "median_s": 662.5,
+       "min_s": 333.0,
+       "max_s": 1208.0,
+       "n": 80,
+       "of": 80
+      },
+      {
+       "name": "Run actions/upload-artifact@v4",
+       "about": "Saves files from this job so a later job or a person can download them",
+       "source": "builtin",
+       "median_s": 2.0,
+       "min_s": 1.0,
+       "max_s": 4.0,
+       "n": 80,
+       "of": 80
+      },
+      {
+       "name": "Post Run r-lib/actions/setup-r-dependencies@v2",
+       "about": "Clean-up for an earlier step (saves caches, removes credentials)",
+       "source": "builtin",
+       "median_s": 1.0,
+       "min_s": 0.0,
+       "max_s": 3.0,
+       "n": 80,
+       "of": 80
+      },
+      {
+       "name": "Post Run r-lib/actions/setup-r-dependencies@v2 (2)",
+       "about": "Clean-up for an earlier step (saves caches, removes credentials)",
+       "source": "builtin",
+       "median_s": 1.0,
+       "min_s": 1.0,
+       "max_s": 1.0,
+       "n": 1,
+       "of": 80
+      },
+      {
+       "name": "Post Run actions/checkout@v4",
+       "about": "Clean-up for an earlier step (saves caches, removes credentials)",
+       "source": "builtin",
+       "median_s": 0.0,
+       "min_s": 0.0,
+       "max_s": 1.0,
+       "n": 80,
+       "of": 80
+      },
+      {
+       "name": "Complete job",
+       "about": "GitHub closes the job and cleans up the machine",
+       "source": "builtin",
+       "median_s": 0.0,
+       "min_s": 0.0,
+       "max_s": 1.0,
+       "n": 80,
+       "of": 80
+      }
+     ],
+     "stages": {},
+     "stage_notes": {},
+     "stage_about": {}
+    },
+    {
+     "name": "publish-scenarios",
+     "about": "Joins the 16 copies' results into one what-if file per election and publishes it",
+     "legs": 1,
+     "median_s": 29.0,
+     "min_s": 27.0,
+     "max_s": 39.0,
+     "leg_median_s": 29.0,
+     "slowest_leg_median_s": 29.0,
+     "runs_seen": 5,
+     "steps": [
+      {
+       "name": "Set up job",
+       "about": "GitHub starts the machine and downloads the actions this job uses",
+       "source": "builtin",
+       "median_s": 1.0,
+       "min_s": 0.0,
+       "max_s": 1.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Run actions/checkout@v4",
+       "about": "Downloads this repo's code onto the machine",
+       "source": "builtin",
+       "median_s": 2.0,
+       "min_s": 2.0,
+       "max_s": 3.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Run actions/download-artifact@v4",
+       "about": "Fetches files an earlier job saved",
+       "source": "builtin",
+       "median_s": 4.0,
+       "min_s": 3.0,
+       "max_s": 6.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Run actions/download-artifact@v4 (2)",
+       "about": "Fetches files an earlier job saved",
+       "source": "builtin",
+       "median_s": 1.0,
+       "min_s": 1.0,
+       "max_s": 2.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Combine into scenario-<election>.json",
+       "about": "Runs scripts/combine_scenarios.py (Python, no R install) to build scenario-vic2026.json and scenario-nsw2027.json",
+       "source": "config",
+       "median_s": 7.0,
+       "min_s": 6.0,
+       "max_s": 8.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Publish to the forecast-latest release and R2",
+       "about": "Uploads the what-if files to the forecast-latest release and to R2",
+       "source": "config",
+       "median_s": 12.0,
+       "min_s": 11.0,
+       "max_s": 17.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Post Run actions/checkout@v4",
+       "about": "Clean-up for an earlier step (saves caches, removes credentials)",
+       "source": "builtin",
+       "median_s": 0.0,
+       "min_s": 0.0,
+       "max_s": 0.0,
+       "n": 5,
+       "of": 5
+      },
+      {
+       "name": "Complete job",
+       "about": "GitHub closes the job and cleans up the machine",
+       "source": "builtin",
+       "median_s": 0.0,
+       "min_s": 0.0,
+       "max_s": 0.0,
+       "n": 5,
+       "of": 5
+      }
+     ],
+     "stages": {},
+     "stage_notes": {},
+     "stage_about": {}
+    }
+   ],
+   "phases": [
+    {
+     "jobs": [
+      "gate"
+     ],
+     "median_s": 3.0,
+     "min_s": 3.0,
+     "max_s": 4.0,
+     "slowest": "gate",
+     "parallel": false
+    },
+    {
+     "jobs": [
+      "refresh"
+     ],
+     "median_s": 843.0,
+     "min_s": 674.0,
+     "max_s": 915.0,
+     "slowest": "refresh",
+     "parallel": false
+    },
+    {
+     "jobs": [
+      "scenarios"
+     ],
+     "median_s": 1235.0,
+     "min_s": 1228.0,
+     "max_s": 1809.0,
+     "slowest": "scenarios",
+     "parallel": true
+    },
+    {
+     "jobs": [
+      "publish-scenarios"
+     ],
+     "median_s": 29.0,
+     "min_s": 27.0,
+     "max_s": 39.0,
+     "slowest": "publish-scenarios",
+     "parallel": false
+    }
+   ],
+   "critical_path": [
+    "gate",
+    "refresh",
+    "scenarios",
+    "publish-scenarios"
+   ],
+   "slowest_steps": [
+    {
+     "job": "scenarios",
+     "step": "Run this copy's scenarios",
+     "about": "Runs scripts/build_scenarios.R for this copy's election, party and mode: the seat model at each forced vote level",
+     "median_s": 662.5
+    },
+    {
+     "job": "refresh",
+     "step": "Run the pipeline",
+     "about": "Runs scripts/run_all.R: every model stage from preference flows to the seat simulation and the pages (stages in the next table); then checks the Victorian outputs were written by this run",
+     "median_s": 426.0
+    },
+    {
+     "job": "refresh",
+     "step": "Fetch the anchor's poll data",
+     "about": "Clones the poll CSVs and seat files from the aus-polling-analyser repository (a shallow copy of its analysis folder only)",
+     "median_s": 118.0
+    },
+    {
+     "job": "refresh",
+     "step": "NSW 2027 forecast (on while the repository variable AUSPOL_PUBLISH_NSW2027 is 1, set 8 Oct)",
+     "about": "Downloads the NSW tables, runs the seat model for NSW 2027 at 20,000 simulations, builds its forecast JSON and poll-trend data, and uploads them to the release",
+     "median_s": 85.0
+    },
+    {
+     "job": "refresh",
+     "step": "Fetch the trained models",
+     "about": "Downloads the trained trees and the fitted tables from the shipped-models release; refetches today's Wikipedia and Poll Bludger poll tables and leader ratings; fails if any required file is missing or the models are more than 14 days old",
+     "median_s": 52.0
+    }
+   ]
+  }
+ ],
+ "warnings": []
+}
