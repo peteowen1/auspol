@@ -9,6 +9,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 ## NEEDS PETE
 
 - **IN FLIGHT 25 Nov (morning), all Pete's asks, in order:**
+  **DATED Thu 26 Nov, 4:30am run (first at 100k daily, PR #280):** (a) every scenario job finished under its 120-min limit
+  and publish-scenarios logs `CSC9 ... 72 of 72` and `CSC7 ... differs ... in 0 of 88` for all four parties; (b) log has
+  `S6  AUSPOL_N_SIMS=100000 allowed`, `NS1 ... 20000 sims; the forecast itself runs 100000`, `CFC9`, `OK council`;
+  (c) `curl -sI` the whatif file shows `Content-Encoding: gzip`, then MESSAGE ITG with the run id and built_at;
+  (d) Bendigo East moved (uploaded 11:30am 25 Nov): One Nation's primary down ~4 points vs the 9:55am 25 Nov run.
+  Rollback for (d): `deciding-runs/20261125-nov-mrp/BEFORE-seat-poll-blend-vic2026-cb5e3bc1.csv`.
   UPDATE 11:40am: (2) Bendigo East SHIPPED to shipped-models (md5 de6b7c33; rollback `deciding-runs/20261125-nov-mrp/BEFORE-*`);
   live from the first run after 11:30am (the 100k run had already downloaded). (1) former-leader screen REFUSED by
   do-no-harm (prereg file); Pete: test it seat-level instead -> Opus agent building `scripts/seat_quick.R` (worktree
