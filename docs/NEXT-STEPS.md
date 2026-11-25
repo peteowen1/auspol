@@ -171,7 +171,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   saved: Chrome blocked the download on api.beta.tab.com.au; Betfair has no Victorian markets). On 27 Nov, if the TAB
   download is blocked again, check Chrome's download prompt for that site first. Leads from X (23 Nov): a 16 Nov 4CP
   calculator post https://x.com/NotTurnbull/status/2122215843228684574 (calculator unnamed; if it is not Jago's, add it
-  as reported-only, never scored); the 20 Nov Greens odds post is Sportsbet/TAB, already captured. Each date: `Rscript scripts/snapshot_benchmarks.R`, plus the GES
+  as reported-only, never scored); the 20 Nov Greens odds post is Sportsbet/TAB, already captured. Leads from X (25 Nov
+  bookmark triage): Dania Freidgeim's "First Preference" Vic 2026 model, with interactive seat-by-seat probabilities
+  (hung 71%, Coalition majority 27%, Labor majority 2%) https://x.com/DaniaFreidgeim/status/2123683498167021757, ALREADY
+  a source: `snapshot_benchmarks.R` fetches it as "firstpreference" since 24 Nov, nothing to do; the YouGov 4CP poll run through Jago's
+  calculator (LNP 70, GRN 14, ALP 4, reported-only) https://x.com/rippinghottakes/status/2125017464333611290; Antony
+  Green's Victorian political-geography piece, to read against our regional swings
+  https://x.com/AntonyGreenElec/status/2124779398729806235. Each date: `Rscript scripts/snapshot_benchmarks.R`, plus the GES
   Chrome step (`scripts/ges_read_calls.js`; plan Amendment 1), rerun the script, commit the calls folder, rerun
   `scripts/build_data_registry.R`. Scorer BUILT 23 Oct: `Rscript scripts/score_benchmarks_vic2026.R --results=<csv>`
   (`district, winner, status`; winner as the VEC prints the party) once every district is declared; `--dry-run` passes
