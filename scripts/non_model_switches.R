@@ -33,6 +33,7 @@ NON_MODEL_SWITCHES <- c(
   AUSPOL_COUNCIL_YEARS           = "BUILDER",  # fetch_council_results.R
   AUSPOL_COV_JOIN                = "BUILDER",  # check_poll_coverage.R
   AUSPOL_CROSS_SEAT_CACHE_DIR    = "RUN",  # cross_seat_vote.R
+  AUSPOL_IND_PERSON_CACHE        = "RUN",  # ind_person.R: "0" skips the disk memo of the person cells and carry cases (same numbers, slower)
   AUSPOL_CV_GRID                 = "BUILDER",  # score_class_variance.R
   AUSPOL_CV_V2                   = "BUILDER",  # score_class_variance.R
   AUSPOL_DATA_ROOT               = "BUILDER",  # build_wa_swing_correspondences.R, dry_run_seat_swing_port_wa.R, transpose_fed_swing.R
