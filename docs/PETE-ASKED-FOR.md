@@ -33,6 +33,12 @@ moved verbatim 2026-10-24. Every row below still has something open.
 
 ---
 
+## 2026-11-25
+
+| Request | Status |
+|---|---|
+| Correlated seat draws: seats in the same region / of the same type should move together (One Nation surging across regional seats at once); today only the statewide draw links seats | **BUILT, OFF** (branch `seat-corr-regions`, not merged): `AUSPOL_SEAT_CLUSTER_COR`, prereg `plans/prereg-seat-cluster-cor-2026-11-25.md`. Screen and live effect: see the prereg's RESULT section. Not in the live forecast until Pete decides. Election-night runner (`R/night_runner.R`) not wired. |
+
 ## 2026-11-24
 
 | Request | Status |
