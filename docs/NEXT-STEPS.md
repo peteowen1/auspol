@@ -113,6 +113,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - OPEN, DATED 27 Nov (evening) and 28 Nov (morning): save the VEC early and postal vote spreadsheet again, raw, into
   `external/reference/vec-early-vote-2026/` (link on https://www.vec.vic.gov.au/voting/2026-state-election/voting-statistics);
   the 28 Nov copy is the final pre-poll count. Screen: `scripts/screen_early_vote.R`.
+  Copies on disk: 24, 25 and 26 Nov (26 Nov 9:30am, Last-Modified 25 Nov 21:42 GMT).
 - OPEN, after 28 Nov: early-vote share (an xgb feature is not separable from a placebo, DECISIONS 24 Nov): add vic2026 to the
   panel and rescore; untested route = a direct post-tree Labor correction. Also from ITG's ask: `flows_to_labor` in
   scenario-vic2026.json and `n` on each `polls` row of vic-page-data.json.
@@ -125,7 +126,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   accessibility text on 3 election-day + 1 early centre (Glenroy South and Broadmeadows EVC 1: lift out of order, stairs only).
   Night model unaffected (booth names unchanged), geocoder nothing new, night bundle NOT re-uploaded (no booth change).
   ITG confirmed 26 Nov: the booth finder shows no accessibility text, so no rebuild.
-- OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. 24 Nov 9:16am done, every source (`docs/benchmarks/vic2026/2026-11-23/`; TAB moved to one "Vic Seats" event, read by
+- OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. REHEARSED 26 Nov 9:35am (UTC folder 2026-11-25, 432ab86b): every scripted source fine; TAB and GES still need the Chrome steps; the betfair VBK2! warning (79-82 thin books left out) is normal (74 on 23 Nov). 24 Nov 9:16am done, every source (`docs/benchmarks/vic2026/2026-11-23/`; TAB moved to one "Vic Seats" event, read by
   `bk_tab_seats()`; 27 Nov: also rebuild `seat-odds-page.html` there, the seat odds artifact
   https://claude.ai/artifact/PJHtfKoc8xKvhjUErCb9QR; and the SITE page politics/odds.qmd: hand-write that folder's
   `majority-markets.csv` + `capture-note.txt` (copy 2026-11-23's shape), `Rscript scripts/build_seat_odds_json.R`, then
