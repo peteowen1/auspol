@@ -24,6 +24,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   jobs 22-28 min (limit 120), CSC9 72 of 72, CSC7 0 of 88 differ for all four parties, whatif file gzip (932,598 bytes),
   Bendigo East now Nationals 0.559 (was ONP), ITG told. FOUND: the ind_person cache (PR #281) hits in the forecast job
   (0.2 s) but MISSES in every scenario (~59 s each): agent on branch ind-person-cache-scn. Thursday's run only needs a glance.
+- **DATED Thu 26 Nov morning, seat-type correlation screens (branch `seat-corr-type` 5453c141, Pete "Go" 25 Nov):** read the
+  markers in `C:/dev/auspol-wt-corrtype/deciding-runs/20261125-2142-seat-type-A/` (type, 1:00am) and `-B/` (both, 3:15am),
+  5,000 sims, all elections. Score each with `scripts/score_seat_totals.R <base_cache> <arm_cache>` (caches under each
+  folder's `cache/`), check the baseline reproduces 1.8792 / 0.3033, fill the RESULT in
+  `docs/plans/prereg-seat-type-cor-2026-11-25.md` (branch), then the vic2026 live effect (switch 0 / type / both, 20k).
+  Any ship decision goes to Pete with the split.
 - **DATED Thu 26 Nov, 4:30am run, MRP + cache:** log has `SPM5 ... 24 cell(s) of YouGov (MRP) 2026-11-23` (Bendigo East, Mulgrave, Kew,
   Pakenham, Niddrie, Melbourne; table md5 f560c155) and the what-if jobs log `IPC1  ind-person cache hit` (PR #283), each
   ~60 s faster than run 45545825468's scenario jobs.
