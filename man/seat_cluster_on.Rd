@@ -2,11 +2,11 @@
 % Please edit documentation in R/seat_cluster.R
 \name{seat_cluster_on}
 \alias{seat_cluster_on}
-\title{Is the seat cluster factor on? (\code{AUSPOL_SEAT_CLUSTER_COR}, "0" or "1")}
+\title{Is the seat cluster factor on? (\code{AUSPOL_SEAT_CLUSTER_COR} anything but "0")}
 \usage{
 seat_cluster_on()
 }
 \description{
-Is the seat cluster factor on? (\code{AUSPOL_SEAT_CLUSTER_COR}, "0" or "1")
+Is the seat cluster factor on? (\code{AUSPOL_SEAT_CLUSTER_COR} anything but "0")
 }
 \keyword{internal}

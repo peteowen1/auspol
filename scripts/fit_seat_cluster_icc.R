@@ -16,14 +16,65 @@
 # 1.10,8.67), because the simulator's cluster loading is a share of each cell's own sd: what is
 # estimated is the correlation of standardised misses between seats of one cluster, net of the
 # election-wide miss (the one-way ANOVA removes the election mean).
+#
+# --scheme=type (plans/prereg-seat-type-cor-2026-11-25.md) instead writes
+# inst/extdata/seat-cluster-icc-type.csv: election, party, icc_type (one-way ICC within seat-type
+# clusters, seat_cluster_type_map() on `ours` + <output>/census-features-vintage.csv), icc_r2 and
+# icc_t2 (region and type variance shares from lme4::lmer(z ~ 1 + (1|region) + (1|type)), REML, on
+# seats with both ids; NA / icc_type where the jurisdiction has no region), n_cells. The first
+# file is not touched in this mode.
 suppressMessages(library(data.table))
 a <- commandArgs(trailingOnly = TRUE)
+scheme_type <- "--scheme=type" %in% a
+a <- a[!grepl("^--", a)]
 out_dir <- if (length(a)) a[1] else "output"
 source("R/election_dates.R"); source("R/seat_cluster.R")
 
 pp <- fread(file.path(out_dir, "published-predictions.csv"))
 cat(sprintf("SKF0 published-predictions: %d rows, %d elections, classes %s\n", nrow(pp), uniqueN(pp$pair),
             paste(sort(unique(pp$party)), collapse = ",")))
+if (scheme_type) {
+  cen <- read.csv(file.path(out_dir, "census-features-vintage.csv"), stringsAsFactors = FALSE)
+  lsd <- as.numeric(strsplit(Sys.getenv("AUSPOL_LEVEL_SD", "1.10,8.67"), ",")[[1]])
+  pp <- pp[!(ours <= 0 & actual <= 0)]
+  pp[, p := pmin(pmax(ours, 0), 100) / 100]
+  pp[, z := (actual - ours) / (lsd[1] + lsd[2] * sqrt(p * (1 - p)))]
+  crossed <- function(y, r, t) {
+    ok <- is.finite(y) & !is.na(r) & !is.na(t); y <- y[ok]; r <- factor(r[ok]); t <- factor(t[ok])
+    if (length(y) < 10L || nlevels(r) < 2L || nlevels(t) < 2L || stats::var(y) == 0) return(c(NA_real_, NA_real_))
+    f <- tryCatch(suppressMessages(suppressWarnings(lme4::lmer(y ~ 1 + (1 | r) + (1 | t), REML = TRUE))), error = function(e) NULL)
+    if (is.null(f)) return(c(NA_real_, NA_real_))
+    vc <- as.data.frame(lme4::VarCorr(f)); v <- stats::setNames(vc$vcov, vc$grp)
+    tot <- sum(v)
+    c(unname(v["r"] / tot), unname(v["t"] / tot))
+  }
+  res <- list()
+  for (el in sort(unique(pp$pair))) {
+    d <- pp[pair == el]
+    w <- dcast(d, seat ~ party, value.var = "ours", fill = 0)
+    sh <- as.matrix(w[, -1]); rownames(sh) <- w$seat
+    tid <- seat_cluster_type_map(el, w$seat, sh, census = cen)
+    has_r <- seat_cluster_has_region(el)
+    rid <- if (has_r) seat_cluster_map(el, w$seat, sh) else rep(NA_integer_, nrow(w))
+    d <- merge(d, data.table(seat = w$seat, tc = as.integer(tid), rc = as.integer(rid)), by = "seat")
+    for (k in sort(unique(d$party))) {
+      u <- d[party == k]
+      it <- seat_cluster_icc1(u$z, u$tc)
+      cr <- if (has_r) crossed(u$z, u$rc, u$tc) else c(NA_real_, it)
+      res[[length(res) + 1L]] <- data.table(election = el, party = k, icc_type = round(it, 5),
+        icc_r2 = round(cr[1], 5), icc_t2 = round(cr[2], 5), n_cells = nrow(u),
+        n_types = uniqueN(u$tc), scheme = attr(tid, "scheme"))
+    }
+  }
+  R <- rbindlist(res)
+  fwrite(R, "inst/extdata/seat-cluster-icc-type.csv")
+  cat(sprintf("SKT3 seat-cluster-icc-type.csv: %d rows; cell-weighted mean by class (fed / state):\n", nrow(R)))
+  R[, grp := ifelse(grepl("^fed", election), "fed", "state")]
+  wm <- function(x, w) { ok <- is.finite(x); round(sum(x[ok] * w[ok]) / sum(w[ok]), 3) }
+  print(R[, .(icc_type = wm(icc_type, n_cells), icc_r2 = wm(icc_r2, n_cells), icc_t2 = wm(icc_t2, n_cells),
+              n_el = .N), by = .(grp, party)][order(grp, party)])
+  quit(status = 0)
+}
 cand <- fread(file.path(out_dir, "candidacies.csv"), select = c("election", "seat", "state"))
 fds <- unique(cand[grepl("^fed", election) & state %in% c("NSW", "VIC", "QLD", "WA", "SA", "TAS", "ACT", "NT"), .(seat, state)])
 fds <- fds[, .(state = names(sort(table(state), decreasing = TRUE))[1]), by = seat][order(seat)]

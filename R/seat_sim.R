@@ -1287,6 +1287,58 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   if (!is.null(seat_cluster) || !is.null(cluster_rho)) {
     if (is.null(seat_cluster) || is.null(cluster_rho))
       stop("seat_cluster and cluster_rho go together; pass both or neither")
+  }
+  if ((is.matrix(seat_cluster) || is.list(cluster_rho)) && !is.null(seat_cluster)) {
+    # SEVERAL FACTORS (AUSPOL_SEAT_CLUSTER_COR=both; plans/prereg-seat-type-cor-2026-11-25.md):
+    # seat_cluster is a matrix, one column per factor, cluster_rho a list of named vectors in the
+    # same order. noise = sd * (sum_f sqrt(rho_f) z_f[cluster_f(i)] + sqrt(1 - sum_f rho_f) z_own).
+    # The factors' common parts are summed per seat here into one column block per seat, so the
+    # compiled core reads them through its one-factor interface unchanged.
+    if (!is.matrix(seat_cluster) || !is.list(cluster_rho) || ncol(seat_cluster) != length(cluster_rho))
+      stop("a multi-factor seat_cluster is a matrix with one column per factor, and cluster_rho a list of the same length")
+    if (nrow(seat_cluster) != nseat)
+      stop("seat_cluster must have one entry per seat (", nseat, "); got ", nrow(seat_cluster))
+    nf <- ncol(seat_cluster)
+    rho_m <- base::matrix(0, nf, K, dimnames = list(NULL, parties))
+    for (f in seq_len(nf)) {
+      r <- cluster_rho[[f]]
+      if (is.null(names(r)) || !all(names(r) %in% parties))
+        stop("cluster_rho must be named by share columns; not a column: ", paste(setdiff(names(r), parties), collapse = ", "))
+      if (anyNA(r) || any(r < 0) || any(r >= 1)) stop("cluster_rho must be in [0, 1)")
+      rho_m[f, names(r)] <- r
+    }
+    if (any(colSums(rho_m) >= 1)) stop("cluster_rho summed over factors must be in [0, 1)")
+    scm <- base::matrix(as.integer(seat_cluster), nseat, nf)
+    act <- which(vapply(seq_len(nf), function(f) any(rho_m[f, ] > 0) && any(!is.na(scm[, f])), logical(1)))
+    if (length(act)) {
+      if (is.null(sd_cell_pre))
+        stop("seat_cluster needs level_sd and no party_draws (the per-cell sd must be fixed per seat)")
+      Rsh <- base::matrix(0, nseat, K)
+      for (f in act) Rsh[!is.na(scm[, f]), ] <- Rsh[!is.na(scm[, f]), , drop = FALSE] +
+        matrix(rho_m[f, ], sum(!is.na(scm[, f])), K, byrow = TRUE)
+      .had <- exists(".Random.seed", envir = globalenv(), inherits = FALSE)
+      .old <- if (.had) get(".Random.seed", envir = globalenv(), inherits = FALSE) else NULL
+      .s4 <- if (!is.null(seed)) as.integer((as.numeric(seed) * 7919 + 15485863) %% .Machine$integer.max)
+             else if (.had) as.integer(abs(.old[length(.old) - 1L]) %% .Machine$integer.max) else 15485863L
+      set.seed(.s4)
+      clu_z <- base::matrix(0, n_sims, nseat * K)
+      for (f in act) {
+        ids <- sort(unique(scm[!is.na(scm[, f]), f])); ci <- match(scm[, f], ids)
+        zf <- base::matrix(stats::rnorm(n_sims * length(ids) * K), n_sims, length(ids) * K)
+        ld <- matrix(sqrt(rho_m[f, ]), n_sims, K, byrow = TRUE)
+        for (i in which(!is.na(ci)))
+          clu_z[, (i - 1L) * K + seq_len(K)] <- clu_z[, (i - 1L) * K + seq_len(K)] + ld * zf[, (ci[i] - 1L) * K + seq_len(K)]
+        rm(zf)
+      }
+      if (.had) assign(".Random.seed", .old, envir = globalenv())
+      else rm(".Random.seed", envir = globalenv())
+      clu_load <- sd_cell_pre + 0; clu_load[rowSums(Rsh) == 0, ] <- 0
+      storage.mode(clu_load) <- "double"; dimnames(clu_load) <- NULL
+      clu_col <- as.integer((seq_len(nseat) - 1L) * K)
+      sd_cell_pre <- sd_cell_pre * sqrt(1 - Rsh)
+      has_clu <- TRUE
+    }
+  } else if (!is.null(seat_cluster) || !is.null(cluster_rho)) {
     if (length(seat_cluster) != nseat)
       stop("seat_cluster must have one entry per seat (", nseat, "); got ", length(seat_cluster))
     if (is.null(names(cluster_rho)) || !all(names(cluster_rho) %in% parties))
