@@ -15,3 +15,6 @@
 5. Small fixes: #283 review nits (miss diagnosis compares against same-target entries).
 
 ## Log
+- 10:09pm: full check_like_ci on dev PASSED (5,551 tests, 0 failed; R CMD check skipped, package unchanged). Item 1 done.
+- 10:05pm: hubs slimmed, DECISIONS 40.4k -> 27.7k, NEXT-STEPS 45.7k -> 41.4k (47d6dfdc). Item 4 done.
+- 10:14pm: #283 review nit fixed (fe34a24b, 27 cache tests pass); CI R-CMD-check green on d38a3bf7. Item 5 done.
