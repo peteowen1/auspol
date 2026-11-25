@@ -14,6 +14,9 @@
 #                    proves them unchanged (OPT-IN: a single canary election can miss an edit that
 #                    changes only another election of the same harness; --no-reuse always wins)
 #        --base-only build/refresh the cached baseline (with reuse) and exit; no arm, no scoring
+#        --dump      also save each run's exact simulation inputs (AUSPOL_SEAT_STATE_DUMP) as
+#                    state-<pair>.rds in its cache directory, for scripts/seat_quick.R. A separate
+#                    cache key (a run without the state file can never satisfy a dump call).
 #
 # HOW IT WORKS (and why it is built this way: R/quick_arm.R header has the profile).
 #  1. One harness run per ELECTION (the harnesses already take a pair selector), so an
@@ -61,6 +64,7 @@ sims <- as.integer(flag("sims", "1000")); slots <- as.integer(flag("slots", "2")
 stopifnot(is.finite(sims), sims >= 100, slots >= 1, slots <= 2)  # two R processes at once is the machine's limit
 base_only <- "--base-only" %in% a
 reuse_on <- "--reuse" %in% a && !("--no-reuse" %in% a)
+dump_on <- "--dump" %in% a
 if (!clean_only && !base_only && !length(arm_env)) stop("usage: Rscript scripts/quick_arm.R \"AUSPOL_X=1 AUSPOL_Y=0\" [--pairs=..] [--sims=N] [--base=\"ENV\"]")
 # the arm and the baseline must differ, or this compares a run with itself
 arm_eff <- c(base_env[setdiff(names(base_env), names(arm_env))], arm_env)
@@ -177,12 +181,12 @@ external_id <- paste(c(
   } else paste0("anchor-files=", quick_tree_sig(anchor_dir)),
   paste0("reference=", quick_tree_sig(file.path(src_external, "reference"))), ""), collapse = ";")
 key_of <- function(env) {
-  quick_md5(paste(c("keyv2", code_hash, external_id, sims, input_sig, if (length(env)) paste0(names(env)[order(names(env))], "=", env[order(names(env))])), collapse = ";"))
+  quick_md5(paste(c("keyv2", code_hash, external_id, sims, input_sig, if (dump_on) "seat-state-dump", if (length(env)) paste0(names(env)[order(names(env))], "=", env[order(names(env))])), collapse = ";"))
 }
 key_base <- key_of(base_env); key_arm <- key_of(arm_eff)
 # What each key was made of, so a later call can find a baseline that differs ONLY in code
 # (the canary below). Written once per key directory.
-key_parts_of <- function(env) list(code = code_hash, external = external_id, sims = sims, input = input_sig,
+key_parts_of <- function(env) list(code = code_hash, external = external_id, sims = sims, input = paste0(input_sig, if (dump_on) "+dump"),
                                    env = if (length(env)) paste0(names(env)[order(names(env))], "=", env[order(names(env))]) else character(0))
 for (.k in c(list(list(key_base, base_env)), if (!base_only) list(list(key_arm, arm_eff)))) {
   .d <- file.path(qd, "cache", .k[[1]]); dir.create(.d, recursive = TRUE, showWarnings = FALSE)
@@ -231,7 +235,8 @@ if (nzchar(want)) {
   U <- U[U$id %in% w, ]
 }
 cache_dir <- function(key, id) file.path(qd, "cache", key, id)
-have <- function(key, id) file.exists(file.path(cache_dir(key, id), "meta.rds"))
+have <- function(key, id) file.exists(file.path(cache_dir(key, id), "meta.rds")) &&
+  (!dump_on || file.exists(file.path(cache_dir(key, id), sprintf("state-%s.rds", id))))
 secs_guess <- function(h) if (h == "fed") 70 else if (h == "wa") 60 else 45
 hcodes <- sapply(unique(U$harness), function(h) quick_harness_code_sig(repo, h), USE.NAMES = TRUE)
 tasks <- list()
@@ -259,6 +264,7 @@ run_unit <- function(task) {
   logf <- file.path(task$dir, "run.log")
   env <- c(task$env, AUSPOL_XGB_PRIMARY = "1", AUSPOL_SKIP_PAIRS = "", AUSPOL_N_SIMS = as.character(task$sims))
   env[task$var] <- task$val
+  if (isTRUE(task$dump)) env["AUSPOL_SEAT_STATE_DUMP"] <- file.path(task$dir, "state.rds")   # -> state-<pair>.rds
   old_wd <- setwd(root)
   # A CLEAN SLATE EVERY RUN: this worker process runs many tasks in turn and a child
   # inherits its environment, so a switch left over from an earlier (arm) task made the
@@ -282,7 +288,8 @@ run_unit <- function(task) {
   new <- new[file.mtime(new) >= t0 - 2]
   pick1 <- function(pat) { f <- new[grepl(pat, basename(new))]; if (length(f) != 1L) NA_character_ else f }
   sd_f <- pick1("-sharedetail"); ap_f <- pick1("-allprobs")
-  ok <- identical(as.integer(status), 0L) && !is.na(sd_f) && !is.na(ap_f)
+  ok <- identical(as.integer(status), 0L) && !is.na(sd_f) && !is.na(ap_f) &&
+    (!isTRUE(task$dump) || file.exists(file.path(task$dir, sprintf("state-%s.rds", task$id))))
   if (ok) {
     file.copy(sd_f, file.path(task$dir, "sharedetail.csv"), overwrite = TRUE)
     file.copy(ap_f, file.path(task$dir, "allprobs.csv"), overwrite = TRUE)
@@ -304,7 +311,7 @@ run_unit <- function(task) {
 res <- list()
 if (length(tasks)) {
   tasks <- tasks[order(-vapply(tasks, function(t) t$est, 0))]
-  for (i in seq_along(tasks)) { tasks[[i]]$qd <- qd; tasks[[i]]$sims <- sims }
+  for (i in seq_along(tasks)) { tasks[[i]]$qd <- qd; tasks[[i]]$sims <- sims; tasks[[i]]$dump <- dump_on }
   cat(sprintf("quick_arm: running %d harness run(s) on %d process(es) (est %.0f s)\n", length(tasks), slots,
               sum(vapply(tasks, function(t) t$est, 0)) / slots))
   # Compile ONCE here, in the slot the workers will load from (its src/ is a junction to the real
