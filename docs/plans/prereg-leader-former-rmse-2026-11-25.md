@@ -69,3 +69,38 @@ Run 25 Nov, before any variant was scored (`--noise-only`, baseline residuals on
   constant can reach. **This set cannot SHOW any version better; it can only show which way the point
   estimate goes.** Every round is therefore read as direction plus SE, never as a verdict, and the
   held-out set (6 seats) is a sign check only.
+
+## Result (25 Nov 2026, about 1:20pm; `former_leader_variants.R`, cache 45c2997405f4)
+
+Rounds on TRAIN (elections before 2024; 30 seats moved, since the time-forward fit is 0 where fewer than 3 earlier
+seats exist). Squared-error change is variant minus baseline (negative is better), SE clustered on election;
+"targeted" = the former leader's party's cell (n 30), "all" = every cell of the moved seats (n 197); log loss
+per touched seat and over all 2,931 seats (lower is better):
+
+| round | targeted RMSE | targeted SSE change (SE) | bias | all-cell SSE change (SE) | log loss touched (SE) | log loss all (SE) |
+|---|---|---|---|---|---|---|
+| 1 flat, proportional | 6.231 -> 6.127 | -38.6 (69.0) | -2.14 -> -1.47 | +0.2 (87.7) | +0.0275 (0.0152) | +0.00028 (0.00015) |
+| 2 flat, to runner-up | 6.231 -> 6.127 | -38.6 (69.0) | same | +53.6 (95.5) | +0.0298 (0.0165) | +0.00031 (0.00016) |
+| 3 by role | 6.231 -> 6.148 | -31.0 (71.2) | -1.44 | +12.0 (91.7) | +0.0296 | +0.00030 |
+| 4 by leader standing | 6.231 -> 6.142 | -33.3 (75.8) | -1.43 | +10.3 (97.1) | +0.0307 | +0.00031 |
+| 5 by by-election since | 6.231 -> 6.183 | -18.1 (72.6) | -1.51 | +20.2 (90.3) | +0.0275 | +0.00028 |
+| 6 only where the base carries the vote | 6.137 -> 6.520 (n 9) | +43.7 (56.0) | -3.60 -> -3.06 | +49.8 (60.5) | +0.0234 | +0.00007 |
+| 7 by tenure | 6.231 -> 6.219 | -4.7 (50.4) | -1.70 | +51.8 (85.1) | +0.0213 | +0.00022 |
+
+Kept: round 1 only. The prereg said to stop after two rounds in a row with nothing kept (rounds 2 and 3);
+rounds 4-7 were run anyway, and none of them would have been kept either, so the stop rule changed nothing.
+
+**HELD OUT (2024-2026, 6 seats in 4 elections, scored once) for flat, proportional**: targeted RMSE 4.558 ->
+4.605 (SSE +2.5, SE 31.4); bias -0.48 -> +0.60 (the over-call there was small and the cut overshoots); all
+cells +2.1 (SE 38.9) over 42; log loss -0.0266 per touched seat (SE 0.0258), -0.00005 over all seats.
+
+**vic2026**, the flat rule fitted this way on all 35 elections: Mulgrave ALP -0.89, Bulleen LNP -0.89
+(Andrews: by-election since, not standing; Guy: no by-election, not standing). The shipped-code fit on the
+tree residual gives -1.04 to -1.38.
+
+**Reading.** The over-call is real (-2.30, SE 0.99), and cutting it lowers the targeted error on train in every
+variant but two. But the points removed go to the other parties, and their cells get worse by about the
+same amount: over every cell of those seats the primary-vote error does not move (+0.2) under the best
+variant, and rises when the freed share goes to the runner-up. No variant here improves pooled primary RMSE,
+and the held-out seats do not confirm even the targeted gain. Every number is inside one SE, as the noise
+floor said it would be.
