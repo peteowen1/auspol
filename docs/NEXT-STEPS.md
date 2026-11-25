@@ -12,15 +12,15 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   upper house on the site, seat TCP per what-if. Six Nov YouGov MRP seats (Mulgrave, Bendigo East corrected, Kew, Pakenham,
   Niddrie, Melbourne) in table md5 f560c155, published by run 45584793640 at 8:32pm (scenarios not rerun: what-if page is
   the 3:29pm run until 4:30am). ON from 4:30am Thu: ind_person cache across processes (PR #283 merged, on dev), Victorian
-  Socialists from YouGov's regional crosstab in the upper house (`AUSPOL_COUNCIL_VS_POLL=1`, 7f12d55b). On dev only:
+  Socialists from YouGov's regional crosstab in the upper house (`AUSPOL_UPPER_HOUSE_VS_POLL=1`, 7f12d55b). On dev only:
   seat-level quick tester (merged 6b6910db), switch registry scans .sh/.ps1 (d718b747, dev-e2). OFF by decision:
   former-leader cut, regional seat correlation, upper-house all-party regional blend (DECISIONS 25 Nov). dev -> main
   after 28 Nov (dev carries deliberately-off-main work). Rebuild worktrees `C:/dev/auspol-wt-rb*`: unlink junctions before removing.
 - **NEEDS PETE (26 Nov): seat-type correlation, both arms REFUSED under the prereg's clause 1** (branch `seat-corr-type`
   d3367c17, RESULT in `docs/plans/prereg-seat-type-cor-2026-11-25.md`). Type only: -0.0071 (0.41 SE), null. Region + type:
   -0.0159 (0.92 SE; needs 1 SE), passes clauses 2-5 (sign 35 of 35). Recommendation: OFF for 28 Nov; rescore after.
-- LIVE 26 Nov 8:03am: PR #284 (Victorian Socialists 0.54 seats) via the new `only=council` run (PR #285, 62 s). To
-  republish the upper house alone: `gh workflow run forecast.yaml -R peteowen1/auspol --ref main -f only=council`.
+- LIVE 26 Nov 8:03am: PR #284 (Victorian Socialists 0.54 seats) via the new upper-house-only run (PR #285, 62 s). To
+  republish the upper house alone: `gh workflow run forecast.yaml -R peteowen1/auspol --ref main -f only=upper-house`.
 - CHECKED 26 Nov 4:30am run 45665482641 (main a0efa804): success; CSC9 72 of 72, CSC7 0 of 88 for all parties; S6, NS1,
   CFC9, OK council, OK whatif present; cache fix (#283) works: Victorian what-ifs 152 s -> 90 s each (72 scenarios,
   vs run 45545825468); what-if jobs ~17 min. Hung 61.5%. The what-if step logs no IPC1 lines (summary output only).
