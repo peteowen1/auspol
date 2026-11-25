@@ -177,14 +177,20 @@ ind_person_cells <- function(target, corpus = NULL) {
   v
 }
 
-# What differs between this lookup and the newest earlier entry of the same kind.
+# What differs between this lookup and the newest earlier entry of the same kind, preferring one for the same
+# target (key part `args`): the newest entry overall may be another election's, and comparing with it would
+# report "args changed", which names no cause (review of PR #283).
 #' @noRd
 .ip_miss_reason <- function(dir, what, key, parts) {
   fs <- list.files(dir, pattern = sprintf("^ipmeta-%s-.*\\.rds$", what), full.names = TRUE)
   fs <- fs[basename(fs) != sprintf("ipmeta-%s-%s.rds", what, key)]   # never compare an entry with itself
   if (!length(fs)) return(sprintf("no earlier %s entry in %s", what, dir))
-  m <- tryCatch(readRDS(fs[which.max(file.mtime(fs))]), error = function(e) NULL)
-  if (is.null(m)) return("the newest earlier entry is unreadable")
+  fs <- fs[order(file.mtime(fs), decreasing = TRUE)]
+  ms <- lapply(fs, function(f) tryCatch(readRDS(f), error = function(e) NULL))
+  ok <- !vapply(ms, is.null, NA)
+  if (!any(ok)) return("every earlier entry is unreadable")
+  same <- which(ok & vapply(ms, function(z) identical(z$parts$args, parts$args), NA))
+  m <- ms[[if (length(same)) same[1] else which(ok)[1]]]
   d <- names(parts)[!vapply(names(parts), function(n) identical(parts[[n]], m$parts[[n]]), NA)]
   out <- character(0)
   if (length(d)) out <- c(out, paste0("key part(s) changed: ", paste(d, collapse = ", ")))
