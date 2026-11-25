@@ -8,22 +8,14 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
-- **Status 25 Nov, 2pm (replaces the 24 Nov status and the 25 Nov morning in-flight list; both verbatim in DECISIONS
-  2026-11-25 and git history).** Live: 100k sims daily incl. scenarios (PR #280), independents cache (PR #281), upper house
-  on R2 + site `politics/vic2026/upper-house` (PR #278), seat TCP per what-if scenario (PR #276), Bendigo East from the Nov
-  YouGov MRP (table md5 de6b7c33, rollback `deciding-runs/20261125-nov-mrp/BEFORE-*`). OFF by decision: former-leader cut,
-  regional seat correlation (DECISIONS 25 Nov). IN FLIGHT: PR #282 statewide-anchor code to main (CI); seat-level quick
-  tester `seat-quick-screen` (worktree `C:/dev/auspol-wt-seatq`, reviewed, needs one full check_like_ci then merge to dev;
-  last attempt reaped for low memory); PR #282 MERGED 2:05pm. Night rehearsal 25 Nov, LAPTOP PASSED 2:06pm on the first
-  night state from a 100k run (6.7 MB, release asset 11:26am; NW2 check passed): 87 of 88 seats, 2CP 87, final_twos on all 88
-  (`scripts/night_vic2026.sh <2022 index> <dir> --dry-2022 --max-cycles=1`, rc 0). GitHub backup rehearsal run 45537238935
-  (web-2022, 50 min, test key) PASSED 3:50pm: every cycle 87 of 88 seats, 2CP 87, uploaded to the test key (NWU3), no VWF3!.
-  Both 25 Nov rehearsals DONE.
-  Rebuild worktrees `C:/dev/auspol-wt-rb0`, `-rb1`, `-rbm`, `-rbr`, `-rbb` (junction lists in their deciding-runs folders): unlink before removing.
-- **CHECKED EARLY 25 Nov on manual run 45545825468 (Pete OK, 3:18pm; published 3:29pm with Bendigo East):** 100k scenario
-  jobs 22-28 min (limit 120), CSC9 72 of 72, CSC7 0 of 88 differ for all four parties, whatif file gzip (932,598 bytes),
-  Bendigo East now Nationals 0.559 (was ONP), ITG told. FOUND: the ind_person cache (PR #281) hits in the forecast job
-  (0.2 s) but MISSES in every scenario (~59 s each): agent on branch ind-person-cache-scn. Thursday's run only needs a glance.
+- **Status 25 Nov, 10pm (replaces the 2pm block; that one is in git history).** Live: 100k sims daily incl. scenarios,
+  upper house on the site, seat TCP per what-if. Six Nov YouGov MRP seats (Mulgrave, Bendigo East corrected, Kew, Pakenham,
+  Niddrie, Melbourne) in table md5 f560c155, published by run 45584793640 at 8:32pm (scenarios not rerun: what-if page is
+  the 3:29pm run until 4:30am). ON from 4:30am Thu: ind_person cache across processes (PR #283 merged, on dev), Victorian
+  Socialists from YouGov's regional crosstab in the upper house (`AUSPOL_COUNCIL_VS_POLL=1`, 7f12d55b). On dev only:
+  seat-level quick tester (merged 6b6910db), switch registry scans .sh/.ps1 (d718b747, dev-e2). OFF by decision:
+  former-leader cut, regional seat correlation, upper-house all-party regional blend (DECISIONS 25 Nov). dev -> main
+  after 28 Nov (dev carries deliberately-off-main work). Rebuild worktrees `C:/dev/auspol-wt-rb*`: unlink junctions before removing.
 - **DATED Thu 26 Nov morning, seat-type correlation screens (branch `seat-corr-type` 5453c141, Pete "Go" 25 Nov):** read the
   markers in `C:/dev/auspol-wt-corrtype/deciding-runs/20261125-2142-seat-type-A/` (type, 1:00am) and `-B/` (both, 3:15am),
   5,000 sims, all elections. Score each with `scripts/score_seat_totals.R <base_cache> <arm_cache>` (caches under each
@@ -32,7 +24,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   Any ship decision goes to Pete with the split.
 - **DATED Thu 26 Nov, 4:30am run, MRP + cache:** log has `SPM5 ... 24 cell(s) of YouGov (MRP) 2026-11-23` (Bendigo East, Mulgrave, Kew,
   Pakenham, Niddrie, Melbourne; table md5 f560c155) and the what-if jobs log `IPC1  ind-person cache hit` (PR #283), each
-  ~60 s faster than run 45545825468's scenario jobs.
+  ~60 s faster than run 45545825468's scenario jobs; the council step logs 8 `CFC2` lines (Victorian Socialists, Northern
+  Metro 7.0%) and the upper-house JSON's Victorian Socialists total about 0.5 seats.
 - **DATED Thu 26 Nov, 4:30am run (first at 100k daily, PR #280):** (a) every scenario job finished under its 120-min limit
   and publish-scenarios logs `CSC9 ... 72 of 72` and `CSC7 ... differs ... in 0 of 88` for all four parties, and the scenario
   logs show `ind_person` warm (the cache, PR #281); (b) log has `S6  AUSPOL_N_SIMS=100000 allowed`, `NS1 ... 20000 sims; the
