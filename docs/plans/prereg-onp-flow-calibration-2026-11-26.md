@@ -123,3 +123,25 @@ One Nation's share of the final two against the Coalition (median over runs with
 The calibration closes 1-2 points, under a fifth, of the TCP gap to YouGov in these seats; most of the remaining gap is YouGov's
 own assumption (about 79% of the other candidates' votes to the Coalition, above every real count on disk: sa2026
 62.7-68.6% in four such seats). Seat counts move more than TCPs because many seats sit near 50.
+
+## RESULT: guard (seat-winner log loss), 26 Nov 2026 7:22-7:47pm; DECISION: REFUSED, kept off (Pete)
+
+quick_arm `AUSPOL_ONP_FLOW_CAL=1` vs shipped baseline, 1,000 sims, slots 1, private quick dir; pairs qld2017,
+qld2020, qld2024, sa2026, fed2025, fed2019, nsw2023, wa2025 (779 seats); caches fbdf69733ac2 (base) / 2207fcac2f9a (arm).
+
+| election | seats | ll base | ll arm | change (lower is better) |
+|---|---:|---:|---:|---:|
+| sa2026 | 47 | 0.2220 | 0.2253 | +0.0033 |
+| qld2020 | 93 | 0.1975 | 0.1981 | +0.0005 |
+| fed2019 | 151 | 0.2203 | 0.2206 | +0.0003 |
+| nsw2023 | 93 | 0.1943 | 0.1945 | +0.0001 |
+| fed2025 | 150 | 0.2864 | 0.2865 | +0.0001 |
+| wa2025 | 59 | 0.1920 | 0.1920 | 0.0000 |
+| qld2024 | 93 | 0.2695 | 0.2692 | -0.0003 |
+| pooled | 779 | 0.2800 | 0.2803 | +0.0003 (SE 0.0002, clustered on election) => WORSE by more than 1 SE |
+
+The named risk happened: in the four SA 2026 seats One Nation WON, the arm lowered its probability in every one
+(Hammond 0.65 -> 0.47, Ngadjuri 0.94 -> 0.88, MacKillop 0.37 -> 0.34, Narungga 0.32 -> 0.30). The primary TCP metric
+improved (5.00 -> 4.62 on 28 seats) by fitting the seats One Nation lost better. Guard fails; per the clause-refusal
+rule the split went to Pete, who chose to keep the current flows for 28 Nov (26 Nov ~7:55pm). Rescore after the
+election with vic2026 added.
