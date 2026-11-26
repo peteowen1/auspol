@@ -16,6 +16,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   seat-level quick tester (merged 6b6910db), switch registry scans .sh/.ps1 (d718b747, dev-e2). OFF by decision:
   former-leader cut, regional seat correlation, upper-house all-party regional blend (DECISIONS 25 Nov). dev -> main
   after 28 Nov (dev carries deliberately-off-main work). Rebuild worktrees `C:/dev/auspol-wt-rb*`: unlink junctions before removing.
+- OPEN, DATED 26-27 Nov: the Herald Sun "all 88 seats" YouGov page adds parts hourly; 15 seats missing at 6pm (Albert Park, Brunswick, Footscray, Kororoit, Laverton, Melbourne, Northcote, Pascoe Vale, Point Cook, Prahran, Preston, Richmond, Tarneit, Werribee, Williamstown). When they appear: fetch the new Flourish embeds raw, `scratchpad parse_flourish.py`, append to mrp_extra.csv, rebuild + upload the seat-poll table; the next daily run picks it up (no extra run needed).
 - **NEEDS PETE (26 Nov): seat-type correlation, both arms REFUSED under the prereg's clause 1** (branch `seat-corr-type`
   d3367c17, RESULT in `docs/plans/prereg-seat-type-cor-2026-11-25.md`). Type only: -0.0071 (0.41 SE), null. Region + type:
   -0.0159 (0.92 SE; needs 1 SE), passes clauses 2-5 (sign 35 of 35). Recommendation: OFF for 28 Nov; rescore after.
