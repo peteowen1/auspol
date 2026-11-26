@@ -188,3 +188,17 @@ DECISION (Pete, 27 Nov ~9:40am, "go" on the recommendation): NOT shipped. No arm
 than its noise, and the commonest cases (minor right, other minors) get worse. The local merge to dev was undone
 before any push. Open after 28 Nov: the trees over-send minor-right preferences to the Coalition (48 vs 37); a
 pairwise flow target; the One Nation primary under-call; rescore with vic2026's own counts added.
+
+## AMENDMENT 2, 27 Nov 2026 ~9:55am: k = 20, criterion written BEFORE its runs
+
+Pete, seeing the sweep above: "k = 20 maybe, in between k = 10 and k = 30 which both look good". Leave-one-election-
+out choice of a single k picks 10 (13 elections) or 30 (2): -0.0009, SE 0.0009, 9 better / 6 worse. k = 30 live
+replay (27 Nov state): One Nation 18.5 -> 16.4, Coalition 43.1 -> 44.0, Labor 19.4 -> 20.6, P(Coalition majority)
+43.4% -> 47.1%. k = 20 was not in the grid; it is chosen by Pete between two grid points, not fitted.
+
+Ship `AUSPOL_ONP_FLOW_CAL=1, AUSPOL_ONP_FLOW_CAL_K=20` only if BOTH:
+1. Transfer log loss (same scorer, same 15 elections): per-election mean change below 0 AND at least 10 of 15
+   elections better.
+2. Guard, seat-winner log loss (quick_arm, 1,000 sims, the same 8 pairs as the 26 Nov guard): pooled change not
+   worse than +1 SE (clustered on election).
+Either fails: not shipped, and the split goes to Pete as before.
