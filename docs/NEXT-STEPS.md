@@ -13,6 +13,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   version D (PR #289), NSW 2027 OFF the daily run (repo var). Refused, kept off: One Nation flow calibration (branch
   onp-flow-cal). Republish the upper house alone: `gh workflow run forecast.yaml -R peteowen1/auspol --ref main -f only=upper-house`.
   Rebuild worktrees `C:/dev/auspol-wt-rb*` hold the live inputs: unlink junctions before removing.
+- NIGHT RUNBOOK (one page, 27 Nov): `docs/NIGHT-RUNBOOK-vic2026.md`. NEEDS PETE before 6pm Sat: the fetch rate (script default
+  --parallel=4 --every=90 has already been refused by the VEC site; runbook recommends --parallel=2 --every=180, then 1 / 300 on 999s).
 - OPEN, DATED Fri 27 Nov 4:30am run (first Victoria-only daily): success; no nsw2027 steps or jobs; UHV/UHF3 lines (upper house
   version D); SCC1 (correlation); CSC9/CSC7 pass; published numbers near the 8:24pm run (hung 58%, Coalition majority 41%).
 - DONE 26 Nov 11:55pm, night swing to uncounted seats: built OFF (`R/night_borrow.R`, replay `--borrow`), stays OFF for 28 Nov:

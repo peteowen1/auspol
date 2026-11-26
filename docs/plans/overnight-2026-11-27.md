@@ -17,3 +17,8 @@
 - 12:15am: request register: 4 shipped/refused rows closed (moved verbatim to backlog/pete-asked-for-closed-2026-11.md), 26 Nov asks added.
 - 12:25am: dev CI was RED on 1b2cd22f (my push without check_like_ci: undocumented Rd arg); check_like_ci then also caught
   AUSPOL_NIGHT_BORROW and AUSPOL_EXTERNAL unlisted. Fixed, check_like_ci clean, pushed.
+- 12:40am: queue: NSW blog seat-page paths corrected (`politics/vic2026/seat.qmd`, `nsw2027/index.qmd:46`); search-interest item reworded.
+- FOR PETE (after 28 Nov, not urgent): 7 remote branches add nothing over dev and can be deleted: dev-2026-10-07-unreviewed,
+  other-upper-houses, pipeline-guide, seat-corr-type, upper-house-combo, upper-house-count, upper-house-vote. Not deleted (needs his yes).
+- Benchmark capture of record must run after 11am Sydney (folder is the UTC date; 27 Nov UTC starts 11am AEDT).
+- 1:00am: wrote docs/NIGHT-RUNBOOK-vic2026.md (claims checked: auto index on laptop and backup, results --source). FOR PETE: night fetch rate decision.
