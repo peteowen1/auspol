@@ -16,8 +16,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - OPEN, DATED Fri 27 Nov 4:30am run (first Victoria-only daily): success; no nsw2027 steps or jobs; UHV/UHF3 lines (upper house
   version D); SCC1 (correlation); CSC9/CSC7 pass; published numbers near the 8:24pm run (hung 58%, Coalition majority 41%).
 - DONE 26 Nov 9:38pm: election-night runner with the correlation. One cycle on the saved 2022 full-count snapshot
-  (night-reh-1403) with the 8:24pm night state: rc 0, 87 of 88 seats, 2CP 87; seat totals ALP 49.7 / LNP 30.1 vs 50.2 / 29.9 without
-  it, hung 0.7% vs 0.06% (wider spread, as intended). `R/night_runner.R:567` passes seat_cluster/cluster_rho.
+  (night-reh-1403) with the 8:24pm night state: rc 0, 87 of 88 seats, 2CP 87; seat totals ALP 49.7 / LNP 30.1 vs 50.2 / 29.9 with the 25 Nov state (no correlation, older polls), so not a clean
+  on/off test; hung 0.7% vs 0.06%. `R/night_runner.R:567` passes seat_cluster/cluster_rho.
 - OPEN, after 28 Nov: One Nation allocation. The modelled version is LIVE on Pete's override of its refusal (23 Nov, DECISIONS);
   the rank rule with retrained trees stays off. Score both on vic2026 once results are in.
 - OPEN, 15 Nov full review (`reviews/FABLE-FULL-REVIEW-2026-11-15.md`, "Pick up from here" is the work list; DECISIONS
