@@ -211,3 +211,37 @@ no-ticket figures point. The WA case is the single biggest lever on the headline
 
 Switch "0" output is byte-identical to origin/dev's script on the same inputs (built_at aside), re-checked after
 these changes.
+
+## Third addition, 26 Nov 2026 evening: a ballot-crowding term (Pete: "go"). Written BEFORE fitting it.
+
+Why: 2010 (5 to 8 groups per region) is a different ballot from 2018 (18-19) and 2022 (22-24); 2026 has 11 to 16.
+A uniform ratio averaged over 2018 and 2022 assumes the 2026 ballot is as crowded as those.
+
+9. **Model, per major party k.** log(upper/lower) = a_k + b_k x + c_k ticket + e, fitted at the ELECTION level
+   (one row per election: the regions of one election share its swing, so they are not independent rows), on
+   Victoria 2010, 2018, 2022 and the six analogues nsw2019, nsw2023, sa2022, sa2026, wa2021, wa2025 (n = 9 per
+   party, 3 parameters). ticket = 1 for Victoria 2010/2018/2022 and WA 2021.
+   - **x = log(groups on the ballot per seat to fill)**, averaged over regions where a state has regions.
+     Chosen over the raw group count because NSW (21 seats), SA (11) and WA 2025 (37) are single statewide
+     ballots: 20 groups for 21 seats is not the same crowding as 20 groups for 5 seats, since the number of
+     viable minor options a voter sees scales with the seats on offer (quota 4.5% against 16.7%). Raw log groups is
+     reported as a sensitivity. The minor-vote share the ballot offers was rejected as x: it is the outcome
+     (the majors' ratio is 1 minus it, nearly), so it would be circular.
+   - Group counts: Victoria 2010 from the raw VEC files (parser above), 2018/2022 from the council results,
+     2026 from `upper-house-groups-2026.csv` (ungrouped columns excluded everywhere); analogues from the state
+     rows of `other-upper-house-fp.csv` (WA 2021 region rows), ungrouped excluded. Seats: Victoria 5 per region,
+     NSW 21, SA 11, WA 2021 6 per region, WA 2025 37.
+   - **Shrinkage on both terms**: each party's b_k and c_k (OLS) are partially pooled toward their
+     precision-weighted mean across the three parties (DerSimonian-Laird, w = tau2 / (tau2 + se^2)); the
+     intercept is then refitted given the shrunk b and c.
+   - **Prediction for 2026**: each region at its own x (its 2026 group count / 5), ticket = 0. Uncertainty drawn
+     per simulation: the residual sd of the election-level fit split into a common part (row means across the
+     three parties) and a party part, plus the coefficient uncertainty x0' V x0 from the unshrunk OLS
+     (conservative), plus the same region residual as switch 1.
+10. **Backtest, time-forward.** Only analogues held BEFORE the target can enter: 2022 from Victoria 2010 + 2018 +
+    nsw2019 + wa2021 + sa2022 (5 rows). 2018 from 2010 has one usable row (no analogue precedes it), so the
+    crowding model is not estimable there and that cell is reported as such; pooled numbers are then over the 2022
+    backtest only (24 cells) for all arms, with the original 48-cell table left as it was. A leaky variant fitted on
+    every row is shown labelled, for reference only.
+11. **Switch value "2"** = switch 1 with the majors' ratios from this model; "1" unchanged. Decision is Pete's,
+    from the live table; this addition sets no automatic rule beyond reporting.
