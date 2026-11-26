@@ -22,3 +22,5 @@
   other-upper-houses, pipeline-guide, seat-corr-type, upper-house-combo, upper-house-count, upper-house-vote. Not deleted (needs his yes).
 - Benchmark capture of record must run after 11am Sydney (folder is the UTC date; 27 Nov UTC starts 11am AEDT).
 - 1:00am: wrote docs/NIGHT-RUNBOOK-vic2026.md (claims checked: auto index on laptop and backup, results --source). FOR PETE: night fetch rate decision.
+- 5:04am: 4:30am run 45868309996 GREEN, every check passed (NEXT-STEPS). Move from 8:24pm = final Newspoll via Poll Bludger.
+- 5:25am: FOR PETE: Agenda C 14 Nov poll double-counted (alias gap); fix prepared, not applied (it is an upload). NEXT-STEPS top.

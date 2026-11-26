@@ -15,8 +15,14 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   Rebuild worktrees `C:/dev/auspol-wt-rb*` hold the live inputs: unlink junctions before removing.
 - NIGHT RUNBOOK (one page, 27 Nov): `docs/NIGHT-RUNBOOK-vic2026.md`. NEEDS PETE before 6pm Sat: the fetch rate (script default
   --parallel=4 --every=90 has already been refused by the VEC site; runbook recommends --parallel=2 --every=180, then 1 / 300 on 999s).
-- OPEN, DATED Fri 27 Nov 4:30am run (first Victoria-only daily): success; no nsw2027 steps or jobs; UHV/UHF3 lines (upper house
-  version D); SCC1 (correlation); CSC9/CSC7 pass; published numbers near the 8:24pm run (hung 58%, Coalition majority 41%).
+- DONE 27 Nov 5:04am, run 45868309996 (main): success, 11 jobs + 2 skipped; no nsw2027 step or jobs; S6, SCC1, UHF1/2, UHV0-4,
+  CSC5/7/9 all pass (72 of 72 scenarios). Hung 55.9% (58.4% at 8:24pm), Coalition majority 43.8% (41.3%), seats LNP 43.1 / ALP 19.4
+  / ONP 18.7 / GRN 6.5; upper house C+ON reach 21 72%, ALP+GRN 6%. The move is the final Newspoll (LNP 33 ALP 20 ONP 18 GRN 17,
+  n 1,506, Poll Bludger 27 Nov), in via Poll Bludger only.
+- NEEDS PETE (27 Nov): the 14 Nov Agenda C poll is counted TWICE (Wikipedia "Agenda C Synesis", Poll Bludger "Agenda C/Antenna";
+  firm_alias.csv pattern `synesis` misses the second). Fix ready: pattern `synesis|agenda c` (scratchpad rel27/firm_alias-fixed.csv,
+  proved to pair them); it goes to external/reference/polls/statewide-samples/ AND the shipped-models release (an upload). Size: 60-day
+  poll means move ALP -0.14, ONP -0.12, LNP -0.09, GRN +0.18 points. In the published forecast since at least 26 Nov.
 - DONE 26 Nov 11:55pm, night swing to uncounted seats: built OFF (`R/night_borrow.R`, replay `--borrow`), stays OFF for 28 Nov:
   vic2022 worse at every fraction (early swing overstates the final), fed2025 up to 9% better. OPEN after 28 Nov: correct the
   early-booth bias, rescore on real-feed replays. `reviews/night-borrowed-swing-2026-11-26.md`.
