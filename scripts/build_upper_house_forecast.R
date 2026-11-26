@@ -170,6 +170,24 @@ count <- function(v, bloc, aff, ex, transfers = TRUE, seats = 5L) {
   }
   won
 }
+# AUSPOL_UPPER_HOUSE_COUNT_MODEL = "1": count with preferences measured from the 2025 Victorian Senate ballots
+# (R/upper_house_count.R; plan and validation docs/plans/upper-house-count-model-2026-11-26.md) instead of count()'s
+# assumed bloc weighting and exhaustion. The aff / ex draws below still happen, so the vote draws are identical
+# under both settings and only the count differs.
+COUNT_MODEL <- Sys.getenv("AUSPOL_UPPER_HOUSE_COUNT_MODEL", "0")
+stopifnot(COUNT_MODEL %in% c("0", "1"))
+if (COUNT_MODEL == "1") {
+  source("R/upper_house_count.R")
+  UH_FLOWS_FILE <- "external/reference/aec/senate-flows/vic-senate-2025-flows.csv.gz"
+  if (!file.exists(UH_FLOWS_FILE)) stop("AUSPOL_UPPER_HOUSE_COUNT_MODEL=1 needs ", UH_FLOWS_FILE, " (scripts/validate_upper_house_count.R writes it)")
+  uh_flows <- uh_read_flows(UH_FLOWS_FILE)
+  # A party a Senate voter numbered that is not standing in the region: "pool" = the region's same-bloc pool group
+  # first (pre-registered), "bloc" = any same-bloc group, "skip" = drop the mark. It moves the chamber (validation note).
+  UH_ABSENT <- Sys.getenv("AUSPOL_UPPER_HOUSE_ABSENT", "pool")
+  stopifnot(UH_ABSENT %in% c("pool", "bloc", "skip"))
+  cat(sprintf("UHF3  count model 1: preferences from %s (%.0f ballots, %d class sequences); parties not standing: %s\n",
+              uh_flows$label, uh_flows$n_ballots, nrow(uh_flows$seq), UH_ABSENT))
+}
 run <- function(label, aff_fun, ex_fun, transfers = TRUE) {
   res <- vector("list", length(regions)); names(res) <- regions
   aff <- aff_fun(N); ex <- ex_fun(N)
@@ -185,7 +203,15 @@ run <- function(label, aff_fun, ex_fun, transfers = TRUE) {
     V <- cbind(maj, minor); colnames(V) <- c(gr$group[match(cls, gr$class)], mi$group)
     V <- V / rowSums(V) * 6                                              # quotas
     bl <- gr$bloc[match(colnames(V), gr$group)]
-    W <- t(vapply(seq_len(N), function(i) count(V[i, ], bl, aff[i], ex[i], transfers), integer(ncol(V))))
+    W <- if (COUNT_MODEL == "1") {
+      gi <- match(colnames(V), gr$group)
+      pat <- uh_region_patterns(colnames(V), uh_flows, min_to = 5L, top = 150L, tail = 150L, seed = match(r, regions), absent = UH_ABSENT)
+      d <- pat$diag
+      cat(sprintf("UHF3  %s: %d ballot patterns; Senate ballots that stopped at the minimum number %.2f boxes here on average; groups on no Senate ballot (their bloc's voters stand in): %s\n",
+                  r, nrow(pat$S), sum(d$len_at_min * d$n_own, na.rm = TRUE) / sum(d$n_own[!is.na(d$len_at_min)]),
+                  paste(d$group[grepl("^POOL_", d$class)], collapse = ", ")))
+      count_region(V, colnames(V), pat, seats = 5L, cands = gr$candidates[gi])
+    } else t(vapply(seq_len(N), function(i) count(V[i, ], bl, aff[i], ex[i], transfers), integer(ncol(V))))
     colnames(W) <- colnames(V)
     res[[r]] <- list(V = V, W = W)
   }
@@ -234,7 +260,9 @@ jsonlite::write_json(list(
                   if (Sys.getenv("AUSPOL_UPPER_HOUSE_VS_POLL", "1") == "1")
                     "Minor vote split across groups from 2022 shares pulled toward equal; Victorian Socialists from YouGov's regional polling (6-23 Nov)."
                   else "Minor vote split across groups from 2022 shares pulled toward equal."),
-                  "Preferences assumed, not measured: same-bloc groups favoured about 2.5 to 1, 5-30% of votes exhaust at each exclusion.")),
+                  if (COUNT_MODEL == "1")
+                    "Preferences measured from 4.1 million Victorian ballots at the 2025 Senate election (no group voting tickets since 2026), each group's voters following that party's Senate voters."
+                  else "Preferences assumed, not measured: same-bloc groups favoured about 2.5 to 1, 5-30% of votes exhaust at each exclusion.")),
   OUT, auto_unbox = TRUE, digits = NA)
 cat(sprintf("UHF9  wrote %s: %d simulations, %d regions, %d bytes
 ", OUT, N, length(regions), file.size(OUT)))
