@@ -19,10 +19,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   CSC5/7/9 all pass (72 of 72 scenarios). Hung 55.9% (58.4% at 8:24pm), Coalition majority 43.8% (41.3%), seats LNP 43.1 / ALP 19.4
   / ONP 18.7 / GRN 6.5; upper house C+ON reach 21 72%, ALP+GRN 6%. The move is the final Newspoll (LNP 33 ALP 20 ONP 18 GRN 17,
   n 1,506, Poll Bludger 27 Nov), in via Poll Bludger only.
-- NEEDS PETE (27 Nov): the 14 Nov Agenda C poll is counted TWICE (Wikipedia "Agenda C Synesis", Poll Bludger "Agenda C/Antenna";
-  firm_alias.csv pattern `synesis` misses the second). Fix ready: pattern `synesis|agenda c` (scratchpad rel27/firm_alias-fixed.csv,
-  proved to pair them); it goes to external/reference/polls/statewide-samples/ AND the shipped-models release (an upload). Size: 60-day
-  poll means move ALP -0.14, ONP -0.12, LNP -0.09, GRN +0.18 points. In the published forecast since at least the 4:30am 24 Nov run (45228420242 page data has both rows).
+- DONE 27 Nov 7:10am (Pete's go): the 14 Nov Agenda C poll was counted TWICE since at least the 24 Nov run (Wikipedia "Agenda C
+  Synesis/Antenna", Poll Bludger "Agenda C/Antenna"). firm_alias.csv pattern now `synesis|agenda c`, local + shipped-models (upload
+  verified byte-equal). Proved on that morning's fresh tables: .ps_merge_own 232 -> 231 Vic polls, pairs 66 -> 67, the poll kept once
+  as bludgertrack+wiki. Rerun 45889032949 (main) dispatched 7:10am; the capture of record uses it.
   OPEN after 28 Nov, same check over every Vic poll (640): 3 older pairs with near-identical primaries under two names within
   4 days: uComms/ReachTEL 13-14 Nov 2018 (same company, almost surely one poll), Essential/Galaxy 2014, Essential/Newspoll2 2017
   (maybe coincidence). Rerun the check over every state's poll table.
