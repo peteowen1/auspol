@@ -1,0 +1,114 @@
+election,unit,groups,seats,cls,ratio,ticket
+nsw2019,state,20,21,ALP,0.891312051497034,0
+nsw2019,state,20,21,GRN,1.01699076302601,0
+nsw2019,state,20,21,LNP,0.837284524164258,0
+nsw2023,state,21,21,ALP,0.990514129832555,0
+nsw2023,state,21,21,GRN,0.936645825449324,0
+nsw2023,state,21,21,LNP,0.841857873762004,0
+sa2022,state,20,11,ALP,0.924776847171208,0
+sa2022,state,20,11,GRN,0.990017231959905,0
+sa2022,state,20,11,LNP,0.96956853024971,0
+sa2026,state,17,11,ALP,0.979660897288141,0
+sa2026,state,17,11,GRN,0.98309326930938,0
+sa2026,state,17,11,LNP,0.95381906995319,0
+vic2010,Eastern Metropolitan,7,5,ALP,0.97547483027386,1
+vic2010,Eastern Metropolitan,7,5,GRN,1.07130081200931,1
+vic2010,Eastern Metropolitan,7,5,LNP,0.963632450742923,1
+vic2010,Eastern Victoria,6,5,ALP,0.97547483027386,1
+vic2010,Eastern Victoria,6,5,GRN,1.07130081200931,1
+vic2010,Eastern Victoria,6,5,LNP,0.963632450742923,1
+vic2010,Northern Metropolitan,10,5,ALP,0.97547483027386,1
+vic2010,Northern Metropolitan,10,5,GRN,1.07130081200931,1
+vic2010,Northern Metropolitan,10,5,LNP,0.963632450742923,1
+vic2010,Northern Victoria,8,5,ALP,0.97547483027386,1
+vic2010,Northern Victoria,8,5,GRN,1.07130081200931,1
+vic2010,Northern Victoria,8,5,LNP,0.963632450742923,1
+vic2010,South-Eastern Metropolitan,6,5,ALP,0.97547483027386,1
+vic2010,South-Eastern Metropolitan,6,5,GRN,1.07130081200931,1
+vic2010,South-Eastern Metropolitan,6,5,LNP,0.963632450742923,1
+vic2010,Southern Metropolitan,8,5,ALP,0.97547483027386,1
+vic2010,Southern Metropolitan,8,5,GRN,1.07130081200931,1
+vic2010,Southern Metropolitan,8,5,LNP,0.963632450742923,1
+vic2010,Western Metropolitan,6,5,ALP,0.97547483027386,1
+vic2010,Western Metropolitan,6,5,GRN,1.07130081200931,1
+vic2010,Western Metropolitan,6,5,LNP,0.963632450742923,1
+vic2010,Western Victoria,6,5,ALP,0.97547483027386,1
+vic2010,Western Victoria,6,5,GRN,1.07130081200931,1
+vic2010,Western Victoria,6,5,LNP,0.963632450742923,1
+vic2018,Eastern Metropolitan,18,5,ALP,0.914883322718286,1
+vic2018,Eastern Metropolitan,18,5,GRN,0.863738302886289,1
+vic2018,Eastern Metropolitan,18,5,LNP,0.835998957761587,1
+vic2018,Eastern Victoria,18,5,ALP,0.914883322718286,1
+vic2018,Eastern Victoria,18,5,GRN,0.863738302886289,1
+vic2018,Eastern Victoria,18,5,LNP,0.835998957761587,1
+vic2018,Northern Metropolitan,19,5,ALP,0.914883322718286,1
+vic2018,Northern Metropolitan,19,5,GRN,0.863738302886289,1
+vic2018,Northern Metropolitan,19,5,LNP,0.835998957761587,1
+vic2018,Northern Victoria,18,5,ALP,0.914883322718286,1
+vic2018,Northern Victoria,18,5,GRN,0.863738302886289,1
+vic2018,Northern Victoria,18,5,LNP,0.835998957761587,1
+vic2018,South-Eastern Metropolitan,19,5,ALP,0.914883322718286,1
+vic2018,South-Eastern Metropolitan,19,5,GRN,0.863738302886289,1
+vic2018,South-Eastern Metropolitan,19,5,LNP,0.835998957761587,1
+vic2018,Southern Metropolitan,18,5,ALP,0.914883322718286,1
+vic2018,Southern Metropolitan,18,5,GRN,0.863738302886289,1
+vic2018,Southern Metropolitan,18,5,LNP,0.835998957761587,1
+vic2018,Western Metropolitan,18,5,ALP,0.914883322718286,1
+vic2018,Western Metropolitan,18,5,GRN,0.863738302886289,1
+vic2018,Western Metropolitan,18,5,LNP,0.835998957761587,1
+vic2018,Western Victoria,18,5,ALP,0.914883322718286,1
+vic2018,Western Victoria,18,5,GRN,0.863738302886289,1
+vic2018,Western Victoria,18,5,LNP,0.835998957761587,1
+vic2022,Eastern Victoria,22,5,ALP,0.894273760896065,1
+vic2022,Eastern Victoria,22,5,GRN,0.901552899658869,1
+vic2022,Eastern Victoria,22,5,LNP,0.85350887821365,1
+vic2022,North-Eastern Metropolitan,22,5,ALP,0.894273760896065,1
+vic2022,North-Eastern Metropolitan,22,5,GRN,0.901552899658869,1
+vic2022,North-Eastern Metropolitan,22,5,LNP,0.85350887821365,1
+vic2022,Northern Metropolitan,22,5,ALP,0.894273760896065,1
+vic2022,Northern Metropolitan,22,5,GRN,0.901552899658869,1
+vic2022,Northern Metropolitan,22,5,LNP,0.85350887821365,1
+vic2022,Northern Victoria,22,5,ALP,0.894273760896065,1
+vic2022,Northern Victoria,22,5,GRN,0.901552899658869,1
+vic2022,Northern Victoria,22,5,LNP,0.85350887821365,1
+vic2022,South-Eastern Metropolitan,22,5,ALP,0.894273760896065,1
+vic2022,South-Eastern Metropolitan,22,5,GRN,0.901552899658869,1
+vic2022,South-Eastern Metropolitan,22,5,LNP,0.85350887821365,1
+vic2022,Southern Metropolitan,22,5,ALP,0.894273760896065,1
+vic2022,Southern Metropolitan,22,5,GRN,0.901552899658869,1
+vic2022,Southern Metropolitan,22,5,LNP,0.85350887821365,1
+vic2022,Western Metropolitan,23,5,ALP,0.894273760896065,1
+vic2022,Western Metropolitan,23,5,GRN,0.901552899658869,1
+vic2022,Western Metropolitan,23,5,LNP,0.85350887821365,1
+vic2022,Western Victoria,22,5,ALP,0.894273760896065,1
+vic2022,Western Victoria,22,5,GRN,0.901552899658869,1
+vic2022,Western Victoria,22,5,LNP,0.85350887821365,1
+vic2026,Eastern Victoria,11,5,,,0
+vic2026,North-Eastern Metropolitan,12,5,,,0
+vic2026,Northern Metropolitan,13,5,,,0
+vic2026,Northern Victoria,13,5,,,0
+vic2026,South-Eastern Metropolitan,12,5,,,0
+vic2026,Southern Metropolitan,11,5,,,0
+vic2026,Western Metropolitan,12,5,,,0
+vic2026,Western Victoria,15,5,,,0
+wa2021,Agricultural,19,6,ALP,1.00692478566363,1
+wa2021,Agricultural,19,6,GRN,0.922236299400877,1
+wa2021,Agricultural,19,6,LNP,0.809251918227483,1
+wa2021,East Metropolitan,18,6,ALP,1.00692478566363,1
+wa2021,East Metropolitan,18,6,GRN,0.922236299400877,1
+wa2021,East Metropolitan,18,6,LNP,0.809251918227483,1
+wa2021,Mining and Pastoral,19,6,ALP,1.00692478566363,1
+wa2021,Mining and Pastoral,19,6,GRN,0.922236299400877,1
+wa2021,Mining and Pastoral,19,6,LNP,0.809251918227483,1
+wa2021,North Metropolitan,18,6,ALP,1.00692478566363,1
+wa2021,North Metropolitan,18,6,GRN,0.922236299400877,1
+wa2021,North Metropolitan,18,6,LNP,0.809251918227483,1
+wa2021,South Metropolitan,19,6,ALP,1.00692478566363,1
+wa2021,South Metropolitan,19,6,GRN,0.922236299400877,1
+wa2021,South Metropolitan,19,6,LNP,0.809251918227483,1
+wa2021,South West,19,6,ALP,1.00692478566363,1
+wa2021,South West,19,6,GRN,0.922236299400877,1
+wa2021,South West,19,6,LNP,0.809251918227483,1
+wa2025,state,13,37,ALP,0.986976177606152,0
+wa2025,state,13,37,GRN,0.989265727289391,0
+wa2025,state,13,37,LNP,0.983182634525074,0

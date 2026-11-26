@@ -110,6 +110,8 @@ NON_MODEL_SWITCHES <- c(
   AUSPOL_SALIENCE_SLEEP          = "BUILDER",  # fetch_emergence_trends.R, fetch_salience.R, fetch_salience_v4.R, fetch_salience_v5.R, fetch_salience_v6.R, fetch_salience_v6_vic2010.R, fetch_salience_vic2026_full.R, fetch_seat_salience.R, fetch_seat_salience_v3.R, fetch_seat_salience_vic2026_live.R, victoria_salience_dryrun.R
   AUSPOL_SALIENCE_TO             = "BUILDER",  # build_vic2026_salience_jump.R, fetch_salience_vic2026_full.R
   AUSPOL_SA_PAIR                 = "RUN",  # backtest_candidate_sa.R
+  AUSPOL_SENATE_PREFS_DIR        = "DIAG",  # validate_upper_house_count.R: where the Senate ballot files are (a worktree points at the main checkout's)
+  AUSPOL_OTHER_UH_FP             = "DIAG",  # validate_upper_house_count.R: other states' upper-house first preferences (NSW check)
   AUSPOL_SCORE_SUFFIX            = "DIAG",  # score_wa_flows.R
   AUSPOL_SEAT_SWING_WA_FILE      = "RUN",  # seat_predictions.R, seat_swing_port.R
   AUSPOL_SHARES_FILE             = "DIAG",  # explore_onp_seat_regression.R

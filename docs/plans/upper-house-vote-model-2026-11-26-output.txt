@@ -1,0 +1,263 @@
+UHB0  inputs: 1600 district-class rows; region table 72 rows (vic2010 24, vic2018 24, vic2022 24)
+
+Statewide upper/lower ratio by election (exp of m):
+Key: <party>
+  party vic2010 vic2018 vic2022
+ <char>   <num>   <num>   <num>
+    ALP   0.975   0.915   0.894
+    GRN   1.071   0.864   0.902
+    LNP   0.964   0.836   0.854
+
+1. MAJORS BACKTEST. Error in predicted UPPER-house region share, percentage points (lower is better).
+   Each cell = one party in one region (n = 8 regions x 3 parties = 24). Input: that election's ACTUAL lower-house
+   region shares (oracle), so this scores the ratio model alone. rmse_oracle_level (ADDITION) also sets each
+   party's level to the one that fits the target exactly, so it scores only the REGIONAL pattern.
+   current_constants_LEAKY were fitted on 2018 and 2022 themselves: shown for reference, not a fair score.
+  target         history                     arm     n  rmse rmse_ALP rmse_LNP
+  <char>          <char>                  <char> <num> <num>    <num>    <num>
+ vic2018         vic2010            uniform_prev    24 4.242    3.681    5.816
+ vic2018         vic2010 current_constants_LEAKY    24 2.180    2.332    2.869
+ vic2018         vic2010              raw_region    24 7.102    3.366   11.748
+ vic2018         vic2010                A_shrunk    24 7.102    3.366   11.748
+ vic2018         vic2010                 B_slope    24 7.102    3.593   11.652
+ vic2022         vic2018            uniform_prev    24 1.768    2.360    1.803
+ vic2022         vic2018 current_constants_LEAKY    24 1.673    2.220    1.754
+ vic2022         vic2018              raw_region    24 2.802    1.966    4.137
+ vic2022         vic2018                A_shrunk    24 2.802    1.966    4.137
+ vic2022         vic2018                 B_slope    24 2.542    1.793    3.855
+ vic2022 vic2010+vic2018            uniform_prev    24 1.768    2.360    1.803
+ vic2022 vic2010+vic2018 current_constants_LEAKY    24 1.673    2.220    1.754
+ vic2022 vic2010+vic2018              raw_region    24 3.889    2.723    6.056
+ vic2022 vic2010+vic2018                A_shrunk    24 3.303    2.716    4.990
+ vic2022 vic2010+vic2018                 B_slope    24 3.532    2.460    5.475
+ rmse_GRN rmse_oracle_level
+    <num>             <num>
+    2.573             2.226
+    0.769             2.226
+    1.401             2.929
+    1.401             2.929
+    1.628             2.936
+    0.748             1.664
+    0.627             1.664
+    1.607             2.776
+    1.607             2.776
+    1.142             2.487
+    0.748             1.664
+    0.627             1.664
+    1.128             2.310
+    0.671             1.756
+    1.185             1.929
+
+Pre-registered decision, pooled over the 2018 (from 2010) and 2022 (from 2010+2018) backtests, 48 cells:
+                     arm     n  rmse rmse_oracle_level
+                  <char> <num> <num>             <num>
+            uniform_prev    48 3.250             1.965
+ current_constants_LEAKY    48 1.943             1.965
+              raw_region    48 5.725             2.638
+                A_shrunk    48 5.538             2.414
+                 B_slope    48 5.609             2.484
+
+Shrinkage on 2010+2018 (the 2022 backtest's fit): w ALP 0.73 LNP 0.31 GRN 0.42; level slopes ALP -0.37 LNP -0.26 GRN -0.13
+
+1b. ADDITION. Correlation of each region's deviation from the statewide ratio, between elections (8 regions):
+  party     n r_2010_2018 r_2018_2022 sd_2010 sd_2018 sd_2022
+ <char> <int>       <num>       <num>   <num>   <num>   <num>
+    ALP     8        0.54        0.70   0.051   0.057   0.074
+    GRN     8        0.22        0.18   0.079   0.098   0.067
+    LNP     8        0.29        0.73   0.028   0.115   0.070
+   2022 from 2018 with region effects shrunk by the three-election weights (IN-SAMPLE: the weights use 2022), RMSE points, n = 24:
+  party     n uniform shrunk_2018_effects
+ <char> <int>   <num>               <num>
+    ALP     8   2.360               1.892
+    LNP     8   1.803               1.564
+    GRN     8   0.748               0.755
+    all    24   1.768               1.483
+
+2. LIVE FIT on 2010, 2018, 2022. Level = mean of the 2018 and 2022 statewide log ratios.
+   ALP: statewide ratio 0.905; region drift sd 0.040 (log); between-region sd 0.045; shrink w 0.80; slope (arm B) -0.44
+          Eastern Victoria North-Eastern Metropolitan 
+                     0.931                      0.887 
+     Northern Metropolitan          Northern Victoria 
+                     0.854                      0.963 
+South-Eastern Metropolitan      Southern Metropolitan 
+                     0.915                      0.912 
+      Western Metropolitan           Western Victoria 
+                     0.869                      0.938 
+   LNP: statewide ratio 0.845; region drift sd 0.058 (log); between-region sd 0.051; shrink w 0.70; slope (arm B) -0.23
+          Eastern Victoria North-Eastern Metropolitan 
+                     0.810                      0.825 
+     Northern Metropolitan          Northern Victoria 
+                     0.911                      0.816 
+South-Eastern Metropolitan      Southern Metropolitan 
+                     0.877                      0.878 
+      Western Metropolitan           Western Victoria 
+                     0.870                      0.828 
+   GRN: statewide ratio 0.882; region drift sd 0.069 (log); between-region sd 0.039; shrink w 0.49; slope (arm B) -0.13
+          Eastern Victoria North-Eastern Metropolitan 
+                     0.886                      0.881 
+     Northern Metropolitan          Northern Victoria 
+                     0.868                      0.931 
+South-Eastern Metropolitan      Southern Metropolitan 
+                     0.866                      0.900 
+      Western Metropolitan           Western Victoria 
+                     0.854                      0.901 
+   Statewide drift for a new election (log sd), Victorian history only: common 0.095, party 0.047.
+   Ticket-abolition experiments, change in log ratio (after minus before):
+Key: <case>
+                   case    ALP    GRN    LNP
+                 <char>  <num>  <num>  <num>
+       Victorian Senate -0.083 -0.222 -0.181
+ WA Legislative Council -0.020  0.070  0.195
+   Regime variance added: common sd 0.128, party sd 0.092. Mean shift NOT applied (cases disagree in sign): ALP -0.051, GRN -0.076, LNP +0.007
+   2026 drift (log sd): common 0.160, party 0.103 -> a party's statewide ratio 80% range about x0.78 to x1.28 of its centre.
+   ADDITION, calibration check: every statewide major ratio on disk (Victoria 2010-22, NSW/SA/WA, Victorian Senate 2004-25), log sd and range:
+  party     n log_sd   min   max
+ <char> <int>  <num> <num> <num>
+    ALP    17  0.068 0.805 1.007
+    GRN    17  0.117 0.789 1.222
+    LNP    17  0.079 0.753 0.984
+   Drawn statewide log sd (common and party combined): 0.106 without the ticket variance, 0.190 with it.
+   For scale: the current script's NOISE (points of region vote, ALP 3.0, LNP 2.5, GRN 1.0, ONP 2.0) is independent per region and has no statewide part.
+
+3. ONE NATION. Poll check on the majors: each poll's relative ratios against Victoria 2018-22 (log points):
+Key: <poll>
+   poll    ALP   GRN    LNP
+ <char>  <num> <num>  <num>
+  feb26 -0.124 0.023  0.101
+  nov26 -0.093 0.039  0.055
+  oct25 -0.081 0.089 -0.008
+   Poll discrepancy variance beyond sampling 0.0023 (sd 0.048) from 3 polls x 3 majors. Historical majors' geometric mean ratio 0.877.
+   Federal state rows dropped by the n >= 5 rule (or no se): 11 of 37 (fed2004 VIC, fed2007 SA, fed2007 VIC, fed2010 QLD, fed2010 SA, fed2010 WA, fed2013 QLD, fed2016 NSW, fed2019 TAS, fed2019 SA, fed2025 NT)
+   Units (federal states pooled within each election first). ratio = exp(log_ratio); weight = share of the pooled estimate.
+                        unit                                    kind states
+                      <char>                                  <char>  <int>
+                     fed2004                 federal Senate vs House      4
+                     fed2007                 federal Senate vs House      3
+                     fed2010                 federal Senate vs House      1
+                     fed2013                 federal Senate vs House      1
+                     fed2016                 federal Senate vs House      1
+                     fed2019                 federal Senate vs House      4
+                     fed2022                 federal Senate vs House      6
+                     fed2025                 federal Senate vs House      6
+            vic2022 Victoria           Victorian council vs assembly      1
+ nsw2019 contested districts other state upper vs lower (no tickets)      1
+ nsw2023 contested districts other state upper vs lower (no tickets)      1
+  sa2026 contested districts other state upper vs lower (no tickets)      1
+  wa2021 contested districts    other state upper vs lower (tickets)      1
+  wa2025 contested districts other state upper vs lower (no tickets)      1
+               DemosAU nov26        DemosAU same-poll relative ratio      1
+               DemosAU feb26        DemosAU same-poll relative ratio      1
+     n ratio    se weight
+ <int> <num> <num>  <num>
+    74 1.029 0.061  0.068
+    31 0.483 0.412  0.008
+    14 0.470 0.127  0.044
+    11 0.863 0.088  0.058
+    12 0.878 0.038  0.075
+    56 0.891 0.120  0.047
+   144 0.840 0.037  0.076
+   145 0.836 0.037  0.076
+     4 0.938 0.097  0.055
+    12 1.075 0.050  0.072
+    17 0.866 0.023  0.079
+    47 1.050 0.013  0.080
+    40 0.830 0.047  0.073
+    41 0.783 0.026  0.078
+  1321 1.040 0.100  0.054
+  1274 0.921 0.091  0.057
+   POOLED One Nation ratio 0.879; se of the mean 0.040, between-unit sd 0.140, predictive log sd 0.146 -> 80% of draws 0.73 to 1.06
+   Weight by source family:
+                                    kind weight
+                                  <char>  <num>
+                 federal Senate vs House  0.453
+           Victorian council vs assembly  0.055
+ other state upper vs lower (no tickets)  0.309
+    other state upper vs lower (tickets)  0.073
+        DemosAU same-poll relative ratio  0.110
+   Sensitivity: federal 2019+ only -> 0.906 (pred sd 0.144); Victorian federal rows only -> 0.870 (pred sd 0.182)
+
+4. MINOR GROUPS' REGIONAL PATTERN, 2022 from 2018 (statewide 2022 level given as an oracle). 9 groups in both, n = 72 group-regions.
+   Shrink weight w 0.76 (pattern instability sd 0.279, between-region sd 0.492, from 72 pairs; IN-SAMPLE: uses 2022, flagged).
+   RMSE of region share, points (lower is better):
+     n  flat raw_2018_pattern shrunk
+ <int> <num>            <num>  <num>
+    72  1.02             0.82  0.702
+                           grp     n  flat   raw shrunk
+                        <char> <int> <num> <num>  <num>
+ Libertarian|Liberal Democrats     8 0.981 1.395  1.214
+          Victorian Socialists     8 1.600 1.157  0.927
+             Transport Matters     8 0.077 0.146  0.120
+  Labour DLP|Democratic Labour     8 1.378 1.353  1.102
+                 Justice Party     8 0.547 0.824  0.642
+                      Shooters     8 1.600 0.319  0.428
+         Sustainable Australia     8 0.245 0.153  0.176
+                        Reason     8 0.988 0.253  0.447
+              Health Australia     8 0.210 0.205  0.201
+
+5. BALLOT CROWDING. x = log(groups on the ballot per seat to fill); ticket = 1 for Victoria 2010-22 and WA 2021.
+
+   Fit on all 9 elections, scale per_seat (PRE-REGISTERED). Coefficients per party (OLS, se, shrink weight, shrunk):
+    cls  b_ols  se_b   w_b      b  c_ols  se_c   w_c     c      a
+ <char>  <num> <num> <num>  <num>  <num> <num> <num> <num>  <num>
+    ALP -0.037 0.032     0 -0.045  0.032 0.048     0 0.019 -0.038
+    GRN -0.057 0.039     0 -0.045  0.013 0.058     0 0.019 -0.026
+    LNP -0.048 0.051     0 -0.045 -0.006 0.076     0 0.019 -0.102
+   residual log sd: common 0.044, party 0.060 (df 6)
+Key: <election, x, ticket>
+ election      x ticket    ALP    GRN    LNP
+   <char>  <num>  <num>  <num>  <num>  <num>
+  nsw2019 -0.049      0 -0.115  0.017 -0.178
+  nsw2023  0.000      0 -0.010 -0.065 -0.172
+   sa2022  0.598      0 -0.078 -0.010 -0.031
+   sa2026  0.435      0 -0.021 -0.017 -0.047
+  vic2010  0.337      1 -0.025  0.069 -0.037
+  vic2018  1.294      1 -0.089 -0.146 -0.179
+  vic2022  1.487      1 -0.112 -0.104 -0.158
+   wa2021  1.135      1  0.007 -0.081 -0.212
+   wa2025 -1.046      0 -0.013 -0.011 -0.017
+   2026 prediction (no tickets), statewide (mean x), ratio and 80% interval of the statewide draw:
+    cls ratio  lo80  hi80 log_sd
+ <char> <num> <num> <num>  <num>
+    ALP 0.924 0.831 1.028  0.083
+    GRN 0.935 0.837 1.045  0.087
+    LNP 0.867 0.768 0.978  0.094
+   by region:
+                             ALP   GRN   LNP
+Eastern Victoria           0.929 0.940 0.871
+North-Eastern Metropolitan 0.925 0.936 0.868
+Northern Metropolitan      0.922 0.933 0.865
+Northern Victoria          0.922 0.933 0.865
+South-Eastern Metropolitan 0.925 0.936 0.868
+Southern Metropolitan      0.929 0.940 0.871
+Western Metropolitan       0.925 0.936 0.868
+Western Victoria           0.916 0.927 0.859
+
+   Fit on all 9 elections, scale raw (SENSITIVITY). Coefficients per party (OLS, se, shrink weight, shrunk):
+    cls  b_ols  se_b   w_b      b  c_ols  se_c   w_c      c     a
+ <char>  <num> <num> <num>  <num>  <num> <num> <num>  <num> <num>
+    ALP -0.057 0.050  0.14 -0.112 -0.017 0.034  0.06 -0.056 0.289
+    GRN -0.146 0.040  0.20 -0.126 -0.073 0.027  0.10 -0.060 0.342
+    LNP -0.155 0.057  0.11 -0.125 -0.084 0.039  0.05 -0.060 0.262
+   residual log sd: common 0.022, party 0.059 (df 6)
+
+   Time-forward fit for 2022 (vic2010, vic2018, nsw2019, wa2021, sa2022): b = ALP -0.042 GRN -0.129 LNP -0.078; c = ALP 0.052 GRN 0.052 LNP 0.052
+   BACKTEST 2022 (from 2010+2018 + earlier analogues), RMSE of region share, points, n = 24 (lower is better).
+  2018 from 2010: the crowding model is NOT ESTIMABLE time-forward (one usable election).
+                                                          arm     n  rmse
+                                                       <char> <num> <num>
+                                                 uniform_prev    24 1.768
+                                      current_constants_LEAKY    24 1.673
+                                                   raw_region    24 3.889
+                                                     A_shrunk    24 3.303
+                                                      B_slope    24 3.532
+ crowding (time-forward: 2010, 2018, nsw2019, wa2021, sa2022)    24 1.863
+                  crowding_LEAKY (fitted on all 9 incl. 2022)    24 1.772
+ rmse_ALP rmse_LNP rmse_GRN
+    <num>    <num>    <num>
+    2.360    1.803    0.748
+    2.220    1.754    0.627
+    2.723    6.056    1.128
+    2.716    4.990    0.671
+    2.460    5.475    1.185
+    2.630    1.771    0.595
+    2.389    1.807    0.667
