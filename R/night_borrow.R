@@ -81,6 +81,8 @@ night_apply_borrow <- function(shares, borrow) {
 }
 
 #' AUSPOL_NIGHT_BORROW: "0"/unset off; "1" on at the defaults; or "k,c0"
+#' @param v The setting (default: the AUSPOL_NIGHT_BORROW environment variable).
+#' @return `NULL` when off, else `list(k, c0)`.
 #' @export
 night_borrow_args <- function(v = Sys.getenv("AUSPOL_NIGHT_BORROW", "0")) {
   if (!nzchar(v) || identical(v, "0")) return(NULL)

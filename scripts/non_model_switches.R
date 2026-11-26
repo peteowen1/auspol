@@ -32,6 +32,7 @@ NON_MODEL_SWITCHES <- c(
   AUSPOL_TRACE_SEAT              = "DIAG",  # fit_seats_full.R: print one seat's row after every stage (TRS0/TRS1)
   AUSPOL_CHAMBER_SEATS           = "RUN",  # build_forecast_json.R
   AUSPOL_COUNCIL_LIB_ONLY        = "BUILDER",  # fetch_council_results.R
+  AUSPOL_EXTERNAL                = "BUILDER",  # build_other_upper_houses.R: where external/ lives, for worktrees
   AUSPOL_COUNCIL_YEARS           = "BUILDER",  # fetch_council_results.R
   AUSPOL_COV_JOIN                = "BUILDER",  # check_poll_coverage.R
   AUSPOL_CROSS_SEAT_CACHE_DIR    = "RUN",  # cross_seat_vote.R
@@ -70,6 +71,7 @@ NON_MODEL_SWITCHES <- c(
   AUSPOL_MC_LIVE                 = "BUILDER",  # fit_minor_candidates.R: predict an election with nominations and no votes (vic2026), -live outputs (6 Nov)
   AUSPOL_NB_PRIOR                = "BUILDER",  # build_notional_baselines.R
   AUSPOL_NB_TARGET               = "BUILDER",  # build_notional_baselines.R
+  AUSPOL_NIGHT_BORROW            = "DIAG",  # R/night_borrow.R via night_replay_json.R --borrow: swing borrowed by uncounted seats (OFF, review 2026-11-26)
   AUSPOL_NIGHT_STATE_SIMS        = "RUN",  # fit_seats_full.R: draws kept in the election-night state (20000; the forecast may run more)
   AUSPOL_NIGHT_SURGE_FADE        = "DIAG",  # night_replay_detail.R (night fixes, review 2026-10-30)
   AUSPOL_NIGHT_TCP_CENTER        = "DIAG",  # night_replay_detail.R

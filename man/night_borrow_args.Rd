@@ -6,6 +6,12 @@
 \usage{
 night_borrow_args(v = Sys.getenv("AUSPOL_NIGHT_BORROW", "0"))
 }
+\arguments{
+\item{v}{The setting (default: the AUSPOL_NIGHT_BORROW environment variable).}
+}
+\value{
+\code{NULL} when off, else \code{list(k, c0)}.
+}
 \description{
 AUSPOL_NIGHT_BORROW: "0"/unset off; "1" on at the defaults; or "k,c0"
 }
