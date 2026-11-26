@@ -222,8 +222,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   `AUSPOL_HARNESS_SW_DRAWS=1`; what ships is `=net` (F4), so they test a superseded setting. The question they carry
   stands: is the statewide spread `AUSPOL_FP_EXTRA_SD` 2.419 (fitted on the scored elections, a mild leak) too wide
   for states? Rewrite as `net` arms with a time-forward value before any screen.
-- CLOSED 23 Nov: vic2026 search interest stays OFF for the election (Pete, after the final snapshot's walk; DECISIONS).
-  Snapshot to 21 Nov in `output/salience-v6.csv` (733 rows); walk in `deciding-runs/20261123-salience-walk/`. Score it after 28 Nov.
+- OPEN, after 28 Nov: score vic2026 search interest (kept OFF for the election, Pete 23 Nov, DECISIONS). Snapshot to 21 Nov
+  in `output/salience-v6.csv` (733 rows); walk in `deciding-runs/20261123-salience-walk/`.
 - OPEN F8, F13, F17, F19 (F5, F7, F9 REFUSED; F10 and F12 SHIPPED, DECISIONS 30 Oct / `AUSPOL_LIVE_LEVEL_PRED_TREND`;
   F14, F15 were design notes, no task; F16 NOT PASSED 29 Oct; F18 walk 1 done; IND override shipped as arm H): post-xgb
   tables fitted on residuals the shares no longer carry (F8; arms R and N exhausted), HTV overwriting xgb flows (F13: no
@@ -288,8 +288,9 @@ weighting by track record, seat-poll precision blend, typical-vote independent m
 ## 2026-10-07 to 2026-10-08: archived handoffs
 
 Verbatim in `backlog/journal-2026-10-07-to-10-08.md`. Still OPEN from them:
-- OPEN: NSW 2027 page, blog side: seat pages need an election switch in inthegame-blog's `politics/seat.qmd` (still
-  Victoria-only 23 Oct; `politics/nsw.qmd:46` has `seatPage: false`; data on R2 since PR #107). Owned by the `inthegame-blog` session.
+- OPEN, after 28 Nov (NSW is off the daily run until then): NSW 2027 seat pages, blog side. The seat page is
+  Victoria-only (`inthegame-blog/politics/vic2026/seat.qmd`); `politics/nsw2027/index.qmd:46` has `seatPage: false`
+  (checked 27 Nov). Data on R2 since PR #107. Owned by the `inthegame-blog` session.
 - OPEN: fed2025 seat polls deserved weight ~0.13 and got 0.55; no pre-election signal found yet. Worst case McMahon,
   Camenzuli (IND) published 29.0, actual 9.8: ONE poll, Compass Polling 8 Apr 2025 (opt-in SMS link, n=1,003, IND 41);
   base_pred 6.0 and xgb 4.9 were both under, so the 29 is the seat-poll step (AUSPOL_SEAT_POLL_IND_MAP). Polls are

@@ -13,3 +13,7 @@
 4. Housekeeping on dev: queue items flagged by check_queue.py that this session touched.
 
 ## Log
+- 12:10am: tests for R/night_borrow.R written (18 checks, pass), pushed.
+- 12:15am: request register: 4 shipped/refused rows closed (moved verbatim to backlog/pete-asked-for-closed-2026-11.md), 26 Nov asks added.
+- 12:25am: dev CI was RED on 1b2cd22f (my push without check_like_ci: undocumented Rd arg); check_like_ci then also caught
+  AUSPOL_NIGHT_BORROW and AUSPOL_EXTERNAL unlisted. Fixed, check_like_ci clean, pushed.
