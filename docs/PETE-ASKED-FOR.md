@@ -33,6 +33,12 @@ moved verbatim 2026-10-24. Every row below still has something open.
 
 ---
 
+## 2026-11-27
+
+| Request | Status |
+|---|---|
+| "53% for our model sounds wild" (Labor between Coalition and One Nation); "why ... whats our methodology - how can it improve"; then "lets test these now - get them in if good" (1 pairwise back-off, 2 predict the pairwise split, 3 how-to-vote cards, 4 drop the 50/50 blend); "are we using the right metric to judge flow"; "k = 20 maybe" | IN FLIGHT 27 Nov ~10am. Why 53: history 62.9% but 2.7 effective events, the trees score both sides near 0.5, then 0.15 smoothing. Fix 1 at k=3: Pete said ship, then the transfer log-loss test he asked for showed a wash (8/7 elections), so NOT shipped (local merge undone). k=20 (Pete's pick): transfers -0.0013 SE 0.0008, 11 of 15 better (passes amendment 2, criterion 1); seat log-loss guard running. Fixes 2-4 NOT done before 28 Nov, told Pete 27 Nov: 2 needs every as-at flow model retrained; 3 has no Labor card data on disk (only Coalition cards); 4 was refused Sept and needs a rescore. OPEN after 28 Nov. Branch `onp-flow-cal`, prereg amendments 1-2. |
+
 ## 2026-11-26
 
 | Request | Status |
