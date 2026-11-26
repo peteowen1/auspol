@@ -94,3 +94,24 @@ exists in this repo (the backtest predictions are model reruns, not what was pub
 - An apparent win is unacceptable if it comes from one party alone (reported per party), or if the shrinkage weight
   is near 1 with tau2 estimated from 8 regions (reported).
 - The switch ships "0". Pete decides on "1" from the live 0-vs-1 seat table.
+
+## Addition, 26 Nov 2026, still before any model fit (original clauses above left unedited)
+
+Added after a review of the plan, before fitting; the data tables built so far were descriptive (statewide and
+region ratios by election), no model output.
+
+1. **One Nation pooling is clustered on the election.** Federal state rows within one election are not
+   independent (election-level sd about 0.26 in the 24 Nov walk). States are first pooled within each election
+   (inverse-variance), then the meta-analysis runs over election-level units (federal elections, Victoria 2022,
+   each DemosAU poll, each other-state upper house election if the sibling file lands). Weights are reported by
+   source family. The simulation draws the predictive spread for a NEW setting (pooled se and tau), not only the
+   se of the pooled mean. Rows dropped by the n >= 5 rule are counted.
+2. **Majors' drift is correlated.** The statewide drift is split into a common part (all three majors move
+   together, as when the minor pool grows) and a party part; both variances come from the 2010, 2018 and 2022
+   statewide log ratios. One common draw per simulation, plus one per party.
+3. **Oracle-level RMSE reported too.** 2010 had six groups per region and major ratios of 0.96 to 1.07, so a
+   level miss shared by every arm can hide the regional evidence. Beside the pre-registered RMSE, each backtest
+   also reports RMSE with each party's statewide ratio set to its actual value (labelled as an addition; the
+   decision rule is unchanged).
+4. **Minor groups:** groups named in the poll (DLP, Legalise Cannabis, Victorian Socialists) are held at their
+   polled statewide level, with sampling error drawn; only the un-named groups are scaled to fill the pool.
