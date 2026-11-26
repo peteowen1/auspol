@@ -135,7 +135,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. REHEARSED 26 Nov 9:35am (UTC folder 2026-11-25, 432ab86b): every scripted source fine; TAB and GES still need the Chrome steps; the betfair VBK2! warning (79-82 thin books left out) is normal (74 on 23 Nov). 24 Nov 9:16am done, every source (`docs/benchmarks/vic2026/2026-11-23/`; TAB moved to one "Vic Seats" event, read by
   `bk_tab_seats()`; 27 Nov: also rebuild `seat-odds-page.html` there, the seat odds artifact
   https://claude.ai/artifact/PJHtfKoc8xKvhjUErCb9QR; and the SITE page politics/odds.qmd: hand-write that folder's
-  `majority-markets.csv` + `capture-note.txt` (copy 2026-11-23's shape), `Rscript scripts/build_seat_odds_json.R`, then
+  `majority-markets.csv` + `capture-note.txt` (copy 2026-11-23's shape, but WRITE THE RUN DATE in the note, e.g. "the run built 27 Nov 4:41am": blog #1329, the judge flagged the 24 Nov model beside today's hub), `Rscript scripts/build_seat_odds_json.R`, then
   `wrangler r2 object put inthegame-data/auspol/seat-odds-vic2026.json --file output/seat-odds-vic2026.json --content-type application/json --remote`). 17 Nov: 6 sources (TAB not
   saved: Chrome blocked the download on api.beta.tab.com.au; Betfair has no Victorian markets). On 27 Nov, if the TAB
   download is blocked again, check Chrome's download prompt for that site first. Leads from X (23 Nov): a 16 Nov 4CP
