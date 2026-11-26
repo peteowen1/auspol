@@ -171,13 +171,19 @@ uh_read_flows <- function(path) {
 #' chosen at random, the draw fixed by `seed`). Ballots that stopped at the Senate minimum are cut to `min_to`
 #' tokens when `min_to` is smaller (a voter following the instruction numbers the new minimum).
 #'
+#' `absent` sets that substitution rule, and it moves the forecast (docs/reviews/upper-house-count-validation-2026-11-26.md):
+#' "pool" (the pre-registered rule, above), "bloc" (any unused group of the same bloc, equally likely, named
+#' parties included), "skip" (the mark is dropped and the voter's next mark is used; ballots get shorter).
+#'
 #' @param group_names names of the region's groups (order = the vote vector's order).
 #' @param top,tail the `top` most frequent class sequences per group are kept exactly; the rest are represented by
 #'   `tail` draws (with replacement, by weight), each carrying an equal share of the rest's weight. Unbiased.
 #' @return list(S = integer matrix P x (G + 1), S[, 1] the first group and 0 after the ballot ends; share = each
 #'   pattern's share of its first group's votes; group = group_names; class; diag = effective length summary).
 #' @noRd
-uh_region_patterns <- function(group_names, flows, min_to = NULL, K = 200, top = 2000L, tail = 2000L, seed = 1L) {
+uh_region_patterns <- function(group_names, flows, min_to = NULL, K = 200, top = 2000L, tail = 2000L, seed = 1L,
+                               absent = c("pool", "bloc", "skip")) {
+  absent <- match.arg(absent)
   G <- length(group_names)
   min_from <- flows$min_marks; if (is.null(min_to)) min_to <- min_from
   cls <- uh_party_class(group_names)
@@ -214,8 +220,11 @@ uh_region_patterns <- function(group_names, flows, min_to = NULL, K = 200, top =
       used <- logical(G); used[g] <- TRUE; j <- 1L
       for (z in t) {
         h <- which(cls == z & !used)
-        if (!length(h)) { b <- uh_bloc(z); h <- which(cls == paste0("POOL_", b) & !used)
-          if (!length(h)) h <- which(bl == b & !used) }
+        if (!length(h) && absent != "skip") {
+          b <- uh_bloc(z)
+          if (absent == "pool") h <- which(cls == paste0("POOL_", b) & !used)
+          if (!length(h)) h <- which(bl == b & !used)
+        }
         if (!length(h)) next
         if (length(h) > 1L) h <- h[sample.int(length(h), 1L)]
         j <- j + 1L; M[p, j] <- h; used[h] <- TRUE
@@ -364,12 +373,17 @@ uh_replay_of <- function(tr) {
 #' @param seats seats in the region (5 for a Victorian region).
 #' @param cands candidates per group (default no limit).
 #' @param min_to above-the-line minimum on the target ballot (5 for Victoria from 2026).
+#' @param top,tail pattern-bank size per group when `flows` is a fitted object (150 / 150 is what was timed:
+#'   about 90 s for 4,000 simulations x 8 regions).
+#' @param absent how a party not standing in the region is substituted (see uh_region_patterns()).
 #' @return integer N x G matrix of seats won.
 #' @noRd
-count_region <- function(votes_by_group, group_bloc_or_class, flows, seats = 5L, cands = NULL, min_to = 5L, seed = 1L) {
+count_region <- function(votes_by_group, group_bloc_or_class, flows, seats = 5L, cands = NULL, min_to = 5L, seed = 1L,
+                         top = 150L, tail = 150L, absent = "pool") {
   V <- if (is.matrix(votes_by_group)) votes_by_group else matrix(votes_by_group, nrow = 1L)
   stopifnot(ncol(V) == length(group_bloc_or_class))
-  pat <- if (!is.null(flows$S)) flows else uh_region_patterns(group_bloc_or_class, flows, min_to = min_to, seed = seed)
+  pat <- if (!is.null(flows$S)) flows else
+    uh_region_patterns(group_bloc_or_class, flows, min_to = min_to, top = top, tail = tail, seed = seed, absent = absent)
   W <- t(vapply(seq_len(nrow(V)), function(i) uh_stv(V[i, ], pat, seats, cands), integer(ncol(V))))
   if (ncol(V) == 1L) W <- t(W)
   colnames(W) <- if (is.null(colnames(V))) group_bloc_or_class else colnames(V)

@@ -101,7 +101,12 @@ if (COUNT_MODEL == "1") {
   UH_FLOWS_FILE <- "external/reference/aec/senate-flows/vic-senate-2025-flows.csv.gz"
   if (!file.exists(UH_FLOWS_FILE)) stop("AUSPOL_UPPER_HOUSE_COUNT_MODEL=1 needs ", UH_FLOWS_FILE, " (scripts/validate_upper_house_count.R writes it)")
   uh_flows <- uh_read_flows(UH_FLOWS_FILE)
-  cat(sprintf("UHF3  count model 1: preferences from %s (%.0f ballots, %d class sequences)\n", uh_flows$label, uh_flows$n_ballots, nrow(uh_flows$seq)))
+  # A party a Senate voter numbered that is not standing in the region: "pool" = the region's same-bloc pool group
+  # first (pre-registered), "bloc" = any same-bloc group, "skip" = drop the mark. It moves the chamber (validation note).
+  UH_ABSENT <- Sys.getenv("AUSPOL_UPPER_HOUSE_ABSENT", "pool")
+  stopifnot(UH_ABSENT %in% c("pool", "bloc", "skip"))
+  cat(sprintf("UHF3  count model 1: preferences from %s (%.0f ballots, %d class sequences); parties not standing: %s\n",
+              uh_flows$label, uh_flows$n_ballots, nrow(uh_flows$seq), UH_ABSENT))
 }
 run <- function(label, aff_fun, ex_fun, transfers = TRUE) {
   res <- vector("list", length(regions)); names(res) <- regions
@@ -119,7 +124,7 @@ run <- function(label, aff_fun, ex_fun, transfers = TRUE) {
     bl <- gr$bloc[match(colnames(V), gr$group)]
     W <- if (COUNT_MODEL == "1") {
       gi <- match(colnames(V), gr$group)
-      pat <- uh_region_patterns(colnames(V), uh_flows, min_to = 5L, top = 150L, tail = 150L, seed = match(r, regions))
+      pat <- uh_region_patterns(colnames(V), uh_flows, min_to = 5L, top = 150L, tail = 150L, seed = match(r, regions), absent = UH_ABSENT)
       d <- pat$diag
       cat(sprintf("UHF3  %s: %d ballot patterns; Senate ballots that stopped at the minimum number %.2f boxes here on average; groups on no Senate ballot (their bloc's voters stand in): %s\n",
                   r, nrow(pat$S), sum(d$len_at_min * d$n_own, na.rm = TRUE) / sum(d$n_own[!is.na(d$len_at_min)]),

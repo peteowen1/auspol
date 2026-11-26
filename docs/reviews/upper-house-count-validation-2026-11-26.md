@@ -1,5 +1,24 @@
 # Upper-house count from real ballots: results (26 Nov 2026)
 
+## Needs Pete: how a party that is not standing is replaced
+
+A Senate voter who numbered a party not on a 2026 region's ballot (Trumpet of Patriots stands nowhere; Family First
+is missing from two regions) has to be given a substitute. The rule moves the chamber more than anything else here.
+Same 4,000 vote draws (16 Nov inputs), only this rule changes. Mean seats of 40; majority = 21 seats.
+
+| Rule (`AUSPOL_UPPER_HOUSE_ABSENT`) | Coalition | One Nation | Greens | Labour DLP (all regions) | Coalition + One Nation reach 21 |
+|---|---|---|---|---|---|
+| current `count()` (switch off), for reference | 12.46 | 8.75 | 6.68 | 0.49 | 67% |
+| "pool": the region's right-wing or left-wing small-party group first (pre-registered) | 11.99 | 8.34 | 7.63 | 0.85 | 46% |
+| "bloc": any group of the same side, equally likely, big parties included | 12.40 | 8.78 | 7.57 | 0.15 | 65% |
+| "skip": drop the mark, use the voter's next one | 12.03 | 8.82 | 7.78 | 0.08 | 57% |
+
+Under "pool" most of those right-wing votes land on Labour DLP, which is on no Senate ballot, so its 0.85 seats are
+mostly this rule, not DLP voters. Recommendation (mine, not decided): "bloc", because it keeps every ballot at the
+5-box minimum without handing one small party every stray right-wing mark. The pattern-bank sampling is not what
+moves these: a different seed, or 600 + 600 patterns per group instead of 150 + 150, moves no group by more than
+0.06 seats and the majority chance by under 1 point.
+
 Plan, written and committed before fitting: [plans/upper-house-count-model-2026-11-26.md](../plans/upper-house-count-model-2026-11-26.md).
 Reproduce: `python -I scripts/parse_senate_formal_prefs.py <zip> <prefix>` for each year, then
 `Rscript scripts/validate_upper_house_count.R` (set `AUSPOL_SENATE_PREFS_DIR` from a worktree). Code:
@@ -16,8 +35,14 @@ from the bill as introduced, https://content.legislation.vic.gov.au/sites/defaul
 - New s 112A(2): an above-the-line ballot with fewer than 5 numbers starting at 1 is formal up to the first break;
   a lone 1 is formal. s 112A(3): a tick or cross counts as 1. New s 112B: marked both ways, below the line wins if
   formal.
-- Not confirmed (the Act does not touch them and the in-force count schedule was not read): how exhausted ballots
-  are recorded, the surplus transfer method, and whether a below-the-line ballot with fewer than 5 numbers is saved.
+- The count itself, Electoral Act 2002 s 114A (version 071, in force 19 Aug 2026,
+  https://content.legislation.vic.gov.au/sites/default/files/2026-08/02-23aa071-authorised.pdf): quota =
+  first preferences / (vacancies + 1), rounded down, + 1; a surplus moves at transfer value = surplus / the elected
+  candidate's first-preference votes (s 114A(7)), so papers with no next preference stay in the divisor and their
+  share of the surplus is lost. That is what our count does (every paper scaled by (votes - quota) / votes, the
+  exhausted ones then dropped). The Act never uses the word "exhaust": papers with no continuing preference simply
+  do not move. Not confirmed: the exact divisor for a candidate elected on transfers (s 114A(9), (11)), and whether
+  a below-the-line ballot with fewer than 5 numbers is saved.
 
 ## The data
 
@@ -87,13 +112,18 @@ exhaustion, because how-to-vote cards changed. For Victoria 2026 the flows come 
 election with different cards from a state one, so expect the time-forward accuracy, not the in-sample one.
 
 Exhaustion through our count on real ballots is 174,096 at the last decision in 2025 against the AEC's 185,736, and
-246,795 against 261,868 in 2022: about 6% low, from counting by group rather than by candidate.
+246,795 against 261,868 in 2022: about 6% low. The cause is not established (counting by group rather than by
+candidate, and the Senate's own transfer rules, are both candidates).
 
-NSW Legislative Council 2023 (21 seats; reported, not a pass condition; first preferences from branch
-`other-upper-houses`; actual from Wikipedia: Labor 8, Coalition 7, Greens 2, One Nation 1, Legalise Cannabis 1,
-Liberal Democrats 1, Shooters 1). With NSW's 1-box minimum applied (Senate ballots that stopped at 6 stop at 1): match
-on both seeds. Without it: match on one seed, Animal Justice instead of the Shooters on the other. The current
-`count()` also matches. SA 2026 not checked (its actual result was not on hand).
+Other upper houses (reported, not a pass condition; statewide first preferences from branch `other-upper-houses`;
+actual results from Wikipedia, ECSA and NSWEC not checked):
+
+- NSW LC 2023, 21 seats, flows from the 2022 Senate (actual Labor 8, Coalition 7, Greens 2, One Nation 1, Legalise
+  Cannabis 1, Liberal Democrats 1, Shooters 1). With NSW's 1-box minimum applied (Senate ballots that stopped at 6
+  stop at 1): match on both seeds. Without it: match on one seed, Animal Justice instead of the Shooters on the other.
+- SA LC 2026, 11 seats, flows from the 2025 Senate (actual Labor 5, One Nation 3, Liberal 2, Greens 1): match on all
+  four runs.
+- The current `count()` also matches both. As with the Senate, seats by party is a weak test.
 
 ## The forecast with the switch on
 
@@ -120,7 +150,7 @@ mapping: DLP is on no Senate ballot, and a right-wing party a Senate voter numbe
 (Trumpet of Patriots everywhere, Family First in two regions) is replaced by the region's right-wing pool group
 first, which is usually DLP. Worth a look before shipping.
 
-Run time: 1 min 44 s for the whole script at 4,000 simulations x 8 regions (about 90 s of it the count), against
+These numbers use the "pool" rule; see the top for the other two. Run time: 1 min 44 s for the whole script at 4,000 simulations x 8 regions (about 90 s of it the count), against
 15 s with `count()`.
 
 ## What is approximated

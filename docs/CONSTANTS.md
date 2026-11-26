@@ -780,3 +780,14 @@ types read `census-features.csv` for an election whose every row's census predat
 | standardising sd | published `AUSPOL_LEVEL_SD` 1.10, 8.67 | inherited |
 | seat type (values `type`, `both`; `plans/prereg-seat-type-cor-2026-11-25.md`) | k-means on z-scored projected shares + 7 census features (`output/census-features-vintage.csv`, latest census before polling day; missing = 0), k = round(seats / 11), seed 20261126, nstart 20 | no: a definition, chosen 2026-11-25, not tuned |
 | rho for `type` / `both` | `inst/extdata/seat-cluster-icc-type.csv` (`fit_seat_cluster_icc.R --scheme=type`): one-way type ICC (`type`), crossed lmer region and type shares (`both`), pooled as above; sum capped at 0.9 | **ESTIMATED** |
+
+## Upper-house count from measured preferences (`AUSPOL_UPPER_HOUSE_COUNT_MODEL`, TESTING 26 Nov 2026, published "0"; `R/upper_house_count.R`; `plans/upper-house-count-model-2026-11-26.md`)
+
+| Constant | Value / source | Status |
+|---|---|---|
+| next-preference flows and exhaustion | every Victorian ballot at the 2025 Senate election (4,101,762), as class sequences: `external/reference/aec/senate-flows/vic-senate-2025-flows.csv.gz` (compact: top 3,000 sequences + 3,000 weighted draws per first class) | **ESTIMATED** (from one federal election; time-forward accuracy in reviews/upper-house-count-validation-2026-11-26.md) |
+| shrinkage toward the bloc, K | 200 ballots, weight n / (n + K) | **FIXED**, binds only on classes with a few hundred ballots (the smallest named class has 9,810) |
+| Senate minimum 6 becomes Victoria's 5 | ballots that stopped at exactly 6 stop at 5 | **FIXED** by the enacted rule (s 93A); assumes voters follow the instruction, as 87.7% did in the Senate |
+| party classes and left / right / centre lists | `UH_NAMED`, `UH_BLOC`, `UH_LEFT`, `UH_RIGHT` | **FIXED**, a definition (named = on both the Senate and a 2026 regional ballot) |
+| absent-party substitution | `AUSPOL_UPPER_HOUSE_ABSENT`, "pool" (pre-registered) / "bloc" / "skip" | **CHOSEN**, open for Pete: moves the Coalition + One Nation majority chance 46% / 65% / 57% |
+| pattern bank per group | 150 most common sequences + 150 weighted draws, seeded per region | **FIXED** for speed; 600 + 600 and another seed move no group by more than 0.06 seats |

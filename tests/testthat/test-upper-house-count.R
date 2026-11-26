@@ -99,6 +99,10 @@ test_that("mapping onto a region: minimum cut to 5, missing parties go to their 
   expect_equal(pat$class, c("ALP", "GRN", "LNP", "ONP", "POOL_L", "POOL_R"))
   # Labour DLP and Victorian Socialists have no first-preference ballots of their own: their bloc's stand in
   expect_true(all(pat$diag[class %in% c("POOL_L", "POOL_R")]$n_own == 0))
+  # absent = "skip": Family First is dropped, not replaced, so the ballot ends after One Nation
+  pk <- uh_region_patterns(grp, f, min_to = 5L, K = 0, absent = "skip")
+  expect_equal(pk$S[pk$S[, 1] == 1, , drop = FALSE][1, 1:5], c(1L, 2L, 3L, 4L, 0L))
+  expect_error(uh_region_patterns(grp, f, absent = "nearest"))
   # the stated minimum is respected
   pat6 <- uh_region_patterns(grp, f, min_to = 6L, K = 0)
   expect_equal(sum(pat6$S[pat6$S[, 1] == 1, ][1, ] > 0), 6L)

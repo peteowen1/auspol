@@ -166,30 +166,39 @@ for (yr in names(YEARS)) {
 }
 cat(sprintf("\nBROKEN  2022 with first classes shuffled, free count: %s | %s\n", show(rb, dat[["2022"]]$g),
             if (identical(show(rb, dat[["2022"]]$g), paste(act[["2022"]]$order, collapse = " "))) "still elects the actual seats (seats by party cannot tell; see UHC3)" else "MISS"))
-# ---- other upper houses (reported, not a pass condition): NSW LC 2023, 21 seats statewide ---------------------
-# First preferences by group from the sibling branch other-upper-houses (output/other-upper-house-fp.csv); flows
-# are Victorian Senate 2022 (the last federal election before March 2023), mapped by class. NSW asks for at least a
-# 1 above the line, so Senate ballots that stopped at 6 stop at 1 here (min_to = 1); the rest keep their length.
-# Actual result (Wikipedia, Results of the 2023 NSW state election (Legislative Council), read 26 Nov 2026):
-# Labor 8, Coalition 7, Greens 2, One Nation 1, Legalise Cannabis 1, Liberal Democrats 1, Shooters 1.
+# ---- other upper houses (reported, not a pass condition): NSW LC 2023 (21 seats), SA LC 2026 (11 seats) --------
+# Statewide first preferences by group from the sibling branch other-upper-houses (output/other-upper-house-fp.csv);
+# flows are Victorian Senate ballots from the last federal election before each (2022 for NSW, 2025 for SA), mapped
+# by class. Both ask for at least a 1 above the line, so Senate ballots that stopped at 6 stop at 1 (min_to = 1); the
+# rest keep their length. min_to = 6 is shown too. Actual results (Wikipedia "Results of the 2023 New South Wales state
+# election (Legislative Council)" and "... 2026 South Australian state election (Legislative Council)", read
+# 26 Nov 2026): NSW Labor 8, Coalition 7, Greens 2, One Nation 1, Legalise Cannabis 1, Liberal Democrats 1, Shooters 1;
+# SA Labor 5, One Nation 3, Liberal 2, Greens 1.
 OUH <- Sys.getenv("AUSPOL_OTHER_UH_FP", "C:/dev/auspol-wt-ouh/output/other-upper-house-fp.csv")
+OTHER <- list(nsw2023 = list(seats = 21L, flows = "2022", actual = c(ALP = 8L, LNP = 7L, GRN = 2L, ONP = 1L, LCA = 1L, LIBT = 1L, SFF = 1L)),
+              sa2026  = list(seats = 11L, flows = "2025", actual = c(ALP = 5L, ONP = 3L, LNP = 2L, GRN = 1L)))
 if (file.exists(OUH)) {
-  o <- fread(OUH)[election == "nsw2023" & house == "upper" & geo_level == "state", list(votes = sum(votes)), by = "party_raw"][order(-votes)]
-  cl <- uh_party_class(o$party_raw)
-  actual <- c(ALP = 8L, LNP = 7L, GRN = 2L, ONP = 1L, LCA = 1L, LIBT = 1L, SFF = 1L)
-  cat(sprintf("\nUHC4  NSW LC 2023: %d groups, %.0f formal votes (21 seats, quota 1/22). Actual: %s\n", nrow(o), sum(o$votes),
-              paste(names(actual), actual, collapse = ", ")))
-  agg <- function(w) { x <- tapply(w, cl, sum); x <- x[x > 0]; paste(names(sort(-x)), sort(x, decreasing = TRUE), collapse = ", ") }
-  for (mt in c(1L, 6L)) for (sd in 1:2) {
-    pat <- uh_region_patterns(o$party_raw, uh_compact_flows(fits[["2022"]]), min_to = mt, top = 150L, tail = 150L, seed = sd)
-    r <- uh_stv(o$votes, pat, 21L, trace = TRUE)
-    x <- tapply(r$won, cl, sum); hit <- all(x[names(actual)] == actual) && sum(x) == 21L
-    cat(sprintf("   model, ballots stop at %d, seed %d: %s | %s | last two %s\n", mt, sd, agg(r$won), if (hit) "MATCH" else "MISS",
-                { oo <- order(-r$tally); oo <- oo[r$tally[oo] > 0][1:2]; paste(sprintf("%s %.3f", cl[oo], r$tally[oo] / r$quota), collapse = " vs ") }))
+  ouh <- fread(OUH)
+  for (el in names(OTHER)) {
+    cfg <- OTHER[[el]]; el_ <- el
+    o <- ouh[ouh$election == el_ & ouh$house == "upper" & ouh$geo_level == "state", list(votes = sum(votes)), by = "party_raw"][order(-votes)]
+    cl <- uh_party_class(o$party_raw); actual <- cfg$actual
+    cat(sprintf("\nUHC4  %s LC: %d groups, %.0f formal votes (%d seats). Actual: %s\n", el, nrow(o), sum(o$votes), cfg$seats,
+                paste(names(actual), actual, collapse = ", ")))
+    agg <- function(w) { x <- tapply(w, cl, sum); x <- x[x > 0]; paste(names(sort(-x)), sort(x, decreasing = TRUE), collapse = ", ") }
+    for (mt in c(1L, 6L)) for (sd in 1:2) {
+      pat <- uh_region_patterns(o$party_raw, uh_compact_flows(fits[[cfg$flows]]), min_to = mt, top = 150L, tail = 150L, seed = sd)
+      r <- uh_stv(o$votes, pat, cfg$seats, trace = TRUE)
+      x <- tapply(r$won, cl, sum); x <- x[x > 0]
+      hit <- setequal(names(x), names(actual)) && all(x[names(actual)] == actual)
+      oo <- order(-r$tally); oo <- oo[r$tally[oo] > 0][1:2]
+      cat(sprintf("   model, %s flows, ballots stop at %d, seed %d: %s | %s | largest two left %s\n", cfg$flows, mt, sd, agg(r$won),
+                  if (hit) "MATCH" else "MISS", paste(sprintf("%s %.3f", cl[oo], r$tally[oo] / r$quota), collapse = " vs ")))
+    }
+    bl <- ifelse(grepl(RIGHT, o$party_raw, ignore.case = TRUE), "R", ifelse(grepl(LEFT, o$party_raw, ignore.case = TRUE), "L", "C"))
+    w <- count_old(setNames(o$votes / (sum(o$votes) / (cfg$seats + 1)), o$party_raw), bl, 2.5, 0.175, seats = cfg$seats)
+    cat(sprintf("   current count() aff 2.5 ex 0.175: %s\n", agg(w)))
   }
-  bl <- ifelse(grepl(RIGHT, o$party_raw, ignore.case = TRUE), "R", ifelse(grepl(LEFT, o$party_raw, ignore.case = TRUE), "L", "C"))
-  w <- count_old(setNames(o$votes / (sum(o$votes) / 22), o$party_raw), bl, 2.5, 0.175, seats = 21L)
-  cat(sprintf("   current count() aff 2.5 ex 0.175: %s\n", agg(w)))
-} else cat("\nUHC4  no other-upper-house first preferences at ", OUH, ": NSW check skipped\n")
+} else cat("\nUHC4  no other-upper-house first preferences at ", OUH, ": NSW and SA checks skipped\n")
 
 cat(sprintf("\nUHC9  passes: %d of %d (V0 %d/2)\n", sum(unlist(res)), length(res), sum(unlist(res[grep("^V0", names(res))]))))

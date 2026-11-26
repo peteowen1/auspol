@@ -84,3 +84,22 @@ Speed: 4,000 simulations x 8 regions timed, target under two minutes.
 
 What would make an apparent pass unacceptable: V0 passing only because of the "groups left = seats left" shortcut
 deciding the last seat (reported if it does); V2 using any 2025 ballot.
+
+## Amendments (added after fitting; the text above is unedited)
+
+1. **Last two for the last seat** (added after comparing V0's exhaustion with the AEC's): with one seat left and two
+   groups in, the higher is elected and the other is not excluded, as the AEC and VEC counts stop. It changes no
+   winner, only the exhausted total reported at the end.
+2. **Step-by-step replay** (post hoc, and the only test here that discriminates): a flow set with every party's
+   ballots shuffled to another party still passed V0-V2 on seats, so seats by party cannot fail on these counts.
+   The added test follows the real count's own path and measures, after each step, the quota sitting with the wrong
+   group and the exhausted error. Results in docs/reviews/upper-house-count-validation-2026-11-26.md.
+3. **Pattern bank instead of M samples**: per group, the 150 most common class sequences exactly plus 150 weighted
+   draws for the rest (unbiased), not M = 400 random draws.
+4. **The plan's own "unacceptable" clause fired once**: in the free count, the 2022 last seat (Babet, UAP) was
+   first decided by the "groups left = seats left" shortcut, after Labor's third candidate was excluded. With
+   amendment 1 it is decided as the AEC decided it: Babet 0.839 quotas against Labor 0.709 on real ballots.
+5. **Last-seat margins against the AEC** (in quotas, from the distribution of preferences' final count):
+   2025 actual Labor (Ananda-Rajah) 0.869 vs One Nation (Pickering) 0.814; our count on real ballots 0.889 vs
+   0.814; model with 2025 flows 0.87-0.90 vs 0.80-0.82; with 2022 flows 0.85-0.88 vs 0.745.
+   2022 actual UAP (Babet) 0.834 vs Labor (Nunn) 0.685; real ballots 0.839 vs 0.709; model 0.82-0.84 vs 0.70-0.73.
