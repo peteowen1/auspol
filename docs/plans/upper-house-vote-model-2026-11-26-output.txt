@@ -59,6 +59,20 @@ Pre-registered decision, pooled over the 2018 (from 2010) and 2022 (from 2010+20
 
 Shrinkage on 2010+2018 (the 2022 backtest's fit): w ALP 0.73 LNP 0.31 GRN 0.42; level slopes ALP -0.37 LNP -0.26 GRN -0.13
 
+1b. ADDITION. Correlation of each region's deviation from the statewide ratio, between elections (8 regions):
+  party     n r_2010_2018 r_2018_2022 sd_2010 sd_2018 sd_2022
+ <char> <int>       <num>       <num>   <num>   <num>   <num>
+    ALP     8        0.54        0.70   0.051   0.057   0.074
+    GRN     8        0.22        0.18   0.079   0.098   0.067
+    LNP     8        0.29        0.73   0.028   0.115   0.070
+   2022 from 2018 with region effects shrunk by the three-election weights (IN-SAMPLE: the weights use 2022), RMSE points, n = 24:
+  party     n uniform shrunk_2018_effects
+ <char> <int>   <num>               <num>
+    ALP     8   2.360               1.892
+    LNP     8   1.803               1.564
+    GRN     8   0.748               0.755
+    all    24   1.768               1.483
+
 2. LIVE FIT on 2010, 2018, 2022. Level = mean of the 2018 and 2022 statewide log ratios.
    ALP: statewide ratio 0.905; region drift sd 0.040 (log); between-region sd 0.045; shrink w 0.80; slope (arm B) -0.44
           Eastern Victoria North-Eastern Metropolitan 
@@ -96,6 +110,13 @@ Key: <case>
  WA Legislative Council -0.020  0.070  0.195
    Regime variance added: common sd 0.128, party sd 0.092. Mean shift NOT applied (cases disagree in sign): ALP -0.051, GRN -0.076, LNP +0.007
    2026 drift (log sd): common 0.160, party 0.103 -> a party's statewide ratio 80% range about x0.78 to x1.28 of its centre.
+   ADDITION, calibration check: every statewide major ratio on disk (Victoria 2010-22, NSW/SA/WA, Victorian Senate 2004-25), log sd and range:
+  party     n log_sd   min   max
+ <char> <int>  <num> <num> <num>
+    ALP    17  0.068 0.805 1.007
+    GRN    17  0.117 0.789 1.222
+    LNP    17  0.079 0.753 0.984
+   Drawn statewide log sd (common and party combined): 0.106 without the ticket variance, 0.190 with it.
    For scale: the current script's NOISE (points of region vote, ALP 3.0, LNP 2.5, GRN 1.0, ONP 2.0) is independent per region and has no statewide part.
 
 3. ONE NATION. Poll check on the majors: each poll's relative ratios against Victoria 2018-22 (log points):

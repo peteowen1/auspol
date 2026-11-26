@@ -57,6 +57,20 @@ fa <- attr(bt[[3]], "fits")$A; fb <- attr(bt[[3]], "fits")$B
 cat(sprintf("\nShrinkage on 2010+2018 (the 2022 backtest's fit): w ALP %.2f LNP %.2f GRN %.2f; level slopes ALP %.2f LNP %.2f GRN %.2f\n",
             fa$party$ALP$w, fa$party$LNP$w, fa$party$GRN$w, fb$party$ALP$b, fb$party$LNP$b, fb$party$GRN$b))
 
+## ---- 1b. ADDITIONS after the results (labelled): do region effects repeat between 2018 and 2022? ----
+cat("\n1b. ADDITION. Correlation of each region's deviation from the statewide ratio, between elections (8 regions):\n")
+dv <- dcast(rt, reg + party ~ election, value.var = "d")
+print(dv[, .(n = .N, r_2010_2018 = round(cor(vic2010, vic2018, use = "complete"), 2), r_2018_2022 = round(cor(vic2018, vic2022), 2),
+             sd_2010 = round(sd(vic2010, na.rm = TRUE), 3), sd_2018 = round(sd(vic2018), 3), sd_2022 = round(sd(vic2022), 3)), by = party], row.names = FALSE)
+f3 <- uh_fit_majors(rt, c("vic2010", "vic2018", "vic2022"))
+T22 <- rt[election == "vic2022"]; T18 <- rt[election == "vic2018"]
+ins <- rbindlist(lapply(c("ALP", "LNP", "GRN"), function(k) { pk <- k
+  a <- T22[party == pk]; o <- T18[party == pk][match(a$reg, reg)]
+  data.table(party = k, act = a$us, uni = a$ls * exp(o$m), shr = a$ls * exp(o$m + f3$party[[k]]$w * o$d)) }))
+cat("   2022 from 2018 with region effects shrunk by the three-election weights (IN-SAMPLE: the weights use 2022), RMSE points, n = 24:\n")
+print(ins[, .(n = .N, uniform = round(sqrt(mean((uni - act)^2)), 3), shrunk_2018_effects = round(sqrt(mean((shr - act)^2)), 3)), by = party][
+  , rbind(.SD, data.table(party = "all", n = sum(n), uniform = round(sqrt(sum(uniform^2 * n) / sum(n)), 3), shrunk_2018_effects = round(sqrt(sum(shrunk_2018_effects^2 * n) / sum(n)), 3)))], row.names = FALSE)
+
 ## ---- 2. the live fit: all three elections ----
 fl <- uh_fit_majors(rt, c("vic2010", "vic2018", "vic2022"))
 sl <- uh_level_slope(inp, c("vic2010", "vic2018", "vic2022")); flb <- uh_fit_majors(rt, c("vic2010", "vic2018", "vic2022"), slope = sl)
@@ -74,6 +88,20 @@ cat(sprintf("   Regime variance added: common sd %.3f, party sd %.3f. Mean shift
 fl2 <- uh_add_regime_variance(fl, nv)
 cat(sprintf("   2026 drift (log sd): common %.3f, party %.3f -> a party's statewide ratio 80%% range about x%.2f to x%.2f of its centre.\n",
             fl2$drift_common_sd, fl2$drift_party_sd, exp(-1.2816 * sqrt(fl2$drift_common_sd^2 + fl2$drift_party_sd^2)), exp(1.2816 * sqrt(fl2$drift_common_sd^2 + fl2$drift_party_sd^2))))
+cat("   ADDITION, calibration check: every statewide major ratio on disk (Victoria 2010-22, NSW/SA/WA, Victorian Senate 2004-25), log sd and range:\n")
+oth <- "C:/dev/auspol/output/other-upper-house-fp.csv"
+obs <- unique(rt[, .(src = election, party, lr = m)])
+if (file.exists(oth)) { o <- fread(oth)[geo_level == "state"]; o <- o[, .(v = sum(votes)), by = .(election, house, party = party_class)][, sh := v / sum(v), by = .(election, house)]
+  o <- dcast(o[party %in% c("ALP", "LNP", "GRN")], election + party ~ house, value.var = "sh")[, .(src = election, party, lr = log(upper / lower))]; obs <- rbind(obs, o) }
+cnd <- fread("C:/dev/auspol/output/candidacies.csv", select = c("election", "seat", "party", "ordinary"))[grepl("^fed", election) & !is.na(ordinary)]
+sen <- fread("C:/dev/auspol/output/senate-by-division-class.csv")[state == "VIC"]
+for (e in unique(paste0("fed", sen$fed))) { ee <- e; ss <- sen[paste0("fed", fed) == ee]; hh <- cnd[election == ee & seat %in% ss$division]
+  if (!nrow(hh)) next
+  h <- hh[, .(v = sum(as.numeric(ordinary))), by = party][, sh := v / sum(v)]; s0 <- ss[, .(v = sum(v)), by = .(party = cls)][, sh := v / sum(v)]
+  mm <- merge(h, s0, by = "party")[party %in% c("ALP", "LNP", "GRN")]; obs <- rbind(obs, mm[, .(src = paste(ee, "VIC Senate"), party, lr = log(sh.y / sh.x))]) }
+print(obs[, .(n = .N, log_sd = round(sd(lr), 3), min = round(exp(min(lr)), 3), max = round(exp(max(lr)), 3)), by = party], row.names = FALSE)
+cat(sprintf("   Drawn statewide log sd (common and party combined): %.3f without the ticket variance, %.3f with it.\n",
+            sqrt(fl$drift_common_sd^2 + fl$drift_party_sd^2), sqrt(fl2$drift_common_sd^2 + fl2$drift_party_sd^2)))
 cat("   For scale: the current script's NOISE (points of region vote, ALP 3.0, LNP 2.5, GRN 1.0, ONP 2.0) is independent per region and has no statewide part.\n")
 
 ## ---- 3. One Nation ----

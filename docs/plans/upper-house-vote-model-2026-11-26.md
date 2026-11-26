@@ -133,7 +133,7 @@ fitting: its statewide major-party ratios and One Nation's contested-district ra
    simulation carries the uncertainty instead of a guessed direction. Reported: the mean shift that WOULD
    apply, and the seat table it would move, so Pete can see the size of the bet.
 
-## Results (26 Nov 2026, after fitting; full output in `upper-house-vote-model-2026-11-26-output.txt`)
+## Results (26 Nov 2026, after fitting; revised the same evening after a review; full output in `upper-house-vote-model-2026-11-26-output.txt`)
 
 **Backtest, majors.** Error in each party's upper-house region share, percentage points (lower is better); n = 24
 cells per backtest (8 regions x 3 parties), lower-house actuals given.
@@ -149,41 +149,65 @@ cells per backtest (8 regions x 3 parties), lower-house actuals given.
 The current constants score 1.67 on 2022 but were fitted on 2018 and 2022 themselves, so that is not a fair score.
 
 **Decision (pre-registered rule): arm A does not beat the uniform ratio, so switch "1" uses a uniform statewide
-ratio per party** (fitted level = mean of 2018 and 2022: Labor 0.905, Coalition 0.845, Greens 0.882), with the
-whole region spread as region noise (log sd 0.05 to 0.08), plus statewide drift. Past region effects do not
-repeat: Coalition in Eastern Victoria was 0.94 in 2010, 0.74 in 2018, 0.83 in 2022. Even with the statewide level
-handed over, region effects lose (2.41 against 1.97). The "big regional variation" is real in each year but is not
-the same variation the next time.
+ratio per party** (level = mean of 2018 and 2022: Labor 0.905, Coalition 0.845, Greens 0.882), with the whole
+region spread as region noise (log sd 0.05 to 0.08).
 
-**Drift.** Victorian history alone: common log sd 0.095, party 0.047. The two ticket-abolition experiments
-disagree in sign (WA 2021 to 2025: Coalition +0.19, Greens +0.07, Labor -0.02; Victorian Senate 2013 to 2016:
--0.18, -0.22, -0.08), so no shift is applied; their spread (common 0.128, party 0.092) is added. Result: common
-0.160, party 0.103, so a party's statewide ratio has an 80% range of about x0.78 to x1.28. Had the mean shift been
-applied it would be Labor -0.05, Greens -0.08, Coalition +0.01 (log).
+**What the loss means (corrected).** It is NOT that region effects never repeat. Region deviations from the
+statewide ratio correlate 0.70 (Labor) and 0.73 (Coalition) between 2018 and 2022, 0.18 for the Greens; between
+2010 and 2018, 0.54, 0.29, 0.22. The loss comes from 2010 (a six-group ballot) and from the Coalition's 2018 spread
+being 1.6 times 2022's, which one election cannot shrink. With the three-election shrinkage weights applied to
+2018's effects (in-sample: the weights use 2022), 2022 from 2018 scores 1.48 against uniform 1.77 (Labor 1.89 v
+2.36, Coalition 1.56 v 1.80, Greens 0.76 v 0.75). So region effects are a live alternative that the
+pre-registered test could not clear; the seat table below shows it barely matters (64% against 65%).
+
+**Drift (results addition 8, replacing addition 6's stacking).** Victorian history alone gives common log sd 0.095
+and party 0.047, combined 0.106. Every statewide major ratio on disk (Victoria 2010-22, NSW, SA, WA, Victorian
+Senate 2004-25; n = 17 per party) has log sd 0.068 (Labor), 0.079 (Coalition), 0.117 (Greens), ranges 0.81-1.01,
+0.75-0.98, 0.79-1.22. Stacking the ticket-experiment variance on top (combined 0.190, 80% range x0.78 to x1.28)
+is wider than everything ever observed: the Victorian history already contains the 2010-to-2018 regime change.
+So switch "1" uses the Victorian drift alone. The stacked version stays in the table as the pre-registered one.
 
 **One Nation.** Pooled ratio 0.879 (80% of draws 0.73 to 1.06) from 16 units. Weight by source: federal Senate vs
 House 45% (8 elections), other states' upper houses 38% (no tickets 31%: SA 2026 1.05, NSW 2019 1.08, NSW 2023
 0.87, WA 2025 0.78; WA 2021 with tickets 7%), DemosAU same-poll 11% (Nov 1.04, Feb 0.92), Victoria 2022 5%
-(0.94, four districts). Sensitivity: federal 2019 onward only 0.906; Victorian federal rows only 0.870.
+(0.94, four districts). The weights are near equal per unit because the between-unit sd (0.14) swamps every
+unit's own se, so a family's weight is mostly its unit count. Sensitivity: federal 2019 onward only 0.906;
+Victorian federal rows only 0.870.
 
 **Minor groups' regional pattern** (2022 from 2018, statewide 2022 level given, 9 groups, n = 72): flat 1.02
 points, raw 2018 pattern 0.82, shrunk (w 0.76) 0.70. Shrunk pattern used. w is in-sample (it uses 2022).
 
-**Polled minors after the fill** (switch 1, mean of regions): DLP 3.5% and Legalise Cannabis 3.5% against
-DemosAU's 4%, Victorian Socialists 3.2% (YouGov 4, DemosAU 3). The shortfall comes from simulations where the
-majors' drift leaves a small pool and the named groups are capped at the pool less one point. Implied minor pool
-(excluding One Nation) 21.4% against DemosAU's 21%.
+**Minor split (results addition 7, replacing addition 4).** Holding the polled groups fixed and stretching the
+rest made the un-polled groups absorb every swing in the pool: Family First and the Libertarians rose to about 0.7
+seats each while Legalise Cannabis and DLP fell under 0.05. Now the pool is shared in proportion to every group's
+level (polled groups at DemosAU's level times a sampling draw, Victorian Socialists at YouGov's regional figures,
+the un-polled groups scaled together to DemosAU's "others" 10%, factor 1.35). After the fill (mean of regions):
+DLP 4.1%, Legalise Cannabis 4.1%, Victorian Socialists 3.9%, other minors 9.7%, against DemosAU 4 / 4 / 3 / 10.
 
-**Live, 26 Nov 2026 inputs (forecast-latest), 4,000 simulations.** Mean seats (80% range):
+**NOISE kept.** The build script's `NOISE` (2.0 to 3.0 points per region) was hand-set in the walk with no sizing
+(`upper-house-forecast-walk-2026-11-24/sim.R` line 29). Under switch 1 it stays as the lower-house regional
+forecast error, which nothing else carries (the lower-house draws are statewide); the fitted ratio residual is
+added on top. Possible double counting of up to half its size; not resolved.
 
-| | switch 0 (hand-set) | switch 1 (fitted) | switch 1 without ticket variance |
-|---|---|---|---|
-| Labor | 10.0 (8-12) | 9.9 (7-13) | 10.0 (8-12) |
-| Coalition | 12.7 (11-14) | 12.3 (9-15) | 12.5 (10-15) |
-| One Nation | 8.7 (7-11) | 8.6 (6-11) | 8.9 (7-11) |
-| Greens | 6.7 (5-9) | 6.4 (4-9) | 6.5 (4-9) |
-| minor groups | 1.8 (0-4) | 2.7 (0-8) | 2.1 (0-6) |
-| P(Coalition + One Nation >= 21) | 72% | 59% | 68% |
-| P(Labor + Greens >= 21) | 1% | 6% | 3% |
+**Arm C (poll blend).** Weight on the 21-25 Nov poll 0.29 / 0.19 / 0.17 (Coalition, Labor, Greens); shift +0.016,
+-0.017, +0.007 (log). Not in switch 1; shown in the table.
 
-Switch "0" output is byte-identical to origin/dev's script on the same inputs (built_at aside).
+**Live, 26 Nov 2026 inputs (forecast-latest), 4,000 simulations.** Mean seats of 40 (80% range); last two rows are
+the chance of a 21-seat majority for each bloc.
+
+| | switch 0 | **switch 1** | + ticket variance (prereg add. 6) | + region effects | + mean ticket shift | + WA ticket shift | arm C poll blend |
+|---|---|---|---|---|---|---|---|
+| Labor | 10.0 (8-12) | **9.8 (7-12)** | 9.8 (7-13) | 9.7 (8-12) | 9.4 (7-12) | 9.3 (7-12) | 9.6 (7-12) |
+| Coalition | 12.7 (11-14) | **12.5 (10-15)** | 12.3 (9-15) | 12.4 (10-15) | 12.6 (10-15) | 14.6 (12-17) | 12.7 (10-15) |
+| One Nation | 8.7 (7-11) | **8.8 (7-11)** | 8.6 (6-11) | 8.8 (7-11) | 8.9 (7-11) | 8.6 (6-11) | 8.8 (7-11) |
+| Greens | 6.7 (5-9) | **6.3 (4-8)** | 6.1 (3-9) | 6.4 (4-9) | 5.8 (3-8) | 6.2 (4-9) | 6.3 (4-9) |
+| minor groups | 1.8 (0-4) | **2.6 (0-6)** | 3.2 (0-9) | 2.7 (0-7) | 3.3 (0-7) | 1.3 (0-4) | 2.5 (0-6) |
+| P(Coalition + One Nation >= 21) | 72% | **65%** | 58% | 64% | 69% | 91% | 69% |
+| P(Labor + Greens >= 21) | 1% | **2%** | 5% | 2% | 1% | 1% | 2% |
+
+Mean ticket shift = the average of the two experiments (Labor -0.05, Coalition +0.01, Greens -0.08, log); WA
+shift = WA 2021 to 2025 alone (Labor -0.02, Coalition +0.19, Greens +0.07), the direction the other states'
+no-ticket figures point. The WA case is the single biggest lever on the headline number.
+
+Switch "0" output is byte-identical to origin/dev's script on the same inputs (built_at aside), re-checked after
+these changes.

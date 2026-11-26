@@ -787,11 +787,11 @@ types read `census-features.csv` for an election whose every row's census predat
 |---|---|---|
 | hand-set ratios under switch 0 (ALP, LNP, GRN, ONP) | 0.905, 0.845, 0.883, 0.85 (log sd 0.08), `scripts/build_upper_house_forecast.R` | partly: Victoria 2018/2022 averages, never refit by a script; switch 1 fits them |
 | majors' ratio, switch 1 | mean of the 2018 and 2022 statewide log ratios (`upper-house-ratio-inputs.csv`) | yes |
-| majors' drift | common + party sd from 2010/2018/2022, x(1 + 1/2); plus ticket-experiment variance (`upper-house-noticket-experiments.csv`) | yes |
+| majors' drift | common + party sd from 2010/2018/2022, x(1 + 1/2) (ticket-experiment variance `UH_REGIME` off: results addition 8) | yes |
 | One Nation ratio | DerSimonian-Laird over units (`upper-house-onp-sources.csv` + DemosAU same-poll) | yes |
 | federal One Nation min divisions per state row | 5 | no: guard against one-seat ratios (11 of 37 rows dropped) |
 | One Nation region drift | mean of the majors' region variance | borrowed |
 | minor pattern shrink w | tau2/(tau2+s2) from groups in both 2018 and 2022 (0.76) | yes (in-sample) |
 | polled minor levels | DemosAU 21-25 Nov: DLP 4, Legalise Cannabis 4, VS 3 (`external/reference/polls/demosau-upper-lower-2025-2026.csv`) | yes (poll) |
-| room left for un-polled minors | 1 point | no: guard |
+| un-polled minor groups total | DemosAU 21-25 Nov "others" 10% (scaled together; the pool is then shared in proportion) | yes (poll) |
 | unmatched minor group level | region's 2022 median minor share, x0.3 for ungrouped/unnamed | inherited from switch 0 |

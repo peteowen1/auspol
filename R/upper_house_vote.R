@@ -408,28 +408,22 @@ uh_minor_region_levels <- function(mi, tot22, w, vw, polled = numeric(0),
 
 #' Simulated minor-group votes in one region
 #'
-#' Polled groups keep their level x a per-simulation sampling factor (shared across regions, passed in); the rest
-#' share what is left of the pool with Dirichlet noise around their expected levels.
+#' The pool (what the majors and One Nation leave) is shared across ALL the region's minor groups in proportion to
+#' their expected levels, with Dirichlet noise; a polled group's weight is also multiplied by its per-simulation
+#' sampling factor (shared across regions, passed in). Proportional, not "polled groups fixed and the rest stretched":
+#' holding polled groups fixed left the un-polled ones absorbing every swing in the pool (results addition 7).
 #' @param lv data.frame for ONE region from [uh_minor_region_levels()], in the column order wanted.
 #' @param pool length-N vector: percent left after the majors and One Nation.
 #' @param zf N x (polled groups) matrix of multiplicative sampling factors, columns named by key.
 #' @param conc Dirichlet concentration (the build script's CONC).
-#' @param floor_rest minimum points left for the un-polled groups.
-#' @return N x groups matrix of percent.
+#' @return N x groups matrix of percent; rows sum to `pool`.
 #' @export
-uh_minor_votes <- function(lv, pool, zf, conc = 30, floor_rest = 1) {
-  N <- length(pool); G <- nrow(lv); out <- matrix(0, N, G)
-  ip <- which(lv$polled); io <- which(!lv$polled)
-  named <- matrix(0, N, length(ip))
-  for (j in seq_along(ip)) named[, j] <- lv$level[ip[j]] * zf[, lv$key[ip[j]]]
-  ns <- rowSums(named); cap <- pmax(0, pool - floor_rest)
-  sc <- ifelse(ns > cap & ns > 0, cap / ns, 1); named <- named * sc
-  rest <- pool - rowSums(named)
-  if (length(io)) {
-    wo <- lv$level[io] / sum(lv$level[io])
-    gam <- matrix(stats::rgamma(N * length(io), shape = rep(conc * wo, each = N)), N)
-    out[, io] <- gam / rowSums(gam) * rest
-  }
-  out[, ip] <- named
-  out
+uh_minor_votes <- function(lv, pool, zf, conc = 30) {
+  N <- length(pool); G <- nrow(lv)
+  if (any(!is.finite(lv$level)) || any(lv$level <= 0)) stop("uh_minor_votes: every minor group needs a positive level")
+  W <- matrix(lv$level, N, G, byrow = TRUE)
+  for (j in which(lv$polled)) W[, j] <- W[, j] * zf[, lv$key[j]]
+  W <- W / rowSums(W)
+  gam <- matrix(stats::rgamma(N * G, shape = conc * W), N)
+  gam / rowSums(gam) * pool
 }

@@ -112,13 +112,17 @@ test_that("minor pattern: shrinkage needs enough pairs; region levels keep the s
   expect_equal(unname(uh_level_by_region(4, c(r1 = 0.5), 0, vw)), rep(4, 3))
 })
 
-test_that("minor votes fill the pool exactly; polled groups hold their level unless the pool is too small", {
+test_that("minor votes fill the pool exactly, in proportion to the levels, polled weight moved by its factor", {
   lv <- data.frame(key = c("P", NA, NA), level = c(4, 2, 1), polled = c(TRUE, FALSE, FALSE))
-  zf <- matrix(1, 200, 1, dimnames = list(NULL, "P"))
-  set.seed(4); mv <- uh_minor_votes(lv, rep(20, 200), zf)
-  expect_equal(rowSums(mv), rep(20, 200))
-  expect_equal(mv[, 1], rep(4, 200))
-  small <- uh_minor_votes(lv, rep(3, 200), zf)
-  expect_equal(small[, 1], rep(2, 200))                 # capped at pool - 1
-  expect_equal(rowSums(small), rep(3, 200))
+  zf <- matrix(1, 4000, 1, dimnames = list(NULL, "P"))
+  set.seed(4); mv <- uh_minor_votes(lv, rep(14, 4000), zf)
+  expect_equal(rowSums(mv), rep(14, 4000))
+  expect_equal(unname(colMeans(mv)), c(8, 4, 2), tolerance = 0.03)
+  big <- uh_minor_votes(lv, rep(28, 4000), zf)               # a bigger pool scales every group, polled or not
+  expect_equal(unname(colMeans(big)), c(16, 8, 4), tolerance = 0.03)
+  zf2 <- zf; zf2[] <- 2
+  up <- uh_minor_votes(lv, rep(14, 4000), zf2)
+  expect_gt(mean(up[, 1]), 9.5)
+  bad <- lv; bad$level[2] <- 0
+  expect_error(uh_minor_votes(bad, rep(14, 10), zf[1:10, , drop = FALSE]), "positive level")
 })

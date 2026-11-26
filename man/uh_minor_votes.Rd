@@ -4,7 +4,7 @@
 \alias{uh_minor_votes}
 \title{Simulated minor-group votes in one region}
 \usage{
-uh_minor_votes(lv, pool, zf, conc = 30, floor_rest = 1)
+uh_minor_votes(lv, pool, zf, conc = 30)
 }
 \arguments{
 \item{lv}{data.frame for ONE region from \code{\link[=uh_minor_region_levels]{uh_minor_region_levels()}}, in the column order wanted.}
@@ -14,13 +14,13 @@ uh_minor_votes(lv, pool, zf, conc = 30, floor_rest = 1)
 \item{zf}{N x (polled groups) matrix of multiplicative sampling factors, columns named by key.}
 
 \item{conc}{Dirichlet concentration (the build script's CONC).}
-
-\item{floor_rest}{minimum points left for the un-polled groups.}
 }
 \value{
-N x groups matrix of percent.
+N x groups matrix of percent; rows sum to \code{pool}.
 }
 \description{
-Polled groups keep their level x a per-simulation sampling factor (shared across regions, passed in); the rest
-share what is left of the pool with Dirichlet noise around their expected levels.
+The pool (what the majors and One Nation leave) is shared across ALL the region's minor groups in proportion to
+their expected levels, with Dirichlet noise; a polled group's weight is also multiplied by its per-simulation
+sampling factor (shared across regions, passed in). Proportional, not "polled groups fixed and the rest stretched":
+holding polled groups fixed left the un-polled ones absorbing every swing in the pool (results addition 7).
 }
