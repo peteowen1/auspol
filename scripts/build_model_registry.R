@@ -1102,7 +1102,14 @@ CLASSIFY <- list(
   AUSPOL_ONP_FLOW_KEYS = paste(
     "DEAD EXPERIMENT, off: both arms (cond, cond2) refused on 35 elections 24 Nov (plans/prereg-onp-flow-keys-2026-11-24.md).",
     "Read in R/xgb_flow_override.R inside xgb_flow_conditional_override_for(), which every harness and fit_seats_full.R",
-    "call for per-seat flows (ONK1 line).")
+    "call for per-seat flows (ONK1 line)."),
+  # ---- Added 2026-11-26.
+  AUSPOL_ONP_FLOW_CAL = paste(
+    "ARM, off: One Nation pairwise flow calibration (plans/prereg-onp-flow-calibration-2026-11-26.md). Read in",
+    "R/onp_flow_cal.R, called at the end of xgb_flow_conditional_override_for(), which every harness and",
+    "fit_seats_full.R call for per-seat flows (ONC0/ONC1 lines)."),
+  AUSPOL_ONP_FLOW_CAL_K = paste(
+    "Shrinkage constant for AUSPOL_ONP_FLOW_CAL, read in R/onp_flow_cal.R; inert while that switch is 0.")
 )
 
 fmt_row <- function(sw) {

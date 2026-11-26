@@ -65,3 +65,35 @@ elections) and shrinks.
 - **Power, stated now:** only sa2026 has more than two One Nation final counts (29); the others have 1-2 each. The
   primary is effectively an sa2026 measurement with a handful of other seats.
 - No 20,000-sim deciding run before 28 Nov (time).
+
+## RESULT (26 Nov, evening)
+
+### Primary: flow-only One Nation TCP error (`scripts/score_onp_flow_cal.R`, actual primaries)
+
+36 One Nation final counts in fed2016, fed2019, fed2025, qld2020, qld2024, sa2026; 28 scored (the actual final pair
+comes out of the count under both arms; the 8 others, e.g. Maranoa, finish Labor v Coalition under both). Absolute
+error of One Nation's share of the final two, points, lower is better:
+
+| election | final two | seats | switch 0 | switch 1 | bias 0 | bias 1 |
+|---|---|---|---|---|---|---|
+| sa2026 | ALP v ONP | 23 | 4.18 | 3.80 | -0.96 | -1.44 |
+| sa2026 | LNP v ONP | 4 | 5.14 | 4.66 | +0.28 | -0.57 |
+| qld2020 | ALP v ONP (Mirani) | 1 | 23.29 | 23.33 | -23.29 | -23.33 |
+| **pooled** | | **28** | **5.00** | **4.62** | -1.58 | -2.10 |
+
+Change -0.38 points. SE: 0.12 paired over seats (18 better, 10 worse); the election-clustered SE (0.03) rests on two
+elections and is not meaningful. Winners reproduced from actual primaries: 32 -> 33 of 36 (Light, SA: now Labor, as
+happened). Passes the primary by about 3 seat-level SE. It is effectively an sa2026 result, as stated in advance.
+Bias: switch 1 leaves One Nation slightly UNDER its real final share in sa2026 (-1.4), so the calibrated flows are
+not too far the other way there.
+
+### Unacceptable clause: live splits inside the measured ranges
+
+Every live vic2026 split after calibration sits inside the range of the per-election measured rates for its class
+(e.g. Labor between Coalition and One Nation 58.6% to Coalition, measured 53.9-67.0; Greens between Labor and One
+Nation 80%, measured 75.3-94.1). Clause not triggered.
+
+### Live effect (replay of `night-state-vic-2026.rds` from run 45772760059, 20,000 sims)
+
+Switch 0 reproduces the published forecast (One Nation 19.5 expected seats; Ripon One Nation 52.6 v Coalition,
+published 52.5).
