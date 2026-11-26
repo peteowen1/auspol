@@ -8,23 +8,16 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
-- **Status 25 Nov, 10pm (replaces the 2pm block; that one is in git history).** Live: 100k sims daily incl. scenarios,
-  upper house on the site, seat TCP per what-if. Six Nov YouGov MRP seats (Mulgrave, Bendigo East corrected, Kew, Pakenham,
-  Niddrie, Melbourne) in table md5 f560c155, published by run 45584793640 at 8:32pm (scenarios not rerun: what-if page is
-  the 3:29pm run until 4:30am). ON from 4:30am Thu: ind_person cache across processes (PR #283 merged, on dev), Victorian
-  Socialists from YouGov's regional crosstab in the upper house (`AUSPOL_UPPER_HOUSE_VS_POLL=1`, 7f12d55b). On dev only:
-  seat-level quick tester (merged 6b6910db), switch registry scans .sh/.ps1 (d718b747, dev-e2). OFF by decision:
-  former-leader cut, regional seat correlation, upper-house all-party regional blend (DECISIONS 25 Nov). dev -> main
-  after 28 Nov (dev carries deliberately-off-main work). Rebuild worktrees `C:/dev/auspol-wt-rb*`: unlink junctions before removing.
-- DONE 26 Nov 8:12pm: all 88 YouGov MRP seats loaded (table md5 4bf15725, run 45789715805).
-- **NEEDS PETE (26 Nov): seat-type correlation, both arms REFUSED under the prereg's clause 1** (branch `seat-corr-type`
-  d3367c17, RESULT in `docs/plans/prereg-seat-type-cor-2026-11-25.md`). Type only: -0.0071 (0.41 SE), null. Region + type:
-  -0.0159 (0.92 SE; needs 1 SE), passes clauses 2-5 (sign 35 of 35). Recommendation: OFF for 28 Nov; rescore after.
-- LIVE 26 Nov 8:03am: PR #284 (Victorian Socialists 0.54 seats) via the new upper-house-only run (PR #285, 62 s). To
-  republish the upper house alone: `gh workflow run forecast.yaml -R peteowen1/auspol --ref main -f only=upper-house`.
-- CHECKED 26 Nov 4:30am run 45665482641 (main a0efa804): success; CSC9 72 of 72, CSC7 0 of 88 for all parties; S6, NS1,
-  CFC9, OK council, OK whatif present; cache fix (#283) works: Victorian what-ifs 152 s -> 90 s each (72 scenarios,
-  vs run 45545825468); what-if jobs ~17 min. Hung 61.5%. The what-if step logs no IPC1 lines (summary output only).
+- **Status 26 Nov, 9:30pm (replaces 25 Nov 10pm; today's detail is in DECISIONS 26 Nov).** Live (main, final run 45789715805,
+  8:24pm): DemosAU poll, all 88 YouGov MRP seats (table md5 4bf15725), region + seat-type correlation (PR #288), upper house
+  version D (PR #289), NSW 2027 OFF the daily run (repo var). Refused, kept off: One Nation flow calibration (branch
+  onp-flow-cal). Republish the upper house alone: `gh workflow run forecast.yaml -R peteowen1/auspol --ref main -f only=upper-house`.
+  Rebuild worktrees `C:/dev/auspol-wt-rb*` hold the live inputs: unlink junctions before removing.
+- OPEN, DATED Fri 27 Nov 4:30am run (first Victoria-only daily): success; no nsw2027 steps or jobs; UHV/UHF3 lines (upper house
+  version D); SCC1 (correlation); CSC9/CSC7 pass; published numbers near the 8:24pm run (hung 58%, Coalition majority 41%).
+- OPEN, BEFORE 28 Nov: election-night runner with the correlation (night state now carries seat_cluster/cluster_rho,
+  checked only at zero votes counted; night_replay*.R do not pass the factor). Done when a 2022 replay at a partial count
+  runs with the factor and its seat numbers are sane.
 - OPEN, after 28 Nov: One Nation allocation. The modelled version is LIVE on Pete's override of its refusal (23 Nov, DECISIONS);
   the rank rule with retrained trees stays off. Score both on vic2026 once results are in.
 - OPEN, 15 Nov full review (`reviews/FABLE-FULL-REVIEW-2026-11-15.md`, "Pick up from here" is the work list; DECISIONS
@@ -122,11 +115,6 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   run stage 9 from here until a full rebuild is checked. nsw2027's demographic table has no shift.
   25 Nov morning checks (early-share correction live, whatif on R2, seat TCP per scenario, upper house) DONE; text verbatim
   in `backlog/journal-2026-11-25-queue-history.md`, with the superseded #1262 note (#1310 merged 26 Nov).
-- DONE 26 Nov 5:13am, VEC venues recheck: reissued ("correct as at 24th Nov 7:00pm", Last-Modified 24 Nov 22:56 GMT), saved
-  raw `voting-locations/raw-20261126-0513/`, rebuilt: same 1,852 + 310 centres, none added or removed; only entrance /
-  accessibility text on 3 election-day + 1 early centre (Glenroy South and Broadmeadows EVC 1: lift out of order, stairs only).
-  Night model unaffected (booth names unchanged), geocoder nothing new, night bundle NOT re-uploaded (no booth change).
-  ITG confirmed 26 Nov: the booth finder shows no accessibility text, so no rebuild.
 - OPEN, DATED (Fri 27 Nov, the capture of record): vic2026 benchmark capture. REHEARSED 26 Nov 9:35am (UTC folder 2026-11-25, 432ab86b): every scripted source fine; TAB and GES still need the Chrome steps; the betfair VBK2! warning (79-82 thin books left out) is normal (74 on 23 Nov). 24 Nov 9:16am done, every source (`docs/benchmarks/vic2026/2026-11-23/`; TAB moved to one "Vic Seats" event, read by
   `bk_tab_seats()`; 27 Nov: also rebuild `seat-odds-page.html` there, the seat odds artifact
   https://claude.ai/artifact/PJHtfKoc8xKvhjUErCb9QR; and the SITE page politics/odds.qmd: hand-write that folder's
