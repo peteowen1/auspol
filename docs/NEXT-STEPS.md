@@ -23,6 +23,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   firm_alias.csv pattern `synesis` misses the second). Fix ready: pattern `synesis|agenda c` (scratchpad rel27/firm_alias-fixed.csv,
   proved to pair them); it goes to external/reference/polls/statewide-samples/ AND the shipped-models release (an upload). Size: 60-day
   poll means move ALP -0.14, ONP -0.12, LNP -0.09, GRN +0.18 points. In the published forecast since at least 26 Nov.
+  OPEN after 28 Nov, same check over every Vic poll (640): 3 older pairs with near-identical primaries under two names within
+  4 days: uComms/ReachTEL 13-14 Nov 2018 (same company, almost surely one poll), Essential/Galaxy 2014, Essential/Newspoll2 2017
+  (maybe coincidence). Rerun the check over every state's poll table.
 - DONE 26 Nov 11:55pm, night swing to uncounted seats: built OFF (`R/night_borrow.R`, replay `--borrow`), stays OFF for 28 Nov:
   vic2022 worse at every fraction (early swing overstates the final), fed2025 up to 9% better. OPEN after 28 Nov: correct the
   early-booth bias, rescore on real-feed replays. `reviews/night-borrowed-swing-2026-11-26.md`.
