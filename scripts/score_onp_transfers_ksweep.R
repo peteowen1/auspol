@@ -6,7 +6,7 @@
 root <- "C:/dev/auspol"; options(auspol.root = root)
 suppressMessages(devtools::load_all(".", quiet = TRUE)); suppressMessages(library(data.table))
 SMOOTH <- 0.15
-ARMS <- c("0", "0.25", "1", "3", "10", "30")
+ARMS <- c("0", "0.25", "1", "3", "10", "20", "30")
 SD <- fread(file.path(root, "output", "pooled-sharedetail.csv"), showProgress = FALSE)
 TR <- fread(file.path(root, "output", "xgb-flows-v1-features.csv"), showProgress = FALSE,
             select = c("election", "seat", "round", "event_id", "from", "surv", "to", "votes"))
