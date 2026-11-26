@@ -52,6 +52,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   2022 pages (run 44984447331, 2 cycles, 4-5 min refresh). 23 Nov: two runs failed on the VEC site refusing GitHub (HTTP 999); fixed by the cooldown/retry commits e478d8e9, 60bc0b4f, 6de5673c (on `main`); rerun 45199291224 passed (4 cycles, 87 of 88 seats, uploaded to the test key, no `VWF3!`). TO DO: after the 26 Nov venues recheck, if any bundled file changed,
   `bash scripts/publish_night_inputs.sh --upload` (23 Nov 8:45pm: the uploaded bundle matches all 18 local files). The 25 Nov
   `web-2022` rehearsal PASSED (run 45537238935). Done when: the venues recheck is done. UNTESTED: the live key, a 330-minute run. Detail: `backlog/journal-2026-11-21-queue-history.md`.
+- RISK FOR 28 Nov (found 26 Nov 9:10pm): the VEC website rate-limited the LAPTOP (HTTP 999 on 32 of 174 pages at the default
+  --parallel=4), so no complete snapshot and no cycle. On the night start with --parallel=4 and drop to --parallel=1 (about 5 min a
+  fetch) if VWF5! 999s appear; the GitHub backup already uses --parallel=1 --retries=6 --retry-pause=120.
 - OPEN, NIGHT SOURCE (before 28 Nov): the VEC REFUSED the feed (11 Nov); the night runs on the VEC WEBSITE
   (`R/vec_web.R`, `scripts/fetch_vec_web_snapshot.R`, `night_cycle(source_type = "web")`, `cand_ref = "copy"`). Still open:
   (1) the 2026 results index URL is only known on the night (the fetcher takes --index); (2) ASSUMED (Pete, 17 Nov;
