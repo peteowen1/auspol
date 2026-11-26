@@ -145,3 +145,46 @@ The named risk happened: in the four SA 2026 seats One Nation WON, the arm lower
 improved (5.00 -> 4.62 on 28 seats) by fitting the seats One Nation lost better. Guard fails; per the clause-refusal
 rule the split went to Pete, who chose to keep the current flows for 28 Nov (26 Nov ~7:55pm). Rescore after the
 election with vic2026 added.
+
+## AMENDMENT 1, 27 Nov 2026: Pete chose to ship, then a flow-only transfer test was run and it was NOT shipped
+
+Added after the result; the clauses above are unedited. Pete asked (27 Nov) why the live Labor split between the
+Coalition and One Nation is ~54% to the Coalition and chose to test and ship fixes. Two facts measured that morning:
+
+- Why the trees give ~54%: for `ALP|LNP+ONP` the time-forward history rate is 62.9% to the Coalition but backed by
+  2.7 effective events; the trees score each destination near 0.5 (Coalition 0.55, One Nation 0.47 in Ripon), the
+  rescale gives 55.1% (median, 88 seats) and the 0.15 smoothing toward uniform about 54%.
+  (`scratchpad/onpf/decompose_live.R`.)
+- The offset the guard failure was blamed on is real: on the published path (output/published-predictions.csv,
+  built 13 Nov) sa2026's One Nation primary is 2.9 points low on average over 47 seats, and in the seats it won
+  Hammond -2.3, MacKillop -11.4, Narungga -8.8, Ngadjuri +0.7. With actual primaries the calibration is better
+  (TCP error 5.00 -> 4.62, winners 32 -> 33 of 36); the generous flows had been covering for the primaries.
+
+Live replay on the 27 Nov 7:39am state (20,000 sims): One Nation 18.5 -> 13.3 expected seats, Coalition 43.1 -> 45.3,
+Labor 19.4 -> 22.5, P(Coalition majority) 43.4% -> 51.9%, P(hung) 56.3% -> 47.5%.
+
+Pete chose "Ship it" (~9:10am), then asked whether a flow change should be judged on the flows themselves (transfer
+log loss) rather than seat or primary metrics. That test, run before anything was pushed:
+
+Transfer log loss (vote-weighted cross-entropy of the ACTUAL destination shares in every real exclusion with One
+Nation alive, actual primaries, flows after the 0.15 smoothing; 1,948 events, 15 elections; per-election change vs
+the trees, lower is better; `scratchpad/onpf/event_ksweep.R`):
+
+| arm | change | SE | better / worse |
+|---|---|---|---|
+| k 3, every class (this switch) | -0.0002 | 0.0016 | 8 / 7 |
+| k 1 | +0.0014 | 0.0019 | 7 / 8 |
+| k 0.25 | +0.0026 | 0.0023 | 7 / 8 |
+| k 10 | -0.0013 | 0.0011 | 9 / 6 |
+| k 30 | -0.0012 | 0.0007 | 13 / 2 |
+| Greens only, k 3 | -0.0001 | 0.0009 | 8 / 5 |
+| k per class chosen leave-one-election-out | +0.0001 | 0.0007 | 7 / 7 |
+
+Two-way split to the non-One-Nation major (trees / k 3 / actual): minor right 48.1 / 50.1 / 36.8 (786 events), other
+minors 43.1 / 45.3 / 37.2 (611), independents 45.2 / 49.7 / 44.8 (266), Greens 50.0 / 56.5 / 54.4 (266). Labor
+exclusions with the Coalition and One Nation alive: 3 events, unmeasurable.
+
+DECISION (Pete, 27 Nov ~9:40am, "go" on the recommendation): NOT shipped. No arm beats the trees on transfers by more
+than its noise, and the commonest cases (minor right, other minors) get worse. The local merge to dev was undone
+before any push. Open after 28 Nov: the trees over-send minor-right preferences to the Coalition (48 vs 37); a
+pairwise flow target; the One Nation primary under-call; rescore with vic2026's own counts added.
