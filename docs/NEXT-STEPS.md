@@ -374,6 +374,11 @@ Trigger: the post-election review after 28 Nov, unless an item names its own.
   (Parramatta, Heathcote): walk examples with Pete before any rule.
 
 ## Harness and pipeline hygiene
+- OPEN, AFTER 28 Nov (One Nation flows, shipped k=20 on 27 Nov; DECISIONS 27 Nov): review nits from the ship: the comment at
+  `R/xgb_flow_override.R` ~471 still says the calibration defaults off; `scripts/score_onp_transfers_ksweep.R` ARMS lacks "20"
+  (the k=20 run used scratch `event_k20.R`) and has no per-election aggregation step. Then the real work: the trees over-send
+  minor-right preferences to the Coalition (48 vs 37 actual, 786 events), a pairwise flow target, the One Nation primary
+  under-call (sa2026 -2.9 pts), rescore with vic2026's own counts. Fixes 3 (no Labor card data) and 4 (smoothing) open too.
 - OPEN, AFTER 28 Nov (speed, Pete 26 Nov: "only run what a change needs"; `reviews/speed-sweep-2-*-2026-11-26.md`, verified):
   (1) more `only=` modes (pages, lower-house, scenarios, nsw2027) + per-stage input hashes, 25-45 min per one-area manual run;
   (2) NSW 2027 weekly or on input change (83 s critical path, ~85 runner-min/day; Pete decides, repo var AUSPOL_PUBLISH_NSW2027);
