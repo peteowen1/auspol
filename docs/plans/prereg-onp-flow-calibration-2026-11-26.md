@@ -97,3 +97,29 @@ Nation 80%, measured 75.3-94.1). Clause not triggered.
 
 Switch 0 reproduces the published forecast (One Nation 19.5 expected seats; Ripon One Nation 52.6 v Coalition,
 published 52.5).
+
+Expected seats and chances (88 seats, majority 45; a replay, same primaries and draws as the published run):
+
+| | switch 0 (published) | switch 1 |
+|---|---|---|
+| One Nation expected seats | 19.5 | 14.2 |
+| Coalition | 41.8 | 44.1 |
+| Labor | 19.8 | 22.8 |
+| Greens | 6.6 | 6.5 |
+| P(Coalition majority) | 39.1% | 47.6% |
+| P(hung parliament) | 60.6% | 51.8% |
+
+One Nation's share of the final two against the Coalition (median over runs with that pair), points, against YouGov:
+
+| seat | switch 0 | switch 1 | YouGov |
+|---|---|---|---|
+| Ripon | 52.6 | 50.5 | 41 |
+| Eildon | 45.6 | 44.7 | 35 |
+| Shepparton | 43.0 | 42.7 | 35 |
+| Morwell | 50.5 | 49.1 | 40 |
+| Lowan | 50.2 | 49.8 | 47 |
+| Ovens Valley | 50.1 | 49.5 | 44 |
+
+The calibration closes 1-2 points, under a fifth, of the TCP gap to YouGov in these seats; most of the remaining gap is YouGov's
+own assumption (about 79% of the other candidates' votes to the Coalition, above every real count on disk: sa2026
+62.7-68.6% in four such seats). Seat counts move more than TCPs because many seats sit near 50.
