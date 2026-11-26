@@ -366,6 +366,12 @@ Trigger: the post-election review after 28 Nov, unless an item names its own.
   (Parramatta, Heathcote): walk examples with Pete before any rule.
 
 ## Harness and pipeline hygiene
+- OPEN, AFTER 28 Nov (speed, Pete 26 Nov: "only run what a change needs"; `reviews/speed-sweep-2-*-2026-11-26.md`, verified):
+  (1) more `only=` modes (pages, lower-house, scenarios, nsw2027) + per-stage input hashes, 25-45 min per one-area manual run;
+  (2) NSW 2027 weekly or on input change (83 s critical path, ~85 runner-min/day; Pete decides, repo var AUSPOL_PUBLISH_NSW2027);
+  (3) 3 scenario offsets at once per job (build_scenarios.R:63 serial; ~8-10 min off the run); (4) fit_federal/fit_nsw weekly
+  (outputs unread, 63 s); (5) actions/cache for output/cache/cross-seat; (6) save the level-independent prefix of fit_seats_full.R
+  for what-ifs (verifier: level dependence not traced, check before building).
 - OPEN (speed, CORRECTED 6 Nov 12:40pm) stage 4 (`fit_xgb_primary_asat.R`) 1,664 s for 31 models on a full retrain. The "287 s before"
   I compared it with was `driver.log` of 19 SEP (22 elections, ensemble 1); not the kernel leak. Cost per model grows with the corpus:
   `xgb.cv` uses ONE FOLD PER EARLIER ELECTION (sa2026: 34 folds, 401 rounds, 142 s; sa2010: 4 folds, 1 s), times `AUSPOL_XGB_ENSEMBLE=3`
