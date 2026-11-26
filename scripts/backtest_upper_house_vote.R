@@ -143,3 +143,46 @@ cat(sprintf("   Shrink weight w %.2f (pattern instability sd %.3f, between-regio
 cat("   RMSE of region share, points (lower is better):\n")
 print(mt[, .(n = .N, flat = round(sqrt(mean((flat - act)^2)), 3), raw_2018_pattern = round(sqrt(mean((raw - act)^2)), 3), shrunk = round(sqrt(mean((shrunk - act)^2)), 3))], row.names = FALSE)
 print(mt[, .(n = .N, flat = round(sqrt(mean((flat - act)^2)), 3), raw = round(sqrt(mean((raw - act)^2)), 3), shrunk = round(sqrt(mean((shrunk - act)^2)), 3)), by = grp], row.names = FALSE)
+
+## ---- 5. ballot crowding (prereg addition 9-10) ----
+cr <- fread("external/reference/vec/upper-house-crowding-inputs.csv")
+cat("\n5. BALLOT CROWDING. x = log(groups on the ballot per seat to fill); ticket = 1 for Victoria 2010-22 and WA 2021.\n")
+for (sc in c("per_seat", "raw")) {
+  et <- uh_crowding_table(cr, sc)
+  allE <- setdiff(unique(et$election), "vic2026")
+  cf <- uh_crowding_fit(et, allE)
+  cat(sprintf("\n   Fit on all %d elections, scale %s%s. Coefficients per party (OLS, se, shrink weight, shrunk):\n", cf$n, sc, if (sc == "raw") " (SENSITIVITY)" else " (PRE-REGISTERED)"))
+  print(cf$coef[, .(cls, b_ols = round(b_ols, 3), se_b = round(se_b, 3), w_b = round(w_b, 2), b = round(b, 3),
+                    c_ols = round(c_ols, 3), se_c = round(se_c, 3), w_c = round(w_c, 2), c = round(c, 3), a = round(a, 3))], row.names = FALSE)
+  cat(sprintf("   residual log sd: common %.3f, party %.3f (df %d)\n", cf$common_sd, cf$party_sd, cf$n - 3))
+  if (sc == "per_seat") {
+    print(dcast(et, election + x + ticket ~ cls, value.var = "y")[, lapply(.SD, function(v) if (is.numeric(v)) round(v, 3) else v)], row.names = FALSE)
+    x26 <- unique(cr[election == "vic2026", .(unit, xg = log(groups / seats))]); xr <- setNames(x26$xg, x26$unit)
+    pr <- uh_crowding_predict(cf, xr, 0)
+    sdt <- sqrt(cf$common_sd^2 + cf$party_sd^2 + pr$coef_var)
+    cat("   2026 prediction (no tickets), statewide (mean x), ratio and 80% interval of the statewide draw:\n")
+    print(data.table(cls = names(sdt), ratio = round(exp(colMeans(pr$point)), 3), lo80 = round(exp(colMeans(pr$point) - 1.2816 * sdt), 3),
+                     hi80 = round(exp(colMeans(pr$point) + 1.2816 * sdt), 3), log_sd = round(sdt, 3)), row.names = FALSE)
+    cat("   by region:\n"); print(round(exp(pr$point), 3))
+    cf_live <- cf
+  }
+}
+# backtest: 2022 regions from the time-forward fit, 2022's own group counts, ticket = 1
+et <- uh_crowding_table(cr, "per_seat")
+tf <- c("vic2010", "vic2018", "nsw2019", "wa2021", "sa2022")
+bt22 <- function(cf, label) {
+  T <- rt[election == "vic2022"]; x22 <- unique(cr[election == "vic2022", .(reg = unit, xg = log(groups / seats))])
+  P <- uh_crowding_predict(cf, setNames(x22$xg, x22$reg), 1)$point
+  h <- T[, .(party, reg, us, hat = ls * exp(P[cbind(match(reg, rownames(P)), match(party, colnames(P)))]))]
+  data.table(arm = label, n = nrow(h), rmse = sqrt(mean((h$hat - h$us)^2)),
+             rmse_ALP = h[party == "ALP", sqrt(mean((hat - us)^2))], rmse_LNP = h[party == "LNP", sqrt(mean((hat - us)^2))], rmse_GRN = h[party == "GRN", sqrt(mean((hat - us)^2))])
+}
+cft <- uh_crowding_fit(et, tf)
+cat(sprintf("\n   Time-forward fit for 2022 (%s): b = %s; c = %s\n", paste(tf, collapse = ", "),
+            paste(sprintf("%s %.3f", cft$coef$cls, cft$coef$b), collapse = " "), paste(sprintf("%s %.3f", cft$coef$cls, cft$coef$c), collapse = " ")))
+b22 <- rbind(B[target == "vic2022" & history == "vic2010+vic2018", .(arm, n, rmse, rmse_ALP, rmse_LNP, rmse_GRN)],
+             bt22(cft, "crowding (time-forward: 2010, 2018, nsw2019, wa2021, sa2022)"),
+             bt22(uh_crowding_fit(et, setdiff(unique(et$election), "vic2026")), "crowding_LEAKY (fitted on all 9 incl. 2022)"))
+cat("   BACKTEST 2022 (from 2010+2018 + earlier analogues), RMSE of region share, points, n = 24 (lower is better).\n",
+    "  2018 from 2010: the crowding model is NOT ESTIMABLE time-forward (one usable election).\n", sep = "")
+print(b22[, lapply(.SD, function(v) if (is.numeric(v)) round(v, 3) else v)], row.names = FALSE)

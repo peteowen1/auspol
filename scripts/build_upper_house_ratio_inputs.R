@@ -16,7 +16,7 @@ num <- function(v) suppressWarnings(as.numeric(gsub(",", "", v)))
 cand <- fread(file.path(SRC, "candidacies.csv"), select = c("election", "seat", "party", "votes", "ordinary"), showProgress = FALSE)
 
 ## ---- Victoria: council by district ----
-up <- list()
+up <- list(); ng <- list()   # ng: groups on the ballot per region (ungrouped columns excluded), for the crowding term
 for (y in c(2018, 2022)) {
   g <- fread(file.path(SRC, sprintf("council-fp-%d.csv", y)), select = c("region", "district", "block_kind", "row_kind", "group_name", "total"), showProgress = FALSE)
   d <- g[block_kind == "district_total" & row_kind %in% c("group", "ungrouped")]
@@ -24,6 +24,7 @@ for (y in c(2018, 2022)) {
   d[, district := sub(" District$", "", district)]
   if (y == 2018) fwrite(d[row_kind == "group", .(votes = sum(total)), by = .(region, group_name)], "external/reference/vec/upper-house-group-totals-2018.csv")
   up[[as.character(y)]] <- d[, .(upper = sum(total)), by = .(region, district, cls)][, election := paste0("vic", y)]
+  ng[[as.character(y)]] <- d[row_kind == "group", .(groups = uniqueN(group_name)), by = region][, election := paste0("vic", y)]
 }
 # 2010: one sheet per district; the block whose header is "<name> District Total" with ATL/BTL/Total columns is the total.
 files <- Sys.glob(file.path(RAW, "state2010*RegionFPVbyVC.xls")); stopifnot(length(files) == 8L)
@@ -41,6 +42,7 @@ for (f in files) {
     stopifnot(length(rows) > 0, x[i, 2] == "Informal")                    # the block ended where it should
     r <- rbindlist(rows); r[, cls := ifelse(grepl("^UNGROUPED", toupper(group_name)), "IND", classify_party(group_name))]
     u10[[paste(reg, dist)]] <- r[, .(upper = sum(upper)), by = cls][, `:=`(election = "vic2010", region = reg, district = dist)]
+    ng[[paste("2010", reg, dist)]] <- data.table(region = reg, groups = sum(!grepl("^UNGROUPED", toupper(r$group_name))), election = "vic2010")
   }
 }
 u10 <- rbindlist(u10)
@@ -104,6 +106,30 @@ sv <- sm[, .(v = sum(v)), by = .(election = paste0("fed", fed), cls)][, sh := v 
 fv <- merge(hv, sv, by = c("election", "cls"), suffixes = c("_l", "_u"))[cls %in% c("ALP", "LNP", "GRN"), .(case = "Victorian Senate", election, cls, ratio = sh_u / sh_l)]
 nt <- rbind(nt, fv)
 fwrite(nt, "external/reference/vec/upper-house-noticket-experiments.csv")
+
+## ---- ballot crowding (prereg addition 9): groups per region / state, seats, tickets, statewide major ratios ----
+ngv <- unique(rbindlist(ng, use.names = TRUE))
+stopifnot(ngv[, .N, by = .(election, region)][, all(N == 1L)])           # one count per region (2010: same in every district)
+g26 <- fread("external/reference/vec/2026/upper-house-groups-2026.csv")
+ngv <- rbind(ngv, g26[!grepl("^Ungrouped", group), .(groups = .N), by = region][, election := "vic2026"])
+vs <- M[cls %in% c("ALP", "LNP", "GRN"), .(u = sum(upper), l = sum(lower)), by = .(election, cls)]
+vt <- M[, .(U = sum(upper), L = sum(lower)), by = election]
+vs <- merge(vs, vt, by = "election")[, .(election, cls, ratio = (u / U) / (l / L))]
+cr <- merge(ngv[, .(election, unit = region, groups, seats = 5L)], vs, by = "election", all.x = TRUE, allow.cartesian = TRUE)
+if (file.exists(OTH)) {
+  st2 <- o[geo_level == "state", .(v = sum(votes)), by = .(election, house, cls = party_class)][, sh := v / sum(v), by = .(election, house)]
+  ar <- dcast(st2[cls %in% c("ALP", "LNP", "GRN")], election + cls ~ house, value.var = "sh")[, .(election, cls, ratio = upper / lower)]
+  ug <- o[house == "upper" & !grepl("UNGROUPED", toupper(party_raw))]
+  an <- rbind(ug[geo_level == "state" & election != "wa2021", .(unit = "state", groups = uniqueN(party_raw)), by = election],
+              ug[geo_level == "region" & election == "wa2021", .(groups = uniqueN(party_raw)), by = .(election, unit = geo)])
+  an[, seats := c(nsw2019 = 21L, nsw2023 = 21L, sa2022 = 11L, sa2026 = 11L, wa2021 = 6L, wa2025 = 37L)[election]]
+  stopifnot(!anyNA(an$seats))
+  cr <- rbind(cr, merge(an, ar, by = "election", allow.cartesian = TRUE))
+}
+cr[, ticket := as.integer(grepl("^vic20(10|18|22)$|^wa2021$", election))]
+fwrite(cr[order(election, unit, cls)], "external/reference/vec/upper-house-crowding-inputs.csv")
+print(unique(cr[, .(election, unit, groups, seats, ticket)])[, .(units = .N, groups = paste(range(groups), collapse = "-"), seats = seats[1], ticket = ticket[1]), by = election])
+cat(sprintf("UHI7  crowding inputs: %d rows, %d elections\n", nrow(cr), uniqueN(cr$election)))
 cat(sprintf("UHI6  no-ticket experiments: %d rows (%s)\n", nrow(nt), paste(unique(nt$case), collapse = ", ")))
 cat(sprintf("UHI4  One Nation sources: %d (federal state-elections with >= 1 paired division: %d)\n", nrow(src), sum(src$kind == "federal Senate vs House")))
 fwrite(src, "external/reference/vec/upper-house-onp-sources.csv")

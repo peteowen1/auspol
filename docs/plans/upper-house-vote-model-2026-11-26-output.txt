@@ -193,3 +193,71 @@ Key: <poll>
          Sustainable Australia     8 0.245 0.153  0.176
                         Reason     8 0.988 0.253  0.447
               Health Australia     8 0.210 0.205  0.201
+
+5. BALLOT CROWDING. x = log(groups on the ballot per seat to fill); ticket = 1 for Victoria 2010-22 and WA 2021.
+
+   Fit on all 9 elections, scale per_seat (PRE-REGISTERED). Coefficients per party (OLS, se, shrink weight, shrunk):
+    cls  b_ols  se_b   w_b      b  c_ols  se_c   w_c     c      a
+ <char>  <num> <num> <num>  <num>  <num> <num> <num> <num>  <num>
+    ALP -0.037 0.032     0 -0.045  0.032 0.048     0 0.019 -0.038
+    GRN -0.057 0.039     0 -0.045  0.013 0.058     0 0.019 -0.026
+    LNP -0.048 0.051     0 -0.045 -0.006 0.076     0 0.019 -0.102
+   residual log sd: common 0.044, party 0.060 (df 6)
+Key: <election, x, ticket>
+ election      x ticket    ALP    GRN    LNP
+   <char>  <num>  <num>  <num>  <num>  <num>
+  nsw2019 -0.049      0 -0.115  0.017 -0.178
+  nsw2023  0.000      0 -0.010 -0.065 -0.172
+   sa2022  0.598      0 -0.078 -0.010 -0.031
+   sa2026  0.435      0 -0.021 -0.017 -0.047
+  vic2010  0.337      1 -0.025  0.069 -0.037
+  vic2018  1.294      1 -0.089 -0.146 -0.179
+  vic2022  1.487      1 -0.112 -0.104 -0.158
+   wa2021  1.135      1  0.007 -0.081 -0.212
+   wa2025 -1.046      0 -0.013 -0.011 -0.017
+   2026 prediction (no tickets), statewide (mean x), ratio and 80% interval of the statewide draw:
+    cls ratio  lo80  hi80 log_sd
+ <char> <num> <num> <num>  <num>
+    ALP 0.924 0.831 1.028  0.083
+    GRN 0.935 0.837 1.045  0.087
+    LNP 0.867 0.768 0.978  0.094
+   by region:
+                             ALP   GRN   LNP
+Eastern Victoria           0.929 0.940 0.871
+North-Eastern Metropolitan 0.925 0.936 0.868
+Northern Metropolitan      0.922 0.933 0.865
+Northern Victoria          0.922 0.933 0.865
+South-Eastern Metropolitan 0.925 0.936 0.868
+Southern Metropolitan      0.929 0.940 0.871
+Western Metropolitan       0.925 0.936 0.868
+Western Victoria           0.916 0.927 0.859
+
+   Fit on all 9 elections, scale raw (SENSITIVITY). Coefficients per party (OLS, se, shrink weight, shrunk):
+    cls  b_ols  se_b   w_b      b  c_ols  se_c   w_c      c     a
+ <char>  <num> <num> <num>  <num>  <num> <num> <num>  <num> <num>
+    ALP -0.057 0.050  0.14 -0.112 -0.017 0.034  0.06 -0.056 0.289
+    GRN -0.146 0.040  0.20 -0.126 -0.073 0.027  0.10 -0.060 0.342
+    LNP -0.155 0.057  0.11 -0.125 -0.084 0.039  0.05 -0.060 0.262
+   residual log sd: common 0.022, party 0.059 (df 6)
+
+   Time-forward fit for 2022 (vic2010, vic2018, nsw2019, wa2021, sa2022): b = ALP -0.042 GRN -0.129 LNP -0.078; c = ALP 0.052 GRN 0.052 LNP 0.052
+   BACKTEST 2022 (from 2010+2018 + earlier analogues), RMSE of region share, points, n = 24 (lower is better).
+  2018 from 2010: the crowding model is NOT ESTIMABLE time-forward (one usable election).
+                                                          arm     n  rmse
+                                                       <char> <num> <num>
+                                                 uniform_prev    24 1.768
+                                      current_constants_LEAKY    24 1.673
+                                                   raw_region    24 3.889
+                                                     A_shrunk    24 3.303
+                                                      B_slope    24 3.532
+ crowding (time-forward: 2010, 2018, nsw2019, wa2021, sa2022)    24 1.863
+                  crowding_LEAKY (fitted on all 9 incl. 2022)    24 1.772
+ rmse_ALP rmse_LNP rmse_GRN
+    <num>    <num>    <num>
+    2.360    1.803    0.748
+    2.220    1.754    0.627
+    2.723    6.056    1.128
+    2.716    4.990    0.671
+    2.460    5.475    1.185
+    2.630    1.771    0.595
+    2.389    1.807    0.667

@@ -126,3 +126,22 @@ test_that("minor votes fill the pool exactly, in proportion to the levels, polle
   bad <- lv; bad$level[2] <- 0
   expect_error(uh_minor_votes(bad, rep(14, 10), zf[1:10, , drop = FALSE]), "positive level")
 })
+
+test_that("crowding model recovers a known slope and ticket term; refuses too few elections or a constant ticket", {
+  set.seed(5)
+  e <- paste0("e", 1:9); gr <- c(6, 18, 22, 20, 21, 20, 17, 19, 13); se <- c(5, 5, 5, 21, 21, 11, 11, 6, 37); tk <- c(1, 1, 1, 0, 0, 0, 0, 1, 0)
+  cr <- do.call(rbind, lapply(c("ALP", "LNP", "GRN"), function(k) data.frame(election = e, unit = "s", groups = gr, seats = se, cls = k, ticket = tk,
+    ratio = exp(-0.05 + -0.06 * log(gr / se) + 0.03 * tk + rnorm(9, 0, 0.005)))))
+  et <- uh_crowding_table(cr)
+  cf <- uh_crowding_fit(et, e)
+  expect_equal(cf$coef$b, rep(-0.06, 3), tolerance = 0.15)
+  expect_equal(cf$coef$c, rep(0.03, 3), tolerance = 0.5)
+  pr <- uh_crowding_predict(cf, c(r1 = log(11 / 5), r2 = log(15 / 5)), 0)
+  expect_gt(pr$point["r1", "ALP"], pr$point["r2", "ALP"])          # more crowded ballot, lower ratio
+  set.seed(6); d <- uh_crowding_draws(cf, pr, c(ALP = 0.001, GRN = 0.001, LNP = 0.001), 2000)
+  expect_equal(median(d$LNP[, "r1"]), exp(pr$point["r1", "LNP"]), tolerance = 0.02)
+  expect_error(uh_crowding_fit(et, e[1:3]), "at least 4")
+  expect_error(uh_crowding_fit(et, e[c(4:7, 9)]), "does not vary")
+  bad <- cr; bad$groups[1] <- NA
+  expect_error(uh_crowding_table(bad), "group count")
+})

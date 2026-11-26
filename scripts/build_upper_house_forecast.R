@@ -80,7 +80,12 @@ CONC <- 30
 # Cannabis), Victorian Socialists at the YouGov regional figures above, the rest from 2022 with a shrunk regional
 # pattern scaled to DemosAU's "others"; the pool the majors leave is shared in proportion. NOISE (lower-house
 # regional error, not measured anywhere) is kept on top. "0" (default) draws nothing here: output unchanged.
-VM <- Sys.getenv("AUSPOL_UPPER_HOUSE_VOTE_MODEL", "0") == "1"
+# "2" = "1" with the majors' ratios from the ballot-crowding model (prereg addition 9): log ratio = a + b x + c
+# ticket, x = log(groups per seat), fitted on Victoria 2010/2018/2022 and six other-state upper houses, each 2026
+# region at its own group count, no tickets.
+UVM <- Sys.getenv("AUSPOL_UPPER_HOUSE_VOTE_MODEL", "0")
+if (!UVM %in% c("0", "1", "2")) stop("AUSPOL_UPPER_HOUSE_VOTE_MODEL must be 0, 1 or 2, got ", UVM)
+VM <- UVM %in% c("1", "2"); VM2 <- UVM == "2"
 if (VM) {
   if (!exists("uh_fit_majors")) { options(auspol.root = normalizePath(".")); suppressMessages(devtools::load_all(quiet = TRUE)) }
   uin <- fread("external/reference/vec/upper-house-ratio-inputs.csv"); urt <- uh_region_table(uin)
@@ -103,7 +108,16 @@ if (VM) {
   for (k in names(UH_SHIFT)) ufm$party[[k]]$mu <- ufm$party[[k]]$mu + UH_SHIFT[[k]]
   cat(sprintf("UHV0  majors: regional %s, ticket variance %s, level shift %s; drift log sd common %.3f, party %.3f\n", UH_REGIONAL, UH_REGIME,
               paste(sprintf("%s %+.3f", names(UH_SHIFT), UH_SHIFT), collapse = " "), ufm$drift_common_sd, ufm$drift_party_sd))
-  RAT1 <- uh_draw_major_ratios(ufm, uh_major_logratio(ufm, regions), N)
+  if (VM2) {
+    ucr <- fread("external/reference/vec/upper-house-crowding-inputs.csv"); uet <- uh_crowding_table(ucr, "per_seat")
+    ucf <- uh_crowding_fit(uet, setdiff(unique(uet$election), "vic2026"))
+    x26 <- unique(ucr[election == "vic2026", .(unit, xg = log(groups / seats))]); stopifnot(setequal(x26$unit, regions))
+    upr <- uh_crowding_predict(ucf, setNames(x26$xg, x26$unit)[regions], 0)
+    RAT1 <- uh_crowding_draws(ucf, upr, vapply(ufm$party, function(f) f$s2, 0), N)
+    cat(sprintf("UHV4  crowding model (%d elections): slope %s, ticket %s; 2026 statewide ratio %s; residual log sd common %.3f, party %.3f\n",
+                ucf$n, paste(sprintf("%s %.3f", ucf$coef$cls, ucf$coef$b), collapse = " "), paste(sprintf("%s %+.3f", ucf$coef$cls, ucf$coef$c), collapse = " "),
+                paste(sprintf("%s %.3f", colnames(upr$point), exp(colMeans(upr$point))), collapse = " "), ucf$common_sd, ucf$party_sd))
+  } else RAT1 <- uh_draw_major_ratios(ufm, uh_major_logratio(ufm, regions), N)
   uop <- uh_onp_pool(rbind(fread("external/reference/vec/upper-house-onp-sources.csv"), uh_onp_poll_units(upl, urt)$units, fill = TRUE))
   onp_sd_reg <- sqrt(mean(vapply(ufm$party, function(f) f$s2, 0)))      # region drift borrowed from the majors
   RAT1$ONP <- exp(uop$mu + rnorm(N, 0, uop$pred_sd) + matrix(rnorm(N * length(regions), 0, onp_sd_reg), N, dimnames = list(NULL, regions)))
@@ -208,7 +222,11 @@ jsonlite::write_json(list(
   regions = lapply(regions, function(r) list(region = r, groups = lapply(unname(split(tb[region == r][order(-quotas)], seq_len(sum(tb$region == r)))), function(z)
     list(group = z$group, class = z$class, vote_pct = round(z$quotas * 100 / 6, 2), quotas = round(z$quotas, 3), seats = round(z$seats, 3),
          p1 = round(z$p1, 4), p2 = round(z$p2, 4), p3 = round(z$p3, 4))))),
-  assumptions = c(if (VM) c(sprintf("Upper-house vote = lower-house forecast by region x a ratio per party fitted on Victoria 2010, 2018 and 2022 (Labor %.3f, Coalition %.3f, Greens %.3f), with its election-to-election drift drawn as uncertainty.",
+  assumptions = c(if (VM2) c(sprintf("Upper-house vote = lower-house forecast by region x a ratio per party from a ballot-crowding model (groups per seat, tickets) fitted on Victoria 2010-22 and six other states' upper houses (2026 statewide: Labor %.3f, Coalition %.3f, Greens %.3f).",
+                                    exp(mean(upr$point[, "ALP"])), exp(mean(upr$point[, "LNP"])), exp(mean(upr$point[, "GRN"]))),
+                            sprintf("One Nation ratio %.2f pooled from federal Senate, other states' upper houses, Victoria 2022 and DemosAU's same-poll figures.", exp(uop$mu)),
+                            "Minor vote shared in proportion to DLP and Legalise Cannabis at DemosAU 21-25 Nov levels, Victorian Socialists at YouGov regional figures, and the other groups from 2022 with a shrunk regional pattern.")
+                  else if (VM) c(sprintf("Upper-house vote = lower-house forecast by region x a ratio per party fitted on Victoria 2010, 2018 and 2022 (Labor %.3f, Coalition %.3f, Greens %.3f), with its election-to-election drift drawn as uncertainty.",
                                     exp(ufm$party$ALP$mu), exp(ufm$party$LNP$mu), exp(ufm$party$GRN$mu)),
                             sprintf("One Nation ratio %.2f pooled from federal Senate, other states' upper houses, Victoria 2022 and DemosAU's same-poll figures.", exp(uop$mu)),
                             "Minor vote shared in proportion to DLP and Legalise Cannabis at DemosAU 21-25 Nov levels, Victorian Socialists at YouGov regional figures, and the other groups from 2022 with a shrunk regional pattern.")

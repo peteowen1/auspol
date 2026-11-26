@@ -245,3 +245,55 @@ A uniform ratio averaged over 2018 and 2022 assumes the 2026 ballot is as crowde
     every row is shown labelled, for reference only.
 11. **Switch value "2"** = switch 1 with the majors' ratios from this model; "1" unchanged. Decision is Pete's,
     from the live table; this addition sets no automatic rule beyond reporting.
+
+### Results of the crowding term (addition 9-11), 26 Nov 2026 evening
+
+Groups per region counted (ungrouped excluded): Victoria 2010 6-10 (mean 7.1; the coordinator's sheet-2 count was
+6.5, so a region or two differ), 2018 18-19, 2022 22-23, 2026 11-15; NSW 2019 20 and 2023 21 (21 seats), SA 2022 20
+and 2026 17 (11 seats), WA 2021 18-19 per region (6 seats), WA 2025 13 (37 seats).
+
+**Fit, all 9 elections, x = log(groups per seat).** Each party's own slope and ticket term are close enough to
+each other that the pooling put no weight on the party differences (between-party variance estimated as 0):
+
+| party | slope, own (se) | slope, pooled | ticket, own (se) | ticket, pooled |
+|---|---|---|---|---|
+| Labor | -0.037 (0.032) | -0.045 | +0.032 (0.048) | +0.019 |
+| Greens | -0.057 (0.039) | -0.045 | +0.013 (0.058) | +0.019 |
+| Coalition | -0.048 (0.051) | -0.045 | -0.006 (0.076) | +0.019 |
+
+A doubling of groups per seat lowers a major's ratio by about 3% (exp(-0.045 x log 2)). The ticket term is near zero
+and well inside its se: with crowding in the model, tickets add nothing measurable. Residual log sd: common 0.044,
+party 0.060 (6 df). Sensitivity with raw log(groups): slopes -0.11 to -0.13 and ticket about -0.06.
+
+**2026 prediction (no tickets, each region at its own count):** Labor 0.924 (80% 0.83-1.03), Greens 0.935
+(0.84-1.05), Coalition 0.867 (0.77-0.98); regions differ by under 0.01 (Western Victoria, 15 groups, lowest). These
+sit above the switch-1 uniform ratios (0.905 / 0.882 / 0.845), because the 2026 ballot is less crowded than 2018-22.
+
+**Backtest, 2022 from 2010 + 2018 + earlier analogues (n = 24 cells, points, lower is better).** 2018 from 2010:
+not estimable (no analogue precedes it).
+
+| arm | RMSE | Labor | Coalition | Greens |
+|---|---:|---:|---:|---:|
+| uniform ratio, last election | **1.77** | 2.36 | 1.80 | 0.75 |
+| shrunk region effects | 3.30 | 2.72 | 4.99 | 0.67 |
+| region effects + level slope | 3.53 | 2.46 | 5.48 | 1.19 |
+| crowding, time-forward (5 elections) | 1.86 | 2.63 | 1.77 | 0.60 |
+| crowding, fitted on all 9 incl. 2022 (leaky) | 1.77 | 2.39 | 1.81 | 0.67 |
+
+The crowding arm does not beat uniform on 2022 (1.86 against 1.77); this backtest can say little, because 2018 and
+2022 had nearly the same crowding (x 1.29 against 1.49), so the term barely moves between them. Its case rests on
+the 2026 ballot being far less crowded than either, which only the cross-state rows measure.
+
+**Live table, 26 Nov forecast-latest, 4,000 simulations** (mean seats of 40, 80% range):
+
+| | switch 0 | switch 1 | switch 2 (crowding) |
+|---|---|---|---|
+| Labor | 10.0 (8-12) | 9.8 (7-12) | 10.0 (8-12) |
+| Coalition | 12.7 (11-14) | 12.5 (10-15) | 12.8 (11-15) |
+| One Nation | 8.7 (7-11) | 8.8 (7-11) | 8.7 (7-11) |
+| Greens | 6.7 (5-9) | 6.3 (4-8) | 6.7 (4-9) |
+| minor groups | 1.8 (0-4) | 2.6 (0-6) | 1.8 (0-4) |
+| P(Coalition + One Nation >= 21) | 72% | 65% | 70% |
+| P(Labor + Greens >= 21) | 1% | 2% | 3% |
+
+Switch "0" re-checked byte-identical to origin/dev.

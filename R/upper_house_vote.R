@@ -11,7 +11,7 @@
 utils::globalVariables(c("reg", "region", "election", "upper", "lower", "cls", "district", "party", "U", "L",
   "SU", "SL", "u", "l", "su", "sl", "us", "ls", "y", "m", "lstate", "d", "xr", "da", "dbar", "yd", "xd", "er",
   "lst", "kind", "se", "n", "log_ratio", "unit", "source", "weight", "key", "votes", "R", "v", "share", "state",
-  "pat", "pat_n", "pat_o", "yr", "ratio", "change", "com", "case", "poll", "house", "pct", "group_name", "group", "level", "polled", "med"))
+  "pat", "pat_n", "pat_o", "yr", "ratio", "change", "com", "case", "poll", "house", "pct", "group_name", "group", "level", "polled", "med", "xg", "groups", "seats", "ticket", "b_ols", "c_ols", "se_b", "se_c", "w_b", "w_c", "b", "a", "res"))
 
 #' Map an older Legislative Council region name to its 2022 successor
 #'
@@ -426,4 +426,85 @@ uh_minor_votes <- function(lv, pool, zf, conc = 30) {
   W <- W / rowSums(W)
   gam <- matrix(stats::rgamma(N * G, shape = conc * W), N)
   gam / rowSums(gam) * pool
+}
+
+#' Election-level table for the ballot-crowding model
+#'
+#' @param cr data.frame: election, unit, groups, seats, cls, ratio (the election's statewide upper/lower ratio,
+#'   repeated per unit), ticket (`external/reference/vec/upper-house-crowding-inputs.csv`).
+#' @param scale "per_seat" (x = log(groups / seats), the pre-registered choice) or "raw" (x = log(groups)).
+#' @return data.table election, cls, x (mean over units), ticket, y = log ratio.
+#' @export
+uh_crowding_table <- function(cr, scale = c("per_seat", "raw")) {
+  scale <- match.arg(scale)
+  x <- data.table::copy(data.table::as.data.table(cr))
+  if (any(!is.finite(x$groups)) || any(x$groups < 1)) stop("uh_crowding_table: every unit needs a group count")
+  x[, xg := if (scale == "per_seat") log(groups / seats) else log(groups)]
+  x[!is.na(ratio), .(x = mean(xg), ticket = ticket[1], y = log(ratio[1])), by = .(election, cls)]
+}
+
+#' Fit the ballot-crowding model: log ratio = a + b x + c ticket, per major party, b and c partially pooled
+#'
+#' Each party's OLS slope b_k and ticket term c_k are shrunk toward their precision-weighted mean across parties
+#' ([uh_dl_pool()]: w = tau2 / (tau2 + se^2)); the intercept is refitted given the shrunk terms. Residuals are split
+#' into a common part (mean across parties within an election) and a party part.
+#' @param et table from [uh_crowding_table()].
+#' @param elections elections to fit on.
+#' @return list(coef = data.table cls, a, b, c, b_ols, c_ols, se_b, se_c, w_b, w_c; V = per-party OLS vcov;
+#'   common_sd, party_sd, n, elections).
+#' @export
+uh_crowding_fit <- function(et, elections) {
+  els <- elections; x <- data.table::as.data.table(et)[election %in% els]
+  ps <- sort(unique(x$cls)); E <- data.table::uniqueN(x$election)
+  if (E < 4L) stop("uh_crowding_fit: needs at least 4 elections for 3 parameters, got ", E)
+  if (data.table::uniqueN(x$ticket) < 2L) stop("uh_crowding_fit: the ticket indicator does not vary in these elections")
+  ols <- lapply(ps, function(k) { pk <- k; stats::lm(y ~ x + ticket, data = x[cls == pk]) }); names(ols) <- ps
+  cf <- data.table::rbindlist(lapply(ps, function(k) { s <- summary(ols[[k]])$coefficients
+    data.table::data.table(cls = k, b_ols = s["x", 1], se_b = s["x", 2], c_ols = s["ticket", 1], se_c = s["ticket", 2]) }))
+  pb <- uh_dl_pool(cf$b_ols, cf$se_b); pc <- uh_dl_pool(cf$c_ols, cf$se_c)
+  cf[, `:=`(w_b = pb$tau2 / (pb$tau2 + se_b^2), w_c = pc$tau2 / (pc$tau2 + se_c^2))]
+  cf[, `:=`(b = pb$mu + w_b * (b_ols - pb$mu), c = pc$mu + w_c * (c_ols - pc$mu))]
+  cf[, a := vapply(cls, function(k) { pk <- k; z <- x[cls == pk]; mean(z$y - b[cls == pk] * z$x - c[cls == pk] * z$ticket) }, 0)]
+  r <- merge(x, cf[, .(cls, a, b, c)], by = "cls")[, res := y - a - b * x - c * ticket]
+  R <- as.matrix(data.table::dcast(r, election ~ cls, value.var = "res")[, -1])
+  com <- rowMeans(R); df <- max(1, E - 3)
+  list(coef = cf, V = lapply(ols, stats::vcov), common_sd = sqrt(sum(com^2) / df),
+       party_sd = sqrt(sum((R - com)^2) / (df * (length(ps) - 1))), n = E, elections = sort(unique(x$election)))
+}
+
+#' Point log ratio per region from the crowding model, and its coefficient variance
+#'
+#' @param cf fit from [uh_crowding_fit()].
+#' @param xr named numeric: each region's x (log groups per seat, or log groups, matching the fit).
+#' @param ticket 0 or 1 for the election predicted.
+#' @return list(point = regions x parties matrix, coef_var = named per party, at the mean x).
+#' @export
+uh_crowding_predict <- function(cf, xr, ticket = 0) {
+  ps <- cf$coef$cls
+  pt <- sapply(ps, function(k) { z <- cf$coef[cls == k]; z$a + z$b * xr + z$c * ticket })
+  if (is.null(dim(pt))) pt <- matrix(pt, nrow = length(xr), dimnames = list(names(xr), ps))
+  rownames(pt) <- names(xr)
+  x0 <- c(1, mean(xr), ticket)
+  cv <- vapply(ps, function(k) drop(t(x0) %*% cf$V[[k]] %*% x0), 0)
+  list(point = pt, coef_var = cv)
+}
+
+#' Simulated ratio draws from the crowding model
+#'
+#' exp(point + common residual + party residual + coefficient error + region residual). The first three are drawn
+#' once per simulation and shared by every region.
+#' @param cf fit from [uh_crowding_fit()].
+#' @param pr from [uh_crowding_predict()].
+#' @param s2 named per party: region residual variance (from [uh_fit_majors()] with regional = FALSE).
+#' @param N simulations.
+#' @return list by party of N x regions matrices.
+#' @export
+uh_crowding_draws <- function(cf, pr, s2, N) {
+  P <- pr$point; R <- nrow(P); com <- stats::rnorm(N, 0, cf$common_sd); out <- list()
+  for (k in colnames(P)) {
+    sh <- com + stats::rnorm(N, 0, cf$party_sd) + stats::rnorm(N, 0, sqrt(pr$coef_var[[k]]))
+    lr <- matrix(P[, k], N, R, byrow = TRUE) + sh + matrix(stats::rnorm(N * R, 0, sqrt(s2[[k]])), N, R)
+    out[[k]] <- exp(lr); colnames(out[[k]]) <- rownames(P)
+  }
+  out
 }
