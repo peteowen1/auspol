@@ -72,6 +72,49 @@ cat(sprintf("UHF1  %d simulations, %d regions, %d groups (%d minor). Minor group
 cat(sprintf("UHF1  One Nation ratio drawn per simulation: median %.2f, 80%% of draws %.2f to %.2f\n", median(onp_ratio), quantile(onp_ratio, .1), quantile(onp_ratio, .9)))
 CONC <- 30
 
+# ---- AUSPOL_UPPER_HOUSE_VOTE_MODEL=1: the fitted vote model (R/upper_house_vote.R) ---------------------------
+# docs/plans/upper-house-vote-model-2026-11-26.md. Majors: a uniform statewide ratio per party fitted on Victoria
+# 2010/2018/2022 (the pre-registered backtest found past region effects did not beat it), with statewide drift
+# (common + party, widened by the ticket-abolition experiments) and region drift drawn per simulation. One Nation:
+# ratio pooled over federal, other-state, Victorian and DemosAU same-poll evidence. Minors: DemosAU-polled groups
+# held at their polled level, Victorian Socialists at the YouGov regional figures above, the rest from 2022 with a
+# shrunk regional pattern, filling what the majors leave. "0" (default) draws nothing here, so its output is unchanged.
+VM <- Sys.getenv("AUSPOL_UPPER_HOUSE_VOTE_MODEL", "0") == "1"
+if (VM) {
+  if (!exists("uh_fit_majors")) { options(auspol.root = normalizePath(".")); suppressMessages(devtools::load_all(quiet = TRUE)) }
+  uin <- fread("external/reference/vec/upper-house-ratio-inputs.csv"); urt <- uh_region_table(uin)
+  ufm <- uh_add_regime_variance(uh_fit_majors(urt, c("vic2010", "vic2018", "vic2022"), regional = FALSE),
+                                uh_noticket_variance(fread("external/reference/vec/upper-house-noticket-experiments.csv")))
+  RAT1 <- uh_draw_major_ratios(ufm, uh_major_logratio(ufm, regions), N)
+  upl <- fread("external/reference/polls/demosau-upper-lower-2025-2026.csv")
+  uop <- uh_onp_pool(rbind(fread("external/reference/vec/upper-house-onp-sources.csv"), uh_onp_poll_units(upl, urt)$units, fill = TRUE))
+  onp_sd_reg <- sqrt(mean(vapply(ufm$party, function(f) f$s2, 0)))      # region drift borrowed from the majors
+  RAT1$ONP <- exp(uop$mu + rnorm(N, 0, uop$pred_sd) + matrix(rnorm(N * length(regions), 0, onp_sd_reg), N, dimnames = list(NULL, regions)))
+  for (k in c(cls)) cat(sprintf("UHV1  %s upper/lower ratio: median %.3f, 80%% of draws %.2f to %.2f (pooled over regions and simulations)\n",
+                                k, median(RAT1[[k]]), quantile(RAT1[[k]], .1), quantile(RAT1[[k]], .9)))
+  cat(sprintf("UHV2  One Nation pooled ratio %.3f from %d units (federal %.0f%%, other states %.0f%%, Victoria 2022 %.0f%%, DemosAU %.0f%%)\n",
+              exp(uop$mu), nrow(uop$units), 100 * sum(uop$units[kind == "federal Senate vs House"]$weight), 100 * sum(uop$units[grepl("^other state", kind)]$weight),
+              100 * sum(uop$units[kind == "Victorian council vs assembly"]$weight), 100 * sum(uop$units[grepl("^DemosAU", kind)]$weight)))
+  # minors: DemosAU's named groups (DLP, Legalise Cannabis) held at their polled level; Victorian Socialists at the
+  # YouGov regional figures (vs_hat) when AUSPOL_UPPER_HOUSE_VS_POLL=1, else at DemosAU's statewide 3%.
+  t18 <- fread("external/reference/vec/upper-house-group-totals-2018.csv"); t22 <- fread("external/reference/vec/2022/upper-house-group-totals-2022.csv")
+  for (tt in list(t18, t22)) { tt[, reg := uh_map_region(region)]; tt[, key := uh_key_of(group_name)] }
+  p18 <- uh_minor_pattern(t18[, .(reg, key, votes)]); p22 <- uh_minor_pattern(t22[, .(reg, key, votes)])
+  bk <- intersect(p18$key, p22$key); ums <- uh_minor_shrink(p22[key %in% bk], p18[key %in% bk])
+  vw <- setNames(x[, .(e = sum(enrolment)), by = region][match(regions, region)]$e, regions)
+  dp <- upl[poll == "nov26" & house == "upper"]; dpn <- upl[poll == "nov26"]$n[1]
+  pk <- c(DLP = "Labour DLP|Democratic Labour", LCV = "Cannabis", VS = "Victorian Socialists")
+  polled <- setNames(dp$pct[match(names(pk), dp$party)], pk); stopifnot(!anyNA(polled))
+  ulv <- uh_minor_region_levels(g[class == "MINOR", .(region, group)], fread("external/reference/vec/2022/upper-house-group-totals-2022.csv"),
+                                ums$w, vw, polled)
+  if (exists("vs_hat")) ulv[key == "Victorian Socialists", level := vs_hat[region]]
+  ZF <- sapply(pk, function(k) { p <- polled[[k]] / 100; nn <- if (k == "Victorian Socialists" && exists("vs_hat")) 3890 else dpn
+    exp(rnorm(N, 0, sqrt((1 - p) / (nn * p)))) })
+  colnames(ZF) <- unname(pk)
+  cat(sprintf("UHV3  minor groups: regional pattern shrink w %.2f (%d group-region pairs); polled levels held: %s; %d of %d 2026 minor groups matched to 2022\n",
+              ums$w, ums$n_pairs, paste(sprintf("%s %.0f%%", names(pk), polled), collapse = ", "), sum(!is.na(ulv$key) & ulv$key %in% p22$key), nrow(ulv)))
+}
+
 # ---- the count ----------------------------------------------------------------------------------------------
 # v: named votes in quotas by group. bloc: L / R / C per group. aff: same-bloc multiplier. ex: share exhausting at
 # each exclusion. transfers = FALSE gives whole quotas then largest remainders (the first walk's rule).
@@ -96,11 +139,12 @@ run <- function(label, aff_fun, ex_fun, transfers = TRUE) {
   for (r in regions) {
     gr <- g[region == r]; mi <- gr[class == "MINOR"]
     maj <- sapply(cls, function(k) {
-      rat <- if (k == "ONP") onp_ratio else RATIO[[k]]
+      rat <- if (VM) RAT1[[k]][, r] else if (k == "ONP") onp_ratio else RATIO[[k]]
       pmax(0.5, A[region == r][[k]] * swing[, k] * rat + rnorm(N, 0, NOISE[[k]]))
     })
     pool <- pmax(3, 100 - rowSums(maj))
-    gam <- matrix(rgamma(N * nrow(mi), shape = rep(CONC * mi$w, each = N)), N); minor <- gam / rowSums(gam) * pool
+    if (VM) { lv <- ulv[region == r][match(mi$group, group)]; minor <- uh_minor_votes(lv, pool, ZF, CONC) } else {
+    gam <- matrix(rgamma(N * nrow(mi), shape = rep(CONC * mi$w, each = N)), N); minor <- gam / rowSums(gam) * pool }
     V <- cbind(maj, minor); colnames(V) <- c(gr$group[match(cls, gr$class)], mi$group)
     V <- V / rowSums(V) * 6                                              # quotas
     bl <- gr$bloc[match(colnames(V), gr$group)]
@@ -141,10 +185,14 @@ jsonlite::write_json(list(
   regions = lapply(regions, function(r) list(region = r, groups = lapply(unname(split(tb[region == r][order(-quotas)], seq_len(sum(tb$region == r)))), function(z)
     list(group = z$group, class = z$class, vote_pct = round(z$quotas * 100 / 6, 2), quotas = round(z$quotas, 3), seats = round(z$seats, 3),
          p1 = round(z$p1, 4), p2 = round(z$p2, 4), p3 = round(z$p3, 4))))),
-  assumptions = c("Upper-house vote = lower-house forecast by region x a ratio per party (Labor 0.905, Coalition 0.845, Greens 0.883, One Nation median 0.85).",
+  assumptions = c(if (VM) c(sprintf("Upper-house vote = lower-house forecast by region x a ratio per party fitted on Victoria 2010, 2018 and 2022 (Labor %.3f, Coalition %.3f, Greens %.3f), with its year-to-year drift and the ticket abolition drawn as uncertainty.",
+                                    exp(ufm$party$ALP$mu), exp(ufm$party$LNP$mu), exp(ufm$party$GRN$mu)),
+                            sprintf("One Nation ratio %.2f pooled from federal Senate, other states' upper houses, Victoria 2022 and DemosAU's same-poll figures.", exp(uop$mu)),
+                            "Minor groups: DLP and Legalise Cannabis at DemosAU's 21-25 Nov levels, Victorian Socialists at YouGov's regional figures, the rest from 2022 with a shrunk regional pattern.")
+                  else c("Upper-house vote = lower-house forecast by region x a ratio per party (Labor 0.905, Coalition 0.845, Greens 0.883, One Nation median 0.85).",
                   if (Sys.getenv("AUSPOL_UPPER_HOUSE_VS_POLL", "1") == "1")
                     "Minor vote split across groups from 2022 shares pulled toward equal; Victorian Socialists from YouGov's regional polling (6-23 Nov)."
-                  else "Minor vote split across groups from 2022 shares pulled toward equal.",
+                  else "Minor vote split across groups from 2022 shares pulled toward equal."),
                   "Preferences assumed, not measured: same-bloc groups favoured about 2.5 to 1, 5-30% of votes exhaust at each exclusion.")),
   OUT, auto_unbox = TRUE, digits = NA)
 cat(sprintf("UHF9  wrote %s: %d simulations, %d regions, %d bytes
