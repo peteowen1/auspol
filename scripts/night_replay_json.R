@@ -43,10 +43,27 @@ cat(sprintf("NJ5  booth districts matching no seat: live %s; previous %s\n",
 cat(sprintf("NJ1 %s: %d seats, %d sims, 2CP %s, cand-ref=%s, early=%s, gap_k=%s, surge-fade=%s, tcp-center=%s, tcp-flow-floor=%s, fractions %s\n", st$pair, nrow(st$shares), sims,
             if (use_tcp) "ON" else "off", cand_ref, early, gap_k, surge_fade, tcp_center, tcp_floor, paste(fracs, collapse = ",")))
 
+# --borrow=0 (default, byte-identical) | 1 | "k,c0": shift each seat's prior by the swing the OTHER counted seats show
+# (R/night_borrow.R, AUSPOL_NIGHT_BORROW), with the region / type cluster terms of the afternoon forecast's seat factor.
+borrow <- night_borrow_args(flag("borrow", "0"))
+if (!is.null(borrow)) {
+  scc <- if (!is.null(st[["seat_cluster"]])) list(seat_cluster = st$seat_cluster, cluster_rho = st$cluster_rho)
+         else seat_cluster_setup(st$pair, st$shares, tag = "NJB1", quiet = FALSE)
+  cat(sprintf("NJB1 borrow ON: k %.2f, c0 %.3f, cluster %s\n", borrow$k, borrow$c0,
+              if (is.null(scc$seat_cluster)) "none" else paste(colnames(as.matrix(scc$seat_cluster)), collapse = "+")))
+}
+
 index <- list()
 for (fr in fracs) {
   shares <- st$shares; sdo <- st$sdo; swd <- st$swd; nu <- NULL
   if (fr > 0) {
+    if (!is.null(borrow)) {
+      nu0 <- night_booth_update(shares, night_prior_sd(shares, st$level_sd, st$level_mult, sdo), fr, L, R, gap_k = gap_k, early = early, cand_ref = cand_ref)
+      bw <- night_borrow_swing(shares, nu0$shares, nu0$counted, cluster = scc$seat_cluster, rho = scc$cluster_rho, k = borrow$k, c0 = borrow$c0)
+      shares <- night_apply_borrow(shares, bw)
+      cat(sprintf("NJB2 %.3f: n_eff %.1f, statewide swing %s; largest seat shift %.2f pts\n", fr, attr(bw, "detail")$n_eff,
+                  paste(sprintf("%s %+.2f", names(attr(bw, "detail")$statewide), attr(bw, "detail")$statewide), collapse = " "), max(abs(bw))))
+    }
     nu <- night_booth_update(shares, night_prior_sd(shares, st$level_sd, st$level_mult, sdo), fr, L, R, gap_k = gap_k, early = early, cand_ref = cand_ref)
     if (!isFALSE(cand_ref) && fr == fracs[fracs > 0][1]) cat(sprintf("NJ1  cand-ref: %d returning candidate(s) relabelled to their current class\n", nu$n_cand_ref))
     if (nu$n_updated == 0L) stop("NJ2! replay at ", fr, " updated no seat: booth districts do not match the saved state's seats")

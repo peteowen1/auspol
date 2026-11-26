@@ -15,11 +15,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   Rebuild worktrees `C:/dev/auspol-wt-rb*` hold the live inputs: unlink junctions before removing.
 - OPEN, DATED Fri 27 Nov 4:30am run (first Victoria-only daily): success; no nsw2027 steps or jobs; UHV/UHF3 lines (upper house
   version D); SCC1 (correlation); CSC9/CSC7 pass; published numbers near the 8:24pm run (hung 58%, Coalition majority 41%).
-- OPEN, DATED Fri 27 Nov (Pete chose 26 Nov 10pm: build, replay, then decide): NIGHT SWING TO UNCOUNTED SEATS. Today a seat
-  with nothing counted keeps its afternoon forecast: night_booth_update() moves only seats with booths, and night_shrink_draws()
-  (R/night_update.R:551) shrinks the statewide draws around the AFTERNOON centre; the cluster factor is drawn fresh, never set from
-  counted seats. Build behind a switch (off): shrunk counted swing statewide + same-region/same-type extra; replay vic2022, fed2022,
-  fed2025 at 5/10/20% counted. Done when: ON if early calls and chamber log loss improve with no night worse, else stays off.
+- DONE 26 Nov 11:55pm, night swing to uncounted seats: built OFF (`R/night_borrow.R`, replay `--borrow`), stays OFF for 28 Nov:
+  vic2022 worse at every fraction (early swing overstates the final), fed2025 up to 9% better. OPEN after 28 Nov: correct the
+  early-booth bias, rescore on real-feed replays. `reviews/night-borrowed-swing-2026-11-26.md`.
 - DONE 26 Nov 9:38pm: election-night runner with the correlation. One cycle on the saved 2022 full-count snapshot
   (night-reh-1403) with the 8:24pm night state: rc 0, 87 of 88 seats, 2CP 87; seat totals ALP 49.7 / LNP 30.1 vs 50.2 / 29.9 with the 25 Nov state (no correlation, older polls), so not a clean
   on/off test; hung 0.7% vs 0.06%. `R/night_runner.R:567` passes seat_cluster/cluster_rho.
