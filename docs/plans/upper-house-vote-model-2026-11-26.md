@@ -115,3 +115,20 @@ region ratios by election), no model output.
    decision rule is unchanged).
 4. **Minor groups:** groups named in the poll (DLP, Legalise Cannabis, Victorian Socialists) are held at their
    polled statewide level, with sampling error drawn; only the un-named groups are scaled to fill the pool.
+
+## Second addition, 26 Nov 2026 (after the other-states file landed, before the Victorian model fit)
+
+The sibling file `output/other-upper-house-fp.csv` (branch other-upper-houses 82039762) landed. Seen before
+fitting: its statewide major-party ratios and One Nation's contested-district ratios (descriptive only).
+
+5. **One Nation units from other states**: nsw2019, nsw2023, sa2026, wa2021, wa2025, each restricted to the
+   districts where One Nation stood for the lower house (a statewide ratio is diluted by seats with no candidate;
+   NSW 2019 statewide reads 6.3). sa2022 has statewide upper rows only and is left out. Each is one unit in the
+   pooling. WA 2021 is labelled as a ticket-era unit.
+6. **Group tickets are abolished for 2026; Victoria's 2010-2022 ratios are all ticket-era.** Two natural
+   experiments are on disk: WA Legislative Council 2021 (tickets) to 2025 (none): log change ALP -0.02,
+   LNP +0.19, GRN +0.07; the Victorian Senate 2013 (tickets) to 2016 (none, also a double dissolution):
+   ALP -0.08, LNP -0.18, GRN -0.22. They disagree in sign, so no mean shift is applied. Their spread (pooled
+   sd of the six changes) is added to the common statewide drift for 2026 as a regime-change variance, so the
+   simulation carries the uncertainty instead of a guessed direction. Reported: the mean shift that WOULD
+   apply, and the seat table it would move, so Pete can see the size of the bet.
