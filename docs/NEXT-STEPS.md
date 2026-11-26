@@ -22,7 +22,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - DONE 27 Nov 7:10am (Pete's go): the 14 Nov Agenda C poll was counted TWICE since at least the 24 Nov run (Wikipedia "Agenda C
   Synesis/Antenna", Poll Bludger "Agenda C/Antenna"). firm_alias.csv pattern now `synesis|agenda c`, local + shipped-models (upload
   verified byte-equal). Proved on that morning's fresh tables: .ps_merge_own 232 -> 231 Vic polls, pairs 66 -> 67, the poll kept once
-  as bludgertrack+wiki. Rerun 45889032949 (main) dispatched 7:10am; the capture of record uses it.
+  as bludgertrack+wiki. Rerun 45889032949 green 7:22am (PZ2 67 also on Wikipedia, PZ1 231 ours): hung 0.559 -> 0.562, LNP 43.12 ->
+  43.07 (maj 0.438 -> 0.435), ONP 18.68 -> 18.56, GRN 6.50 -> 6.67. It skipped scenarios (manual run), so 45891528338 (scenarios=true,
+  7:30am) rebuilds the what-if pages too; the capture of record uses that run.
   OPEN after 28 Nov, same check over every Vic poll (640): 3 older pairs with near-identical primaries under two names within
   4 days: uComms/ReachTEL 13-14 Nov 2018 (same company, almost surely one poll), Essential/Galaxy 2014, Essential/Newspoll2 2017
   (maybe coincidence). Rerun the check over every state's poll table.
