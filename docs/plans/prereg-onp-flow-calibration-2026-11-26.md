@@ -202,3 +202,13 @@ Ship `AUSPOL_ONP_FLOW_CAL=1, AUSPOL_ONP_FLOW_CAL_K=20` only if BOTH:
 2. Guard, seat-winner log loss (quick_arm, 1,000 sims, the same 8 pairs as the 26 Nov guard): pooled change not
    worse than +1 SE (clustered on election).
 Either fails: not shipped, and the split goes to Pete as before.
+
+### AMENDMENT 2 RESULT (27 Nov ~9:50am): k = 20 PASSES both criteria, SHIPPED
+
+1. Transfer log loss: -0.0013 per election (SE 0.0008), 11 of 15 better (worse: fed2022 +0.0057, fed2025 +0.0012,
+   fed2010 and qld2020 +0.0000). Passes (mean below 0, at least 10 better).
+2. Guard, quick_arm `AUSPOL_ONP_FLOW_CAL=1 AUSPOL_ONP_FLOW_CAL_K=20`, 1,000 sims, 779 seats, 8 elections: seat-winner
+   log loss 0.2800 -> 0.2801, +0.0001 (SE 0.0001) => within 1 SE. Passes. By election: sa2026 +0.0008, qld2020
+   +0.0006, nsw2023 +0.0001, fed2019 0, wa2025 0, fed2025 -0.0001, qld2024 -0.0003. AEF-7 ledger subset 442 seats
+   0.2440 -> 0.2440. HD1 verified (both switches applied, none leaked).
+Shipped: `AUSPOL_ONP_FLOW_CAL = "1"`, `AUSPOL_ONP_FLOW_CAL_K = "20"`.
