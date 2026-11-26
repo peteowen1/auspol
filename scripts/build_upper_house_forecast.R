@@ -8,6 +8,10 @@
 #      external/reference/vec/vic-district-regions.csv, external/reference/vec/2026/enrolment/enrolment-2026.csv,
 #      external/reference/vec/2026/upper-house-groups-2026.csv, external/reference/vec/2022/upper-house-group-totals-2022.csv
 #      (2022 first preferences by region and group, summed from output/council-fp-2022.csv; 22 MB -> a few KB).
+#      Shipped 26 Nov 2026 ("version D"): vote model 2 (R/upper_house_vote.R, sourced) also reads
+#      external/reference/vec/upper-house-{ratio-inputs,noticket-experiments,crowding-inputs,onp-sources,group-totals-2018}.csv
+#      and external/reference/polls/demosau-upper-lower-2025-2026.csv; count model 1 (R/upper_house_count.R, sourced)
+#      reads external/reference/aec/senate-flows/vic-senate-2025-flows.csv.gz. Needs only data.table and jsonlite.
 suppressPackageStartupMessages(library(data.table))
 a <- commandArgs(trailingOnly = TRUE)
 arg <- function(name, default) { hit <- grep(paste0("^--", name, "="), a, value = TRUE); if (length(hit)) sub("^[^=]*=", "", hit[1]) else default }
@@ -79,15 +83,16 @@ CONC <- 30
 # Victorian and DemosAU same-poll evidence. Minors: relative weights from DemosAU's named levels (DLP, Legalise
 # Cannabis), Victorian Socialists at the YouGov regional figures above, the rest from 2022 with a shrunk regional
 # pattern scaled to DemosAU's "others"; the pool the majors leave is shared in proportion. NOISE (lower-house
-# regional error, not measured anywhere) is kept on top. "0" (default) draws nothing here: output unchanged.
+# regional error, not measured anywhere) is kept on top. "0" (the hand-set ratios, published until 26 Nov 2026) draws nothing here.
 # "2" = "1" with the majors' ratios from the ballot-crowding model (prereg addition 9): log ratio = a + b x + c
 # ticket, x = log(groups per seat), fitted on Victoria 2010/2018/2022 and six other-state upper houses, each 2026
 # region at its own group count, no tickets.
-UVM <- Sys.getenv("AUSPOL_UPPER_HOUSE_VOTE_MODEL", "0")
+UVM <- Sys.getenv("AUSPOL_UPPER_HOUSE_VOTE_MODEL", "2")   # shipped 26 Nov 2026 (scripts/published_flags.R)
 if (!UVM %in% c("0", "1", "2")) stop("AUSPOL_UPPER_HOUSE_VOTE_MODEL must be 0, 1 or 2, got ", UVM)
 VM <- UVM %in% c("1", "2"); VM2 <- UVM == "2"
 if (VM) {
-  if (!exists("uh_fit_majors")) { options(auspol.root = normalizePath(".")); suppressMessages(devtools::load_all(quiet = TRUE)) }
+  # Sourced, not load_all(): the only=upper-house workflow job installs data.table and jsonlite and nothing else.
+  if (!exists("uh_fit_majors")) source("R/upper_house_vote.R")
   uin <- fread("external/reference/vec/upper-house-ratio-inputs.csv"); urt <- uh_region_table(uin)
   # Settings of the shipped variant; the alternatives are the sensitivities in the plan's results section.
   UH_REGIONAL <- FALSE                       # TRUE: shrunk region effects (lost the backtest, 5.54 v 3.25 points)
@@ -174,7 +179,7 @@ count <- function(v, bloc, aff, ex, transfers = TRUE, seats = 5L) {
 # (R/upper_house_count.R; plan and validation docs/plans/upper-house-count-model-2026-11-26.md) instead of count()'s
 # assumed bloc weighting and exhaustion. The aff / ex draws below still happen, so the vote draws are identical
 # under both settings and only the count differs.
-COUNT_MODEL <- Sys.getenv("AUSPOL_UPPER_HOUSE_COUNT_MODEL", "0")
+COUNT_MODEL <- Sys.getenv("AUSPOL_UPPER_HOUSE_COUNT_MODEL", "1")   # shipped 26 Nov 2026 (scripts/published_flags.R)
 stopifnot(COUNT_MODEL %in% c("0", "1"))
 if (COUNT_MODEL == "1") {
   source("R/upper_house_count.R")
@@ -183,7 +188,7 @@ if (COUNT_MODEL == "1") {
   uh_flows <- uh_read_flows(UH_FLOWS_FILE)
   # A party a Senate voter numbered that is not standing in the region: "pool" = the region's same-bloc pool group
   # first (pre-registered), "bloc" = any same-bloc group, "skip" = drop the mark. It moves the chamber (validation note).
-  UH_ABSENT <- Sys.getenv("AUSPOL_UPPER_HOUSE_ABSENT", "pool")
+  UH_ABSENT <- Sys.getenv("AUSPOL_UPPER_HOUSE_ABSENT", "bloc")   # shipped 26 Nov 2026 (scripts/published_flags.R)
   stopifnot(UH_ABSENT %in% c("pool", "bloc", "skip"))
   cat(sprintf("UHF3  count model 1: preferences from %s (%.0f ballots, %d class sequences); parties not standing: %s\n",
               uh_flows$label, uh_flows$n_ballots, nrow(uh_flows$seq), UH_ABSENT))

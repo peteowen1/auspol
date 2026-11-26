@@ -151,10 +151,12 @@ uh_write_flows <- function(flows, path) {
   utils::write.csv(flows$seq, con, row.names = FALSE)
 }
 uh_read_flows <- function(path) {
-  h <- readLines(path, n = 1L)
+  # readLines() decompresses .gz itself; fread() on a .gz path would need the R.utils package, which the
+  # only=upper-house workflow job does not install.
+  txt <- readLines(path); h <- txt[1L]
   if (!grepl("^# uh_flows ", h)) stop("uh_read_flows: ", path, " is not a flows file")
   f <- function(k) sub(paste0("^.*", k, "=([^ ]*).*$"), "\\1", h)
-  seq <- data.table::fread(path, skip = 1L, colClasses = list(character = c("first", "rest"), logical = "at_min", numeric = "n"))
+  seq <- data.table::fread(text = txt[-1L], colClasses = list(character = c("first", "rest"), logical = "at_min", numeric = "n"))
   seq[is.na(rest), rest := ""]
   list(seq = seq, named = strsplit(f("named"), ",", fixed = TRUE)[[1]], min_marks = as.integer(f("min_marks")),
        n_ballots = as.numeric(f("n_ballots")), label = f("label"))
