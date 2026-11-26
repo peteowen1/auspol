@@ -1,6 +1,6 @@
 # Model registry
 
-**Generated 2026-11-26 by `scripts/build_model_registry.R`. Do not hand-edit** --
+**Generated 2026-11-27 by `scripts/build_model_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate whenever a switch is added to
 `published_flags.R` or a harness's wiring changes.
 
@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (339 switches from `published_flags.R`, 7 entry points)
+## Switch parity (342 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -342,6 +342,9 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_TREND_RW_MULT` | NO | NO | NO | NO | NO | NO | NO | forecast_mode.R |
 | `AUSPOL_TREND_SIGMAS` | NO | NO | NO | NO | NO | NO | NO | forecast_mode.R |
 | `AUSPOL_TREND_SZC` | NO | NO | NO | NO | NO | NO | NO | trend.R |
+| `AUSPOL_UPPER_HOUSE_ABSENT` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_UPPER_HOUSE_COUNT_MODEL` | NO | NO | NO | NO | NO | NO | NO |  |
+| `AUSPOL_UPPER_HOUSE_VOTE_MODEL` | NO | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_UPPER_HOUSE_VS_POLL` | NO | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_UPSET_FLOOR` | yes | NO | NO | NO | NO | NO | NO |  |
 | `AUSPOL_WA_CUTOFF` | NO | yes | NO | yes | yes | yes | NO |  |
@@ -654,6 +657,9 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_TREND_RW_MULT`** (intentional / dead experiment): REFUSED ARM 2026-10-12, same prereg, off at "1". Read inside R/forecast_mode.R -- universal in practice.
 - **`AUSPOL_TREND_SIGMAS`** (intentional / dead experiment): REFUSED ARM 2026-10-12 (plans/prereg-responsive-trend-2026-10-12.md), off at "default". Read inside R/forecast_mode.R (the statewide forecast every harness and fit_seats_full.R call), not per-harness -- universal in practice.
 - **`AUSPOL_TREND_SZC`** (intentional / dead experiment): REFUSED ARM 2026-10-12, same prereg (T3), off at "polls". Read inside R/trend.R, so it reaches every trend fit -- universal in practice.
+- **`AUSPOL_UPPER_HOUSE_ABSENT`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
+- **`AUSPOL_UPPER_HOUSE_COUNT_MODEL`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
+- **`AUSPOL_UPPER_HOUSE_VOTE_MODEL`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_UPPER_HOUSE_VS_POLL`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_UPSET_FLOOR`** (intentional / dead experiment): REFUSED 2026-10-02 (Brier guard: 0.0894 -> 0.0904 against a 0.0005 limit; plans/prereg-upset-floor-2026-10-02.md,  DECISIONS.md 2026-10-02), default 0, code kept. Not a per-harness switch by design: it is stage 6b, applied by  scripts/rebuild_forecasts.sh (scripts/apply_upset_floor.R) to the pooled harness output, and read live by  fit_seats_full.R and scripts/promote_rebuild.R; so no harness reads it.
 - **`AUSPOL_WA_CUTOFF`** (intentional / dead experiment): Read inside R/external_flows.R (pool_configured_flows), not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).
@@ -728,8 +734,8 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR4  every AUSPOL_* switch read in code (452) is registered (320) or listed as not a model switch (132).
+MR4  every AUSPOL_* switch read in code (459) is registered (323) or listed as not a model switch (136).
 
 
 
-**MR2! 3 switch(es) have a non-universal row with NO recorded classification: AUSPOL_LEADER_FORMER, AUSPOL_SEAT_STATE_DUMP, AUSPOL_UPPER_HOUSE_VS_POLL.** Add them to CLASSIFY in scripts/build_model_registry.R before trusting this table.
+**MR2! 6 switch(es) have a non-universal row with NO recorded classification: AUSPOL_LEADER_FORMER, AUSPOL_SEAT_STATE_DUMP, AUSPOL_UPPER_HOUSE_ABSENT, AUSPOL_UPPER_HOUSE_COUNT_MODEL, AUSPOL_UPPER_HOUSE_VOTE_MODEL, AUSPOL_UPPER_HOUSE_VS_POLL.** Add them to CLASSIFY in scripts/build_model_registry.R before trusting this table.

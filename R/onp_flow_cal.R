@@ -1,4 +1,4 @@
-# ONE NATION PAIRWISE FLOW CALIBRATION (AUSPOL_ONP_FLOW_CAL, default "0" = unchanged).
+# ONE NATION PAIRWISE FLOW CALIBRATION (AUSPOL_ONP_FLOW_CAL, SHIPPED "1" at k = 20 on 2026-11-27; "0" = trees unchanged).
 # docs/plans/prereg-onp-flow-calibration-2026-11-26.md
 #
 # The per-seat flow trees lean toward One Nation in every key that includes it: live vic2026, the other candidates'
@@ -106,10 +106,10 @@ onp_flow_cal_apply <- function(ov, rates, k, target_election) {
 #' @return `ov`, adjusted when `AUSPOL_ONP_FLOW_CAL=1`, otherwise unchanged.
 #' @keywords internal
 onp_flow_cal <- function(ov, hist, target_election) {
-  mode <- Sys.getenv("AUSPOL_ONP_FLOW_CAL", "0")
+  mode <- Sys.getenv("AUSPOL_ONP_FLOW_CAL", "1")   # SHIPPED 2026-11-27 at k = 20 (prereg amendment 2)
   if (!mode %in% c("0", "1")) stop("AUSPOL_ONP_FLOW_CAL must be \"0\" or \"1\", not '", mode, "'", call. = FALSE)
   if (identical(mode, "0")) return(ov)
-  k <- suppressWarnings(as.numeric(Sys.getenv("AUSPOL_ONP_FLOW_CAL_K", "3")))
+  k <- suppressWarnings(as.numeric(Sys.getenv("AUSPOL_ONP_FLOW_CAL_K", "20")))
   if (!is.finite(k) || k < 0) stop("AUSPOL_ONP_FLOW_CAL_K must be a non-negative number", call. = FALSE)
   hl <- suppressWarnings(as.numeric(Sys.getenv("AUSPOL_FLOW_RATE_HL", "2")))
   d <- election_dates()
