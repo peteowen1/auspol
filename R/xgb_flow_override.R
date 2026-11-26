@@ -468,6 +468,8 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
   cat(sprintf("XF9  per-seat xgb flows override built for %s: %d of %d seats, %d key(s) each (min_events=%d)\n",
               target_election, n_built, length(seats), nrow(key_rates), min_events))
   if (n_built == 0L) return(NULL)
+  # ONE NATION PAIRWISE CALIBRATION (AUSPOL_ONP_FLOW_CAL, default "0" = no-op), R/onp_flow_cal.R.
+  out <- onp_flow_cal(out, hist, target_election)
 
   # PER-CELL FLOW UNCERTAINTY, opt-in via AUSPOL_FLOW_CELL_SD. Attached as an
   # attribute so a caller that does not know about it is unaffected; unset
