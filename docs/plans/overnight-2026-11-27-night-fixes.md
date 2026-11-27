@@ -82,5 +82,14 @@ Pete's calls (27 Nov ~9:20pm): a fix that PASSES its prereg overnight gets switc
 - Fast screen built (scratchpad/overnight/screen.sh + small-states/, 2,000 draws, to 9pm, three nights): 422 s per
   arm vs ~45 min full. Simulation is not the bottleneck; per-snapshot parsing and booth matching repeat for every arm
   (cache after 28 Nov; replay logs need per-stage timing).
+- Lane B vic2022 full nights vs its base (byte-identical to the corrected base; fed2025 base byte-identical too):
+  B1c night -0.0033 (SE 0.0033), 88/88 right at the end (base 87); B1 -0.0006; B2 +0.0034 (SE 0.0038); B3 exactly 0
+  (applied, tcp-by-type TRUE, but the 2022 night has ordinary-booth 2CP only: untestable on any night we have). Federal
+  nights running (fed2025 then fed2022).
+- Lane E (9b75b010): E1 booth-mix variance fitted to c = 0 (federal base sd already over-covers: 98.3% in its 95% band;
+  only <= 1 counted unit under-covers, 0.917, n 925); e1k4 -0.0003 (SE 0.0007); e1sqrt (Pete's sqrt weights) -0.0021
+  (SE 0.0012) but wrong 0.99 calls 2 -> 3 and seats right 376 -> 373, Mildura 8pm far worse: REFUSED. E2 total-votes
+  sd (cv 0.0689 vic2014->2018, leak-free) is ~0.1 pt by 9pm; full-night vic2022 replay started 2:23am. Early votes cast
+  as an input made the expected total WORSE (cv 0.041 -> 0.052): early voters replace polling-day voters.
 - 1:15am lane D launched: D1 vote-type uncertainty until a type reports; D2 Student-t combine (from lane C) on the
   current sd. Lane B full replays running (vic2022 lbbase byte-identical to the corrected base).
