@@ -18,7 +18,7 @@ with HTTP 999 (refused):
 So the script's own defaults (`--parallel=4 --every=90`) are the ones that have already been refused. A fetch is 174
 pages (88 districts, 2 pages each): about 1 minute at 4 at a time, and over 9 minutes at 1 at a time.
 
-Recommended start: `--parallel=2 --every=180`, then drop to `--parallel=1 --every=300` at the first `VWF5!` line that
+Start (Pete chose 27 Nov 4:40pm): `--parallel=2 --every=180`, then drop to `--parallel=1 --every=300` at the first `VWF5!` line that
 counts HTTP 999. The cost is a refresh every 4-10 minutes rather than every 2-3. A block costs far more: 45 minutes
 with no update.
 

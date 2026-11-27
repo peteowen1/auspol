@@ -13,27 +13,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   version D (PR #289), NSW 2027 OFF the daily run (repo var). Refused, kept off: One Nation flow calibration (branch
   onp-flow-cal). Republish the upper house alone: `gh workflow run forecast.yaml -R peteowen1/auspol --ref main -f only=upper-house`.
   Rebuild worktrees `C:/dev/auspol-wt-rb*` hold the live inputs: unlink junctions before removing.
-- NIGHT RUNBOOK (one page, 27 Nov): `docs/NIGHT-RUNBOOK-vic2026.md`. NEEDS PETE before 6pm Sat: the fetch rate (script default
-  --parallel=4 --every=90 has already been refused by the VEC site; runbook recommends --parallel=2 --every=180, then 1 / 300 on 999s).
-- DONE 27 Nov 5:04am, run 45868309996 (main): success, 11 jobs + 2 skipped; no nsw2027 step or jobs; S6, SCC1, UHF1/2, UHV0-4,
-  CSC5/7/9 all pass (72 of 72 scenarios). Hung 55.9% (58.4% at 8:24pm), Coalition majority 43.8% (41.3%), seats LNP 43.1 / ALP 19.4
-  / ONP 18.7 / GRN 6.5; upper house C+ON reach 21 72%, ALP+GRN 6%. The move is the final Newspoll (LNP 33 ALP 20 ONP 18 GRN 17,
-  n 1,506, Poll Bludger 27 Nov), in via Poll Bludger only.
-- DONE 27 Nov 7:10am (Pete's go): the 14 Nov Agenda C poll was counted TWICE since at least the 24 Nov run (Wikipedia "Agenda C
-  Synesis/Antenna", Poll Bludger "Agenda C/Antenna"). firm_alias.csv pattern now `synesis|agenda c`, local + shipped-models (upload
-  verified byte-equal). Proved on that morning's fresh tables: .ps_merge_own 232 -> 231 Vic polls, pairs 66 -> 67, the poll kept once
-  as bludgertrack+wiki. Rerun 45889032949 green 7:22am (PZ2 67 also on Wikipedia, PZ1 231 ours): hung 0.559 -> 0.562, LNP 43.12 ->
-  43.07 (maj 0.438 -> 0.435), ONP 18.68 -> 18.56, GRN 6.50 -> 6.67. It skipped scenarios (manual run), so 45891528338 (scenarios=true,
-  7:30am) rebuilds the what-if pages too; the capture of record uses that run.
-  OPEN after 28 Nov, same check over every Vic poll (640): 3 older pairs with near-identical primaries under two names within
-  4 days: uComms/ReachTEL 13-14 Nov 2018 (same company, almost surely one poll), Essential/Galaxy 2014, Essential/Newspoll2 2017
-  (maybe coincidence). Rerun the check over every state's poll table.
-- DONE 26 Nov 11:55pm, night swing to uncounted seats: built OFF (`R/night_borrow.R`, replay `--borrow`), stays OFF for 28 Nov:
-  vic2022 worse at every fraction (early swing overstates the final), fed2025 up to 9% better. OPEN after 28 Nov: correct the
-  early-booth bias, rescore on real-feed replays. `reviews/night-borrowed-swing-2026-11-26.md`.
-- DONE 26 Nov 9:38pm: election-night runner with the correlation. One cycle on the saved 2022 full-count snapshot
-  (night-reh-1403) with the 8:24pm night state: rc 0, 87 of 88 seats, 2CP 87; seat totals ALP 49.7 / LNP 30.1 vs 50.2 / 29.9 with the 25 Nov state (no correlation, older polls), so not a clean
-  on/off test; hung 0.7% vs 0.06%. `R/night_runner.R:567` passes seat_cluster/cluster_rho.
+- NIGHT RUNBOOK (one page): `docs/NIGHT-RUNBOOK-vic2026.md`. Fetch rate DECIDED 27 Nov 4:40pm (Pete): `--parallel=2
+  --every=180`, then `--parallel=1 --every=300` at the first `VWF5!` 999 (DECISIONS).
+- OPEN after 28 Nov (Agenda C duplicate, fixed 27 Nov, DECISIONS): same check over every Vic poll (640) found 3 older pairs with
+  near-identical primaries under two names within 4 days: uComms/ReachTEL 13-14 Nov 2018 (almost surely one poll),
+  Essential/Galaxy 2014, Essential/Newspoll2 2017 (maybe coincidence). Rerun the check over every state's poll table.
+- OPEN after 28 Nov (night swing to uncounted seats, built OFF 26 Nov, `R/night_borrow.R`): correct the early-booth bias,
+  rescore on real-feed replays. `reviews/night-borrowed-swing-2026-11-26.md`.
 - OPEN, after 28 Nov: One Nation allocation. The modelled version is LIVE on Pete's override of its refusal (23 Nov, DECISIONS);
   the rank rule with retrained trees stays off. Score both on vic2026 once results are in.
 - OPEN, 15 Nov full review (`reviews/FABLE-FULL-REVIEW-2026-11-15.md`, "Pick up from here" is the work list; DECISIONS
@@ -63,11 +49,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - SHIPPED 14 Nov, arm SPL (Pete's override, "Build per-side, ship live"): paid SEAT polls lose a lean toward the sponsor's
   side, each side shrunk to zero (`AUSPOL_SEAT_POLL_PAID_LEAN=1`, `plans/prereg-seat-paid-lean-2026-11-14.md`). Backtest
   neutral; live today unchanged (Hawthorn's paid poll is 15 months old). OPEN after 28 Nov: score it on vic2026.
-- OPEN, DATED 23 Nov and 25 Nov, NIGHT BACKUP (on `main` 0.4.196, PR #265): if the laptop dies on the night, Actions >
-  "Election-night backup", key `auspol/night/vic2026.json`, source `web`, index = the results index URL, minutes 330. Passed on the
-  2022 pages (run 44984447331, 2 cycles, 4-5 min refresh). 23 Nov: two runs failed on the VEC site refusing GitHub (HTTP 999); fixed by the cooldown/retry commits e478d8e9, 60bc0b4f, 6de5673c (on `main`); rerun 45199291224 passed (4 cycles, 87 of 88 seats, uploaded to the test key, no `VWF3!`). TO DO: after the 26 Nov venues recheck, if any bundled file changed,
-  `bash scripts/publish_night_inputs.sh --upload` (23 Nov 8:45pm: the uploaded bundle matches all 18 local files). The 25 Nov
-  `web-2022` rehearsal PASSED (run 45537238935). Done when: the venues recheck is done. UNTESTED: the live key, a 330-minute run. Detail: `backlog/journal-2026-11-21-queue-history.md`.
+- NIGHT BACKUP READY (PR #265; command in the runbook, line ~54). Venues recheck DONE 26 Nov 5:15am; bundle left as is, 17 of 18
+  files byte-identical, `places-2026.csv` differs only in accessibility text on 3 rows (DECISIONS 27 Nov). UNTESTED: the live key,
+  a 330-minute run. Detail: `backlog/journal-2026-11-21-queue-history.md`.
 - RISK FOR 28 Nov (found 26 Nov 9:10pm): the VEC website rate-limited the LAPTOP (HTTP 999 on 32 of 174 pages at the default
   --parallel=4), so no complete snapshot and no cycle. On the night start with --parallel=4 and drop to --parallel=1 (about 5 min a
   fetch) if VWF5! 999s appear; the GitHub backup already uses --parallel=1 --retries=6 --retry-pause=120.
@@ -123,10 +107,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   bases (other classes over-called -2.9, SE 0.84; Narracan Greens is the live case).
 
 
-- OPEN, DATED 27 Nov (evening) and 28 Nov (morning): save the VEC early and postal vote spreadsheet again, raw, into
+- OPEN, DATED 28 Nov (after ~8:40am, when the VEC posts each day's file; `Last-Modified` was 8:37am on 27 Nov, so an evening
+  copy repeats the morning's): save the VEC early and postal vote spreadsheet again, raw, into
   `external/reference/vec-early-vote-2026/` (link on https://www.vec.vic.gov.au/voting/2026-state-election/voting-statistics);
-  the 28 Nov copy is the final pre-poll count. Screen: `scripts/screen_early_vote.R`.
-  Copies on disk: 24, 25, 26 and 27 Nov (27 Nov 9:10am, Thursday's figures).
+  it is the final pre-poll count. Screen: `scripts/screen_early_vote.R`. Copies on disk: 24, 25, 26 and 27 Nov.
 - OPEN, after 28 Nov: early-vote share (an xgb feature is not separable from a placebo, DECISIONS 24 Nov): add vic2026 to the
   panel and rescore; untested route = a direct post-tree Labor correction. Also from ITG's ask: `flows_to_labor` in
   scenario-vic2026.json and `n` on each `polls` row of vic-page-data.json.
