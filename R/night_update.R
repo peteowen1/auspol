@@ -130,6 +130,8 @@ night_prior_sd <- function(shares, level_sd, level_mult = NULL, sd_override = NU
 #'   variance, so an uncounted early or postal block carries its own uncertainty until it reports.
 #' @param proj_tails Lane D2: `"normal"` (default, byte-identical) or `"t"`: combine with a Student-t projection error of
 #'   the same variance ([combine_prior_projection_t()], df `.NIGHT_T_DF` from lane C).
+#' @param booth_knn Lane F, the per-booth best guess: `NULL` (default, byte-identical) or `list(h, k, size_w, types)`, passed to
+#'   [project_seat_from_booths()] (`docs/plans/prereg-night-booth-guess-2026-11-28.md`). Cannot be combined with `booth_reg_k`.
 #' @return List: `shares` (posterior means, rows renormalised to 100), `sd` (posterior sds),
 #'   `counted` (named per-seat share of the final night vote counted), `resolved` (mean over
 #'   updated cells of 1 - posterior sd / prior sd), `n_updated` (seats with booths), `units`
@@ -661,7 +663,9 @@ night_shrink_draws <- function(draws, keep) {
 #' Every flag absent gives `NULL`, the run without lane A.
 #' Lane D adds `--type-sd=<on|off|k>` (`type_sd`, D1) and `--proj-tails=<normal|t>` (`proj_tails`, D2;
 #' `docs/plans/prereg-night-lane-d-2026-11-28.md`); `off` and `normal` add nothing.
-#' @param booth_reg,booth_reg_all,type_pool,rep_sd,type_sd,proj_tails Flag values as strings, or `NULL` when not given.
+#' Lane F adds `--booth-knn=h,k,size_w,types` (`booth_knn`, e.g. `10,1,10,1`; `docs/plans/prereg-night-booth-guess-2026-11-28.md`);
+#' `off` adds nothing.
+#' @param booth_reg,booth_reg_all,type_pool,rep_sd,type_sd,proj_tails,booth_knn Flag values as strings, or `NULL` when not given.
 #' @return `NULL` or a named list.
 #' @export
 night_lane_a_args <- function(booth_reg = NULL, booth_reg_all = NULL, type_pool = NULL, rep_sd = NULL, type_sd = NULL, proj_tails = NULL, booth_knn = NULL) {

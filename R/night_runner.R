@@ -563,7 +563,8 @@ night_expected_votes <- function(enrolment, prev, basis = c("night", "final")) {
 #'   the three real replayed nights (`scripts/fit_night_projection_sd.R`).
 #' @param lane_a `NULL` (default, unchanged) or a list (see [night_lane_a_args()]) of lane A switches passed to [night_booth_update()]:
 #'   `booth_reg_k`, `booth_reg_all`, `type_pool_k`, `rep_sd` (`docs/plans/prereg-night-lane-a-2026-11-27.md`), and lane D's
-#'   `type_sd`, `proj_tails` (`docs/plans/prereg-night-lane-d-2026-11-28.md`).
+#'   `type_sd`, `proj_tails` (`docs/plans/prereg-night-lane-d-2026-11-28.md`), and lane F's `booth_knn`
+#'   (`docs/plans/prereg-night-booth-guess-2026-11-28.md`).
 #' @return List: `sim`, `nu` (the update), `shares`, `sd`, `matched` (seats in both state and feed),
 #'   `n_updated`, `class_split` (the split seats, or `NULL`).
 #' @export
@@ -984,7 +985,9 @@ night_cycle <- function(cfg) {
                             # D2 cfg$proj_tails "t" by default (full 20k replay PASSED 28 Nov 3:40am, 1.04 SE, every night better;
                             # Pete's overnight rule), "normal" turns it off (--loop=--proj-tails=normal).
                             lane_a = c(.night_rep_sd_cfg(cfg$rep_sd), night_lane_a_args(type_sd = cfg$type_sd,
-                                       proj_tails = if (is.null(cfg$proj_tails)) .NIGHT_PROJ_TAILS else cfg$proj_tails))); stamp_t("update_simulate")
+                                       proj_tails = if (is.null(cfg$proj_tails)) .NIGHT_PROJ_TAILS else cfg$proj_tails,
+                                       # lane F (docs/plans/prereg-night-booth-guess-2026-11-28.md): per-booth best guess, OFF unless --booth-knn=h,k,size_w,types
+                                       booth_knn = cfg$booth_knn))); stamp_t("update_simulate")
     if (!is.null(res$class_split)) message(sprintf("NW24  night class split: %d seat(s) counting 2+ candidates of one class separately", nrow(res$class_split)))
     res$denominator <- denom; res$n_placeholder <- conv$n_placeholder_booths; res$n_unlisted <- conv$n_unlisted_booths
     if (length(res$nu$fallback_projected)) message("NW12  ", length(res$nu$fallback_projected), " seat(s) fell back to the projected denominator (no usable expected votes): ", paste(res$nu$fallback_projected, collapse = ", "))

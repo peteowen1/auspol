@@ -28,7 +28,8 @@ night_booth_update(
   proj_diag = FALSE,
   booth_reg_all = FALSE,
   type_sd = NULL,
-  proj_tails = c("normal", "t")
+  proj_tails = c("normal", "t"),
+  booth_knn = NULL
 )
 }
 \arguments{
@@ -115,6 +116,9 @@ variance, so an uncounted early or postal block carries its own uncertainty unti
 
 \item{proj_tails}{Lane D2: \code{"normal"} (default, byte-identical) or \code{"t"}: combine with a Student-t projection error of
 the same variance (\code{\link[=combine_prior_projection_t]{combine_prior_projection_t()}}, df \code{.NIGHT_T_DF} from lane C).}
+
+\item{booth_knn}{Lane F, the per-booth best guess: \code{NULL} (default, byte-identical) or \code{list(h, k, size_w, types)}, passed to
+\code{\link[=project_seat_from_booths]{project_seat_from_booths()}} (\verb{docs/plans/prereg-night-booth-guess-2026-11-28.md}). Cannot be combined with \code{booth_reg_k}.}
 }
 \value{
 List: \code{shares} (posterior means, rows renormalised to 100), \code{sd} (posterior sds),
