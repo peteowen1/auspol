@@ -7,6 +7,7 @@
 #       Candidates and PollingLocations XML, flat> [--feed=external/reference/vec/2026/feed-docs/inner22]
 #       [--out=<dir>] [--label=fixes] [--surge-fade=1] [--tcp-center=median] [--tcp-flow-floor=0.01] [--last-day=20221127]
 #       [--stamps=<comma list of snapshot stamps to run, default all>] [--resume=1] [--stop-after=<n steps, testing>]
+#       [--proj-sd=old|fitted]   (projection sd: old = the rehearsal table, default; fitted = scripts/fit_night_projection_sd.R)
 # Every step rewrites <out>/vic2022-<label>-*.partial.csv; --resume=1 picks up a killed run (night_replay_checkpoint.R).
 #
 # Defaults are the live runner's (since 2026-10-31); the before-fixes arm is
@@ -26,6 +27,7 @@ surge_fade <- !identical(flag("surge-fade", "1"), "0"); tcp_center <- flag("tcp-
 tcp_floor <- as.numeric(flag("tcp-flow-floor", "0.01")); own_fp <- identical(flag("tcp-own-fp", "0"), "1")
 pair_r <- flag("pair-r", NULL); if (!is.null(pair_r)) pair_r <- as.numeric(pair_r)   # prereg-night-pair-trust-2026-11-11
 cand_ref <- local({ v <- flag("cand-ref", "0"); if (v == "1") TRUE else if (v %in% c("move", "copy")) v else if (v == "0") FALSE else stop("--cand-ref must be 0, 1, move or copy") })   # prereg-night-candidate-ref(-copy)-2026-11-11
+proj_sd <- flag("proj-sd", "old"); if (!proj_sd %in% c("old", "fitted", "max")) stop("--proj-sd must be old, fitted or max")   # scripts/fit_night_projection_sd.R
 cls_split_on <- identical(flag("class-split", "0"), "1")   # prereg-night-class-split-2026-11-14
 pair_cal <- flag("pair-cal", NULL); if (!is.null(pair_cal)) pair_cal <- as.numeric(strsplit(pair_cal, ",")[[1]])   # c(alpha,beta), prereg-night-pair-cal-2026-11-11
 pair_lbl <- sprintf("vic%d", st$to)
@@ -54,7 +56,7 @@ if ("district" %in% names(turn)) turn$district <- .night_seat_names(turn$distric
 cat(sprintf("NRV5 reference districts renamed to seat names: %d of %d; matching no seat: %s\n",
             sum(!nm0 %in% seats), length(nm0), paste(setdiff(unique(ref$district), seats), collapse = ", ")))
 cat(sprintf("NRV1 %s: %d seats in state, %d snapshots %s to %s, %d sims; label %s (surge-fade %s, tcp-center %s, tcp-flow-floor %s); %d winners to score\n",
-            pair_lbl, length(seats), length(files), stamp[1], stamp[length(stamp)], nrow(st$swd), label, surge_fade, tcp_center, tcp_floor, nrow(win))); cat(sprintf("NRV1 tcp-own-fp %s, cand-ref %s, pair-r %s, pair-cal %s\n", own_fp, cand_ref, if (is.null(pair_r)) "off" else format(pair_r), if (is.null(pair_cal)) "off" else paste(format(pair_cal), collapse = ",")))
+            pair_lbl, length(seats), length(files), stamp[1], stamp[length(stamp)], nrow(st$swd), label, surge_fade, tcp_center, tcp_floor, nrow(win))); cat(sprintf("NRV1 tcp-own-fp %s, cand-ref %s, proj-sd %s, pair-r %s, pair-cal %s\n", own_fp, cand_ref, proj_sd, if (is.null(pair_r)) "off" else format(pair_r), if (is.null(pair_cal)) "off" else paste(format(pair_cal), collapse = ",")))
 
 source("scripts/night_replay_checkpoint.R")   # per-step partial files; --resume=1 skips the times already done
 ck_prefix <- sprintf("%s-%s", pair_lbl, label); ck_kinds <- c("summary", "seats", "tcp")
@@ -70,7 +72,7 @@ for (k in seq_along(files)) {
   enr <- stats::setNames(feed$contests$enrolment, sub(" District$", "", feed$contests$district))
   expected <- night_expected_votes(enr, night_turnout_table(turn, ref), "night")
   r <- night_run_update(st, conv, ref, gap_k = 5, total = "expected", expected = expected, use_tcp = TRUE,
-                        surge_fade = surge_fade, tcp_center = tcp_center, tcp_flow_floor = tcp_floor, tcp_own_fp = own_fp, tcp_pair_r = pair_r, tcp_pair_cal = pair_cal, cand_ref = cand_ref, class_split = cls_split)
+                        surge_fade = surge_fade, tcp_center = tcp_center, tcp_flow_floor = tcp_floor, tcp_own_fp = own_fp, tcp_pair_r = pair_r, tcp_pair_cal = pair_cal, cand_ref = cand_ref, class_split = cls_split, proj_sd = proj_sd)
   tot <- r$sim$totals; alp <- tot[, "ALP"]; oth <- tot[, setdiff(colnames(tot), "ALP"), drop = FALSE]
   wp <- as.data.table(r$sim$win_prob)
   sc <- merge(win, wp, by = c("seat", "party"), all.x = TRUE); sc[is.na(prob), prob := 0]
