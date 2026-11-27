@@ -24,7 +24,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   final-three rounds are defined by who received votes (a round sent wholly to one side is dropped). Done when traced.
 - NOTE (28 Nov, overnight): the LIVE night loop now runs A3 (`--rep-sd`, PR #292) and D2 (`--proj-tails=t`, PR #293) by
   default, but the replay scripts do NOT: any replay meant to measure the live night must pass
-  `--rep-sd=0.0458,0 --proj-tails=t --tcp-cand=1 --booth-knn=10,1,10,0` (B1c and lane F ON live since 28 Nov 8:45am, PR #294; and `--class-split=1 --pair-cal=0.945244,0.681490 --cand-ref=copy` on vic).
+  `--rep-sd=0.0458,0 --proj-tails=t --tcp-cand=1 --booth-knn=10,1,10,2` (B1c and lane F ON live since 28 Nov 8:45am, PR #294; vote types matched `,2` from PR #295; and `--class-split=1 --pair-cal=0.945244,0.681490 --cand-ref=copy` on vic).
   Overnight log: `docs/plans/overnight-2026-11-27-night-fixes.md`. Fast screen: scratchpad `overnight/screen.sh`
   (2,000-draw states); per-stage replay timing and a parsed-snapshot cache are the speed fix (after 28 Nov).
 - OPEN after 28 Nov (night projection sd, REFUSED 27 Nov, `--proj-sd` stays `old`; prereg-night-proj-sd-2026-11-27.md):
