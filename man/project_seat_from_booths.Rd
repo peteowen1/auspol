@@ -86,7 +86,9 @@ its own swing per class, \verb{base + sum_j w_j (y_j - base) / (sum_j w_j + k)},
 a reference, \code{y_j} booth j's own swing, \code{base} the unchanged ordinary swing, \verb{w_j = (votes_j / median booth) * exp(-d^2 / (2 h^2))}, \code{d^2} the squared distance (points) between the two booths' reference shares over every
 reference class plus \verb{(size_w * log ratio of reference votes)^2}. \code{types = TRUE}: an uncounted non-ordinary unit
 whose type has no counted unit takes the reference-vote-weighted swing of ALL the seat's ordinary booths (counted:
-own; uncounted: guessed) in place of the all-types counted swing, keeping its type gap. Not with \code{booth_reg}.}
+own; uncounted: guessed) in place of the all-types counted swing, keeping its type gap. \code{types = "knn"}: such a unit
+instead adds the deviation of the counted polling booths whose reference shares look most like its own (the same
+kernel, no size term) to its all-types swing plus type gap. Not with \code{booth_reg}.}
 }
 \value{
 data.table \verb{cls, projected, counted_share}, or \code{NULL} if no
