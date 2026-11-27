@@ -22,6 +22,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   made Victorian seats worse (vic2014 +0.0117; Melbourne/Prahran Greens wins pulled to Labor): feed actual primaries and
   score the seat model with the new flows. Review nits: `htv_seat_splits_final3()` fallback ignores `AUSPOL_HTV_EXCLUDE`;
   final-three rounds are defined by who received votes (a round sent wholly to one side is dropped). Done when traced.
+- NOTE (28 Nov, overnight): the LIVE night loop now runs A3 (`--rep-sd`, PR #292) and D2 (`--proj-tails=t`, PR #293) by
+  default, but the replay scripts do NOT: any replay meant to measure the live night must pass
+  `--rep-sd=0.0458,0 --proj-tails=t` (and `--class-split=1 --pair-cal=0.945244,0.681490 --cand-ref=copy` on vic).
+  Overnight log: `docs/plans/overnight-2026-11-27-night-fixes.md`. Fast screen: scratchpad `overnight/screen.sh`
+  (2,000-draw states); per-stage replay timing and a parsed-snapshot cache are the speed fix (after 28 Nov).
 - OPEN after 28 Nov (night projection sd, REFUSED 27 Nov, `--proj-sd` stays `old`; prereg-night-proj-sd-2026-11-27.md):
   the table is too narrow under ~1% counted (majors 6.15 real vs 3.5, n 288) but `max` only trades seats (-0.0019, SE
   0.0029). Mildura vic2022 is mainly a flow miss (independent 55% of the final two at 15% counted, finished 48%).
