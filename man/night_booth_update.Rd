@@ -19,7 +19,9 @@ night_booth_update(
   expected = NULL,
   lean = NULL,
   early_frac = NULL,
-  cand_ref = FALSE
+  cand_ref = FALSE,
+  keep_proj = FALSE,
+  proj_sd = c("old", "fitted", "max")
 )
 }
 \arguments{
@@ -73,6 +75,14 @@ letters only, case-folded): \code{TRUE} or \code{"move"} files those previous vo
 (\verb{docs/plans/prereg-night-candidate-ref-2026-11-11.md}, FAILED: the old class loses its history); \code{"copy"}
 keeps them under the old class AND adds them to the current one, with each unit's reference total unchanged
 (\verb{docs/plans/prereg-night-candidate-ref-copy-2026-11-11.md}). Needs a \code{candidate} column in both tables.}
+
+\item{keep_proj}{\code{TRUE} adds \code{proj_detail} to the result: one row per seat and class projected (\verb{seat, cls, proj}
+(points), \verb{counted_share, n_units, has_ref, sd_proj, in_prior, prior, prior_sd}), for fitting the projection sd
+(\code{scripts/fit_night_projection_sd.R}). \code{FALSE} (default) returns the list exactly as before.}
+
+\item{proj_sd}{\code{"old"} (default, byte-identical): the projection sd is \code{\link[=booth_projection_sd]{booth_projection_sd()}}'s rehearsal table, the same
+for every class. \code{"fitted"}: its curve fitted on the three real replayed nights, by class group and projected share
+(\code{booth_projection_sd(method = "fitted")}). It already widens minor and independent cells, so leave \code{new_sd_mult} at 1 with it.}
 }
 \value{
 List: \code{shares} (posterior means, rows renormalised to 100), \code{sd} (posterior sds),

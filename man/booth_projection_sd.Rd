@@ -7,7 +7,10 @@
 booth_projection_sd(
   counted_share,
   table = data.frame(share = c(0, 0.05, 0.086, 0.224, 0.346, 0.95, 1), sd = c(3.5, 3.5,
-    2.63, 1.93, 1.77, 0.26, 0.26))
+    2.63, 1.93, 1.77, 0.26, 0.26)),
+  method = c("old", "fitted", "max"),
+  share = NULL,
+  cls = NULL
 )
 }
 \arguments{
@@ -15,6 +18,11 @@ booth_projection_sd(
 
 \item{table}{data.frame \verb{share, sd} to interpolate; the rehearsal-1 table
 by default.}
+
+\item{method}{\code{"old"} (default, the table above, unchanged) or \code{"fitted"}.}
+
+\item{share, cls}{For \code{"fitted"}: the projected share (points) and class of each cell (recycled against
+\code{counted_share}). A class in \code{.booth_proj_sd_fit$major} uses the major-party curve, every other the other one.}
 }
 \value{
 sd in share points.
@@ -26,4 +34,10 @@ the projected major-party share was 2.63 at 8.6\% of all votes counted,
 shaped (early votes arrive as one lump), so it is interpolated through
 those points, held at 3.5 below 5\% counted and at 0.26 above 95\%.
 A replay re-fits this; it is a rehearsal constant, not a law.
+}
+\details{
+\code{method = "fitted"} (opt-in; \code{--proj-sd=fitted} on the night scripts) replaces the table with a smooth curve
+fitted by \code{scripts/fit_night_projection_sd.R} on the three real replayed nights (vic2022, fed2022, fed2025), per
+class group (\code{.booth_proj_sd_fit}): \verb{sd^2 = a + (b + c p (1 - p)) / max(counted_share, floor)}, \code{p} the projected
+share as a fraction. With \verb{a, b, c >= 0} it falls monotonically with the count and has no cliff.
 }

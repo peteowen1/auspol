@@ -21,6 +21,7 @@ reference table's ordinary booths); anything else: the VEC feed),
 \code{"off"} for the old 0.2 pair cliff; or \code{"alpha,beta"}),
 \code{class_split} (\code{"on"} by default: two candidates of one minor class counted separately, \verb{docs/plans/prereg-night-class-split-2026-11-14.md};
 \code{"off"}),
+\code{proj_sd} (\code{"old"} by default, the rehearsal table; \code{"fitted"}: \code{\link[=booth_projection_sd]{booth_projection_sd()}}'s fitted curve),
 \code{last_stamp} (skip when the newest snapshot has this stamp), \code{cache} (environment for the state and lookup).}
 }
 \value{
