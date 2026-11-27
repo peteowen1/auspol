@@ -91,5 +91,12 @@ Pete's calls (27 Nov ~9:20pm): a fix that PASSES its prereg overnight gets switc
   (SE 0.0012) but wrong 0.99 calls 2 -> 3 and seats right 376 -> 373, Mildura 8pm far worse: REFUSED. E2 total-votes
   sd (cv 0.0689 vic2014->2018, leak-free) is ~0.1 pt by 9pm; full-night vic2022 replay started 2:23am. Early votes cast
   as an input made the expected total WORSE (cv 0.041 -> 0.052): early voters replace polling-day voters.
+- Lane D (907fd8f2) screen: D1 vote-type sd REFUSED (+0.0005 SE 0.0001; vic +0.0038 SE 0.0016: over-widens seats the
+  projection had right); D2 Student-t combine passed the screen (-0.0011 SE 0.0008); D1+D2 refused (vic 1.7 SE worse).
+- E2 full-night vic2022 vs A3 (2:23am): +0.0001, no seat changed: no effect, REFUSED (nothing to switch on).
+- **D2 full 20k replays (2:37-3:40am) PASSED narrowly:** under 15% counted -0.000801 (SE 0.000771, 1.04 SE); nights
+  vic -0.0005, fed2022 -0.0007, fed2025 -0.0010; wrong calls and seats right unchanged; Mildura 7pm Cupper 0.92 -> 0.95
+  (wrong way, reported). Shipped as the default on dev (4121081e, .NIGHT_PROJ_TAILS = "t", off with
+  --loop=--proj-tails=normal); main port branch ship-night-d2 (check_like_ci + review running 3:42am).
 - 1:15am lane D launched: D1 vote-type uncertainty until a type reports; D2 Student-t combine (from lane C) on the
   current sd. Lane B full replays running (vic2022 lbbase byte-identical to the corrected base).
