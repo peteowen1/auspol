@@ -119,6 +119,8 @@ night_prior_sd <- function(shares, level_sd, level_mult = NULL, sd_override = NU
 #' @param rep_sd Lane A1 sd: `NULL` (default) is byte-identical. `c(a, b)`: the projection sd becomes
 #'   `sqrt(sd^2 + unc_frac^2 * (a * rep_dist^2 + b * swing_sd^2 / (n_ord + 1)))` (the diag columns of
 #'   [project_seat_from_booths()]).
+#' @param booth_reg_all With `booth_reg_k`: `TRUE` applies the booth-share offset to every uncounted unit with a
+#'   reference (the early and postal blocks too), not only ordinary booths. `FALSE` (default) is ordinary booths only.
 #' @param proj_diag `TRUE` (with `keep_proj`) adds the lane A diag columns (`sd_table, n_ord, swing_sd, rep_dist,
 #'   unc_frac`) to `proj_detail`. `FALSE` (default) is byte-identical.
 #' @return List: `shares` (posterior means, rows renormalised to 100), `sd` (posterior sds),
@@ -130,7 +132,7 @@ night_prior_sd <- function(shares, level_sd, level_mult = NULL, sd_override = NU
 night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, gap_k = NULL, early = "last", new_sd_mult = 1,
                                reported = NULL, total = c("table", "projected", "expected"), expected = NULL, lean = NULL,
                                early_frac = NULL, cand_ref = FALSE, keep_proj = FALSE, proj_sd = c("old", "fitted", "max"),
-                               booth_reg_k = NULL, type_pool_k = NULL, rep_sd = NULL, proj_diag = FALSE) {
+                               booth_reg_k = NULL, type_pool_k = NULL, rep_sd = NULL, proj_diag = FALSE, booth_reg_all = FALSE) {
   total <- match.arg(total); proj_sd <- match.arg(proj_sd)
   if (!is.null(rep_sd)) stopifnot(is.numeric(rep_sd), length(rep_sd) == 2L, all(is.finite(rep_sd)), all(rep_sd >= 0))
   lane_diag <- isTRUE(proj_diag) || !is.null(rep_sd)
@@ -218,7 +220,7 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
     if (length(units)) units_by_seat[[s]] <- units
   }
   type_gap <- if (is.null(gap_k)) NULL else .night_type_gap(Lc, Rk, units_by_seat, gap_k)
-  booth_reg <- if (is.null(booth_reg_k)) NULL else list(k = booth_reg_k, pool = .night_booth_slope(Lc, Rk, units_by_seat))
+  booth_reg <- if (is.null(booth_reg_k)) NULL else list(k = booth_reg_k, pool = .night_booth_slope(Lc, Rk, units_by_seat), all = isTRUE(booth_reg_all))
   for (s in names(units_by_seat)) {
     ld <- Lc[Lc$district == s]; rd <- Rk[Rk$district == s]
     units <- units_by_seat[[s]]
@@ -619,4 +621,29 @@ night_shrink_draws <- function(draws, keep) {
   out <- sweep(sweep(draws, 2L, ctr) * keep, 2L, ctr, `+`)
   dimnames(out) <- dimnames(draws)
   out
+}
+
+#' Lane A switches from night-script flags
+#'
+#' Turns the strings of `--booth-reg=<k>`, `--booth-reg-all=1`, `--type-pool=<k>` and `--rep-sd=<a>,<b>` into the
+#' `lane_a` list [night_run_update()] passes to [night_booth_update()] (`docs/plans/prereg-night-lane-a-2026-11-27.md`).
+#' Every flag absent gives `NULL`, the run without lane A.
+#' @param booth_reg,booth_reg_all,type_pool,rep_sd Flag values as strings, or `NULL` when not given.
+#' @return `NULL` or a named list.
+#' @export
+night_lane_a_args <- function(booth_reg = NULL, booth_reg_all = NULL, type_pool = NULL, rep_sd = NULL) {
+  num1 <- function(x, nm) { v <- suppressWarnings(as.numeric(x)); if (length(v) != 1L || !is.finite(v) || v < 0) stop("NX30! --", nm, " must be one number >= 0", call. = FALSE); v }
+  out <- list()
+  if (!is.null(booth_reg)) out$booth_reg_k <- num1(booth_reg, "booth-reg")
+  if (identical(booth_reg_all, "1")) {
+    if (is.null(booth_reg)) stop("NX30! --booth-reg-all needs --booth-reg", call. = FALSE)
+    out$booth_reg_all <- TRUE
+  }
+  if (!is.null(type_pool)) out$type_pool_k <- num1(type_pool, "type-pool")
+  if (!is.null(rep_sd)) {
+    v <- suppressWarnings(as.numeric(strsplit(rep_sd, ",")[[1]]))
+    if (length(v) != 2L || any(!is.finite(v)) || any(v < 0)) stop("NX30! --rep-sd must be two numbers >= 0, a,b", call. = FALSE)
+    out$rep_sd <- v
+  }
+  if (length(out)) out else NULL
 }

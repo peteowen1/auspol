@@ -538,13 +538,18 @@ night_expected_votes <- function(enrolment, prev, basis = c("night", "final")) {
 #'   run separately from their counted figures (`docs/plans/prereg-night-class-split-2026-11-14.md`).
 #' @param proj_sd Passed to [night_booth_update()]: `"old"` (default, unchanged) or `"fitted"`, the projection sd fitted on
 #'   the three real replayed nights (`scripts/fit_night_projection_sd.R`).
+#' @param lane_a `NULL` (default, unchanged) or a list (see [night_lane_a_args()]) of lane A switches passed to [night_booth_update()]:
+#'   `booth_reg_k`, `booth_reg_all`, `type_pool_k`, `rep_sd` (`docs/plans/prereg-night-lane-a-2026-11-27.md`).
 #' @return List: `sim`, `nu` (the update), `shares`, `sd`, `matched` (seats in both state and feed),
 #'   `n_updated`, `class_split` (the split seats, or `NULL`).
 #' @export
 night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "table", "expected"), expected = NULL, sims = NULL, use_tcp = TRUE,
                              lean = NULL, early_frac = NULL, surge_fade = TRUE, tcp_center = "median", tcp_flow_floor = 0.01, tcp_own_fp = FALSE,
-                             tcp_pair_r = NULL, tcp_pair_cal = NULL, cand_ref = FALSE, class_split = NULL, proj_sd = "old") {
+                             tcp_pair_r = NULL, tcp_pair_cal = NULL, cand_ref = FALSE, class_split = NULL, proj_sd = "old", lane_a = NULL) {
   total <- match.arg(total)
+  la_ok <- c("booth_reg_k", "booth_reg_all", "type_pool_k", "rep_sd")
+  if (!is.null(lane_a) && (!is.list(lane_a) || !all(names(lane_a) %in% la_ok)))
+    stop("NW30! lane_a must be a list with names among ", paste(la_ok, collapse = ", "), call. = FALSE)
   if (!is.numeric(tcp_flow_floor) || length(tcp_flow_floor) != 1L || !is.finite(tcp_flow_floor) || tcp_flow_floor < 0)
     stop("NW17! tcp_flow_floor must be one finite number >= 0 (got ", paste(format(tcp_flow_floor), collapse = ", "), ")", call. = FALSE)
   if (is.null(sims)) sims <- st$n_sims
@@ -552,9 +557,9 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
   seats <- rownames(st$shares)
   matched <- intersect(seats, unique(conv$live$district))
   shares <- st$shares; sdo <- st$sdo; swd <- st$swd
-  nu <- night_booth_update(shares, night_prior_sd(shares, st$level_sd, st$level_mult, sdo), 1, conv$live, ref,
+  nu <- do.call(night_booth_update, c(list(shares, night_prior_sd(shares, st$level_sd, st$level_mult, sdo), 1, conv$live, ref,
                            gap_k = gap_k, reported = conv$counted, total = total, expected = expected, lean = lean,
-                           early_frac = early_frac, cand_ref = cand_ref, proj_sd = proj_sd)
+                           early_frac = early_frac, cand_ref = cand_ref, proj_sd = proj_sd), lane_a))
   if (nu$n_updated > 0L) {
     shares <- nu$shares; sdo <- nu$sd; swd <- night_shrink_draws(swd, 1 - nu$resolved)
   }
