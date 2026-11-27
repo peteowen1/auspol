@@ -831,7 +831,7 @@ night_publish_json <- function(doc, out_file, min_seats = 1L) {
 # "0,0" -> off (the night command's --loop=--rep-sd=off turns it off mid-count); "a,b" as given. Widens the projection sd
 # by how unlike the counted booths are the ones still to come (night_booth_update()'s rep_sd).
 .NIGHT_REP_SD <- c(0.0458, 0)
-.NIGHT_BOOTH_KNN <- "10,1,10,0"   # lane F default for the live night (night_cycle): per-booth guess on polling booths only (h,k,size_w,types); "off" turns it off. Pete's override of the prereg, 28 Nov 2026
+.NIGHT_BOOTH_KNN <- "10,1,10,2"   # lane F default for the live night (night_cycle): per-booth guess on polling booths, and each vote type matched to the booths most like it (h,k,size_w,types; types 2 = "knn"); "off" turns it off. Pete's overrides of the prereg, 28 Nov 2026 (Amendments 1 and 3)
 .NIGHT_PROJ_TAILS <- "t"   # lane D2 default for the live night (night_cycle); "normal" is the old normal-normal combine
 .night_rep_sd_cfg <- function(x) {
   if (is.null(x)) return(list(rep_sd = .NIGHT_REP_SD))
