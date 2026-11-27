@@ -43,11 +43,20 @@ lv = {r["party"]: r["forecast_level"] for r in fc["statewide"]}
 FC = {"seats": FCS, "state": {"fp": {k: lv[k] for k in ("LNP", "ALP", "GRN", "ONP", "OTH") if k in lv},
                               "tpp": {"ALP": round(a.tpp_alp, 1), "LNP": round(100 - a.tpp_alp, 1)}, "built": fc["built_at"]}}
 
+def clean(o):
+    # Scraped names (bookmaker outcomes, candidates) are rendered by the page with innerHTML: drop < and > so no
+    # string can carry markup. Real names never contain them; apostrophes (O'Brien) are kept.
+    if isinstance(o, str): return o.replace("<", "").replace(">", "")
+    if isinstance(o, list): return [clean(x) for x in o]
+    if isinstance(o, dict): return {clean(k): clean(v) for k, v in o.items()}
+    return o
 def swap(name, obj):
     global h
     m = re.search(r"const " + name + r" = ", h); assert m, name
     _, end = json.JSONDecoder().raw_decode(h[m.end():])
-    h = h[:m.end()] + json.dumps(obj, separators=(",", ":"), ensure_ascii=False) + h[m.end() + end:]
+    # ensure_ascii covers U+2028/9; escaping < > & stops any "</script>" breakout from the embedded JSON
+    js = json.dumps(clean(obj), separators=(",", ":")).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+    h = h[:m.end()] + js + h[m.end() + end:]
 for n, o in (("DATA", DATA), ("MARKETS", j["markets"]), ("BETS", BETS), ("FC", FC)): swap(n, o)
 
 # dated text: the capture sentence in the header and the price time in the prices tab
