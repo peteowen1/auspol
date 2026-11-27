@@ -270,7 +270,7 @@ if (file.exists(gf)) {
   g <- fread(gf, skip = "district,")
   # Only the five map colours ges_read_calls.js decodes are calls. Anything else (its UNK) would reach
   # classify_party() with a blank name and come back IND: a plausible, wrong, frozen call.
-  bad <- !(g$party %in% c("LIB", "NAT", "ALP", "GRN", "ONP"))
+  bad <- !(g$party %in% c("LIB", "NAT", "ALP", "GRN", "ONP", "IND"))   # IND: grey #7e7e7e, GES's panel "Independent" (Mulgrave, 27 Nov)
   if (any(bad)) stop(sprintf("VB6! GES has %d district(s) with an unread map colour (%s): %s", sum(bad),
                              paste(unique(g$party[bad]), collapse = ","), paste(g$district[bad], collapse = ", ")))
   write_calls(g[, .(district = match_districts(district, "ges"), call_class = classify_party(rep("", .N), code = party), prob = NA_real_)], "ges")

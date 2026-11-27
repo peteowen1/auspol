@@ -17,7 +17,8 @@
   const paths = [...svg.querySelectorAll("path")];
   const gj = await fetch("/victoria-districts.geojson").then((r) => r.json());
   const cls = (r, g, b) =>
-    g > 180 && r < 60 ? "GRN" :
+    g > 140 && r < 60 && g > b ? "GRN" :   // g 140: darker Greens shade #009c54 (Brunswick, 27 Nov)
+    r === g && g === b && r >= 100 && r <= 160 ? "IND" :   // grey #7e7e7e = the panel's "Independent" (Mulgrave, 27 Nov)
     b > 150 && b > r ? "LIB" :
     r > 200 && g >= 70 && g <= 120 && b < 40 ? "ONP" :
     r > 190 && g < 70 ? "ALP" :
