@@ -109,3 +109,12 @@ arrive in one lump at 11pm, so the vote-type rule acts for a few hours only. Pet
 Each early voting centre as its own unit (Pete's fuller version) cannot be built: no 2022 or 2018 result by early
 voting centre exists (the VEC published one early total per district), the 2026 centres are new, and no replay feed
 carries early votes by centre.
+
+## Amendment 4 (28 Nov 2026, about 9:35am): full runs of `bkt` FAIL a guard; merged by Pete's second override
+
+Full 20,000-draw replays to 2am of `bkt` (code 102afb8c) against `ship2` (the live night, B1c + polling-booth guess):
+under 15% counted +0.0000 (SE 0.0002); vic2022 +0.0013, fed2022 -0.0001, fed2025 -0.0002. Whole night: vic2022 -0.0001
+(0.0016), fed2022 +0.0011 (0.0011), **fed2025 +0.0044 (0.0030), 1.5 SE worse: fails clause 2**. Wrong 0.99 calls 18 = 18;
+seats right 382 = 382. Mildura 8 / 9 / 10 / 11pm 0.86 / 0.30 / 0.25 / 0.15 -> 0.74 / 0.22 / 0.17 / 0.18. Worse: Croydon,
+Mornington (vic2022); Wills, Cowper, Forrest, Calwell (fed2025). Told Pete; he chose "Merge anyway". PR #295 merged
+(main 882638aa). Back to polling booths only mid-count: `--loop=--booth-knn=10,1,10,0`.
