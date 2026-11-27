@@ -10,11 +10,12 @@ night_lane_a_args(
   type_pool = NULL,
   rep_sd = NULL,
   type_sd = NULL,
-  proj_tails = NULL
+  proj_tails = NULL,
+  booth_knn = NULL
 )
 }
 \arguments{
-\item{booth_reg, booth_reg_all, type_pool, rep_sd, type_sd, proj_tails}{Flag values as strings, or \code{NULL} when not given.}
+\item{booth_reg, booth_reg_all, type_pool, rep_sd, type_sd, proj_tails, booth_knn}{Flag values as strings, or \code{NULL} when not given.}
 }
 \value{
 \code{NULL} or a named list.
@@ -25,4 +26,6 @@ Turns the strings of \verb{--booth-reg=<k>}, \code{--booth-reg-all=1}, \verb{--t
 Every flag absent gives \code{NULL}, the run without lane A.
 Lane D adds \verb{--type-sd=<on|off|k>} (\code{type_sd}, D1) and \verb{--proj-tails=<normal|t>} (\code{proj_tails}, D2;
 \verb{docs/plans/prereg-night-lane-d-2026-11-28.md}); \code{off} and \code{normal} add nothing.
+Lane F adds \verb{--booth-knn=h,k,size_w,types} (\code{booth_knn}, e.g. \verb{10,1,10,1}; \verb{docs/plans/prereg-night-booth-guess-2026-11-28.md});
+\code{off} adds nothing.
 }

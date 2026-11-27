@@ -6,6 +6,8 @@
 #   Rscript scripts/night_replay_feed.R --state=<state-fed2022.rds> [--out=<dir>] [--times=18:00,...] [--surge-fade=1]
 #       [--tcp-center=median] [--tcp-flow-floor=0.01] [--label=base] [--resume=1] [--stop-after=<n steps, testing>]
 #       [--proj-sd=old|fitted]   (projection sd: old = the rehearsal table, default; fitted = scripts/fit_night_projection_sd.R)
+#       [--same-class=0|1] [--flow-pool=0|1] [--tcp-by-type=0|1] [--tcp-cand=0|1]   (lane B, off by default; prereg-night-lane-b-2026-11-27;
+#        the feed replay counts no declaration vote, so --tcp-by-type has only ordinary booths here)
 # Every step rewrites <out>/<night>-<label>-*.partial.csv; --resume=1 picks up a killed run (night_replay_checkpoint.R).
 #
 # Simplifications (say them in every result): a reported place carries its FINAL count, not its first-night figure;
@@ -33,11 +35,14 @@ cand_ref <- local({ v <- flag("cand-ref", "0"); if (v == "1") TRUE else if (v %i
 proj_sd <- flag("proj-sd", "old"); if (!proj_sd %in% c("old", "fitted", "max")) stop("--proj-sd must be old, fitted or max")   # scripts/fit_night_projection_sd.R
 # lane A (docs/plans/prereg-night-lane-a-2026-11-27.md): --booth-reg=<k> [--booth-reg-all=1] --type-pool=<k> --rep-sd=<a>,<b>
 # lane D (docs/plans/prereg-night-lane-d-2026-11-28.md): --type-sd=<on|off|k> --proj-tails=<normal|t>
-lane_a <- night_lane_a_args(flag("booth-reg"), flag("booth-reg-all"), flag("type-pool"), flag("rep-sd"), flag("type-sd"), flag("proj-tails"))
+lane_a <- night_lane_a_args(flag("booth-reg"), flag("booth-reg-all"), flag("type-pool"), flag("rep-sd"), flag("type-sd"), flag("proj-tails"), flag("booth-knn"))
 cat(sprintf("NRF1D lane D: type-sd %s, proj-tails %s\n", flag("type-sd", "off"), flag("proj-tails", "normal")))
 cat(sprintf("NRF1A lane A: %s\n", if (is.null(lane_a)) "off" else paste(names(lane_a), vapply(lane_a, function(x) paste(x, collapse = ","), ""), sep = "=", collapse = " ")))
 cls_split_on <- identical(flag("class-split", "0"), "1")   # prereg-night-class-split-2026-11-14
 cls_split <- if (cls_split_on) night_class_split_params(pair_lbl) else NULL
+# lane B (prereg-night-lane-b-2026-11-27), all off by default: --same-class=1 (B1), --flow-pool=1 (B2), --tcp-by-type=1 (B3)
+same_class <- if (identical(flag("same-class", "0"), "1")) night_same_class_params(pair_lbl) else FALSE
+flow_pool <- identical(flag("flow-pool", "0"), "1"); tcp_by_type <- identical(flag("tcp-by-type", "0"), "1"); tcp_cand <- identical(flag("tcp-cand", "0"), "1")   # --tcp-cand=1 (B1c)
 if (cls_split_on) cat(sprintf("NRCS night class split: %s\n", if (is.null(cls_split)) "NO parameters (class_split_fit gave none): off" else sprintf("sd0 %.3f, f %s", cls_split$sd0, paste(names(cls_split$f), sprintf("%.3f", cls_split$f), collapse = " "))))
 pair_cal <- flag("pair-cal", NULL); if (!is.null(pair_cal)) pair_cal <- as.numeric(strsplit(pair_cal, ",")[[1]])   # c(alpha,beta), prereg-night-pair-cal-2026-11-11
 day <- as.Date(c(`2022` = "2022-05-21", `2025` = "2025-05-03")[[as.character(yr)]])
@@ -58,6 +63,7 @@ pp <- B[!grepl("^declaration", classification) & !is.na(t_fp)]
 cat(sprintf("NRF1 %s: %d seats in state, %d places with a night return, %d places in the booth table; %d sims; label %s (surge-fade %s, tcp-center %s, tcp-flow-floor %s)\n",
             pair_lbl, length(seats), nrow(pp), nrow(L[L$booth_type == "ordinary", list(1), by = list(district, booth)]), nrow(st$swd),
             label, surge_fade, tcp_center, tcp_floor)); cat(sprintf("NRF1 tcp-own-fp %s, cand-ref %s, proj-sd %s, pair-r %s, pair-cal %s\n", own_fp, cand_ref, proj_sd, if (is.null(pair_r)) "off" else format(pair_r), if (is.null(pair_cal)) "off" else paste(format(pair_cal), collapse = ",")))
+cat(sprintf("NRF1 lane B: same-class %s, flow-pool %s, tcp-by-type %s, tcp-cand %s\n", if (isFALSE(same_class)) "off" else paste("g", paste(names(same_class), sprintf("%.3f", same_class), collapse = " ")), flow_pool, tcp_by_type, tcp_cand))
 miss <- setdiff(unique(pp$division), seats); if (length(miss)) cat("NRF1 feed divisions not in the state:", paste(miss, collapse = ", "), "\n")
 
 # The pair on screen per division per snapshot. Usable while it is on screen and not flagged maverick AT THAT
@@ -103,7 +109,8 @@ for (k in seq_along(at)) {
   tcp_rows <- merge(Tc, tb, by = c("district", "booth"))
   conv <- list(live = L, counted = rep_pp, tcp = tcp_rows)
   r <- night_run_update(st, conv, R, gap_k = 5, total = "projected", use_tcp = nrow(tcp_rows) > 0,
-                        surge_fade = surge_fade, tcp_center = tcp_center, tcp_flow_floor = tcp_floor, tcp_own_fp = own_fp, tcp_pair_r = pair_r, tcp_pair_cal = pair_cal, cand_ref = cand_ref, class_split = cls_split, proj_sd = proj_sd, lane_a = lane_a)
+                        surge_fade = surge_fade, tcp_center = tcp_center, tcp_flow_floor = tcp_floor, tcp_own_fp = own_fp, tcp_pair_r = pair_r, tcp_pair_cal = pair_cal, cand_ref = cand_ref, class_split = cls_split, proj_sd = proj_sd, lane_a = lane_a,
+                        same_class = same_class, flow_pool = flow_pool, tcp_by_type = tcp_by_type, tcp_cand = tcp_cand)
   tot <- r$sim$totals; alp <- tot[, "ALP"]
   oth <- tot[, setdiff(colnames(tot), "ALP"), drop = FALSE]
   wp <- as.data.table(r$sim$win_prob)

@@ -130,6 +130,8 @@ night_prior_sd <- function(shares, level_sd, level_mult = NULL, sd_override = NU
 #'   variance, so an uncounted early or postal block carries its own uncertainty until it reports.
 #' @param proj_tails Lane D2: `"normal"` (default, byte-identical) or `"t"`: combine with a Student-t projection error of
 #'   the same variance ([combine_prior_projection_t()], df `.NIGHT_T_DF` from lane C).
+#' @param booth_knn Lane F, the per-booth best guess: `NULL` (default, byte-identical) or `list(h, k, size_w, types)`, passed to
+#'   [project_seat_from_booths()] (`docs/plans/prereg-night-booth-guess-2026-11-28.md`). Cannot be combined with `booth_reg_k`.
 #' @return List: `shares` (posterior means, rows renormalised to 100), `sd` (posterior sds),
 #'   `counted` (named per-seat share of the final night vote counted), `resolved` (mean over
 #'   updated cells of 1 - posterior sd / prior sd), `n_updated` (seats with booths), `units`
@@ -140,7 +142,7 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
                                reported = NULL, total = c("table", "projected", "expected"), expected = NULL, lean = NULL,
                                early_frac = NULL, cand_ref = FALSE, keep_proj = FALSE, proj_sd = c("old", "fitted", "max"),
                                booth_reg_k = NULL, type_pool_k = NULL, rep_sd = NULL, proj_diag = FALSE, booth_reg_all = FALSE,
-                               type_sd = NULL, proj_tails = c("normal", "t")) {
+                               type_sd = NULL, proj_tails = c("normal", "t"), booth_knn = NULL) {
   total <- match.arg(total); proj_sd <- match.arg(proj_sd); proj_tails <- match.arg(proj_tails)
   type_k <- .night_type_sd_k(type_sd)
   if (!is.null(rep_sd)) stopifnot(is.numeric(rep_sd), length(rep_sd) == 2L, all(is.finite(rep_sd)), all(rep_sd >= 0))
@@ -237,7 +239,7 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
     p <- project_seat_from_booths(ld, rd, units, type_gap = type_gap, total = total, expected_total = if (is.null(expected)) NA_real_ else unname(expected[s]),
                                   lean = if (is.null(Lk)) NULL else Lk[Lk$district == s],
                                   early_frac = if (is.null(early_frac) || !s %in% names(early_frac)) NA_real_ else unname(early_frac[s]),
-                                  booth_reg = booth_reg, type_pool_k = type_pool_k, diag = lane_diag, type_sd = type_k)
+                                  booth_reg = booth_reg, type_pool_k = type_pool_k, diag = lane_diag, type_sd = type_k, booth_knn = booth_knn)
     if (is.null(p) || !nrow(p)) next
     cs <- p$counted_share[1]
     proj_total[s] <- sum(p$projected)
@@ -368,11 +370,21 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
 #'   votes`), e.g. `output/booths-vic2022.csv`.
 #' @param units Named list: the counted units per seat ([night_booth_update()]'s `units`).
 #' @param post Seat x class matrix of updated first preferences (percent).
+#' @param cand_level `FALSE` (default, unchanged) or `TRUE` (switch `same_class`, B1): `a` and `b` are each class's
+#'   SENIOR candidate (most counted votes in the units with a 2CP), so its other candidates' votes join the others
+#'   whose flow is measured, and `fp_a` / `fp_b` are the senior's share (the class's share times the counted senior
+#'   fraction). Needs a `candidate` column in `fp`; without one it is the class-level count.
+#' @param by_type `NULL` (default, unchanged) or the reference election's booth table (`district, booth_type, party,
+#'   votes`; switch `tcp_by_type`, B3): the flow becomes the mix of per-vote-type flows (ordinary, early, postal, ...)
+#'   weighted by each type's share of the others' votes at the reference election, a type's gap to the ordinary flow
+#'   partial-pooled across the night's seats (`.night_tcp_type_mix()`); columns `flow_class_mix` (the flow before)
+#'   and `type_mix` are added.
 #' @return data.table `seat, a, b, flow` (share of the others' votes reaching `a`, 0-1), `share_a`
 #'   (projected final 2CP share of `a`, 0-1), `raw_share_a` (the RAW counted 2CP share of `a` over `a` + `b` in the counted units, no projection), `votes` (2CP votes counted). Seats with no counted
 #'   2CP, not exactly two classes, a class missing from `post`, or no other votes, are absent.
 #' @export
-night_tcp_obs <- function(tcp, fp, units, post) {
+night_tcp_obs <- function(tcp, fp, units, post, cand_level = FALSE, by_type = NULL) {
+  PT <- list()
   # vote-type labels differ between the two files ("marked as voted" / "marked_as_voted"): one spelling
   .vt <- function(x) gsub("[^a-z]+", "_", tolower(x))
   TT <- data.table::as.data.table(tcp)
@@ -397,6 +409,16 @@ night_tcp_obs <- function(tcp, fp, units, post) {
     tu <- unique(TT$unit[TT$district == s & TT$unit %in% u])
     f <- FF[FF$district == s & FF$unit %in% tu, list(v = sum(votes)), by = "cls"]
     tot <- sum(f$v); fa <- sum(f$v[f$cls == a]); fb <- sum(f$v[f$cls == b])
+    # cand_level (same_class, B1): only the class's SENIOR candidate is in the pair; its other candidates' votes join
+    # the others, whose flow is what the count measures (Mildura vic2022: two other independents beside Cupper)
+    sen_a <- NULL; sen_b <- NULL; ra <- 1; rb <- 1
+    if (isTRUE(cand_level) && "candidate" %in% names(FF)) {
+      fc <- FF[FF$district == s & FF$unit %in% tu & !is.na(FF$candidate), list(v = sum(votes)), by = c("cls", "candidate")]
+      top <- function(k) { z <- fc[fc$cls == k]; if (nrow(z)) z$candidate[which.max(z$v)] else NA_character_ }
+      sen_a <- top(a); sen_b <- top(b)
+      if (!is.na(sen_a) && fa > 0) { va <- sum(fc$v[fc$cls == a & fc$candidate == sen_a]); ra <- va / fa; fa <- va }
+      if (!is.na(sen_b) && fb > 0) { vb <- sum(fc$v[fc$cls == b & fc$candidate == sen_b]); rb <- vb / fb; fb <- vb }
+    }
     rest <- tot - fa - fb
     if (rest <= 0) next
     flow <- min(1, max(0, (x$v[1] - fa) / rest))
@@ -406,18 +428,70 @@ night_tcp_obs <- function(tcp, fp, units, post) {
     # 1 - sum(w^2)); under 3 booths the spread cannot be measured, so the flow is held loosely (0.25).
     # Review of #161: the biased form gave 0.01 for two equal booths and the flow ~99% weight.
     pb_t <- TT[TT$district == s & TT$unit %in% tu & TT$cls == a, list(ta = sum(votes)), by = "unit"]
-    pb_f <- FF[FF$district == s & FF$unit %in% tu, list(fa = sum(votes[cls == a]), fb = sum(votes[cls == b]), tot = sum(votes)), by = "unit"]
+    pb_f <- if (!is.null(sen_a) && !is.na(sen_a) && !is.na(sen_b)) {
+      sa_ <- sen_a; sb_ <- sen_b
+      FF[FF$district == s & FF$unit %in% tu, list(fa = sum(votes[cls == a & candidate %in% sa_]), fb = sum(votes[cls == b & candidate %in% sb_]), tot = sum(votes)), by = "unit"]
+    } else FF[FF$district == s & FF$unit %in% tu, list(fa = sum(votes[cls == a]), fb = sum(votes[cls == b]), tot = sum(votes)), by = "unit"]
     pbk <- merge(pb_t, pb_f, by = "unit"); pbk[, rst := tot - fa - fb]; pbk <- pbk[pbk$rst > 0]
     se <- if (nrow(pbk) >= 3L) {
       fj <- pmin(1, pmax(0, (pbk$ta - pbk$fa) / pbk$rst)); w <- pbk$rst / sum(pbk$rst)
       sqrt(sum(w * (fj - sum(w * fj))^2) * sum(w^2) / max(1 - sum(w^2), 1e-6))
     } else 0.25
-    pa <- post[s, a]; pb <- post[s, b]
+    if (!is.null(by_type) && nrow(pbk)) {
+      ord_u <- unique(FF$booth[FF$district == s & FF$booth_type == "ordinary"])
+      pty <- ifelse(pbk$unit %in% ord_u, "ordinary", pbk$unit)
+      PT[[s]] <- data.table::data.table(seat = s, a = a, b = b, vtype = pty, ta = pbk$ta, fa = pbk$fa, rst = pbk$rst)[,
+        list(ta = sum(ta), fa = sum(fa), rst = sum(rst)), by = c("seat", "a", "b", "vtype")]
+    }
+    pa <- post[s, a] * ra; pb <- post[s, b] * rb
     out[[s]] <- data.table::data.table(seat = s, a = a, b = b, flow = flow, flow_se = max(se, 0.02),
                                        fp_a = pa, fp_b = pb,
                                        share_a = (pa + flow * (100 - pa - pb)) / 100, raw_share_a = x$v[1] / sum(x$v), votes = sum(x$v))
   }
-  data.table::rbindlist(out)
+  out <- data.table::rbindlist(out)
+  if (!is.null(by_type) && length(PT) && nrow(out)) out <- .night_tcp_type_mix(out, data.table::rbindlist(PT), by_type, .vt)
+  out
+}
+
+# tcp_by_type (B3): the seat's flow as the mix, over vote types, of each type's flow, weighted by the type's share of
+# the others' votes at the reference election. A type's flow is the seat's ordinary flow plus a gap: the seat's own
+# counted gap partial-pooled toward the night's mean gap for that type (method of moments over the seats counting
+# both; tau^2 = spread of gaps less sampling), or the mean gap alone where the type is not yet counted. Every term is
+# estimated from the night's counts (no fitted constant). Seats with no counted ordinary booth keep their flow.
+.night_tcp_type_mix <- function(out, G, ref, .vt) {
+  G <- data.table::copy(G)
+  G$flow <- pmin(1, pmax(0, (G$ta - G$fa) / G$rst))
+  G$v <- pmax(G$flow * (1 - G$flow), 0.01) / pmax(G$rst, 1)
+  O <- G[G$vtype == "ordinary", c("seat", "flow", "v")]; data.table::setnames(O, c("flow", "v"), c("f_ord", "v_ord"))
+  X <- merge(G[G$vtype != "ordinary"], O, by = "seat")
+  X$gap <- X$flow - X$f_ord; X$vg <- X$v + X$v_ord
+  gt <- if (nrow(X)) X[, list(n = .N, tau2 = if (.N >= 2L) max(0, stats::var(gap) - mean(vg)) else 0, mg = mean(gap)), by = "vtype"] else
+    data.table::data.table(vtype = character(), n = integer(), tau2 = numeric(), mg = numeric())
+  if (nrow(gt)) gt$gbar <- vapply(seq_len(nrow(gt)), function(i) { x <- X[X$vtype == gt$vtype[i]]; w <- 1 / (gt$tau2[i] + x$vg); sum(w * x$gap) / sum(w) }, 0)
+  Rf <- data.table::as.data.table(ref)
+  rty <- ifelse(Rf$booth_type == "ordinary", "ordinary", .vt(Rf$booth_type)); rcl <- classify_party(Rf$party)
+  Rf <- data.table::data.table(seat = Rf$district, vtype = rty, cls = rcl, v = Rf$votes)
+  Rf$v[!is.finite(Rf$v)] <- 0
+  out$flow_class_mix <- out$flow; out$type_mix <- FALSE
+  for (k in seq_len(nrow(out))) {
+    s <- out$seat[k]; a <- out$a[k]; b <- out$b[k]
+    fo <- O$f_ord[O$seat == s]; if (!length(fo)) next
+    rs <- Rf[Rf$seat == s]
+    if (!nrow(rs)) next
+    wt <- rs[, list(rest = sum(v[!cls %in% c(a, b)])), by = "vtype"]
+    wt <- wt[wt$rest > 0]; if (!nrow(wt)) next
+    fh <- vapply(wt$vtype, function(t) {
+      if (t == "ordinary") return(fo[1])
+      gi <- match(t, gt$vtype); gb <- if (is.na(gi)) 0 else gt$gbar[gi]; ta2 <- if (is.na(gi)) 0 else gt$tau2[gi]
+      own <- X[X$seat == s & X$vtype == t]
+      if (nrow(own)) { w <- if (ta2 > 0) ta2 / (ta2 + own$vg[1]) else 0; fo[1] + w * own$gap[1] + (1 - w) * gb } else fo[1] + gb
+    }, 0)
+    nf <- min(1, max(0, sum(wt$rest * fh) / sum(wt$rest)))
+    out$flow[k] <- nf; out$type_mix[k] <- TRUE
+    out$share_a[k] <- (out$fp_a[k] + nf * (100 - out$fp_a[k] - out$fp_b[k])) / 100
+  }
+  attr(out, "type_gaps") <- gt
+  out
 }
 
 #' Condition simulated draws on the VEC's two-candidate count
@@ -661,10 +735,12 @@ night_shrink_draws <- function(draws, keep) {
 #' Every flag absent gives `NULL`, the run without lane A.
 #' Lane D adds `--type-sd=<on|off|k>` (`type_sd`, D1) and `--proj-tails=<normal|t>` (`proj_tails`, D2;
 #' `docs/plans/prereg-night-lane-d-2026-11-28.md`); `off` and `normal` add nothing.
-#' @param booth_reg,booth_reg_all,type_pool,rep_sd,type_sd,proj_tails Flag values as strings, or `NULL` when not given.
+#' Lane F adds `--booth-knn=h,k,size_w,types` (`booth_knn`, e.g. `10,1,10,1`; `docs/plans/prereg-night-booth-guess-2026-11-28.md`);
+#' `off` adds nothing.
+#' @param booth_reg,booth_reg_all,type_pool,rep_sd,type_sd,proj_tails,booth_knn Flag values as strings, or `NULL` when not given.
 #' @return `NULL` or a named list.
 #' @export
-night_lane_a_args <- function(booth_reg = NULL, booth_reg_all = NULL, type_pool = NULL, rep_sd = NULL, type_sd = NULL, proj_tails = NULL) {
+night_lane_a_args <- function(booth_reg = NULL, booth_reg_all = NULL, type_pool = NULL, rep_sd = NULL, type_sd = NULL, proj_tails = NULL, booth_knn = NULL) {
   num1 <- function(x, nm) { v <- suppressWarnings(as.numeric(x)); if (length(v) != 1L || !is.finite(v) || v < 0) stop("NX30! --", nm, " must be one number >= 0", call. = FALSE); v }
   out <- list()
   if (!is.null(booth_reg)) out$booth_reg_k <- num1(booth_reg, "booth-reg")
@@ -683,5 +759,14 @@ night_lane_a_args <- function(booth_reg = NULL, booth_reg_all = NULL, type_pool 
     if (!proj_tails %in% c("normal", "t")) stop("NX30! --proj-tails must be normal or t", call. = FALSE)
     if (proj_tails == "t") out$proj_tails <- "t"
   }
+  if (!is.null(booth_knn) && !identical(booth_knn, "off")) out$booth_knn <- .night_booth_knn_cfg(booth_knn)
   if (length(out)) out else NULL
+}
+
+# Lane F flag `--booth-knn=h,k,size_w,types` (types 1 or 0) -> project_seat_from_booths()'s booth_knn list.
+.night_booth_knn_cfg <- function(x) {
+  v <- suppressWarnings(as.numeric(strsplit(as.character(x), ",", fixed = TRUE)[[1]]))
+  if (length(v) != 4L || any(!is.finite(v)) || any(v < 0) || v[1] <= 0 || !v[4] %in% c(0, 1))
+    stop("NX33! --booth-knn must be h,k,size_w,types with h > 0, k and size_w >= 0, types 0 or 1 (e.g. 10,1,10,1)", call. = FALSE)
+  list(h = v[1], k = v[2], size_w = v[3], types = v[4] == 1)
 }
