@@ -13,7 +13,8 @@ htv_final3_on()
 \code{"1"}: the share written into the exact \code{LNP|ALP+GRN} key (the Liberal excluded third, Labor and the Greens the
 last two, which decides a Labor-v-Greens seat) is fitted from earlier FINAL-THREE exclusions only: Liberal
 exclusions whose votes went to Labor and the Greens and nobody else. Every wider \code{LNP|...ALP+GRN...} key keeps the
-share fitted from all exclusions. \code{"0"} (published): one share for every key, byte-identical to before.
+share fitted from all exclusions. \code{"0"}: one share for every key, byte-identical to before. Published \code{"1"} since
+27 Nov 2026 (Pete's override of the Victorian seat guard, DECISIONS 27 Nov).
 Measured 27 Nov 2026: in Labor-above federal elections the final-three share ran 65-73\% while the earlier,
 many-candidate exclusions ran 44-62\%, and the pooled fit (seat-count weights) is pulled toward the earlier ones.
 \verb{docs/plans/prereg-htv-final3-2026-11-27.md}.
