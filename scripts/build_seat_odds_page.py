@@ -44,9 +44,10 @@ FC = {"seats": FCS, "state": {"fp": {k: lv[k] for k in ("LNP", "ALP", "GRN", "ON
                               "tpp": {"ALP": round(a.tpp_alp, 1), "LNP": round(100 - a.tpp_alp, 1)}, "built": fc["built_at"]}}
 
 def clean(o):
-    # Scraped names (bookmaker outcomes, candidates) are rendered by the page with innerHTML: drop < and > so no
-    # string can carry markup. Real names never contain them; apostrophes (O'Brien) are kept.
-    if isinstance(o, str): return o.replace("<", "").replace(">", "")
+    # Scraped names (bookmaker outcomes, candidates) are rendered by the page with innerHTML, in text and in
+    # double-quoted attributes (data-seat="..."): drop < > and " so no string can carry markup or close an
+    # attribute. Real names never contain them; apostrophes (O'Brien) are kept, safe inside double quotes.
+    if isinstance(o, str): return o.replace("<", "").replace(">", "").replace('"', "")
     if isinstance(o, list): return [clean(x) for x in o]
     if isinstance(o, dict): return {clean(k): clean(v) for k, v in o.items()}
     return o
