@@ -111,6 +111,18 @@ night_prior_sd <- function(shares, level_sd, level_mult = NULL, sd_override = NU
 #' @param proj_sd `"old"` (default, byte-identical): the projection sd is [booth_projection_sd()]'s rehearsal table, the same
 #'   for every class. `"fitted"`: its curve fitted on the three real replayed nights, by class group and projected share
 #'   (`booth_projection_sd(method = "fitted")`). It already widens minor and independent cells, so leave `new_sd_mult` at 1 with it.
+#' @param booth_reg_k Lane A1 (`docs/plans/prereg-night-lane-a-2026-11-27.md`): `NULL` (default) is byte-identical. A
+#'   number `k`: each uncounted ordinary booth's swing depends on its own reference share, the seat's slope partial-pooled
+#'   by `n / (n + k)` toward the slope pooled over every seat's counted booths ([project_seat_from_booths()] `booth_reg`).
+#' @param type_pool_k Lane A2: `NULL` (default) is byte-identical. A number `k`: each booth type's swing partial-pooled
+#'   toward the seat's ordinary-equivalent swing plus that type's pooled gap (`gap_k`); see [project_seat_from_booths()].
+#' @param rep_sd Lane A1 sd: `NULL` (default) is byte-identical. `c(a, b)`: the projection sd becomes
+#'   `sqrt(sd^2 + unc_frac^2 * (a * rep_dist^2 + b * swing_sd^2 / (n_ord + 1)))` (the diag columns of
+#'   [project_seat_from_booths()]).
+#' @param booth_reg_all With `booth_reg_k`: `TRUE` applies the booth-share offset to every uncounted unit with a
+#'   reference (the early and postal blocks too), not only ordinary booths. `FALSE` (default) is ordinary booths only.
+#' @param proj_diag `TRUE` (with `keep_proj`) adds the lane A diag columns (`sd_table, n_ord, swing_sd, rep_dist,
+#'   unc_frac`) to `proj_detail`. `FALSE` (default) is byte-identical.
 #' @return List: `shares` (posterior means, rows renormalised to 100), `sd` (posterior sds),
 #'   `counted` (named per-seat share of the final night vote counted), `resolved` (mean over
 #'   updated cells of 1 - posterior sd / prior sd), `n_updated` (seats with booths), `units`
@@ -119,8 +131,11 @@ night_prior_sd <- function(shares, level_sd, level_mult = NULL, sd_override = NU
 #' @export
 night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, gap_k = NULL, early = "last", new_sd_mult = 1,
                                reported = NULL, total = c("table", "projected", "expected"), expected = NULL, lean = NULL,
-                               early_frac = NULL, cand_ref = FALSE, keep_proj = FALSE, proj_sd = c("old", "fitted", "max")) {
+                               early_frac = NULL, cand_ref = FALSE, keep_proj = FALSE, proj_sd = c("old", "fitted", "max"),
+                               booth_reg_k = NULL, type_pool_k = NULL, rep_sd = NULL, proj_diag = FALSE, booth_reg_all = FALSE) {
   total <- match.arg(total); proj_sd <- match.arg(proj_sd)
+  if (!is.null(rep_sd)) stopifnot(is.numeric(rep_sd), length(rep_sd) == 2L, all(is.finite(rep_sd)), all(rep_sd >= 0))
+  lane_diag <- isTRUE(proj_diag) || !is.null(rep_sd)
   stopifnot(is.numeric(new_sd_mult), length(new_sd_mult) == 1L, new_sd_mult >= 1)
   stopifnot(identical(dim(shares), dim(prior_sd)), is.finite(frac), frac >= 0, frac <= 1)
   if (!is.null(reported)) stopifnot(all(c("district", "unit") %in% names(reported)))
@@ -205,13 +220,15 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
     if (length(units)) units_by_seat[[s]] <- units
   }
   type_gap <- if (is.null(gap_k)) NULL else .night_type_gap(Lc, Rk, units_by_seat, gap_k)
+  booth_reg <- if (is.null(booth_reg_k)) NULL else list(k = booth_reg_k, pool = .night_booth_slope(Lc, Rk, units_by_seat), all = isTRUE(booth_reg_all))
   for (s in names(units_by_seat)) {
     ld <- Lc[Lc$district == s]; rd <- Rk[Rk$district == s]
     units <- units_by_seat[[s]]
     if (total == "expected" && !(!is.null(expected) && is.finite(unname(expected[s])) && unname(expected[s]) > 0)) fallback_projected <- c(fallback_projected, s)
     p <- project_seat_from_booths(ld, rd, units, type_gap = type_gap, total = total, expected_total = if (is.null(expected)) NA_real_ else unname(expected[s]),
                                   lean = if (is.null(Lk)) NULL else Lk[Lk$district == s],
-                                  early_frac = if (is.null(early_frac) || !s %in% names(early_frac)) NA_real_ else unname(early_frac[s]))
+                                  early_frac = if (is.null(early_frac) || !s %in% names(early_frac)) NA_real_ else unname(early_frac[s]),
+                                  booth_reg = booth_reg, type_pool_k = type_pool_k, diag = lane_diag)
     if (is.null(p) || !nrow(p)) next
     cs <- p$counted_share[1]
     proj_total[s] <- sum(p$projected)
@@ -224,12 +241,24 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
     # swing to measure -- the projection carries its counted share forward -- so its projection is held
     # more loosely (new_sd_mult; 1 = as every other class).
     if (new_sd_mult != 1) sdj[!names(proj) %in% unique(rd$cls)] <- sdj[!names(proj) %in% unique(rd$cls)] * new_sd_mult
+    # LANE A1 sd (rep_sd = c(a, b)): widen for how unlike the counted units are the ones still to come, and for how much
+    # the counted booths' swings disagree, both scaled by the share still to come:
+    #   sd^2 = sd_table^2 + (unc_frac^2) * (a * rep_dist^2 + b * swing_sd^2 / (n_ord + 1))
+    sd_base <- sdj
+    if (!is.null(rep_sd)) {
+      ssd <- p$swing_sd; ssd[is.na(ssd)] <- 0
+      sdj <- sqrt(sdj^2 + p$unc_frac^2 * (rep_sd[1] * p$rep_dist^2 + rep_sd[2] * ssd^2 / (p$n_ord + 1)))
+    }
     j <- match(names(proj), cls_all); ok <- !is.na(j)
-    if (isTRUE(keep_proj))
-      proj_rows[[s]] <- data.table::data.table(seat = s, cls = names(proj), proj = unname(proj), counted_share = cs,
-                                               n_units = length(units), has_ref = names(proj) %in% unique(rd$cls), sd_proj = sdj,
-                                               in_prior = ok, prior = ifelse(ok, post[s, pmax(j, 1L)], NA_real_),
-                                               prior_sd = ifelse(ok, psd[s, pmax(j, 1L)], NA_real_))
+    if (isTRUE(keep_proj)) {
+      pr <- data.table::data.table(seat = s, cls = names(proj), proj = unname(proj), counted_share = cs,
+                                   n_units = length(units), has_ref = names(proj) %in% unique(rd$cls), sd_proj = sdj,
+                                   in_prior = ok, prior = ifelse(ok, post[s, pmax(j, 1L)], NA_real_),
+                                   prior_sd = ifelse(ok, psd[s, pmax(j, 1L)], NA_real_))
+      if (lane_diag)
+        pr[, `:=`(sd_table = sd_base, n_ord = p$n_ord, swing_sd = p$swing_sd, rep_dist = p$rep_dist, unc_frac = p$unc_frac)]
+      proj_rows[[s]] <- pr
+    }
     if (!any(ok)) next
     # A class standing now that the projection does not see (no booth votes) keeps its prior;
     # a class the projection sees that the forecast does not model is left out (rows renormalise).
@@ -244,6 +273,28 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
        fallback_projected = fallback_projected, proj_total = proj_total, n_cand_ref = n_cand_ref)
   if (isTRUE(keep_proj)) out$proj_detail <- data.table::rbindlist(proj_rows)   # only when asked: the default list is unchanged
   out
+}
+
+# Lane A1: slope of a counted ordinary booth's swing on its own reference share, per class, pooled over every seat's
+# counted ordinary booths (both demeaned within seat, weighted by this year's booth totals). Only what is counted now.
+.night_booth_slope <- function(Lc, Rk, units_by_seat) {
+  rows <- list()
+  for (s in names(units_by_seat)) {
+    u <- units_by_seat[[s]]
+    ld <- Lc[Lc$district == s & Lc$unit %in% u & Lc$booth_type == "ordinary"]
+    rd <- Rk[Rk$district == s & Rk$unit %in% u & Rk$booth_type == "ordinary"]
+    if (!nrow(rd) || !nrow(ld)) next
+    lt <- ld[, list(lt = sum(v)), by = "unit"]; rt <- rd[, list(rt = sum(v)), by = "unit"]
+    mc <- merge(ld, rd[, list(unit, cls, rv = v)], by = c("unit", "cls"))
+    mc <- merge(merge(mc, lt, by = "unit"), rt, by = "unit")
+    if (!nrow(mc)) next
+    mc[, `:=`(x = rv / pmax(rt, 1), y = v / pmax(lt, 1) - rv / pmax(rt, 1))]
+    mc[, `:=`(xc = x - sum(lt * x) / sum(lt), yc = y - sum(lt * y) / sum(lt)), by = "cls"]
+    rows[[s]] <- mc[, list(cls, lt, xc, yc)]
+  }
+  G <- data.table::rbindlist(rows)
+  if (!nrow(G)) return(NULL)
+  G[, list(beta = if (sum(lt * xc^2) > 1e-10) sum(lt * xc * yc) / sum(lt * xc^2) else 0, n_booths = .N), by = "cls"]
 }
 
 # Pooled swing gap of each non-ordinary booth type against ordinary booths, per class, over the
@@ -570,4 +621,29 @@ night_shrink_draws <- function(draws, keep) {
   out <- sweep(sweep(draws, 2L, ctr) * keep, 2L, ctr, `+`)
   dimnames(out) <- dimnames(draws)
   out
+}
+
+#' Lane A switches from night-script flags
+#'
+#' Turns the strings of `--booth-reg=<k>`, `--booth-reg-all=1`, `--type-pool=<k>` and `--rep-sd=<a>,<b>` into the
+#' `lane_a` list [night_run_update()] passes to [night_booth_update()] (`docs/plans/prereg-night-lane-a-2026-11-27.md`).
+#' Every flag absent gives `NULL`, the run without lane A.
+#' @param booth_reg,booth_reg_all,type_pool,rep_sd Flag values as strings, or `NULL` when not given.
+#' @return `NULL` or a named list.
+#' @export
+night_lane_a_args <- function(booth_reg = NULL, booth_reg_all = NULL, type_pool = NULL, rep_sd = NULL) {
+  num1 <- function(x, nm) { v <- suppressWarnings(as.numeric(x)); if (length(v) != 1L || !is.finite(v) || v < 0) stop("NX30! --", nm, " must be one number >= 0", call. = FALSE); v }
+  out <- list()
+  if (!is.null(booth_reg)) out$booth_reg_k <- num1(booth_reg, "booth-reg")
+  if (identical(booth_reg_all, "1")) {
+    if (is.null(booth_reg)) stop("NX30! --booth-reg-all needs --booth-reg", call. = FALSE)
+    out$booth_reg_all <- TRUE
+  }
+  if (!is.null(type_pool)) out$type_pool_k <- num1(type_pool, "type-pool")
+  if (!is.null(rep_sd)) {
+    v <- suppressWarnings(as.numeric(strsplit(rep_sd, ",")[[1]]))
+    if (length(v) != 2L || any(!is.finite(v)) || any(v < 0)) stop("NX30! --rep-sd must be two numbers >= 0, a,b", call. = FALSE)
+    out$rep_sd <- v
+  }
+  if (length(out)) out else NULL
 }
