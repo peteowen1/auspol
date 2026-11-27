@@ -61,3 +61,17 @@ Pete's calls (27 Nov ~9:20pm): a fix that PASSES its prereg overnight gets switc
 - Review of tonight's dev night code (834699bb~1..HEAD): 0 Important; default path unchanged; 0 NW11 booth-name
   mismatches in the corrected replay. Nits: checkpoint helper sourced from cwd; NRV6 guard only at a 19:00 stamp.
 - night_vic2026.sh --loop=FLAG pass-through (6b5b9aaa), to turn a shipped default off mid-count.
+- **A3 SHIPPED (PR #292 merged 1:06am, main c21be992; dev c136880c):** seat-level replay on all three nights passed
+  (under 15% counted -0.0012 SE 0.0008; nights vic -0.0013, fed2022 -0.0002, fed2025 +0.0001 SE 0.0003; wrong 0.99
+  calls 25 -> 23; seats right 381 both). ON by default in night_cycle (.night_rep_sd_cfg); off with --loop=--rep-sd=off.
+  Mildura 7pm Cupper 0.98 -> 0.92 (fp sd 3.2 -> 5.2); unchanged from 8pm (projection still 44.9/39.6; flows 57.7%).
+  Gates: two Sonnet reviews 0 Important; check_like_ci clean on the ship branch; GitHub CI green; rehearsal on the saved
+  2022 pages with A3 on rc 0 (87 of 88, loop prints rep-sd 0.0458,0); partial-count fixture (543 of 1,729 centres)
+  with A3 on: no NA in shares, sd or win probabilities.
+- Lane C seat-level vic2022 replay (12:15am): worse at every hour from 10pm (0.057 -> 0.064, 11pm 0.016 -> 0.025);
+  refusal confirmed. Stays off.
+- Fast screen built (scratchpad/overnight/screen.sh + small-states/, 2,000 draws, to 9pm, three nights): 422 s per
+  arm vs ~45 min full. Simulation is not the bottleneck; per-snapshot parsing and booth matching repeat for every arm
+  (cache after 28 Nov; replay logs need per-stage timing).
+- 1:15am lane D launched: D1 vote-type uncertainty until a type reports; D2 Student-t combine (from lane C) on the
+  current sd. Lane B full replays running (vic2022 lbbase byte-identical to the corrected base).
