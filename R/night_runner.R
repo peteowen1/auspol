@@ -178,6 +178,29 @@ night_polling_places <- function(setup_dir) {
   if (is.null(out) || !nrow(out)) NULL else out
 }
 
+#' A replay's polling list from the replayed election's own ordinary booths
+#'
+#' The live night makes a placeholder for every voting centre still to report from the commission's polling list
+#' (`places-2026.csv` on the website path). The 2022 set-up file carries no Classification, so [night_polling_places()]
+#' gives `booth_class` NA there and [night_booth_table()] made NO placeholders: on the vic2022 replay the uncounted
+#' ordinary booths were never projected (found 27 Nov 2026 on Mildura). This builds the list the replay should use, the
+#' same role the live list plays: one `VotingCentre` row per ORDINARY booth of the replayed election's final booth file
+#' (early voting centres are not in it as ordinary booths, so nothing doubles against the district early unit).
+#'
+#' @param booths Final booth table of the replayed election (`district, booth, booth_type`), e.g. `output/booths-vic2022.csv`.
+#' @param contests The snapshot's `feed$contests` (`district_id, district`), for the district ids.
+#' @return data.table `district_id, district, booth_id, booth, booth_class` ([night_polling_places()]'s shape).
+#' @export
+night_places_from_booths <- function(booths, contests) {
+  B <- data.table::as.data.table(booths)
+  B <- unique(B[B$booth_type == "ordinary" & !is.na(B$booth) & nzchar(B$booth), c("district", "booth")])
+  C <- data.table::as.data.table(contests)[, c("district_id", "district")]
+  C[, seat := sub(" District$", "", district)]
+  out <- merge(B, C[, list(district_id, seat)], by.x = "district", by.y = "seat")
+  if (!nrow(out)) stop("NW31! no replayed booth's district matches the snapshot's contests", call. = FALSE)
+  out[, list(district_id = as.character(district_id), district, booth_id = NA_character_, booth, booth_class = "VotingCentre")]
+}
+
 #' Convert a parsed Assembly snapshot into the booth table shape the night update expects
 #'
 #' @param feed Output of [vec_feed_read_lh()].
@@ -536,13 +559,20 @@ night_expected_votes <- function(enrolment, prev, basis = c("night", "final")) {
 #'   previous votes as their current class's booth reference (`docs/plans/prereg-night-candidate-ref-2026-11-11.md`).
 #' @param class_split `NULL` (default, unchanged) or [night_class_split_params()]: two candidates of one minor class
 #'   run separately from their counted figures (`docs/plans/prereg-night-class-split-2026-11-14.md`).
+#' @param proj_sd Passed to [night_booth_update()]: `"old"` (default, unchanged) or `"fitted"`, the projection sd fitted on
+#'   the three real replayed nights (`scripts/fit_night_projection_sd.R`).
+#' @param lane_a `NULL` (default, unchanged) or a list (see [night_lane_a_args()]) of lane A switches passed to [night_booth_update()]:
+#'   `booth_reg_k`, `booth_reg_all`, `type_pool_k`, `rep_sd` (`docs/plans/prereg-night-lane-a-2026-11-27.md`).
 #' @return List: `sim`, `nu` (the update), `shares`, `sd`, `matched` (seats in both state and feed),
 #'   `n_updated`, `class_split` (the split seats, or `NULL`).
 #' @export
 night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "table", "expected"), expected = NULL, sims = NULL, use_tcp = TRUE,
                              lean = NULL, early_frac = NULL, surge_fade = TRUE, tcp_center = "median", tcp_flow_floor = 0.01, tcp_own_fp = FALSE,
-                             tcp_pair_r = NULL, tcp_pair_cal = NULL, cand_ref = FALSE, class_split = NULL) {
+                             tcp_pair_r = NULL, tcp_pair_cal = NULL, cand_ref = FALSE, class_split = NULL, proj_sd = "old", lane_a = NULL) {
   total <- match.arg(total)
+  la_ok <- c("booth_reg_k", "booth_reg_all", "type_pool_k", "rep_sd")
+  if (!is.null(lane_a) && (!is.list(lane_a) || !all(names(lane_a) %in% la_ok)))
+    stop("NW30! lane_a must be a list with names among ", paste(la_ok, collapse = ", "), call. = FALSE)
   if (!is.numeric(tcp_flow_floor) || length(tcp_flow_floor) != 1L || !is.finite(tcp_flow_floor) || tcp_flow_floor < 0)
     stop("NW17! tcp_flow_floor must be one finite number >= 0 (got ", paste(format(tcp_flow_floor), collapse = ", "), ")", call. = FALSE)
   if (is.null(sims)) sims <- st$n_sims
@@ -550,9 +580,9 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
   seats <- rownames(st$shares)
   matched <- intersect(seats, unique(conv$live$district))
   shares <- st$shares; sdo <- st$sdo; swd <- st$swd
-  nu <- night_booth_update(shares, night_prior_sd(shares, st$level_sd, st$level_mult, sdo), 1, conv$live, ref,
+  nu <- do.call(night_booth_update, c(list(shares, night_prior_sd(shares, st$level_sd, st$level_mult, sdo), 1, conv$live, ref,
                            gap_k = gap_k, reported = conv$counted, total = total, expected = expected, lean = lean,
-                           early_frac = early_frac, cand_ref = cand_ref)
+                           early_frac = early_frac, cand_ref = cand_ref, proj_sd = proj_sd), lane_a))
   if (nu$n_updated > 0L) {
     shares <- nu$shares; sdo <- nu$sd; swd <- night_shrink_draws(swd, 1 - nu$resolved)
   }
@@ -758,6 +788,29 @@ night_publish_json <- function(doc, out_file, min_seats = 1L) {
   stop("NW20! cand_ref must be \"off\", \"copy\" or \"move\" (got ", paste(format(x), collapse = ","), ")", call. = FALSE)
 }
 
+# cfg$proj_sd: NULL or "old" -> the rehearsal-table projection sd (unchanged); "fitted" -> the curve fitted on the three real
+# replayed nights (scripts/fit_night_projection_sd.R). Opt-in until Pete decides.
+.night_proj_sd_cfg <- function(x) {
+  if (is.null(x) || identical(x, "old")) return("old")
+  if (identical(x, "fitted")) return("fitted")
+  if (identical(x, "max")) return("max")
+  stop("NW26! proj_sd must be \"old\", \"fitted\" or \"max\" (got ", paste(format(x), collapse = ","), ")", call. = FALSE)
+}
+
+# cfg$rep_sd (lane A3, docs/plans/prereg-night-lane-a-2026-11-27.md; seat-level replay PASSED 28 Nov 2026 12:40am, all three
+# real nights): NULL -> ON at the fitted c(0.0458, 0) (Pete's rule: a fix that passes overnight is switched on); "off" or
+# "0,0" -> off (the night command's --loop=--rep-sd=off turns it off mid-count); "a,b" as given. Widens the projection sd
+# by how unlike the counted booths are the ones still to come (night_booth_update()'s rep_sd).
+.NIGHT_REP_SD <- c(0.0458, 0)
+.night_rep_sd_cfg <- function(x) {
+  if (is.null(x)) return(list(rep_sd = .NIGHT_REP_SD))
+  if (identical(x, "off")) return(NULL)
+  v <- suppressWarnings(as.numeric(strsplit(as.character(x), ",", fixed = TRUE)[[1]]))
+  if (length(v) != 2L || any(!is.finite(v)) || any(v < 0))
+    stop("NW32! rep_sd must be \"off\" or \"a,b\" with a, b >= 0 (got ", paste(format(x), collapse = ","), ")", call. = FALSE)
+  if (all(v == 0)) NULL else list(rep_sd = v)
+}
+
 # cfg$class_split (NW23, NW24): NULL or "on" -> two candidates of one minor class run separately from their counted figures (Pete,
 # 14 Nov 2026: on for the 28 Nov night; docs/plans/prereg-night-class-split-2026-11-14.md PASSED); "off" -> as before.
 # Parameters fitted once per election from earlier ones (night_class_split_params()), kept in the cycle cache.
@@ -793,6 +846,7 @@ night_publish_json <- function(doc, out_file, min_seats = 1L) {
 #'   `"off"` for the old 0.2 pair cliff; or `"alpha,beta"`),
 #'   `class_split` (`"on"` by default: two candidates of one minor class counted separately, `docs/plans/prereg-night-class-split-2026-11-14.md`;
 #'   `"off"`),
+#'   `proj_sd` (`"old"` by default, the rehearsal table; `"fitted"`: [booth_projection_sd()]'s fitted curve),
 #'   `last_stamp` (skip when the newest snapshot has this stamp), `cache` (environment for the state and lookup).
 #' @return List: `status` ("ok", "no_new" or "failed"), `stamp`, `timings` (seconds per step), `message`, `summary`.
 #' @export
@@ -922,7 +976,8 @@ night_cycle <- function(cfg) {
                             tcp_flow_floor = if (is.null(cfg$tcp_flow_floor)) 0.01 else cfg$tcp_flow_floor,
                             tcp_own_fp = isTRUE(cfg$tcp_own_fp), tcp_pair_cal = .night_pair_cal_cfg(cfg$tcp_pair_cal),
                             cand_ref = .night_cand_ref_cfg(cfg$cand_ref, web),
-                            class_split = .night_class_split_cfg(cfg$class_split, cache$st$pair, cache)); stamp_t("update_simulate")
+                            class_split = .night_class_split_cfg(cfg$class_split, cache$st$pair, cache),
+                            proj_sd = .night_proj_sd_cfg(cfg$proj_sd), lane_a = .night_rep_sd_cfg(cfg$rep_sd)); stamp_t("update_simulate")
     if (!is.null(res$class_split)) message(sprintf("NW24  night class split: %d seat(s) counting 2+ candidates of one class separately", nrow(res$class_split)))
     res$denominator <- denom; res$n_placeholder <- conv$n_placeholder_booths; res$n_unlisted <- conv$n_unlisted_booths
     if (length(res$nu$fallback_projected)) message("NW12  ", length(res$nu$fallback_projected), " seat(s) fell back to the projected denominator (no usable expected votes): ", paste(res$nu$fallback_projected, collapse = ", "))

@@ -1,6 +1,7 @@
 # ELECTION-NIGHT LOOP: poll the snapshot source every N seconds, run a cycle when a new snapshot appears.
 #
 #   Rscript scripts/night_loop.R --every=60 [--max-cycles=0] [--retries=3] [--stale-min=20] <the same flags as scripts/night_runner.R> [--upload-key=auspol/night/vic2026.json]
+#       [--proj-sd=old|fitted]   (projection sd: old = the rehearsal table, default; fitted = scripts/fit_night_projection_sd.R)
 #
 # A bad snapshot is archived (raw), logged, retried up to --retries times (it may be half written), then skipped
 # until a NEWER one lands. The last good JSON is never touched by a failed cycle (night_publish_json writes a temp
@@ -17,7 +18,7 @@ cfg <- list(source = need("source"), archive = need("archive"), setup = flag("se
             sims = if (!is.null(flag("sims"))) as.integer(flag("sims")) else NULL,
             use_tcp = identical(flag("tcp", "1"), "1"), allow_stub = identical(flag("allow-stub", "0"), "1"),
             turnout = flag("turnout"), council_lean = flag("council-lean"), early_partial = identical(flag("early-partial", "0"), "1"), allow_unmatched = identical(flag("allow-unmatched", "0"), "1"), allow_projected = identical(flag("allow-projected", "0"), "1"),
-            surge_fade = !identical(flag("surge-fade", "1"), "0"), tcp_center = flag("tcp-center", "median"), tcp_flow_floor = as.numeric(flag("tcp-flow-floor", "0.01")), tcp_own_fp = identical(flag("tcp-own-fp", "0"), "1"), tcp_pair_cal = flag("tcp-pair-cal", "fitted"), source_type = flag("source-type", "feed"), enrolment = flag("enrolment"), places = flag("places"), cand_ref = flag("cand-ref"), class_split = flag("class-split"), cache = new.env())
+            surge_fade = !identical(flag("surge-fade", "1"), "0"), tcp_center = flag("tcp-center", "median"), tcp_flow_floor = as.numeric(flag("tcp-flow-floor", "0.01")), tcp_own_fp = identical(flag("tcp-own-fp", "0"), "1"), tcp_pair_cal = flag("tcp-pair-cal", "fitted"), source_type = flag("source-type", "feed"), enrolment = flag("enrolment"), places = flag("places"), cand_ref = flag("cand-ref"), class_split = flag("class-split"), proj_sd = flag("proj-sd", "old"), rep_sd = flag("rep-sd"), cache = new.env())
 upload_key <- flag("upload-key")   # e.g. auspol/night/vic2026.json: after each good cycle, scripts/night_publish_r2.sh uploads --out there
 every <- as.numeric(flag("every", "60")); max_cycles <- as.integer(flag("max-cycles", "0")); retries <- as.integer(flag("retries", "3"))
 # --stale-min: warn (NWL3, once per quiet spell) when no new snapshot has appeared for this many minutes; 0 turns it off.
@@ -26,7 +27,8 @@ log_f <- file.path(cfg$archive, "night-loop.log")
 dir.create(cfg$archive, recursive = TRUE, showWarnings = FALSE)
 say <- function(...) { l <- paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "  ", ...); cat(l, "\n"); cat(l, "\n", file = log_f, append = TRUE) }
 last_ok <- NULL; fails <- 0L; last_try <- NULL; cycles <- 0L
-say("loop start: every ", every, "s, source ", cfg$source)
+say("loop start: every ", every, "s, source ", cfg$source, ", proj-sd ", cfg$proj_sd, ", rep-sd ",
+    { ra <- .night_rep_sd_cfg(cfg$rep_sd); if (is.null(ra)) "off" else paste(ra$rep_sd, collapse = ",") })
 repeat {
   # the website source's snapshots are folders (night_web_latest()); the feed's are files (night_fetch_snapshot()).
   # Before 11 Nov 2026 this read the feed only, so a --source-type=web loop waited forever (dress rehearsal).

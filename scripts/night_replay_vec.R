@@ -7,6 +7,7 @@
 #       Candidates and PollingLocations XML, flat> [--feed=external/reference/vec/2026/feed-docs/inner22]
 #       [--out=<dir>] [--label=fixes] [--surge-fade=1] [--tcp-center=median] [--tcp-flow-floor=0.01] [--last-day=20221127]
 #       [--stamps=<comma list of snapshot stamps to run, default all>] [--resume=1] [--stop-after=<n steps, testing>]
+#       [--proj-sd=old|fitted]   (projection sd: old = the rehearsal table, default; fitted = scripts/fit_night_projection_sd.R)
 # Every step rewrites <out>/vic2022-<label>-*.partial.csv; --resume=1 picks up a killed run (night_replay_checkpoint.R).
 #
 # Defaults are the live runner's (since 2026-10-31); the before-fixes arm is
@@ -14,7 +15,8 @@
 # time here is "by this hour". Times are the snapshot stamps, Melbourne time (AEDT, same as Sydney).
 # Writes <out>/vic2022-<label>-summary.csv and -seats.csv. Check codes NRV1-NRV4.
 options(auspol.root = normalizePath("."))
-suppressMessages({ library(data.table); devtools::load_all(quiet = TRUE) })
+suppressMessages({ library(data.table); devtools::load_all(Sys.getenv("AUSPOL_CODE_DIR", "."), quiet = TRUE) })
+cat(sprintf("NRCODE code from %s (data from %s)\n", normalizePath(Sys.getenv("AUSPOL_CODE_DIR", ".")), normalizePath(".")))   # AUSPOL_CODE_DIR: run a branch's code against this checkout's data
 a <- commandArgs(trailingOnly = TRUE)
 flag <- function(name, default = NULL) { h <- grep(paste0("^--", name, "="), a, value = TRUE); if (length(h)) sub("^[^=]*=", "", h[1]) else default }
 need <- function(n) { v <- flag(n); if (is.null(v)) stop("NRV1! --", n, "= is required"); v }
@@ -26,6 +28,10 @@ surge_fade <- !identical(flag("surge-fade", "1"), "0"); tcp_center <- flag("tcp-
 tcp_floor <- as.numeric(flag("tcp-flow-floor", "0.01")); own_fp <- identical(flag("tcp-own-fp", "0"), "1")
 pair_r <- flag("pair-r", NULL); if (!is.null(pair_r)) pair_r <- as.numeric(pair_r)   # prereg-night-pair-trust-2026-11-11
 cand_ref <- local({ v <- flag("cand-ref", "0"); if (v == "1") TRUE else if (v %in% c("move", "copy")) v else if (v == "0") FALSE else stop("--cand-ref must be 0, 1, move or copy") })   # prereg-night-candidate-ref(-copy)-2026-11-11
+proj_sd <- flag("proj-sd", "old"); if (!proj_sd %in% c("old", "fitted", "max")) stop("--proj-sd must be old, fitted or max")   # scripts/fit_night_projection_sd.R
+# lane A (docs/plans/prereg-night-lane-a-2026-11-27.md): --booth-reg=<k> [--booth-reg-all=1] --type-pool=<k> --rep-sd=<a>,<b>
+lane_a <- night_lane_a_args(flag("booth-reg"), flag("booth-reg-all"), flag("type-pool"), flag("rep-sd"))
+cat(sprintf("NRV1A lane A: %s\n", if (is.null(lane_a)) "off" else paste(names(lane_a), vapply(lane_a, function(x) paste(x, collapse = ","), ""), sep = "=", collapse = " ")))
 cls_split_on <- identical(flag("class-split", "0"), "1")   # prereg-night-class-split-2026-11-14
 pair_cal <- flag("pair-cal", NULL); if (!is.null(pair_cal)) pair_cal <- as.numeric(strsplit(pair_cal, ",")[[1]])   # c(alpha,beta), prereg-night-pair-cal-2026-11-11
 pair_lbl <- sprintf("vic%d", st$to)
@@ -51,10 +57,12 @@ seats <- rownames(st$shares)
 nm0 <- unique(ref$district); ref$district <- .night_seat_names(ref$district, seats)
 if (!is.null(pl) && "district" %in% names(pl)) pl$district <- .night_seat_names(pl$district, seats)
 if ("district" %in% names(turn)) turn$district <- .night_seat_names(turn$district, seats)
+replay_booths <- fread(sprintf("output/booths-vic%d.csv", st$to), showProgress = FALSE)   # the replayed election's own booths: its place list
+replay_booths$district <- .night_seat_names(replay_booths$district, seats)
 cat(sprintf("NRV5 reference districts renamed to seat names: %d of %d; matching no seat: %s\n",
             sum(!nm0 %in% seats), length(nm0), paste(setdiff(unique(ref$district), seats), collapse = ", ")))
 cat(sprintf("NRV1 %s: %d seats in state, %d snapshots %s to %s, %d sims; label %s (surge-fade %s, tcp-center %s, tcp-flow-floor %s); %d winners to score\n",
-            pair_lbl, length(seats), length(files), stamp[1], stamp[length(stamp)], nrow(st$swd), label, surge_fade, tcp_center, tcp_floor, nrow(win))); cat(sprintf("NRV1 tcp-own-fp %s, cand-ref %s, pair-r %s, pair-cal %s\n", own_fp, cand_ref, if (is.null(pair_r)) "off" else format(pair_r), if (is.null(pair_cal)) "off" else paste(format(pair_cal), collapse = ",")))
+            pair_lbl, length(seats), length(files), stamp[1], stamp[length(stamp)], nrow(st$swd), label, surge_fade, tcp_center, tcp_floor, nrow(win))); cat(sprintf("NRV1 tcp-own-fp %s, cand-ref %s, proj-sd %s, pair-r %s, pair-cal %s\n", own_fp, cand_ref, proj_sd, if (is.null(pair_r)) "off" else format(pair_r), if (is.null(pair_cal)) "off" else paste(format(pair_cal), collapse = ",")))
 
 source("scripts/night_replay_checkpoint.R")   # per-step partial files; --resume=1 skips the times already done
 ck_prefix <- sprintf("%s-%s", pair_lbl, label); ck_kinds <- c("summary", "seats", "tcp")
@@ -66,11 +74,17 @@ for (k in seq_along(files)) {
   if (tm %in% ck$done) next
   feed <- vec_feed_read_lh(files[k])
   feed$contests$district <- .night_seat_names(feed$contests$district, seats)
-  conv <-suppressMessages(night_booth_table(feed, lk, pl))
-  enr <- stats::setNames(feed$contests$enrolment, sub(" District$", "", feed$contests$district))
+  # The place list is the replayed election's own ordinary booths (night_places_from_booths()), the role places-2026.csv
+  # plays live: the 2022 set-up list has no Classification, so it made NO placeholders and the uncounted ordinary booths
+  # were never projected (Mildura, 27 Nov 2026).
+  pl_k <- night_places_from_booths(replay_booths, feed$contests)
+  conv <-suppressMessages(night_booth_table(feed, lk, pl_k))
+  cat(sprintf("NRV6 %s: %d placeholder booths (uncounted ordinary booths to project)\n", tm, conv$n_placeholder_booths))
+  if (tm == "19:00" && conv$n_placeholder_booths == 0L) stop("NRV6! no placeholder booths at 7pm: the uncounted ordinary booths would not be projected")
+  enr <-stats::setNames(feed$contests$enrolment, sub(" District$", "", feed$contests$district))
   expected <- night_expected_votes(enr, night_turnout_table(turn, ref), "night")
   r <- night_run_update(st, conv, ref, gap_k = 5, total = "expected", expected = expected, use_tcp = TRUE,
-                        surge_fade = surge_fade, tcp_center = tcp_center, tcp_flow_floor = tcp_floor, tcp_own_fp = own_fp, tcp_pair_r = pair_r, tcp_pair_cal = pair_cal, cand_ref = cand_ref, class_split = cls_split)
+                        surge_fade = surge_fade, tcp_center = tcp_center, tcp_flow_floor = tcp_floor, tcp_own_fp = own_fp, tcp_pair_r = pair_r, tcp_pair_cal = pair_cal, cand_ref = cand_ref, class_split = cls_split, proj_sd = proj_sd, lane_a = lane_a)
   tot <- r$sim$totals; alp <- tot[, "ALP"]; oth <- tot[, setdiff(colnames(tot), "ALP"), drop = FALSE]
   wp <- as.data.table(r$sim$win_prob)
   sc <- merge(win, wp, by = c("seat", "party"), all.x = TRUE); sc[is.na(prob), prob := 0]

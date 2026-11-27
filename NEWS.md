@@ -1,3 +1,12 @@
+# auspol 0.4.207
+
+Changes the election-night model only (no change to the published afternoon forecast).
+
+- **Election night: wider uncertainty when the first booths counted are unlike the rest of the seat** (lane A3, ON by default in the night loop; `--rep-sd=off` or the night command's `--loop=--rep-sd=off` turns it off). Replayed on the three real nights (Victoria 2022, federal 2022 and 2025): seat log loss under 15% counted -0.0012 (SE 0.0008), no night worse, fewer confident wrong calls; Mildura 2022 at 7pm goes from 0.98 to 0.92 for the candidate who lost. `docs/plans/prereg-night-lane-a-2026-11-27.md`.
+- Replays of Victorian nights now project uncounted ordinary booths, as the live night does (they never did).
+- `scripts/night_vic2026.sh --loop=FLAG` passes a model flag to the night loop.
+- Built and left OFF: booth-strength swing (A1), vote-type swing pooling (A2), a fitted projection sd (`--proj-sd`).
+
 # auspol 0.4.206
 
 Changes the published Victorian seat forecast in Labor-v-Greens contests.

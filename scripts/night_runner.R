@@ -8,6 +8,7 @@
 # snapshot folders from scripts/fetch_vec_web_snapshot.R> --enrolment=external/reference/vec/2026/enrolment/enrolment-2026.csv
 # --places=external/reference/vec/2026/voting-locations/places-2026.csv (scripts/build_vec_places_2026.R; without it, the reference table's ordinary booths). --setup is
 # then not read. --cand-ref=copy is the default on the website (off on the feed); --cand-ref=off turns it off.
+# --proj-sd=old (default: the rehearsal-table projection sd) or fitted (scripts/fit_night_projection_sd.R).
 # --state is the afternoon forecast saved with AUSPOL_NIGHT_DUMP (scripts/night_replay.R header);
 # --ref is the booth table of the election BEFORE the one being counted (the state's `from`).
 # No credential is read or written here: the snapshot source is night_fetch_snapshot() (R/night_runner.R).
@@ -22,7 +23,7 @@ cfg <- list(source = need("source"), archive = need("archive"), setup = flag("se
             sims = if (!is.null(flag("sims"))) as.integer(flag("sims")) else NULL,
             use_tcp = identical(flag("tcp", "1"), "1"), allow_stub = identical(flag("allow-stub", "0"), "1"),
             turnout = flag("turnout"), council_lean = flag("council-lean"), early_partial = identical(flag("early-partial", "0"), "1"), allow_unmatched = identical(flag("allow-unmatched", "0"), "1"), allow_projected = identical(flag("allow-projected", "0"), "1"),
-            surge_fade = !identical(flag("surge-fade", "1"), "0"), tcp_center = flag("tcp-center", "median"), tcp_flow_floor = as.numeric(flag("tcp-flow-floor", "0.01")), tcp_own_fp = identical(flag("tcp-own-fp", "0"), "1"), tcp_pair_cal = flag("tcp-pair-cal", "fitted"), source_type = flag("source-type", "feed"), enrolment = flag("enrolment"), places = flag("places"), cand_ref = flag("cand-ref"), class_split = flag("class-split"))
+            surge_fade = !identical(flag("surge-fade", "1"), "0"), tcp_center = flag("tcp-center", "median"), tcp_flow_floor = as.numeric(flag("tcp-flow-floor", "0.01")), tcp_own_fp = identical(flag("tcp-own-fp", "0"), "1"), tcp_pair_cal = flag("tcp-pair-cal", "fitted"), source_type = flag("source-type", "feed"), enrolment = flag("enrolment"), places = flag("places"), cand_ref = flag("cand-ref"), class_split = flag("class-split"), proj_sd = flag("proj-sd", "old"))
 r <- night_cycle(cfg)
 cat(r$summary, "\n")
 quit(status = if (r$status == "failed") 1L else 0L)

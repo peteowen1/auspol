@@ -22,7 +22,9 @@ night_run_update(
   tcp_pair_r = NULL,
   tcp_pair_cal = NULL,
   cand_ref = FALSE,
-  class_split = NULL
+  class_split = NULL,
+  proj_sd = "old",
+  lane_a = NULL
 )
 }
 \arguments{
@@ -73,6 +75,12 @@ previous votes as their current class's booth reference (\verb{docs/plans/prereg
 
 \item{class_split}{\code{NULL} (default, unchanged) or \code{\link[=night_class_split_params]{night_class_split_params()}}: two candidates of one minor class
 run separately from their counted figures (\verb{docs/plans/prereg-night-class-split-2026-11-14.md}).}
+
+\item{proj_sd}{Passed to \code{\link[=night_booth_update]{night_booth_update()}}: \code{"old"} (default, unchanged) or \code{"fitted"}, the projection sd fitted on
+the three real replayed nights (\code{scripts/fit_night_projection_sd.R}).}
+
+\item{lane_a}{\code{NULL} (default, unchanged) or a list (see \code{\link[=night_lane_a_args]{night_lane_a_args()}}) of lane A switches passed to \code{\link[=night_booth_update]{night_booth_update()}}:
+\code{booth_reg_k}, \code{booth_reg_all}, \code{type_pool_k}, \code{rep_sd} (\verb{docs/plans/prereg-night-lane-a-2026-11-27.md}).}
 }
 \value{
 List: \code{sim}, \code{nu} (the update), \code{shares}, \code{sd}, \code{matched} (seats in both state and feed),
