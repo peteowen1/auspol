@@ -68,3 +68,30 @@ Victorian Labor-above elections (vic2014, and vic2018's open seats) score worse 
 election worse on the seat guard by more than 2 SE of its own paired seat differences. The live use is Victorian.
 The 17 Nov per-state shrink raised vic2014's share in the same direction and lost seat log loss there (+0.0044), so
 that split is shown on its own.
+
+## RESULT, primary (27 Nov 2026, `scripts/score_htv_final3_transfers.R`, run from the main checkout's external/)
+
+44 final-three events in 12 elections with a card row (819,162 final-three votes on disk over 21 elections; 8
+elections have no card row and are untouched: fed2007 fed2010 fed2019 nsw2015 nt2024 vic2006 wa2021 wa2025; 2 events
+untouched for want of a card or share: nsw2011 Marrickville, vic2018 Melbourne). Two-way log loss after 0.15
+smoothing, lower is better:
+
+| Scope | events | elections | off | on | change (SE, clustered on election) |
+|---|---|---|---|---|---|
+| all scored | 44 | 12 | 0.6582 | 0.6478 | -0.0104 (0.0030) |
+| federal | 21 | 4 | 0.6480 | 0.6327 | -0.0152 (0.0034) |
+| Victoria | 16 | 4 | 0.6626 | 0.6544 | -0.0083 (0.0058) |
+| Labor-above card | 30 | 7 | 0.6507 | 0.6362 | -0.0145 (0.0034) |
+
+Vote-weighted -0.0134; unsmoothed -0.0096. Leave-one-election-out: -0.0114 to -0.0085. Worse: qld2020 +0.0073 (one
+event, Greens-above card), nsw2019 +0.0001, nsw2023 +0.0006. Victoria: vic2014 -0.0253, vic2022 -0.0048, vic2018
+-0.0012, vic2010 0.0000 (no earlier final-three Labor-above cell). Primary PASSES (better by 3.5 SE), and the
+named unacceptable case (Victoria worse on transfers) did not happen.
+
+## RESULT, guard: INCOMPLETE
+
+The quick_arm screen (1,000 sims, slots 1) was stopped by Claude Code's low-memory reaper at 17:44 after 2 of 12
+elections (other sessions' R jobs took the machine to ~1.8 GB free). From its cache: fed2019 byte-identical (no card
+row, as expected); fed2016 seat log loss 0.2317 -> 0.2319, +0.0001 (paired seat SE 0.0002), 4 seats moved:
+Melbourne (Greens won) +0.0302, Wills -0.0061, Grayndler -0.0031, Sydney -0.0010. The other 10 elections, including
+all three Victorian ones, are unscored, so the decision rule cannot be applied yet. Not shipped.
