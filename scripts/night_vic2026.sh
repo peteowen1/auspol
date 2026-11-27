@@ -4,6 +4,7 @@
 #
 #   bash scripts/night_vic2026.sh <results index URL> <work dir> [--upload] [--upload-key=KEY] [--every=90] [--max-cycles=N] [--dry-2022] [--parallel=4]
 #       [--retries=3] [--retry-pause=5,15,30]   (the GitHub backup passes --retries=6 --retry-pause=120; see the fetcher)
+#       [--loop=--FLAG=VALUE ...]   one model flag per --loop, passed to night_loop.R (e.g. --loop=--proj-sd=old)
 #
 #   <results index URL>  the VEC page that links EVERY district's result page (2022's was
 #                        .../2022-state-election-results; its /results-by-district child links none), or
@@ -25,10 +26,11 @@
 set -u
 [ $# -ge 2 ] || { sed -n 2,24p "$0"; exit 2; }
 INDEX="$1"; WORK="$2"; shift 2
-UPLOAD=0; EVERY=90; MAXC=0; DRY=0; PAR=4; LIVE_KEY=auspol/night/vic2026.json; KEY=""; RETRIES=3; RPAUSE=5,15,30
+UPLOAD=0; EVERY=90; MAXC=0; DRY=0; PAR=4; LIVE_KEY=auspol/night/vic2026.json; KEY=""; RETRIES=3; RPAUSE=5,15,30; LOOP_EXTRA=()
 for a in "$@"; do case "$a" in
   --upload) UPLOAD=1; KEY="$LIVE_KEY" ;; --upload-key=*) UPLOAD=1; KEY="${a#*=}" ;; --every=*) EVERY="${a#*=}" ;; --max-cycles=*) MAXC="${a#*=}" ;; --parallel=*) PAR="${a#*=}" ;; --dry-2022) DRY=1 ;;
   --retries=*) RETRIES="${a#*=}" ;; --retry-pause=*) RPAUSE="${a#*=}" ;;
+  --loop=*) LOOP_EXTRA+=("${a#--loop=}") ;;
   *) echo "NV1! unknown argument: $a"; exit 2 ;; esac; done
 [ "$DRY" = 1 ] && [ "$KEY" = "$LIVE_KEY" ] && { echo "NV1! --dry-2022 with the live key would put 2022 results on the live page; refusing"; exit 2; }
 [ "$UPLOAD" = 1 ] && [ -z "$KEY" ] && { echo "NV1! --upload-key= needs a key"; exit 2; }
@@ -71,6 +73,9 @@ if [ "$DRY" = 1 ]; then
   echo "NV4  DRY RUN on 2022 pages: $(echo "$D" | tr ',' '\n' | wc -l) districts, Narracan dropped, unmatched seats allowed"
 fi
 [ "$UPLOAD" = 1 ] && LOOP_ARGS+=(--upload-key="$KEY")
+# --loop=FLAG passes one model flag straight to night_loop.R, e.g. --loop=--proj-sd=old to turn an overnight fix off
+# mid-count (27 Nov 2026). Printed so the log says what ran.
+[ ${#LOOP_EXTRA[@]} -gt 0 ] && { LOOP_ARGS+=("${LOOP_EXTRA[@]}"); echo "NV5  extra loop flags: ${LOOP_EXTRA[*]}"; }
 echo "NV5  upload: $([ "$UPLOAD" = 1 ] && echo "ON, to $KEY$([ "$KEY" = "$LIVE_KEY" ] && echo " (THE LIVE PAGE)")" || echo off); fetch every ${EVERY}s; work dir $WORK"
 
 # Set before either starts, so an interrupt between the two launches cannot leave one behind. Ctrl+C / TERM exit 130
