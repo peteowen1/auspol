@@ -208,10 +208,15 @@ combine_prior_projection <- function(prior, proj, sd_prior, sd_proj) {
 booth_projection_sd <- function(counted_share,
                                 table = data.frame(share = c(0.00, 0.05, 0.086, 0.224, 0.346, 0.95, 1.00),
                                                    sd    = c(3.5, 3.5, 2.63, 1.93, 1.77, 0.26, 0.26)),
-                                method = c("old", "fitted"), share = NULL, cls = NULL) {
+                                method = c("old", "fitted", "max"), share = NULL, cls = NULL) {
   method <- match.arg(method)
-  if (method == "old") return(stats::approx(table$share, table$sd, xout = pmin(pmax(counted_share, 0), 1), rule = 2)$y)
-  if (is.null(share) || is.null(cls)) stop("BPS1! booth_projection_sd(method = \"fitted\") needs share and cls", call. = FALSE)
+  old <- function(x) stats::approx(table$share, table$sd, xout = pmin(pmax(x, 0), 1), rule = 2)$y
+  if (method == "old") return(old(counted_share))
+  if (is.null(share) || is.null(cls)) stop("BPS1! booth_projection_sd(method = \"fitted\"/\"max\") needs share and cls", call. = FALSE)
+  if (method == "max") {   # the larger of the two: widens only where the table is too narrow (the first ~2% counted)
+    n <- max(length(counted_share), length(share), length(cls))
+    return(pmax(rep_len(old(counted_share), n), booth_projection_sd(counted_share, table, "fitted", share, cls)))
+  }
   f <- .booth_proj_sd_fit
   n <- max(length(counted_share), length(share), length(cls))
   cs <- rep_len(pmin(pmax(counted_share, 0), 1), n); p <- rep_len(pmin(pmax(share / 100, 0), 1), n)
@@ -226,5 +231,6 @@ booth_projection_sd <- function(counted_share,
 .booth_proj_sd_fit <- list(
   major = c("ALP", "LNP"),
   floor = 0.002,
-  coef = rbind(major = c(a = NA_real_, b = NA_real_, c = NA_real_),
-               other = c(a = NA_real_, b = NA_real_, c = NA_real_)))
+  # fitted 27 Nov 2026 on snapshots to 9pm (16,546 projections: fed2022 7,878, fed2025 7,375, vic2022 1,293)
+  coef = rbind(major = c(a = 1.5023, b = 0.06082, c = 0.6140),
+               other = c(a = 0.4822, b = 0.04474, c = 1.5480)))

@@ -765,7 +765,8 @@ night_publish_json <- function(doc, out_file, min_seats = 1L) {
 .night_proj_sd_cfg <- function(x) {
   if (is.null(x) || identical(x, "old")) return("old")
   if (identical(x, "fitted")) return("fitted")
-  stop("NW26! proj_sd must be \"old\" or \"fitted\" (got ", paste(format(x), collapse = ","), ")", call. = FALSE)
+  if (identical(x, "max")) return("max")
+  stop("NW26! proj_sd must be \"old\", \"fitted\" or \"max\" (got ", paste(format(x), collapse = ","), ")", call. = FALSE)
 }
 
 # cfg$class_split (NW23, NW24): NULL or "on" -> two candidates of one minor class run separately from their counted figures (Pete,
