@@ -2,7 +2,7 @@
 #
 #   Rscript scripts/night_loop.R --every=60 [--max-cycles=0] [--retries=3] [--stale-min=20] <the same flags as scripts/night_runner.R> [--upload-key=auspol/night/vic2026.json]
 #       [--proj-sd=old|fitted]   (projection sd: old = the rehearsal table, default; fitted = scripts/fit_night_projection_sd.R)
-#       [--booth-knn=h,k,size_w,types]   (lane F, the per-booth best guess, e.g. 10,1,10,1; absent = off; docs/plans/prereg-night-booth-guess-2026-11-28.md)
+#       [--booth-knn=h,k,size_w,types]   (lane F, the per-booth best guess; absent = night_cycle's default 10,1,10,0 (polling booths only), off turns it off; docs/plans/prereg-night-booth-guess-2026-11-28.md)
 #       [--same-class=off|on] [--flow-pool=off|on] [--tcp-by-type=off|on] [--tcp-cand=on|off]   (lane B: B1-B3 off by
 #        default; B1c --tcp-cand ON by default, --tcp-cand=off turns it off; docs/plans/prereg-night-lane-b-2026-11-27.md)
 #
@@ -35,7 +35,7 @@ last_ok <- NULL; fails <- 0L; last_try <- NULL; cycles <- 0L
 say("loop start: every ", every, "s, source ", cfg$source, ", proj-sd ", cfg$proj_sd, ", rep-sd ",
     { ra <- .night_rep_sd_cfg(cfg$rep_sd); if (is.null(ra)) "off" else paste(ra$rep_sd, collapse = ",") },
     ", type-sd ", if (is.null(cfg$type_sd)) "off" else cfg$type_sd, ", proj-tails ", if (is.null(cfg$proj_tails)) .NIGHT_PROJ_TAILS else cfg$proj_tails,
-    ", booth-knn ", if (is.null(cfg$booth_knn)) "off" else cfg$booth_knn,
+    ", booth-knn ", if (is.null(cfg$booth_knn)) .NIGHT_BOOTH_KNN else cfg$booth_knn,
     ", same-class ", cfg$same_class, ", flow-pool ", cfg$flow_pool, ", tcp-by-type ", cfg$tcp_by_type,
     ", tcp-cand ", if (.night_tcp_cand_cfg(cfg$tcp_cand)) "on" else "off")
 repeat {

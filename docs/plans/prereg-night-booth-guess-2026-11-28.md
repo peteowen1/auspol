@@ -73,3 +73,12 @@ Mildura (Cupper's win chance, she lost): a3d2 0.95 / 0.94 / 0.45 at 7 / 8 / 9pm;
 similar counted unit) only moves from +1.8 to +2.6 against a final +6.8, and that block decides the seat. Nothing is
 worse by more than 1 SE and both arms gain 2 seats right at 9pm, so the effect is real but too small to clear the bar.
 Stays OFF (`--booth-knn` absent). Pete told in conversation, 28 Nov.
+
+## Amendment 1 (28 Nov 2026, about 8:15am): Pete's override, visible, original clauses unedited
+
+Shown both arms and Mildura, Pete chose "Both": B1c (PR #294) and `bko` (polling booths only, `--booth-knn=10,1,10,0`) ON
+for tonight, although `bk` was the arm named to decide and it failed clause 1. This is his override, not a pass.
+Joint screen of B1c + `bko` against `a3d2` (2,000 draws, to 9pm, code 4cb9de21): primary -0.0010 (SE 0.0008); nights
+vic2022 -0.0066 (0.0063), fed2022 -0.0014 (0.0008), fed2025 -0.0001 (0.0013); wrong 0.99 calls 2 = 2; seats right
+376 vs 374 base. B1c alone was -0.0006 (0.0007). Mildura (Cupper, lost) 7 / 8 / 9pm: 0.85 / 0.86 / 0.29 (a3d2 0.95 /
+0.94 / 0.45). Full 20,000-draw replays to 2am follow, before the ship.

@@ -130,3 +130,9 @@ test_that("bad configs and flags raise NX32 or NX33", {
   expect_equal(night_lane_a_args(booth_knn = "10,1,10,0")$booth_knn$types, FALSE)
   expect_null(night_lane_a_args(booth_knn = "off"))
 })
+
+test_that("the live night defaults to the per-booth guess on polling booths only and 'off' turns it off", {
+  expect_identical(.NIGHT_BOOTH_KNN, "10,1,10,0")
+  expect_identical(night_lane_a_args(booth_knn = .NIGHT_BOOTH_KNN)$booth_knn, list(h = 10, k = 1, size_w = 10, types = FALSE))
+  expect_null(night_lane_a_args(booth_knn = "off"))
+})

@@ -831,6 +831,7 @@ night_publish_json <- function(doc, out_file, min_seats = 1L) {
 # "0,0" -> off (the night command's --loop=--rep-sd=off turns it off mid-count); "a,b" as given. Widens the projection sd
 # by how unlike the counted booths are the ones still to come (night_booth_update()'s rep_sd).
 .NIGHT_REP_SD <- c(0.0458, 0)
+.NIGHT_BOOTH_KNN <- "10,1,10,0"   # lane F default for the live night (night_cycle): per-booth guess on polling booths only (h,k,size_w,types); "off" turns it off. Pete's override of the prereg, 28 Nov 2026
 .NIGHT_PROJ_TAILS <- "t"   # lane D2 default for the live night (night_cycle); "normal" is the old normal-normal combine
 .night_rep_sd_cfg <- function(x) {
   if (is.null(x)) return(list(rep_sd = .NIGHT_REP_SD))
@@ -1043,7 +1044,7 @@ night_cycle <- function(cfg) {
                             lane_a = c(.night_rep_sd_cfg(cfg$rep_sd), night_lane_a_args(type_sd = cfg$type_sd,
                                        proj_tails = if (is.null(cfg$proj_tails)) .NIGHT_PROJ_TAILS else cfg$proj_tails,
                                        # lane F (docs/plans/prereg-night-booth-guess-2026-11-28.md): per-booth best guess, OFF unless --booth-knn=h,k,size_w,types
-                                       booth_knn = cfg$booth_knn)),
+                                       booth_knn = if (is.null(cfg$booth_knn)) .NIGHT_BOOTH_KNN else cfg$booth_knn)),
                             # lane B (docs/plans/prereg-night-lane-b-2026-11-27.md): B1, B2, B3 OFF unless set (refused);
                             # B1c cfg$tcp_cand ON by default (.NIGHT_TCP_CAND), "off" turns it off (--loop=--tcp-cand=off).
                             same_class = .night_lane_b_cfg(cfg$same_class, "same_class", cache$st$pair, cache),
