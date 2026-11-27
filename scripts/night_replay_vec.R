@@ -16,8 +16,7 @@
 # Writes <out>/vic2022-<label>-summary.csv and -seats.csv. Check codes NRV1-NRV4.
 options(auspol.root = normalizePath("."))
 suppressMessages({ library(data.table); devtools::load_all(Sys.getenv("AUSPOL_CODE_DIR", "."), quiet = TRUE) })
-cat(sprintf("NRCODE code from %s (data from %s)
-", normalizePath(Sys.getenv("AUSPOL_CODE_DIR", ".")), normalizePath(".")))   # AUSPOL_CODE_DIR: run a branch's code against this checkout's data
+cat(sprintf("NRCODE code from %s (data from %s)\n", normalizePath(Sys.getenv("AUSPOL_CODE_DIR", ".")), normalizePath(".")))   # AUSPOL_CODE_DIR: run a branch's code against this checkout's data
 a <- commandArgs(trailingOnly = TRUE)
 flag <- function(name, default = NULL) { h <- grep(paste0("^--", name, "="), a, value = TRUE); if (length(h)) sub("^[^=]*=", "", h[1]) else default }
 need <- function(n) { v <- flag(n); if (is.null(v)) stop("NRV1! --", n, "= is required"); v }
