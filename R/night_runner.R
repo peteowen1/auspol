@@ -562,7 +562,8 @@ night_expected_votes <- function(enrolment, prev, basis = c("night", "final")) {
 #' @param proj_sd Passed to [night_booth_update()]: `"old"` (default, unchanged) or `"fitted"`, the projection sd fitted on
 #'   the three real replayed nights (`scripts/fit_night_projection_sd.R`).
 #' @param lane_a `NULL` (default, unchanged) or a list (see [night_lane_a_args()]) of lane A switches passed to [night_booth_update()]:
-#'   `booth_reg_k`, `booth_reg_all`, `type_pool_k`, `rep_sd` (`docs/plans/prereg-night-lane-a-2026-11-27.md`).
+#'   `booth_reg_k`, `booth_reg_all`, `type_pool_k`, `rep_sd` (`docs/plans/prereg-night-lane-a-2026-11-27.md`), and lane D's
+#'   `type_sd`, `proj_tails` (`docs/plans/prereg-night-lane-d-2026-11-28.md`).
 #' @return List: `sim`, `nu` (the update), `shares`, `sd`, `matched` (seats in both state and feed),
 #'   `n_updated`, `class_split` (the split seats, or `NULL`).
 #' @export
@@ -570,7 +571,7 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
                              lean = NULL, early_frac = NULL, surge_fade = TRUE, tcp_center = "median", tcp_flow_floor = 0.01, tcp_own_fp = FALSE,
                              tcp_pair_r = NULL, tcp_pair_cal = NULL, cand_ref = FALSE, class_split = NULL, proj_sd = "old", lane_a = NULL) {
   total <- match.arg(total)
-  la_ok <- c("booth_reg_k", "booth_reg_all", "type_pool_k", "rep_sd")
+  la_ok <- c("booth_reg_k", "booth_reg_all", "type_pool_k", "rep_sd", "type_sd", "proj_tails")
   if (!is.null(lane_a) && (!is.list(lane_a) || !all(names(lane_a) %in% la_ok)))
     stop("NW30! lane_a must be a list with names among ", paste(la_ok, collapse = ", "), call. = FALSE)
   if (!is.numeric(tcp_flow_floor) || length(tcp_flow_floor) != 1L || !is.finite(tcp_flow_floor) || tcp_flow_floor < 0)
@@ -977,7 +978,9 @@ night_cycle <- function(cfg) {
                             tcp_own_fp = isTRUE(cfg$tcp_own_fp), tcp_pair_cal = .night_pair_cal_cfg(cfg$tcp_pair_cal),
                             cand_ref = .night_cand_ref_cfg(cfg$cand_ref, web),
                             class_split = .night_class_split_cfg(cfg$class_split, cache$st$pair, cache),
-                            proj_sd = .night_proj_sd_cfg(cfg$proj_sd), lane_a = .night_rep_sd_cfg(cfg$rep_sd)); stamp_t("update_simulate")
+                            proj_sd = .night_proj_sd_cfg(cfg$proj_sd),
+                            # lane D (cfg$type_sd, cfg$proj_tails: docs/plans/prereg-night-lane-d-2026-11-28.md) is OFF unless set
+                            lane_a = c(.night_rep_sd_cfg(cfg$rep_sd), night_lane_a_args(type_sd = cfg$type_sd, proj_tails = cfg$proj_tails))); stamp_t("update_simulate")
     if (!is.null(res$class_split)) message(sprintf("NW24  night class split: %d seat(s) counting 2+ candidates of one class separately", nrow(res$class_split)))
     res$denominator <- denom; res$n_placeholder <- conv$n_placeholder_booths; res$n_unlisted <- conv$n_unlisted_booths
     if (length(res$nu$fallback_projected)) message("NW12  ", length(res$nu$fallback_projected), " seat(s) fell back to the projected denominator (no usable expected votes): ", paste(res$nu$fallback_projected, collapse = ", "))

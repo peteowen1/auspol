@@ -30,7 +30,9 @@ pair_r <- flag("pair-r", NULL); if (!is.null(pair_r)) pair_r <- as.numeric(pair_
 cand_ref <- local({ v <- flag("cand-ref", "0"); if (v == "1") TRUE else if (v %in% c("move", "copy")) v else if (v == "0") FALSE else stop("--cand-ref must be 0, 1, move or copy") })   # prereg-night-candidate-ref(-copy)-2026-11-11
 proj_sd <- flag("proj-sd", "old"); if (!proj_sd %in% c("old", "fitted", "max")) stop("--proj-sd must be old, fitted or max")   # scripts/fit_night_projection_sd.R
 # lane A (docs/plans/prereg-night-lane-a-2026-11-27.md): --booth-reg=<k> [--booth-reg-all=1] --type-pool=<k> --rep-sd=<a>,<b>
-lane_a <- night_lane_a_args(flag("booth-reg"), flag("booth-reg-all"), flag("type-pool"), flag("rep-sd"))
+# lane D (docs/plans/prereg-night-lane-d-2026-11-28.md): --type-sd=<on|off|k> --proj-tails=<normal|t>
+lane_a <- night_lane_a_args(flag("booth-reg"), flag("booth-reg-all"), flag("type-pool"), flag("rep-sd"), flag("type-sd"), flag("proj-tails"))
+cat(sprintf("NRV1D lane D: type-sd %s, proj-tails %s\n", flag("type-sd", "off"), flag("proj-tails", "normal")))
 cat(sprintf("NRV1A lane A: %s\n", if (is.null(lane_a)) "off" else paste(names(lane_a), vapply(lane_a, function(x) paste(x, collapse = ","), ""), sep = "=", collapse = " ")))
 cls_split_on <- identical(flag("class-split", "0"), "1")   # prereg-night-class-split-2026-11-14
 pair_cal <- flag("pair-cal", NULL); if (!is.null(pair_cal)) pair_cal <- as.numeric(strsplit(pair_cal, ",")[[1]])   # c(alpha,beta), prereg-night-pair-cal-2026-11-11
