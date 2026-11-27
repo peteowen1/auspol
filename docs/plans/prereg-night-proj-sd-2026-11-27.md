@@ -39,6 +39,22 @@ of the table and the fitted curve, which widens only the first ~2% counted and l
 The original arm (`fitted`) still runs and is reported. The criteria above apply unchanged to both; the leave-one-night-
 out requirement applies to `max` too (its fitted half is refit without the scored night before shipping is judged).
 
-## RESULT
+## RESULT (27 Nov 5:52pm): `max` FAILS the primary by its own bar; `fitted` NOT RUN
 
-(not run)
+Runs: snapshots to 9pm, base (`old`) and `max` on the same seeds, from `834699bb` (dev). Settings printed and read
+(NRV1/NRF1): class split on, pair_cal 0.945244,0.681490, cand_ref copy (vic) / off (federal).
+
+- Primary (counted < 15%, 2,358 cells, 389 seats): base 0.2031, max 0.2012, diff -0.0019, SE 0.0029. Needs more than
+  1 SE: FAIL. By night: vic2022 -0.0031, fed2022 +0.0013, fed2025 -0.0055.
+- Guard 1 (night-average): vic2022 -0.0019 (SE 0.0041), fed2022 +0.0008 (0.0016), fed2025 -0.0032 (0.0037). Holds.
+- Guard 2 (0.99 with 10%+ counted): 0/0/3 both arms. Holds. At any count: 11 -> 8 (Fowler fed2022, Fowler fed2025,
+  Mildura vic2022 no longer at 0.99 on the first booths).
+- Guard 3 (right at 9pm): 87/148/143 both arms. Holds.
+- Biggest moves (summed log loss, cells < 15%): better Fowler fed2025 -5.22, Fowler fed2022 -2.05, Richmond fed2025
+  -2.01, Mildura -1.30; worse Leichhardt fed2025 +1.43, Mackellar fed2022 +1.37, Griffith fed2022 +0.74.
+- Leave-one-night-out version of `max`: not run (the in-sample version already fails).
+- `fitted`: stopped before it ran (vic2022 rc 127 is the stop, not a failure of the code) to free memory for the
+  Liberal flow seat check; its held-out interval coverage was already worse than the table's (Amendment 1).
+
+Verdict by the rule: does not ship; `--proj-sd` stays `old`. Decision to Pete (clause refusal on a headline-negative
+log loss): see PETE-ASKED-FOR 27 Nov.
