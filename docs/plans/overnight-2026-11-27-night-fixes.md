@@ -6,7 +6,12 @@
 independent group). Better on every night (121 named seat-nights -0.0032, SE 0.0024; all-seat vic -0.0033, fed2022
 -0.0004, fed2025 -0.0002; Vic seats right at the end 87 -> 88; Mildura 7pm-9pm far better), but REFUSED by its own
 prereg clause: without the two seats it was developed on (Mildura, Melbourne) it is -0.0011 (SE 0.0013), under 1 SE.
-Off unless you say yes. A draft PR to main with it ON is being prepared so yes = merge + a 2-minute rehearsal.
+Off unless you say yes. **Draft PR #294** (https://github.com/peteowen1/auspol/pull/294) has it ON: check_like_ci
+clean (5,973 passed; R CMD check 0/0), reviewed 0 Important, GitHub CI dispatched. Checked since: (a) it acts on the
+LIVE website path (partial-count fixture: 2 seats move > 0.01, no NAs); (b) on top of A3 + D2 (fast screen, three nights
+to 9pm) it is still better or neutral everywhere: vic whole-night 0.1485 -> 0.1425, seats right 85 -> 86 (Bass), federal
+nights -0.0002 / -0.0003, wrong calls unchanged. **Yes = I mark #294 ready, merge, cherry-pick the same port onto dev
+(night files on dev and main are identical), and rehearse (~15 min).**
 
 **Shipped overnight (ON for tonight, on main and dev, rehearsed, off-switch in brackets):**
 - A3, PR #292: wider early uncertainty when the counted booths are unlike the rest of the seat. Seat log loss under 15%
