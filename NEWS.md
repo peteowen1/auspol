@@ -1,3 +1,10 @@
+# auspol 0.4.209
+
+Changes the election-night model only.
+
+- **Election night: the counted two-candidate flow is read against each finalist's leading candidate, not the whole party class** (lane B1c, ON by default in the night loop; `--tcp-cand=off` or `--loop=--tcp-cand=off` turns it off). Where two independents stand, the one not in the final two now counts with the other candidates whose preferences are flowing. Replays on the three real nights: 121 named seat-nights -0.0032 seat log loss (SE 0.0024); without Mildura and Melbourne -0.0011 (SE 0.0013); all-seat nights Victoria 2022 -0.0033 (SE 0.0033), federal 2022 -0.0004 (SE 0.0003), federal 2025 -0.0002 (SE 0.0003). Every night better, wrong 0.99 calls unchanged, seats right at the end Victoria 87 to 88 (federal unchanged); Mildura 2022 7pm to 9pm far better. Its preregistered clause refused it because the two development seats carried the pass; switched on for Pete's approval. `docs/plans/prereg-night-lane-b-2026-11-27.md`.
+- Built and left OFF (refused): same-class candidates moved by their own flow (B1, `--same-class`), flow errors pooled across seats of one final-pair type (B2, `--flow-pool`), the counted flow mixed by vote type (B3, `--tcp-by-type`).
+
 # auspol 0.4.208
 
 Changes the election-night model only.

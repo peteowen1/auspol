@@ -564,12 +564,24 @@ night_expected_votes <- function(enrolment, prev, basis = c("night", "final")) {
 #' @param lane_a `NULL` (default, unchanged) or a list (see [night_lane_a_args()]) of lane A switches passed to [night_booth_update()]:
 #'   `booth_reg_k`, `booth_reg_all`, `type_pool_k`, `rep_sd` (`docs/plans/prereg-night-lane-a-2026-11-27.md`), and lane D's
 #'   `type_sd`, `proj_tails` (`docs/plans/prereg-night-lane-d-2026-11-28.md`).
+#' @param same_class `FALSE` (default, unchanged), `TRUE` (parameters from [night_same_class_params()] for the
+#'   state's election) or a named `g`: switch B1, same-class candidates the simulator did not split moved by their own
+#'   flow ([night_same_class_shift()]).
+#' @param tcp_cand `FALSE` (default here, unchanged) or `TRUE`: switch B1c, the counted 2CP flow read against each
+#'   finalist class's senior candidate ([night_tcp_obs()] `cand_level`). [night_cycle()] turns it on unless
+#'   `cfg$tcp_cand` is `"off"`.
+#' @param flow_pool `FALSE` (default, unchanged) or `TRUE`: switch B2, counted flow errors pooled across seats of
+#'   one final-pair type ([night_flow_pool()]) before each seat's own count is applied.
+#' @param tcp_by_type `FALSE` (default, unchanged) or `TRUE`: switch B3, the counted flow mixed by vote type
+#'   ([night_tcp_obs()] `by_type`, weights from `ref`).
 #' @return List: `sim`, `nu` (the update), `shares`, `sd`, `matched` (seats in both state and feed),
-#'   `n_updated`, `class_split` (the split seats, or `NULL`).
+#'   `n_updated`, `class_split` (the split seats, or `NULL`); with any lane B switch on, also `same_class`,
+#'   `flow_pool` and `tcp_by_type` (their per-seat detail, or `NULL`).
 #' @export
 night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "table", "expected"), expected = NULL, sims = NULL, use_tcp = TRUE,
                              lean = NULL, early_frac = NULL, surge_fade = TRUE, tcp_center = "median", tcp_flow_floor = 0.01, tcp_own_fp = FALSE,
-                             tcp_pair_r = NULL, tcp_pair_cal = NULL, cand_ref = FALSE, class_split = NULL, proj_sd = "old", lane_a = NULL) {
+                             tcp_pair_r = NULL, tcp_pair_cal = NULL, cand_ref = FALSE, class_split = NULL, proj_sd = "old", lane_a = NULL,
+                             same_class = FALSE, flow_pool = FALSE, tcp_by_type = FALSE, tcp_cand = FALSE) {
   total <- match.arg(total)
   la_ok <- c("booth_reg_k", "booth_reg_all", "type_pool_k", "rep_sd", "type_sd", "proj_tails")
   if (!is.null(lane_a) && (!is.list(lane_a) || !all(names(lane_a) %in% la_ok)))
@@ -609,13 +621,28 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
   hc <- st$htv_card
   sim <- if (!is.null(hc) && is.finite(hc$p)) htv_mix_sims(run(hc$labor_above), run(hc$greens_above), hc$p) else run(st$htv_ov)
   n_tcp <- 0L
+  # Lane B switches (R/night_flow.R, docs/plans/prereg-night-lane-b-2026-11-27.md), each OFF by default: off, the
+  # code below is the code before them.
+  sc_g <- if (isTRUE(same_class)) night_same_class_params(st$pair) else if (is.numeric(same_class)) same_class else NULL
+  sc_det <- NULL; fpool_det <- NULL; obs <- NULL
+  if (!is.null(sc_g) && nu$n_updated > 0L) {
+    sim <- night_same_class_shift(sim, .night_cand_votes(conv$live, nu$units, seats), shares, sc_g, st$coalition_split, ncs)
+    sc_det <- attr(sim, "same_class")
+  }
   if (use_tcp && nu$n_updated > 0L && nrow(conv$tcp)) {
-    obs <- night_tcp_obs(conv$tcp, conv$live, nu$units, shares)
+    obs <- if (!isTRUE(tcp_cand) && !isTRUE(tcp_by_type)) night_tcp_obs(conv$tcp, conv$live, nu$units, shares) else
+      night_tcp_obs(conv$tcp, conv$live, nu$units, shares, cand_level = isTRUE(tcp_cand), by_type = if (isTRUE(tcp_by_type)) ref else NULL)
     n_tcp <- nrow(obs)
+    if (isTRUE(flow_pool)) { sim <- night_flow_pool(sim, obs, shares); fpool_det <- attr(sim, "flow_pool") }
     sim <- night_apply_tcp(sim, obs, center = tcp_center, flow_sd_floor = tcp_flow_floor, own_fp = tcp_own_fp, pair_r = tcp_pair_r, pair_cal = tcp_pair_cal)
   }
-  list(sim = sim, nu = nu, shares = shares, sd = sdo, matched = matched, n_updated = nu$n_updated, n_tcp = n_tcp,
+  out <- list(sim = sim, nu = nu, shares = shares, sd = sdo, matched = matched, n_updated = nu$n_updated, n_tcp = n_tcp,
        class_split = if (is.null(ncs)) NULL else attr(ncs, "detail"))
+  if (!is.null(sc_g) || isTRUE(flow_pool) || isTRUE(tcp_by_type) || isTRUE(tcp_cand)) {
+    out$same_class <- sc_det; out$flow_pool <- fpool_det
+    out$tcp_by_type <- if (isTRUE(tcp_by_type) && !is.null(obs) && nrow(obs) && "type_mix" %in% names(obs)) obs[obs$type_mix] else NULL
+  }
+  out
 }
 
 #' Build the published-shape JSON document from a night update
@@ -832,6 +859,32 @@ night_publish_json <- function(doc, out_file, min_seats = 1L) {
   p
 }
 
+# cfg$same_class / flow_pool / tcp_by_type (lane B, docs/plans/prereg-night-lane-b-2026-11-27.md): NULL or "off" ->
+# FALSE (unchanged); "on" -> TRUE, and for same_class its parameters, fitted once per election and cached (a failure
+# turns it off for the night and says so, NSC3!).
+.night_lane_b_cfg <- function(x, what, election = NULL, cache = NULL) {
+  if (is.null(x) || identical(x, "off") || isFALSE(x)) return(FALSE)
+  if (!(identical(x, "on") || isTRUE(x)))
+    stop("NSC3! ", what, " must be \"on\" or \"off\" (got ", paste(format(x), collapse = ","), ")", call. = FALSE)
+  if (what != "same_class") return(TRUE)
+  key <- paste0("same_class_", election)
+  if (!is.null(cache) && exists(key, envir = cache, inherits = FALSE)) return(get(key, envir = cache))
+  g <- tryCatch(night_same_class_params(election), error = function(e) {
+    message("NSC3! same-class step OFF for the night, its parameters failed: ", conditionMessage(e)); FALSE })
+  if (!isFALSE(g)) message(sprintf("NSC3  same-class step %s: g %s", election, paste(names(g), sprintf("%.3f", g), collapse = " ")))
+  if (!is.null(cache)) assign(key, g, envir = cache)
+  g
+}
+
+# cfg$tcp_cand (lane B1c, docs/plans/prereg-night-lane-b-2026-11-27.md): NULL -> ON (.NIGHT_TCP_CAND; Pete approves the
+# default in its PR: every replayed night better, though the prereg's clause refused it because two development seats
+# carried the pass); "off" turns it off (the night command's --loop=--tcp-cand=off), "on" turns it on.
+.NIGHT_TCP_CAND <- TRUE
+.night_tcp_cand_cfg <- function(x) {
+  if (is.null(x)) return(.NIGHT_TCP_CAND)
+  isTRUE(.night_lane_b_cfg(x, "tcp_cand"))
+}
+
 #' One election-night cycle
 #'
 #' @param cfg List: `source`, `archive`, `setup`, `state` (RDS path or already-read list), `ref` (booth CSV path),
@@ -849,6 +902,9 @@ night_publish_json <- function(doc, out_file, min_seats = 1L) {
 #'   `class_split` (`"on"` by default: two candidates of one minor class counted separately, `docs/plans/prereg-night-class-split-2026-11-14.md`;
 #'   `"off"`),
 #'   `proj_sd` (`"old"` by default, the rehearsal table; `"fitted"`: [booth_projection_sd()]'s fitted curve),
+#'   `same_class`, `flow_pool`, `tcp_by_type` (`"off"` by default; `"on"`: lane B switches B1-B3 of
+#'   [night_run_update()], `docs/plans/prereg-night-lane-b-2026-11-27.md`), `tcp_cand` (B1c: on by default, `"off"`
+#'   turns it off),
 #'   `last_stamp` (skip when the newest snapshot has this stamp), `cache` (environment for the state and lookup).
 #' @return List: `status` ("ok", "no_new" or "failed"), `stamp`, `timings` (seconds per step), `message`, `summary`.
 #' @export
@@ -984,7 +1040,13 @@ night_cycle <- function(cfg) {
                             # D2 cfg$proj_tails "t" by default (full 20k replay PASSED 28 Nov 3:40am, 1.04 SE, every night better;
                             # Pete's overnight rule), "normal" turns it off (--loop=--proj-tails=normal).
                             lane_a = c(.night_rep_sd_cfg(cfg$rep_sd), night_lane_a_args(type_sd = cfg$type_sd,
-                                       proj_tails = if (is.null(cfg$proj_tails)) .NIGHT_PROJ_TAILS else cfg$proj_tails))); stamp_t("update_simulate")
+                                       proj_tails = if (is.null(cfg$proj_tails)) .NIGHT_PROJ_TAILS else cfg$proj_tails)),
+                            # lane B (docs/plans/prereg-night-lane-b-2026-11-27.md): B1, B2, B3 OFF unless set (refused);
+                            # B1c cfg$tcp_cand ON by default (.NIGHT_TCP_CAND), "off" turns it off (--loop=--tcp-cand=off).
+                            same_class = .night_lane_b_cfg(cfg$same_class, "same_class", cache$st$pair, cache),
+                            flow_pool = isTRUE(.night_lane_b_cfg(cfg$flow_pool, "flow_pool")),
+                            tcp_by_type = isTRUE(.night_lane_b_cfg(cfg$tcp_by_type, "tcp_by_type")),
+                            tcp_cand = .night_tcp_cand_cfg(cfg$tcp_cand)); stamp_t("update_simulate")
     if (!is.null(res$class_split)) message(sprintf("NW24  night class split: %d seat(s) counting 2+ candidates of one class separately", nrow(res$class_split)))
     res$denominator <- denom; res$n_placeholder <- conv$n_placeholder_booths; res$n_unlisted <- conv$n_unlisted_booths
     if (length(res$nu$fallback_projected)) message("NW12  ", length(res$nu$fallback_projected), " seat(s) fell back to the projected denominator (no usable expected votes): ", paste(res$nu$fallback_projected, collapse = ", "))

@@ -22,6 +22,9 @@ reference table's ordinary booths); anything else: the VEC feed),
 \code{class_split} (\code{"on"} by default: two candidates of one minor class counted separately, \verb{docs/plans/prereg-night-class-split-2026-11-14.md};
 \code{"off"}),
 \code{proj_sd} (\code{"old"} by default, the rehearsal table; \code{"fitted"}: \code{\link[=booth_projection_sd]{booth_projection_sd()}}'s fitted curve),
+\code{same_class}, \code{flow_pool}, \code{tcp_by_type} (\code{"off"} by default; \code{"on"}: lane B switches B1-B3 of
+\code{\link[=night_run_update]{night_run_update()}}, \verb{docs/plans/prereg-night-lane-b-2026-11-27.md}), \code{tcp_cand} (B1c: on by default, \code{"off"}
+turns it off),
 \code{last_stamp} (skip when the newest snapshot has this stamp), \code{cache} (environment for the state and lookup).}
 }
 \value{
