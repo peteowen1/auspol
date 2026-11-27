@@ -53,6 +53,52 @@ votes by 9pm, check it is acting through the early units before believing it.
 
 A pass here is a screen pass only: the main session runs the full 20k replays before shipping.
 
-## RESULT
+## RESULT (28 Nov 2026, 2am; screen, 2,000 draws, code 7be04b37)
 
-(pending)
+Seat-winner log loss, arm minus base (below zero is better; SE clustered on seat). Primary = cells under 15% counted
+(1,382 cells, 389 seats); per night = all snapshots run (vic2022 352 cells, fed2022 1,057, fed2025 900).
+
+| arm | primary diff (SE) | vic2022 night | fed2022 night | fed2025 night | wrong 0.99 calls base -> arm | verdict |
+|---|---|---|---|---|---|---|
+| d1 `--type-sd=on` | +0.0005 (0.0001) | +0.0038 (0.0016) | +0.0003 (0.0002) | +0.0006 (0.0005) | 2 -> 2 | **FAIL** (worse; vic2022 worse by 2.4 SE) |
+| d2 `--proj-tails=t` | -0.0011 (0.0008) | -0.0004 (0.0016) | -0.0008 (0.0010) | -0.0016 (0.0009) | 2 -> 2 | **PASSES the screen** (1.4 SE better, no night worse) |
+| d12 both | -0.0009 (0.0008) | +0.0026 (0.0015) | -0.0005 (0.0010) | -0.0014 (0.0008) | 2 -> 2 | **FAIL** (vic2022 worse by 1.7 SE) |
+
+Seats right at the last snapshot (not a pass clause): d2 loses one on fed2022 (148 -> 147) and one on fed2025 (143 -> 142);
+d1 and d12 one on fed2022.
+
+**D1 acted mostly on vic2022** (the only night with sizeable early units uncounted in the replay at 9pm); its federal
+moves are small, as expected. It helped Mildura (-0.056 summed log loss over its two cells) but widened Croydon,
+Northcote, Hastings, Morwell, Mornington, where the projection was right and the extra width only cost confidence.
+The vote-type spread is real on the reference pairs, but on these nights the table sd plus A3 already covers it:
+adding it in quadrature over-widens.
+
+**D2 is the reverse of the named target.** Same variance with fatter tails means a projection within about one
+combined sd of the prior gets MORE weight than the normal gives, so Mildura (prior IND 38.4 sd 8.5, projection near
+46) gets more confident in the wrong direction (+0.365 summed log loss over two cells). Its gain comes from seats where
+the projection was far from the prior and wrong early (Fowler fed2022 -0.684, Melbourne fed2025 -0.273, Northcote
+vic2022 -0.231). Also: with `proj == prior` the t posterior MEAN equals the prior (tested) but its sd is narrower than
+the normal one; "reduces to normal" holds for the mean only.
+
+**Named target, Mildura vic2022** (trace, 2,000 draws, same base flags). Cupper (IND) lost, so a lower win chance is
+better; posterior sd in share points (afternoon prior: IND 38.4 sd 8.5, LNP 38.7 sd 8.3).
+
+| arm | 7pm Cupper win | 7pm IND / LNP sd | 8pm Cupper win | 8pm IND / LNP sd |
+|---|---|---|---|---|
+| base (A3) | 0.921 | 5.21 / 5.34 | 0.940 | 2.33 / 2.33 |
+| d1 | 0.917 | 5.32 / 5.43 | 0.927 | 2.87 / 2.84 |
+| d2 | 0.946 | 4.74 / 4.85 | 0.945 | 2.25 / 2.19 |
+| d12 | 0.942 | 4.84 / 4.92 | 0.932 | 2.75 / 2.65 |
+
+D1 barely moves 7pm: at 0.9% counted the projection sd is already wide and the prior dominates, so adding the early
+block's variance changes the posterior sd by 0.1. It widens 8pm by about 0.5 points and takes Cupper 0.940 -> 0.927. The
+Mildura over-confidence is NOT mainly the uncounted early vote; it is the 2CP step (flow) and the prior, which lane D
+does not touch.
+
+**Verdicts:** D1 refused, D12 refused, D2 passes the screen as written but moves its named target the wrong way;
+the main session should run the full 20k replays before shipping D2, and Pete should see the Mildura row.
+
+Caveats: `k` was fitted on 5 pairs; nsw2015 -> nsw2019 also maps (prepoll, postal, absent) and ends before 2022, so add it
+at any refit. D1 weights each unit by its share of the seat's projected FINAL total (the arithmetic of the seat
+share), not of the votes still to come; `--type-sd=<number>` is a `k` (scaled by sqrt(p (1 - p))), not points.
+`check_like_ci.R` was not run (tests for lanes A and D and the rep-sd cfg ran and pass).
