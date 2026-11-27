@@ -127,3 +127,26 @@ test_that("htv_jur_adjust pulls a label toward the target state's own cells, shr
   expect_true(all(r0$adj == 0))
   withr::with_envvar(c(AUSPOL_HTV_JUR_SHRINK = "2"), expect_error(htv_jur_shrink_on(), "HTV15!"))
 })
+
+test_that("AUSPOL_HTV_FINAL3: the exact LNP|ALP+GRN key takes the final-three share, wider keys keep theirs", {
+  r0 <- htv_flow_override(NULL, fm, "vic2022", c("Footscray", "Kew"), table = tab, rows = rows)
+  r1 <- htv_flow_override(NULL, fm, "vic2022", c("Footscray", "Kew"), table = tab,
+                          rows = c(rows, list(final3 = list(greens_above = 30, labor_above = 70, open = NA_real_))))
+  expect_equal(unname(r1$Footscray[["LNP|ALP+GRN"]]), c(30, 70))
+  expect_equal(unname(r1$Kew[["LNP|ALP+GRN"]]), c(70, 30))
+  expect_equal(r1$Footscray[["LNP|ALP+GRN+IND"]], r0$Footscray[["LNP|ALP+GRN+IND"]])
+  # no final-three share for a label: the all-exclusion share stands
+  r2 <- htv_flow_override(NULL, fm, "vic2022", "Kew", table = tab,
+                          rows = c(rows, list(final3 = list(greens_above = 30, labor_above = NA_real_, open = NA_real_))))
+  expect_equal(unname(r2$Kew[["LNP|ALP+GRN"]]), c(62, 38))
+  withr::with_envvar(c(AUSPOL_HTV_FINAL3 = "2"), expect_error(htv_final3_on(), "HTV16!"))
+})
+
+test_that("htv_seat_splits_final3 keeps only Liberal rounds that went to Labor and the Greens alone", {
+  d <- tempfile(); dir.create(d)
+  tx <- data.table::data.table(election = "a2018", seat = c("S1", "S1", "S1", "S1", "S1"), round = c(2L, 2L, 2L, 4L, 4L),
+                               from = "LNP", to = c("ALP", "GRN", "IND", "ALP", "GRN"), votes = c(10, 10, 30, 70, 30))
+  data.table::fwrite(tx, file.path(d, "x-transfers.csv"))
+  s <- htv_seat_splits_final3(d)
+  expect_equal(nrow(s), 1L); expect_equal(s$alp, 70); expect_equal(s$tot, 100)
+})
