@@ -126,7 +126,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - OPEN, DATED 27 Nov (evening) and 28 Nov (morning): save the VEC early and postal vote spreadsheet again, raw, into
   `external/reference/vec-early-vote-2026/` (link on https://www.vec.vic.gov.au/voting/2026-state-election/voting-statistics);
   the 28 Nov copy is the final pre-poll count. Screen: `scripts/screen_early_vote.R`.
-  Copies on disk: 24, 25 and 26 Nov (26 Nov 9:30am, Last-Modified 25 Nov 21:42 GMT).
+  Copies on disk: 24, 25, 26 and 27 Nov (27 Nov 9:10am, Thursday's figures).
 - OPEN, after 28 Nov: early-vote share (an xgb feature is not separable from a placebo, DECISIONS 24 Nov): add vic2026 to the
   panel and rescore; untested route = a direct post-tree Labor correction. Also from ITG's ask: `flows_to_labor` in
   scenario-vic2026.json and `n` on each `polls` row of vic-page-data.json.
@@ -377,6 +377,7 @@ Trigger: the post-election review after 28 Nov, unless an item names its own.
 - OPEN, AFTER 28 Nov: `scripts/compare_bookmaker_odds.R` and `scripts/value_odds_vic2026.R` read the newest Sportsbet
   event file, so a `--derive` of 27 Nov fails (VB18!/VB19!, VBK3! "Sworn in Government"): extra Sportsbet events saved
   that day are newer. Give both the seat-market check `snapshot_benchmarks.R` got on 27 Nov. Their 27 Nov outputs are fine.
+  Done when: `snapshot_benchmarks.R --date=2026-11-27 --derive` exits 0 with the bookmaker files byte-identical.
 - OPEN, AFTER 28 Nov (One Nation flows, shipped k=20 on 27 Nov; DECISIONS 27 Nov): review nits from the ship: the comment at
   `R/xgb_flow_override.R` ~471 still says the calibration defaults off; `scripts/score_onp_transfers_ksweep.R` ARMS lacks "20"
   (the k=20 run used scratch `event_k20.R`) and has no per-election aggregation step. Then the real work: the trees over-send
