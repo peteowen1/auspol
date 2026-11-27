@@ -16,7 +16,8 @@ project_seat_from_booths(
   booth_reg = NULL,
   type_pool_k = NULL,
   diag = FALSE,
-  type_sd = NULL
+  type_sd = NULL,
+  booth_knn = NULL
 )
 }
 \arguments{
@@ -78,6 +79,14 @@ of the projection from not knowing how each uncounted non-ordinary unit will swi
 booths, \code{sum_u (size_u / T)^2 * k_t^2 * p (1 - p) * (1 - c_t)}: \code{size_u} the unit's projected votes, \code{T} the seat's
 projected total, \code{p} the class's projected share (fraction), \code{c_t} the counted share of that type in the seat
 (counted votes of the type over counted plus projected uncounted). Zero once every unit of every type has reported.}
+
+\item{booth_knn}{Lane F, the per-booth best guess (\verb{docs/plans/prereg-night-booth-guess-2026-11-28.md}). \code{NULL}
+(default) is byte-identical. A list \code{list(h, k, size_w, types)}: each uncounted ORDINARY booth with a reference gets
+its own swing per class, \verb{base + sum_j w_j (y_j - base) / (sum_j w_j + k)}, over the counted ordinary booths \code{j} with
+a reference, \code{y_j} booth j's own swing, \code{base} the unchanged ordinary swing, \verb{w_j = (votes_j / median booth) * exp(-d^2 / (2 h^2))}, \code{d^2} the squared distance (points) between the two booths' reference shares over every
+reference class plus \verb{(size_w * log ratio of reference votes)^2}. \code{types = TRUE}: an uncounted non-ordinary unit
+whose type has no counted unit takes the reference-vote-weighted swing of ALL the seat's ordinary booths (counted:
+own; uncounted: guessed) in place of the all-types counted swing, keeping its type gap. Not with \code{booth_reg}.}
 }
 \value{
 data.table \verb{cls, projected, counted_share}, or \code{NULL} if no

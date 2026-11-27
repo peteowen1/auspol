@@ -85,7 +85,8 @@ the three real replayed nights (\code{scripts/fit_night_projection_sd.R}).}
 
 \item{lane_a}{\code{NULL} (default, unchanged) or a list (see \code{\link[=night_lane_a_args]{night_lane_a_args()}}) of lane A switches passed to \code{\link[=night_booth_update]{night_booth_update()}}:
 \code{booth_reg_k}, \code{booth_reg_all}, \code{type_pool_k}, \code{rep_sd} (\verb{docs/plans/prereg-night-lane-a-2026-11-27.md}), and lane D's
-\code{type_sd}, \code{proj_tails} (\verb{docs/plans/prereg-night-lane-d-2026-11-28.md}).}
+\code{type_sd}, \code{proj_tails} (\verb{docs/plans/prereg-night-lane-d-2026-11-28.md}), and lane F's \code{booth_knn}
+(\verb{docs/plans/prereg-night-booth-guess-2026-11-28.md}).}
 
 \item{same_class}{\code{FALSE} (default, unchanged), \code{TRUE} (parameters from \code{\link[=night_same_class_params]{night_same_class_params()}} for the
 state's election) or a named \code{g}: switch B1, same-class candidates the simulator did not split moved by their own

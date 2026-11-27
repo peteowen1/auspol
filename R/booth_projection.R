@@ -80,12 +80,28 @@ match_booth_units <- function(live, ref) {
 #'   booths, `sum_u (size_u / T)^2 * k_t^2 * p (1 - p) * (1 - c_t)`: `size_u` the unit's projected votes, `T` the seat's
 #'   projected total, `p` the class's projected share (fraction), `c_t` the counted share of that type in the seat
 #'   (counted votes of the type over counted plus projected uncounted). Zero once every unit of every type has reported.
+#' @param booth_knn Lane F, the per-booth best guess (`docs/plans/prereg-night-booth-guess-2026-11-28.md`). `NULL`
+#'   (default) is byte-identical. A list `list(h, k, size_w, types)`: each uncounted ORDINARY booth with a reference gets
+#'   its own swing per class, `base + sum_j w_j (y_j - base) / (sum_j w_j + k)`, over the counted ordinary booths `j` with
+#'   a reference, `y_j` booth j's own swing, `base` the unchanged ordinary swing, `w_j = (votes_j / median booth) *
+#'   exp(-d^2 / (2 h^2))`, `d^2` the squared distance (points) between the two booths' reference shares over every
+#'   reference class plus `(size_w * log ratio of reference votes)^2`. `types = TRUE`: an uncounted non-ordinary unit
+#'   whose type has no counted unit takes the reference-vote-weighted swing of ALL the seat's ordinary booths (counted:
+#'   own; uncounted: guessed) in place of the all-types counted swing, keeping its type gap. Not with `booth_reg`.
 #' @return data.table `cls, projected, counted_share`, or `NULL` if no
 #'   counted unit has a reference (nothing to measure a swing on).
 #' @export
 project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, total = c("table", "projected", "expected"), expected_total = NA_real_,
-                                     lean = NULL, early_frac = NA_real_, booth_reg = NULL, type_pool_k = NULL, diag = FALSE, type_sd = NULL) {
+                                     lean = NULL, early_frac = NA_real_, booth_reg = NULL, type_pool_k = NULL, diag = FALSE, type_sd = NULL,
+                                     booth_knn = NULL) {
   if (!is.null(type_sd)) stopifnot(is.numeric(type_sd), length(names(type_sd)) == length(type_sd), all(is.finite(type_sd)), all(type_sd >= 0))
+  if (!is.null(booth_knn)) {
+    if (!is.null(booth_reg)) stop("NX32! booth_knn and booth_reg cannot both be on", call. = FALSE)
+    ok_bk <- is.list(booth_knn) && all(c("h", "k", "size_w", "types") %in% names(booth_knn)) &&
+      all(vapply(booth_knn[c("h", "k", "size_w")], function(x) is.numeric(x) && length(x) == 1L && is.finite(x) && x >= 0, logical(1))) &&
+      booth_knn$h > 0 && is.logical(booth_knn$types) && length(booth_knn$types) == 1L && !is.na(booth_knn$types)
+    if (!ok_bk) stop("NX32! booth_knn must be list(h > 0, k >= 0, size_w >= 0, types TRUE/FALSE)", call. = FALSE)
+  }
   total <- match.arg(total)
   live <- data.table::as.data.table(live); ref <- data.table::as.data.table(ref)
   classes <- unique(live$cls)
@@ -137,6 +153,7 @@ project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, 
   grid <- merge(grid, ref[, .(unit, cls, rv = v)], by = c("unit", "cls"), all.x = TRUE)
   grid <- merge(grid, ref_tot, by = "unit", all.x = TRUE)
   grid <- merge(grid, sw_t, by = c("booth_type", "cls"), all.x = TRUE); grid <- merge(grid, sw_a, by = "cls", all.x = TRUE)
+  if (!is.null(booth_knn)) grid[, .bk_untyped := is.na(sw)]   # this unit's type has no counted unit (lane F, types = TRUE)
   if (!is.null(type_gap) && nrow(type_gap)) {
     # An update join, NOT merge(): merge() re-sorts the rows by its keys, and `has_ref` below is a
     # vector aligned to grid's row order across the later merge by `cls` -- re-sorting by booth type
@@ -198,6 +215,7 @@ project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, 
     grid[hit1, sw := sw + a1_beta * (rv / pmax(rt, 1) - a1_xm)]
     grid[, c("a1_beta", "a1_xm") := NULL]
   }
+  if (!is.null(booth_knn)) grid <- .booth_knn_swing(grid, live, ref, ref_tot, live_tot, units, counted_units, booth_knn)
   has_ref <- grid$unit %in% ref_tot$unit
   mean_unit <- mean(ref_tot$rt)
   grid[, size := data.table::fifelse(has_ref, rt * growth, mean_unit * growth)]
@@ -250,6 +268,57 @@ project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, 
   }
   if (!is.null(type_sd)) out <- .lane_d_type_var(out, unique(grid[, .(unit, booth_type, size)]), er, live, counted_units, type_sd)
   out[]
+}
+
+# Lane F (project_seat_from_booths(booth_knn = ...)): the per-booth best guess. `grid` is the uncounted unit x class grid
+# with `sw` (fraction) already set by the unchanged rules and `.bk_untyped`; returns it with `sw` replaced on (a) uncounted
+# ordinary booths with a reference and (b) with types = TRUE, uncounted non-ordinary units whose type had no counted unit.
+.booth_knn_swing <- function(grid, live, ref, ref_tot, live_tot, units, counted_units, bk) {
+  ord <- units$unit[units$booth_type == "ordinary"]
+  rcls <- setdiff(unique(ref$cls), "_COPYADJ")
+  RS <- ref[ref$cls %in% rcls & ref$unit %in% ord, list(v = sum(v)), by = c("unit", "cls")]
+  if (!nrow(RS)) { grid[, .bk_untyped := NULL]; return(grid) }
+  RS[ref_tot, on = "unit", rt := i.rt]; RS[, s := v / pmax(rt, 1)]
+  X <- data.table::dcast(RS, unit ~ cls, value.var = "s", fill = 0)
+  RT <- stats::setNames(ref_tot$rt, ref_tot$unit); LT <- stats::setNames(live_tot$lt, live_tot$unit)
+  ycls <- intersect(unique(live$cls), rcls)   # classes with a reference swing (others take the counted share anyway)
+  cu <- X$unit[X$unit %in% counted_units & X$unit %in% names(LT)]; cu <- cu[LT[cu] > 0]
+  uu <- intersect(X$unit[!X$unit %in% counted_units], grid$unit[grid$booth_type == "ordinary"])
+  if (!length(cu) || !length(ycls)) { grid[, .bk_untyped := NULL]; return(grid) }
+  xm <- as.matrix(X[, -1, with = FALSE]); rownames(xm) <- X$unit
+  # counted booths' own swings, units x classes (a class absent at a booth this year had share 0 there)
+  LS <- live[live$unit %in% cu & live$cls %in% ycls, list(v = sum(v)), by = c("unit", "cls")]
+  Y <- matrix(0, length(cu), length(ycls), dimnames = list(cu, ycls))
+  if (nrow(LS)) Y[cbind(match(LS$unit, cu), match(LS$cls, ycls))] <- LS$v / LT[LS$unit]
+  RX <- matrix(0, length(cu), length(ycls), dimnames = list(cu, ycls)); ic <- intersect(ycls, colnames(xm)); RX[, ic] <- xm[cu, ic, drop = FALSE]
+  Y <- Y - RX
+  # base: the unchanged ordinary swing per class, as the grid holds it (one value per class on ordinary rows)
+  bt <- grid[grid$booth_type == "ordinary" & grid$cls %in% ycls, list(b = sw[1]), by = "cls"]
+  base <- stats::setNames(rep(0, length(ycls)), ycls); base[bt$cls] <- bt$b
+  if (!nrow(bt)) {   # no uncounted ordinary booth: the all-types swing is the base for the types step
+    sa <- grid[grid$cls %in% ycls, list(b = sw_all[1]), by = "cls"]; base[sa$cls] <- sa$b }
+  med <- stats::median(RT[X$unit]); if (!isTRUE(med > 0)) med <- 1
+  G <- NULL
+  if (length(uu)) {
+    D2 <- matrix(0, length(uu), length(cu))
+    for (c0 in colnames(xm)) D2 <- D2 + outer(100 * xm[uu, c0], 100 * xm[cu, c0], "-")^2
+    D2 <- D2 + outer(bk$size_w * log(pmax(RT[uu], 1)), bk$size_w * log(pmax(RT[cu], 1)), "-")^2
+    W <- exp(-D2 / (2 * bk$h^2)) * matrix(LT[cu] / med, length(uu), length(cu), byrow = TRUE)
+    dev <- sweep(Y, 2L, base[ycls])
+    G <- sweep((W %*% dev) / (rowSums(W) + bk$k), 2L, base[ycls], "+"); rownames(G) <- uu
+    hit <- grid$booth_type == "ordinary" & grid$unit %in% uu & grid$cls %in% ycls
+    data.table::set(grid, which(hit), "sw", G[cbind(match(grid$unit[hit], uu), match(grid$cls[hit], ycls))])
+  }
+  if (isTRUE(bk$types)) {
+    # every ordinary booth with a reference: counted at its own swing, uncounted at its guess (or the base), by reference votes
+    allu <- c(cu, setdiff(X$unit, cu)); S <- matrix(rep(base[ycls], each = length(allu)), length(allu), dimnames = list(allu, ycls))
+    S[cu, ] <- Y; if (!is.null(G)) S[rownames(G), ] <- G
+    ow <- colSums(S * RT[allu]) / sum(RT[allu])
+    hit <- grid$booth_type != "ordinary" & grid$.bk_untyped & grid$cls %in% ycls & !is.na(grid$sw_all)
+    if (any(hit)) data.table::set(grid, which(hit), "sw", grid$sw[hit] - grid$sw_all[hit] + ow[grid$cls[hit]])
+  }
+  grid[, .bk_untyped := NULL]
+  grid
 }
 
 # Lane D1 (project_seat_from_booths(type_sd = k)): variance (points^2) per class from the uncounted non-ordinary units'

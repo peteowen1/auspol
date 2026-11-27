@@ -563,7 +563,8 @@ night_expected_votes <- function(enrolment, prev, basis = c("night", "final")) {
 #'   the three real replayed nights (`scripts/fit_night_projection_sd.R`).
 #' @param lane_a `NULL` (default, unchanged) or a list (see [night_lane_a_args()]) of lane A switches passed to [night_booth_update()]:
 #'   `booth_reg_k`, `booth_reg_all`, `type_pool_k`, `rep_sd` (`docs/plans/prereg-night-lane-a-2026-11-27.md`), and lane D's
-#'   `type_sd`, `proj_tails` (`docs/plans/prereg-night-lane-d-2026-11-28.md`).
+#'   `type_sd`, `proj_tails` (`docs/plans/prereg-night-lane-d-2026-11-28.md`), and lane F's `booth_knn`
+#'   (`docs/plans/prereg-night-booth-guess-2026-11-28.md`).
 #' @param same_class `FALSE` (default, unchanged), `TRUE` (parameters from [night_same_class_params()] for the
 #'   state's election) or a named `g`: switch B1, same-class candidates the simulator did not split moved by their own
 #'   flow ([night_same_class_shift()]).
@@ -583,7 +584,7 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
                              tcp_pair_r = NULL, tcp_pair_cal = NULL, cand_ref = FALSE, class_split = NULL, proj_sd = "old", lane_a = NULL,
                              same_class = FALSE, flow_pool = FALSE, tcp_by_type = FALSE, tcp_cand = FALSE) {
   total <- match.arg(total)
-  la_ok <- c("booth_reg_k", "booth_reg_all", "type_pool_k", "rep_sd", "type_sd", "proj_tails")
+  la_ok <- c("booth_reg_k", "booth_reg_all", "type_pool_k", "rep_sd", "type_sd", "proj_tails", "booth_knn")
   if (!is.null(lane_a) && (!is.list(lane_a) || !all(names(lane_a) %in% la_ok)))
     stop("NW30! lane_a must be a list with names among ", paste(la_ok, collapse = ", "), call. = FALSE)
   if (!is.numeric(tcp_flow_floor) || length(tcp_flow_floor) != 1L || !is.finite(tcp_flow_floor) || tcp_flow_floor < 0)
@@ -830,6 +831,7 @@ night_publish_json <- function(doc, out_file, min_seats = 1L) {
 # "0,0" -> off (the night command's --loop=--rep-sd=off turns it off mid-count); "a,b" as given. Widens the projection sd
 # by how unlike the counted booths are the ones still to come (night_booth_update()'s rep_sd).
 .NIGHT_REP_SD <- c(0.0458, 0)
+.NIGHT_BOOTH_KNN <- "10,1,10,0"   # lane F default for the live night (night_cycle): per-booth guess on polling booths only (h,k,size_w,types); "off" turns it off. Pete's override of the prereg, 28 Nov 2026
 .NIGHT_PROJ_TAILS <- "t"   # lane D2 default for the live night (night_cycle); "normal" is the old normal-normal combine
 .night_rep_sd_cfg <- function(x) {
   if (is.null(x)) return(list(rep_sd = .NIGHT_REP_SD))
@@ -1040,7 +1042,9 @@ night_cycle <- function(cfg) {
                             # D2 cfg$proj_tails "t" by default (full 20k replay PASSED 28 Nov 3:40am, 1.04 SE, every night better;
                             # Pete's overnight rule), "normal" turns it off (--loop=--proj-tails=normal).
                             lane_a = c(.night_rep_sd_cfg(cfg$rep_sd), night_lane_a_args(type_sd = cfg$type_sd,
-                                       proj_tails = if (is.null(cfg$proj_tails)) .NIGHT_PROJ_TAILS else cfg$proj_tails)),
+                                       proj_tails = if (is.null(cfg$proj_tails)) .NIGHT_PROJ_TAILS else cfg$proj_tails,
+                                       # lane F (docs/plans/prereg-night-booth-guess-2026-11-28.md): per-booth best guess, OFF unless --booth-knn=h,k,size_w,types
+                                       booth_knn = if (is.null(cfg$booth_knn)) .NIGHT_BOOTH_KNN else cfg$booth_knn)),
                             # lane B (docs/plans/prereg-night-lane-b-2026-11-27.md): B1, B2, B3 OFF unless set (refused);
                             # B1c cfg$tcp_cand ON by default (.NIGHT_TCP_CAND), "off" turns it off (--loop=--tcp-cand=off).
                             same_class = .night_lane_b_cfg(cfg$same_class, "same_class", cache$st$pair, cache),

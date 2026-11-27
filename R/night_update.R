@@ -130,6 +130,8 @@ night_prior_sd <- function(shares, level_sd, level_mult = NULL, sd_override = NU
 #'   variance, so an uncounted early or postal block carries its own uncertainty until it reports.
 #' @param proj_tails Lane D2: `"normal"` (default, byte-identical) or `"t"`: combine with a Student-t projection error of
 #'   the same variance ([combine_prior_projection_t()], df `.NIGHT_T_DF` from lane C).
+#' @param booth_knn Lane F, the per-booth best guess: `NULL` (default, byte-identical) or `list(h, k, size_w, types)`, passed to
+#'   [project_seat_from_booths()] (`docs/plans/prereg-night-booth-guess-2026-11-28.md`). Cannot be combined with `booth_reg_k`.
 #' @return List: `shares` (posterior means, rows renormalised to 100), `sd` (posterior sds),
 #'   `counted` (named per-seat share of the final night vote counted), `resolved` (mean over
 #'   updated cells of 1 - posterior sd / prior sd), `n_updated` (seats with booths), `units`
@@ -140,7 +142,7 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
                                reported = NULL, total = c("table", "projected", "expected"), expected = NULL, lean = NULL,
                                early_frac = NULL, cand_ref = FALSE, keep_proj = FALSE, proj_sd = c("old", "fitted", "max"),
                                booth_reg_k = NULL, type_pool_k = NULL, rep_sd = NULL, proj_diag = FALSE, booth_reg_all = FALSE,
-                               type_sd = NULL, proj_tails = c("normal", "t")) {
+                               type_sd = NULL, proj_tails = c("normal", "t"), booth_knn = NULL) {
   total <- match.arg(total); proj_sd <- match.arg(proj_sd); proj_tails <- match.arg(proj_tails)
   type_k <- .night_type_sd_k(type_sd)
   if (!is.null(rep_sd)) stopifnot(is.numeric(rep_sd), length(rep_sd) == 2L, all(is.finite(rep_sd)), all(rep_sd >= 0))
@@ -237,7 +239,7 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
     p <- project_seat_from_booths(ld, rd, units, type_gap = type_gap, total = total, expected_total = if (is.null(expected)) NA_real_ else unname(expected[s]),
                                   lean = if (is.null(Lk)) NULL else Lk[Lk$district == s],
                                   early_frac = if (is.null(early_frac) || !s %in% names(early_frac)) NA_real_ else unname(early_frac[s]),
-                                  booth_reg = booth_reg, type_pool_k = type_pool_k, diag = lane_diag, type_sd = type_k)
+                                  booth_reg = booth_reg, type_pool_k = type_pool_k, diag = lane_diag, type_sd = type_k, booth_knn = booth_knn)
     if (is.null(p) || !nrow(p)) next
     cs <- p$counted_share[1]
     proj_total[s] <- sum(p$projected)
@@ -733,10 +735,12 @@ night_shrink_draws <- function(draws, keep) {
 #' Every flag absent gives `NULL`, the run without lane A.
 #' Lane D adds `--type-sd=<on|off|k>` (`type_sd`, D1) and `--proj-tails=<normal|t>` (`proj_tails`, D2;
 #' `docs/plans/prereg-night-lane-d-2026-11-28.md`); `off` and `normal` add nothing.
-#' @param booth_reg,booth_reg_all,type_pool,rep_sd,type_sd,proj_tails Flag values as strings, or `NULL` when not given.
+#' Lane F adds `--booth-knn=h,k,size_w,types` (`booth_knn`, e.g. `10,1,10,1`; `docs/plans/prereg-night-booth-guess-2026-11-28.md`);
+#' `off` adds nothing.
+#' @param booth_reg,booth_reg_all,type_pool,rep_sd,type_sd,proj_tails,booth_knn Flag values as strings, or `NULL` when not given.
 #' @return `NULL` or a named list.
 #' @export
-night_lane_a_args <- function(booth_reg = NULL, booth_reg_all = NULL, type_pool = NULL, rep_sd = NULL, type_sd = NULL, proj_tails = NULL) {
+night_lane_a_args <- function(booth_reg = NULL, booth_reg_all = NULL, type_pool = NULL, rep_sd = NULL, type_sd = NULL, proj_tails = NULL, booth_knn = NULL) {
   num1 <- function(x, nm) { v <- suppressWarnings(as.numeric(x)); if (length(v) != 1L || !is.finite(v) || v < 0) stop("NX30! --", nm, " must be one number >= 0", call. = FALSE); v }
   out <- list()
   if (!is.null(booth_reg)) out$booth_reg_k <- num1(booth_reg, "booth-reg")
@@ -755,5 +759,14 @@ night_lane_a_args <- function(booth_reg = NULL, booth_reg_all = NULL, type_pool 
     if (!proj_tails %in% c("normal", "t")) stop("NX30! --proj-tails must be normal or t", call. = FALSE)
     if (proj_tails == "t") out$proj_tails <- "t"
   }
+  if (!is.null(booth_knn) && !identical(booth_knn, "off")) out$booth_knn <- .night_booth_knn_cfg(booth_knn)
   if (length(out)) out else NULL
+}
+
+# Lane F flag `--booth-knn=h,k,size_w,types` (types 1 or 0) -> project_seat_from_booths()'s booth_knn list.
+.night_booth_knn_cfg <- function(x) {
+  v <- suppressWarnings(as.numeric(strsplit(as.character(x), ",", fixed = TRUE)[[1]]))
+  if (length(v) != 4L || any(!is.finite(v)) || any(v < 0) || v[1] <= 0 || !v[4] %in% c(0, 1))
+    stop("NX33! --booth-knn must be h,k,size_w,types with h > 0, k and size_w >= 0, types 0 or 1 (e.g. 10,1,10,1)", call. = FALSE)
+  list(h = v[1], k = v[2], size_w = v[3], types = v[4] == 1)
 }
