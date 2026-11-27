@@ -82,3 +82,17 @@ Joint screen of B1c + `bko` against `a3d2` (2,000 draws, to 9pm, code 4cb9de21):
 vic2022 -0.0066 (0.0063), fed2022 -0.0014 (0.0008), fed2025 -0.0001 (0.0013); wrong 0.99 calls 2 = 2; seats right
 376 vs 374 base. B1c alone was -0.0006 (0.0007). Mildura (Cupper, lost) 7 / 8 / 9pm: 0.85 / 0.86 / 0.29 (a3d2 0.95 /
 0.94 / 0.45). Full 20,000-draw replays to 2am follow, before the ship.
+
+## Amendment 2 (28 Nov 2026, about 9:10am): vote types matched to similar booths, written before the arm ran
+
+Pete (9am): "I asked for full booth level with vote type - surely that's the best way". New mode `types = "knn"`
+(flag `--booth-knn=10,1,10,2`): each uncounted early / postal / absent / other unit whose type has no counted unit keeps
+its current swing (all-types counted swing + type gap) PLUS the kernel-weighted deviation of the counted polling booths
+whose reference shares look most like ITS OWN reference shares (same h = 10, k = 1; no size term). Checked before the
+screen on the saved Mildura data only (not scored): early swing at 8pm +1.8 -> +5.7 (final +6.8); seat 8pm Cupper /
+Coalition 45.3 / 41.6 -> 44.0 / 43.2, 9pm 42.4 / 43.5 -> 41.8 / 44.4 (final 41.2 / 45.0).
+
+Arm `bkt`: live flags (A3, D2, B1c `--tcp-cand=1`) + `--booth-knn=10,1,10,2`, against arm `both` (the live night as
+shipped: same flags + `--booth-knn=10,1,10,0`). Same screen, same four clauses (primary better by more than 1 SE; no
+night worse by more than 1 SE; wrong 0.99 calls not more; seats right not fewer), then full 20k runs with the same
+clauses. Pass -> ON by the standing rule; fail -> Pete's call. Cutoff for changes 2:45pm (Pete: "we have 6 hours").
