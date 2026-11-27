@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (342 switches from `published_flags.R`, 7 entry points)
+## Switch parity (343 switches from `published_flags.R`, 7 entry points)
 
 The last column lists the `R/` files whose code (not comments) reads the switch. A row of `NO`s with a file there is shared-function wiring: every entry point that calls that function honours it. Presence is still not value: a hardcoded constant beside the read (audit F3) or a swapped table (F10) scores "yes" here.
 
@@ -137,6 +137,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 | `AUSPOL_HONOUR_DEPARTED` | yes | yes | yes | yes | yes | yes | yes |  |
 | `AUSPOL_HTV_CARD_P` | NO | NO | NO | NO | NO | NO | NO | htv_flow.R |
 | `AUSPOL_HTV_EXCLUDE` | NO | NO | NO | NO | NO | NO | NO | htv_flow.R |
+| `AUSPOL_HTV_FINAL3` | NO | NO | NO | NO | NO | NO | NO | htv_flow.R |
 | `AUSPOL_HTV_FLOW` | yes | yes | yes | yes | yes | yes | yes | htv_flow.R |
 | `AUSPOL_HTV_JUR_SHRINK` | NO | NO | NO | NO | NO | NO | NO | htv_flow.R |
 | `AUSPOL_HTV_LABELS` | NO | NO | NO | NO | NO | NO | NO | htv_flow.R |
@@ -468,6 +469,7 @@ The last column lists the `R/` files whose code (not comments) reads the switch.
 - **`AUSPOL_HISTORIC_ELECTED_BACKFILL`** (**adopted, shared-function wiring**): SHIPPED 2026-09-15 on judgement (costs 0.0141 pooled RMSE in the backtest, but vic2026 is never a training pair so the 62 returning members can only move the live forecast, which the backtest cannot see). Read ONCE at build time by scripts/build_candidacies.R and baked into output/candidacies.csv, so no harness reads it at runtime; reversible by rebuilding candidacies with the flag off.
 - **`AUSPOL_HTV_CARD_P`** (intentional / dead experiment): LIVE ONLY by design: fit_seats_full.R mixes the two card runs when the target has no how-to-vote row (htv_card_p(), htv_mix_sims(), R/htv_flow.R) and the target's REGION has an entry ('vic=0.67': nsw2027 gets none). The night runner mixes the same way from the saved state's htv_card. Backtest targets all have known cards, so no harness reads it.
 - **`AUSPOL_HTV_EXCLUDE`** (intentional / dead experiment): DIAGNOSTIC 2026-10-13: leaves named transfer files out of the how-to-vote fit (R/htv_flow.R) to attribute a new file's effect; published empty. Read inside R/ via htv_flow_override() -- universal in practice.
+- **`AUSPOL_HTV_FINAL3`** (intentional / dead experiment): UNIVERSAL via R/: read inside htv_final3_on() from fit_htv_flow_rows() (R/htv_flow.R), which every harness and fit_seats_full.R reach through htv_flow_override(). SHIPPED 2026-11-27 on Pete's override of the Victorian seat guard (plans/prereg-htv-final3-2026-11-27.md).
 - **`AUSPOL_HTV_JUR_SHRINK`** (intentional / dead experiment): UNIVERSAL via R/: read inside htv_jur_shrink_on() from htv_card_label_shares() (R/htv_flow.R), which every harness and fit_seats_full.R reach through the HTV flow. REFUSED 2026-11-17, stays 0 (plans/prereg-htv-jur-shrink-2026-11-17.md).
 - **`AUSPOL_HTV_LABELS`** (intentional / dead experiment): UNIVERSAL via R/: read inside htv_labels_mode() from fit_htv_flow_rows() (R/htv_flow.R), which htv_flow_override() calls in every harness and fit_seats_full.R. SHIPPED hybrid 2026-11-15 (plans/prereg-htv-card-labels-2026-11-15.md).
 - **`AUSPOL_HTV_RECENCY_HL`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: read in fit_htv_flow_rows() (R/htv_flow.R), which every harness and fit_seats_full.R reach through htv_flow_override(). plans/prereg-htv-recency-2026-10-31.md
@@ -734,7 +736,7 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR4  every AUSPOL_* switch read in code (459) is registered (323) or listed as not a model switch (136).
+MR4  every AUSPOL_* switch read in code (460) is registered (324) or listed as not a model switch (136).
 
 
 
