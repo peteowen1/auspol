@@ -57,6 +57,19 @@ below zero), or from a night whose booths are mostly unmatched to a reference (c
 night). A pass here is a screen pass only: full 20,000-draw replays to 2am on all three nights before shipping, with
 the same four clauses on the full run. Cutoff: Pete's 1pm; anything not passed by then stays off.
 
-## RESULT
+## RESULT (28 Nov 2026, 7:40am; screen, 2,000 draws, code 970bf419): FAIL, stays off
 
-(to be filled)
+Seat-winner log loss, arm minus base `a3d2` (below zero is better; SE clustered on seat). Primary = cells under 15%
+counted (1,382 cells, 389 seats); per night = all snapshots run (vic2022 352 cells, fed2022 1,057, fed2025 900).
+
+| arm | primary | vic2022 | fed2022 | fed2025 | wrong 0.99 calls (base 2) | seats right (base 374) | verdict |
+|---|---|---|---|---|---|---|---|
+| `bk` (deciding) | -0.0004 (0.0005) | +0.0009 (0.0019) | -0.0014 (0.0010) | +0.0014 (0.0023) | 2 | 376 | **FAIL clause 1** (0.8 SE, needs > 1) |
+| `bko` (reported) | -0.0004 (0.0003) | -0.0011 (0.0012) | -0.0012 (0.0007) | +0.0002 (0.0013) | 2 | 376 | (not deciding) |
+
+Mildura (Cupper's win chance, she lost): a3d2 0.95 / 0.94 / 0.45 at 7 / 8 / 9pm; `bk` 0.95 / 0.90 / 0.49; `bko` 0.95 /
+0.92 / 0.44. Seat-level traces on the saved Mildura data: the guess moves the uncounted town booths the right way
+(Coalition swing +1.8 to about +6.4 at 8pm against finals of +6 to +13), but the early vote (40% of the seat, no
+similar counted unit) only moves from +1.8 to +2.6 against a final +6.8, and that block decides the seat. Nothing is
+worse by more than 1 SE and both arms gain 2 seats right at 9pm, so the effect is real but too small to clear the bar.
+Stays OFF (`--booth-knn` absent). Pete told in conversation, 28 Nov.
