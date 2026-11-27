@@ -12,7 +12,10 @@ project_seat_from_booths(
   total = c("table", "projected", "expected"),
   expected_total = NA_real_,
   lean = NULL,
-  early_frac = NA_real_
+  early_frac = NA_real_,
+  booth_reg = NULL,
+  type_pool_k = NULL,
+  diag = FALSE
 )
 }
 \arguments{
@@ -48,6 +51,25 @@ unit is ONE unit per district and counts as reported once any early voting centr
 \code{early_frac} below 1 the unreported remainder (counted early votes x (1 - f) / f) is projected from the
 reference early block's shares plus the early swing, instead of being left out. \code{NA} (the default) is
 byte-identical to the previous behaviour.}
+
+\item{booth_reg}{Lane A1 (\verb{docs/plans/prereg-night-lane-a-2026-11-27.md}). \code{NULL} (default) is byte-identical. A list
+\verb{list(k = <booths>, pool = data.table(cls, beta))}: each uncounted ORDINARY booth's swing is the seat's ordinary swing
+plus \verb{beta * (its reference share - the counted booths' reference share)}, where \code{beta} is the slope of counted
+ordinary booths' swing on their reference share (weighted by this year's booth totals), partial-pooled toward the
+cross-seat slope \code{pool$beta} (0 if absent) by \code{n / (n + k)}, \code{n} the seat's counted ordinary booths. Clipped to
+\verb{[-1, 1]}. A booth strong for a class last time does not get the same swing as a weak one. \code{booth_reg$all = TRUE}
+applies the same offset to every uncounted unit with a reference (early, postal), not only ordinary booths.}
+
+\item{type_pool_k}{Lane A2. \code{NULL} (default) is byte-identical. A number \code{k >= 0}: each booth type's swing is its own
+counted swing partial-pooled toward a pooled estimate, \code{w = m / (m + k)} with \code{m} its counted votes in units of the
+seat's median ordinary booth; the pooled estimate is the seat's ordinary-equivalent swing (every counted type's
+swing minus its \code{type_gap}, weighted by counted votes) plus the type's own \code{type_gap} (0 without one). So a seat
+with only its early vote in projects its ordinary booths at the early swing minus the early gap, not at the raw early swing.}
+
+\item{diag}{\code{TRUE} adds columns \code{n_ord} (counted ordinary booths with a reference), \code{rep_dist} (reference-share
+distance, points, between the uncounted units and the counted ones, size-weighted), \code{swing_sd} (spread, points, of
+the counted ordinary booths' swings) and \code{unc_frac} (projected share of the seat's votes still to come). \code{FALSE}
+(default) returns the columns as before.}
 }
 \value{
 data.table \verb{cls, projected, counted_share}, or \code{NULL} if no

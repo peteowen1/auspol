@@ -46,6 +46,18 @@ total = "expected"; scorer `laneA_score.R` in the session scratchpad, copied to 
 - What would make an apparent win unacceptable: a gain carried by one night while another is worse (guard); a win in
   the mean that only comes from clipping; any fitted constant scored in-sample.
 
+## Additions (written ~10pm 27 Nov, after review, BEFORE any arm was scored; the clauses above are unedited)
+
+1. **A1b** (`booth_reg_all = TRUE`, `--booth-reg=5 --booth-reg-all=1`): the A1 offset also applied to every uncounted
+   non-ordinary unit with a reference (the early and postal blocks). Reason: in Mildura vic2022 49% of the final votes
+   were early and none were counted by 9pm, so an ordinary-only A1 leaves most of the projection untouched. Same
+   criterion and guards as A1.
+2. **A3 control**: A3 must also beat the count-only `"fitted"` sd curve (refused at the seat level tonight) on the same
+   cells and the same leave-one-night-out split; if it does not, it is that refused arm again. A3 is screen-only either
+   way: a pass goes to the main session's seat-level replay, it is not shipped from this screen.
+3. A2's booth-size unit uses REFERENCE booth totals (a live feed's uncounted units hold nothing; a replay's hold the
+   final result, which would leak). Fixed before the a2 arm ran.
+
 ## RESULT
 
 (filled in after the runs)
