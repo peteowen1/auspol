@@ -28,6 +28,17 @@ fit passes, it does not ship.
 the night), merged to `main` (the GitHub backup runs from `main`) after `scripts/check_like_ci.R` and the review gate,
 then `--dry-2022 --max-cycles=1`. Cutoff noon Sat 28 Nov: past it the model runs as it is today.
 
+## Amendment 1 (27 Nov 5:18pm, after the fit, BEFORE any replay arm ran)
+
+The fit (16,546 projections to 9pm; fed2022 7,878, fed2025 7,375, vic2022 1,293) showed the old table is too narrow
+only at the very start: majors under 0.5% counted had a real error of 6.15 points against 3.5 assumed (95% interval
+coverage 0.767, n 288); from 2-5% counted on, the table covers 0.96-0.98. Fitting on two nights and scoring the third,
+the pure fitted curve covers WORSE than the table in the middle of the count (vic2022 held out: 0.803 against 0.851
+for majors, 0.865 against 0.953 for other classes). So a second arm is added, `--proj-sd=max`: at each cell the larger
+of the table and the fitted curve, which widens only the first ~2% counted and leaves later snapshots untouched.
+The original arm (`fitted`) still runs and is reported. The criteria above apply unchanged to both; the leave-one-night-
+out requirement applies to `max` too (its fitted half is refit without the scored night before shipping is judged).
+
 ## RESULT
 
 (not run)
