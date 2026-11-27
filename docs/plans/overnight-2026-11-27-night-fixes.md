@@ -49,3 +49,15 @@ Pete's calls (27 Nov ~9:20pm): a fix that PASSES its prereg overnight gets switc
   (RMSE 2.715 -> 2.782; fed2025 +0.56 SE 0.22, fails "no night worse"); A2 vote-type pooling no change on federal (only
   ordinary booths counted by 9pm); A3 representativeness sd better overall (-0.017 SE 0.006) but 10-15% bin worse by 2 SE
   and does not beat the count-only fitted curve: fails as written. vic2022 arms pending on the corrected places.
+- 11:04pm corrected vic2022 base (3f63ff25): placeholders 1,542 at 7pm -> 8 at 2am; Labor 7pm dip -3.3 -> -2.0 seats; log
+  loss 7pm 0.216 -> 0.199, 8pm 0.129 -> 0.104, but 9pm 0.041 -> 0.061 (Northcote: Labor 0.94 -> 0.21; a flow problem).
+- Lane A final (8ea44f8e): A1, A1b, A2 refused; A3 (--rep-sd=0.0458,0) borderline -> seat-level replays (11:24pm).
+  A3 vic2022: Mildura 7pm Cupper 0.98 -> 0.92; 7pm log loss 0.199 -> 0.183; 9pm 0.061 -> 0.063. Federal nights pending.
+- Lane B (46d2bf43 + place fix 207d5573): B1 same-class own flows, B1c candidate-level 2CP read, B2 cross-seat flow pooling,
+  B3 flow by vote type; one-seat traces only; replays queued after A3 (scratchpad/overnight/run_laneb.sh).
+- Lane C (fffbf957, --proj-sd=units): 10-feature Student-t variance model; projection log score better on all held-out
+  nights (vic +0.288 SE 0.104) but vic2022 90% coverage 0.94 -> 0.81 (3 units) and narrower than base at 1-2 units:
+  refused by its prereg. Pete asked why (12:10am); seat-level vic2022 replay started 12:15am to settle it.
+- Review of tonight's dev night code (834699bb~1..HEAD): 0 Important; default path unchanged; 0 NW11 booth-name
+  mismatches in the corrected replay. Nits: checkpoint helper sourced from cwd; NRV6 guard only at a 19:00 stamp.
+- night_vic2026.sh --loop=FLAG pass-through (6b5b9aaa), to turn a shipped default off mid-count.
