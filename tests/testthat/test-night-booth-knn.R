@@ -117,15 +117,15 @@ test_that("a counted early unit keeps its own early swing under types = TRUE", {
   expect_equal(got, (0.40 + 0.10) * 1000, tolerance = 1e-6)
 })
 
-test_that("bad configs and flags raise NX32", {
+test_that("bad configs and flags raise NX32 or NX33", {
   nm <- c(bk_cnt, "T3"); live <- mk_seat(bk_live[nm]); ref <- mk_seat(bk_ref[nm])
   expect_error(project_seat_from_booths(live, ref, bk_cnt, booth_knn = bk_cfg(), booth_reg = list(k = 1, pool = NULL)), "NX32")
   bad <- list(list(h = 10, k = 1, size_w = 10), bk_cfg(h = 0), bk_cfg(k = -1), bk_cfg(size_w = -1), bk_cfg(types = 1),
               bk_cfg(types = NA), bk_cfg(h = c(1, 2)), "10,1,10,1", bk_cfg(h = Inf))
   for (b in bad) expect_error(project_seat_from_booths(live, ref, bk_cnt, booth_knn = b), "NX32")
-  expect_error(.night_booth_knn_cfg("10,1,10"), "NX32")
-  expect_error(.night_booth_knn_cfg("0,1,10,1"), "NX32")
-  expect_error(.night_booth_knn_cfg("10,1,10,2"), "NX32")
+  expect_error(.night_booth_knn_cfg("10,1,10"), "NX33")
+  expect_error(.night_booth_knn_cfg("0,1,10,1"), "NX33")
+  expect_error(.night_booth_knn_cfg("10,1,10,2"), "NX33")
   expect_equal(night_lane_a_args(booth_knn = "10,1,10,1")$booth_knn, list(h = 10, k = 1, size_w = 10, types = TRUE))
   expect_equal(night_lane_a_args(booth_knn = "10,1,10,0")$booth_knn$types, FALSE)
   expect_null(night_lane_a_args(booth_knn = "off"))

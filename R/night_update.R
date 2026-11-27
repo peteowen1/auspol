@@ -695,6 +695,6 @@ night_lane_a_args <- function(booth_reg = NULL, booth_reg_all = NULL, type_pool 
 .night_booth_knn_cfg <- function(x) {
   v <- suppressWarnings(as.numeric(strsplit(as.character(x), ",", fixed = TRUE)[[1]]))
   if (length(v) != 4L || any(!is.finite(v)) || any(v < 0) || v[1] <= 0 || !v[4] %in% c(0, 1))
-    stop("NX32! --booth-knn must be h,k,size_w,types with h > 0, k and size_w >= 0, types 0 or 1 (e.g. 10,1,10,1)", call. = FALSE)
+    stop("NX33! --booth-knn must be h,k,size_w,types with h > 0, k and size_w >= 0, types 0 or 1 (e.g. 10,1,10,1)", call. = FALSE)
   list(h = v[1], k = v[2], size_w = v[3], types = v[4] == 1)
 }
