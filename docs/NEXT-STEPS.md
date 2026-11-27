@@ -18,6 +18,15 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 - OPEN after 28 Nov (Agenda C duplicate, fixed 27 Nov, DECISIONS): same check over every Vic poll (640) found 3 older pairs with
   near-identical primaries under two names within 4 days: uComms/ReachTEL 13-14 Nov 2018 (almost surely one poll),
   Essential/Galaxy 2014, Essential/Newspoll2 2017 (maybe coincidence). Rerun the check over every state's poll table.
+- OPEN after 28 Nov (Liberal flow final-three, SHIPPED 27 Nov on Pete's override, PR #291): trace why better transfers
+  made Victorian seats worse (vic2014 +0.0117; Melbourne/Prahran Greens wins pulled to Labor): feed actual primaries and
+  score the seat model with the new flows. Review nits: `htv_seat_splits_final3()` fallback ignores `AUSPOL_HTV_EXCLUDE`;
+  final-three rounds are defined by who received votes (a round sent wholly to one side is dropped). Done when traced.
+- OPEN after 28 Nov (night projection sd, REFUSED 27 Nov, `--proj-sd` stays `old`; prereg-night-proj-sd-2026-11-27.md):
+  the table is too narrow under ~1% counted (majors 6.15 real vs 3.5, n 288) but `max` only trades seats (-0.0019, SE
+  0.0029). Mildura vic2022 is mainly a flow miss (independent 55% of the final two at 15% counted, finished 48%).
+  Speed: `night_booth_update()` filters the booth table per seat (`Lc[Lc$district == s]`); profile one snapshot. Done
+  when the replay snapshot cost is measured and the per-seat loop split once.
 - OPEN after 28 Nov (night swing to uncounted seats, built OFF 26 Nov, `R/night_borrow.R`): correct the early-booth bias,
   rescore on real-feed replays. `reviews/night-borrowed-swing-2026-11-26.md`.
 - OPEN, after 28 Nov: One Nation allocation. The modelled version is LIVE on Pete's override of its refusal (23 Nov, DECISIONS);
