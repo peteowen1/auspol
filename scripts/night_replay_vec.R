@@ -57,6 +57,8 @@ seats <- rownames(st$shares)
 nm0 <- unique(ref$district); ref$district <- .night_seat_names(ref$district, seats)
 if (!is.null(pl) && "district" %in% names(pl)) pl$district <- .night_seat_names(pl$district, seats)
 if ("district" %in% names(turn)) turn$district <- .night_seat_names(turn$district, seats)
+replay_booths <- fread(sprintf("output/booths-vic%d.csv", st$to), showProgress = FALSE)   # the replayed election's own booths: its place list
+replay_booths$district <- .night_seat_names(replay_booths$district, seats)
 cat(sprintf("NRV5 reference districts renamed to seat names: %d of %d; matching no seat: %s\n",
             sum(!nm0 %in% seats), length(nm0), paste(setdiff(unique(ref$district), seats), collapse = ", ")))
 cat(sprintf("NRV1 %s: %d seats in state, %d snapshots %s to %s, %d sims; label %s (surge-fade %s, tcp-center %s, tcp-flow-floor %s); %d winners to score\n",
@@ -72,8 +74,14 @@ for (k in seq_along(files)) {
   if (tm %in% ck$done) next
   feed <- vec_feed_read_lh(files[k])
   feed$contests$district <- .night_seat_names(feed$contests$district, seats)
-  conv <-suppressMessages(night_booth_table(feed, lk, pl))
-  enr <- stats::setNames(feed$contests$enrolment, sub(" District$", "", feed$contests$district))
+  # The place list is the replayed election's own ordinary booths (night_places_from_booths()), the role places-2026.csv
+  # plays live: the 2022 set-up list has no Classification, so it made NO placeholders and the uncounted ordinary booths
+  # were never projected (Mildura, 27 Nov 2026).
+  pl_k <- night_places_from_booths(replay_booths, feed$contests)
+  conv <-suppressMessages(night_booth_table(feed, lk, pl_k))
+  cat(sprintf("NRV6 %s: %d placeholder booths (uncounted ordinary booths to project)\n", tm, conv$n_placeholder_booths))
+  if (tm == "19:00" && conv$n_placeholder_booths == 0L) stop("NRV6! no placeholder booths at 7pm: the uncounted ordinary booths would not be projected")
+  enr <-stats::setNames(feed$contests$enrolment, sub(" District$", "", feed$contests$district))
   expected <- night_expected_votes(enr, night_turnout_table(turn, ref), "night")
   r <- night_run_update(st, conv, ref, gap_k = 5, total = "expected", expected = expected, use_tcp = TRUE,
                         surge_fade = surge_fade, tcp_center = tcp_center, tcp_flow_floor = tcp_floor, tcp_own_fp = own_fp, tcp_pair_r = pair_r, tcp_pair_cal = pair_cal, cand_ref = cand_ref, class_split = cls_split, proj_sd = proj_sd, lane_a = lane_a)
