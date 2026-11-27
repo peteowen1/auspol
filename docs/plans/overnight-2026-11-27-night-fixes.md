@@ -8,6 +8,15 @@
 3. **Never kill a process by name, never move HEAD in C:/dev/auspol from an agent, never write to `output/`.**
    Only the main session runs replays (detached, one heavy R job at a time; free memory is ~4-5 GB).
 
+**Pete, 28 Nov ~1:25am, going to bed: "I want everything in this table to be a yes when I wake up - don't stop til
+that's done".** The table (sources of uncertainty the night model tracks): share counted (yes, too tight at 1-2 booths);
+counted booths unlike the rest (yes, A3); number and size of booths, the people-and-booths mix (NO; "people weighted in
+some form maybe sqrt is better than linear"); vote types (partly: no extra uncertainty until a type reports); total votes
+to come (NO; "find population growth in over 18 in that suburb - or enrolment in the seat"); preference flows (partly:
+lane B); statewide correlation (yes); fat tails (NO). A row becomes "yes" when a switch for it is built, passes its prereg
+on the three real nights, and is ON (merged to main and dev, rehearsed). A row whose strongest version fails stays honest:
+the morning summary says built, measured, refused and why, at the top. Rule 2 still holds: nothing changes after 1pm.
+
 Pete's calls (27 Nov ~9:20pm): a fix that PASSES its prereg overnight gets switched on by Claude (merged to `main` and
 `dev`, flag on in the night command, rehearsed); anything failing or borderline stays off for him. Cutoff 1pm Sat.
 
