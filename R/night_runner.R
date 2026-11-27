@@ -803,6 +803,7 @@ night_publish_json <- function(doc, out_file, min_seats = 1L) {
 # "0,0" -> off (the night command's --loop=--rep-sd=off turns it off mid-count); "a,b" as given. Widens the projection sd
 # by how unlike the counted booths are the ones still to come (night_booth_update()'s rep_sd).
 .NIGHT_REP_SD <- c(0.0458, 0)
+.NIGHT_PROJ_TAILS <- "t"   # lane D2 default for the live night (night_cycle); "normal" is the old normal-normal combine
 .night_rep_sd_cfg <- function(x) {
   if (is.null(x)) return(list(rep_sd = .NIGHT_REP_SD))
   if (identical(x, "off")) return(NULL)
@@ -979,8 +980,11 @@ night_cycle <- function(cfg) {
                             cand_ref = .night_cand_ref_cfg(cfg$cand_ref, web),
                             class_split = .night_class_split_cfg(cfg$class_split, cache$st$pair, cache),
                             proj_sd = .night_proj_sd_cfg(cfg$proj_sd),
-                            # lane D (cfg$type_sd, cfg$proj_tails: docs/plans/prereg-night-lane-d-2026-11-28.md) is OFF unless set
-                            lane_a = c(.night_rep_sd_cfg(cfg$rep_sd), night_lane_a_args(type_sd = cfg$type_sd, proj_tails = cfg$proj_tails))); stamp_t("update_simulate")
+                            # lane D (docs/plans/prereg-night-lane-d-2026-11-28.md): D1 cfg$type_sd OFF unless set (refused);
+                            # D2 cfg$proj_tails "t" by default (full 20k replay PASSED 28 Nov 3:40am, 1.04 SE, every night better;
+                            # Pete's overnight rule), "normal" turns it off (--loop=--proj-tails=normal).
+                            lane_a = c(.night_rep_sd_cfg(cfg$rep_sd), night_lane_a_args(type_sd = cfg$type_sd,
+                                       proj_tails = if (is.null(cfg$proj_tails)) .NIGHT_PROJ_TAILS else cfg$proj_tails))); stamp_t("update_simulate")
     if (!is.null(res$class_split)) message(sprintf("NW24  night class split: %d seat(s) counting 2+ candidates of one class separately", nrow(res$class_split)))
     res$denominator <- denom; res$n_placeholder <- conv$n_placeholder_booths; res$n_unlisted <- conv$n_unlisted_booths
     if (length(res$nu$fallback_projected)) message("NW12  ", length(res$nu$fallback_projected), " seat(s) fell back to the projected denominator (no usable expected votes): ", paste(res$nu$fallback_projected, collapse = ", "))

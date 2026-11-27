@@ -29,7 +29,7 @@ say <- function(...) { l <- paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "  "
 last_ok <- NULL; fails <- 0L; last_try <- NULL; cycles <- 0L
 say("loop start: every ", every, "s, source ", cfg$source, ", proj-sd ", cfg$proj_sd, ", rep-sd ",
     { ra <- .night_rep_sd_cfg(cfg$rep_sd); if (is.null(ra)) "off" else paste(ra$rep_sd, collapse = ",") },
-    ", type-sd ", if (is.null(cfg$type_sd)) "off" else cfg$type_sd, ", proj-tails ", if (is.null(cfg$proj_tails)) "normal" else cfg$proj_tails)
+    ", type-sd ", if (is.null(cfg$type_sd)) "off" else cfg$type_sd, ", proj-tails ", if (is.null(cfg$proj_tails)) .NIGHT_PROJ_TAILS else cfg$proj_tails)
 repeat {
   # the website source's snapshots are folders (night_web_latest()); the feed's are files (night_fetch_snapshot()).
   # Before 11 Nov 2026 this read the feed only, so a --source-type=web loop waited forever (dress rehearsal).
