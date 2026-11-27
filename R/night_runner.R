@@ -571,7 +571,7 @@ night_run_update <- function(st, conv, ref, gap_k = 5, total = c("projected", "t
                              lean = NULL, early_frac = NULL, surge_fade = TRUE, tcp_center = "median", tcp_flow_floor = 0.01, tcp_own_fp = FALSE,
                              tcp_pair_r = NULL, tcp_pair_cal = NULL, cand_ref = FALSE, class_split = NULL, proj_sd = "old", lane_a = NULL) {
   total <- match.arg(total)
-  la_ok <- c("booth_reg_k", "booth_reg_all", "type_pool_k", "rep_sd", "type_sd", "proj_tails")
+  la_ok <- c("booth_reg_k", "booth_reg_all", "type_pool_k", "rep_sd", "type_sd", "proj_tails", "booth_knn")
   if (!is.null(lane_a) && (!is.list(lane_a) || !all(names(lane_a) %in% la_ok)))
     stop("NW30! lane_a must be a list with names among ", paste(la_ok, collapse = ", "), call. = FALSE)
   if (!is.numeric(tcp_flow_floor) || length(tcp_flow_floor) != 1L || !is.finite(tcp_flow_floor) || tcp_flow_floor < 0)
