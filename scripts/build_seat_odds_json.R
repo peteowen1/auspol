@@ -6,7 +6,7 @@
 #   defaults: the newest docs/benchmarks/vic2026/<date>/ that holds ours-calls.csv,
 #             output/seat-odds-vic2026.json
 #   upload:   wrangler r2 object put inthegame-data/auspol/seat-odds-vic2026.json \
-#               --file output/seat-odds-vic2026.json --content-type application/json --remote
+#               --file output/seat-odds-vic2026.json --content-type application/json --cache-control "public, max-age=300" --remote
 #
 # Inputs in the capture folder: <source>-calls.csv (district, call_class, prob) from
 # scripts/snapshot_benchmarks.R, bookmaker-odds-top4.csv (prices), majority-markets.csv and
@@ -36,9 +36,9 @@ if (length(miss)) stop(sprintf("SOJ1! %s lacks %s", cap, paste(miss, collapse = 
 
 # Source order and labels as the page shows them; GES gives a single call, not a chance.
 SOURCES <- data.table(
-  id    = c("ours", "sportsbet", "tab", "betfair", "theswingison", "aeforecasts", "firstpreference", "ges"),
-  label = c("Our model", "Sportsbet", "TAB", "Betfair", "The Swing Is On", "AE Forecasts", "First Preference", "Global Election Sim"),
-  kind  = c("model", "book", "book", "book", "model", "model", "model", "call"))
+  id    = c("ours", "sportsbet", "tab", "betfair", "theswingison", "aeforecasts", "firstpreference", "poliwave", "ges"),
+  label = c("Our model", "Sportsbet", "TAB", "Betfair", "The Swing Is On", "AE Forecasts", "First Preference", "Poliwave", "Global Election Sim"),
+  kind  = c("model", "book", "book", "book", "model", "model", "model", "model", "call"))
 
 # Every source's own class labels collapse to the page's six groups.
 to_group <- function(x) {

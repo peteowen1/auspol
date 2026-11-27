@@ -37,6 +37,8 @@
 #                date (a 7-day rolling buffer); the entry for DAY is the forecast of record for that date
 #   firstpreference (added 24 Nov) electionfirstpreference.com's vic2026_candidate_fp_projections.csv: every
 #                candidate's projected primary and win chance by district, and gov_probs.json for its chamber odds
+#   poliwave     (added 27 Nov, Pete) poliwave.com's electorate table data (SvelteKit __data.json, devalue-encoded):
+#                every district's win chance by party from its 20,000 simulations
 #   sportsbet, tab, betfair (added 24 Oct) seat-winner markets via the oddsdata package (C:/dev/oddsdata). Partial
 #                coverage (50, 53 and 4 of 88 on 24 Oct), so their calls files carry only the districts priced and
 #                say how many. Prices become probabilities with oddsdata::implied_probs()'s power method (plan
@@ -162,6 +164,10 @@ if (!DERIVE_ONLY) {
   get("firstpreference", paste0(FPM, "/vic2026_candidate_fp_projections.csv"), "vic2026_candidate_fp_projections.csv",
       has_text("District,Party_Code,Display_Name"))
   get("firstpreference", paste0(FPM, "/gov_probs.json"), "gov_probs.json", has_text("coal_maj"))
+
+  # Poliwave: the data behind its electorate table (the page itself refuses scripts with a 403).
+  get("poliwave", "https://www.poliwave.com/au/vic/projection/ridings/__data.json", "ridings__data.json",
+      has_text('"win_probabilities"'))
 
   # Bookmakers and the exchange, through oddsdata, which writes raw files and manifest rows itself. Last, because
   # get() rewrites the manifest from memory and would drop rows appended behind its back.
@@ -364,6 +370,42 @@ if (file.exists(ff)) {
   write_calls(fcl[, .(district = match_districts(District, "firstpreference"), call_class = cls, prob)], "firstpreference")
 } else { cat("VB4! no First Preference file for this date\n"); fails <- c(fails, "firstpreference") }
 
+# Poliwave (added 27 Nov 2026): SvelteKit's devalue format, a flat array whose objects and arrays hold the
+# indices of their values (negative = undefined). Each riding carries win_probabilities, in percent, by party code.
+# Liberal and National both count as the Coalition; IND is independent; any other code (VS) is OTH.
+pwf <- raw("poliwave", "ridings__data.json")
+if (file.exists(pwf)) {
+  pw_nodes <- fromJSON(pwf, simplifyVector = FALSE)$nodes
+  pw_hyd <- function(a, i) {
+    if (i < 0) return(NULL)
+    v <- a[[i + 1L]]
+    if (is.list(v) && length(v) && !is.null(names(v))) return(lapply(v, function(j) pw_hyd(a, j)))
+    if (is.list(v)) return(lapply(v, function(j) if (is.numeric(j)) pw_hyd(a, j) else j))
+    v
+  }
+  pw_rid <- NULL
+  for (nd in pw_nodes) {
+    if (!identical(nd$type, "data")) next
+    a <- nd$data; top <- a[[1]]
+    if (!is.null(top$ridings)) pw_rid <- pw_hyd(a, top$ridings)
+  }
+  if (is.null(pw_rid)) stop("VB21! Poliwave data has no ridings")
+  pmap <- c(ALP = "ALP", LIB = "LNP", NAT = "LNP", GRN = "GRN", ONP = "ONP", IND = "IND")
+  pwl <- rbindlist(lapply(pw_rid, function(r) {
+    wp <- unlist(lapply(r$win_probabilities, function(p) if (is.null(p)) NA_real_ else as.numeric(p)))
+    if (!length(wp)) return(data.table(District = r$name, code = NA_character_, pct = NA_real_))
+    data.table(District = r$name, code = names(wp), pct = unname(wp))
+  }))
+  ptot <- pwl[, .(s = sum(pct)), by = District]
+  if (nrow(ptot) != 88L || anyNA(ptot$s) || any(abs(ptot$s - 100) > 0.5))
+    stop(sprintf("VB21! Poliwave: %d districts, win chances sum to %.1f-%.1f, not 88 districts at 100", nrow(ptot), min(ptot$s), max(ptot$s)))
+  pwl[, cls := ifelse(code %in% names(pmap), unname(pmap[code]), "OTH")]
+  pcl <- pwl[pct > 0, .(prob = sum(pct)), by = .(District, cls)]
+  pcl[, prob := prob / sum(prob), by = District]
+  cat(sprintf("VB21 Poliwave: %d districts; codes filed as OTH: %s\n", nrow(ptot), paste(sort(unique(pwl$code[pwl$cls == "OTH"])), collapse = " ")))
+  write_calls(pcl[, .(district = match_districts(District, "poliwave"), call_class = cls, prob)], "poliwave")
+} else { cat("VB4! no Poliwave file for this date\n"); fails <- c(fails, "poliwave") }
+
 # Bookmakers and the exchange: seat-winner markets only, partial coverage. Selections are classed by name; a residual
 # ("Any Other", "Other", "Any Other Result", "Any Other Party or Independent") is ANY_OTHER, which scores as the
 # winner's probability when the winner is in none of the named classes. A name we cannot class stops the script.
@@ -381,8 +423,14 @@ book_class <- function(x) {
 newest <- function(src, pat) { f <- sort(list.files(raw(src), pat, full.names = TRUE)); if (length(f)) tail(f, 1) else NA_character_ }
 if (requireNamespace("oddsdata", quietly = TRUE)) {
   parsers <- list(
-    sportsbet = function() { f <- newest("sportsbet", "^event-.*-markets-.*\\.json$"); if (is.na(f)) NULL else
-      oddsdata::sb_parse_markets(read_txt(f), "seat-betting")[, seat := market] },
+    # newest event file that holds seat markets: other Sportsbet events saved the same day (the government and
+    # sworn-in markets, 27 Nov) are newer and would otherwise be read as the seat book (VBK3!)
+    sportsbet = function() {
+      for (f in rev(sort(list.files(raw("sportsbet"), "^event-.*-markets-.*\\.json$", full.names = TRUE)))) {
+        o <- oddsdata::sb_parse_markets(read_txt(f), "seat-betting")
+        if (nrow(o) && uniqueN(o$market) >= 10L) return(o[, seat := market])
+      }
+      NULL },
     tab = function() { f <- newest("tab", "^Politics-Victorian-Politics.*\\.json$"); if (is.na(f)) NULL else
       bk_tab_seats(oddsdata::tab_parse_markets(read_txt(f))) },
     betfair = function() { o <- bk_read_betfair(raw("betfair"), read_txt); if (is.null(o)) NULL else   # every chunk file

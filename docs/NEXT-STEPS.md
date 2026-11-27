@@ -374,6 +374,9 @@ Trigger: the post-election review after 28 Nov, unless an item names its own.
   (Parramatta, Heathcote): walk examples with Pete before any rule.
 
 ## Harness and pipeline hygiene
+- OPEN, AFTER 28 Nov: `scripts/compare_bookmaker_odds.R` and `scripts/value_odds_vic2026.R` read the newest Sportsbet
+  event file, so a `--derive` of 27 Nov fails (VB18!/VB19!, VBK3! "Sworn in Government"): extra Sportsbet events saved
+  that day are newer. Give both the seat-market check `snapshot_benchmarks.R` got on 27 Nov. Their 27 Nov outputs are fine.
 - OPEN, AFTER 28 Nov (One Nation flows, shipped k=20 on 27 Nov; DECISIONS 27 Nov): review nits from the ship: the comment at
   `R/xgb_flow_override.R` ~471 still says the calibration defaults off; `scripts/score_onp_transfers_ksweep.R` ARMS lacks "20"
   (the k=20 run used scratch `event_k20.R`) and has no per-election aggregation step. Then the real work: the trees over-send
