@@ -25,6 +25,7 @@ NON_MODEL_SWITCHES <- c(
   AUSPOL_BT_BASE                 = "BUILDER",  # build_bucket_total_history.R
   AUSPOL_BT_LOG                  = "BUILDER",  # build_bucket_total_history.R
   AUSPOL_BT_OUT                  = "RUN",  # build_bludgertrack_polls.R
+  AUSPOL_CODE_DIR                = "RUN",  # night_replay_vec.R, night_replay_feed.R, fit_night_projection_sd.R: load a branch's code against this checkout's data
   AUSPOL_BT_RAW                  = "RUN",  # build_bludgertrack_polls.R
   AUSPOL_CAND_ALLOW_OTHER_CHANGE = "BUILDER",  # build_candidacies.R
   AUSPOL_CAND_OUT                = "BUILDER",  # build_candidacies.R
