@@ -2,7 +2,7 @@
 #
 #   Rscript scripts/night_loop.R --every=60 [--max-cycles=0] [--retries=3] [--stale-min=20] <the same flags as scripts/night_runner.R> [--upload-key=auspol/night/vic2026.json]
 #       [--proj-sd=old|fitted]   (projection sd: old = the rehearsal table, default; fitted = scripts/fit_night_projection_sd.R)
-#       [--booth-knn=h,k,size_w,types]   (lane F, the per-booth best guess; absent = night_cycle's default 10,1,10,0 (polling booths only), off turns it off; docs/plans/prereg-night-booth-guess-2026-11-28.md)
+#       [--booth-knn=h,k,size_w,types]   (lane F, the per-booth best guess; absent = night_cycle's default 10,1,10,2 (polling booths + vote types matched to similar booths), off turns it off; docs/plans/prereg-night-booth-guess-2026-11-28.md)
 #       [--same-class=off|on] [--flow-pool=off|on] [--tcp-by-type=off|on] [--tcp-cand=on|off]   (lane B: B1-B3 off by
 #        default; B1c --tcp-cand ON by default, --tcp-cand=off turns it off; docs/plans/prereg-night-lane-b-2026-11-27.md)
 #
