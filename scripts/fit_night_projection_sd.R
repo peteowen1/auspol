@@ -55,7 +55,8 @@ counted_votes <- function(live, reported) {
 # swing), --type-pool=<k> (A2 vote-type pooling), --rep-diag=1 (diag columns in the output, no change to projections)
 num_or_null <- function(x) if (is.null(x)) NULL else as.numeric(x)
 BREG <- num_or_null(flag("booth-reg")); TPOOL <- num_or_null(flag("type-pool")); RDIAG <- identical(flag("rep-diag", "0"), "1")
-BALL <- identical(flag("booth-reg-all", "0"), "1")   # A1b: the booth offset on early / postal blocks toocat(sprintf("NPSD0A lane A: booth_reg_k %s (all units %s), type_pool_k %s, proj_diag %s\n", if (is.null(BREG)) "off" else BREG, BALL, if (is.null(TPOOL)) "off" else TPOOL, RDIAG))
+BALL <- identical(flag("booth-reg-all", "0"), "1")   # A1b: the booth offset on early / postal blocks too
+cat(sprintf("NPSD0A lane A: booth_reg_k %s (all units %s), type_pool_k %s, proj_diag %s\n", if (is.null(BREG)) "off" else BREG, BALL, if (is.null(TPOOL)) "off" else TPOOL, RDIAG))
 one_update <- function(st, live, ref, reported, expected, cr) {
   shares <- st$shares
   nu <- night_booth_update(shares, night_prior_sd(shares, st$level_sd, st$level_mult, st$sdo), 1, live, ref,
