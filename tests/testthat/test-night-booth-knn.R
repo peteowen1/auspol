@@ -158,3 +158,13 @@ test_that("the live night defaults to the per-booth guess with vote types matche
   expect_identical(night_lane_a_args(booth_knn = "10,1,10,0")$booth_knn$types, FALSE)
   expect_null(night_lane_a_args(booth_knn = "off"))
 })
+
+test_that("types = 'knn' leaves no NA when every polling booth is counted and a class exists only at the early unit", {
+  nm <- bk_cnt
+  mk3 <- function(x) { d <- mk_seat(x[nm]); e <- data.table::data.table(unit = "early", booth_type = "early", cls = c("ALP", "LNP", "GRN", "ONP"), v = c(1200, 700, 0, 100)); rbind(d, e) }
+  live <- mk3(bk_live); ref <- mk3(bk_ref)
+  for (ty in list("knn", TRUE, FALSE)) {
+    p <- project_seat_from_booths(live, ref, bk_cnt, booth_knn = bk_cfg(types = ty))
+    expect_false(anyNA(p$projected), info = format(ty))
+  }
+})
