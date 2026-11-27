@@ -58,11 +58,26 @@ match_booth_units <- function(live, ref) {
 #'   `early_frac` below 1 the unreported remainder (counted early votes x (1 - f) / f) is projected from the
 #'   reference early block's shares plus the early swing, instead of being left out. `NA` (the default) is
 #'   byte-identical to the previous behaviour.
+#' @param booth_reg Lane A1 (`docs/plans/prereg-night-lane-a-2026-11-27.md`). `NULL` (default) is byte-identical. A list
+#'   `list(k = <booths>, pool = data.table(cls, beta))`: each uncounted ORDINARY booth's swing is the seat's ordinary swing
+#'   plus `beta * (its reference share - the counted booths' reference share)`, where `beta` is the slope of counted
+#'   ordinary booths' swing on their reference share (weighted by this year's booth totals), partial-pooled toward the
+#'   cross-seat slope `pool$beta` (0 if absent) by `n / (n + k)`, `n` the seat's counted ordinary booths. Clipped to
+#'   `[-1, 1]`. A booth strong for a class last time does not get the same swing as a weak one.
+#' @param type_pool_k Lane A2. `NULL` (default) is byte-identical. A number `k >= 0`: each booth type's swing is its own
+#'   counted swing partial-pooled toward a pooled estimate, `w = m / (m + k)` with `m` its counted votes in units of the
+#'   seat's median ordinary booth; the pooled estimate is the seat's ordinary-equivalent swing (every counted type's
+#'   swing minus its `type_gap`, weighted by counted votes) plus the type's own `type_gap` (0 without one). So a seat
+#'   with only its early vote in projects its ordinary booths at the early swing minus the early gap, not at the raw early swing.
+#' @param diag `TRUE` adds columns `n_ord` (counted ordinary booths with a reference), `rep_dist` (reference-share
+#'   distance, points, between the uncounted units and the counted ones, size-weighted), `swing_sd` (spread, points, of
+#'   the counted ordinary booths' swings) and `unc_frac` (projected share of the seat's votes still to come). `FALSE`
+#'   (default) returns the columns as before.
 #' @return data.table `cls, projected, counted_share`, or `NULL` if no
 #'   counted unit has a reference (nothing to measure a swing on).
 #' @export
 project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, total = c("table", "projected", "expected"), expected_total = NA_real_,
-                                     lean = NULL, early_frac = NA_real_) {
+                                     lean = NULL, early_frac = NA_real_, booth_reg = NULL, type_pool_k = NULL, diag = FALSE) {
   total <- match.arg(total)
   live <- data.table::as.data.table(live); ref <- data.table::as.data.table(ref)
   classes <- unique(live$cls)
@@ -105,7 +120,9 @@ project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, 
     if (!is.null(er)) out0 <- rbind(out0[, .(cls, v = projected)], er)[, .(projected = sum(v)), by = cls]
     cs_all <- if (is.null(er)) 1 else { cv_all <- sum(live[unit %in% counted_units]$v)
       if (total == "expected" && is.finite(expected_total) && expected_total > 0) min(1, cv_all / expected_total) else cv_all / (cv_all + sum(er$v)) }
-    return(out0[, counted_share := cs_all][])
+    out0[, counted_share := cs_all]
+    if (isTRUE(diag)) out0[, `:=`(n_ord = NA_integer_, swing_sd = NA_real_, rep_dist = 0, unc_frac = 1 - cs_all)]
+    return(out0[])
   }
   grid <- data.table::CJ(unit = unc$unit, cls = classes); grid <- merge(grid, unc, by = "unit")
   grid <- merge(grid, ref[, .(unit, cls, rv = v)], by = c("unit", "cls"), all.x = TRUE)
@@ -122,6 +139,53 @@ project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, 
     grid[, gap := NULL]
   }
   grid[is.na(sw), sw := sw_all]; grid[is.na(sw), sw := 0]; grid[is.na(rv), rv := 0]
+  # LANE A2: each type's swing partial-pooled toward the seat's ordinary-equivalent swing plus the type's pooled gap.
+  if (!is.null(type_pool_k)) {
+    stopifnot(is.numeric(type_pool_k), length(type_pool_k) == 1L, type_pool_k >= 0)
+    GP <- if (!is.null(type_gap) && nrow(type_gap)) data.table::as.data.table(type_gap)[, list(booth_type, cls, g = gap)] else
+      data.table::data.table(booth_type = character(0), cls = character(0), g = numeric(0))
+    ord_tot <- live_tot$lt[live_tot$unit %in% units$unit[units$booth_type == "ordinary"]]
+    med_booth <- if (length(ord_tot) && stats::median(ord_tot) > 0) stats::median(ord_tot) else max(1, stats::median(live_tot$lt))
+    STY <- mc[, list(sw_own = sum(v) / sum(lt) - sum(rv) / sum(rt), wl = sum(lt)), by = c("booth_type", "cls")]
+    STY[GP, on = c("booth_type", "cls"), g := i.g]
+    if (!"g" %in% names(STY)) STY[, g := NA_real_]
+    STY[is.na(g) | STY$booth_type == "ordinary", g := 0]
+    BASE <- STY[, list(b0 = sum((sw_own - g) * wl) / sum(wl)), by = "cls"]
+    grid[, `:=`(a2_g = NA_real_, a2_own = NA_real_, a2_m = 0, a2_b = NA_real_)]
+    grid[GP, on = c("booth_type", "cls"), a2_g := i.g]
+    grid[grid$booth_type == "ordinary" | is.na(a2_g), a2_g := 0]
+    grid[STY, on = c("booth_type", "cls"), `:=`(a2_own = i.sw_own, a2_m = i.wl / med_booth)]
+    grid[BASE, on = "cls", a2_b := i.b0]
+    hit2 <- !is.na(grid$a2_b)
+    w2 <- grid$a2_m / (grid$a2_m + type_pool_k); w2[is.na(grid$a2_own)] <- 0
+    own2 <- grid$a2_own; own2[is.na(own2)] <- 0
+    new2 <- w2 * own2 + (1 - w2) * (grid$a2_b + grid$a2_g)
+    if (any(hit2)) data.table::set(grid, which(hit2), "sw", new2[hit2])
+    grid[, c("a2_g", "a2_own", "a2_m", "a2_b") := NULL]
+  }
+  # LANE A1 (and the diag columns): booth-level swing on the booth's own reference share.
+  MO <- mc[mc$booth_type == "ordinary"]
+  if (nrow(MO)) {
+    MO[, `:=`(x = rv / pmax(rt, 1), y = v / pmax(lt, 1) - rv / pmax(rt, 1))]
+    SLOPE <- MO[, {
+      xm <- sum(lt * x) / sum(lt); ym <- sum(lt * y) / sum(lt); vx <- sum(lt * (x - xm)^2) / sum(lt)
+      list(n_ord = .N, xm = xm, b_loc = if (.N >= 2 && vx > 1e-8) sum(lt * (x - xm) * (y - ym)) / sum(lt) / vx else NA_real_,
+           swing_sd = 100 * sqrt(sum(lt * (y - ym)^2) / sum(lt)))
+    }, by = "cls"]
+  } else SLOPE <- data.table::data.table(cls = character(0), n_ord = integer(0), xm = numeric(0), b_loc = numeric(0), swing_sd = numeric(0))
+  if (!is.null(booth_reg)) {
+    k1 <- booth_reg$k; stopifnot(is.numeric(k1), length(k1) == 1L, k1 >= 0)
+    SL <- data.table::copy(SLOPE); SL[, b_pool := 0]
+    if (!is.null(booth_reg$pool) && nrow(booth_reg$pool)) SL[data.table::as.data.table(booth_reg$pool), on = "cls", b_pool := i.beta]
+    SL[is.na(b_pool), b_pool := 0]
+    SL[, w1 := ifelse(is.na(b_loc), 0, n_ord / (n_ord + k1))]
+    SL[, beta := pmin(1, pmax(-1, w1 * ifelse(is.na(b_loc), 0, b_loc) + (1 - w1) * b_pool))]
+    grid[, `:=`(a1_beta = NA_real_, a1_xm = NA_real_)]
+    grid[SL, on = "cls", `:=`(a1_beta = i.beta, a1_xm = i.xm)]
+    hit1 <- grid$booth_type == "ordinary" & grid$unit %in% ref_tot$unit & !is.na(grid$a1_beta)
+    grid[hit1, sw := sw + a1_beta * (rv / pmax(rt, 1) - a1_xm)]
+    grid[, c("a1_beta", "a1_xm") := NULL]
+  }
   has_ref <- grid$unit %in% ref_tot$unit
   mean_unit <- mean(ref_tot$rt)
   grid[, size := data.table::fifelse(has_ref, rt * growth, mean_unit * growth)]
@@ -164,7 +228,23 @@ project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, 
     cv <- sum(live[unit %in% counted_units]$v)
     counted_share <- cv / (cv + sum(unique(grid[, .(unit, size)])$size) + (if (is.null(er)) 0 else sum(er$v)))
   }
-  out[, counted_share := counted_share][]
+  out[, counted_share := counted_share]
+  if (isTRUE(diag)) {
+    XC <- mc[, list(xc = sum(rv) / sum(rt)), by = "cls"]
+    GU <- grid[has_ref & grid$cls %in% ref_cls, list(xu = sum(size * rv / pmax(rt, 1)) / max(sum(size), 1e-9)), by = "cls"]
+    RD <- merge(XC, GU, by = "cls")[, list(cls, rep_dist = 100 * abs(xu - xc))]
+    unc_v <- sum(unique(grid[, .(unit, size)])$size) + (if (is.null(er)) 0 else sum(er$v))
+    out <- .lane_a_diag(out, SLOPE, RD, unc_v / max(sum(out$projected), 1e-9))
+  }
+  out[]
+}
+
+# Lane A diag columns (project_seat_from_booths(diag = TRUE)): one value per class, 0 / NA where not measurable.
+.lane_a_diag <- function(out, SLOPE, RD, unc_frac) {
+  out <- merge(out, SLOPE[, list(cls, n_ord, swing_sd)], by = "cls", all.x = TRUE, sort = FALSE)
+  out <- merge(out, RD, by = "cls", all.x = TRUE, sort = FALSE)
+  out[is.na(n_ord), n_ord := 0L]; out[is.na(rep_dist), rep_dist := 0]
+  out[, unc_frac := unc_frac][]
 }
 
 #' Combine the afternoon prior with the night's projection

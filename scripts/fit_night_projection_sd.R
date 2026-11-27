@@ -51,10 +51,16 @@ counted_votes <- function(live, reported) {
   R0 <- unique(data.table::as.data.table(reported)[, list(district, unit)])
   merge(L, R0, by = c("district", "unit"))[, list(cv = sum(v)), by = "district"]
 }
+# Lane A switches (docs/plans/prereg-night-lane-a-2026-11-27.md), all off by default: --booth-reg=<k> (A1 booth-level
+# swing), --type-pool=<k> (A2 vote-type pooling), --rep-diag=1 (diag columns in the output, no change to projections)
+num_or_null <- function(x) if (is.null(x)) NULL else as.numeric(x)
+BREG <- num_or_null(flag("booth-reg")); TPOOL <- num_or_null(flag("type-pool")); RDIAG <- identical(flag("rep-diag", "0"), "1")
+cat(sprintf("NPSD0A lane A: booth_reg_k %s, type_pool_k %s, proj_diag %s\n", if (is.null(BREG)) "off" else BREG, if (is.null(TPOOL)) "off" else TPOOL, RDIAG))
 one_update <- function(st, live, ref, reported, expected, cr) {
   shares <- st$shares
   nu <- night_booth_update(shares, night_prior_sd(shares, st$level_sd, st$level_mult, st$sdo), 1, live, ref,
-                           gap_k = 5, reported = reported, total = "expected", expected = expected, cand_ref = cr, keep_proj = TRUE)
+                           gap_k = 5, reported = reported, total = "expected", expected = expected, cand_ref = cr, keep_proj = TRUE,
+                           booth_reg_k = BREG, type_pool_k = TPOOL, proj_diag = RDIAG)
   nu$proj_detail
 }
 fin <- function(X, tr) {
