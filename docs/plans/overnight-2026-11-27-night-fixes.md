@@ -43,3 +43,9 @@ Pete's calls (27 Nov ~9:20pm): a fix that PASSES its prereg overnight gets switc
   unaffected. The LIVE website path is fine: partial-count fixture (543 of 1,729 centres, no early/postal) made 1,186
   placeholders, exactly the missing ones, 0 unlisted (scratchpad/web_partial.R). Fix: replay passes the final ordinary
   booth list as places (lane A, own commit); vic2022 base to be rerun.
+- 10:10pm: place-list fix cherry-picked to dev (3f63ff25); faulty vic2022 base kept as `noplaces-*`; corrected vic2022 base
+  started 10:44pm after the federal bases (fed2022 done 10:17pm, fed2025 10:44pm).
+- ~10:45pm lane A interim (federal nights; projection error under 15% counted, 7,378 cells): A1 booth-level swing WORSE
+  (RMSE 2.715 -> 2.782; fed2025 +0.56 SE 0.22, fails "no night worse"); A2 vote-type pooling no change on federal (only
+  ordinary booths counted by 9pm); A3 representativeness sd better overall (-0.017 SE 0.006) but 10-15% bin worse by 2 SE
+  and does not beat the count-only fitted curve: fails as written. vic2022 arms pending on the corrected places.
