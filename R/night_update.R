@@ -119,7 +119,7 @@ night_prior_sd <- function(shares, level_sd, level_mult = NULL, sd_override = NU
 #' @export
 night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, gap_k = NULL, early = "last", new_sd_mult = 1,
                                reported = NULL, total = c("table", "projected", "expected"), expected = NULL, lean = NULL,
-                               early_frac = NULL, cand_ref = FALSE, keep_proj = FALSE, proj_sd = c("old", "fitted")) {
+                               early_frac = NULL, cand_ref = FALSE, keep_proj = FALSE, proj_sd = c("old", "fitted", "max")) {
   total <- match.arg(total); proj_sd <- match.arg(proj_sd)
   stopifnot(is.numeric(new_sd_mult), length(new_sd_mult) == 1L, new_sd_mult >= 1)
   stopifnot(identical(dim(shares), dim(prior_sd)), is.finite(frac), frac >= 0, frac <= 1)
@@ -219,7 +219,7 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
     proj <- 100 * p$projected / sum(p$projected)
     names(proj) <- p$cls
     sdj <- if (proj_sd == "old") rep(booth_projection_sd(cs), length(proj)) else
-      booth_projection_sd(cs, method = "fitted", share = unname(proj), cls = names(proj))
+      booth_projection_sd(cs, method = proj_sd, share = unname(proj), cls = names(proj))
     # NEW CANDIDATES (#160): a class with no votes at the previous election in this seat has no booth
     # swing to measure -- the projection carries its counted share forward -- so its projection is held
     # more loosely (new_sd_mult; 1 = as every other class).

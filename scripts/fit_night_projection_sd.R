@@ -29,6 +29,10 @@ dp <- function(...) file.path(DR, ...)
 CR <- strsplit(flag("cand-ref", "copy"), ",")[[1]]   # "copy,off" also records cand_ref off (doubles the time)
 NIGHTS <- strsplit(flag("nights", "vic2022,fed2022,fed2025"), ",")[[1]]
 redo <- identical(flag("extract", "0"), "1")
+# --max-time=HH:MM: stop each night's extraction after this clock time (snapshots grow costlier as booths come in;
+# the low-count end the fit is about is all before 9pm)
+max_time <- flag("max-time", "99:99")
+cat(sprintf("NPSD0 snapshots up to %s, cand_ref %s, nights %s\n", max_time, paste(CR, collapse = ","), paste(NIGHTS, collapse = ",")))
 night_f <- function(nm) file.path(out_dir, sprintf("night-proj-errors-%s.csv", nm))   # one per night: a killed run keeps the nights done
 
 truth_of <- function(booths, seats) {
@@ -72,7 +76,9 @@ if ("vic2022" %in% NIGHTS && (redo || !file.exists(night_f("vic2022")))) {
   tr <- truth_of(fread(dp(sprintf("output/booths-vic%d.csv", st$to)), showProgress = FALSE), seats)
   files <- list.files(dp("external/reference/vec/2026/feed-docs/inner22"), pattern = "verboselh_[0-9]{8}_[0-9]{6}\\.xml$", recursive = TRUE, full.names = TRUE, ignore.case = TRUE)
   stamp <- sub(".*verboselh_([0-9]{8}_[0-9]{6})\\.xml$", "\\1", basename(files), ignore.case = TRUE)
-  keep <- substr(stamp, 1, 8) <= "20221127"; files <- files[keep][order(stamp[keep])]; stamp <- sort(stamp[keep])
+  clk <- ifelse(substr(stamp, 1, 8) > "20221126", sprintf("%02d:%s", 24L + as.integer(substr(stamp, 10, 11)), substr(stamp, 12, 13)),
+                sprintf("%s:%s", substr(stamp, 10, 11), substr(stamp, 12, 13)))
+  keep <- substr(stamp, 1, 8) <= "20221127" & clk <= max_time; files <- files[keep][order(stamp[keep])]; stamp <- sort(stamp[keep])
   cat(sprintf("NPSD1 vic2022: %d seats, %d snapshots %s to %s, cand_ref %s\n", length(seats), length(files), stamp[1], stamp[length(stamp)], paste(CR, collapse = ",")))
   for (k in seq_along(files)) {
     feed <- vec_feed_read_lh(files[k]); feed$contests$district <- .night_seat_names(feed$contests$district, seats)
@@ -101,6 +107,7 @@ for (nm in intersect(c("fed2022", "fed2025"), NIGHTS)) {
   st <- readRDS(file.path(runs, sprintf("state-%s.rds", nm))); yr <- st$to; seats <- rownames(st$shares)
   day <- as.Date(c(`2022` = "2022-05-21", `2025` = "2025-05-03")[[as.character(yr)]])
   tm <- c(sprintf("%02d:%02d", rep(18:23, each = 4), c(0, 15, 30, 45)), "24:00", "25:00", "26:00", "27:00")
+  tm <- tm[tm <= max_time]
   at <- vapply(tm, function(x) { p <- as.integer(strsplit(x, ":")[[1]]); as.numeric(as.POSIXct(day, tz = "UTC") + p[1] * 3600 + p[2] * 60) }, numeric(1))
   L <- fread(dp(sprintf("output/booths-fed%d.csv", yr)), showProgress = FALSE); R0 <- fread(dp(sprintf("output/booths-fed%d.csv", st$from)), showProgress = FALSE)
   B <- fread(dp(sprintf("output/night-feed/booth-returns-fed%d.csv", yr)), showProgress = FALSE)

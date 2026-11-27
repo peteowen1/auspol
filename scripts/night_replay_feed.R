@@ -29,7 +29,7 @@ surge_fade <- !identical(flag("surge-fade", "1"), "0"); tcp_center <- flag("tcp-
 tcp_floor <- as.numeric(flag("tcp-flow-floor", "0.01")); own_fp <- identical(flag("tcp-own-fp", "0"), "1")
 pair_r <- flag("pair-r", NULL); if (!is.null(pair_r)) pair_r <- as.numeric(pair_r)   # prereg-night-pair-trust-2026-11-11
 cand_ref <- local({ v <- flag("cand-ref", "0"); if (v == "1") TRUE else if (v %in% c("move", "copy")) v else if (v == "0") FALSE else stop("--cand-ref must be 0, 1, move or copy") })   # prereg-night-candidate-ref(-copy)-2026-11-11
-proj_sd <- flag("proj-sd", "old"); if (!proj_sd %in% c("old", "fitted")) stop("--proj-sd must be old or fitted")   # scripts/fit_night_projection_sd.R
+proj_sd <- flag("proj-sd", "old"); if (!proj_sd %in% c("old", "fitted", "max")) stop("--proj-sd must be old, fitted or max")   # scripts/fit_night_projection_sd.R
 cls_split_on <- identical(flag("class-split", "0"), "1")   # prereg-night-class-split-2026-11-14
 cls_split <- if (cls_split_on) night_class_split_params(pair_lbl) else NULL
 if (cls_split_on) cat(sprintf("NRCS night class split: %s\n", if (is.null(cls_split)) "NO parameters (class_split_fit gave none): off" else sprintf("sd0 %.3f, f %s", cls_split$sd0, paste(names(cls_split$f), sprintf("%.3f", cls_split$f), collapse = " "))))
