@@ -1,3 +1,10 @@
+# auspol 0.4.208
+
+Changes the election-night model only.
+
+- **Election night: fat-tailed blend of the afternoon forecast and the booth projection** (lane D2, ON by default in the night loop; `--proj-tails=normal` or `--loop=--proj-tails=normal` turns it off). A projection far from the afternoon forecast is down-weighted instead of trusted outright (Student-t error, same variance as before). Full replays on the three real nights: seat log loss under 15% counted -0.0008 (SE 0.0008, 1.04 SE), every night better, wrong calls and seats right unchanged. Mildura 2022 at 7pm moves the wrong way (0.92 to 0.95 for the losing candidate). `docs/plans/prereg-night-lane-d-2026-11-28.md`.
+- Built and left OFF: extra uncertainty for vote types not yet reported (`--type-sd`; refused).
+
 # auspol 0.4.207
 
 Changes the election-night model only (no change to the published afternoon forecast).

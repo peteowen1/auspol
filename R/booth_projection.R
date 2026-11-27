@@ -74,11 +74,18 @@ match_booth_units <- function(live, ref) {
 #'   distance, points, between the uncounted units and the counted ones, size-weighted), `swing_sd` (spread, points, of
 #'   the counted ordinary booths' swings) and `unc_frac` (projected share of the seat's votes still to come). `FALSE`
 #'   (default) returns the columns as before.
+#' @param type_sd Lane D1 (`docs/plans/prereg-night-lane-d-2026-11-28.md`). `NULL` (default) is byte-identical. A named
+#'   numeric `k` by booth type (e.g. `c(early = 8.16, postal = 9.86)`): adds a column `type_var` (points^2), the variance
+#'   of the projection from not knowing how each uncounted non-ordinary unit will swing against the seat's ordinary
+#'   booths, `sum_u (size_u / T)^2 * k_t^2 * p (1 - p) * (1 - c_t)`: `size_u` the unit's projected votes, `T` the seat's
+#'   projected total, `p` the class's projected share (fraction), `c_t` the counted share of that type in the seat
+#'   (counted votes of the type over counted plus projected uncounted). Zero once every unit of every type has reported.
 #' @return data.table `cls, projected, counted_share`, or `NULL` if no
 #'   counted unit has a reference (nothing to measure a swing on).
 #' @export
 project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, total = c("table", "projected", "expected"), expected_total = NA_real_,
-                                     lean = NULL, early_frac = NA_real_, booth_reg = NULL, type_pool_k = NULL, diag = FALSE) {
+                                     lean = NULL, early_frac = NA_real_, booth_reg = NULL, type_pool_k = NULL, diag = FALSE, type_sd = NULL) {
+  if (!is.null(type_sd)) stopifnot(is.numeric(type_sd), length(names(type_sd)) == length(type_sd), all(is.finite(type_sd)), all(type_sd >= 0))
   total <- match.arg(total)
   live <- data.table::as.data.table(live); ref <- data.table::as.data.table(ref)
   classes <- unique(live$cls)
@@ -123,6 +130,7 @@ project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, 
       if (total == "expected" && is.finite(expected_total) && expected_total > 0) min(1, cv_all / expected_total) else cv_all / (cv_all + sum(er$v)) }
     out0[, counted_share := cs_all]
     if (isTRUE(diag)) out0[, `:=`(n_ord = 0L, swing_sd = 0, rep_dist = 0, unc_frac = 1 - cs_all)]
+    if (!is.null(type_sd)) out0 <- .lane_d_type_var(out0, NULL, er, live, counted_units, type_sd)
     return(out0[])
   }
   grid <- data.table::CJ(unit = unc$unit, cls = classes); grid <- merge(grid, unc, by = "unit")
@@ -240,7 +248,27 @@ project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, 
     unc_v <- sum(unique(grid[, .(unit, size)])$size) + (if (is.null(er)) 0 else sum(er$v))
     out <- .lane_a_diag(out, SLOPE, RD, unc_v / max(sum(out$projected), 1e-9))
   }
+  if (!is.null(type_sd)) out <- .lane_d_type_var(out, unique(grid[, .(unit, booth_type, size)]), er, live, counted_units, type_sd)
   out[]
+}
+
+# Lane D1 (project_seat_from_booths(type_sd = k)): variance (points^2) per class from the uncounted non-ordinary units'
+# unknown swing against the ordinary booths. `unc` = the uncounted units' `unit, booth_type, size` (NULL: none); `er` the
+# projected remainder of a partly counted early unit (its own early swing is measured, so it counts as early with c_t > 0).
+.lane_d_type_var <- function(out, unc, er, live, counted_units, type_sd) {
+  T0 <- max(sum(out$projected), 1e-9)
+  U <- if (is.null(unc)) data.table::data.table(unit = character(0), booth_type = character(0), size = numeric(0)) else
+    data.table::as.data.table(unc)[, list(unit, booth_type, size)]
+  if (!is.null(er) && nrow(er)) U <- rbind(U, data.table::data.table(unit = "early_rest", booth_type = "early", size = sum(er$v)))
+  U <- U[U$booth_type != "ordinary" & U$booth_type %in% names(type_sd) & U$size > 0]
+  if (!nrow(U)) { out[, type_var := 0]; return(out) }
+  cnt <- live[live$unit %in% counted_units, list(cv = sum(v)), by = "booth_type"]
+  ut <- U[, list(uv = sum(size), s2 = sum((size / T0)^2)), by = "booth_type"]
+  ut[, cv := 0]; ut[cnt, on = "booth_type", cv := i.cv]
+  ut[, w := unname(type_sd[ut$booth_type])^2 * ut$s2 * (1 - ut$cv / (ut$cv + ut$uv))]
+  p <- pmin(pmax(out$projected / T0, 0), 1)
+  out[, type_var := sum(ut$w) * p * (1 - p)]
+  out
 }
 
 # Lane A diag columns (project_seat_from_booths(diag = TRUE)): one value per class, 0 / NA where not measurable.
@@ -266,6 +294,51 @@ combine_prior_projection <- function(prior, proj, sd_prior, sd_proj) {
   wp <- 1 / sd_prior^2; wq <- 1 / sd_proj^2
   list(mean = (prior * wp + proj * wq) / (wp + wq), sd = sqrt(1 / (wp + wq)))
 }
+
+#' Combine the prior with a fat-tailed (Student-t) projection
+#'
+#' Ported from lane C (branch `night-lane-c`, fffbf957) for lane D2 (`docs/plans/prereg-night-lane-d-2026-11-28.md`):
+#' the projection error is `scale * t_df` instead of normal, so a projection far from the prior is down-weighted
+#' rather than trusted. Computed exactly as a scale mixture: `t_df = N(0, scale^2 / w)` with `w ~ Gamma(df/2, rate df/2)`
+#' on `k` equal-probability quantile nodes. Given `w` the posterior is the normal-normal one; each node is weighted by
+#' the marginal density of the projection, `N(proj; prior, sd_prior^2 + scale^2 / w)`. The result is the mixture's mean
+#' and sd. Vectorised over cells. When `proj == prior` the mean is exactly the prior; with `df = Inf` the result is
+#' [combine_prior_projection()]'s.
+#'
+#' @param prior,proj numeric shares (points), same length (or recycled).
+#' @param sd_prior prior sd (points).
+#' @param scale the t scale of the projection error (points).
+#' @param df degrees of freedom (`Inf` gives the normal result).
+#' @param k number of mixture nodes.
+#' @return list(mean, sd, w_mean): posterior mean and sd, and the posterior mean of the precision multiplier `w`.
+#' @export
+combine_prior_projection_t <- function(prior, proj, sd_prior, scale, df, k = 32L) {
+  n <- max(length(prior), length(proj), length(sd_prior), length(scale))
+  prior <- rep_len(prior, n); proj <- rep_len(proj, n); sd_prior <- rep_len(sd_prior, n); scale <- rep_len(scale, n)
+  if (!is.finite(df)) {
+    cm <- combine_prior_projection(prior, proj, sd_prior, scale)
+    return(list(mean = cm$mean, sd = cm$sd, w_mean = rep(1, n)))
+  }
+  stopifnot(length(df) == 1L, df > 0, k >= 2)
+  w <- stats::qgamma((seq_len(k) - 0.5) / k, shape = df / 2, rate = df / 2)
+  vp <- sd_prior^2
+  vq <- outer(scale^2, 1 / w)                     # n x k projection variances
+  tot <- vp + vq
+  d <- proj - prior
+  lw <- -0.5 * log(tot) - 0.5 * d^2 / tot         # log N(proj; prior, tot), up to a constant
+  lw <- lw - apply(lw, 1L, max)
+  pw <- exp(lw); pw <- pw / rowSums(pw)
+  mk <- prior + vp * d / tot                      # node posterior means (recycles prior, vp, d by row)
+  vk <- vp * vq / tot                             # node posterior variances
+  m <- rowSums(pw * mk)
+  v <- rowSums(pw * (vk + mk^2)) - m^2
+  list(mean = m, sd = sqrt(pmax(v, 0)), w_mean = as.numeric(pw %*% w))
+}
+
+# Lane D2: degrees of freedom of the projection error, lane C's fit (fffbf957, .booth_proj_units_fit$df, Student-t
+# likelihood over the three replayed nights' projections). With `proj_tails = "t"` the current projection sd is turned
+# into a t scale with the SAME variance, sd * sqrt((df - 2) / df): same spread, fatter tails. Inventoried in docs/CONSTANTS.md.
+.NIGHT_T_DF <- 4.755439
 
 #' Projection sd as a function of the counted share
 #'

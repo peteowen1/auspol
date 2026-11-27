@@ -18,7 +18,7 @@ cfg <- list(source = need("source"), archive = need("archive"), setup = flag("se
             sims = if (!is.null(flag("sims"))) as.integer(flag("sims")) else NULL,
             use_tcp = identical(flag("tcp", "1"), "1"), allow_stub = identical(flag("allow-stub", "0"), "1"),
             turnout = flag("turnout"), council_lean = flag("council-lean"), early_partial = identical(flag("early-partial", "0"), "1"), allow_unmatched = identical(flag("allow-unmatched", "0"), "1"), allow_projected = identical(flag("allow-projected", "0"), "1"),
-            surge_fade = !identical(flag("surge-fade", "1"), "0"), tcp_center = flag("tcp-center", "median"), tcp_flow_floor = as.numeric(flag("tcp-flow-floor", "0.01")), tcp_own_fp = identical(flag("tcp-own-fp", "0"), "1"), tcp_pair_cal = flag("tcp-pair-cal", "fitted"), source_type = flag("source-type", "feed"), enrolment = flag("enrolment"), places = flag("places"), cand_ref = flag("cand-ref"), class_split = flag("class-split"), proj_sd = flag("proj-sd", "old"), rep_sd = flag("rep-sd"), cache = new.env())
+            surge_fade = !identical(flag("surge-fade", "1"), "0"), tcp_center = flag("tcp-center", "median"), tcp_flow_floor = as.numeric(flag("tcp-flow-floor", "0.01")), tcp_own_fp = identical(flag("tcp-own-fp", "0"), "1"), tcp_pair_cal = flag("tcp-pair-cal", "fitted"), source_type = flag("source-type", "feed"), enrolment = flag("enrolment"), places = flag("places"), cand_ref = flag("cand-ref"), class_split = flag("class-split"), proj_sd = flag("proj-sd", "old"), rep_sd = flag("rep-sd"), type_sd = flag("type-sd"), proj_tails = flag("proj-tails"), cache = new.env())
 upload_key <- flag("upload-key")   # e.g. auspol/night/vic2026.json: after each good cycle, scripts/night_publish_r2.sh uploads --out there
 every <- as.numeric(flag("every", "60")); max_cycles <- as.integer(flag("max-cycles", "0")); retries <- as.integer(flag("retries", "3"))
 # --stale-min: warn (NWL3, once per quiet spell) when no new snapshot has appeared for this many minutes; 0 turns it off.
@@ -28,7 +28,8 @@ dir.create(cfg$archive, recursive = TRUE, showWarnings = FALSE)
 say <- function(...) { l <- paste0(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "  ", ...); cat(l, "\n"); cat(l, "\n", file = log_f, append = TRUE) }
 last_ok <- NULL; fails <- 0L; last_try <- NULL; cycles <- 0L
 say("loop start: every ", every, "s, source ", cfg$source, ", proj-sd ", cfg$proj_sd, ", rep-sd ",
-    { ra <- .night_rep_sd_cfg(cfg$rep_sd); if (is.null(ra)) "off" else paste(ra$rep_sd, collapse = ",") })
+    { ra <- .night_rep_sd_cfg(cfg$rep_sd); if (is.null(ra)) "off" else paste(ra$rep_sd, collapse = ",") },
+    ", type-sd ", if (is.null(cfg$type_sd)) "off" else cfg$type_sd, ", proj-tails ", if (is.null(cfg$proj_tails)) .NIGHT_PROJ_TAILS else cfg$proj_tails)
 repeat {
   # the website source's snapshots are folders (night_web_latest()); the feed's are files (night_fetch_snapshot()).
   # Before 11 Nov 2026 this read the feed only, so a --source-type=web loop waited forever (dress rehearsal).

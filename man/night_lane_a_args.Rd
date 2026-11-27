@@ -8,11 +8,13 @@ night_lane_a_args(
   booth_reg = NULL,
   booth_reg_all = NULL,
   type_pool = NULL,
-  rep_sd = NULL
+  rep_sd = NULL,
+  type_sd = NULL,
+  proj_tails = NULL
 )
 }
 \arguments{
-\item{booth_reg, booth_reg_all, type_pool, rep_sd}{Flag values as strings, or \code{NULL} when not given.}
+\item{booth_reg, booth_reg_all, type_pool, rep_sd, type_sd, proj_tails}{Flag values as strings, or \code{NULL} when not given.}
 }
 \value{
 \code{NULL} or a named list.
@@ -21,4 +23,6 @@ night_lane_a_args(
 Turns the strings of \verb{--booth-reg=<k>}, \code{--booth-reg-all=1}, \verb{--type-pool=<k>} and \verb{--rep-sd=<a>,<b>} into the
 \code{lane_a} list \code{\link[=night_run_update]{night_run_update()}} passes to \code{\link[=night_booth_update]{night_booth_update()}} (\verb{docs/plans/prereg-night-lane-a-2026-11-27.md}).
 Every flag absent gives \code{NULL}, the run without lane A.
+Lane D adds \verb{--type-sd=<on|off|k>} (\code{type_sd}, D1) and \verb{--proj-tails=<normal|t>} (\code{proj_tails}, D2;
+\verb{docs/plans/prereg-night-lane-d-2026-11-28.md}); \code{off} and \code{normal} add nothing.
 }

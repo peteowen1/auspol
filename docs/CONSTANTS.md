@@ -741,6 +741,8 @@ Replay-only until the 2026 feed arrives; none is read by the published forecast.
 | flow SE below 3 counted booths | 0.25 | `night_tcp_obs()` | judgement (a flow share's plausible range) |
 | flow SE floor | 0.02 | `night_tcp_obs()` | judgement |
 | new-candidate sd multiplier | 1 (off): 1.5 and 2 were slightly worse on 2022 (few new candidates; One Nation 2026 untestable) | `night_booth_update(new_sd_mult =)` | a replay with a new party (SA 2026) |
+| vote-type swing spread `k_t` (lane D1, OFF by default) | early 8.158, postal 9.858, absent 8.739, provisional 49.911, marked_as_voted 236.177; sigma = k sqrt(p (1 - p)) points | `.NIGHT_TYPE_SD`, `R/night_update.R`; `night_booth_update(type_sd = "on")`, `--type-sd=on` | **FITTED** by `scripts/fit_night_type_sd.R` on vic2010->14, vic2014->18, wa2008->13, wa2013->17, wa2017->21 (all before the earliest replayed night). Refit with vic2018->22 and the federal pairs before using it live, if it ships. `plans/prereg-night-lane-d-2026-11-28.md` |
+| projection t degrees of freedom (lane D2, OFF by default) | 4.755439 | `.NIGHT_T_DF`, `R/booth_projection.R`; `night_booth_update(proj_tails = "t")`, `--proj-tails=t` | **FITTED** by lane C (`night-lane-c` fffbf957, `.booth_proj_units_fit$df`), on its own variance model; reused here with the current sd turned into a same-variance t scale |
 
 ## Election-night 2CP update (added 2026-10-31)
 
