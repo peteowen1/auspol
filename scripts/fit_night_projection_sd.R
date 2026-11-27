@@ -55,12 +55,12 @@ counted_votes <- function(live, reported) {
 # swing), --type-pool=<k> (A2 vote-type pooling), --rep-diag=1 (diag columns in the output, no change to projections)
 num_or_null <- function(x) if (is.null(x)) NULL else as.numeric(x)
 BREG <- num_or_null(flag("booth-reg")); TPOOL <- num_or_null(flag("type-pool")); RDIAG <- identical(flag("rep-diag", "0"), "1")
-cat(sprintf("NPSD0A lane A: booth_reg_k %s, type_pool_k %s, proj_diag %s\n", if (is.null(BREG)) "off" else BREG, if (is.null(TPOOL)) "off" else TPOOL, RDIAG))
+BALL <- identical(flag("booth-reg-all", "0"), "1")   # A1b: the booth offset on early / postal blocks toocat(sprintf("NPSD0A lane A: booth_reg_k %s (all units %s), type_pool_k %s, proj_diag %s\n", if (is.null(BREG)) "off" else BREG, BALL, if (is.null(TPOOL)) "off" else TPOOL, RDIAG))
 one_update <- function(st, live, ref, reported, expected, cr) {
   shares <- st$shares
   nu <- night_booth_update(shares, night_prior_sd(shares, st$level_sd, st$level_mult, st$sdo), 1, live, ref,
                            gap_k = 5, reported = reported, total = "expected", expected = expected, cand_ref = cr, keep_proj = TRUE,
-                           booth_reg_k = BREG, type_pool_k = TPOOL, proj_diag = RDIAG)
+                           booth_reg_k = BREG, type_pool_k = TPOOL, proj_diag = RDIAG, booth_reg_all = BALL)
   nu$proj_detail
 }
 fin <- function(X, tr) {
@@ -80,7 +80,9 @@ if ("vic2022" %in% NIGHTS && (redo || !file.exists(night_f("vic2022")))) {
   ref$district <- .night_seat_names(ref$district, seats); turn$district <- .night_seat_names(turn$district, seats)
   setup <- file.path(runs, "setup"); pl <- night_polling_places(setup); lk <- night_party_lookup(setup)
   if (!is.null(pl) && "district" %in% names(pl)) pl$district <- .night_seat_names(pl$district, seats)
-  tr <- truth_of(fread(dp(sprintf("output/booths-vic%d.csv", st$to)), showProgress = FALSE), seats)
+  rb <- fread(dp(sprintf("output/booths-vic%d.csv", st$to)), showProgress = FALSE)
+  tr <- truth_of(rb, seats)
+  rb$district <- .night_seat_names(rb$district, seats)
   files <- list.files(dp("external/reference/vec/2026/feed-docs/inner22"), pattern = "verboselh_[0-9]{8}_[0-9]{6}\\.xml$", recursive = TRUE, full.names = TRUE, ignore.case = TRUE)
   stamp <- sub(".*verboselh_([0-9]{8}_[0-9]{6})\\.xml$", "\\1", basename(files), ignore.case = TRUE)
   clk <- ifelse(substr(stamp, 1, 8) > "20221126", sprintf("%02d:%s", 24L + as.integer(substr(stamp, 10, 11)), substr(stamp, 12, 13)),
@@ -89,7 +91,11 @@ if ("vic2022" %in% NIGHTS && (redo || !file.exists(night_f("vic2022")))) {
   cat(sprintf("NPSD1 vic2022: %d seats, %d snapshots %s to %s, cand_ref %s\n", length(seats), length(files), stamp[1], stamp[length(stamp)], paste(CR, collapse = ",")))
   for (k in seq_along(files)) {
     feed <- vec_feed_read_lh(files[k]); feed$contests$district <- .night_seat_names(feed$contests$district, seats)
-    conv <- suppressMessages(night_booth_table(feed, lk, pl))
+    # place list = the replayed election's own ordinary booths (night_places_from_booths(); the 2022 set-up list has no
+    # Classification and made no placeholders, so uncounted ordinary booths were never projected)
+    conv <- suppressMessages(night_booth_table(feed, lk, night_places_from_booths(rb, feed$contests)))
+    cat(sprintf("NPSD8 %s: %d placeholder booths\n", stamp[k], conv$n_placeholder_booths))
+    if (grepl("_19", stamp[k]) && conv$n_placeholder_booths == 0L) stop("NPSD8! no placeholder booths at 7pm")
     enr <- stats::setNames(feed$contests$enrolment, sub(" District$", "", feed$contests$district))
     expected <- night_expected_votes(enr, night_turnout_table(turn, ref), "night")
     cvt <- counted_votes(conv$live, conv$counted)
