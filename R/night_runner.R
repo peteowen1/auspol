@@ -178,6 +178,29 @@ night_polling_places <- function(setup_dir) {
   if (is.null(out) || !nrow(out)) NULL else out
 }
 
+#' A replay's polling list from the replayed election's own ordinary booths
+#'
+#' The live night makes a placeholder for every voting centre still to report from the commission's polling list
+#' (`places-2026.csv` on the website path). The 2022 set-up file carries no Classification, so [night_polling_places()]
+#' gives `booth_class` NA there and [night_booth_table()] made NO placeholders: on the vic2022 replay the uncounted
+#' ordinary booths were never projected (found 27 Nov 2026 on Mildura). This builds the list the replay should use, the
+#' same role the live list plays: one `VotingCentre` row per ORDINARY booth of the replayed election's final booth file
+#' (early voting centres are not in it as ordinary booths, so nothing doubles against the district early unit).
+#'
+#' @param booths Final booth table of the replayed election (`district, booth, booth_type`), e.g. `output/booths-vic2022.csv`.
+#' @param contests The snapshot's `feed$contests` (`district_id, district`), for the district ids.
+#' @return data.table `district_id, district, booth_id, booth, booth_class` ([night_polling_places()]'s shape).
+#' @export
+night_places_from_booths <- function(booths, contests) {
+  B <- data.table::as.data.table(booths)
+  B <- unique(B[B$booth_type == "ordinary" & !is.na(B$booth) & nzchar(B$booth), c("district", "booth")])
+  C <- data.table::as.data.table(contests)[, c("district_id", "district")]
+  C[, seat := sub(" District$", "", district)]
+  out <- merge(B, C[, list(district_id, seat)], by.x = "district", by.y = "seat")
+  if (!nrow(out)) stop("NW31! no replayed booth's district matches the snapshot's contests", call. = FALSE)
+  out[, list(district_id = as.character(district_id), district, booth_id = NA_character_, booth, booth_class = "VotingCentre")]
+}
+
 #' Convert a parsed Assembly snapshot into the booth table shape the night update expects
 #'
 #' @param feed Output of [vec_feed_read_lh()].
