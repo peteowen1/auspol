@@ -125,6 +125,50 @@ htv_seat_splits <- function(dir = file.path("external", "elections")) {
   tx[, list(alp = sum(votes[to == "ALP"]), tot = sum(votes)), by = list(election, seat)]
 }
 
+#' Final-three Liberal exclusions only: `AUSPOL_HTV_FINAL3`
+#'
+#' `"1"`: the share written into the exact `LNP|ALP+GRN` key (the Liberal excluded third, Labor and the Greens the
+#' last two, which decides a Labor-v-Greens seat) is fitted from earlier FINAL-THREE exclusions only: Liberal
+#' exclusions whose votes went to Labor and the Greens and nobody else. Every wider `LNP|...ALP+GRN...` key keeps the
+#' share fitted from all exclusions. `"0"`: one share for every key, byte-identical to before. Published `"1"` since
+#' 27 Nov 2026 (Pete's override of the Victorian seat guard, DECISIONS 27 Nov).
+#' Measured 27 Nov 2026: in Labor-above federal elections the final-three share ran 65-73% while the earlier,
+#' many-candidate exclusions ran 44-62%, and the pooled fit (seat-count weights) is pulled toward the earlier ones.
+#' `docs/plans/prereg-htv-final3-2026-11-27.md`.
+#' @return `TRUE` when on.
+#' @export
+htv_final3_on <- function() {
+  v <- Sys.getenv("AUSPOL_HTV_FINAL3", "1")
+  if (!v %in% c("0", "1")) stop("HTV16! AUSPOL_HTV_FINAL3 must be 0 or 1, not '", v, "'", call. = FALSE)
+  identical(v, "1")
+}
+
+#' Liberal votes to ALP and ALP+GRN in final-three exclusions, per election and seat
+#'
+#' A final-three exclusion is a Liberal/LNP round whose votes went to ALP and GRN and to no other candidate (so they
+#' were the last two). Same sources and shape as [htv_seat_splits()].
+#' @inheritParams htv_observed_splits
+#' @return data.table election, seat, alp, tot; NULL when there are none.
+#' @export
+htv_seat_splits_final3 <- function(dir = file.path("external", "elections")) {
+  bundle <- file.path(dir, "coalition-split-events.csv")
+  tx <- if (file.exists(bundle) && !nzchar(Sys.getenv("AUSPOL_HTV_EXCLUDE", ""))) coalition_split_transfers(dir) else {
+    fs <- list.files(dir, pattern = "-transfers[.]csv$", full.names = TRUE)
+    if (!length(fs)) return(NULL)
+    data.table::rbindlist(lapply(fs, function(f) {
+      d <- data.table::fread(f, showProgress = FALSE)
+      d[d$from == "LNP", list(election, seat, round, to, votes)]
+    }), fill = TRUE)
+  }
+  tx <- data.table::as.data.table(tx)[tx$votes > 0, list(election, seat, round, to, votes)]
+  if (!nrow(tx)) return(NULL)
+  rec <- tx[, list(rset = paste(sort(unique(to)), collapse = "+")), by = list(election, seat, round)]
+  f3 <- rec[rec$rset == "ALP+GRN", list(election, seat, round)]
+  if (!nrow(f3)) return(NULL)
+  tx <- merge(tx, f3, by = c("election", "seat", "round"))
+  tx[, list(alp = sum(votes[to == "ALP"]), tot = sum(votes)), by = list(election, seat)]
+}
+
 #' Which labels train the card shares: `AUSPOL_HTV_LABELS`
 #'
 #' `"outcome"` (published until 15 Nov 2026): each earlier election is labelled by its own observed split (under 50% to Labor is
@@ -260,8 +304,22 @@ htv_jur_adjust <- function(cells, by_lab, target_election) {
 fit_htv_flow_rows <- function(target_election, dir = file.path("external", "elections"), min_seats = 2L) {
   # AUSPOL_HTV_LABELS=card: labels from the card table, not the result; a third (open) share; shrinkage, no min_seats.
   lm <- htv_labels_mode()
-  if (lm %in% c("card", "hybrid"))
-    return(htv_card_label_shares(target_election, htv_seat_splits(dir), htv_order_table(), fallback_outcome = identical(lm, "hybrid")))
+  if (lm %in% c("card", "hybrid")) {
+    tab <- htv_order_table()
+    fr <- htv_card_label_shares(target_election, htv_seat_splits(dir), tab, fallback_outcome = identical(lm, "hybrid"))
+    # AUSPOL_HTV_FINAL3=1: a second set of shares, from final-three exclusions only, for the exact LNP|ALP+GRN key.
+    if (!is.null(fr) && htv_final3_on()) {
+      f3 <- utils::capture.output(r3 <- htv_card_label_shares(target_election, htv_seat_splits_final3(dir), tab,
+                                                              fallback_outcome = identical(lm, "hybrid")))
+      fr$final3 <- if (is.null(r3)) NULL else r3[c("greens_above", "labor_above", "open")]
+      cat(sprintf("HTV16 %s final-three shares for LNP|ALP+GRN (all-exclusion shares in brackets): %s\n", target_election,
+                  if (is.null(r3)) "none fitted, the all-exclusion shares stand" else
+                    paste(sprintf("%s %.1f%% [%.1f%%] from %d cells", c("labor_above", "greens_above", "open"),
+                                  unlist(r3[c("labor_above", "greens_above", "open")]), unlist(fr[c("labor_above", "greens_above", "open")]),
+                                  vapply(c("labor_above", "greens_above", "open"), function(l) sum(r3$n$label == l), 0L)), collapse = "; ")))
+    }
+    return(fr)
+  }
   obs <- htv_observed_splits(dir)
   if (is.null(obs)) return(NULL)
   obs <- obs[elections_before(obs$election, target_election) & obs$n_seats >= min_seats]   # time-forward
@@ -362,6 +420,9 @@ htv_flow_override <- function(ov, fm, target_election, seats, table = NULL, rows
     if (is.na(above) && !is.finite(if (is.null(fr$open)) NA_real_ else fr$open)) next
     share <- if (is.na(above)) fr$open else share_for(above)
     if (!is.finite(share)) { skipped_na <- c(skipped_na, s); next }
+    # AUSPOL_HTV_FINAL3: the exact final-three key takes its own share when one was fitted (fit_htv_flow_rows()).
+    share3 <- if (is.null(fr$final3)) NA_real_ else if (is.na(above)) fr$final3$open else if (isTRUE(above)) fr$final3$greens_above else fr$final3$labor_above
+    if (is.null(share3) || !is.finite(share3)) share3 <- share
     L <- if (!is.null(out[[s]])) out[[s]] else fm$conditional
     touched <- FALSE
     for (k in names(L)) {
@@ -370,7 +431,8 @@ htv_flow_override <- function(ov, fm, target_election, seats, table = NULL, rows
       if (!all(c("ALP", "GRN") %in% names(r))) next
       tot <- r[["ALP"]] + r[["GRN"]]
       if (!is.finite(tot) || tot <= 0) next
-      r[["ALP"]] <- tot * share / 100; r[["GRN"]] <- tot * (1 - share / 100)
+      sh <- if (identical(k, "LNP|ALP+GRN")) share3 else share
+      r[["ALP"]] <- tot * sh / 100; r[["GRN"]] <- tot * (1 - sh / 100)
       L[[k]] <- r; touched <- TRUE
     }
     if (touched) { out[[s]] <- L; applied <- applied + 1L; orders <- c(orders, if (is.na(above)) "open" else if (above) "greens_above" else "labor_above") }

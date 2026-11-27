@@ -1,3 +1,9 @@
+# auspol 0.4.206
+
+Changes the published Victorian seat forecast in Labor-v-Greens contests.
+
+- **Liberal preferences between Labor and the Greens now come from final-three counts** (`AUSPOL_HTV_FINAL3=1`). When the Liberal is excluded with Labor and the Greens the last two, the share to Labor is fitted from earlier counts of exactly that kind, instead of one share pooled over every Liberal exclusion. Greens-contested Victorian seats go from 61.7% to 67.1% to Labor; Brunswick (open Liberal card) is unchanged. Better on 44 actual transfers in 12 elections; worse on Victorian seat calls in the backtest (+0.0042 log loss); shipped on Pete's call. `docs/plans/prereg-htv-final3-2026-11-27.md`.
+
 # auspol 0.4.205
 
 No change to the published forecast; a new data file for the site and a new comparison source.
