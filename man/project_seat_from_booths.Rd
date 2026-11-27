@@ -15,7 +15,8 @@ project_seat_from_booths(
   early_frac = NA_real_,
   booth_reg = NULL,
   type_pool_k = NULL,
-  diag = FALSE
+  diag = FALSE,
+  type_sd = NULL
 )
 }
 \arguments{
@@ -70,6 +71,13 @@ with only its early vote in projects its ordinary booths at the early swing minu
 distance, points, between the uncounted units and the counted ones, size-weighted), \code{swing_sd} (spread, points, of
 the counted ordinary booths' swings) and \code{unc_frac} (projected share of the seat's votes still to come). \code{FALSE}
 (default) returns the columns as before.}
+
+\item{type_sd}{Lane D1 (\verb{docs/plans/prereg-night-lane-d-2026-11-28.md}). \code{NULL} (default) is byte-identical. A named
+numeric \code{k} by booth type (e.g. \code{c(early = 8.16, postal = 9.86)}): adds a column \code{type_var} (points^2), the variance
+of the projection from not knowing how each uncounted non-ordinary unit will swing against the seat's ordinary
+booths, \code{sum_u (size_u / T)^2 * k_t^2 * p (1 - p) * (1 - c_t)}: \code{size_u} the unit's projected votes, \code{T} the seat's
+projected total, \code{p} the class's projected share (fraction), \code{c_t} the counted share of that type in the seat
+(counted votes of the type over counted plus projected uncounted). Zero once every unit of every type has reported.}
 }
 \value{
 data.table \verb{cls, projected, counted_share}, or \code{NULL} if no

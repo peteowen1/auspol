@@ -123,6 +123,13 @@ night_prior_sd <- function(shares, level_sd, level_mult = NULL, sd_override = NU
 #'   reference (the early and postal blocks too), not only ordinary booths. `FALSE` (default) is ordinary booths only.
 #' @param proj_diag `TRUE` (with `keep_proj`) adds the lane A diag columns (`sd_table, n_ord, swing_sd, rep_dist,
 #'   unc_frac`) to `proj_detail`. `FALSE` (default) is byte-identical.
+#' @param type_sd Lane D1 (`docs/plans/prereg-night-lane-d-2026-11-28.md`): `NULL` (default) is byte-identical. `"on"` uses
+#'   `.NIGHT_TYPE_SD` (`scripts/fit_night_type_sd.R`: per vote type, the spread across seats of the type's swing minus
+#'   the ordinary swing, on reference pairs that end before May 2022); one number `k` uses it for every non-ordinary type;
+#'   a named numeric by booth type is used as given. Adds [project_seat_from_booths()]'s `type_var` to the projection
+#'   variance, so an uncounted early or postal block carries its own uncertainty until it reports.
+#' @param proj_tails Lane D2: `"normal"` (default, byte-identical) or `"t"`: combine with a Student-t projection error of
+#'   the same variance ([combine_prior_projection_t()], df `.NIGHT_T_DF` from lane C).
 #' @return List: `shares` (posterior means, rows renormalised to 100), `sd` (posterior sds),
 #'   `counted` (named per-seat share of the final night vote counted), `resolved` (mean over
 #'   updated cells of 1 - posterior sd / prior sd), `n_updated` (seats with booths), `units`
@@ -132,8 +139,10 @@ night_prior_sd <- function(shares, level_sd, level_mult = NULL, sd_override = NU
 night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, gap_k = NULL, early = "last", new_sd_mult = 1,
                                reported = NULL, total = c("table", "projected", "expected"), expected = NULL, lean = NULL,
                                early_frac = NULL, cand_ref = FALSE, keep_proj = FALSE, proj_sd = c("old", "fitted", "max"),
-                               booth_reg_k = NULL, type_pool_k = NULL, rep_sd = NULL, proj_diag = FALSE, booth_reg_all = FALSE) {
-  total <- match.arg(total); proj_sd <- match.arg(proj_sd)
+                               booth_reg_k = NULL, type_pool_k = NULL, rep_sd = NULL, proj_diag = FALSE, booth_reg_all = FALSE,
+                               type_sd = NULL, proj_tails = c("normal", "t")) {
+  total <- match.arg(total); proj_sd <- match.arg(proj_sd); proj_tails <- match.arg(proj_tails)
+  type_k <- .night_type_sd_k(type_sd)
   if (!is.null(rep_sd)) stopifnot(is.numeric(rep_sd), length(rep_sd) == 2L, all(is.finite(rep_sd)), all(rep_sd >= 0))
   lane_diag <- isTRUE(proj_diag) || !is.null(rep_sd)
   stopifnot(is.numeric(new_sd_mult), length(new_sd_mult) == 1L, new_sd_mult >= 1)
@@ -228,7 +237,7 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
     p <- project_seat_from_booths(ld, rd, units, type_gap = type_gap, total = total, expected_total = if (is.null(expected)) NA_real_ else unname(expected[s]),
                                   lean = if (is.null(Lk)) NULL else Lk[Lk$district == s],
                                   early_frac = if (is.null(early_frac) || !s %in% names(early_frac)) NA_real_ else unname(early_frac[s]),
-                                  booth_reg = booth_reg, type_pool_k = type_pool_k, diag = lane_diag)
+                                  booth_reg = booth_reg, type_pool_k = type_pool_k, diag = lane_diag, type_sd = type_k)
     if (is.null(p) || !nrow(p)) next
     cs <- p$counted_share[1]
     proj_total[s] <- sum(p$projected)
@@ -249,6 +258,9 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
       ssd <- p$swing_sd; ssd[is.na(ssd)] <- 0
       sdj <- sqrt(sdj^2 + p$unc_frac^2 * (rep_sd[1] * p$rep_dist^2 + rep_sd[2] * ssd^2 / (p$n_ord + 1)))
     }
+    # LANE D1 (type_sd): the uncounted early / postal / absent... units' unknown swing against the ordinary booths,
+    # shrinking as each type reports (project_seat_from_booths()'s type_var): sd^2 = sd^2 + type_var.
+    if (!is.null(type_k)) sdj <- sqrt(sdj^2 + p$type_var)
     j <- match(names(proj), cls_all); ok <- !is.na(j)
     if (isTRUE(keep_proj)) {
       pr <- data.table::data.table(seat = s, cls = names(proj), proj = unname(proj), counted_share = cs,
@@ -262,7 +274,10 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
     if (!any(ok)) next
     # A class standing now that the projection does not see (no booth votes) keeps its prior;
     # a class the projection sees that the forecast does not model is left out (rows renormalise).
-    cm <- combine_prior_projection(post[s, j[ok]], proj[ok], psd[s, j[ok]], sdj[ok])
+    # LANE D2 (proj_tails = "t"): Student-t projection error with the same variance as sdj (lane C's df), so a projection
+    # far from the prior is down-weighted instead of trusted; "normal" (default) is the normal-normal combine, unchanged.
+    cm <- if (proj_tails == "t") combine_prior_projection_t(post[s, j[ok]], proj[ok], psd[s, j[ok]], sdj[ok] * sqrt((.NIGHT_T_DF - 2) / .NIGHT_T_DF), .NIGHT_T_DF) else
+      combine_prior_projection(post[s, j[ok]], proj[ok], psd[s, j[ok]], sdj[ok])
     res <- c(res, 1 - cm$sd / psd[s, j[ok]])
     post[s, j[ok]] <- cm$mean; psd[s, j[ok]] <- cm$sd
     post[s, ] <- 100 * post[s, ] / sum(post[s, ])
@@ -273,6 +288,22 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
        fallback_projected = fallback_projected, proj_total = proj_total, n_cand_ref = n_cand_ref)
   if (isTRUE(keep_proj)) out$proj_detail <- data.table::rbindlist(proj_rows)   # only when asked: the default list is unchanged
   out
+}
+
+# Lane D1 constants: k per vote type, sigma_type(class) = k * sqrt(p (1 - p)) points, p the projected share (fraction).
+# scripts/fit_night_type_sd.R, 28 Nov 2026, on vic2010->14, vic2014->18, wa2008->13, wa2013->17, wa2017->21 (5,255 type
+# gaps over 325 district-pairs; within-pair spread plus between-pair spread of the mean gap). All pairs end before the
+# earliest replayed night (fed2022), so no screened night is in its own fit. Inventoried in docs/CONSTANTS.md; refit, do not hand-tune.
+.NIGHT_TYPE_SD <- c(absent = 8.739, early = 8.158, marked_as_voted = 236.177, postal = 9.858, provisional = 49.911)
+.night_type_sd_k <- function(x) {
+  if (is.null(x) || identical(x, "off")) return(NULL)
+  if (identical(x, "on")) return(.NIGHT_TYPE_SD)
+  if (is.character(x)) x <- suppressWarnings(as.numeric(x))
+  if (!is.numeric(x) || !length(x) || any(!is.finite(x)) || any(x < 0))
+    stop("NX31! type_sd must be NULL, \"off\", \"on\", one number >= 0 or a named numeric by booth type", call. = FALSE)
+  if (is.null(names(x))) { if (length(x) != 1L) stop("NX31! an unnamed type_sd must be one number", call. = FALSE)
+    x <- stats::setNames(rep(x, length(.NIGHT_TYPE_SD)), names(.NIGHT_TYPE_SD)) }
+  x
 }
 
 # Lane A1: slope of a counted ordinary booth's swing on its own reference share, per class, pooled over every seat's
@@ -628,10 +659,12 @@ night_shrink_draws <- function(draws, keep) {
 #' Turns the strings of `--booth-reg=<k>`, `--booth-reg-all=1`, `--type-pool=<k>` and `--rep-sd=<a>,<b>` into the
 #' `lane_a` list [night_run_update()] passes to [night_booth_update()] (`docs/plans/prereg-night-lane-a-2026-11-27.md`).
 #' Every flag absent gives `NULL`, the run without lane A.
-#' @param booth_reg,booth_reg_all,type_pool,rep_sd Flag values as strings, or `NULL` when not given.
+#' Lane D adds `--type-sd=<on|off|k>` (`type_sd`, D1) and `--proj-tails=<normal|t>` (`proj_tails`, D2;
+#' `docs/plans/prereg-night-lane-d-2026-11-28.md`); `off` and `normal` add nothing.
+#' @param booth_reg,booth_reg_all,type_pool,rep_sd,type_sd,proj_tails Flag values as strings, or `NULL` when not given.
 #' @return `NULL` or a named list.
 #' @export
-night_lane_a_args <- function(booth_reg = NULL, booth_reg_all = NULL, type_pool = NULL, rep_sd = NULL) {
+night_lane_a_args <- function(booth_reg = NULL, booth_reg_all = NULL, type_pool = NULL, rep_sd = NULL, type_sd = NULL, proj_tails = NULL) {
   num1 <- function(x, nm) { v <- suppressWarnings(as.numeric(x)); if (length(v) != 1L || !is.finite(v) || v < 0) stop("NX30! --", nm, " must be one number >= 0", call. = FALSE); v }
   out <- list()
   if (!is.null(booth_reg)) out$booth_reg_k <- num1(booth_reg, "booth-reg")
@@ -644,6 +677,11 @@ night_lane_a_args <- function(booth_reg = NULL, booth_reg_all = NULL, type_pool 
     v <- suppressWarnings(as.numeric(strsplit(rep_sd, ",")[[1]]))
     if (length(v) != 2L || any(!is.finite(v)) || any(v < 0)) stop("NX30! --rep-sd must be two numbers >= 0, a,b", call. = FALSE)
     out$rep_sd <- v
+  }
+  if (!is.null(type_sd) && !identical(type_sd, "off")) { .night_type_sd_k(type_sd); out$type_sd <- type_sd }
+  if (!is.null(proj_tails)) {
+    if (!proj_tails %in% c("normal", "t")) stop("NX30! --proj-tails must be normal or t", call. = FALSE)
+    if (proj_tails == "t") out$proj_tails <- "t"
   }
   if (length(out)) out else NULL
 }

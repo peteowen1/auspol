@@ -26,7 +26,9 @@ night_booth_update(
   type_pool_k = NULL,
   rep_sd = NULL,
   proj_diag = FALSE,
-  booth_reg_all = FALSE
+  booth_reg_all = FALSE,
+  type_sd = NULL,
+  proj_tails = c("normal", "t")
 )
 }
 \arguments{
@@ -104,6 +106,15 @@ toward the seat's ordinary-equivalent swing plus that type's pooled gap (\code{g
 
 \item{booth_reg_all}{With \code{booth_reg_k}: \code{TRUE} applies the booth-share offset to every uncounted unit with a
 reference (the early and postal blocks too), not only ordinary booths. \code{FALSE} (default) is ordinary booths only.}
+
+\item{type_sd}{Lane D1 (\verb{docs/plans/prereg-night-lane-d-2026-11-28.md}): \code{NULL} (default) is byte-identical. \code{"on"} uses
+\code{.NIGHT_TYPE_SD} (\code{scripts/fit_night_type_sd.R}: per vote type, the spread across seats of the type's swing minus
+the ordinary swing, on reference pairs that end before May 2022); one number \code{k} uses it for every non-ordinary type;
+a named numeric by booth type is used as given. Adds \code{\link[=project_seat_from_booths]{project_seat_from_booths()}}'s \code{type_var} to the projection
+variance, so an uncounted early or postal block carries its own uncertainty until it reports.}
+
+\item{proj_tails}{Lane D2: \code{"normal"} (default, byte-identical) or \code{"t"}: combine with a Student-t projection error of
+the same variance (\code{\link[=combine_prior_projection_t]{combine_prior_projection_t()}}, df \code{.NIGHT_T_DF} from lane C).}
 }
 \value{
 List: \code{shares} (posterior means, rows renormalised to 100), \code{sd} (posterior sds),
