@@ -82,3 +82,30 @@ Joint screen of B1c + `bko` against `a3d2` (2,000 draws, to 9pm, code 4cb9de21):
 vic2022 -0.0066 (0.0063), fed2022 -0.0014 (0.0008), fed2025 -0.0001 (0.0013); wrong 0.99 calls 2 = 2; seats right
 376 vs 374 base. B1c alone was -0.0006 (0.0007). Mildura (Cupper, lost) 7 / 8 / 9pm: 0.85 / 0.86 / 0.29 (a3d2 0.95 /
 0.94 / 0.45). Full 20,000-draw replays to 2am follow, before the ship.
+
+## Amendment 2 (28 Nov 2026, about 9:10am): vote types matched to similar booths, written before the arm ran
+
+Pete (9am): "I asked for full booth level with vote type - surely that's the best way". New mode `types = "knn"`
+(flag `--booth-knn=10,1,10,2`): each uncounted early / postal / absent / other unit whose type has no counted unit keeps
+its current swing (all-types counted swing + type gap) PLUS the kernel-weighted deviation of the counted polling booths
+whose reference shares look most like ITS OWN reference shares (same h = 10, k = 1; no size term). Checked before the
+screen on the saved Mildura data only (not scored): early swing at 8pm +1.8 -> +5.7 (final +6.8); seat 8pm Cupper /
+Coalition 45.3 / 41.6 -> 44.0 / 43.2, 9pm 42.4 / 43.5 -> 41.8 / 44.4 (final 41.2 / 45.0).
+
+Arm `bkt`: live flags (A3, D2, B1c `--tcp-cand=1`) + `--booth-knn=10,1,10,2`, against arm `both` (the live night as
+shipped: same flags + `--booth-knn=10,1,10,0`). Same screen, same four clauses (primary better by more than 1 SE; no
+night worse by more than 1 SE; wrong 0.99 calls not more; seats right not fewer), then full 20k runs with the same
+clauses. Pass -> ON by the standing rule; fail -> Pete's call. Cutoff for changes 2:45pm (Pete: "we have 6 hours").
+
+## Amendment 3 (28 Nov 2026, about 9:00am): `bkt` screen FAILED clause 1; ON by Pete's override
+
+Screen of `bkt` against `both` (2,000 draws, to 9pm, code 102afb8c): primary +0.0000 (SE 0.0003), FAIL clause 1. Under
+15% counted: vic2022 +0.0013, fed2022 -0.0001, fed2025 -0.0005. Night averages vic2022 -0.0013 (0.0031), fed2022 +0.0002
+(0.0004), fed2025 +0.0015 (0.0016): none worse by 1 SE. Wrong 0.99 calls 2 -> 1; seats right equal. Mildura 7 / 8 / 9pm
+0.85 / 0.86 / 0.29 -> 0.85 / 0.74 / 0.21; worst moves Croydon (Labor 0.21 -> 0.41 at 8-9pm, Liberal won) and
+Mornington (independent 0.23 -> 0.37 at 9pm, Liberal won), both close. In the 2022 replay feed Mildura's early votes
+arrive in one lump at 11pm, so the vote-type rule acts for a few hours only. Pete chose "On, your override".
+`.NIGHT_BOOTH_KNN` -> "10,1,10,2"; off-switches `--loop=--booth-knn=10,1,10,0` (back to polling booths only) or `off`.
+Each early voting centre as its own unit (Pete's fuller version) cannot be built: no 2022 or 2018 result by early
+voting centre exists (the VEC published one early total per district), the 2026 centres are new, and no replay feed
+carries early votes by centre.

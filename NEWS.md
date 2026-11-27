@@ -1,3 +1,9 @@
+# auspol 0.4.210
+
+Changes the election-night model only.
+
+- **Election night: each vote type still to come is matched to the polling booths whose past results look most like its own** (lane F `types = "knn"`, ON by default as `--booth-knn=10,1,10,2`; `--loop=--booth-knn=10,1,10,0` goes back to polling booths only). An uncounted early, postal or absent block takes its usual swing plus the deviation of those similar counted booths, so Mildura's early vote (40% of the seat) follows the town booths. Screened level overall (0.0000, SE 0.0003; failed its pre-registered clause) and switched on by Pete's override; Mildura 2022 at 8 / 9pm 0.86 / 0.29 -> 0.74 / 0.21 for the losing independent.
+
 # auspol 0.4.209
 
 Changes the election-night model only.

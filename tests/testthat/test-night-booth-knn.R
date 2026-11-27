@@ -105,6 +105,27 @@ test_that("types = TRUE gives an uncounted early unit the weighted swing of all 
   expect_gt(abs(hk$ow - hk$base), 0.003)   # the two rules must differ for this check to bite
 })
 
+test_that("types = 'knn' gives an uncounted early unit the swing of the counted booths most like it (no size term)", {
+  nm <- c(bk_cnt, "T3", "C3")
+  early <- list(early = list("early", 1400, 600, 0))   # town-like reference shares (LNP 30%), much bigger than any booth
+  live_w <- mk_seat(c(bk_live[nm], early)); ref_w <- mk_seat(c(bk_ref[nm], early))
+  live_o <- mk_seat(bk_live[nm]); ref_o <- mk_seat(bk_ref[nm])
+  hk <- hand_knn(nm, bk_cnt, 10, 1, 10)
+  # by hand: shares-only kernel from the early block to each counted booth
+  xe <- c(0.7, 0.3, 0)
+  RT <- vapply(bk_cnt, function(u) sum(unlist(bk_ref[[u]][-1])), 0); LT <- vapply(bk_cnt, function(u) sum(unlist(bk_live[[u]][-1])), 0)
+  y <- vapply(bk_cnt, function(u) bk_live[[u]][[3]], 0) / LT - vapply(bk_cnt, function(u) bk_ref[[u]][[3]], 0) / RT
+  med <- median(vapply(nm, function(u) sum(unlist(bk_ref[[u]][-1])), 0))
+  d2 <- vapply(bk_cnt, function(j) sum((100 * (xe - unlist(bk_ref[[j]][-1]) / sum(unlist(bk_ref[[j]][-1]))))^2), 0)
+  w <- LT / med * exp(-d2 / (2 * 10^2))
+  sw_e <- hk$base + sum(w * (y - hk$base)) / (sum(w) + 1)
+  cfg <- bk_cfg(types = "knn")
+  got <- lnp(project_seat_from_booths(live_w, ref_w, bk_cnt, booth_knn = cfg)) - lnp(project_seat_from_booths(live_o, ref_o, bk_cnt, booth_knn = cfg))
+  expect_equal(got, (0.3 + sw_e) * 2000, tolerance = 1e-6)
+  expect_gt(sw_e, hk$base + 0.03)   # it follows the town booths (+8), well above the pooled swing
+  expect_identical(.night_booth_knn_cfg("10,1,10,2")$types, "knn")
+})
+
 test_that("a counted early unit keeps its own early swing under types = TRUE", {
   nm <- c(bk_cnt, "T3", "C3")
   e1r <- list(early = list("early", 1200, 800, 0)); e1l <- list(early = list("early", 1000, 1000, 0))   # counted, LNP +10 points
@@ -125,14 +146,25 @@ test_that("bad configs and flags raise NX32 or NX33", {
   for (b in bad) expect_error(project_seat_from_booths(live, ref, bk_cnt, booth_knn = b), "NX32")
   expect_error(.night_booth_knn_cfg("10,1,10"), "NX33")
   expect_error(.night_booth_knn_cfg("0,1,10,1"), "NX33")
-  expect_error(.night_booth_knn_cfg("10,1,10,2"), "NX33")
+  expect_error(.night_booth_knn_cfg("10,1,10,3"), "NX33")
   expect_equal(night_lane_a_args(booth_knn = "10,1,10,1")$booth_knn, list(h = 10, k = 1, size_w = 10, types = TRUE))
   expect_equal(night_lane_a_args(booth_knn = "10,1,10,0")$booth_knn$types, FALSE)
   expect_null(night_lane_a_args(booth_knn = "off"))
 })
 
-test_that("the live night defaults to the per-booth guess on polling booths only and 'off' turns it off", {
-  expect_identical(.NIGHT_BOOTH_KNN, "10,1,10,0")
-  expect_identical(night_lane_a_args(booth_knn = .NIGHT_BOOTH_KNN)$booth_knn, list(h = 10, k = 1, size_w = 10, types = FALSE))
+test_that("the live night defaults to the per-booth guess with vote types matched and 'off' turns it off", {
+  expect_identical(.NIGHT_BOOTH_KNN, "10,1,10,2")
+  expect_identical(night_lane_a_args(booth_knn = .NIGHT_BOOTH_KNN)$booth_knn, list(h = 10, k = 1, size_w = 10, types = "knn"))
+  expect_identical(night_lane_a_args(booth_knn = "10,1,10,0")$booth_knn$types, FALSE)
   expect_null(night_lane_a_args(booth_knn = "off"))
+})
+
+test_that("types = 'knn' leaves no NA when every polling booth is counted and a class exists only at the early unit", {
+  nm <- bk_cnt
+  mk3 <- function(x) { d <- mk_seat(x[nm]); e <- data.table::data.table(unit = "early", booth_type = "early", cls = c("ALP", "LNP", "GRN", "ONP"), v = c(1200, 700, 0, 100)); rbind(d, e) }
+  live <- mk3(bk_live); ref <- mk3(bk_ref)
+  for (ty in list("knn", TRUE, FALSE)) {
+    p <- project_seat_from_booths(live, ref, bk_cnt, booth_knn = bk_cfg(types = ty))
+    expect_false(anyNA(p$projected), info = format(ty))
+  }
 })

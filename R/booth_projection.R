@@ -87,7 +87,9 @@ match_booth_units <- function(live, ref) {
 #'   exp(-d^2 / (2 h^2))`, `d^2` the squared distance (points) between the two booths' reference shares over every
 #'   reference class plus `(size_w * log ratio of reference votes)^2`. `types = TRUE`: an uncounted non-ordinary unit
 #'   whose type has no counted unit takes the reference-vote-weighted swing of ALL the seat's ordinary booths (counted:
-#'   own; uncounted: guessed) in place of the all-types counted swing, keeping its type gap. Not with `booth_reg`.
+#'   own; uncounted: guessed) in place of the all-types counted swing, keeping its type gap. `types = "knn"`: such a unit
+#'   instead adds the deviation of the counted polling booths whose reference shares look most like its own (the same
+#'   kernel, no size term) to its all-types swing plus type gap. Not with `booth_reg`.
 #' @return data.table `cls, projected, counted_share`, or `NULL` if no
 #'   counted unit has a reference (nothing to measure a swing on).
 #' @export
@@ -99,8 +101,9 @@ project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, 
     if (!is.null(booth_reg)) stop("NX32! booth_knn and booth_reg cannot both be on", call. = FALSE)
     ok_bk <- is.list(booth_knn) && all(c("h", "k", "size_w", "types") %in% names(booth_knn)) &&
       all(vapply(booth_knn[c("h", "k", "size_w")], function(x) is.numeric(x) && length(x) == 1L && is.finite(x) && x >= 0, logical(1))) &&
-      booth_knn$h > 0 && is.logical(booth_knn$types) && length(booth_knn$types) == 1L && !is.na(booth_knn$types)
-    if (!ok_bk) stop("NX32! booth_knn must be list(h > 0, k >= 0, size_w >= 0, types TRUE/FALSE)", call. = FALSE)
+      booth_knn$h > 0 && length(booth_knn$types) == 1L && !is.na(booth_knn$types) &&
+      (is.logical(booth_knn$types) || identical(booth_knn$types, "knn"))
+    if (!ok_bk) stop("NX32! booth_knn must be list(h > 0, k >= 0, size_w >= 0, types TRUE/FALSE/\"knn\")", call. = FALSE)
   }
   total <- match.arg(total)
   live <- data.table::as.data.table(live); ref <- data.table::as.data.table(ref)
@@ -297,6 +300,7 @@ project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, 
   base <- stats::setNames(rep(0, length(ycls)), ycls); base[bt$cls] <- bt$b
   if (!nrow(bt)) {   # no uncounted ordinary booth: the all-types swing is the base for the types step
     sa <- grid[grid$cls %in% ycls, list(b = sw_all[1]), by = "cls"]; base[sa$cls] <- sa$b }
+  base[is.na(base)] <- 0   # a class with no counted-booth reference has no measured swing: no deviation (review 28 Nov: NA leaked into "knn")
   med <- stats::median(RT[X$unit]); if (!isTRUE(med > 0)) med <- 1
   G <- NULL
   if (length(uu)) {
@@ -316,6 +320,26 @@ project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, 
     ow <- colSums(S * RT[allu]) / sum(RT[allu])
     hit <- grid$booth_type != "ordinary" & grid$.bk_untyped & grid$cls %in% ycls & !is.na(grid$sw_all)
     if (any(hit)) data.table::set(grid, which(hit), "sw", grid$sw[hit] - grid$sw_all[hit] + ow[grid$cls[hit]])
+  }
+  if (identical(bk$types, "knn")) {
+    # each uncounted non-ordinary unit whose type has no counted unit (early, postal, absent ...) is treated as the voters
+    # of the polling booths whose reference results look most like its own: the same kernel on reference shares, NO size
+    # term (an early block is not a big booth), its swing = its current swing (all-types swing + type gap) plus the
+    # similar counted booths' deviation from the ordinary base.
+    tu <- unique(grid$unit[grid$booth_type != "ordinary" & grid$.bk_untyped & grid$unit %in% names(RT)])
+    if (length(tu)) {
+      RT2 <- ref[ref$cls %in% rcls & ref$unit %in% tu, list(v = sum(v)), by = c("unit", "cls")]
+      RT2[ref_tot, on = "unit", rt := i.rt]; RT2[, s := v / pmax(rt, 1)]
+      xt <- matrix(0, length(tu), ncol(xm), dimnames = list(tu, colnames(xm)))
+      j2 <- match(RT2$cls, colnames(xm)); okj <- !is.na(j2)
+      xt[cbind(match(RT2$unit[okj], tu), j2[okj])] <- RT2$s[okj]
+      D3 <- matrix(0, length(tu), length(cu))
+      for (c0 in colnames(xm)) D3 <- D3 + outer(100 * xt[, c0], 100 * xm[cu, c0], "-")^2
+      W3 <- exp(-D3 / (2 * bk$h^2)) * matrix(LT[cu] / med, length(tu), length(cu), byrow = TRUE)
+      A3 <- (W3 %*% sweep(Y, 2L, base[ycls])) / (rowSums(W3) + bk$k); rownames(A3) <- tu
+      hit <- grid$booth_type != "ordinary" & grid$.bk_untyped & grid$unit %in% tu & grid$cls %in% ycls
+      if (any(hit)) data.table::set(grid, which(hit), "sw", grid$sw[hit] + A3[cbind(match(grid$unit[hit], tu), match(grid$cls[hit], ycls))])
+    }
   }
   grid[, .bk_untyped := NULL]
   grid
