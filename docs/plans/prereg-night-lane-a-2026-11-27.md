@@ -73,21 +73,67 @@ extraction exactly: max |difference| 0 in projection and sd on all 16,546 rows (
 **Found on the way, fixed separately (0fb2b74d): the vic2022 replay never projected uncounted ordinary booths.** The
 2022 set-up polling list has no Classification, so no placeholders were made; the vic2022 rows above (and the whole
 vic2022 base the night replays measured) projected the uncounted remainder at the early/postal reference shares. That
-is why every arm moved vic2022 by ~0 and Mildura not at all. vic2022 is re-extracted on the corrected place list below.
+is why every arm moved vic2022 by ~0 and Mildura not at all. Every number below uses vic2022 re-extracted on the
+corrected place list (placeholders per snapshot: 1,729 at 6:03pm, 1,542 at 7pm, 843 at 8pm, 325 at 9pm). The corrected
+base is WORSE on vic2022 under 15% counted (RMSE 3.196 -> 3.457 points, 621 cells): the old base was wrong in a way that
+happened to score better.
 
-### Federal nights (unaffected by the place-list bug), < 15% counted
+### Mean arms, cells under 15% counted (7,378 cells, 369 seat-nights; fed2022 3,336, fed2025 3,421, vic2022 621)
 
-| arm | cells | RMSE base | RMSE arm | dMSE (SE) | fed2022 dMSE (SE) | fed2025 dMSE (SE) |
-|---|---|---|---|---|---|---|
-| A1 booth swing | 6,757 | see pooled | | | +0.242 (0.266) | +0.557 (0.219) |
-| A2 type pooling | 6,757 | | | | 0.000 (exact) | 0.000 (exact) |
-| A1+A2 | 6,757 | | | | +0.242 (0.266) | +0.557 (0.219) |
+Projection RMSE of first preferences, share points, lower is better. dMSE = arm minus base mean squared error, negative
+is better, (SE) clustered on night x seat.
 
-Pooled over the three nights with the OLD vic2022 rows (7,378 cells, 369 seat-nights): base 2.715; A1 2.782 (dMSE
-+0.368, SE 0.158, z +2.3); A2 2.716 (+0.006, SE 0.007); A1+A2 2.783 (+0.374, SE 0.158). Majors only (2,418 cells):
-base 3.304, A1 3.471. A1's worst seats: Grey 2022 (+669 summed squared error), Whitlam 2025 (+412).
+| arm | RMSE base | RMSE arm | pooled dMSE (SE) | fed2022 dMSE (SE) | fed2025 dMSE (SE) | vic2022 dMSE (SE) | verdict |
+|---|---|---|---|---|---|---|---|
+| A1 booth swing, ordinary booths (k 5) | 2.742 | 2.792 | +0.276 (0.162) | +0.242 (0.266) | **+0.557 (0.219)** | **-1.091 (0.384)** | FAIL (primary worse; fed2025 worse 2.5 SE) |
+| A1b booth swing, all units | 2.742 | 2.835 | +0.520 (0.213) | +0.440 (0.338) | **+0.903 (0.286)** | -1.166 (0.698) | FAIL (primary worse 2.4 SE; fed2025 3.2 SE) |
+| A2 vote-type pooling (k 5) | 2.742 | 2.742 | +0.001 (0.001) | 0 exactly | 0 exactly | +0.007 (0.011) | FAIL (no effect) |
+| A1 + A2 | 2.742 | 2.792 | +0.276 (0.162) | +0.242 (0.266) | +0.557 (0.219) | -1.090 (0.384) | FAIL (same as A1) |
 
-A2 changes nothing on the federal nights by construction: only ordinary polling places are counted there by 9pm, so
-each type's pooled swing equals the old one (ordinary swing plus the gap). It only acts where two types are counted.
+Majors only (ALP, LNP; 2,418 cells): base 3.297, A1 3.449, A1b 3.534. A1's worst seats: Grey 2022 (+669 summed squared
+error), Whitlam 2025 (+412), Riverina 2025 (+215); best Herbert 2022 (-255), Mulgrave vic2022 (-168).
 
-(vic2022 on the corrected place list, A1b, and A3: below.)
+**The split is by night type, not noise:** the booth-share slope helps the one Victorian night by 2.8 SE and hurts both
+federal nights. Not tuned (k fixed in advance); the federal nights are 11 times the cells. Recorded, not acted on.
+
+A2 is a no-op by construction on the federal nights (only ordinary places are counted there by 9pm, so each type's
+pooled swing equals the old ordinary-swing-plus-gap) and nearly so on vic2022 (the early unit counts as one block).
+
+**Named target, Mildura vic2022, Coalition (final 45.0) / independents (final 41.2):**
+
+| snapshot | corrected base | A1 | A1b |
+|---|---|---|---|
+| 7pm | 34.1 / 43.5 | 38.8 / 38.5 | 44.0 / 32.8 |
+| 8pm | 40.1 / 45.8 | 41.1 / 45.0 | 43.0 / 43.3 |
+| 9pm | 42.8 / 42.1 | 43.0 / 42.0 | 44.3 / 40.9 |
+
+A1b fixes the Coalition in Mildura at 7pm and over-corrects the independents (32.8 against 41.2).
+
+### A3 representativeness sd (fitted leave-one-night-out), cells under 15% counted
+
+Mean Gaussian log score (negative log density of the error), lower is better. Fitted on the corrected base:
+sd^2 = sd_table^2 + unc_frac^2 x a x rep_dist^2, a = 0.0458 (all three nights; held-out fits 0.039-0.064). b (the
+booth-swing spread term) fitted to 0 on every split.
+
+- Against the table sd (the original criterion): 2.3911 -> 2.3761, diff -0.0149 (SE 0.0048). Every night better
+  (vic2022 -0.027 (0.012), fed2022 -0.011 (0.007), fed2025 -0.017 (0.008)). No bin worse by over 1 SE (largest
+  +0.0014 (0.0026) at 5-10%). Gain is almost all in the first 0.5% counted (-0.111, SE 0.031). **PASSES.**
+- Against the count-only "fitted" curve refit on the same split (addition 2): -0.052 (SE 0.079), not separable, and
+  fed2022 WORSE by 0.148 (SE 0.021). **FAILS the added control clause.**
+- On the first, old-vic run the 10-15% bin was worse by 2.1 SE; on the corrected base it is not.
+
+So A3 passes the original criterion and fails the control added before scoring. Per the clause-refusal rule this goes to
+Pete, not to me: the recommendation is NOT to ship, because it does not beat a curve already refused at the seat level.
+
+### Not built
+
+Unit sizes from the VEC's 2026 early/postal counts: no pre-election early/postal count by district exists on disk for
+any replayed night, so it cannot be tested on a replay. Not built.
+
+### Seat-level replay commands (main session), if wanted
+
+Flags now on `night_replay_vec.R` / `night_replay_feed.R` (via `night_lane_a_args()`, NRV1A / NRF1A print what applied):
+`--booth-reg=5` (A1), `--booth-reg-all=1` (with it, A1b), `--type-pool=5` (A2), `--rep-sd=0.0458,0` (A3). None passed the
+projection screen outright; the only one worth a seat-level look is A3 (`--rep-sd=0.0458,0`), and only to settle the
+control clause.
+
