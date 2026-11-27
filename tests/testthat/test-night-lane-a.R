@@ -69,3 +69,42 @@ test_that("night_booth_update: the lane A switches off are identical, on they re
   expect_error(night_booth_update(sh, psd, 1, live, ref, reported = rp, rep_sd = c(-1, 1)))
   expect_identical(.night_booth_slope(live[0], ref[0], list()), NULL)
 })
+
+# A fixture with ordinary booths, an early block, a postal block, a pooled type gap, an upper-house lean for a new
+# class, and total = "expected": the switches-off output was computed with the pre-lane-A code (403f3f9d) and is
+# hard-coded below, so a change to the default path fails here.
+la_fixture <- function() {
+  ref <- data.table::rbindlist(list(
+    la_seat(c(0.30, 0.50, 0.70), c(800, 1200, 600)),
+    la_seat(0.45, 3000, "early", "early"), la_seat(0.55, 900, "postal", "postal")))
+  live <- data.table::rbindlist(list(
+    la_seat(c(0.36, 0.52, 0.66), c(850, 1250, 640)),
+    la_seat(0.50, 3600, "early", "early"), la_seat(0.58, 950, "postal", "postal")))
+  live <- rbind(live, data.table::data.table(unit = c("B1", "B2", "B3", "early", "postal"), booth_type = c("ordinary", "ordinary", "ordinary", "early", "postal"),
+                                             cls = "ONP", v = c(80, 90, 40, 300, 60)))
+  gap <- data.table::data.table(booth_type = c("early", "postal"), cls = c("LNP", "LNP"), gap = c(0.03, 0.05))
+  lean <- data.table::data.table(unit = c("B1", "B2", "B3", "early", "postal"), cls = "ONP", share = c(0.08, 0.06, 0.05, 0.07, 0.06))
+  list(ref = ref, live = live, gap = gap, lean = lean)
+}
+LA_OLD_PROJ <- c(3554.21806167401, 4018.56299559471, 582.728281938326)   # 403f3f9d, scratch script old_vals.R
+LA_OLD_CS <- 0.28375
+
+test_that("switches off reproduce the pre-lane-A code on a fixture with every existing option", {
+  f <- la_fixture()
+  p <- project_seat_from_booths(f$live, f$ref, c("B1", "B2"), type_gap = f$gap, total = "expected", expected_total = 8000, lean = f$lean)
+  p <- p[order(cls)]
+  expect_identical(p$cls, c("ALP", "LNP", "ONP"))
+  expect_equal(p$projected, LA_OLD_PROJ, tolerance = 1e-12)
+  expect_equal(p$counted_share[1], LA_OLD_CS, tolerance = 1e-12)
+})
+
+test_that("rep_sd is finite on a fully counted seat; the flag parser is strict", {
+  f <- la_fixture()
+  pd <- project_seat_from_booths(f$live, f$ref, unique(f$live$unit), diag = TRUE)
+  expect_true(all(pd$n_ord == 0L) && all(is.finite(pd$swing_sd)))
+  expect_null(night_lane_a_args())
+  expect_identical(night_lane_a_args("5", "1", "3", "0.1,0.2"), list(booth_reg_k = 5, booth_reg_all = TRUE, type_pool_k = 3, rep_sd = c(0.1, 0.2)))
+  expect_error(night_lane_a_args(rep_sd = "0.1"), "NX30")
+  expect_error(night_lane_a_args(booth_reg_all = "1"), "NX30")
+  expect_error(night_lane_a_args(type_pool = "-1"), "NX30")
+})

@@ -63,7 +63,8 @@ match_booth_units <- function(live, ref) {
 #'   plus `beta * (its reference share - the counted booths' reference share)`, where `beta` is the slope of counted
 #'   ordinary booths' swing on their reference share (weighted by this year's booth totals), partial-pooled toward the
 #'   cross-seat slope `pool$beta` (0 if absent) by `n / (n + k)`, `n` the seat's counted ordinary booths. Clipped to
-#'   `[-1, 1]`. A booth strong for a class last time does not get the same swing as a weak one.
+#'   `[-1, 1]`. A booth strong for a class last time does not get the same swing as a weak one. `booth_reg$all = TRUE`
+#'   applies the same offset to every uncounted unit with a reference (early, postal), not only ordinary booths.
 #' @param type_pool_k Lane A2. `NULL` (default) is byte-identical. A number `k >= 0`: each booth type's swing is its own
 #'   counted swing partial-pooled toward a pooled estimate, `w = m / (m + k)` with `m` its counted votes in units of the
 #'   seat's median ordinary booth; the pooled estimate is the seat's ordinary-equivalent swing (every counted type's
@@ -121,7 +122,7 @@ project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, 
     cs_all <- if (is.null(er)) 1 else { cv_all <- sum(live[unit %in% counted_units]$v)
       if (total == "expected" && is.finite(expected_total) && expected_total > 0) min(1, cv_all / expected_total) else cv_all / (cv_all + sum(er$v)) }
     out0[, counted_share := cs_all]
-    if (isTRUE(diag)) out0[, `:=`(n_ord = NA_integer_, swing_sd = NA_real_, rep_dist = 0, unc_frac = 1 - cs_all)]
+    if (isTRUE(diag)) out0[, `:=`(n_ord = 0L, swing_sd = 0, rep_dist = 0, unc_frac = 1 - cs_all)]
     return(out0[])
   }
   grid <- data.table::CJ(unit = unc$unit, cls = classes); grid <- merge(grid, unc, by = "unit")
@@ -144,8 +145,9 @@ project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, 
     stopifnot(is.numeric(type_pool_k), length(type_pool_k) == 1L, type_pool_k >= 0)
     GP <- if (!is.null(type_gap) && nrow(type_gap)) data.table::as.data.table(type_gap)[, list(booth_type, cls, g = gap)] else
       data.table::data.table(booth_type = character(0), cls = character(0), g = numeric(0))
-    ord_tot <- live_tot$lt[live_tot$unit %in% units$unit[units$booth_type == "ordinary"]]
-    med_booth <- if (length(ord_tot) && stats::median(ord_tot) > 0) stats::median(ord_tot) else max(1, stats::median(live_tot$lt))
+    # booth size from the REFERENCE totals: a live feed's uncounted units hold nothing (a replay's hold the final result)
+    ord_tot <- ref_tot$rt[ref_tot$unit %in% units$unit[units$booth_type == "ordinary"]]
+    med_booth <- if (length(ord_tot) && isTRUE(stats::median(ord_tot) > 0)) stats::median(ord_tot) else max(1, stats::median(ref_tot$rt))
     STY <- mc[, list(sw_own = sum(v) / sum(lt) - sum(rv) / sum(rt), wl = sum(lt)), by = c("booth_type", "cls")]
     STY[GP, on = c("booth_type", "cls"), g := i.g]
     if (!"g" %in% names(STY)) STY[, g := NA_real_]
@@ -164,15 +166,16 @@ project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, 
     grid[, c("a2_g", "a2_own", "a2_m", "a2_b") := NULL]
   }
   # LANE A1 (and the diag columns): booth-level swing on the booth's own reference share.
-  MO <- mc[mc$booth_type == "ordinary"]
+  SLOPE <- data.table::data.table(cls = character(0), n_ord = integer(0), xm = numeric(0), b_loc = numeric(0), swing_sd = numeric(0))
+  MO <- if (!is.null(booth_reg) || isTRUE(diag)) mc[mc$booth_type == "ordinary" & mc$lt > 0] else mc[0]   # nothing runs with every switch off
   if (nrow(MO)) {
     MO[, `:=`(x = rv / pmax(rt, 1), y = v / pmax(lt, 1) - rv / pmax(rt, 1))]
     SLOPE <- MO[, {
       xm <- sum(lt * x) / sum(lt); ym <- sum(lt * y) / sum(lt); vx <- sum(lt * (x - xm)^2) / sum(lt)
-      list(n_ord = .N, xm = xm, b_loc = if (.N >= 2 && vx > 1e-8) sum(lt * (x - xm) * (y - ym)) / sum(lt) / vx else NA_real_,
+      list(n_ord = .N, xm = xm, b_loc = if (isTRUE(.N >= 2 && vx > 1e-8)) sum(lt * (x - xm) * (y - ym)) / sum(lt) / vx else NA_real_,
            swing_sd = 100 * sqrt(sum(lt * (y - ym)^2) / sum(lt)))
     }, by = "cls"]
-  } else SLOPE <- data.table::data.table(cls = character(0), n_ord = integer(0), xm = numeric(0), b_loc = numeric(0), swing_sd = numeric(0))
+  }
   if (!is.null(booth_reg)) {
     k1 <- booth_reg$k; stopifnot(is.numeric(k1), length(k1) == 1L, k1 >= 0)
     SL <- data.table::copy(SLOPE); SL[, b_pool := 0]
@@ -182,7 +185,8 @@ project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, 
     SL[, beta := pmin(1, pmax(-1, w1 * ifelse(is.na(b_loc), 0, b_loc) + (1 - w1) * b_pool))]
     grid[, `:=`(a1_beta = NA_real_, a1_xm = NA_real_)]
     grid[SL, on = "cls", `:=`(a1_beta = i.beta, a1_xm = i.xm)]
-    hit1 <- grid$booth_type == "ordinary" & grid$unit %in% ref_tot$unit & !is.na(grid$a1_beta)
+    # booth_reg$all = TRUE (prereg addition A1b): the same offset on every uncounted unit with a reference (early, postal...)
+    hit1 <- (isTRUE(booth_reg$all) | grid$booth_type == "ordinary") & grid$unit %in% ref_tot$unit & !is.na(grid$a1_beta)
     grid[hit1, sw := sw + a1_beta * (rv / pmax(rt, 1) - a1_xm)]
     grid[, c("a1_beta", "a1_xm") := NULL]
   }
