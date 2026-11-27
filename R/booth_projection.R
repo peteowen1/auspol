@@ -300,6 +300,7 @@ project_seat_from_booths <- function(live, ref, counted_units, type_gap = NULL, 
   base <- stats::setNames(rep(0, length(ycls)), ycls); base[bt$cls] <- bt$b
   if (!nrow(bt)) {   # no uncounted ordinary booth: the all-types swing is the base for the types step
     sa <- grid[grid$cls %in% ycls, list(b = sw_all[1]), by = "cls"]; base[sa$cls] <- sa$b }
+  base[is.na(base)] <- 0   # a class with no counted-booth reference has no measured swing: no deviation (review 28 Nov: NA leaked into "knn")
   med <- stats::median(RT[X$unit]); if (!isTRUE(med > 0)) med <- 1
   G <- NULL
   if (length(uu)) {
