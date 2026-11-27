@@ -87,7 +87,9 @@ match_booth_units <- function(live, ref) {
 #'   exp(-d^2 / (2 h^2))`, `d^2` the squared distance (points) between the two booths' reference shares over every
 #'   reference class plus `(size_w * log ratio of reference votes)^2`. `types = TRUE`: an uncounted non-ordinary unit
 #'   whose type has no counted unit takes the reference-vote-weighted swing of ALL the seat's ordinary booths (counted:
-#'   own; uncounted: guessed) in place of the all-types counted swing, keeping its type gap. Not with `booth_reg`.
+#'   own; uncounted: guessed) in place of the all-types counted swing, keeping its type gap. `types = "knn"`: such a unit
+#'   instead adds the deviation of the counted polling booths whose reference shares look most like its own (the same
+#'   kernel, no size term) to its all-types swing plus type gap. Not with `booth_reg`.
 #' @return data.table `cls, projected, counted_share`, or `NULL` if no
 #'   counted unit has a reference (nothing to measure a swing on).
 #' @export
