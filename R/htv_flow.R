@@ -130,14 +130,15 @@ htv_seat_splits <- function(dir = file.path("external", "elections")) {
 #' `"1"`: the share written into the exact `LNP|ALP+GRN` key (the Liberal excluded third, Labor and the Greens the
 #' last two, which decides a Labor-v-Greens seat) is fitted from earlier FINAL-THREE exclusions only: Liberal
 #' exclusions whose votes went to Labor and the Greens and nobody else. Every wider `LNP|...ALP+GRN...` key keeps the
-#' share fitted from all exclusions. `"0"` (published): one share for every key, byte-identical to before.
+#' share fitted from all exclusions. `"0"`: one share for every key, byte-identical to before. Published `"1"` since
+#' 27 Nov 2026 (Pete's override of the Victorian seat guard, DECISIONS 27 Nov).
 #' Measured 27 Nov 2026: in Labor-above federal elections the final-three share ran 65-73% while the earlier,
 #' many-candidate exclusions ran 44-62%, and the pooled fit (seat-count weights) is pulled toward the earlier ones.
 #' `docs/plans/prereg-htv-final3-2026-11-27.md`.
 #' @return `TRUE` when on.
 #' @export
 htv_final3_on <- function() {
-  v <- Sys.getenv("AUSPOL_HTV_FINAL3", "0")
+  v <- Sys.getenv("AUSPOL_HTV_FINAL3", "1")
   if (!v %in% c("0", "1")) stop("HTV16! AUSPOL_HTV_FINAL3 must be 0 or 1, not '", v, "'", call. = FALSE)
   identical(v, "1")
 }

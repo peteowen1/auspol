@@ -95,3 +95,23 @@ elections (other sessions' R jobs took the machine to ~1.8 GB free). From its ca
 row, as expected); fed2016 seat log loss 0.2317 -> 0.2319, +0.0001 (paired seat SE 0.0002), 4 seats moved:
 Melbourne (Greens won) +0.0302, Wills -0.0061, Grayndler -0.0031, Sydney -0.0010. The other 10 elections, including
 all three Victorian ones, are unscored, so the decision rule cannot be applied yet. Not shipped.
+
+## RESULT, guard, Victoria (27 Nov 2026 6:05pm, quick_arm 1,000 sims, slots 1, from the main checkout's inputs)
+
+| Election | seats moved | seat log loss off | on | change |
+|---|---|---|---|---|
+| vic2014 | 14 | 0.2806 | 0.2923 | +0.0117 |
+| vic2018 | 2 | 0.2603 | 0.2600 | -0.0003 |
+| vic2022 | 14 | 0.2331 | 0.2341 | +0.0011 |
+| pooled, 264 seats | | 0.2580 | 0.2621 | +0.0042 (SE 0.0038, clustered on election) |
+
+Worse by more than 1 SE on Victoria, the live use. By the rule above: NOT SHIPPED. Federal guard elections beyond
+fed2016 / fed2019, and the other states, not run.
+
+## DECISION: SHIPPED on Pete's override (27 Nov 2026, ~6:10pm)
+
+Asked with both numbers in front of him (transfers better by 3.5 SE; Victorian seats worse by 1.1 SE, vic2014 the
+driver), Pete chose "Ship it on". Claude recommended keeping it off. Working reading, not traced: the low pooled flow
+was compensating for another under-call (likely the Greens primary in Labor-v-Greens seats: Melbourne and Prahran,
+won by the Greens in 2014, moved toward Labor). Trace after 28 Nov by feeding actual primaries and scoring the seat
+model with the new flows (score-components-in-isolation).
