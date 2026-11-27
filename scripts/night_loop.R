@@ -3,6 +3,8 @@
 #   Rscript scripts/night_loop.R --every=60 [--max-cycles=0] [--retries=3] [--stale-min=20] <the same flags as scripts/night_runner.R> [--upload-key=auspol/night/vic2026.json]
 #       [--proj-sd=old|fitted]   (projection sd: old = the rehearsal table, default; fitted = scripts/fit_night_projection_sd.R)
 #       [--booth-knn=h,k,size_w,types]   (lane F, the per-booth best guess, e.g. 10,1,10,1; absent = off; docs/plans/prereg-night-booth-guess-2026-11-28.md)
+#       [--same-class=off|on] [--flow-pool=off|on] [--tcp-by-type=off|on] [--tcp-cand=on|off]   (lane B: B1-B3 off by
+#        default; B1c --tcp-cand ON by default, --tcp-cand=off turns it off; docs/plans/prereg-night-lane-b-2026-11-27.md)
 #
 # A bad snapshot is archived (raw), logged, retried up to --retries times (it may be half written), then skipped
 # until a NEWER one lands. The last good JSON is never touched by a failed cycle (night_publish_json writes a temp
@@ -19,7 +21,9 @@ cfg <- list(source = need("source"), archive = need("archive"), setup = flag("se
             sims = if (!is.null(flag("sims"))) as.integer(flag("sims")) else NULL,
             use_tcp = identical(flag("tcp", "1"), "1"), allow_stub = identical(flag("allow-stub", "0"), "1"),
             turnout = flag("turnout"), council_lean = flag("council-lean"), early_partial = identical(flag("early-partial", "0"), "1"), allow_unmatched = identical(flag("allow-unmatched", "0"), "1"), allow_projected = identical(flag("allow-projected", "0"), "1"),
-            surge_fade = !identical(flag("surge-fade", "1"), "0"), tcp_center = flag("tcp-center", "median"), tcp_flow_floor = as.numeric(flag("tcp-flow-floor", "0.01")), tcp_own_fp = identical(flag("tcp-own-fp", "0"), "1"), tcp_pair_cal = flag("tcp-pair-cal", "fitted"), source_type = flag("source-type", "feed"), enrolment = flag("enrolment"), places = flag("places"), cand_ref = flag("cand-ref"), class_split = flag("class-split"), proj_sd = flag("proj-sd", "old"), rep_sd = flag("rep-sd"), type_sd = flag("type-sd"), proj_tails = flag("proj-tails"), booth_knn = flag("booth-knn"), cache = new.env())
+            surge_fade = !identical(flag("surge-fade", "1"), "0"), tcp_center = flag("tcp-center", "median"), tcp_flow_floor = as.numeric(flag("tcp-flow-floor", "0.01")), tcp_own_fp = identical(flag("tcp-own-fp", "0"), "1"), tcp_pair_cal = flag("tcp-pair-cal", "fitted"), source_type = flag("source-type", "feed"), enrolment = flag("enrolment"), places = flag("places"), cand_ref = flag("cand-ref"), class_split = flag("class-split"), proj_sd = flag("proj-sd", "old"), rep_sd = flag("rep-sd"), type_sd = flag("type-sd"), proj_tails = flag("proj-tails"), booth_knn = flag("booth-knn"),
+            # lane B: B1-B3 off unless "on"; --tcp-cand (B1c) unset means night_cycle's default (on), "off" turns it off
+            same_class = flag("same-class", "off"), flow_pool = flag("flow-pool", "off"), tcp_by_type = flag("tcp-by-type", "off"), tcp_cand = flag("tcp-cand"), cache = new.env())
 upload_key <- flag("upload-key")   # e.g. auspol/night/vic2026.json: after each good cycle, scripts/night_publish_r2.sh uploads --out there
 every <- as.numeric(flag("every", "60")); max_cycles <- as.integer(flag("max-cycles", "0")); retries <- as.integer(flag("retries", "3"))
 # --stale-min: warn (NWL3, once per quiet spell) when no new snapshot has appeared for this many minutes; 0 turns it off.
@@ -31,7 +35,9 @@ last_ok <- NULL; fails <- 0L; last_try <- NULL; cycles <- 0L
 say("loop start: every ", every, "s, source ", cfg$source, ", proj-sd ", cfg$proj_sd, ", rep-sd ",
     { ra <- .night_rep_sd_cfg(cfg$rep_sd); if (is.null(ra)) "off" else paste(ra$rep_sd, collapse = ",") },
     ", type-sd ", if (is.null(cfg$type_sd)) "off" else cfg$type_sd, ", proj-tails ", if (is.null(cfg$proj_tails)) .NIGHT_PROJ_TAILS else cfg$proj_tails,
-    ", booth-knn ", if (is.null(cfg$booth_knn)) "off" else cfg$booth_knn)
+    ", booth-knn ", if (is.null(cfg$booth_knn)) "off" else cfg$booth_knn,
+    ", same-class ", cfg$same_class, ", flow-pool ", cfg$flow_pool, ", tcp-by-type ", cfg$tcp_by_type,
+    ", tcp-cand ", if (.night_tcp_cand_cfg(cfg$tcp_cand)) "on" else "off")
 repeat {
   # the website source's snapshots are folders (night_web_latest()); the feed's are files (night_fetch_snapshot()).
   # Before 11 Nov 2026 this read the feed only, so a --source-type=web loop waited forever (dress rehearsal).

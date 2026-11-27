@@ -24,7 +24,11 @@ night_run_update(
   cand_ref = FALSE,
   class_split = NULL,
   proj_sd = "old",
-  lane_a = NULL
+  lane_a = NULL,
+  same_class = FALSE,
+  flow_pool = FALSE,
+  tcp_by_type = FALSE,
+  tcp_cand = FALSE
 )
 }
 \arguments{
@@ -83,10 +87,25 @@ the three real replayed nights (\code{scripts/fit_night_projection_sd.R}).}
 \code{booth_reg_k}, \code{booth_reg_all}, \code{type_pool_k}, \code{rep_sd} (\verb{docs/plans/prereg-night-lane-a-2026-11-27.md}), and lane D's
 \code{type_sd}, \code{proj_tails} (\verb{docs/plans/prereg-night-lane-d-2026-11-28.md}), and lane F's \code{booth_knn}
 (\verb{docs/plans/prereg-night-booth-guess-2026-11-28.md}).}
+
+\item{same_class}{\code{FALSE} (default, unchanged), \code{TRUE} (parameters from \code{\link[=night_same_class_params]{night_same_class_params()}} for the
+state's election) or a named \code{g}: switch B1, same-class candidates the simulator did not split moved by their own
+flow (\code{\link[=night_same_class_shift]{night_same_class_shift()}}).}
+
+\item{flow_pool}{\code{FALSE} (default, unchanged) or \code{TRUE}: switch B2, counted flow errors pooled across seats of
+one final-pair type (\code{\link[=night_flow_pool]{night_flow_pool()}}) before each seat's own count is applied.}
+
+\item{tcp_by_type}{\code{FALSE} (default, unchanged) or \code{TRUE}: switch B3, the counted flow mixed by vote type
+(\code{\link[=night_tcp_obs]{night_tcp_obs()}} \code{by_type}, weights from \code{ref}).}
+
+\item{tcp_cand}{\code{FALSE} (default here, unchanged) or \code{TRUE}: switch B1c, the counted 2CP flow read against each
+finalist class's senior candidate (\code{\link[=night_tcp_obs]{night_tcp_obs()}} \code{cand_level}). \code{\link[=night_cycle]{night_cycle()}} turns it on unless
+\code{cfg$tcp_cand} is \code{"off"}.}
 }
 \value{
 List: \code{sim}, \code{nu} (the update), \code{shares}, \code{sd}, \code{matched} (seats in both state and feed),
-\code{n_updated}, \code{class_split} (the split seats, or \code{NULL}).
+\code{n_updated}, \code{class_split} (the split seats, or \code{NULL}); with any lane B switch on, also \code{same_class},
+\code{flow_pool} and \code{tcp_by_type} (their per-seat detail, or \code{NULL}).
 }
 \description{
 The same steps as \code{scripts/night_replay.R} (\code{run_one}), driven by a table of reported units instead of a

@@ -4,7 +4,7 @@
 \alias{night_tcp_obs}
 \title{The VEC's two-candidate count, turned into a projected final 2CP per seat}
 \usage{
-night_tcp_obs(tcp, fp, units, post)
+night_tcp_obs(tcp, fp, units, post, cand_level = FALSE, by_type = NULL)
 }
 \arguments{
 \item{tcp}{Booth 2CP rows (\verb{district, booth, vote_type, party_raw, votes}), e.g.
@@ -15,6 +15,16 @@ night_tcp_obs(tcp, fp, units, post)
 \item{units}{Named list: the counted units per seat (\code{\link[=night_booth_update]{night_booth_update()}}'s \code{units}).}
 
 \item{post}{Seat x class matrix of updated first preferences (percent).}
+
+\item{cand_level}{\code{FALSE} (default, unchanged) or \code{TRUE} (switch \code{same_class}, B1): \code{a} and \code{b} are each class's
+SENIOR candidate (most counted votes in the units with a 2CP), so its other candidates' votes join the others
+whose flow is measured, and \code{fp_a} / \code{fp_b} are the senior's share (the class's share times the counted senior
+fraction). Needs a \code{candidate} column in \code{fp}; without one it is the class-level count.}
+
+\item{by_type}{\code{NULL} (default, unchanged) or the reference election's booth table (\verb{district, booth_type, party, votes}; switch \code{tcp_by_type}, B3): the flow becomes the mix of per-vote-type flows (ordinary, early, postal, ...)
+weighted by each type's share of the others' votes at the reference election, a type's gap to the ordinary flow
+partial-pooled across the night's seats (\code{.night_tcp_type_mix()}); columns \code{flow_class_mix} (the flow before)
+and \code{type_mix} are added.}
 }
 \value{
 data.table \verb{seat, a, b, flow} (share of the others' votes reaching \code{a}, 0-1), \code{share_a}
