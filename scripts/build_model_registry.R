@@ -443,6 +443,9 @@ CLASSIFY <- list(
     "UNIVERSAL via R/: read inside class_split_gate() from class_split_args() (R/class_split.R) through",
     "coalition_split_args(); points modes only. SHIPPED 2026-11-18 as cred2 (prereg-ind-split-points Amendment 2, Pete's",
     "override of guard 1): split only seats with 2+ independents who have a record."),
+  AUSPOL_HTV_FINAL3 = paste(
+    "UNIVERSAL via R/: read inside htv_final3_on() from fit_htv_flow_rows() (R/htv_flow.R), which every harness and",
+    "fit_seats_full.R reach through htv_flow_override(). EXPERIMENT 2026-11-27, off (plans/prereg-htv-final3-2026-11-27.md)."),
   AUSPOL_HTV_JUR_SHRINK = paste(
     "UNIVERSAL via R/: read inside htv_jur_shrink_on() from htv_card_label_shares() (R/htv_flow.R), which every",
     "harness and fit_seats_full.R reach through the HTV flow. REFUSED 2026-11-17, stays 0 (plans/prereg-htv-jur-shrink-2026-11-17.md)."),
