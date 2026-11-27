@@ -192,13 +192,39 @@ combine_prior_projection <- function(prior, proj, sd_prior, sd_proj) {
 #' those points, held at 3.5 below 5% counted and at 0.26 above 95%.
 #' A replay re-fits this; it is a rehearsal constant, not a law.
 #'
+#' `method = "fitted"` (opt-in; `--proj-sd=fitted` on the night scripts) replaces the table with a smooth curve
+#' fitted by `scripts/fit_night_projection_sd.R` on the three real replayed nights (vic2022, fed2022, fed2025), per
+#' class group (`.booth_proj_sd_fit`): `sd^2 = a + (b + c p (1 - p)) / max(counted_share, floor)`, `p` the projected
+#' share as a fraction. With `a, b, c >= 0` it falls monotonically with the count and has no cliff.
+#'
 #' @param counted_share share of ALL the seat's votes counted, 0 to 1.
 #' @param table data.frame `share, sd` to interpolate; the rehearsal-1 table
 #'   by default.
+#' @param method `"old"` (default, the table above, unchanged) or `"fitted"`.
+#' @param share,cls For `"fitted"`: the projected share (points) and class of each cell (recycled against
+#'   `counted_share`). A class in `.booth_proj_sd_fit$major` uses the major-party curve, every other the other one.
 #' @return sd in share points.
 #' @export
 booth_projection_sd <- function(counted_share,
                                 table = data.frame(share = c(0.00, 0.05, 0.086, 0.224, 0.346, 0.95, 1.00),
-                                                   sd    = c(3.5, 3.5, 2.63, 1.93, 1.77, 0.26, 0.26))) {
-  stats::approx(table$share, table$sd, xout = pmin(pmax(counted_share, 0), 1), rule = 2)$y
+                                                   sd    = c(3.5, 3.5, 2.63, 1.93, 1.77, 0.26, 0.26)),
+                                method = c("old", "fitted"), share = NULL, cls = NULL) {
+  method <- match.arg(method)
+  if (method == "old") return(stats::approx(table$share, table$sd, xout = pmin(pmax(counted_share, 0), 1), rule = 2)$y)
+  if (is.null(share) || is.null(cls)) stop("BPS1! booth_projection_sd(method = \"fitted\") needs share and cls", call. = FALSE)
+  f <- .booth_proj_sd_fit
+  n <- max(length(counted_share), length(share), length(cls))
+  cs <- rep_len(pmin(pmax(counted_share, 0), 1), n); p <- rep_len(pmin(pmax(share / 100, 0), 1), n)
+  g <- ifelse(rep_len(cls, n) %in% f$major, "major", "other")
+  k <- f$coef[g, , drop = FALSE]
+  sqrt(k[, "a"] + (k[, "b"] + k[, "c"] * p * (1 - p)) / pmax(cs, f$floor))
 }
+
+# Fitted projection-sd constants (method = "fitted"): scripts/fit_night_projection_sd.R, Gaussian likelihood over every
+# (night, snapshot, seat, class) projection of the vic2022, fed2022 and fed2025 replays (total = "expected", cand_ref "copy").
+# Inventoried in docs/CONSTANTS.md. Refit with that script; do not hand-tune.
+.booth_proj_sd_fit <- list(
+  major = c("ALP", "LNP"),
+  floor = 0.002,
+  coef = rbind(major = c(a = NA_real_, b = NA_real_, c = NA_real_),
+               other = c(a = NA_real_, b = NA_real_, c = NA_real_)))

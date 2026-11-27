@@ -105,6 +105,12 @@ night_prior_sd <- function(shares, level_sd, level_mult = NULL, sd_override = NU
 #'   (`docs/plans/prereg-night-candidate-ref-2026-11-11.md`, FAILED: the old class loses its history); `"copy"`
 #'   keeps them under the old class AND adds them to the current one, with each unit's reference total unchanged
 #'   (`docs/plans/prereg-night-candidate-ref-copy-2026-11-11.md`). Needs a `candidate` column in both tables.
+#' @param keep_proj `TRUE` adds `proj_detail` to the result: one row per seat and class projected (`seat, cls, proj`
+#'   (points), `counted_share, n_units, has_ref, sd_proj, in_prior, prior, prior_sd`), for fitting the projection sd
+#'   (`scripts/fit_night_projection_sd.R`). `FALSE` (default) returns the list exactly as before.
+#' @param proj_sd `"old"` (default, byte-identical): the projection sd is [booth_projection_sd()]'s rehearsal table, the same
+#'   for every class. `"fitted"`: its curve fitted on the three real replayed nights, by class group and projected share
+#'   (`booth_projection_sd(method = "fitted")`). It already widens minor and independent cells, so leave `new_sd_mult` at 1 with it.
 #' @return List: `shares` (posterior means, rows renormalised to 100), `sd` (posterior sds),
 #'   `counted` (named per-seat share of the final night vote counted), `resolved` (mean over
 #'   updated cells of 1 - posterior sd / prior sd), `n_updated` (seats with booths), `units`
@@ -113,8 +119,8 @@ night_prior_sd <- function(shares, level_sd, level_mult = NULL, sd_override = NU
 #' @export
 night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, gap_k = NULL, early = "last", new_sd_mult = 1,
                                reported = NULL, total = c("table", "projected", "expected"), expected = NULL, lean = NULL,
-                               early_frac = NULL, cand_ref = FALSE) {
-  total <- match.arg(total)
+                               early_frac = NULL, cand_ref = FALSE, keep_proj = FALSE, proj_sd = c("old", "fitted")) {
+  total <- match.arg(total); proj_sd <- match.arg(proj_sd)
   stopifnot(is.numeric(new_sd_mult), length(new_sd_mult) == 1L, new_sd_mult >= 1)
   stopifnot(identical(dim(shares), dim(prior_sd)), is.finite(frac), frac >= 0, frac <= 1)
   if (!is.null(reported)) stopifnot(all(c("district", "unit") %in% names(reported)))
@@ -181,6 +187,7 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
   seats <- rownames(post); cls_all <- colnames(post)
   counted <- setNames(rep(0, length(seats)), seats)
   res <- numeric(0); n_up <- 0L; units_by_seat <- list(); fallback_projected <- character(0); proj_total <- numeric(0)
+  proj_rows <- list()
   todo <- intersect(seats, unique(Lc$district))
   cd <- if (!is.null(reported)) reported$district; cu <- if (!is.null(reported)) reported$unit
   for (s in todo) {
@@ -211,12 +218,18 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
     counted[s] <- cs
     proj <- 100 * p$projected / sum(p$projected)
     names(proj) <- p$cls
-    sdj <- rep(booth_projection_sd(cs), length(proj))
+    sdj <- if (proj_sd == "old") rep(booth_projection_sd(cs), length(proj)) else
+      booth_projection_sd(cs, method = "fitted", share = unname(proj), cls = names(proj))
     # NEW CANDIDATES (#160): a class with no votes at the previous election in this seat has no booth
     # swing to measure -- the projection carries its counted share forward -- so its projection is held
     # more loosely (new_sd_mult; 1 = as every other class).
     if (new_sd_mult != 1) sdj[!names(proj) %in% unique(rd$cls)] <- sdj[!names(proj) %in% unique(rd$cls)] * new_sd_mult
     j <- match(names(proj), cls_all); ok <- !is.na(j)
+    if (isTRUE(keep_proj))
+      proj_rows[[s]] <- data.table::data.table(seat = s, cls = names(proj), proj = unname(proj), counted_share = cs,
+                                               n_units = length(units), has_ref = names(proj) %in% unique(rd$cls), sd_proj = sdj,
+                                               in_prior = ok, prior = ifelse(ok, post[s, pmax(j, 1L)], NA_real_),
+                                               prior_sd = ifelse(ok, psd[s, pmax(j, 1L)], NA_real_))
     if (!any(ok)) next
     # A class standing now that the projection does not see (no booth votes) keeps its prior;
     # a class the projection sees that the forecast does not model is left out (rows renormalise).
@@ -226,9 +239,11 @@ night_booth_update <- function(shares, prior_sd, frac, live, ref, seed = 2022L, 
     post[s, ] <- 100 * post[s, ] / sum(post[s, ])
     n_up <- n_up + 1L
   }
-  list(shares = post, sd = psd, counted = counted,
+  out <- list(shares = post, sd = psd, counted = counted,
        resolved = if (length(res)) mean(res) else 0, n_updated = n_up, units = units_by_seat, type_gap = type_gap,
        fallback_projected = fallback_projected, proj_total = proj_total, n_cand_ref = n_cand_ref)
+  if (isTRUE(keep_proj)) out$proj_detail <- data.table::rbindlist(proj_rows)   # only when asked: the default list is unchanged
+  out
 }
 
 # Pooled swing gap of each non-ordinary booth type against ordinary booths, per class, over the
