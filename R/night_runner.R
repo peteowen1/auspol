@@ -797,6 +797,20 @@ night_publish_json <- function(doc, out_file, min_seats = 1L) {
   stop("NW26! proj_sd must be \"old\", \"fitted\" or \"max\" (got ", paste(format(x), collapse = ","), ")", call. = FALSE)
 }
 
+# cfg$rep_sd (lane A3, docs/plans/prereg-night-lane-a-2026-11-27.md; seat-level replay PASSED 28 Nov 2026 12:40am, all three
+# real nights): NULL -> ON at the fitted c(0.0458, 0) (Pete's rule: a fix that passes overnight is switched on); "off" or
+# "0,0" -> off (the night command's --loop=--rep-sd=off turns it off mid-count); "a,b" as given. Widens the projection sd
+# by how unlike the counted booths are the ones still to come (night_booth_update()'s rep_sd).
+.NIGHT_REP_SD <- c(0.0458, 0)
+.night_rep_sd_cfg <- function(x) {
+  if (is.null(x)) return(list(rep_sd = .NIGHT_REP_SD))
+  if (identical(x, "off")) return(NULL)
+  v <- suppressWarnings(as.numeric(strsplit(as.character(x), ",", fixed = TRUE)[[1]]))
+  if (length(v) != 2L || any(!is.finite(v)) || any(v < 0))
+    stop("NW32! rep_sd must be \"off\" or \"a,b\" with a, b >= 0 (got ", paste(format(x), collapse = ","), ")", call. = FALSE)
+  if (all(v == 0)) NULL else list(rep_sd = v)
+}
+
 # cfg$class_split (NW23, NW24): NULL or "on" -> two candidates of one minor class run separately from their counted figures (Pete,
 # 14 Nov 2026: on for the 28 Nov night; docs/plans/prereg-night-class-split-2026-11-14.md PASSED); "off" -> as before.
 # Parameters fitted once per election from earlier ones (night_class_split_params()), kept in the cycle cache.
@@ -963,7 +977,7 @@ night_cycle <- function(cfg) {
                             tcp_own_fp = isTRUE(cfg$tcp_own_fp), tcp_pair_cal = .night_pair_cal_cfg(cfg$tcp_pair_cal),
                             cand_ref = .night_cand_ref_cfg(cfg$cand_ref, web),
                             class_split = .night_class_split_cfg(cfg$class_split, cache$st$pair, cache),
-                            proj_sd = .night_proj_sd_cfg(cfg$proj_sd)); stamp_t("update_simulate")
+                            proj_sd = .night_proj_sd_cfg(cfg$proj_sd), lane_a = .night_rep_sd_cfg(cfg$rep_sd)); stamp_t("update_simulate")
     if (!is.null(res$class_split)) message(sprintf("NW24  night class split: %d seat(s) counting 2+ candidates of one class separately", nrow(res$class_split)))
     res$denominator <- denom; res$n_placeholder <- conv$n_placeholder_booths; res$n_unlisted <- conv$n_unlisted_booths
     if (length(res$nu$fallback_projected)) message("NW12  ", length(res$nu$fallback_projected), " seat(s) fell back to the projected denominator (no usable expected votes): ", paste(res$nu$fallback_projected, collapse = ", "))

@@ -1,0 +1,11 @@
+test_that(".night_rep_sd_cfg: on by default at the fitted value, off by 'off' or '0,0', strict otherwise", {
+  on <- .night_rep_sd_cfg(NULL)
+  expect_identical(names(on), "rep_sd")
+  expect_equal(on$rep_sd, c(0.0458, 0))
+  expect_null(.night_rep_sd_cfg("off"))
+  expect_null(.night_rep_sd_cfg("0,0"))
+  expect_equal(.night_rep_sd_cfg("0.1,0.2")$rep_sd, c(0.1, 0.2))
+  expect_error(.night_rep_sd_cfg("abc"), "NW32")
+  expect_error(.night_rep_sd_cfg("0.1"), "NW32")
+  expect_error(.night_rep_sd_cfg("-1,0"), "NW32")
+})
