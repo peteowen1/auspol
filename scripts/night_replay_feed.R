@@ -18,7 +18,9 @@
 # Writes <out>/<label>-summary.csv (one row per time) and <out>/<label>-seats.csv (seat x time x party probability).
 # Check codes NRF1-NRF4.
 options(auspol.root = normalizePath("."))
-suppressMessages({ library(data.table); devtools::load_all(quiet = TRUE) })
+suppressMessages({ library(data.table); devtools::load_all(Sys.getenv("AUSPOL_CODE_DIR", "."), quiet = TRUE) })
+cat(sprintf("NRCODE code from %s (data from %s)
+", normalizePath(Sys.getenv("AUSPOL_CODE_DIR", ".")), normalizePath(".")))   # AUSPOL_CODE_DIR: run a branch's code against this checkout's data
 a <- commandArgs(trailingOnly = TRUE)
 flag <- function(name, default = NULL) { h <- grep(paste0("^--", name, "="), a, value = TRUE); if (length(h)) sub("^[^=]*=", "", h[1]) else default }
 st <- readRDS(flag("state")); yr <- st$to; pair_lbl <- sprintf("fed%d", yr)

@@ -20,7 +20,9 @@
 # report the share of the third's errors inside +-1.96 sd. Check codes NPSD1-NPSD7. The fitted constants are copied by
 # hand into R/booth_projection.R (.booth_proj_sd_fit) and docs/CONSTANTS.md.
 options(auspol.root = normalizePath("."))
-suppressMessages({ library(data.table); devtools::load_all(quiet = TRUE) })
+suppressMessages({ library(data.table); devtools::load_all(Sys.getenv("AUSPOL_CODE_DIR", "."), quiet = TRUE) })
+cat(sprintf("NRCODE code from %s (data from %s)
+", normalizePath(Sys.getenv("AUSPOL_CODE_DIR", ".")), normalizePath(".")))   # AUSPOL_CODE_DIR: run a branch's code against this checkout's data
 a <- commandArgs(trailingOnly = TRUE)
 flag <- function(name, default = NULL) { h <- grep(paste0("^--", name, "="), a, value = TRUE); if (length(h)) sub("^[^=]*=", "", h[1]) else default }
 DR <- flag("data", "."); runs <- file.path(DR, flag("runs", "deciding-runs/20261111-0900-night-pair-cal"))
