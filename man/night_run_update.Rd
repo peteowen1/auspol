@@ -80,7 +80,8 @@ run separately from their counted figures (\verb{docs/plans/prereg-night-class-s
 the three real replayed nights (\code{scripts/fit_night_projection_sd.R}).}
 
 \item{lane_a}{\code{NULL} (default, unchanged) or a list (see \code{\link[=night_lane_a_args]{night_lane_a_args()}}) of lane A switches passed to \code{\link[=night_booth_update]{night_booth_update()}}:
-\code{booth_reg_k}, \code{booth_reg_all}, \code{type_pool_k}, \code{rep_sd} (\verb{docs/plans/prereg-night-lane-a-2026-11-27.md}).}
+\code{booth_reg_k}, \code{booth_reg_all}, \code{type_pool_k}, \code{rep_sd} (\verb{docs/plans/prereg-night-lane-a-2026-11-27.md}), and lane D's
+\code{type_sd}, \code{proj_tails} (\verb{docs/plans/prereg-night-lane-d-2026-11-28.md}).}
 }
 \value{
 List: \code{sim}, \code{nu} (the update), \code{shares}, \code{sd}, \code{matched} (seats in both state and feed),
