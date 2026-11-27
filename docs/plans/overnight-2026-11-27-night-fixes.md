@@ -29,3 +29,17 @@ Pete's calls (27 Nov ~9:20pm): a fix that PASSES its prereg overnight gets switc
 ## Status log
 
 - 9:20pm: plan written; checks before lanes: web page content, vic2026 sizing, Mildura by candidate.
+- 9:12pm rehearsal (`--dry-2022 --max-cycles=1`, tonight's night state): rc 0, 87 of 88, 2CP 87, no 999s, ~90 s a cycle.
+- Sizing (vic2026 forecast, 7:24pm run): 75 of 88 seats have 2+ candidates in one class (IND 25, OTH_RIGHT 29, OTH 55);
+  One Nation in a likely final pair in 57; favourite under 0.70 in 47. Web pages carry every ordinary booth, every early
+  centre, postal/absent/provisional by candidate, and two-candidate counts.
+- 9:30pm lanes A and B launched (Opus, worktrees off dev 403f3f9d; replays only by the main session, `AUSPOL_CODE_DIR`).
+- 9:31pm full-night base replays launched (scratchpad/overnight/).
+- Mildura by candidate (feed, counted ordinary booths): 8pm raw Coalition 45.5 / IND 40.4 (finals 45.0 / 41.2) while the
+  projection said 39.0 / 46.5; 7pm's 4 booths were the Coalition's strongest (67.3% in 2018 -> 60.9%).
+- **Lane A found (~9:55pm): the vic2022 FEED replays never made placeholders for uncounted ordinary booths** (the 2022
+  PollingLocations setup file has no Classification; `night_booth_table()` keeps only VotingCentre). So every vic2022
+  replay result before tonight's fix projected the uncounted 97% from the early/postal units alone. Federal replays are
+  unaffected. The LIVE website path is fine: partial-count fixture (543 of 1,729 centres, no early/postal) made 1,186
+  placeholders, exactly the missing ones, 0 unlisted (scratchpad/web_partial.R). Fix: replay passes the final ordinary
+  booth list as places (lane A, own commit); vic2022 base to be rerun.
