@@ -1,5 +1,42 @@
 # Overnight 27-28 Nov 2026: election-night model fixes
 
+## MORNING SUMMARY (written ~5:10am 28 Nov)
+
+**NEEDS PETE (before 1pm):** B1c, reading the counted final-two against each group's leading CANDIDATE (not the whole
+independent group). Better on every night (121 named seat-nights -0.0032, SE 0.0024; all-seat vic -0.0033, fed2022
+-0.0004, fed2025 -0.0002; Vic seats right at the end 87 -> 88; Mildura 7pm-9pm far better), but REFUSED by its own
+prereg clause: without the two seats it was developed on (Mildura, Melbourne) it is -0.0011 (SE 0.0013), under 1 SE.
+Off unless you say yes. A draft PR to main with it ON is being prepared so yes = merge + a 2-minute rehearsal.
+
+**Shipped overnight (ON for tonight, on main and dev, rehearsed, off-switch in brackets):**
+- A3, PR #292: wider early uncertainty when the counted booths are unlike the rest of the seat. Seat log loss under 15%
+  counted -0.0012 (SE 0.0008), no night worse, fewer wrong 0.99 calls. Mildura 7pm 0.98 -> 0.92. (`--loop=--rep-sd=off`)
+- D2, PR #293: fat-tailed blend of the afternoon forecast and the booth projection. -0.0008 (SE 0.0008, 1.04 SE), every
+  night better. Mildura 7pm 0.92 -> 0.95 (wrong way). (`--loop=--proj-tails=normal`)
+- Liberal flow between Labor and the Greens from final-three counts (PR #291, your override, in the afternoon forecast).
+
+**Your table, row by row (a row is "yes" only if built, passed on three real nights, and on):**
+
+| Source of uncertainty | Now | What happened overnight |
+|---|---|---|
+| Share of votes counted | Yes | unchanged; now joined by A3 and D2 |
+| Counted booths unlike the rest | **Yes (A3, shipped)** | |
+| Number and size of booths (people-weighted, incl. your sqrt) | No: refused | the fitted strength came out ZERO: the current sd already over-covers (98% of errors inside its 95% band) except with <= 1 booth; sqrt weights made calls worse (one more wrong 0.99 call, 3 fewer seats right) |
+| Vote types (extra uncertainty until a type reports) | Partly: refused | measured spread is real, but stacked on A3 it over-widens seats the model had right (Vic 2.4 SE worse); flows by vote type untestable (no night we have reports early/postal final-two counts) |
+| How many votes in total | No: refused | built and run on the full Vic night: no measurable effect (+0.0001); adding early votes made the expected total worse |
+| Preference flows | Partly: **B1c awaits you** | B1 (same-group candidates' own flow) and B2 (pooling flow surprises across seats) built: B1 effect only in the two development seats; B2 worse on Vic |
+| Statewide correlation | Yes | unchanged |
+| Fat tails | **Yes (D2, shipped)** | |
+
+The one-line reason most rows refused: on the replayed nights the model's uncertainty is already a little too WIDE for
+most early projections; the over-confidence is concentrated in seats where one or a few unrepresentative booths report
+first, which A3 and D2 now handle. Adding more uncertainty elsewhere made seats it already called right worse.
+
+**Bugs found and fixed:** Victorian replays never projected uncounted booths (replay only; the live path was checked and
+fine). Every Vic replay number before 10pm 27 Nov is on the faulty path.
+
+**Still open:** B1c decision; morning early-vote save after ~8:40am; Lane B federal 2022 B2 run finishing (no ship).
+
 ## RULES THIS RUN NEVER BREAKS
 
 1. **Never upload to the live night key** (`auspol/night/vic2026.json`) or run the night command with `--upload` before 6pm Sat.
