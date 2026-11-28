@@ -1,0 +1,43 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Libre+Franklin:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+html,body{margin:0}
+body{width:1200px;height:675px;background:#fdf0e0;color:#1c1917;font-family:"Libre Franklin",system-ui,sans-serif;position:relative;overflow:hidden}
+.top{position:absolute;inset:0 0 auto 0;height:10px;background:#1c1917}
+.wrap{padding:44px 56px 0 56px}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:#7a6f63}
+h1{font-family:"DM Serif Display",Georgia,serif;font-weight:400;font-size:46px;line-height:1.08;margin:10px 0 8px}
+.sub{font-size:19px;color:#57504a;margin:0 0 22px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:44px}
+.panel h2{font-family:"DM Serif Display",Georgia,serif;font-weight:400;font-size:28px;margin:0 0 2px}
+.panel .n{font-family:"IBM Plex Mono",monospace;font-size:13px;color:#7a6f63;margin-bottom:12px}
+.row{display:grid;grid-template-columns:150px 1fr;align-items:center;height:62px}
+.lab{font-size:19px;font-weight:600}
+.lab small{display:block;font-weight:400;font-size:14px;color:#7a6f63;font-family:"IBM Plex Mono",monospace}
+.track{position:relative;height:34px}
+.zero{position:absolute;top:-8px;bottom:-8px;width:2px;background:#1c1917}
+.bar{position:absolute;top:0;height:34px;border-radius:0 4px 4px 0}
+.bar.neg{border-radius:4px 0 0 4px}
+.val{position:absolute;top:4px;font-family:"IBM Plex Mono",monospace;font-size:21px;font-weight:500}
+.foot{position:absolute;left:56px;right:56px;bottom:26px;display:flex;justify-content:space-between;font-family:"IBM Plex Mono",monospace;font-size:13.5px;color:#7a6f63;border-top:1px solid #d9cbb8;padding-top:12px}
+.brand{font-family:"DM Serif Display",Georgia,serif;font-size:20px;color:#1c1917}.brand b{color:#c2410c;font-weight:400}
+</style></head><body><div class="top"></div>
+<div class="wrap">
+  <div class="eyebrow">Victoria 2026 · election night · as at __TIME__</div>
+  <h1>__TITLE__</h1>
+  <p class="sub">Change in first-preference vote since 2022, in the polling booths counted so far. Points.</p>
+  <div class="grid" id="g"></div>
+</div>
+<div class="foot"><span>Booths matched to their 2022 result. __VOTES__ votes. Early and postal votes still to come.</span><span class="brand">In The Game<b>.</b> &nbsp;inthegame.blog</span></div>
+<script>
+const D=__DATA__;
+const COL={Labor:"#d32f2f",Coalition:"#2146c7","One Nation":"#f08a1c",Greens:"#1f9d3a"};
+const MAX=36, ZERO=42; // zero line at 38% of the track; scale: MAX points spans the right 62%
+const g=document.getElementById("g");
+D.forEach(p=>{const el=document.createElement("div");el.className="panel";
+  el.innerHTML=`<h2>${p.name}</h2><div class="n">${p.votes.toLocaleString()} votes counted in matched booths</div>`+p.rows.map(r=>{
+    const w=Math.abs(r.ch)/MAX*46, neg=r.ch<0, left=neg?ZERO-w:ZERO;
+    const vx=neg?`right:${100-left+1.5}%`:`left:${ZERO+w+1.5}%`;
+    return `<div class="row"><div class="lab">${r.party}<small>now ${r.now.toFixed(1)}%</small></div><div class="track"><div class="bar ${neg?"neg":""}" style="left:${left}%;width:${w}%;background:${COL[r.party]}"></div><div class="zero" style="left:${ZERO}%"></div><div class="val" style="${vx}">${r.ch>0?"+":"−"}${Math.abs(r.ch).toFixed(1)}</div></div></div>`}).join("");
+  g.appendChild(el)});
+</script></body></html>
