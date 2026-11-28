@@ -119,7 +119,7 @@ seats right 382 = 382. Mildura 8 / 9 / 10 / 11pm 0.86 / 0.30 / 0.25 / 0.15 -> 0.
 Mornington (vic2022); Wills, Cowper, Forrest, Calwell (fed2025). Told Pete; he chose "Merge anyway". PR #295 merged
 (main 882638aa). Back to polling booths only mid-count: `--loop=--booth-knn=10,1,10,0`.
 
-## Amendment 5 (28 Nov 2026, 12:35pm): a learned strength per vote type, written before the fit or any run
+## Amendment 5 (28 Nov 2026, 12:31pm): a learned strength per vote type, written before the fit or any run
 
 **Why.** Amendment 4's full runs failed the fed2025 guard, and the trace put 11.2 of the 17.3 lost on Wills: its postal
 vote (15,028) was matched with 93% weight to three Greens-surging booths, so it was projected GRN +8.0 / ALP -4.1 when
@@ -157,7 +157,7 @@ Tonight's value is the all-pairs fit.
 needs a beta outside the fold range. **Deadline:** no passing screen by 1:45pm, or full runs not done by 2:45pm: the live
 config stays `10,1,10,2`. A guard failure goes to Pete, not merged on my judgement.
 
-### Amendment 5 RESULT (28 Nov 2026, 12:55pm): the fitted strength is 1, so nothing changes; no code, no screen run
+### Amendment 5 RESULT (28 Nov 2026, 12:35pm): the fitted strength is 1, so nothing changes; no code, no screen run
 
 Fit as written above (`fit_knn_beta.R`, through the shipped function): 6 pairs with matched vote-type units (sa2022 has
 none and dropped out), 594 seats, 2,561 vote-type units, 25,910 unit x class rows, two count levels.
