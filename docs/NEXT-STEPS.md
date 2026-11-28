@@ -121,7 +121,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   bases (other classes over-called -2.9, SE 0.84; Narracan Greens is the live case).
 
 
-- OPEN, DATED 28 Nov (after ~8:40am, when the VEC posts each day's file; `Last-Modified` was 8:37am on 27 Nov, so an evening
+- DONE 28 Nov 12:34pm (`vec-early-postal-stats-20261128-1234.xlsx`, VEC file dated 9:55am 28 Nov, the final pre-poll count). Was: DATED 28 Nov (after ~8:40am, when the VEC posts each day's file; `Last-Modified` was 8:37am on 27 Nov, so an evening
   copy repeats the morning's): save the VEC early and postal vote spreadsheet again, raw, into
   `external/reference/vec-early-vote-2026/` (link on https://www.vec.vic.gov.au/voting/2026-state-election/voting-statistics);
   it is the final pre-poll count. Screen: `scripts/screen_early_vote.R`. Copies on disk: 24, 25, 26 and 27 Nov.
