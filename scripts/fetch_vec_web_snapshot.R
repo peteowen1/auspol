@@ -119,6 +119,12 @@ one_snapshot <- function(m) {
     if (sum(is.na(pages)) == length(again)) { refused <- length(again) >= 0.25 * nrow(jobs); break }
   }
   for (i in seq_len(nrow(jobs))) {
+    # ELECTION NIGHT 28 Nov 2026, 6:10pm: four districts' 2CP pages were linked but answered 404 (not published yet), and
+    # one missing page voided every snapshot. A missing 2CP page with its first-preference page present is written as an
+    # empty placeholder (no table: the seat simply has no 2CP count yet) and reported, not treated as a failed snapshot.
+    if (is.na(pages[i]) && jobs$k[i] == "tcp" && !is.na(pages[match(paste(jobs$district[i], "fp"), paste(jobs$district, jobs$k))])) {
+      writeLines("<html><body><!-- 2CP page not published --></body></html>", file.path(d, jobs$f[i]), useBytes = TRUE)
+      cat(sprintf("VWF7 %s: no 2CP page yet for %s (placeholder written)\n", stamp, jobs$district[i])); next }
     if (is.na(pages[i])) { bad <- c(bad, paste(jobs$district[i], jobs$k[i])); next }
     writeLines(pages[i], file.path(d, jobs$f[i]), useBytes = TRUE)
   }

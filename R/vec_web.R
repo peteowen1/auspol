@@ -41,8 +41,14 @@ vec_web_parse <- function(path, district) {
   first <- function(cl) if (length(cl) && length(cl[[1]])) cl[[1]][1] else ""
   if (layout == "2026") {
     hdr <- cells[[1]]
-    cc <- which(vapply(hdr, function(p) length(p) >= 1 && grepl(",", p[1]), logical(1)))
-    cands <- vapply(hdr[cc], function(p) p[1], ""); parties <- vapply(hdr[cc], function(p) if (length(p) >= 2) p[2] else "", "")
+    # VEC PAGE BUG, election night 28 Nov 2026: a hyphenated surname is split at the hyphen on the first-preference page,
+    # "MATTHEWS" in the name slot and "WARD, Kathleen" where the party goes, so the column had no comma and was DROPPED
+    # (the sitting Labor member for Broadmeadows vanished). Such a column is kept, the name rejoined, and its party marked
+    # "__SPLIT__" for night_web_read() to fill from the VEC candidate list.
+    is_split <- function(p) length(p) >= 2 && !grepl(",", p[1]) && grepl("^[A-Z][A-Z' ]*$", trimws(p[1])) && grepl("^[A-Z][A-Z' ]+, ", trimws(p[2]))
+    cc <- which(vapply(hdr, function(p) length(p) >= 1 && (grepl(",", p[1]) || is_split(p)), logical(1)))
+    cands <- vapply(hdr[cc], function(p) if (is_split(p)) paste0(trimws(p[1]), "-", trimws(p[2])) else p[1], "")
+    parties <- vapply(hdr[cc], function(p) if (is_split(p)) "__SPLIT__" else if (length(p) >= 2) p[2] else "", "")
     body <- cells[-1]
     # the 2023 variant (Narracan supplementary) puts the parties in a second header row with an empty first cell
     r2 <- if (length(cells) >= 2) cells[[2]] else list()   # a header-only page (nothing counted yet)
@@ -205,6 +211,30 @@ night_web_read <- function(snap) {
   miss <- c(m$fp, m$tcp)[!file.exists(file.path(snap, c(m$fp, m$tcp)))]
   if (length(miss)) stop("VWB7! ", length(miss), " page(s) listed in the manifest are missing: ", paste(utils::head(miss, 4), collapse = ", "), call. = FALSE)
   fp <- data.table::rbindlist(lapply(seq_len(nrow(m)), function(i) vec_web_parse(file.path(snap, m$fp[i]), m$district[i])))
-  tcp <- data.table::rbindlist(lapply(seq_len(nrow(m)), function(i) vec_web_parse(file.path(snap, m$tcp[i]), m$district[i])))
+  # A 2CP page the VEC had not published yet (28 Nov 2026: linked, but HTTP 404) is saved by the fetcher as a one-line
+  # placeholder; it holds no table, so it is skipped: that seat simply has no 2CP count in this snapshot.
+  tcp <- data.table::rbindlist(lapply(seq_len(nrow(m)), function(i) {
+    f <- file.path(snap, m$tcp[i])
+    if (file.size(f) < 200 && any(grepl("2CP page not published", readLines(f, n = 2L, warn = FALSE), fixed = TRUE))) return(NULL)
+    vec_web_parse(f, m$district[i]) }))
+  # VEC PAGE BUG, election night 28 Nov 2026: the first-preference page splits a hyphenated surname at the hyphen and
+  # prints the rest where the party goes ("MATTHEWS" over "WARD, Kathleen" for MATTHEWS-WARD, Kathleen, Labor), so the
+  # two-candidate page's name matched nobody (VWB4) and the party was lost. Rejoin the name; take the party from the
+  # two-candidate page, else from the VEC candidate list, else leave it blank (an independent).
+  fp <- data.table::as.data.table(fp)
+  split <- fp$party == "__SPLIT__"
+  if (any(split)) {
+    full <- fp$candidate[split]
+    key <- unique(data.table::data.table(district = fp$district[split], candidate = full))
+    key[, party := NA_character_]
+    cl <- file.path(getOption("auspol.root", "."), "external", "reference", "vec", "2026", "vec-candidates-2026.csv")
+    if (anyNA(key$party) && file.exists(cl)) { cc <- data.table::fread(cl, showProgress = FALSE, encoding = "UTF-8")
+      nk <- function(x) gsub("[^a-z]", "", tolower(x)); hit <- match(paste(nk(key$district), nk(key$candidate)), paste(nk(cc$district), nk(cc$name)))
+      key[is.na(party) & !is.na(hit), party := cc$registered_name[hit[is.na(key$party) & !is.na(hit)]]] }
+    key[is.na(party), party := ""]
+    message("VWB8  hyphenated names rejoined (VEC first-preference page splits them): ", paste(sprintf("%s %s [%s]", key$district, key$candidate, key$party), collapse = "; "))
+    pm <- key$party[match(paste(fp$district[split], full), paste(key$district, key$candidate))]
+    fp[split, `:=`(candidate = full, party = pm)]
+  }
   list(fp = fp, tcp = tcp, districts = m$district)
 }
