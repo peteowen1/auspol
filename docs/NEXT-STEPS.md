@@ -8,6 +8,21 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
 
 ## NEEDS PETE
 
+- **ELECTION NIGHT STATE, 28 Nov 11:35pm (detail: DECISIONS, top entry).** Live run: `scripts/night_side/launchers/live_take5.sh`
+  (`--proj-sd=max --flow-pool=on`, `NIGHT_TCP_SEAT_TOTALS` set), work folder `C:\night28\`, stays running through Sun 29 Nov
+  (Pete). Six side loops beside it (raw counts, booth feed, seat 2CP totals, upper-house count, live upper-house forecast,
+  per-booth model capture): `scripts/night_side/README.md`. Stop any of them by PID from the PowerShell tool only.
+  The daily forecast workflow is DISABLED; re-enabling is Pete's call.
+- OPEN, Sun 29 Nov, in this order: (1) review + `check_like_ci` + PR for the night's unreviewed live fixes (`8a35595f`,
+  `df096f92`; `0c431b4f` parser fixes). (2) Replay the saved fetches (`C:\night28\web\`, about 150 snapshots) through each
+  fix: 8:22pm flow fix, seat-level totals, `--flow-pool`, and `--tcp-by-type` (made things worse live at 11:25pm; vic2022
+  has the by-booth data to test it properly). (3) The flow model's Labor/Greens -> Coalition v One Nation flow (pre-election
+  about 50%, tonight 79% in 14 seats; 6 past seats said 60-62%): step through `R/xgb_flow_override.R`, tonight's 14 seats
+  more than triple the evidence. (4) `counted_pct` = 100 at the 2022 night level: a final-basis field for the site and a
+  floor on uncertainty while absent, provisional and late postal votes are out. (5) `vec_2cp.wrong_pair` false for Ripon.
+  (6) Seat-level and booth-level swing files for ITG's "who swung" page (send headers first; R2 publish needs Pete's yes),
+  then the themed lasso/ridge on real swings. (7) Check `booths_fn.R`'s 423 fallback booth estimates against booths that
+  reported later. (8) Move what survives of `scripts/night_side/` into `scripts/` with tests.
 - **Status 26 Nov, 9:30pm (replaces 25 Nov 10pm; today's detail is in DECISIONS 26 Nov).** Live (main, final run 45789715805,
   8:24pm): DemosAU poll, all 88 YouGov MRP seats (table md5 4bf15725), region + seat-type correlation (PR #288), upper house
   version D (PR #289), NSW 2027 OFF the daily run (repo var). Refused, kept off: One Nation flow calibration (branch
