@@ -316,6 +316,14 @@ is folded into the sections below (Model open, Hygiene, Data and infra); nothing
 
 ## Dated, cannot move
 
+- OPEN, DATED 28 Nov, after the count starts at 6pm (Pete's answers, 28 Nov 2:35pm): pause the daily forecast job so it
+  does not publish a fresh pre-election forecast on 29 Nov: `gh workflow disable forecast.yaml`. Re-enabling it is Pete's call.
+  Done already: today's forecast (built 4:41am 28 Nov) is frozen at `auspol/forecast-vic2026-final.json` on R2.
+- OPEN, DATED 28-29 Nov: keep the night loop running overnight and through Sunday 29 Nov (Pete, 28 Nov). Only replayed to 2am.
+- OPEN, DATED 29 Nov: for ITG's 'who swung' page, write a seat-level file (seat, class or candidate, 2022 share on new
+  boundaries, 2026 share, swing, two-candidate pair and share) and a booth-level file in the `booths-vic2022.csv` shape; send
+  ITG the headers first. Publishing them to R2 needs Pete's yes.
+
 - OPEN, after 28 Nov: One Nation flow keys (24 Nov arms `AUSPOL_ONP_FLOW_KEYS` cond/cond2 REFUSED, DECISIONS 2026-11-24). Run
   `scripts/score_flows_oracle.R` with and without the switch on sa2026/qld2024/fed2025 and score both on vic2026: are the trees'
   One-Nation-leaning flows right, or offsetting under-called One Nation primaries? Done when: both scored, written in the prereg.
