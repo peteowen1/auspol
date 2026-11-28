@@ -118,3 +118,41 @@ under 15% counted +0.0000 (SE 0.0002); vic2022 +0.0013, fed2022 -0.0001, fed2025
 seats right 382 = 382. Mildura 8 / 9 / 10 / 11pm 0.86 / 0.30 / 0.25 / 0.15 -> 0.74 / 0.22 / 0.17 / 0.18. Worse: Croydon,
 Mornington (vic2022); Wills, Cowper, Forrest, Calwell (fed2025). Told Pete; he chose "Merge anyway". PR #295 merged
 (main 882638aa). Back to polling booths only mid-count: `--loop=--booth-knn=10,1,10,0`.
+
+## Amendment 5 (28 Nov 2026, 12:35pm): a learned strength per vote type, written before the fit or any run
+
+**Why.** Amendment 4's full runs failed the fed2025 guard, and the trace put 11.2 of the 17.3 lost on Wills: its postal
+vote (15,028) was matched with 93% weight to three Greens-surging booths, so it was projected GRN +8.0 / ALP -4.1 when
+the truth was +1.4 / -0.6. Early votes followed their look-alike booths (GRN +5.0 projected and actual); absent votes
+overshot (+4.1 against +0.8). So the look-alike deviation is right for some vote types and too strong for others.
+
+**The change.** `types = "knn"` multiplies each vote-type unit's look-alike deviation by a strength `beta` for its type
+(early, postal, absent, provisional, other). `beta = 1` is today's live behaviour; `beta = 0` is polling booths only.
+
+**How beta is fitted (fixed now).** From past full counts, pairs fed2019->2022, fed2022->2025, vic2018->2022,
+nsw2019->2023, qld2020->2024, sa2022->2026, wa2021->2025 (those with matched vote-type units; the count per pair and type
+is printed, and a pair with none drops out visibly). For each seat, a synthetic night through the shipped
+`project_seat_from_booths()`: a set of polling booths counted, every vote-type unit uncounted; the look-alike deviation
+is captured from the function itself. `beta_type` is the vote-weighted slope of (actual unit swing minus the counted
+booths' swing) on the deviation, with a separate mean per election x type x class, so beta does not absorb a type's
+lean. Fitted at TWO count levels: every polling booth counted, and the smallest quarter of booths counted (the early
+night the metric scores). The early-night beta ships if the two differ. Each type's beta is shrunk toward the pooled
+beta by its precision (tau^2 / (tau^2 + se^2)), no minimum n, clipped to [0, 1].
+
+**Leakage.** Each replayed night uses a beta fitted WITHOUT its own pair (`--knn-beta` on the replay). That is
+leave-one-out, not time-forward: fed2022's fit includes fed2025 and later state pairs, and no earlier federal pair is on
+disk. So beta is printed per fold; folds that agree (within 0.15) make the leak immaterial, folds that swing are a no-go.
+Tonight's value is the all-pairs fit.
+
+**Screen (2,000 draws, to 9pm, three nights), against the live config** `--rep-sd=0.0458,0 --proj-tails=t --tcp-cand=1
+--booth-knn=10,1,10,2` (beta 1), plus the vic flags:
+1. Primary: fed2025 seat-winner log loss on cells under 15% counted is better than the live config (the guard that failed).
+2. Guards: vic2022 and fed2022 not worse by more than 1 SE (clustered on seat); wrong 0.99 calls not more; seats right not fewer.
+3. Mildura (vic2022): Cupper's win chance at 9pm not above 0.26 (live 0.21) and at 8pm not above 0.80 (live 0.74).
+4. Wills fed2025: the postal guess moves from GRN +8.0 toward +1.4.
+5. Limiting cases, in tests: beta = 1 for every type is byte-identical to today; beta = 0 leaves vote-type units at their
+   swing without the deviation.
+
+**Not acceptable even if 1 passes:** a beta fitted to make Wills pass (the fit never sees a replay score); a pass that
+needs a beta outside the fold range. **Deadline:** no passing screen by 1:45pm, or full runs not done by 2:45pm: the live
+config stays `10,1,10,2`. A guard failure goes to Pete, not merged on my judgement.
