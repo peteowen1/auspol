@@ -156,3 +156,25 @@ Tonight's value is the all-pairs fit.
 **Not acceptable even if 1 passes:** a beta fitted to make Wills pass (the fit never sees a replay score); a pass that
 needs a beta outside the fold range. **Deadline:** no passing screen by 1:45pm, or full runs not done by 2:45pm: the live
 config stays `10,1,10,2`. A guard failure goes to Pete, not merged on my judgement.
+
+### Amendment 5 RESULT (28 Nov 2026, 12:55pm): the fitted strength is 1, so nothing changes; no code, no screen run
+
+Fit as written above (`fit_knn_beta.R`, through the shipped function): 6 pairs with matched vote-type units (sa2022 has
+none and dropped out), 594 seats, 2,561 vote-type units, 25,910 unit x class rows, two count levels.
+
+Raw beta (SE, clustered on seat), 1 = today's live behaviour:
+
+| count level | early | postal | absent | provisional |
+|---|---|---|---|---|
+| smallest quarter of booths counted | 1.40 (0.16) | 1.11 (0.11) | 1.03 (0.14) | 1.33 (0.17) |
+| every booth counted | 1.44 (0.10) | 0.96 (0.12) | 1.08 (0.12) | 1.48 (0.16) |
+
+Shrunk and clipped to [0, 1], every type is 1.00, in the all-pairs fit and in every leave-one-election-out fold (lowest
+0.975). By size of the deviation, postal's beta is 1.17 to 1.66 where the deviation is over 1 point: large deviations are
+not over-strong either. Postal in fed2025 alone is 0.93. One election disagrees: qld2024 (postal -0.09, early 0.58).
+
+**Reading.** Across past elections, vote-type units move with their look-alike booths about one for one, postal
+included. Wills 2025 was one seat's miss, not a pattern, so a learned beta has nothing to correct and would ship as
+beta = 1, which is the live config. Clauses 1 to 5 were not run: there is no arm. Live stays `--booth-knn=10,1,10,2`.
+Not tried (no time before the cutoff): a beta above 1, which the raw fits point to for early votes; it is outside the
+[0, 1] range fixed above and stays a post-election question.
