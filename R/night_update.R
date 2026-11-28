@@ -401,7 +401,13 @@ night_tcp_obs <- function(tcp, fp, units, post, cand_level = FALSE, by_type = NU
     if (!length(u)) next
     u <- ifelse(u %in% FF$booth[FF$district == s & FF$booth_type == "ordinary"], u, .vt(u))
     x <- TT[TT$district == s & TT$unit %in% u, list(v = sum(votes)), by = "cls"]
-    if (nrow(x) != 2L || sum(x$v) <= 0) next
+    # no usable booth-level 2CP (page never fetched): fall back to the SEAT-LEVEL totals when there are any (10:35pm, 28 Nov)
+    seat_only <- FALSE
+    if (nrow(x) != 2L || sum(x$v) <= 0) {
+      z0 <- .night_tcp_seat_totals(); z0 <- if (is.null(z0)) NULL else z0[[.night_dkey(s)]]
+      if (is.null(z0) || z0$votes < 1000 || identical(z0$a, z0$b)) next
+      x <- data.table::data.table(cls = c(z0$a, z0$b), v = c(z0$a_share, 1 - z0$a_share) * z0$votes); seat_only <- TRUE
+    }
     x <- x[order(cls)]
     a <- x$cls[1]; b <- x$cls[2]
     if (!all(c(a, b) %in% colnames(post))) next
@@ -413,6 +419,7 @@ night_tcp_obs <- function(tcp, fp, units, post, cand_level = FALSE, by_type = NU
     # while the counted 2CP had a 8-13 points ABOVE the model in every pairing).
     tu0 <- TT[TT$district == s & TT$unit %in% u, list(tv = sum(votes)), by = "unit"]
     tu <- tu0$unit[tu0$tv > 0]
+    if (seat_only) tu <- unique(FF$unit[FF$district == s & FF$unit %in% u])   # every counted unit: the seat totals are not by booth
     f <- FF[FF$district == s & FF$unit %in% tu, list(v = sum(votes)), by = "cls"]
     tot <- sum(f$v); fa <- sum(f$v[f$cls == a]); fb <- sum(f$v[f$cls == b])
     # cand_level (same_class, B1): only the class's SENIOR candidate is in the pair; its other candidates' votes join
@@ -449,8 +456,31 @@ night_tcp_obs <- function(tcp, fp, units, post, cand_level = FALSE, by_type = NU
       PT[[s]] <- data.table::data.table(seat = s, a = a, b = b, vtype = pty, ta = pbk$ta, fa = pbk$fa, rst = pbk$rst)[,
         list(ta = sum(ta), fa = sum(fa), rst = sum(rst)), by = c("seat", "a", "b", "vtype")]
     }
+    # ELECTION NIGHT 28 Nov 2026, 10:30pm: SEAT-LEVEL two-candidate totals (the VEC's by-booth 2CP pages have been down
+    # since 7:48pm, so the booth-level flow above is frozen on a few hundred votes while the district pages keep
+    # counting: Murray Plains was called One Nation 99.5% with the Nationals ahead 50.5-49.5 on 17,007 votes). When
+    # NIGHT_TCP_SEAT_TOTALS names a JSON of those totals (check_tcp.py), the seat's pair is the same two classes, the
+    # totals hold 1,000+ votes and cover 40%+ of the seat's counted first preferences, the flow is re-read from them:
+    # (a's 2CP share - a's first-preference share) / (the others' share), shares over ALL counted units, with a
+    # standard error that tightens as the 2CP count covers more of the counted first preferences. Unset: unchanged.
+    used_seat <- FALSE
+    stt <- .night_tcp_seat_totals()
+    if (!is.null(stt) && !is.null(stt[[.night_dkey(s)]])) {
+      z <- stt[[.night_dkey(s)]]
+      fall <- FF[FF$district == s & FF$unit %in% u, list(v = sum(votes)), by = "cls"]; tall <- sum(fall$v)
+      fa_all <- sum(fall$v[fall$cls == a]) * ra; fb_all <- sum(fall$v[fall$cls == b]) * rb; rest_all <- tall - fa_all - fb_all
+      cover <- if (tall > 0) z$votes / tall else 0
+      if (identical(sort(c(z$a, z$b)), sort(c(a, b))) && z$votes >= 1000 && cover >= (if (seat_only) 0.25 else 0.4) && rest_all > 0) {
+        used_seat <- TRUE
+        pa2 <- if (identical(z$a, a)) z$a_share else 1 - z$a_share
+        flow <- min(1, max(0, (pa2 - fa_all / tall) / (rest_all / tall)))
+        se <- 0.01 + 0.04 * max(0, 1 - min(1, cover))   # 0.027 at 58% cover, 0.014 at 90%
+        x <- data.table::data.table(cls = c(a, b), v = c(pa2, 1 - pa2) * z$votes)
+      }
+    }
+    if (seat_only && !used_seat) next   # seat totals too thin to stand in for a booth-level count
     pa <- post[s, a] * ra; pb <- post[s, b] * rb
-    out[[s]] <- data.table::data.table(seat = s, a = a, b = b, flow = flow, flow_se = max(se, 0.02),
+    out[[s]] <- data.table::data.table(seat = s, a = a, b = b, flow = flow, flow_se = max(se, if (used_seat) 0.01 else 0.02),
                                        fp_a = pa, fp_b = pb,
                                        share_a = (pa + flow * (100 - pa - pb)) / 100, raw_share_a = x$v[1] / sum(x$v), votes = sum(x$v))
   }
@@ -775,4 +805,24 @@ night_lane_a_args <- function(booth_reg = NULL, booth_reg_all = NULL, type_pool 
   if (length(v) != 4L || any(!is.finite(v)) || any(v < 0) || v[1] <= 0 || !v[4] %in% c(0, 1, 2))
     stop("NX33! --booth-knn must be h,k,size_w,types with h > 0, k and size_w >= 0, types 0, 1 or 2 (2 = vote types matched to similar booths; e.g. 10,1,10,2)", call. = FALSE)
   list(h = v[1], k = v[2], size_w = v[3], types = if (v[4] == 2) "knn" else v[4] == 1)
+}
+
+# Seat-level two-candidate totals for night_tcp_obs() (28 Nov 2026, election night): NULL unless the environment variable
+# NIGHT_TCP_SEAT_TOTALS names a readable JSON written by check_tcp.py ({seats: {<seat>: [{party_class, votes, pct}, x2]}}).
+# Returns a list keyed by the district key: a, b (classes), a_share (0-1), votes. Re-read when the file changes.
+.night_tcp_seat_cache <- new.env()
+.night_tcp_seat_totals <- function() {
+  f <- Sys.getenv("NIGHT_TCP_SEAT_TOTALS", "")
+  if (!nzchar(f) || !file.exists(f)) return(NULL)
+  mt <- as.numeric(file.mtime(f))
+  if (identical(.night_tcp_seat_cache$mt, mt)) return(.night_tcp_seat_cache$val)
+  d <- tryCatch(jsonlite::fromJSON(f, simplifyVector = FALSE), error = function(e) NULL)
+  if (is.null(d) || is.null(d$seats)) return(.night_tcp_seat_cache$val)   # a half-written file: keep the last good read
+  out <- list()
+  for (nm in names(d$seats)) { r <- d$seats[[nm]]
+    if (length(r) != 2L) next
+    v <- c(r[[1]]$votes, r[[2]]$votes); if (!all(is.finite(v)) || sum(v) <= 0) next
+    out[[gsub("[^a-z0-9]", "", tolower(nm))]] <- list(a = r[[1]]$party_class, b = r[[2]]$party_class, a_share = v[1] / sum(v), votes = sum(v)) }
+  .night_tcp_seat_cache$mt <- mt; .night_tcp_seat_cache$val <- out
+  out
 }
