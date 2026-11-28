@@ -406,7 +406,13 @@ night_tcp_obs <- function(tcp, fp, units, post, cand_level = FALSE, by_type = NU
     a <- x$cls[1]; b <- x$cls[2]
     if (!all(c(a, b) %in% colnames(post))) next
     # first preferences in the SAME counted units the 2CP covers
-    tu <- unique(TT$unit[TT$district == s & TT$unit %in% u])
+    # ELECTION NIGHT 28 Nov 2026, 8:25pm: ONLY units whose two-candidate count has votes. The 2026 pages list every
+    # booth on the 2CP page with zeros until its 2CP is counted (and the VEC's 2CP pages froze at 7:48pm while first
+    # preferences kept arriving), so `tu` held booths with first preferences but no 2CP votes: fa and rest were too big
+    # and the flow to class a came out far too low (0.23 to Labor v the Coalition, 0.36 to the Coalition v One Nation,
+    # while the counted 2CP had a 8-13 points ABOVE the model in every pairing).
+    tu0 <- TT[TT$district == s & TT$unit %in% u, list(tv = sum(votes)), by = "unit"]
+    tu <- tu0$unit[tu0$tv > 0]
     f <- FF[FF$district == s & FF$unit %in% tu, list(v = sum(votes)), by = "cls"]
     tot <- sum(f$v); fa <- sum(f$v[f$cls == a]); fb <- sum(f$v[f$cls == b])
     # cand_level (same_class, B1): only the class's SENIOR candidate is in the pair; its other candidates' votes join

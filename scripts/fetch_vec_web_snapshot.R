@@ -118,16 +118,25 @@ one_snapshot <- function(m) {
     # 174 would otherwise cost the laptop a 5-20 minute cooldown on the night)
     if (sum(is.na(pages)) == length(again)) { refused <- length(again) >= 0.25 * nrow(jobs); break }
   }
+  prev_snap <- { ds <- sort(dirname(Sys.glob(file.path(out, "*", "DONE")))); ds <- ds[ds != d]; if (length(ds)) ds[length(ds)] else NA_character_ }
+  carried <- 0L
   for (i in seq_len(nrow(jobs))) {
     # ELECTION NIGHT 28 Nov 2026, 6:10pm: four districts' 2CP pages were linked but answered 404 (not published yet), and
     # one missing page voided every snapshot. A missing 2CP page with its first-preference page present is written as an
     # empty placeholder (no table: the seat simply has no 2CP count yet) and reported, not treated as a failed snapshot.
+    # 7:58pm: the VEC site drops pages to HTTP 404 for a moment while it republishes them (21, then 88 of 176 in two
+    # rounds), so a 404 is NOT "never published". A page that failed now but was saved in the last finished snapshot is
+    # CARRIED OVER from it (one round stale) instead of voiding the snapshot or blanking a seat's 2CP count.
+    if (is.na(pages[i]) && !is.na(prev_snap) && file.exists(file.path(prev_snap, jobs$f[i])) && file.size(file.path(prev_snap, jobs$f[i])) > 500) {
+      file.copy(file.path(prev_snap, jobs$f[i]), file.path(d, jobs$f[i]), overwrite = TRUE); carried <- carried + 1L; next }
     if (is.na(pages[i]) && jobs$k[i] == "tcp" && !is.na(pages[match(paste(jobs$district[i], "fp"), paste(jobs$district, jobs$k))])) {
       writeLines("<html><body><!-- 2CP page not published --></body></html>", file.path(d, jobs$f[i]), useBytes = TRUE)
       cat(sprintf("VWF7 %s: no 2CP page yet for %s (placeholder written)\n", stamp, jobs$district[i])); next }
     if (is.na(pages[i])) { bad <- c(bad, paste(jobs$district[i], jobs$k[i])); next }
     writeLines(pages[i], file.path(d, jobs$f[i]), useBytes = TRUE)
   }
+  if (carried) cat(sprintf("VWF8 %s: %d page(s) carried over from the previous snapshot (failed this round)
+", stamp, carried))
   if (length(bad)) { cat(sprintf("VWF3! %s: %d page(s) failed (%s); no DONE, the runner keeps the previous snapshot\n", stamp, length(bad),
                                  paste(utils::head(bad, 5), collapse = "; ")))
     return(invisible(if (refused) "refused" else FALSE)) }
