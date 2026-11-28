@@ -13,7 +13,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30; slimmed 2
   version D (PR #289), NSW 2027 OFF the daily run (repo var). Refused, kept off: One Nation flow calibration (branch
   onp-flow-cal). Republish the upper house alone: `gh workflow run forecast.yaml -R peteowen1/auspol --ref main -f only=upper-house`.
   Rebuild worktrees `C:/dev/auspol-wt-rb*` hold the live inputs: unlink junctions before removing.
-- NIGHT RUNBOOK (one page): `docs/NIGHT-RUNBOOK-vic2026.md`. Fetch rate DECIDED 27 Nov 4:40pm (Pete): `--parallel=2
+- NIGHT RUNBOOK (one page): `docs/NIGHT-RUNBOOK-vic2026.md`. Fetch rate CHANGED 28 Nov 4:15pm (Pete): `--parallel=2 --every=120`, same fall-back; plus the raw-count side process (DECISIONS). Was, 27 Nov 4:40pm (Pete): `--parallel=2
   --every=180`, then `--parallel=1 --every=300` at the first `VWF5!` 999 (DECISIONS).
 - OPEN after 28 Nov (Agenda C duplicate, fixed 27 Nov, DECISIONS): same check over every Vic poll (640) found 3 older pairs with
   near-identical primaries under two names within 4 days: uComms/ReachTEL 13-14 Nov 2018 (almost surely one poll),
